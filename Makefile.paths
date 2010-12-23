@@ -1,0 +1,4 @@
+GBP_GSL_DIR   = /usr/local/gnu/x86_64/gsl/
+GBP_FFTW_DIR  = /nfs/cluster/evo/gpoole/src/3rd_Party/libs/fftw/
+GBP_SPRNG_DIR = /nfs/cluster/evo/gpoole/src/3rd_Party/libs/sprng/
+GBP_DATA_DIR  = /home/ssi/gpoole/myCode/myData/

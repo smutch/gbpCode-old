@@ -1,0 +1,11 @@
+#############################
+# Library-specific settings #
+#############################
+INCFILES  = gbpSort.h
+OBJFILES  = heap_sort.o  \
+	    merge_sort.o 
+LIBFILE   = 
+BINFILES  = 
+LIBS      = 
+SUBDIRS   =
+#############################

@@ -1,0 +1,23 @@
+#############################
+# Library-sp.oif.o settings #
+#############################
+INCFILES = gbpParse.h
+LIBFILE  = 
+OBJFILES = count_lines.o           \
+	   count_lines_data.o      \
+	   check_comment.o         \
+	   grab_char.o             \
+	   grab_char_tail.o        \
+	   grab_double.o           \
+	   grab_float.o            \
+	   grab_int.o              \
+	   grab_long.o             \
+	   grab_next_line.o        \
+	   grab_next_line_data.o   \
+	   grab_nth_line.o         \
+	   grab_size_t.o           \
+	   grab_word.o             
+BINFILES = 
+LIBS     = 
+SUBDIRS  = 
+#############################

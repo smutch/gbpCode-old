@@ -1,0 +1,14 @@
+###########################
+# Local Makefile settings #
+###########################
+INCFILES  = 
+OBJFILES  = 
+LIBFILE   =
+BINFILES  =
+SCRIPTS   =
+DATAFILES =
+LIBS      =
+SUBDIRS   = gbpLib gbpUtils 
+#############################
+#USE_FFTW =1
+#USE_SPRNG=1

@@ -1,0 +1,12 @@
+#############################
+# Library-specific settings #
+#############################
+INCFILES = gbpCommon.h
+LIBFILE  = 
+OBJFILES = check_mode_for_flag.o \
+	   seconds2ascii.o
+BINFILES = 
+LIBS     = 
+SUBDIRS  = 
+#############################
+

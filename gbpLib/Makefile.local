@@ -1,0 +1,11 @@
+#############################
+# Library-specific settings #
+#############################
+INCFILES  = gbpLib.h
+LIBFILE   = libgbpLib.a
+OBJFILES  = 
+BINFILES  =
+LIBS      =
+SUBDIRS   = gbpCommon gbpSID gbpADaPS gbpParse gbpSort
+#############################
+

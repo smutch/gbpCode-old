@@ -1,0 +1,58 @@
+#!/bin/csh -f
+
+if ($#argv < 4) then
+  echo
+  echo 'Syntax: run_mpi #nodes #proc_per_node wall_time_in_hrs mpi_command ...'
+  echo '------'
+  echo
+  exit(1)
+else
+   @ FIRST_ARG=1
+  set ARG_NNODE=($argv[$FIRST_ARG]);@ FIRST_ARG++
+  set ARG_PPN  =($argv[$FIRST_ARG]);@ FIRST_ARG++
+  set ARG_HRS  =($argv[$FIRST_ARG]);@ FIRST_ARG++
+  set ARG_CMD  =($argv[$FIRST_ARG]);@ FIRST_ARG++
+endif 
+
+set SUBT_FILE="`pwd`/`create_tmpfile`"
+
+echo "#\!/bin/csh"                                                                                       > $SUBT_FILE
+echo '#PBS -N '$ARG_CMD                                                                                 >> $SUBT_FILE
+echo '#PBS -l nodes='$ARG_NNODE':ppn='$ARG_PPN',walltime='$ARG_HRS':00:00'                              >> $SUBT_FILE
+echo '#PBS -S /bin/csh'                                                                                 >> $SUBT_FILE
+#echo '#PBS -l pmem=6GB'                                                                                 >> $SUBT_FILE
+echo '#PBS -V'                                                                                          >> $SUBT_FILE
+echo '#PBS -d '"`pwd`"                                                                                  >> $SUBT_FILE
+echo                                                                                                    >> $SUBT_FILE
+echo 'setenv PATH            '$GBP_MPI'/bin:$PATH'                     >> $SUBT_FILE
+echo 'setenv LD_LIBRARY_PATH '$GBP_MPI'/lib:$LD_LIBRARY_PATH'          >> $SUBT_FILE
+echo 'setenv NPROCS          `cat  $PBS_NODEFILE | wc -l`'                                            >> $SUBT_FILE
+echo 'setenv NNODES          `uniq $PBS_NODEFILE | wc -l`'                                            >> $SUBT_FILE
+echo 'setenv DATE_START      `date`'                                                                  >> $SUBT_FILE
+#echo 'setenv MALLOC_CHECK_ 2'                                                                         >> $SUBT_FILE
+echo                                                                                                    >> $SUBT_FILE
+echo 'cd   $PBS_O_WORKDIR'                                                                              >> $SUBT_FILE
+echo 'echo '-------------------------------''                                                           >> $SUBT_FILE
+echo 'echo "DATE     is {"$DATE_START"}"'                                                               >> $SUBT_FILE
+echo 'echo "PWD      is {"$PWD"}"'                                                                      >> $SUBT_FILE
+echo 'echo "NNODES   is {"$NNODES"}"'                                                                   >> $SUBT_FILE
+echo 'echo "NPROCS   is {"$NPROCS"}"'                                                                   >> $SUBT_FILE
+echo 'echo "MPI_DIR  is {"$GBP_MPI"}"'                                                                  >> $SUBT_FILE
+echo 'echo "Using the following nodes:"'                                                                >> $SUBT_FILE
+echo 'cat $PBS_NODEFILE | uniq'                                                                         >> $SUBT_FILE
+echo 'echo '-------------------------------''                                                           >> $SUBT_FILE
+echo                                                                                                    >> $SUBT_FILE
+#echo -n $GBP_MPI'/bin/mpiexec -mca btl_openib_flags 1 $GBP_BIN/mpi/'$ARG_CMD  >> $SUBT_FILE
+#echo -n $GBP_MPI'/bin/mpiexec -mca mpool_rdma_rcache_size_limit 209715200 $GBP_BIN/mpi/'$ARG_CMD  >> $SUBT_FILE
+echo -n $GBP_MPI'/bin/mpiexec -mca btl tcp,self $GBP_BIN/mpi/'$ARG_CMD  >> $SUBT_FILE
+#echo -n $GBP_MPI'/bin/mpiexec $GBP_BIN/mpi/'$ARG_CMD  >> $SUBT_FILE
+@ i=$FIRST_ARG
+while ($i <= $#argv)
+  echo -n ' '$argv[$i]                                                                             >> $SUBT_FILE
+  @ i++
+end
+echo                                                                                               >> $SUBT_FILE
+
+qsub $SUBT_FILE
+rm   $SUBT_FILE
+
