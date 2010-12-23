@@ -1,0 +1,25 @@
+#############################
+# Library-specific settings #
+#############################
+INCFILES = gbpMCMC.h
+LIBFILE  = libgbpMCMC.a
+OBJFILES = add_DS_to_MCMC.o             \
+	   add_covariance_to_MCMC.o     \
+	   compute_MCMC.o               \
+	   compute_MCMC_chain_stats.o   \
+	   compute_MCMC_Chi2.o          \
+	   free_MCMC.o                  \
+	   generate_new_MCMC_link.o     \
+	   init_MCMC.o                  \
+	   set_MCMC_mode.o              \
+	   set_MCMC_directory.o         \
+	   set_MCMC_coverage_size.o     \
+	   set_MCMC_iterations.o        \
+	   set_MCMC_temperature.o
+BINFILES = covariance2ascii
+LIBS     = -lgbpLib
+SUBDIRS  = 
+#############################
+USE_SPRNG=1
+USE_FFTW=1
+
