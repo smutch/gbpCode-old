@@ -1,0 +1,18 @@
+#############################
+# Library-specific settings #
+#############################
+INCFILES = gbpInterpolate.h 
+OBJFILES = free_interpolate.o       \
+	   init_interpolate.o       \
+	   interpolate.o            \
+	   interpolate_derivative.o \
+	   interpolate_integral.o   \
+	   interpolate_maximum.o    \
+	   interpolate_minimum.o
+LIBFILE  =
+BINFILES = 
+LIBS     = 
+SUBDIRS  = 
+#############################
+USE_SPRNG=1
+

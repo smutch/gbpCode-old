@@ -1,0 +1,19 @@
+#############################
+# Library-specific settings #
+#############################
+INCFILES = gbpMisc.h 
+OBJFILES = take_log10.o                        \
+           take_alog10.o                       \
+	   force_periodic.o                    \
+	   find_index.o                        \
+	   find_index_int.o                    \
+	   d_periodic.o                        \
+	   compute_triaxiality.o               \
+	   compute_Daubechies_scaling_fctns.o                  
+LIBFILE  = 
+BINFILES = 
+LIBS     = 
+SUBDIRS  = 
+#############################
+USE_SPRNG=1
+USE_FFTW =1

@@ -1,0 +1,11 @@
+#############################
+# Library-specific settings #
+#############################
+INCFILES  = gbpMath.h 
+LIBFILE   = libgbpMath.a
+OBJFILES  =
+BINFILES  = 
+LIBS      = 
+SUBDIRS   = gbpMisc gbpStats gbpDomain gbpRNG gbpFFT gbpInterpolate
+#############################
+

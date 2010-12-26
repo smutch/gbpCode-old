@@ -1,0 +1,28 @@
+#############################
+# Library-specific settings #
+#############################
+INCFILES = gbpFFT.h 
+OBJFILES = add_buffer_FFT_k.o     \
+	   add_buffer_FFT_R.o     \
+	   compute_FFT.o          \
+	   compute_iFFT.o         \
+	   index2indices_FFT_k.o  \
+	   index2indices_FFT_R.o  \
+	   index_FFT_k.o          \
+	   index_FFT_R.o          \
+	   index_local_FFT_k.o    \
+	   index_local_FFT_R.o    \
+	   k_field_FFT.o          \
+	   k_mag_field_FFT.o      \
+	   pad_index_FFT_k.o      \
+	   pad_index_FFT_R.o      \
+	   remove_buffer_FFT_k.o  \
+	   remove_buffer_FFT_R.o  \
+	   R_field_FFT.o
+LIBFILE  = 
+BINFILES = 
+LIBS     = 
+SUBDIRS  = 
+#############################
+USE_SPRNG=1
+USE_FFTW =1

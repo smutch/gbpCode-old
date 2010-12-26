@@ -1,0 +1,17 @@
+#############################
+# Library-specific settings #
+#############################
+INCFILES  = gbpDomain.h
+LIBFILE   = 
+OBJFILES  = exchange_ring_buffer.o        \
+	    exchange_slab_buffer_left.o   \
+	    exchange_slab_buffer_right.o  \
+	    clear_field.o                 \
+	    free_field.o                  \
+	    init_field.o
+
+BINFILES  = 
+LIBS      = 
+SUBDIRS   =
+#############################
+USE_FFTW=1
