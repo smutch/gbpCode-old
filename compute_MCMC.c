@@ -119,6 +119,7 @@ void compute_MCMC(MCMC_info *MCMC){
   RNG_info  RNG;
   int       seed=182743;
   int       i_report;
+  int       i_iteration_start;
   int       i_iteration_next_report;
   int       n_accepted;
   int       n_active;
@@ -247,9 +248,13 @@ void compute_MCMC(MCMC_info *MCMC){
     for(j_P=0;j_P<n_P;j_P++,k_P++){
       P_ij_bar_accum[k_P]=0.;
       P_ij_bar[k_P]      =0.;
-      V_compute[k_P]     =0.;
+      if(i_P==j_P)
+        V_compute[k_P]=1.;
+      else
+        V_compute[k_P]=0.;
     }
   }
+  add_covariance_to_MCMC(MCMC,V_compute);
 
   // Initialize coverage arrays
   for(i_P=0,n_coverage=0;i_P<n_P;i_P++){
@@ -457,7 +462,7 @@ void compute_MCMC(MCMC_info *MCMC){
             SID_trap_error("The number arrays in dataset #%d are inconsistant (i.e. %d!=%d).",ERROR_LOGIC,i_DS,n_arrays_test,current_DS->n_arrays);
           for(i_array=0;i_array<current_DS->n_arrays;i_array++){
             fread(array_name_test,sizeof(char),MCMC_NAME_SIZE,fp_run);
-            if(strcmp(array_name_test,MCMC->array_name[i_array]))
+            if(strcmp(array_name_test,current_DS->array_name[i_array]))
               SID_trap_error("Array name #%d for dataset #%d is inconsisitant (i.e. {%s}!={%s}).",ERROR_LOGIC,i_array,i_DS,current_DS->array_name[i_array],array_name_test);
           }
           current_DS=next_DS;
@@ -638,8 +643,11 @@ void compute_MCMC(MCMC_info *MCMC){
       i_phase    =1;
       i_iteration=n_iterations_file_total-n_iterations_burn;
     }
-    else
-      i_phase=2;
+    else{
+      i_phase=2; // ... in other words, we're done; skip the integration.
+      i_iteration=n_iterations;
+    }
+    i_iteration_start=i_iteration;
     SID_log("Done.",SID_LOG_CLOSE);
 
     // Create the chain in 2 phases: a burn-in phase and an integration phase
@@ -660,7 +668,7 @@ void compute_MCMC(MCMC_info *MCMC){
       // Initialize progress reporting
       i_report=0;
       if(n_iterations_phase>20)
-        i_iteration_next_report=n_iterations_phase/10;
+        i_iteration_next_report=i_iteration_start+(n_iterations_phase-i_iteration_start)/10;
       else
         i_iteration_next_report=20;
 
@@ -843,7 +851,7 @@ void compute_MCMC(MCMC_info *MCMC){
         if(i_iteration==i_iteration_next_report){
           i_report++;
           SID_log("%3d%% complete.",SID_LOG_COMMENT|SID_LOG_TIMER,10*(i_report));
-          i_iteration_next_report=MIN(n_iterations_phase,n_iterations_phase*(i_report+1)/10);
+          i_iteration_next_report=MIN(n_iterations_phase,i_iteration_start+(n_iterations_phase-i_iteration_start)*(i_report+1)/10);
         }
       } // while continue
       
@@ -853,7 +861,7 @@ void compute_MCMC(MCMC_info *MCMC){
       SID_log("Proposal success: %5.3f%% (%lld of %lld)",SID_LOG_COMMENT,1e2*((float)(n_success_all)/(float)(n_success_all+n_fail_all)),n_success_all,n_success_all+n_fail_all);
   
       if(my_chain==SID.My_rank){
-        // Write the covariance matrix
+        // Write the status of the covariance matrix calculation
         fp_chain_covariance=fopen(filename_chain_covariance,"wb");
         fwrite(&i_covariance, sizeof(int),   1,      fp_chain_covariance);
         fwrite(&n_covariance, sizeof(int),   1,      fp_chain_covariance);
@@ -862,8 +870,10 @@ void compute_MCMC(MCMC_info *MCMC){
         fwrite(P_i_bar_accum, sizeof(double),n_P,    fp_chain_covariance);
         fwrite(P_ij_bar_accum,sizeof(double),n_P*n_P,fp_chain_covariance);
         fclose(fp_chain_covariance);
+
         // Reset the covariance matrix calculation if this is the end of the burn-in ...
         if(i_phase==0 && !flag_stop){
+
           // This is the covariance matrix that will be 
           //   used for the integration phase
           add_covariance_to_MCMC(MCMC,V_compute);
@@ -879,7 +889,8 @@ void compute_MCMC(MCMC_info *MCMC){
           n_covariance=0;
         }
       }
-      i_iteration=0;
+      i_iteration      =0;
+      i_iteration_start=i_iteration;
       SID_log("Done.",SID_LOG_CLOSE);
     }
     if(my_chain==SID.My_rank){

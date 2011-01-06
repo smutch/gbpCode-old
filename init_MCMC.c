@@ -78,8 +78,6 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   MCMC->DS           =NULL;
   MCMC->last         =NULL;
 
-  add_covariance_to_MCMC(MCMC,NULL);
-
   SID_log("Done.",SID_LOG_CLOSE);
 
   va_end(vargs);

@@ -17,6 +17,7 @@ OBJFILES = add_DS_to_MCMC.o                     \
 	   set_MCMC_likelihood_function.o       \
 	   set_MCMC_iterations.o                \
 	   set_MCMC_temperature.o
+SCRIPTS  = allresults_MCMC.py
 BINFILES = covariance2ascii
 LIBS     = -lgbpLib
 SUBDIRS  = 
