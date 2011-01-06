@@ -9,7 +9,7 @@
 #include <gsl/gsl_fit.h>
 #include <gsl/gsl_interp.h>
 
-void add_DS_to_MCMC(MCMC_info *MCMC,const char *name,int n_M,double *DS,double *dDS,int n_arrays,...){
+void add_DS_to_MCMC(MCMC_info *MCMC,const char *name,int n_M,double *DS,double *dDS,void *params,int n_arrays,...){
   int           i_array;
   MCMC_DS_info *new;
   va_list       vargs;
@@ -25,6 +25,7 @@ void add_DS_to_MCMC(MCMC_info *MCMC,const char *name,int n_M,double *DS,double *
   new->dM_target    =(double *)SID_malloc(sizeof(double)*new->n_M);
   memcpy(new->M_target,  DS,(size_t)new->n_M*sizeof(double));
   memcpy(new->dM_target,dDS,(size_t)new->n_M*sizeof(double));
+  new->params   =params;
   new->n_arrays =n_arrays;
   if(n_arrays>0){
     new->array=(double **)SID_malloc(sizeof(double *)*new->n_arrays);

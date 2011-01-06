@@ -18,9 +18,10 @@ struct MCMC_DS_info {
   int           n_M;
   double       *M_target;
   double       *dM_target;
-  int           n_arrays;
   double      **array;
   char        **array_name;
+  void         *params;
+  int           n_arrays;
   MCMC_DS_info *next;
 };
 
@@ -61,7 +62,7 @@ struct MCMC_info {
 };
 
 void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(double *,MCMC_info *,double **),int n_P,double *P_init,char **P_names,int *flag_limit,double *P_limit_min,double *P_limit_max,int n_arrays,...);
-void add_DS_to_MCMC(MCMC_info *MCMC,const char *name,int n_M,double *DS,double *dDS,int n_arrays,...);
+void add_DS_to_MCMC(MCMC_info *MCMC,const char *name,int n_M,double *DS,double *dDS,void *params,int n_arrays,...);
 void add_covariance_to_MCMC(MCMC_info *MCMC,double *V);
 void free_MCMC(MCMC_info *MCMC);
 void generate_new_MCMC_link(MCMC_info *MCMC,double *P_old,int n_P,double temperature,RNG_info *RNG,gsl_matrix *m,gsl_vector *b,double *P_new);
