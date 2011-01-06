@@ -9,7 +9,7 @@
 #include <gsl/gsl_fit.h>
 #include <gsl/gsl_interp.h>
 
-void compute_MCMC_chain_stats(double **x,int n_x,int n_avg,double *x_min,double *x_bar_in,double *x_max,double *x_sigma,double **auto_cor,double *slopes,double *dP_sub,double *Chi2_in,double *Chi2_min,double *Chi2_avg,double *Chi2_max){
+void compute_MCMC_chain_stats(double **x,int n_x,int n_avg,double *x_min,double *x_bar_in,double *x_max,double *x_sigma,double **auto_cor,double *slopes,double *dP_sub,double *ln_Pr_in,double *ln_Pr_min,double *ln_Pr_avg,double *ln_Pr_max){
   int     i_P;
   int     i_avg;
   double *x_bar;
@@ -71,17 +71,17 @@ void compute_MCMC_chain_stats(double **x,int n_x,int n_avg,double *x_min,double 
     }
   }
 
-  // Compute Chi2 statistics
-  if(Chi2_in!=NULL){
-    (*Chi2_min)=Chi2_in[0];
-    (*Chi2_avg)=Chi2_in[0];
-    (*Chi2_max)=Chi2_in[0];
+  // Compute ln_Pr statistics
+  if(ln_Pr_in!=NULL){
+    (*ln_Pr_min)=ln_Pr_in[0];
+    (*ln_Pr_avg)=ln_Pr_in[0];
+    (*ln_Pr_max)=ln_Pr_in[0];
     for(i_avg=1;i_avg<n_avg;i_avg++){
-      (*Chi2_min) =MIN((*Chi2_min),Chi2_in[i_avg]);
-      (*Chi2_avg)+=Chi2_in[i_avg];
-      (*Chi2_max) =MAX((*Chi2_max),Chi2_in[i_avg]);
+      (*ln_Pr_min) =MIN((*ln_Pr_min),ln_Pr_in[i_avg]);
+      (*ln_Pr_avg)+=ln_Pr_in[i_avg];
+      (*ln_Pr_max) =MAX((*ln_Pr_max),ln_Pr_in[i_avg]);
     }
-    (*Chi2_avg)/=(double)n_avg;
+    (*ln_Pr_avg)/=(double)n_avg;
   }
 
   if(x_bar!=x_bar_in)

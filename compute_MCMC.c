@@ -73,9 +73,11 @@ void compute_MCMC(MCMC_info *MCMC){
   double   *P_last;
   double   *P_avg;
   double   *dP_avg;
-  double    Chi2_min;
-  double    Chi2_avg;
-  double    Chi2_max;
+  double    ln_Pr_last;
+  double    ln_Pr_new;
+  double    ln_Pr_min;
+  double    ln_Pr_avg;
+  double    ln_Pr_max;
   double  **M_best;
   double  **M_min;
   double  **M_max;
@@ -90,8 +92,8 @@ void compute_MCMC(MCMC_info *MCMC){
   double  **dM_avg;
   double   *slopes;
   double   *dP_sub;
-  double   *Chi2_chain;
-  double   *Chi2_proposals;
+  double   *ln_Pr_chain;
+  double   *ln_Pr_proposals;
   double   *drift;
   double  **auto_cor;
   double  **P_chain;
@@ -103,7 +105,7 @@ void compute_MCMC(MCMC_info *MCMC){
   double    L_x,L_y,L_z;
   int       n_x,n_y,n_z;
   int       n_C_x;
-  double    Chi2_new,Chi2_last,Chi2_reduced;
+  double    ln_likelihood_new,ln_likelihood_last;
   FILE     *fp_run;
   FILE     *fp_chain;
   FILE     *fp_chain_iterations;
@@ -138,7 +140,6 @@ void compute_MCMC(MCMC_info *MCMC){
   int       flag_initialized;
   int       flag_report_props;
   int       n_used;
-  int       n_DoF;
   gsl_matrix *m;
   gsl_vector *b;
   double      RN;
@@ -306,24 +307,24 @@ void compute_MCMC(MCMC_info *MCMC){
     current_DS=next_DS;
     i_DS++;
   }
-  P_best        =(double  *)SID_malloc(sizeof(double)  *n_P);
-  P_min         =(double  *)SID_malloc(sizeof(double)  *n_P);
-  P_max         =(double  *)SID_malloc(sizeof(double)  *n_P);
-  P_new         =(double  *)SID_malloc(sizeof(double)  *n_P);
-  P_last        =(double  *)SID_malloc(sizeof(double)  *n_P);
-  P_chain       =(double **)SID_malloc(sizeof(double *)*n_P);
-  P_proposals   =(double **)SID_malloc(sizeof(double *)*n_P);
-  P_avg         =(double  *)SID_malloc(sizeof(double)  *n_P);
-  dP_avg        =(double  *)SID_malloc(sizeof(double)  *n_P);
-  slopes        =(double  *)SID_malloc(sizeof(double *)*n_P);
-  dP_sub        =(double  *)SID_malloc(sizeof(double *)*n_P);
-  drift         =(double  *)SID_malloc(sizeof(double *)*n_P);
-  P_lo_68       =(double  *)SID_malloc(sizeof(double)  *n_P);
-  P_hi_68       =(double  *)SID_malloc(sizeof(double)  *n_P);
-  P_lo_95       =(double  *)SID_malloc(sizeof(double)  *n_P);
-  P_hi_95       =(double  *)SID_malloc(sizeof(double)  *n_P);
-  Chi2_chain    =(double  *)SID_malloc(sizeof(double)  *n_avg);
-  Chi2_proposals=(double  *)SID_malloc(sizeof(double)  *n_avg);
+  P_best         =(double  *)SID_malloc(sizeof(double)  *n_P);
+  P_min          =(double  *)SID_malloc(sizeof(double)  *n_P);
+  P_max          =(double  *)SID_malloc(sizeof(double)  *n_P);
+  P_new          =(double  *)SID_malloc(sizeof(double)  *n_P);
+  P_last         =(double  *)SID_malloc(sizeof(double)  *n_P);
+  P_chain        =(double **)SID_malloc(sizeof(double *)*n_P);
+  P_proposals    =(double **)SID_malloc(sizeof(double *)*n_P);
+  P_avg          =(double  *)SID_malloc(sizeof(double)  *n_P);
+  dP_avg         =(double  *)SID_malloc(sizeof(double)  *n_P);
+  slopes         =(double  *)SID_malloc(sizeof(double *)*n_P);
+  dP_sub         =(double  *)SID_malloc(sizeof(double *)*n_P);
+  drift          =(double  *)SID_malloc(sizeof(double *)*n_P);
+  P_lo_68        =(double  *)SID_malloc(sizeof(double)  *n_P);
+  P_hi_68        =(double  *)SID_malloc(sizeof(double)  *n_P);
+  P_lo_95        =(double  *)SID_malloc(sizeof(double)  *n_P);
+  P_hi_95        =(double  *)SID_malloc(sizeof(double)  *n_P);
+  ln_Pr_chain    =(double  *)SID_malloc(sizeof(double)*n_avg);
+  ln_Pr_proposals=(double  *)SID_malloc(sizeof(double)*n_avg);
   for(i_P=0;i_P<n_P;i_P++)
     P_last[i_P]=MCMC->P_init[i_P];
   if(flag_autocor_on)
@@ -507,6 +508,7 @@ void compute_MCMC(MCMC_info *MCMC){
     n_iterations_file_burn =0;
     n_covariance           =0;
     i_covariance           =0;
+
     // If this is NOT a restart, start from scratch ...
     if(!flag_restart){
       SID_log("Setting initial state...",SID_LOG_OPEN);
@@ -514,7 +516,7 @@ void compute_MCMC(MCMC_info *MCMC){
       fp_stats           =fopen(filename_stats,"wb");
       MCMC->map_P_to_M(P_last,MCMC,M_last);
       MCMC->first_map_call=FALSE;
-      compute_MCMC_Chi2(MCMC,M_last,&Chi2_last,&n_DoF);
+      MCMC->compute_MCMC_ln_likelihood(MCMC,M_last,&ln_likelihood_last);
       fp_chain_iterations=fopen(filename_chain_iterations,"wb");
       fwrite(&n_iterations_file_total,sizeof(int),1,fp_chain_iterations);
       fwrite(&n_iterations_file_burn, sizeof(int),1,fp_chain_iterations);
@@ -558,8 +560,8 @@ void compute_MCMC(MCMC_info *MCMC){
         fp_chain=fopen(filename_chain,"rb");
         for(i_iteration=0;i_iteration<n_iterations_file_total;i_iteration++){
           for(i_avg=0;i_avg<n_avg;i_avg++){
-            fread(&flag_success,sizeof(char),    1,fp_chain);
-            fread(&Chi2_reduced,sizeof(double),  1,fp_chain);
+            fread(&flag_success,sizeof(char),  1,fp_chain);
+            fread(&ln_Pr_last,  sizeof(double),1,fp_chain);
             if(flag_success){
               fread(P_last,sizeof(double),n_P,fp_chain);
               for(i_DS=0;i_DS<n_DS;i_DS++)
@@ -581,30 +583,30 @@ void compute_MCMC(MCMC_info *MCMC){
         MCMC->first_map_call=FALSE;
         SID_log("Done.",SID_LOG_CLOSE);
       }
-      compute_MCMC_Chi2(MCMC,M_last,&Chi2_last,&n_DoF);
+      MCMC->compute_MCMC_ln_likelihood(MCMC,M_last,&ln_likelihood_last);
       
       // ... scan to the end of the chain stats and read the last-generated statistics (particularly the drift)
       SID_log("Reading the last-generated statistics...",SID_LOG_OPEN);
       fp_stats=fopen(filename_stats,"rb");
       for(i_iteration=0;i_iteration<n_iterations_file_total;i_iteration++){
-        fread(P_min, sizeof(double),n_P,fp_stats);
+        fread(P_min, sizeof(double),n_P,fp_stats);    // Read proposal stats
         fread(P_avg, sizeof(double),n_P,fp_stats);
         fread(P_max, sizeof(double),n_P,fp_stats);
         fread(dP_avg,sizeof(double),n_P,fp_stats);
         fread(dP_sub,sizeof(double),n_P,fp_stats);
-        fread(&Chi2_min, sizeof(double),1,fp_stats);
-        fread(&Chi2_avg, sizeof(double),1,fp_stats);
-        fread(&Chi2_max, sizeof(double),1,fp_stats);
+        fread(&ln_Pr_min, sizeof(double),1,fp_stats);
+        fread(&ln_Pr_avg, sizeof(double),1,fp_stats);
+        fread(&ln_Pr_max, sizeof(double),1,fp_stats);
         if(flag_autocor_on)
           fread(auto_cor,sizeof(double),n_avg-1,fp_stats);
-        fread(P_min, sizeof(double),n_P,fp_stats);
+        fread(P_min, sizeof(double),n_P,fp_stats);    // Read chain stats
         fread(P_avg, sizeof(double),n_P,fp_stats);
         fread(P_max, sizeof(double),n_P,fp_stats);
         fread(dP_avg,sizeof(double),n_P,fp_stats);
         fread(dP_sub,sizeof(double),n_P,fp_stats);
-        fread(&Chi2_min, sizeof(double),1,fp_stats);
-        fread(&Chi2_avg, sizeof(double),1,fp_stats);
-        fread(&Chi2_max, sizeof(double),1,fp_stats);
+        fread(&ln_Pr_min, sizeof(double),1,fp_stats);
+        fread(&ln_Pr_avg, sizeof(double),1,fp_stats);
+        fread(&ln_Pr_max, sizeof(double),1,fp_stats);
         if(flag_autocor_on)
           fread(auto_cor,sizeof(double),n_avg-1,fp_stats);
         fread(slopes,sizeof(double),n_P,fp_stats);
@@ -623,7 +625,7 @@ void compute_MCMC(MCMC_info *MCMC){
       SID_log("Initial parameters:",SID_LOG_ALLRANKS|SID_LOG_OPEN);
       for(i_P=0;i_P<n_P;i_P++)
         SID_log("%s = %le",SID_LOG_ALLRANKS|SID_LOG_COMMENT,MCMC->P_names[i_P],P_last[i_P]);
-      SID_log("Chi2/n=%le",SID_LOG_ALLRANKS|SID_LOG_COMMENT,Chi2_last/(double)n_DoF);
+      SID_log("ln(likelihood)=%le+constant",SID_LOG_ALLRANKS|SID_LOG_COMMENT,ln_likelihood_last);
       SID_log("",SID_LOG_ALLRANKS|SID_LOG_NOPRINT|SID_LOG_CLOSE);
     }
     
@@ -681,22 +683,17 @@ void compute_MCMC(MCMC_info *MCMC){
 
           i_thin++;
           if(my_chain==SID.My_rank){
-            // *** Determine the new proposal's chi^2
-            compute_MCMC_Chi2(MCMC,M_new,&Chi2_new,&n_DoF);
+            // *** Determine the new proposal's likelihood
+            MCMC->compute_MCMC_ln_likelihood(MCMC,M_new,&ln_likelihood_new);
             // *** If we decide to keep this proposal, then ...
-            if(Chi2_new<Chi2_last){
-              memcpy(P_last,P_new,(size_t)n_P*sizeof(double));
-              for(i_DS=0;i_DS<n_DS;i_DS++)
-                memcpy(M_last[i_DS],M_new[i_DS],(size_t)n_M[i_DS]*sizeof(double));
-              Chi2_last   =Chi2_new;
-              flag_success=TRUE;
-            }
-            else if((double)random_number(&RNG)<exp(-0.5*(Chi2_new-Chi2_last))){
+            ln_Pr_new=MIN(0.0,ln_likelihood_new-ln_likelihood_last);
+            if((double)random_number(&RNG)<=exp(ln_Pr_new)){
               memcpy(P_last,P_new,(size_t)n_P*sizeof(double));      
               for(i_DS=0;i_DS<n_DS;i_DS++)
                 memcpy(M_last[i_DS],M_new[i_DS],(size_t)n_M[i_DS]*sizeof(double));
-              Chi2_last   =Chi2_new;
-              flag_success=TRUE;
+              ln_likelihood_last=ln_likelihood_new;
+              ln_Pr_last        =ln_Pr_new;
+              flag_success      =TRUE;
             }
             // ... else ...
             else
@@ -716,22 +713,22 @@ void compute_MCMC(MCMC_info *MCMC){
                   SID_log("Proposal #%09d: REJECTED",SID_LOG_ALLRANKS|SID_LOG_OPEN,i_proposal);
                 for(i_P=0;i_P<n_P;i_P++)
                   SID_log("%12s=%le (was %le)",SID_LOG_ALLRANKS|SID_LOG_COMMENT,MCMC->P_names[i_P],P_new[i_P],P_last[i_P]);
-                SID_log("Chi2/n      =%le (was %le)",SID_LOG_ALLRANKS|SID_LOG_COMMENT,Chi2_new/(double)n_DoF,Chi2_last/(double)n_DoF);
-                SID_log("n_success   =%09d",   SID_LOG_ALLRANKS|SID_LOG_COMMENT,n_success);
-                SID_log("n_fail      =%09d",   SID_LOG_ALLRANKS|SID_LOG_COMMENT,n_fail);
+                SID_log("ln(likelihood) =%le+constant (was %le+constant)",SID_LOG_ALLRANKS|SID_LOG_COMMENT,ln_likelihood_new,ln_likelihood_last);
+                SID_log("ln(probability)=%le", SID_LOG_ALLRANKS|SID_LOG_COMMENT,ln_Pr_new);
+                SID_log("n_success      =%09d",SID_LOG_ALLRANKS|SID_LOG_COMMENT,n_success);
+                SID_log("n_fail         =%09d",SID_LOG_ALLRANKS|SID_LOG_COMMENT,n_fail);
                 SID_log("",SID_LOG_ALLRANKS|SID_LOG_NOPRINT|SID_LOG_CLOSE);
               }
               // ... write it to the chain file
-              Chi2_reduced=Chi2_new/(double)n_DoF;
               for(i_P=0;i_P<n_P;i_P++){
                 P_chain[i_P][i_avg%n_avg]    =P_last[i_P];
                 P_proposals[i_P][i_avg%n_avg]=P_new[i_P];
               }
-              Chi2_chain[i_avg%n_avg]    =Chi2_last;
-              Chi2_proposals[i_avg%n_avg]=Chi2_new;
+              ln_Pr_chain[i_avg%n_avg]    =ln_Pr_last;
+              ln_Pr_proposals[i_avg%n_avg]=ln_Pr_new;
               if(my_chain==SID.My_rank){
                 fwrite(&flag_success,sizeof(char),    1,fp_chain);
-                fwrite(&Chi2_reduced,sizeof(double),  1,fp_chain);
+                fwrite(&ln_Pr_last,  sizeof(double),  1,fp_chain);
                 fwrite(P_new,        sizeof(double),n_P,fp_chain);
                 for(i_DS=0;i_DS<n_DS;i_DS++)
                   fwrite(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
@@ -745,6 +742,7 @@ void compute_MCMC(MCMC_info *MCMC){
                 for(j_P=0;j_P<n_P;j_P++,k_P++)
                   P_ij_bar_accum[k_P]+=P_last[i_P]*P_last[j_P];
               }
+
               // Update the covariance matrix after each covariance averaging interval
               if(i_covariance>=n_avg_covariance){
                 for(i_P=0;i_P<n_P;i_P++)
@@ -791,26 +789,26 @@ void compute_MCMC(MCMC_info *MCMC){
         // Generate statistics for the averaging interval we just completed
         if(my_chain==SID.My_rank){
           // Write the statistics to the chain stats file
-          compute_MCMC_chain_stats(P_proposals,n_P,n_avg,P_min,P_avg,P_max,dP_avg,auto_cor,slopes,dP_sub,Chi2_proposals,&Chi2_min,&Chi2_avg,&Chi2_max);
+          compute_MCMC_chain_stats(P_proposals,n_P,n_avg,P_min,P_avg,P_max,dP_avg,auto_cor,slopes,dP_sub,ln_Pr_proposals,&ln_Pr_min,&ln_Pr_avg,&ln_Pr_max);
           fwrite(P_min,   sizeof(double),n_P,fp_stats);
           fwrite(P_avg,   sizeof(double),n_P,fp_stats);
           fwrite(P_max,   sizeof(double),n_P,fp_stats);
           fwrite(dP_avg,  sizeof(double),n_P,fp_stats);
           fwrite(dP_sub,  sizeof(double),n_P,fp_stats);
-          fwrite(&Chi2_min,sizeof(double),1,fp_stats);
-          fwrite(&Chi2_avg,sizeof(double),1,fp_stats);
-          fwrite(&Chi2_max,sizeof(double),1,fp_stats);
+          fwrite(&ln_Pr_min,sizeof(double),1,fp_stats);
+          fwrite(&ln_Pr_avg,sizeof(double),1,fp_stats);
+          fwrite(&ln_Pr_max,sizeof(double),1,fp_stats);
           if(flag_autocor_on)
             fwrite(auto_cor,sizeof(double),n_avg-1,fp_stats);
-          compute_MCMC_chain_stats(P_chain,n_P,n_avg,P_min,P_avg,P_max,dP_avg,auto_cor,slopes,dP_sub,Chi2_chain,&Chi2_min,&Chi2_avg,&Chi2_max);
+          compute_MCMC_chain_stats(P_chain,n_P,n_avg,P_min,P_avg,P_max,dP_avg,auto_cor,slopes,dP_sub,ln_Pr_chain,&ln_Pr_min,&ln_Pr_avg,&ln_Pr_max);
           fwrite(P_min,   sizeof(double),n_P,fp_stats);
           fwrite(P_avg,   sizeof(double),n_P,fp_stats);
           fwrite(P_max,   sizeof(double),n_P,fp_stats);
           fwrite(dP_avg,  sizeof(double),n_P,fp_stats);
           fwrite(dP_sub,  sizeof(double),n_P,fp_stats);
-          fwrite(&Chi2_min,sizeof(double),1,fp_stats);
-          fwrite(&Chi2_avg,sizeof(double),1,fp_stats);
-          fwrite(&Chi2_max,sizeof(double),1,fp_stats);
+          fwrite(&ln_Pr_min,sizeof(double),1,fp_stats);
+          fwrite(&ln_Pr_avg,sizeof(double),1,fp_stats);
+          fwrite(&ln_Pr_max,sizeof(double),1,fp_stats);
           if(flag_autocor_on)
             fwrite(auto_cor,sizeof(double),n_avg-1,fp_stats);
           for(i_P=0;i_P<n_P;i_P++)
@@ -940,7 +938,7 @@ void compute_MCMC(MCMC_info *MCMC){
       for(i_iteration=0,flag_init=TRUE,n_used=0;i_iteration<n_iterations;i_iteration++){
         for(i_avg=0;i_avg<n_avg;i_avg++){
           fread(&flag_success,sizeof(char),  1,  fp_chain);
-          fread(&Chi2_reduced,sizeof(double),1,  fp_chain);
+          fread(&ln_Pr_last,  sizeof(double),1,  fp_chain);
           fread(P_new,        sizeof(double),n_P,fp_chain);
           for(i_DS=0;i_DS<n_DS;i_DS++)
             fread(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
@@ -989,7 +987,7 @@ void compute_MCMC(MCMC_info *MCMC){
       for(i_iteration=0,flag_init=TRUE;i_iteration<n_iterations;i_iteration++){
         for(i_avg=0;i_avg<n_avg;i_avg++){
           fread(&flag_success,sizeof(char),  1,  fp_chain);
-          fread(&Chi2_reduced,sizeof(double),1,  fp_chain);
+          fread(&ln_Pr_last,  sizeof(double),1,  fp_chain);
           fread(P_new,        sizeof(double),n_P,fp_chain);
           for(i_DS=0;i_DS<n_DS;i_DS++)
             fread(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
@@ -1349,8 +1347,8 @@ void compute_MCMC(MCMC_info *MCMC){
       SID_free(SID_FARG auto_cor[i_P]);
   }
   SID_free(SID_FARG P_chain);
-  SID_free(SID_FARG Chi2_chain);
-  SID_free(SID_FARG Chi2_proposals);
+  SID_free(SID_FARG ln_Pr_chain);
+  SID_free(SID_FARG ln_Pr_proposals);
   SID_free(SID_FARG P_proposals);
   SID_free(SID_FARG n_M_arrays);
   SID_free(SID_FARG M_arrays);

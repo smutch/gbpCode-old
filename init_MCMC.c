@@ -17,12 +17,13 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
 
   SID_log("Initializing MCMC structure...",SID_LOG_OPEN);
 
-  MCMC->map_P_to_M            =f;
-  MCMC->params                =params;
-  MCMC->temperature           =0.75;
-  MCMC->n_P                   =n_P;
-  MCMC->n_DS                  =0;
-  MCMC->n_M_total             =0;
+  MCMC->map_P_to_M                =f;
+  MCMC->compute_MCMC_ln_likelihood=compute_MCMC_ln_likelihood_default;
+  MCMC->params                    =params;
+  MCMC->temperature               =0.75;
+  MCMC->n_P                       =n_P;
+  MCMC->n_DS                      =0;
+  MCMC->n_M_total                 =0;
   MCMC->problem_name=(char *)SID_malloc(sizeof(char)*MCMC_NAME_SIZE);
   sprintf(MCMC->problem_name,"%s\0",problem_name);
   MCMC->P_names     =(char **)SID_malloc(sizeof(char *)*MCMC->n_P);
