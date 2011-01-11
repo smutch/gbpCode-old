@@ -8,6 +8,7 @@
 #define MCMC_MODE_SERIAL     1
 #define MCMC_MODE_PARALLEL   2
 #define MCMC_REPORT_PROPS    4
+#define MCMC_NO_CVM_UPDATE   8
 
 #define MCMC_MAP_RETURN_GOOD 0
 #define MCMC_MAP_RETURN_BAD  1

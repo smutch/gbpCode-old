@@ -254,7 +254,8 @@ void compute_MCMC(MCMC_info *MCMC){
         V_compute[k_P]=0.;
     }
   }
-  add_covariance_to_MCMC(MCMC,V_compute);
+  if(!check_mode_for_flag(MCMC->mode,MCMC_NO_CVM_UPDATE))
+    add_covariance_to_MCMC(MCMC,V_compute);
 
   // Initialize coverage arrays
   for(i_P=0,n_coverage=0;i_P<n_P;i_P++){
@@ -556,7 +557,8 @@ void compute_MCMC(MCMC_info *MCMC){
         fread(P_ij_bar_accum,sizeof(double),n_P*n_P,fp_chain_covariance);
         fclose(fp_chain_covariance);
         SID_log("Done.",SID_LOG_CLOSE);
-        add_covariance_to_MCMC(MCMC,V_compute);
+        if(!check_mode_for_flag(MCMC->mode,MCMC_NO_CVM_UPDATE))
+          add_covariance_to_MCMC(MCMC,V_compute);
       }
 
       // ... scan to the end of the chain and read the last-used parameter set
@@ -775,8 +777,10 @@ void compute_MCMC(MCMC_info *MCMC){
                   n_covariance=0;
                 }
                 // Update MCMC structure during burn-in only
-                if(i_phase==0)
-                  add_covariance_to_MCMC(MCMC,V_compute);
+                if(i_phase==0){
+                  if(!check_mode_for_flag(MCMC->mode,MCMC_NO_CVM_UPDATE))
+                    add_covariance_to_MCMC(MCMC,V_compute);
+                }
                 i_covariance=0;
                 j_covariance++;
               }
@@ -876,7 +880,8 @@ void compute_MCMC(MCMC_info *MCMC){
 
           // This is the covariance matrix that will be 
           //   used for the integration phase
-          add_covariance_to_MCMC(MCMC,V_compute);
+          if(!check_mode_for_flag(MCMC->mode,MCMC_NO_CVM_UPDATE))
+            add_covariance_to_MCMC(MCMC,V_compute);
           for(i_P=0,k_P=0;i_P<n_P;i_P++){
             P_i_bar_accum[i_P]=0.;
             P_i_bar[i_P]      =0.;
