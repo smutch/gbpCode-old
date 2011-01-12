@@ -522,7 +522,7 @@ void compute_MCMC(MCMC_info *MCMC){
       fp_stats           =fopen(filename_stats,"wb");
       MCMC->map_P_to_M(P_last,MCMC,M_last);
       MCMC->first_map_call=FALSE;
-      MCMC->compute_MCMC_ln_likelihood(MCMC,M_last,&ln_likelihood_last);
+      MCMC->compute_MCMC_ln_likelihood(MCMC,M_last,P_last,&ln_likelihood_last);
       fp_chain_iterations=fopen(filename_chain_iterations,"wb");
       fwrite(&n_iterations_file_total,sizeof(int),1,fp_chain_iterations);
       fwrite(&n_iterations_file_burn, sizeof(int),1,fp_chain_iterations);
@@ -590,7 +590,7 @@ void compute_MCMC(MCMC_info *MCMC){
         MCMC->first_map_call=FALSE;
         SID_log("Done.",SID_LOG_CLOSE);
       }
-      MCMC->compute_MCMC_ln_likelihood(MCMC,M_last,&ln_likelihood_last);
+      MCMC->compute_MCMC_ln_likelihood(MCMC,M_last,P_last,&ln_likelihood_last);
       
       // ... scan to the end of the chain stats and read the last-generated statistics (particularly the drift)
       SID_log("Reading the last-generated statistics...",SID_LOG_OPEN);
@@ -694,7 +694,7 @@ void compute_MCMC(MCMC_info *MCMC){
           i_thin++;
           if(my_chain==SID.My_rank){
             // *** Determine the new proposal's likelihood
-            MCMC->compute_MCMC_ln_likelihood(MCMC,M_new,&ln_likelihood_new);
+            MCMC->compute_MCMC_ln_likelihood(MCMC,M_new,P_new,&ln_likelihood_new);
             // *** If we decide to keep this proposal, then ...
             ln_Pr_new=MIN(0.0,ln_likelihood_new-ln_likelihood_last);
             if((double)random_number(&RNG)<=exp(ln_Pr_new)){

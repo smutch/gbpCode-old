@@ -31,7 +31,7 @@ struct MCMC_info {
   char     filename_output_dir[256];
   char    *problem_name;
   int     (*map_P_to_M)(double *,MCMC_info *,double **);
-  void    (*compute_MCMC_ln_likelihood)(MCMC_info *MCMC,double **M,double *ln_likeliood);
+  void    (*compute_MCMC_ln_likelihood)(MCMC_info *MCMC,double **M,double *P,double *ln_likeliood);
   void    *params;
   char   **P_names;
   double  *P_init;
@@ -58,6 +58,7 @@ struct MCMC_info {
   int      flag_analysis_on;
   int      first_map_call;
   int      mode;
+  double       *P;
   MCMC_DS_info *DS;
   MCMC_DS_info *last;
 };
@@ -67,13 +68,13 @@ void add_DS_to_MCMC(MCMC_info *MCMC,const char *name,int n_M,double *DS,double *
 void add_covariance_to_MCMC(MCMC_info *MCMC,double *V);
 void free_MCMC(MCMC_info *MCMC);
 void generate_new_MCMC_link(MCMC_info *MCMC,double *P_old,int n_P,double temperature,RNG_info *RNG,gsl_matrix *m,gsl_vector *b,double *P_new);
-void compute_MCMC_ln_likelihood_default(MCMC_info *MCMC,double **M,double *ln_likeliood);
+void compute_MCMC_ln_likelihood_default(MCMC_info *MCMC,double **M,double *P,double *ln_likeliood);
 void compute_MCMC_chain_stats(double **x,int n_x,int n_avg,double *x_min,double *x_bar_in,double *x_max,double *x_sigma,double **auto_cor,double *slopes,double *dP_sub,double *ln_likelihood_in,double *ln_likelihood_min,double *ln_likelihood_avg,double *ln_likelihood_max);
 void compute_MCMC(MCMC_info *MCMC);
 void set_MCMC_temperature(MCMC_info *MCMC,double temperature);
 void set_MCMC_iterations(MCMC_info *MCMC,int n_avg,int n_avg_covariance,int n_thin,int n_burn,int n_integrate);
 void set_MCMC_coverage_size(MCMC_info *MCMC,int coverage_size);
-void set_MCMC_likeliood_function(MCMC_info *MCMC,void (*likelihood_function)(MCMC_info *,double **,double *));
+void set_MCMC_likeliood_function(MCMC_info *MCMC,void (*likelihood_function)(MCMC_info *,double **,double *,double *));
 void set_MCMC_directory(MCMC_info *MCMC,char *directory);
 void set_MCMC_mode(MCMC_info *MCMC,int mode);
 

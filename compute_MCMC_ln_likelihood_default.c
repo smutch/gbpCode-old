@@ -9,7 +9,7 @@
 #include <gsl/gsl_fit.h>
 #include <gsl/gsl_interp.h>
 
-void compute_MCMC_ln_likelihood_default(MCMC_info *MCMC,double **M,double *ln_likelihood){
+void compute_MCMC_ln_likelihood_default(MCMC_info *MCMC,double **M,double *P,double *ln_likelihood){
   int           i_DS;
   int           i_M;
   int           n_M;
