@@ -727,6 +727,7 @@ void compute_MCMC(MCMC_info *MCMC){
                 SID_log("ln(probability)=%le", SID_LOG_ALLRANKS|SID_LOG_COMMENT,ln_Pr_new);
                 SID_log("n_success      =%09d",SID_LOG_ALLRANKS|SID_LOG_COMMENT,n_success);
                 SID_log("n_fail         =%09d",SID_LOG_ALLRANKS|SID_LOG_COMMENT,n_fail);
+								SID_log("success rate   =%.2f %%",SID_LOG_ALLRANKS|SID_LOG_COMMENT,(double)n_success/(double)(n_fail+n_success)*100.0);
                 SID_log("",SID_LOG_ALLRANKS|SID_LOG_NOPRINT|SID_LOG_CLOSE);
               }
               // ... write it to the chain file
