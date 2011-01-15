@@ -236,6 +236,13 @@ endif
 	@echo
 	@echo "Directories:"
 	@echo "------------"
+	@echo -n "  Data {"$(GBP_LIB)"} "
+ifeq ($(wildcard $(GBP_DATA_DIR)),)
+	@mkdir $(GBP_DATA_DIR)
+	@echo "(Created)"
+else
+	@echo "(ok)"
+endif
 	@echo -n "  Libraries {"$(GBP_LIB)"} "
 ifeq ($(wildcard $(GBP_LIB)),)
 	@mkdir $(GBP_LIB)
