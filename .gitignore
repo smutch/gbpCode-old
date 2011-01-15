@@ -3,8 +3,11 @@
 .install*
 .printed_status
 todo
-Makefile.mylocal
-my*
+*.my*
+myBin
+myData
+myInclude
+myLib
 gbpClustering
 gbpCosmo
 gbpHalos
@@ -14,4 +17,3 @@ gbpPhysics
 gbpRender
 gbpSPH
 gbpTrees
-

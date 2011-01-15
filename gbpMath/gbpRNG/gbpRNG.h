@@ -1,7 +1,9 @@
-#ifndef USE_MPI
-  #define  SIMPLE_SPRNG
+#if USE_SPRNG
+  #ifndef USE_MPI
+    #define  SIMPLE_SPRNG
+  #endif
+  #include <sprng.h>
 #endif
-#include <sprng.h>
 
 #define RNG_DEFAULT 2 
 #define RNG_GLOBAL  4 // Create the same stream for all ranks
@@ -10,8 +12,13 @@ typedef struct RNG_info RNG_info;
 struct RNG_info{
   double  GaussBak;
   int     IGauss;
+#ifdef USE_SPRNG
   int     seed;
   int    *stream;
+#else
+  long    seed;
+  long    stream;
+#endif
   int     initialized;
   int     global;
 };

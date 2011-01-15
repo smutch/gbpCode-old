@@ -7,10 +7,10 @@ OBJFILES = init_RNG.o                     \
            random_number.o                \
 	   random_lognormal.o             \
 	   init_seed_from_clock.o         \
+	   ran1.o                         \
            random_gaussian.o
 LIBFILE  = 
 BINFILES = 
 LIBS     = 
 SUBDIRS  = 
 #############################
-USE_SPRNG=1

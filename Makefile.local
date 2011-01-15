@@ -10,5 +10,3 @@ DATAFILES =
 LIBS      =
 SUBDIRS   = gbpLib gbpMath gbpUtils
 #############################
-#USE_FFTW =1
-#USE_SPRNG=1

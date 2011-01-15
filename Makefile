@@ -24,30 +24,42 @@ MAKE       = make
 ifndef USE_DOUBLE
   USE_DOUBLE=0
 endif
+export USE_DOUBLE
 
 # Set default to no MPI support
 ifndef USE_MPI
   USE_MPI=0
 endif
+export USE_MPI
 
 # Set default to no MPI-I/O support
 ifndef USE_MPI_IO
   USE_MPI_IO=0
 endif
+export USE_MPI_IO
 
 # Set default file locations/destinations
+ifneq ($(wildcard $(GBP_SRC)/Makefile.mypaths),)
+  include $(GBP_SRC)/Makefile.mypaths
+else
+  include $(GBP_SRC)/Makefile.paths
+endif
 ifndef GBP_SRC
   GBP_SRC:=$(PWD)
 endif
+export GBP_SRC
 ifndef GBP_BIN
   GBP_BIN=$(GBP_SRC)/bin/
 endif
+export GBP_BIN
 ifndef GBP_LIB
   GBP_LIB=$(GBP_SRC)/lib/
 endif
+export GBP_LIB
 ifndef GBP_INC
   GBP_INC=$(GBP_SRC)/include/
 endif
+export GBP_INC
 ifeq ($(USE_MPI),1)
   GBP_BIN_LOCAL:= $(GBP_BIN)/mpi/
   GBP_LIB_LOCAL:= $(GBP_LIB)/mpi/
@@ -56,17 +68,16 @@ else
   GBP_LIB_LOCAL:= $(GBP_LIB)/
 endif
 
-# Start CCFLAGS and LDFLAGS variables
-CCFLAGS = -I$(GBP_INC) -I$(GBP_GSL_DIR)/include/ -O2
-LDFLAGS = -L$(GBP_LIB_LOCAL) -L$(GBP_GSL_DIR)/lib/ 
-
-# Set paths and local variables
-include $(GBP_SRC)/Makefile.paths
+# Set local variables
 ifneq ($(wildcard Makefile.mylocal),)
   include Makefile.mylocal
 else
   include Makefile.local
 endif
+
+# Start CCFLAGS and LDFLAGS variables
+CCFLAGS = -I$(GBP_INC) -I$(GBP_GSL_DIR)/include/ -O2
+LDFLAGS = -L$(GBP_LIB_LOCAL) -L$(GBP_GSL_DIR)/lib/ 
 
 # Set the name of a file which will list the object files belonging to a library
 ifneq ($(strip $(LIBFILE)),)
@@ -78,8 +89,15 @@ endif
 LISTOBJ:=$(addprefix $(shell pwd)/,$(OBJFILES))' '
 objfiles = $(shell cat $(LIBOBJSFILE))
 
-# Add system libraries here
+# Add GSL and system libraries here
 LIBS  := $(LIBS) -lm -lgsl -lgslcblas
+
+# Set flags for available libraries
+ifneq ($(wildcard $(GBP_SRC)/Makefile.mylibs),)
+  include $(GBP_SRC)/Makefile.mylibs
+else
+  include $(GBP_SRC)/Makefile.libs
+endif
 
 # FFTW (fast Fourier transform) stuff (default off)
 ifndef USE_FFTW
@@ -103,6 +121,7 @@ ifneq ($(USE_FFTW),0)
       LIBS  := $(LIBS) -lsrfftw -lsfftw
     endif
   endif
+  CCFLAGS := $(CCFLAGS) -DUSE_FFTW
 endif
 
 # SPRNG (parallel random number generator) stuff (default off)
@@ -113,13 +132,16 @@ ifneq ($(USE_SPRNG),0)
   CCFLAGS := $(CCFLAGS) -I$(GBP_SPRNG_DIR)/include
   LDFLAGS := $(LDFLAGS) -L$(GBP_SPRNG_DIR)/lib
   LIBS    := $(LIBS) -llcg
+  CCFLAGS := $(CCFLAGS) -DUSE_SPRNG
 endif
+export USE_SPRNG
 
 # Turn on debugging information
 ifdef USE_DEBUGGER
   CCFLAGS := $(CCFLAGS) -g
   LDFLAGS := $(LDFLAGS) -g
 endif
+export USE_DEBUGGER
 
 #  Set compile flags, variables, etc. appropriately
 LDFLAGS:=$(LDFLAGS) $(LIBS) 
@@ -143,7 +165,7 @@ else
   LIBTOUCH2    = .install_lib_mpi
   BINTOUCH2    = .install_bin_mpi
 endif
-ifeq ($(USE_MPI_IO),1)
+ifneq ($(USE_MPI_IO),0)
   CCFLAGS  := $(CCFLAGS) -DUSE_MPI_IO
 endif
 ifneq ($(USE_DOUBLE),0)
@@ -181,6 +203,34 @@ endif
 # Print a status message
 .print_status: .printed_status
 ifeq ($(MAKELEVEL),0)
+	@echo
+	@echo "Makefile flags:"
+	@echo "---------------"
+ifneq ($(USE_DOUBLE),0)
+	@echo "USE_DOUBLE is ON"
+else
+	@echo "USE_DOUBLE is OFF"
+endif
+ifneq ($(USE_MPI),0)
+	@echo "USE_MPI    is ON"
+else
+	@echo "USE_MPI    is OFF"
+endif
+ifneq ($(USE_MPI_IO),0)
+	@echo "USE_MPI_IO is ON"
+else
+	@echo "USE_MPI_IO is OFF"
+endif
+ifneq ($(USE_FFTW),0)
+	@echo "USE_FFTW   is ON"
+else
+	@echo "USE_FFTW   is OFF"
+endif
+ifneq ($(USE_SPRNG),0)
+	@echo "USE_SPRNG  is ON"
+else
+	@echo "USE_SPRNG  is OFF"
+endif
 	@echo
 	@echo "Compile and linking parameters:"
 	@echo "-------------------------------"

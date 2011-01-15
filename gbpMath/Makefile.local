@@ -8,4 +8,3 @@ BINFILES  =
 LIBS      = 
 SUBDIRS   = gbpMisc gbpStats gbpDomain gbpRNG gbpFFT gbpInterpolate
 #############################
-

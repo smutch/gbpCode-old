@@ -14,5 +14,3 @@ BINFILES =
 LIBS     = 
 SUBDIRS  = 
 #############################
-USE_SPRNG=1
-

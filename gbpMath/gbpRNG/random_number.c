@@ -6,16 +6,29 @@ REAL random_number(RNG_info *RNG){
   if(RNG->initialized){
     #ifdef USE_MPI
       if(RNG->global){
-        if(SID.I_am_Master)
-          random_local=(REAL)sprng(RNG->stream);
+        if(SID.I_am_Master){
+          #ifdef USE_SPRNG
+            random_local=(REAL)sprng(RNG->stream);
+          #else
+            random_local=(REAL)ran1(RNG->stream);
+          #endif
+        }
         MPI_Bcast(&random_local,1,MPI_REAL,MASTER_RANK,MPI_COMM_WORLD);
         return(random_local);
       }
       else{
-        return((REAL)(sprng(RNG->stream)));
+        #ifdef USE_SPRNG
+          return((REAL)(sprng(RNG->stream)));
+        #else
+          return((REAL)ran1(RNG->stream));
+        #endif
       }
     #else
-      return((REAL)(sprng()));
+      #ifdef USE_SPRNG
+        return((REAL)(sprng()));
+      #else
+        return((REAL)ran1(RNG->stream));
+      #endif
     #endif
   }
   else
