@@ -1,34 +1,97 @@
 
+INSTALL GUIDE FOR gbpCode AND ITS PACKAGES
+==========================================
+
+Installing the needed libraries
+-------------------------------
+
+To install gbpCode, you need to install several libraries (if you haven't already):
+
+1) Install MPI (optional):
+> ./configure prefix=${GBP_MPI}
+> make
+> make install
+
+2) Install gsl:
+> ./configure prefix=${GBP_GSL_DIR}
+> make
+> make install
+
+3) Install fftw (make sure that you compile both single & double precision, turn prefixes on and enable mpi if you want it):
+> ./configure --enable-type-prefix --enable-float --enable-mpi --prefix=${GBP_FFTW_DIR}
+> make
+> make install
+> make clean
+> ./configure --enable-type-prefix --enable-mpi --prefix=${GBP_FFTW_DIR}
+> make
+> history
+> make install
+
+4) Install sprng (optional; needed for large parallel runs to avoid periodicity in RNG streams)
+
 Installing gbpCode
 ------------------
 
-To install gbpCode, you need to do the following things:
+1) Clone a copy of this repository using the command 'git clone gbpCode.git'
 
-1) Install gsl
+2) Edit the Makefile.libs file in the following way:
+> cp Makefile.libs Makefile.mylibs
+> Change the paths (GBP_GSL_DIR, GBP_FFTW_DIR, etc) in Makefile.mylibs to the appropriate library locations on your system.
 
-2) Install fftw (and optionally, sprng)
+n.b.: By making a copy of Makefile.mylibs in this way, it will always be used instead of Makefile.libs and won't be
+      overwritten if you pull from the repository again to get an updated version of the code.
 
-3) Clone a copy of this repository using the command 'git clone ...'
+3) Add the following lines to your .cshrc (eg. assume you cloned the code to your home directory):
+> setenv GBP_SRC  ${HOME}'/gbpCode/' 
+> source ${GBP_SRC}/.cshrc.gbpCode
 
-4) Edit the Makefile.libs file in the following way:
-> cp Makefile.libs Makefile.mylibs (This way, if you update the repo, this will not need to be redone every time)
-> Change the paths to the appropriate library locations on your system.
+n.b.: If you don't like the default behavior of .cshrc.gbpCode, you can copy the commands in to your .cshrc file and edit them as you wish.
 
-5) Add the following lines to your .cshrc:
-setenv GBP_SRC  ${HOME}'/myCode/'
-source ${GBP_SRC}/.cshrc.gbpCode
-setenv PATH            ${PATH}:${GBP_BIN}
-setenv LD_LIBRARY_PATH ${GBP_LIB}:${LD_LIBRARY_PATH}
+4) Source your new .cshrc
 
-If you don't like the default behavior of .cshrc.gbpCode, you can copy the commands in it to your .cshrc file and edit them as you wish.
-
-6) Source your .cshrc
-
-7) Compile the code:
+5) Compile the code:
 > cd $GBP_SRC
 > make
 
-8) If you want an mpi compile, you should then type:
+6) If you want an mpi compile, you should then type:
 > make clean
 > make USE_MPI=1
+
+n.b.: MPI versions of executables can be run using the 'run_mpi' script that gets installed 
+      in $GBP_BIN.  Run it with no arguments to get the syntax.
+
+Installing additional packages:
+-------------------------------
+
+If you add more packages to gbpCode, you should install them in the following way (using gbpPkg as an example):
+
+1) FROM THE $GBP_SRC directory, make a clone of its repository
+> cd $GBP_SRC
+> git clone gbpPkg.git
+
+2) Createi/edit a Makefile.mylocal file (optional):
+> cd $GBP_SRC
+> cp Makefile.local Makefile.mylocal
+> Edit $GBP_SRC/Makefile.mylocal, adding gbpPkg to the end of the SUBDIRS list
+
+By creating $GBP_SRC/Makefile.mylocal in this way, everytime you compile gbpCode (after 
+an update for example) it will also recompile all your additional packages to make sure 
+that everything is compatible and properly linked.
+
+3) Compile the code:
+> cd $GBP_SRC/gbpPkg
+> make USE_MPI=0
+> make clean
+> make USE_MPI=1
+
+
+** MAC OSX USERS: The version of 'echo' that comes with OS X does not support the '-n' 
+                  option.  In order for the Makefile's output to make sence, you'll 
+                  want to correct this by re-installing bash as follows:
+
+> sudo port install bash
+> sudo mv /bin/bash /bin/bash.old
+> sudo mv /bin/sh /bin/sh.old
+> sudo ln /opt/local/bin/bash /bin/bash
+> sudo ln /opt/local/bin/bash /bin/sh
 

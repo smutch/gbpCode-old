@@ -47,7 +47,7 @@ ifndef GBP_SRC
   GBP_SRC:=$(PWD)
 endif
 export GBP_SRC
-ifndef GBP_INC
+ifndef GBP_DAT
   GBP_INC=$(GBP_DAT)/myData/
 endif
 export GBP_DAT
@@ -83,10 +83,11 @@ else
 endif
 
 # Start CCFLAGS and LDFLAGS variables
-CCFLAGS = -I$(GBP_INC) -I$(GBP_GSL_DIR)/include/ -O2
-LDFLAGS = -L$(GBP_LIB_LOCAL) -L$(GBP_GSL_DIR)/lib/ 
+CCFLAGS = -I$(GBP_INC) -O2
+LDFLAGS = -L$(GBP_LIB_LOCAL) 
 
-# Set the name of a file which will list the object files belonging to a library
+# Fill a file with a list of all the object files that
+#   will contribute to this directory's archive (if defined)
 ifneq ($(strip $(LIBFILE)),)
   LIBOBJSFILE=$(shell pwd)'/.'$(LIBFILE)'.objsfile'
   $(shell rm -f $(LIBOBJSFILE))
@@ -96,52 +97,8 @@ endif
 LISTOBJ:=$(addprefix $(shell pwd)/,$(OBJFILES))' '
 objfiles = $(shell cat $(LIBOBJSFILE))
 
-# Add GSL and system libraries here
-LIBS  := $(LIBS) -lm -lgsl -lgslcblas
-
-# Set flags for available libraries
-ifneq ($(wildcard $(GBP_SRC)/Makefile.mylibs),)
-  include $(GBP_SRC)/Makefile.mylibs
-else
-  include $(GBP_SRC)/Makefile.libs
-endif
-
-# FFTW (fast Fourier transform) stuff (default off)
-ifndef USE_FFTW
-  USE_FFTW=0
-endif
-ifneq ($(USE_FFTW),0)
-  ifdef USE_MPI
-    CCFLAGS := $(CCFLAGS) -I$(GBP_FFTW_DIR)/include
-    LDFLAGS := $(LDFLAGS) -L$(GBP_FFTW_DIR)/lib
-    ifeq ($(USE_DOUBLE),0)
-      LIBS  := $(LIBS) -lsrfftw_mpi -lsfftw_mpi -lsrfftw -lsfftw
-    else
-      LIBS  := $(LIBS) -ldrfftw_mpi -ldfftw_mpi -ldrfftw -ldfftw
-    endif
-  else
-    CCFLAGS := $(CCFLAGS) -I$(GBP_FFTW_DIR)/include
-    LDFLAGS := $(LDFLAGS) -L$(GBP_FFTW_DIR)/lib
-    ifeq ($(USE_DOUBLE),0)
-      LIBS  := $(LIBS) -ldrfftw -ldfftw
-    else
-      LIBS  := $(LIBS) -lsrfftw -lsfftw
-    endif
-  endif
-  CCFLAGS := $(CCFLAGS) -DUSE_FFTW
-endif
-
-# SPRNG (parallel random number generator) stuff (default off)
-ifndef USE_SPRNG
-  USE_SPRNG=0
-endif
-ifneq ($(USE_SPRNG),0)
-  CCFLAGS := $(CCFLAGS) -I$(GBP_SPRNG_DIR)/include
-  LDFLAGS := $(LDFLAGS) -L$(GBP_SPRNG_DIR)/lib
-  LIBS    := $(LIBS) -llcg
-  CCFLAGS := $(CCFLAGS) -DUSE_SPRNG
-endif
-export USE_SPRNG
+# Set library information
+include $(GBP_SRC)/Makefile.libs
 
 # Turn on debugging information
 ifdef USE_DEBUGGER
@@ -250,9 +207,9 @@ ifeq ($(wildcard $(GBP_DAT)),)
 else
 	@echo "(ok)"
 endif
-	@echo -n "  Libraries {"$(GBP_LIB)"} "
-ifeq ($(wildcard $(GBP_LIB)),)
-	@mkdir -p $(GBP_LIB)
+	@echo -n "  Libraries {"$(GBP_LIB_LOCAL)"} "
+ifeq ($(wildcard $(GBP_LIB_LOCAL)),)
+	@mkdir -p $(GBP_LIB_LOCAL)
 	@echo "(Created)"
 else
 	@echo "(ok)"
@@ -264,9 +221,9 @@ ifeq ($(wildcard $(GBP_INC)),)
 else
 	@echo "(ok)"
 endif
-	@echo -n "  Binaries  {"$(GBP_BIN)"} "
-ifeq ($(wildcard $(GBP_BIN)),)
-	@mkdir -p $(GBP_BIN)
+	@echo -n "  Binaries  {"$(GBP_BIN_LOCAL)"} "
+ifeq ($(wildcard $(GBP_BIN_LOCAL)),)
+	@mkdir -p $(GBP_BIN_LOCAL)
 	@echo "(Created)"
 else
 	@echo "(ok)"

@@ -1,12 +1,64 @@
+###################################################
+#  Library information for Greg Poole's Makefile  #
+#                                                 #
+#  Copyright (c) 2008  Gregory B. Poole,          #
+#    Swinburne University of Technology,          #
+#    Melbourne, Australia                         #
+###################################################
+# If you are running OSX-bash, you will           #
+# want to fix a bug in echo.  You can do          #
+# that with the following commands:               #
+#   sudo port install bash                        #
+#   sudo mv /bin/bash /bin/bash.old               #
+#   sudo mv /bin/sh /bin/sh.old                   #
+#   sudo ln /opt/local/bin/bash /bin/bash         #
+#   sudo ln /opt/local/bin/bash /bin/sh           #
+###################################################
 
-# GSL
-GBP_GSL_DIR   = /usr/local/gnu/x86_64/gsl/
+# Add GSL stuff (default off)
+ifndef USE_GSL
+  USE_GSL=0
+endif
+ifneq ($(USE_GSL),0)
+  CCFLAGS := $(CCFLAGS) -I$(GBP_GSL_DIR)/include/
+  LDFLAGS := $(LDFLAGS) -L$(GBP_GSL_DIR)/lib/ 
+  LIBS    := $(LIBS) -lm -lgsl -lgslcblas
+endif
 
-# FFTW
-USE_FFTW      = 1
-GBP_FFTW_DIR  = /nfs/cluster/evo/gpoole/src/3rd_Party/libs/fftw/
+# Add FFTW (fast Fourier transform) stuff (default off)
+ifndef USE_FFTW
+  USE_FFTW=0
+endif
+ifneq ($(USE_FFTW),0)
+  ifdef USE_MPI
+    CCFLAGS := $(CCFLAGS) -I$(GBP_FFTW_DIR)/include
+    LDFLAGS := $(LDFLAGS) -L$(GBP_FFTW_DIR)/lib
+    ifeq ($(USE_DOUBLE),0)
+      LIBS  := $(LIBS) -lsrfftw_mpi -lsfftw_mpi -lsrfftw -lsfftw
+    else
+      LIBS  := $(LIBS) -ldrfftw_mpi -ldfftw_mpi -ldrfftw -ldfftw
+    endif
+  else
+    CCFLAGS := $(CCFLAGS) -I$(GBP_FFTW_DIR)/include
+    LDFLAGS := $(LDFLAGS) -L$(GBP_FFTW_DIR)/lib
+    ifeq ($(USE_DOUBLE),0)
+      LIBS  := $(LIBS) -ldrfftw -ldfftw
+    else
+      LIBS  := $(LIBS) -lsrfftw -lsfftw
+    endif
+  endif
+  CCFLAGS := $(CCFLAGS) -DUSE_FFTW
+endif
 
-# SPRNG (needed for large sets of random numbers; comment out if you don't want to use it)
-#USE_SPRNG     = 1
-#GBP_SPRNG_DIR = /nfs/cluster/evo/gpoole/src/3rd_Party/libs/sprng/
+# SPRNG (parallel random number generator) stuff (default off)
+ifndef USE_SPRNG
+  USE_SPRNG=0
+endif
+ifneq ($(USE_SPRNG),0)
+  CCFLAGS := $(CCFLAGS) -I$(GBP_SPRNG_DIR)/include
+  LDFLAGS := $(LDFLAGS) -L$(GBP_SPRNG_DIR)/lib
+  LIBS    := $(LIBS) -llcg
+  CCFLAGS := $(CCFLAGS) -DUSE_SPRNG
+endif
+export USE_SPRNG
 

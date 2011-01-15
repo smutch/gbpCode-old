@@ -1,23 +1,63 @@
 
-# Needed by the run_mpi script
-if ($HOST==green.ssi.swin.edu.au)
-  GBP_QUEUE=1
+#----------------------------------------------------------------------
+#
+# System-dependant settings
+#   1) Copy this file to .cshrc.myCode
+#   2) Add your own system(s) to the list
+#   3) Place it in $GBP_SRC on each of your systems
+#   3) Source it in your .cshrc
+#
+#----------------------------------------------------------------------
+
+# Defaults (illustrating the set of environment variables that need to
+#           be set in this file; we're assuming GBP_SRC is already set)
+setenv GBP_QUEUE_TYPE NONE
+setenv USE_MPI        0
+setenv USE_GSL        1
+setenv USE_FFTW       1
+setenv USE_SPRNG      0
+setenv GBP_MPI        ${GBP_SRC}/3rd_Party/openmpi
+setenv GBP_GSL_DIR    ${GBP_SRC}/3rd_Party/gsl
+setenv GBP_FFTW_DIR   ${GBP_SRC}/3rd_Party/fftw
+setenv GBP_SPRNG_DIR  ${GBP_SRC}/3rd_Party/sprng
+setenv GBP_LIB        ${GBP_SRC}'myLib/'
+setenv GBP_INC        ${GBP_SRC}'myInclude/'
+setenv GBP_BIN        ${GBP_SRC}'myBin/'
+setenv GBP_DAT        ${GBP_SRC}'myData/'
+
+# Swinburne cluster
+if ( $HOSTTYPE == 'x86_64-linux' ) then
+  setenv USE_SPRNG      1
+  setenv GBP_MPI        /usr/local/gnu/x86_64/openmpi-1.2.5-nonib/
+  setenv GBP_GSL_DIR    /usr/local/gnu/x86_64/gsl/
+  setenv GBP_FFTW_DIR   /nfs/cluster/evo/gpoole/src/3rd_Party/libs/fftw/
+  setenv GBP_SPRNG_DIR  /nfs/cluster/evo/gpoole/src/3rd_Party/libs/sprng/
+  if ( $HOSTNAME == 'green.ssi.swin.edu.au' ) then
+    setenv GBP_QUEUE_TYPE PBS
+  endif
+else if ( $HOSTTYPE == 'intel-mac' ) then
+   # Use defaults
 else
-  GBP_QUEUE=0
+  echo 'Unsupported HOSTTYPE in .cshrc.gbpCode'
 endif
 
-# Sets the path to the MPI distro being used
-if ($HOSTTYPE=intel-mac)
-  setenv GBP_MPI  '/usr/'
+#----------------------------------------------------------------------
+# The rest of this file should generally be left untouched
+#----------------------------------------------------------------------
+
+# Add to the library path
+#
+if ( $?LD_LIBRARY_PATH ) then
+  setenv LD_LIBRARY_PATH ${GBP_LIB}:${LD_LIBRARY_PATH}
 else
-  setenv GBP_MPI  '/usr/local/gnu/x86_64/openmpi-1.2.5-nonib/'
+  setenv LD_LIBRARY_PATH ${GBP_LIB}
 endif
 
-# Paths to various code directories.  Make sure you add GBP_LIB to 
-#   your LD_LIBRARY_PATH and GBP_BIN to your PATH environment 
-#   variables after this.
-setenv GBP_LIB  ${GBP_SRC}'myLib/'
-setenv GBP_INC  ${GBP_SRC}'myInclude/'
-setenv GBP_BIN  ${GBP_SRC}'myBin/'
-setenv GBP_DAT  ${GBP_SRC}'myData/'
+# Add to the path
+#
+if ( $?PATH ) then
+  setenv PATH ${PATH}:${GBP_BIN}
+else
+  setenv LD_LIBRARY_PATH ${GBP_BIN}
+endif
 
