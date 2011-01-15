@@ -231,6 +231,33 @@ ifneq ($(USE_SPRNG),0)
 else
 	@echo "USE_SPRNG  is OFF"
 endif
+
+        # Check if lib, include and bin directories exist.  If any do not, make them.
+	@echo
+	@echo "Directories:"
+	@echo "------------"
+	@echo -n "  Libraries {"$(GBP_LIB)"} "
+ifeq ($(wildcard $(GBP_LIB)),)
+	@mkdir $(GBP_LIB)
+	@echo "(Created)"
+else
+	@echo "(ok)"
+endif
+	@echo -n "  Headers   {"$(GBP_INC)"} "
+ifeq ($(wildcard $(GBP_INC)),)
+	@mkdir $(GBP_INC)
+	@echo "(Created)"
+else
+	@echo "(ok)"
+endif
+	@echo -n "  Binaries  {"$(GBP_BIN)"} "
+ifeq ($(wildcard $(GBP_BIN)),)
+	@mkdir $(GBP_BIN)
+	@echo "(Created)"
+else
+	@echo "(ok)"
+endif
+
 	@echo
 	@echo "Compile and linking parameters:"
 	@echo "-------------------------------"
@@ -241,6 +268,7 @@ endif
 	@echo "LDFLAGS="'$(LDFLAGS)'
 	@echo
 	@rm -rf .printed_status
+
 endif
 .printed_status:
 	@touch  .printed_status
