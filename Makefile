@@ -352,6 +352,10 @@ endif
 # Generate links to scripts
 scripts_dir: $(addprefix $(GBP_BIN_LOCAL)/,$(SCRIPTS))
 $(addprefix $(GBP_BIN_LOCAL)/,$(SCRIPTS)):
+	@i=1 ; while [[ $$i -le $(MAKELEVEL) ]] ; do \
+		echo -n "  " ; \
+		((i = i + 1)) ; \
+	done
 	echo -n "Linking '"$(notdir $@)"' to bin directory..."
 	rm -rf $@
 	ln -s $(CURDIR)/$(notdir $@) $@
@@ -360,6 +364,10 @@ $(addprefix $(GBP_BIN_LOCAL)/,$(SCRIPTS)):
 # Generate links to data files
 data_dir: $(addprefix $(GBP_DAT)/,$(DATAFILES))
 $(addprefix $(GBP_DAT)/,$(DATAFILES)):
+	@i=1 ; while [[ $$i -le $(MAKELEVEL) ]] ; do \
+		echo -n "  " ; \
+		((i = i + 1)) ; \
+	done
 	@echo -n "Linking '"$(notdir $@)"' to data directory..."
 	@rm -rf $@
 	@ln -s $(CURDIR)/$(notdir $@) $@
