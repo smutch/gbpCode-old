@@ -17,6 +17,10 @@
 
 # Executables
 CC_NO_MPI  = gcc
+ifndef GBP_MPI
+  GBP_MPI=/usr/
+endif
+export GBP_MPI
 CC_USE_MPI = $(GBP_MPI)/bin/mpicc
 MAKE       = make
 

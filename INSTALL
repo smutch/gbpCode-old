@@ -1,0 +1,34 @@
+
+Installing gbpCode
+------------------
+
+To install gbpCode, you need to do the following things:
+
+1) Install gsl
+
+2) Install fftw (and optionally, sprng)
+
+3) Clone a copy of this repository using the command 'git clone ...'
+
+4) Edit the Makefile.libs file in the following way:
+> cp Makefile.libs Makefile.mylibs (This way, if you update the repo, this will not need to be redone every time)
+> Change the paths to the appropriate library locations on your system.
+
+5) Add the following lines to your .cshrc:
+setenv GBP_SRC  ${HOME}'/myCode/'
+source ${GBP_SRC}/.cshrc.gbpCode
+setenv PATH            ${PATH}:${GBP_BIN}
+setenv LD_LIBRARY_PATH ${GBP_LIB}:${LD_LIBRARY_PATH}
+
+If you don't like the default behavior of .cshrc.gbpCode, you can copy the commands in it to your .cshrc file and edit them as you wish.
+
+6) Source your .cshrc
+
+7) Compile the code:
+> cd $GBP_SRC
+> make
+
+8) If you want an mpi compile, you should then type:
+> make clean
+> make USE_MPI=1
+

@@ -1,0 +1,23 @@
+
+# Needed by the run_mpi script
+if ($HOST==green.ssi.swin.edu.au)
+  GBP_QUEUE=1
+else
+  GBP_QUEUE=0
+endif
+
+# Sets the path to the MPI distro being used
+if ($HOSTTYPE=intel-mac)
+  setenv GBP_MPI  '/usr/'
+else
+  setenv GBP_MPI  '/usr/local/gnu/x86_64/openmpi-1.2.5-nonib/'
+endif
+
+# Paths to various code directories.  Make sure you add GBP_LIB to 
+#   your LD_LIBRARY_PATH and GBP_BIN to your PATH environment 
+#   variables after this.
+setenv GBP_LIB  ${GBP_SRC}'myLib/'
+setenv GBP_INC  ${GBP_SRC}'myInclude/'
+setenv GBP_BIN  ${GBP_SRC}'myBin/'
+setenv GBP_DAT  ${GBP_SRC}'myData/'
+
