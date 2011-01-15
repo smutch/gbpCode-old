@@ -22,6 +22,3 @@ BINFILES = covariance2ascii
 LIBS     = -lgbpLib
 SUBDIRS  = 
 #############################
-USE_SPRNG=1
-USE_FFTW=1
-
