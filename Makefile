@@ -39,27 +39,28 @@ endif
 export USE_MPI_IO
 
 # Set default file locations/destinations
-ifneq ($(wildcard $(GBP_SRC)/Makefile.mypaths),)
-  include $(GBP_SRC)/Makefile.mypaths
-else
-  include $(GBP_SRC)/Makefile.paths
-endif
 ifndef GBP_SRC
   GBP_SRC:=$(PWD)
 endif
 export GBP_SRC
-ifndef GBP_BIN
-  GBP_BIN=$(GBP_SRC)/bin/
-endif
-export GBP_BIN
-ifndef GBP_LIB
-  GBP_LIB=$(GBP_SRC)/lib/
-endif
-export GBP_LIB
 ifndef GBP_INC
-  GBP_INC=$(GBP_SRC)/include/
+  GBP_INC=$(GBP_DAT)/myData/
+endif
+export GBP_DAT
+ifndef GBP_INC
+  GBP_INC=$(GBP_SRC)/myInclude/
 endif
 export GBP_INC
+ifndef GBP_LIB
+  GBP_LIB=$(GBP_SRC)/myLib/
+endif
+export GBP_LIB
+ifndef GBP_BIN
+  GBP_BIN=$(GBP_SRC)/myBin/
+endif
+export GBP_BIN
+
+# We need to tag-on the /mpi/ if USE_MPI=1
 ifeq ($(USE_MPI),1)
   GBP_BIN_LOCAL:= $(GBP_BIN)/mpi/
   GBP_LIB_LOCAL:= $(GBP_LIB)/mpi/
@@ -67,6 +68,8 @@ else
   GBP_BIN_LOCAL:= $(GBP_BIN)/
   GBP_LIB_LOCAL:= $(GBP_LIB)/
 endif
+export GBP_BIN_LOCAL
+export GBP_LIB_LOCAL
 
 # Set local variables
 ifneq ($(wildcard Makefile.mylocal),)
@@ -171,7 +174,7 @@ endif
 ifneq ($(USE_DOUBLE),0)
   CCFLAGS := $(CCFLAGS) -DUSE_DOUBLE
 endif
-CCFLAGS := $(CCFLAGS) -DGBP_DATA_DIR='"$(GBP_DATA_DIR)"'
+CCFLAGS := $(CCFLAGS) -DGBP_DATA_DIR='"$(GBP_DAT)"'
 OLDDATE=200701010101
 
 ################################
@@ -236,30 +239,30 @@ endif
 	@echo
 	@echo "Directories:"
 	@echo "------------"
-	@echo -n "  Data {"$(GBP_LIB)"} "
-ifeq ($(wildcard $(GBP_DATA_DIR)),)
-	@mkdir $(GBP_DATA_DIR)
+	@echo -n "  Data      {"$(GBP_DAT)"} "
+ifeq ($(wildcard $(GBP_DAT)),)
+	@mkdir -p $(GBP_DAT)
 	@echo "(Created)"
 else
 	@echo "(ok)"
 endif
 	@echo -n "  Libraries {"$(GBP_LIB)"} "
 ifeq ($(wildcard $(GBP_LIB)),)
-	@mkdir $(GBP_LIB)
+	@mkdir -p $(GBP_LIB)
 	@echo "(Created)"
 else
 	@echo "(ok)"
 endif
 	@echo -n "  Headers   {"$(GBP_INC)"} "
 ifeq ($(wildcard $(GBP_INC)),)
-	@mkdir $(GBP_INC)
+	@mkdir -p $(GBP_INC)
 	@echo "(Created)"
 else
 	@echo "(ok)"
 endif
 	@echo -n "  Binaries  {"$(GBP_BIN)"} "
 ifeq ($(wildcard $(GBP_BIN)),)
-	@mkdir $(GBP_BIN)
+	@mkdir -p $(GBP_BIN)
 	@echo "(Created)"
 else
 	@echo "(ok)"
@@ -394,8 +397,8 @@ $(addprefix $(GBP_BIN_LOCAL)/,$(SCRIPTS)):
 	@echo "Done."
 
 # Generate links to data files
-data_dir: $(addprefix $(GBP_DATA_DIR)/,$(DATAFILES))
-$(addprefix $(GBP_DATA_DIR)/,$(DATAFILES)):
+data_dir: $(addprefix $(GBP_DAT)/,$(DATAFILES))
+$(addprefix $(GBP_DAT)/,$(DATAFILES)):
 	@echo -n "Linking '"$(notdir $@)"' to data directory..."
 	@rm -rf $@
 	@ln -s $(PWD)/$(notdir $@) $@

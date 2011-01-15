@@ -1,2 +1,12 @@
-USE_FFTW =1
-#USE_SPRNG=1
+
+# GSL
+GBP_GSL_DIR   = /usr/local/gnu/x86_64/gsl/
+
+# FFTW
+USE_FFTW      = 1
+GBP_FFTW_DIR  = /nfs/cluster/evo/gpoole/src/3rd_Party/libs/fftw/
+
+# SPRNG (needed for large sets of random numbers; comment out if you don't want to use it)
+#USE_SPRNG     = 1
+#GBP_SPRNG_DIR = /nfs/cluster/evo/gpoole/src/3rd_Party/libs/sprng/
+
