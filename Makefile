@@ -352,17 +352,17 @@ endif
 # Generate links to scripts
 scripts_dir: $(addprefix $(GBP_BIN_LOCAL)/,$(SCRIPTS))
 $(addprefix $(GBP_BIN_LOCAL)/,$(SCRIPTS)):
-	@echo -n "Linking '"$(notdir $@)"' to bin directory..."
-	@rm -rf $@
-	@ln -s $(PWD)/$(notdir $@) $@
-	@echo "Done."
+	echo -n "Linking '"$(notdir $@)"' to bin directory..."
+	rm -rf $@
+	ln -s $(CURDIR)/$(notdir $@) $@
+	echo "Done."
 
 # Generate links to data files
 data_dir: $(addprefix $(GBP_DAT)/,$(DATAFILES))
 $(addprefix $(GBP_DAT)/,$(DATAFILES)):
 	@echo -n "Linking '"$(notdir $@)"' to data directory..."
 	@rm -rf $@
-	@ln -s $(PWD)/$(notdir $@) $@
+	@ln -s $(CURDIR)/$(notdir $@) $@
 	@echo "Done."
 
 # Generate library
