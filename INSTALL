@@ -34,26 +34,23 @@ Installing gbpCode
 
 1) Clone a copy of this repository using the command 'git clone gbpCode.git'
 
-2) Edit the Makefile.libs file in the following way:
-> cp Makefile.libs Makefile.mylibs
-> Change the paths (GBP_GSL_DIR, GBP_FFTW_DIR, etc) in Makefile.mylibs to the appropriate library locations on your system.
+2) Edit .cshrc.gbpCode and add it to your .cshrc:
+> cp ${GBP_SRC}/.cshrc.gbpCode ${GBP_SRC}/.cshrc.myCode
+> EDIT .cshrc.myCode; ADD EACH OF THE SYSTEMS THAT YOU USE
+> Add the following lines to your .cshrc (assuming you cloned the repo in ${HOME}):
+    > setenv GBP_SRC  ${HOME}'/gbpCode/' 
+    > source ${GBP_SRC}/.cshrc.myCode
 
 n.b.: By making a copy of Makefile.mylibs in this way, it will always be used instead of Makefile.libs and won't be
       overwritten if you pull from the repository again to get an updated version of the code.
 
-3) Add the following lines to your .cshrc (eg. assume you cloned the code to your home directory):
-> setenv GBP_SRC  ${HOME}'/gbpCode/' 
-> source ${GBP_SRC}/.cshrc.gbpCode
+3) Source your new .cshrc
 
-n.b.: If you don't like the default behavior of .cshrc.gbpCode, you can copy the commands in to your .cshrc file and edit them as you wish.
-
-4) Source your new .cshrc
-
-5) Compile the code:
+4) Compile the code:
 > cd $GBP_SRC
 > make
 
-6) If you want an mpi compile, you should then type:
+5) If you want an mpi compile, you should then type:
 > make clean
 > make USE_MPI=1
 
