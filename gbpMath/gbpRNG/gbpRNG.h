@@ -12,7 +12,7 @@ typedef struct RNG_info RNG_info;
 struct RNG_info{
   double  GaussBak;
   int     IGauss;
-#ifdef USE_SPRNG
+#if USE_SPRNG
   int     seed;
   int    *stream;
 #else
