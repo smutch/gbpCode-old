@@ -1,0 +1,63 @@
+
+#----------------------------------------------------------------------
+#
+# System-dependant settings
+#   1) Copy this file to .cshrc.myCode
+#   2) Add your own system(s) to the list
+#   3) Place it in $GBP_SRC on each of your systems
+#   3) Source it in your .cshrc
+#
+#----------------------------------------------------------------------
+
+# Defaults (illustrating the set of environment variables that need to
+#           be set in this file; we're assuming GBP_SRC is already set)
+export GBP_QUEUE_TYPE=NONE
+export USE_MPI=0
+export USE_GSL=1
+export USE_FFTW=1
+export USE_SPRNG=0
+export GBP_MPI="${GBP_SRC}/3rd_Party/openmpi"
+export GBP_GSL_DIR="${GBP_SRC}/3rd_Party/gsl"
+export GBP_FFTW_DIR="${GBP_SRC}/3rd_Party/fftw"
+export GBP_SPRNG_DIR="${GBP_SRC}/3rd_Party/sprng"
+export GBP_LIB="${GBP_SRC}/myLib/"
+export GBP_INC="${GBP_SRC}/myInclude/"
+export GBP_BIN="${GBP_SRC}/myBin/"
+export GBP_DAT="${GBP_SRC}/myData/"
+
+# Swinburne cluster
+if [ $HOSTTYPE=='x86_64-linux' ]; then
+  export USE_SPRNG=1
+  export GBP_MPI=/usr/local/gnu/x86_64/openmpi-1.2.5-nonib/
+  export GBP_GSL_DIR=/usr/local/gnu/x86_64/gsl/
+  export GBP_FFTW_DIR=/nfs/cluster/evo/gpoole/src/3rd_Party/libs/fftw/
+  export GBP_SPRNG_DIR=/nfs/cluster/evo/gpoole/src/3rd_Party/libs/sprng/
+  if [ $HOSTNAME=='green.ssi.swin.edu.au' ]; then
+    export GBP_QUEUE_TYPE=PBS
+  fi
+elif [ $HOSTTYPE=='intel-mac' ]; then
+   # Use defaults
+else
+  echo 'Unsupported HOSTTYPE in .cshrc.gbpCode'
+fi
+
+#----------------------------------------------------------------------
+# The rest of this file should generally be left untouched
+#----------------------------------------------------------------------
+
+# Add to the library path
+#
+if [ $?LD_LIBRARY_PATH ]; then
+  export LD_LIBRARY_PATH=${GBP_LIB}:${LD_LIBRARY_PATH}
+else
+  export LD_LIBRARY_PATH=${GBP_LIB}
+fi
+
+# Add to the path
+#
+if [ $?PATH ]; then
+  export PATH=${PATH}:${GBP_BIN}
+else
+  export LD_LIBRARY_PATH=${GBP_BIN}
+fi
+

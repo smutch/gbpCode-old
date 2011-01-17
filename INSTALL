@@ -34,15 +34,16 @@ Installing gbpCode
 
 1) Clone a copy of this repository using the command 'git clone gbpCode.git'
 
-2) Edit .cshrc.gbpCode and add it to your .cshrc:
+2) Edit .cshrc.gbpCode (or .bashrc.gbpCode) and add it to your .cshrc (or .bashrc):
 > cp ${GBP_SRC}/.cshrc.gbpCode ${GBP_SRC}/.cshrc.myCode
-> EDIT .cshrc.myCode; ADD EACH OF THE SYSTEMS THAT YOU USE
-> Add the following lines to your .cshrc (assuming you cloned the repo in ${HOME}):
+> EDIT .cshrc.myCode (or .bashrc.myCode); ADD EACH OF THE SYSTEMS THAT YOU USE
+> Add the following lines to your .cshrc (or .bashrc; eg. assuming you cloned the repo in ${HOME}):
     > setenv GBP_SRC  ${HOME}'/gbpCode/' 
     > source ${GBP_SRC}/.cshrc.myCode
 
-n.b.: By making a copy of Makefile.mylibs in this way, it will always be used instead of Makefile.libs and won't be
-      overwritten if you pull from the repository again to get an updated version of the code.
+n.b.: By making a copy of .cshrc.gbpCode (or .bashrc.gbpCode)  in this way, it will always be used 
+      instead of Makefile.libs and won't be overwritten if you pull from the repository again to 
+      get an updated version of the code.
 
 3) Source your new .cshrc
 
