@@ -2,6 +2,7 @@ double take_aln(double val);
 double take_alog10(double val);
 double take_ln(double val);
 double take_log10(double val);
+double add_quad(int n_d, ...);
 void   compute_Daubechies_scaling_fctns(int D_order,int l_max,double **x_return,double **y_return,int *n_return);
 void   force_periodic(REAL *coord,REAL min,REAL box_size);
 double d_periodic(double d,double box_size);

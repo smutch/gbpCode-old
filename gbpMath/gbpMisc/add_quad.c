@@ -1,8 +1,8 @@
-#include <common.h>
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 #include <stdarg.h>
-
+#include <gbpLib.h>
 double add_quad(int n_d, ...){
   int      i;
   double   t_val;

@@ -1,0 +1,12 @@
+###########################
+# Local Makefile settings #
+###########################
+INCFILES  = 
+OBJFILES  = 
+LIBFILE   =
+BINFILES  =
+SCRIPTS   =
+DATAFILES =
+LIBS      =
+SUBDIRS   = 
+#############################

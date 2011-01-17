@@ -6,6 +6,13 @@
 #define SORT_COMPUTE_INDEX       101
 #define SORT_INPLACE_ONLY        102
 
+void sort(void    *sval,
+	  size_t   nval,
+	  size_t **index,
+	  int      type,
+	  int      flag_local,
+	  int      flag_compute_index,
+	  int      flag_in_place);
 void heap_sort(void    *data_in,
                size_t   n_data,
                size_t **index,
