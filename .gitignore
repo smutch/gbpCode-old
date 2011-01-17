@@ -3,6 +3,7 @@
 .install*
 .printed_status
 todo
+wip
 *.my*
 3rd_Party
 myBin

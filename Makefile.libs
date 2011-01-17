@@ -15,6 +15,17 @@
 #   sudo ln /opt/local/bin/bash /bin/sh           #
 ###################################################
 
+# Add gdlib
+ifndef USE_GDLIB
+  USE_GDLIB    =1
+  GBP_GDLIB_DIR=/usr/
+endif
+ifneq ($(USE_GDLIB),0)
+  CCFLAGS := $(CCFLAGS) -I$(GBP_GSL_DIR)/include/
+  LDFLAGS := $(LDFLAGS) -L$(GBP_GSL_DIR)/lib/
+  LIBS    := $(LIBS) -lgd
+endif
+
 # Add GSL stuff (default off)
 ifndef USE_GSL
   USE_GSL=0

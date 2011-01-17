@@ -2,8 +2,7 @@
 # Library-specific settings #
 #############################
 INCFILES  = gbpSort.h
-OBJFILES  = sort.o       \
-            heap_sort.o  \
+OBJFILES  = heap_sort.o  \
 	    merge_sort.o 
 LIBFILE   = 
 BINFILES  = 

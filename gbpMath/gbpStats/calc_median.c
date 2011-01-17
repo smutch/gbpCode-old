@@ -7,17 +7,15 @@ double calc_median(void   *data,
   int     i_mid;
   double  median;
   size_t *index;
-  int     flag_local=TRUE;
 
   if(n_data>0){
 
-    sort(data,
-         n_data,
-         &index,
-         type,
-         flag_local,
-         SORT_COMPUTE_INDEX,
-         FALSE);
+    merge_sort(data,
+               n_data,
+               &index,
+               type,
+               SORT_COMPUTE_INDEX,
+               FALSE);
 
     i_mid=n_data/2;
     if(n_data%2){
