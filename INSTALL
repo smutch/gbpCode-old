@@ -60,26 +60,27 @@ n.b.: MPI versions of executables can be run using the 'run_mpi' script that get
 Installing additional packages:
 -------------------------------
 
-If you add more packages to gbpCode, you should install them in the following way (using gbpPkg as an example):
+If you add more packages to gbpCode, you should install them in the following way (using gbpXXXX as an example):
 
-1) FROM THE $GBP_SRC directory, make a clone of its repository
-> cd $GBP_SRC
-> git clone gbpPkg.git
+1) FROM THE $GBP_SRC directory, make a clone of its repository IN THE gbpPkgs directory:
+> cd $GBP_SRC/gbpPkgs
+> git clone gbpXXXX.git
 
-2) Createi/edit a Makefile.mylocal file (optional):
-> cd $GBP_SRC
+2) Create/edit a Makefile.mylocal file in the gbpPkgs directory:
+> cd $GBP_SRC/gbpPkgs
 > cp Makefile.local Makefile.mylocal
-> Edit $GBP_SRC/Makefile.mylocal, adding gbpPkg to the end of the SUBDIRS list
+> Edit this Makefile.mylocal file, adding gbpXXXX to the end of the SUBDIRS list
 
-By creating $GBP_SRC/Makefile.mylocal in this way, everytime you compile gbpCode (after 
-an update for example) it will also recompile all your additional packages to make sure 
-that everything is compatible and properly linked.
+Now, everytime you recompile gbpCode (after an update for example) it will also 
+recompile all your additional packages to make sure that everything is compatible 
+and properly linked.
 
 3) Compile the code:
-> cd $GBP_SRC/gbpPkg
+> cd $GBP_SRC/gbpPkgs
 > make USE_MPI=0
 > make clean
 > make USE_MPI=1
+
 
 
 ** MAC OSX USERS: The version of 'echo' that comes with OS X does not support the '-n' 
