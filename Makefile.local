@@ -1,0 +1,21 @@
+#############################
+# Library-specific settings #
+#############################
+
+INCFILES  = gbpRender.h
+OBJFILES  = close_movie.o             \
+            create_colour_table.o     \
+            free_image.o              \
+            init_image.o              \
+            open_movie.o              \
+            read_image.o              \
+            render_frame.o            \
+            render_routines.o         \
+            set_image_alpha.o         \
+            set_image_RGB.o           \
+            write_image.o             \
+            write_image_to_movie.o
+LIBFILE   = libgbpRender.a
+BINFILES  = make_colour_bar render
+LIBS      = -lgbpRender -lgbpSPH -lgbpCosmo -lgbpMath -lgbpLib
+#############################
