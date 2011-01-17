@@ -1,0 +1,37 @@
+#############################
+# Library-specific settings #
+#############################
+INCFILES  = gbpSPH.h
+OBJFILES  = display_gadget_header.o         \
+	    init_gadget_read.o              \
+	    set_gadget_filename.o           \
+            display_gadget_info.o           \
+            free_plist.o                    \
+            free_types.o                    \
+            init_plist.o                    \
+            mark_particles.o                \
+	    map_to_grid.o                   \
+            prep_types.o                    \
+	    set_sph_kernel.o                \
+            smooth_grid.o                   \
+            read_mark_file.o                \
+	    read_smooth.o                   \
+            read_gadget_binary.o            \
+            read_gadget_binary_header.o     \
+	    write_smooth.o                  \
+            write_mark_file.o               \
+            write_ascii.o                   \
+            write_csv.o                     \
+            write_gadget_binary.o           
+LIBFILE   = libgbpSPH.a
+BINFILES  = gadget2ascii               \
+            gadget2csv                 \
+            gadget_header              \
+            gadget_info                \
+            gadget_replicate           \
+            gadget_splitmerge          \
+            gadget_subsample           \
+            gadget_mark                \
+            smooth2ascii
+LIBS      = -lgbpSPH -lgbpCosmo -lgbpMath -lgbpLib
+#############################
