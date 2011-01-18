@@ -3,6 +3,7 @@
 #define ERROR_LINE_TOO_SHORT 103
 #define ERROR_FILE_TOO_SHORT 104
 
+int getline(char **string,int *n,FILE *fp);
 int count_lines(FILE *fp);
 int count_lines_data(FILE *fp);
 int check_comment(char *line);
