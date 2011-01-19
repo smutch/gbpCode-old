@@ -8,13 +8,6 @@
 #include <gbpSPH.h>
 #include <gbpHalos.h>
 #include <gbpClustering.h>
-//#include <common.h>
-//#include <SID.h>
-//#include <ADaPS.h>
-//#include <gbpRNG.h>
-//#include <sph.h>
-//#include <clustering.h>
-//#define MAX_FILENAME_LENGTH MAX_FILE_LENGTH
 
 int main(int argc, char *argv[]){
   double  a_start;
@@ -79,9 +72,9 @@ int main(int argc, char *argv[]){
   REAL *x_halos;
   REAL *y_halos;
   REAL *z_halos;
-  REAL *vx_halos;
-  REAL *vy_halos;
-  REAL *vz_halos;
+  REAL *vx_halos_sub;
+  REAL *vy_halos_sub;
+  REAL *vz_halos_sub;
   REAL *V_halos;
   double *M_halos;
   size_t *M_halos_index;
@@ -162,12 +155,8 @@ int main(int argc, char *argv[]){
   redshift         =(double)atof(argv[3]);
   box_size         =(double)atof(argv[4]);
   n_jack           =(int)   atoi(argv[5]);
-  x_column         =(int)   atoi(argv[6]);
-  y_column         =(int)   atoi(argv[7]);
-  z_column         =(int)   atoi(argv[8]);
-  vx_column        =(int)   atoi(argv[9]);
-  vy_column        =(int)   atoi(argv[10]);
-  vz_column        =(int)   atoi(argv[11]);
+  i_grouping_start =(int)   atoi(argv[6]);
+  i_grouping_stop  =(int)   atoi(argv[7]);
   sprintf(filename_out_stats,"%s.stats_cor_func",filename_out_root);
   sprintf(filename_out_1D,   "%s.1D_cor_func",   filename_out_root);
   sprintf(filename_out_2D,   "%s.2D_cor_func",   filename_out_root);
@@ -181,7 +170,7 @@ int main(int argc, char *argv[]){
   r_max_1D   =200.0;
   dr_1D      =r_max_1D/(double)(n_1D-1);
   dlr_l1D     =(take_log10(r_max_1D)-take_log10(r_min_l1D))/(double)(n_1D-1);
-  n_2D       =   50;
+  n_2D       =   25;
   r_min_2D   =  0.0;
   r_max_2D   = 50.0;
   dr_2D      =(r_max_2D-r_min_2D)/(double)(n_2D-1);
@@ -189,104 +178,8 @@ int main(int argc, char *argv[]){
 
   // Initialization
   init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-
-  // Read catalog
-  SID_log("Reading catalog...",SID_LOG_OPEN);
-  if(SID.I_am_Master){
-    fp=fopen(filename_in,"r");
-    n_group=(size_t)count_lines_data(fp);
-    SID_log("%lld halos...",SID_LOG_CONTINUE,n_group);
-    x_halos =(REAL  *)SID_malloc(sizeof(REAL)*n_group);
-    y_halos =(REAL  *)SID_malloc(sizeof(REAL)*n_group);
-    z_halos =(REAL  *)SID_malloc(sizeof(REAL)*n_group);
-    vx_halos=(REAL  *)SID_malloc(sizeof(REAL)*n_group);
-    vy_halos=(REAL  *)SID_malloc(sizeof(REAL)*n_group);
-    vz_halos=(REAL  *)SID_malloc(sizeof(REAL)*n_group);
-    rank_own=(int   *)SID_malloc(sizeof(int) *n_group);
-    x_min=1e10;
-    x_max=0.;
-    y_min=1e10;
-    y_max=0.;
-    z_min=1e10;
-    z_max=0.;
-    for(i_halo=0;i_halo<n_group;i_halo++){
-      grab_next_line_data(fp,&line,&line_length);
-      grab_double(line,x_column, &x_in);
-      grab_double(line,y_column, &y_in);
-      grab_double(line,z_column, &z_in);
-      grab_double(line,vx_column,&vx_in);
-      grab_double(line,vy_column,&vy_in);
-      grab_double(line,vz_column,&vz_in);
-      x_halos[i_halo] =(REAL)x_in;
-      y_halos[i_halo] =(REAL)y_in;
-      z_halos[i_halo] =(REAL)z_in;
-      vx_halos[i_halo]=(REAL)vx_in;
-      vy_halos[i_halo]=(REAL)vy_in;
-      vz_halos[i_halo]=(REAL)vz_in;
-      x_min=MIN(x_min,x_halos[i_halo]);
-      x_max=MAX(x_max,x_halos[i_halo]);
-      y_min=MIN(y_min,y_halos[i_halo]);
-      y_max=MAX(y_max,y_halos[i_halo]);
-      z_min=MIN(z_min,z_halos[i_halo]);
-      z_max=MAX(z_max,z_halos[i_halo]);
-    }
-    SID_log("x_range=%le->%le",SID_LOG_COMMENT,x_min,x_max);
-    SID_log("y_range=%le->%le",SID_LOG_COMMENT,y_min,y_max);
-    SID_log("z_range=%le->%le",SID_LOG_COMMENT,z_min,z_max);
-    fclose(fp);
-  }
-  SID_Bcast(&n_group,sizeof(size_t),MASTER_RANK);
-
-  x_group =(REAL  *)SID_malloc(sizeof(REAL)*n_group);
-  y_group =(REAL  *)SID_malloc(sizeof(REAL)*n_group);
-  z_group =(REAL  *)SID_malloc(sizeof(REAL)*n_group);
-  vx_group=(REAL  *)SID_malloc(sizeof(REAL)*n_group);
-  vy_group=(REAL  *)SID_malloc(sizeof(REAL)*n_group);
-  vz_group=(REAL  *)SID_malloc(sizeof(REAL)*n_group);
-
   init_cosmo_std(&cosmo);
   init_RNG(&seed,&RNG,RNG_DEFAULT);
-
-  ADaPS_store(&(plist.data),(void *)x_group,  "x_halos", ADaPS_DEFAULT);
-  ADaPS_store(&(plist.data),(void *)y_group,  "y_halos", ADaPS_DEFAULT);
-  ADaPS_store(&(plist.data),(void *)z_group,  "z_halos", ADaPS_DEFAULT);
-  ADaPS_store(&(plist.data),(void *)vx_group, "vx_halos",ADaPS_DEFAULT);
-  ADaPS_store(&(plist.data),(void *)vy_group, "vy_halos",ADaPS_DEFAULT);
-  ADaPS_store(&(plist.data),(void *)vz_group, "vz_halos",ADaPS_DEFAULT);
-  SID_log("Done.",SID_LOG_CLOSE);
-
-  // GENERATE RANDOMS
-  n_random      =(size_t)F_random*n_group;
-  SID_log("Generating %d random halos...",SID_LOG_OPEN,n_random);
-  for(i_rank=0,i_random=0,j_random=0;i_rank<SID.n_proc;i_rank++){
-    if(i_rank==SID.n_proc-1)
-      j_random=n_random-i_random;
-    else
-      j_random=(n_random-i_random)/(SID.n_proc-i_rank);
-    if(SID.My_rank==i_rank)
-      n_random_local=j_random;
-    i_random+=j_random;
-  }
-  x_random=(REAL *)SID_malloc(sizeof(REAL)*n_random_local);
-  y_random=(REAL *)SID_malloc(sizeof(REAL)*n_random_local);
-  z_random=(REAL *)SID_malloc(sizeof(REAL)*n_random_local);
-  for(i_random=0;i_random<n_random_local;i_random++){
-    x_random[i_random]=random_number(&RNG)*box_size;
-    if(x_random[i_random]>=box_size)
-      x_random[i_random]-=box_size;
-    y_random[i_random]=random_number(&RNG)*box_size;
-    if(y_random[i_random]>=box_size)
-      y_random[i_random]-=box_size;
-    z_random[i_random]=random_number(&RNG)*box_size;
-    if(z_random[i_random]>=box_size)
-      z_random[i_random]-=box_size;
-  }
-  ADaPS_store(&(plist.data),(void *)&n_random,      "n_all_random",ADaPS_SCALAR_SIZE_T);
-  ADaPS_store(&(plist.data),(void *)&n_random_local,"n_random",    ADaPS_SCALAR_SIZE_T);
-  ADaPS_store(&(plist.data),(void *)x_random,       "x_random",    ADaPS_DEFAULT);
-  ADaPS_store(&(plist.data),(void *)y_random,       "y_random",    ADaPS_DEFAULT);
-  ADaPS_store(&(plist.data),(void *)z_random,       "z_random",    ADaPS_DEFAULT);
-  SID_log("Done.",SID_LOG_CLOSE);
 
   // Initialize arrays used for the 1D correlation function
   SID_log("Initializing arrays...",SID_LOG_OPEN);
@@ -340,8 +233,7 @@ int main(int argc, char *argv[]){
   }
   SID_log("Done.",SID_LOG_CLOSE);
 
-  // Process each grouping in turn
-  SID_log("Computing correlation function...",SID_LOG_OPEN|SID_LOG_TIMER);
+  // Initialize files
   if(SID.I_am_Master){
     fp   =fopen(filename_out_stats,"w");
     fp_1D=fopen(filename_out_1D,"w");
@@ -358,72 +250,184 @@ int main(int argc, char *argv[]){
     fprintf(fp,"#   (8) r_o [Mpc/h] (v_z redshift-space)\n");
     fprintf(fp,"#   (9) r_X [Mpc/h] (v_z redshift-space)\n");
   }
-  if(SID.I_am_Master){
-    for(j_halo=0;j_halo<n_group;j_halo++,i_halo++)
-      rank_own[j_halo]=random_number(&RNG)*SID.n_proc;
-  }
 
-  // Communicate with other ranks
-  for(i_rank=0;i_rank<SID.n_proc;i_rank++){
-    if(i_rank!=MASTER_RANK){
-      if(SID.I_am_Master){
-        for(j_halo=0,n_rank=0;j_halo<n_group;j_halo++){
-          if(rank_own[j_halo]==i_rank){
-            x_group[n_rank] =x_halos[j_halo];
-            y_group[n_rank] =y_halos[j_halo];
-            z_group[n_rank] =z_halos[j_halo];
-            vx_group[n_rank]=vx_halos[j_halo];
-            vy_group[n_rank]=vy_halos[j_halo];
-            vz_group[n_rank]=vz_halos[j_halo];
-            n_rank++;
+  // Process each grouping in turn
+  for(i_grouping=i_grouping_start;i_grouping<=i_grouping_stop;i_grouping++){
+    SID_log("Processing grouping #%03d...",SID_LOG_OPEN,i_grouping);
+
+    // Read catalog
+    SID_log("Reading catalog...",SID_LOG_OPEN);
+    if(SID.I_am_Master){
+      fp=fopen(filename_in,"r");
+      n_group=(size_t)count_lines_data(fp);
+      SID_log("%lld halos...",SID_LOG_CONTINUE,n_group);
+      x_halos     =(REAL  *)SID_malloc(sizeof(REAL)*n_group);
+      y_halos     =(REAL  *)SID_malloc(sizeof(REAL)*n_group);
+      z_halos     =(REAL  *)SID_malloc(sizeof(REAL)*n_group);
+      vx_halos_sub=(REAL  *)SID_malloc(sizeof(REAL)*n_group);
+      vy_halos_sub=(REAL  *)SID_malloc(sizeof(REAL)*n_group);
+      vz_halos_sub=(REAL  *)SID_malloc(sizeof(REAL)*n_group);
+      vx_halos_FoF=(REAL  *)SID_malloc(sizeof(REAL)*n_group);
+      vy_halos_FoF=(REAL  *)SID_malloc(sizeof(REAL)*n_group);
+      vz_halos_FoF=(REAL  *)SID_malloc(sizeof(REAL)*n_group);
+      vx_halos_sys=(REAL  *)SID_malloc(sizeof(REAL)*n_group);
+      vy_halos_sys=(REAL  *)SID_malloc(sizeof(REAL)*n_group);
+      vz_halos_sys=(REAL  *)SID_malloc(sizeof(REAL)*n_group);
+      rank_own    =(int   *)SID_malloc(sizeof(int) *n_group);
+      x_min=1e10;
+      x_max=0.;
+      y_min=1e10;
+      y_max=0.;
+      z_min=1e10;
+      z_max=0.;
+      for(i_halo=0;i_halo<n_group;i_halo++){
+        grab_next_line_data(fp,&line,&line_length);
+        grab_double(line,3, &x_in);
+        grab_double(line,4, &y_in);
+        grab_double(line,5, &z_in);
+        x_halos[i_halo] =(REAL)x_in;
+        y_halos[i_halo] =(REAL)y_in;
+        z_halos[i_halo] =(REAL)z_in;
+        x_min=MIN(x_min,x_halos[i_halo]);
+        x_max=MAX(x_max,x_halos[i_halo]);
+        y_min=MIN(y_min,y_halos[i_halo]);
+        y_max=MAX(y_max,y_halos[i_halo]);
+        z_min=MIN(z_min,z_halos[i_halo]);
+        z_max=MAX(z_max,z_halos[i_halo]);
+        grab_double(line,7,&vx_in);
+        grab_double(line,8,&vy_in);
+        grab_double(line,9,&vz_in);
+        vx_halos_sub[i_halo]=(REAL)vx_in;
+        vy_halos_sub[i_halo]=(REAL)vy_in;
+        vz_halos_sub[i_halo]=(REAL)vz_in;
+        grab_double(line,10,&vx_in);
+        grab_double(line,11,&vy_in);
+        grab_double(line,12,&vz_in);
+        vx_halos_FoF[i_halo]=(REAL)vx_in;
+        vy_halos_FoF[i_halo]=(REAL)vy_in;
+        vz_halos_FoF[i_halo]=(REAL)vz_in;
+        grab_double(line,13,&vx_in);
+        grab_double(line,14,&vy_in);
+        grab_double(line,15,&vz_in);
+        vx_halos_sys[i_halo]=(REAL)vx_in;
+        vy_halos_sys[i_halo]=(REAL)vy_in;
+        vz_halos_sys[i_halo]=(REAL)vz_in;
+      }
+      SID_log("x_range=%le->%le",SID_LOG_COMMENT,x_min,x_max);
+      SID_log("y_range=%le->%le",SID_LOG_COMMENT,y_min,y_max);
+      SID_log("z_range=%le->%le",SID_LOG_COMMENT,z_min,z_max);
+      fclose(fp);
+    }
+    SID_Bcast(&n_group,sizeof(size_t),MASTER_RANK);
+    ADaPS_store(&(plist.data),(void *)x_group, "x_halos", ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)y_group, "y_halos", ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)z_group, "z_halos", ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)vx_group,"vx_halos_sub",ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)vy_group,"vy_halos_sub",ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)vz_group,"vz_halos_sub",ADaPS_DEFAULT);
+    SID_log("Done.",SID_LOG_CLOSE);
+
+    // GENERATE RANDOMS
+    n_random=(size_t)F_random*n_group;
+    SID_log("Generating %d random halos...",SID_LOG_OPEN,n_random);
+    for(i_rank=0,i_random=0,j_random=0;i_rank<SID.n_proc;i_rank++){
+      if(i_rank==SID.n_proc-1)
+        j_random=n_random-i_random;
+      else
+        j_random=(n_random-i_random)/(SID.n_proc-i_rank);
+      if(SID.My_rank==i_rank)
+        n_random_local=j_random;
+      i_random+=j_random;
+    }
+    x_random=(REAL *)SID_malloc(sizeof(REAL)*n_random_local);
+    y_random=(REAL *)SID_malloc(sizeof(REAL)*n_random_local);
+    z_random=(REAL *)SID_malloc(sizeof(REAL)*n_random_local);
+    for(i_random=0;i_random<n_random_local;i_random++){
+      x_random[i_random]=random_number(&RNG)*box_size;
+      if(x_random[i_random]>=box_size)
+        x_random[i_random]-=box_size;
+      y_random[i_random]=random_number(&RNG)*box_size;
+      if(y_random[i_random]>=box_size)
+        y_random[i_random]-=box_size;
+      z_random[i_random]=random_number(&RNG)*box_size;
+      if(z_random[i_random]>=box_size)
+        z_random[i_random]-=box_size;
+    }
+    ADaPS_store(&(plist.data),(void *)&n_random,      "n_all_random",ADaPS_SCALAR_SIZE_T);
+    ADaPS_store(&(plist.data),(void *)&n_random_local,"n_random",    ADaPS_SCALAR_SIZE_T);
+    ADaPS_store(&(plist.data),(void *)x_random,       "x_random",    ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)y_random,       "y_random",    ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)z_random,       "z_random",    ADaPS_DEFAULT);
+    SID_log("Done.",SID_LOG_CLOSE);
+
+    SID_log("Assign rank ownership...",SID_LOG_OPEN|SID_LOG_TIMER);
+    if(SID.I_am_Master){
+      for(j_halo=0;j_halo<n_group;j_halo++,i_halo++)
+        rank_own[j_halo]=(int)(random_number(&RNG)*SID.n_proc);
+    }
+
+    // Communicate with other ranks
+    for(i_rank=0;i_rank<SID.n_proc;i_rank++){
+      if(i_rank!=MASTER_RANK){
+        if(SID.I_am_Master){
+          for(j_halo=0,n_rank=0;j_halo<n_group;j_halo++){
+            if(rank_own[j_halo]==i_rank){
+              x_group[n_rank] =x_halos[j_halo];
+              y_group[n_rank] =y_halos[j_halo];
+              z_group[n_rank] =z_halos[j_halo];
+              vx_group[n_rank]=vx_halos_sub[j_halo];
+              vy_group[n_rank]=vy_halos_sub[j_halo];
+              vz_group[n_rank]=vz_halos_sub[j_halo];
+              n_rank++;
+            }
           }
+          SID_Send(&n_rank, 1,          SID_SIZE_T,i_rank,136789,SID.COMM_WORLD);
+          SID_Send(x_group, (int)n_rank,SID_REAL,  i_rank,136790,SID.COMM_WORLD);
+          SID_Send(y_group, (int)n_rank,SID_REAL,  i_rank,136791,SID.COMM_WORLD);
+          SID_Send(z_group, (int)n_rank,SID_REAL,  i_rank,136792,SID.COMM_WORLD);
+          SID_Send(vx_group,(int)n_rank,SID_REAL,  i_rank,136793,SID.COMM_WORLD);
+          SID_Send(vy_group,(int)n_rank,SID_REAL,  i_rank,136794,SID.COMM_WORLD);
+          SID_Send(vz_group,(int)n_rank,SID_REAL,  i_rank,136795,SID.COMM_WORLD);
         }
-        SID_Send(&n_rank, 1,          SID_SIZE_T,i_rank,136789,SID.COMM_WORLD);
-        SID_Send(x_group, (int)n_rank,SID_REAL,  i_rank,136790,SID.COMM_WORLD);
-        SID_Send(y_group, (int)n_rank,SID_REAL,  i_rank,136791,SID.COMM_WORLD);
-        SID_Send(z_group, (int)n_rank,SID_REAL,  i_rank,136792,SID.COMM_WORLD);
-        SID_Send(vx_group,(int)n_rank,SID_REAL,  i_rank,136793,SID.COMM_WORLD);
-        SID_Send(vy_group,(int)n_rank,SID_REAL,  i_rank,136794,SID.COMM_WORLD);
-        SID_Send(vz_group,(int)n_rank,SID_REAL,  i_rank,136795,SID.COMM_WORLD);
-      }
-      if(SID.My_rank==i_rank){
-        SID_Recv(&n_group_local,1,                 SID_SIZE_T,MASTER_RANK,136789,SID.COMM_WORLD);
-        SID_Recv(x_group,       (int)n_group_local,SID_REAL,  MASTER_RANK,136790,SID.COMM_WORLD);
-        SID_Recv(y_group,       (int)n_group_local,SID_REAL,  MASTER_RANK,136791,SID.COMM_WORLD);
-        SID_Recv(z_group,       (int)n_group_local,SID_REAL,  MASTER_RANK,136792,SID.COMM_WORLD);
-        SID_Recv(vx_group,      (int)n_group_local,SID_REAL,  MASTER_RANK,136793,SID.COMM_WORLD);
-        SID_Recv(vy_group,      (int)n_group_local,SID_REAL,  MASTER_RANK,136794,SID.COMM_WORLD);
-        SID_Recv(vz_group,      (int)n_group_local,SID_REAL,  MASTER_RANK,136795,SID.COMM_WORLD);
+        if(SID.My_rank==i_rank){
+          SID_Recv(&n_group_local,1,                 SID_SIZE_T,MASTER_RANK,136789,SID.COMM_WORLD);
+          SID_Recv(x_group,       (int)n_group_local,SID_REAL,  MASTER_RANK,136790,SID.COMM_WORLD);
+          SID_Recv(y_group,       (int)n_group_local,SID_REAL,  MASTER_RANK,136791,SID.COMM_WORLD);
+          SID_Recv(z_group,       (int)n_group_local,SID_REAL,  MASTER_RANK,136792,SID.COMM_WORLD);
+          SID_Recv(vx_group,      (int)n_group_local,SID_REAL,  MASTER_RANK,136793,SID.COMM_WORLD);
+          SID_Recv(vy_group,      (int)n_group_local,SID_REAL,  MASTER_RANK,136794,SID.COMM_WORLD);
+          SID_Recv(vz_group,      (int)n_group_local,SID_REAL,  MASTER_RANK,136795,SID.COMM_WORLD);
+        }
       }
     }
-  }
 
-  // Take care of the master rank
-  if(SID.I_am_Master){
-    for(j_halo=0,n_group_local=0;j_halo<n_group;j_halo++){
-      if(rank_own[j_halo]==MASTER_RANK){
-        x_group[n_group_local] =x_halos[j_halo];
-        y_group[n_group_local] =y_halos[j_halo];
-        z_group[n_group_local] =z_halos[j_halo];
-        vx_group[n_group_local]=vx_halos[j_halo];
-        vy_group[n_group_local]=vy_halos[j_halo];
-        vz_group[n_group_local]=vz_halos[j_halo];
-        n_group_local++;
+    // Take care of the master rank
+    if(SID.I_am_Master){
+      for(j_halo=0,n_group_local=0;j_halo<n_group;j_halo++){
+        if(rank_own[j_halo]==MASTER_RANK){
+          x_group[n_group_local] =x_halos[j_halo];
+          y_group[n_group_local] =y_halos[j_halo];
+          z_group[n_group_local] =z_halos[j_halo];
+          vx_group[n_group_local]=vx_halos_sub[j_halo];
+          vy_group[n_group_local]=vy_halos_sub[j_halo];
+          vz_group[n_group_local]=vz_halos_sub[j_halo];
+          n_group_local++;
+        }
       }
     }
-  }
+    SID_log("Done.",SID_LOG_CLOSE);
 
-  // Store group size
-  ADaPS_store(&(plist.data),(void *)&n_group,      "n_all_halos",ADaPS_SCALAR_SIZE_T);
-  ADaPS_store(&(plist.data),(void *)&n_group_local,"n_halos",    ADaPS_SCALAR_SIZE_T);
+    // Store group size
+    ADaPS_store(&(plist.data),(void *)&n_group,      "n_all_halos",ADaPS_SCALAR_SIZE_T);
+    ADaPS_store(&(plist.data),(void *)&n_group_local,"n_halos",    ADaPS_SCALAR_SIZE_T);
 
-  // Needed to make writing more straight-forward
-  n_data_ll  =(long long)n_group;
-  n_random_ll=(long long)n_random;
+    // Needed to make writing more straight-forward
+    n_data_ll  =(long long)n_group;
+    n_random_ll=(long long)n_random;
     
-  if(SID.I_am_Master)
-    fprintf(fp,"%lld",n_group);
-  for(i_compute=0;i_compute<4;i_compute++){
+    if(SID.I_am_Master)
+      fprintf(fp,"%lld",n_group);
+    for(i_compute=0;i_compute<4;i_compute++){
       switch(i_compute){
       case 0:
         SID_log("Processing real-space ...",SID_LOG_OPEN|SID_LOG_TIMER);
@@ -578,12 +582,12 @@ int main(int argc, char *argv[]){
       fprintf(fp,"\n");
 
     SID_log("Done.",SID_LOG_CLOSE);
+  }
   if(SID.I_am_Master){
     fclose(fp);
     fclose(fp_1D);
     fclose(fp_2D);
   }
-  SID_log("Done.",SID_LOG_CLOSE);
   
   // Clean-up
   SID_log("Cleaning-up...",SID_LOG_OPEN);
@@ -617,6 +621,19 @@ int main(int argc, char *argv[]){
   free_RNG(&RNG);
   if(SID.I_am_Master)
     SID_free(SID_FARG rank_own);
+  SID_free(SID_FARG x_halos);
+  SID_free(SID_FARG y_halos);
+  SID_free(SID_FARG z_halos);
+  SID_free(SID_FARG vx_halos_sub);
+  SID_free(SID_FARG vy_halos_sub);
+  SID_free(SID_FARG vz_halos_sub);
+  SID_free(SID_FARG vx_halos_FoF);
+  SID_free(SID_FARG vy_halos_FoF);
+  SID_free(SID_FARG vz_halos_FoF);
+  SID_free(SID_FARG vx_halos_sys);
+  SID_free(SID_FARG vy_halos_sys);
+  SID_free(SID_FARG vz_halos_sys);
+  
   SID_log("Done.",SID_LOG_CLOSE);
 
   SID_log("Done.",SID_LOG_CLOSE);
