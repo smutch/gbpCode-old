@@ -7,14 +7,11 @@ void init_RNG(int *seed,RNG_info *RNG,int mode){
   RNG->seed  =(*seed);
   #ifdef USE_SPRNG
     #ifdef USE_MPI
-      if(check_mode_for_flag(mode,RNG_GLOBAL)){
-        RNG->seed =MIN(RNG->seed,(-1)*RNG->seed);
+      if(check_mode_for_flag(mode,RNG_GLOBAL))
         RNG->global=TRUE;
-      }
-      else{
-        RNG->stream=init_sprng(SID.My_rank,SID.n_proc,RNG->seed,SPRNG_DEFAULT);
+      else
         RNG->global=FALSE;
-      }
+      RNG->stream=init_sprng(SID.My_rank,SID.n_proc,RNG->seed,SPRNG_DEFAULT);
     #else
       RNG->stream=init_sprng(RNG->seed,SPRNG_DEFAULT);
     #endif

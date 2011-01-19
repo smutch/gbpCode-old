@@ -14,17 +14,19 @@ else
   set ARG_CMD  =($argv[$FIRST_ARG]);@ FIRST_ARG++
 endif 
 
-# Set the mpiexec command
-set CMD_STRING = ( $GBP_MPI'/bin/mpiexec -mca btl tcp,self '$GBP_BIN'/mpi/'$ARG_CMD )
-
-# Add the command arguments
-@ i=$FIRST_ARG
-while ($i <= $#argv)
-  set CMD_STRING = ( $CMD_STRING' '$argv[$i] )
-  @ i++
-end
+@ NPROCS = $ARG_PPN * $ARG_NNODE
 
 if ( ${GBP_QUEUE_TYPE} == 'PBS' ) then
+  # Set the mpiexec command
+  set CMD_STRING = ( $GBP_MPI'/bin/mpiexec -mca btl tcp,self '$GBP_BIN'/mpi/'$ARG_CMD )
+
+  # Add the command arguments
+  @ i=$FIRST_ARG
+  while ($i <= $#argv)
+    set CMD_STRING = ( $CMD_STRING' '$argv[$i] )
+    @ i++
+  end
+
   set SUBT_FILE="`pwd`/`create_tmpfile`"
 
   echo "#\!/bin/csh"                                                                                     > $SUBT_FILE
@@ -35,9 +37,9 @@ if ( ${GBP_QUEUE_TYPE} == 'PBS' ) then
   echo '#PBS -V'                                                                                        >> $SUBT_FILE
   echo '#PBS -d '"`pwd`"                                                                                >> $SUBT_FILE
   echo                                                                                                  >> $SUBT_FILE
-  echo 'setenv PATH            '$GBP_MPI'/bin:$PATH'                     >> $SUBT_FILE
-  echo 'setenv LD_LIBRARY_PATH '$GBP_MPI'/lib:$LD_LIBRARY_PATH'          >> $SUBT_FILE
-  echo 'setenv NPROCS          `cat  $PBS_NODEFILE | wc -l`'                                            >> $SUBT_FILE
+  echo 'setenv PATH            '$GBP_MPI'/bin:$PATH'                                                    >> $SUBT_FILE
+  echo 'setenv LD_LIBRARY_PATH '$GBP_MPI'/lib:$LD_LIBRARY_PATH'                                         >> $SUBT_FILE
+  echo 'setenv NPROCS          '$NPROCS                                                                 >> $SUBT_FILE
   echo 'setenv NNODES          `uniq $PBS_NODEFILE | wc -l`'                                            >> $SUBT_FILE
   echo 'setenv DATE_START      `date`'                                                                  >> $SUBT_FILE
   #echo 'setenv MALLOC_CHECK_ 2'                                                                        >> $SUBT_FILE
@@ -55,9 +57,28 @@ if ( ${GBP_QUEUE_TYPE} == 'PBS' ) then
   echo                                                                                                  >> $SUBT_FILE
   echo -n $CMD_STRING                                                                                   >> $SUBT_FILE
   echo                                                                                                  >> $SUBT_FILE
-  
+else
+  # Set the mpiexec command
+  set CMD_STRING = ( $GBP_MPI'/bin/mpiexec -n '$NPROCS' '$GBP_BIN'/mpi/'$ARG_CMD )
+
+  # Add the command arguments
+  @ i=$FIRST_ARG
+  while ($i <= $#argv)
+    set CMD_STRING = ( $CMD_STRING' '$argv[$i] )
+    @ i++
+  end
+endif
+
+# Print a status message
+echo 'QUEUE TYPE ={'${GBP_QUEUE_TYPE}'}'
+echo 'GBP_MPI_DIR={'${GBP_MPI}'}'
+echo 'CMD_STRING ={'${CMD_STRING}'}'
+
+# Execute command
+if ( ${GBP_QUEUE_TYPE} == 'PBS' ) then
   qsub $SUBT_FILE
   rm   $SUBT_FILE
 else
-  $CMD_STRING  
+  $CMD_STRING
 endif
+
