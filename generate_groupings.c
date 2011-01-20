@@ -278,9 +278,9 @@ int main(int argc, char *argv[]){
     SID_log("V_med  =%le",SID_LOG_COMMENT,V_med);
     SID_log("V_max  =%le",SID_LOG_COMMENT,V_max);
     fprintf(fp,"# Grouping #%03d for %s\n",i_grouping,filename_out_root);
-    fprintf(fp,"# V_min  =%le km/s\n",SID_LOG_COMMENT,V_min);
-    fprintf(fp,"# V_med  =%le km/s\n",SID_LOG_COMMENT,V_med);
-    fprintf(fp,"# V_max  =%le km/s\n",SID_LOG_COMMENT,V_max);
+    fprintf(fp,"# V_min  =%le km/s\n",V_min);
+    fprintf(fp,"# V_med  =%le km/s\n",V_med);
+    fprintf(fp,"# V_max  =%le km/s\n",V_max);
     fprintf(fp,"# Columns:  1) Mass    [M_sol]\n");
     fprintf(fp,"#           2) V_max   [km/s]\n");
     fprintf(fp,"#           3) x       [Mpc/h]\n");
