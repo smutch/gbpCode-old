@@ -9,27 +9,31 @@
 #----------------------------------------------------------------------
 # Defaults (illustrating the set of environment variables that need to
 #           be set in this file; we're assuming GBP_SRC is already set)
-setenv GBP_QUEUE_TYPE NONE
-setenv USE_MPI        0
-setenv USE_GSL        1
-setenv USE_FFTW       1
-setenv USE_SPRNG      0
-setenv GBP_MPI        ${GBP_SRC}/3rd_Party/openmpi
-setenv GBP_GSL_DIR    ${GBP_SRC}/3rd_Party/gsl
-setenv GBP_FFTW_DIR   ${GBP_SRC}/3rd_Party/fftw
-setenv GBP_SPRNG_DIR  ${GBP_SRC}/3rd_Party/sprng
-setenv GBP_LIB        ${GBP_SRC}'myLib/'
-setenv GBP_INC        ${GBP_SRC}'myInclude/'
-setenv GBP_BIN        ${GBP_SRC}'myBin/'
-setenv GBP_DAT        ${GBP_SRC}'myData/'
+setenv GBP_QUEUE_TYPE    NONE
+setenv USE_MPI           0
+setenv USE_GSL           1
+setenv USE_FFTW          1
+setenv USE_SPRNG         0
+setenv USE_VALGRIND      1
+setenv GBP_MPI           ${GBP_SRC}/3rd_Party/openmpi
+setenv GBP_GSL_DIR       ${GBP_SRC}/3rd_Party/gsl
+setenv GBP_FFTW_DIR      ${GBP_SRC}/3rd_Party/fftw
+setenv GBP_SPRNG_DIR     ${GBP_SRC}/3rd_Party/sprng
+setenv GBP_VALGRIND_DIR  ${GBP_SRC}/3rd_Party/valgrind
+setenv GBP_VALGRIND_PLAT x86-darwin
+setenv GBP_LIB           ${GBP_SRC}'myLib/'
+setenv GBP_INC           ${GBP_SRC}'myInclude/'
+setenv GBP_BIN           ${GBP_SRC}'myBin/'
+setenv GBP_DAT           ${GBP_SRC}'myData/'
 
 # Swinburne cluster
 if ( $HOSTTYPE == 'x86_64-linux' ) then
-  setenv USE_SPRNG      1
-  setenv GBP_MPI        /usr/local/gnu/x86_64/openmpi-1.2.5-nonib/
-  setenv GBP_GSL_DIR    /usr/local/gnu/x86_64/gsl/
-  setenv GBP_FFTW_DIR   /nfs/cluster/evo/gpoole/src/3rd_Party/libs/fftw/
-  setenv GBP_SPRNG_DIR  /nfs/cluster/evo/gpoole/src/3rd_Party/libs/sprng/
+  setenv USE_SPRNG         1
+  setenv GBP_MPI           /usr/local/gnu/x86_64/openmpi-1.2.5-nonib/
+  setenv GBP_GSL_DIR       /usr/local/gnu/x86_64/gsl/
+  setenv GBP_FFTW_DIR      /nfs/cluster/evo/gpoole/src/3rd_Party/libs/fftw/
+  setenv GBP_SPRNG_DIR     /nfs/cluster/evo/gpoole/src/3rd_Party/libs/sprng/
+  setenv GBP_VALGRIND_PLAT amd64-linux
   # We have to check for the HOSTNAME variable, because scp, sshfs etc does
   #   not define it and things crash if we try to reference it
   if ( $?HOSTNAME ) then

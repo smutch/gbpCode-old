@@ -30,11 +30,21 @@ ifndef USE_DOUBLE
 endif
 export USE_DOUBLE
 
-# Set default to no MPI support
+# Set default MPI support
 ifndef USE_MPI
   USE_MPI=0
 endif
 export USE_MPI
+ifndef USE_MPI_IO
+  USE_MPI_IO=0
+endif
+export USE_MPI_IO
+
+# Set default debugger support
+ifndef USE_DEBUGGER
+  USE_DEBUGGER=0
+endif
+export USE_DEBUGGER
 
 # Set default to no MPI-I/O support
 ifndef USE_MPI_IO
@@ -101,7 +111,7 @@ objfiles = $(shell cat $(LIBOBJSFILE))
 include $(GBP_SRC)/Makefile.libs
 
 # Turn on debugging information
-ifdef USE_DEBUGGER
+ifeq ($(USE_DEBUGGER),1)
   CCFLAGS := $(CCFLAGS) -g
   LDFLAGS := $(LDFLAGS) -g
 endif

@@ -18,12 +18,23 @@
 # Add gdlib
 ifndef USE_GDLIB
   USE_GDLIB    =1
-  GBP_GDLIB_DIR=/usr/
+  GBP_GDLIB_DIR=/usr/lib/
 endif
 ifneq ($(USE_GDLIB),0)
   CCFLAGS := $(CCFLAGS) -I$(GBP_GSL_DIR)/include/
   LDFLAGS := $(LDFLAGS) -L$(GBP_GSL_DIR)/lib/
   LIBS    := $(LIBS) -lgd
+endif
+
+# Add valgrind
+ifndef USE_VALGRIND
+  USE_VALGRIND    =0
+  GBP_VALGRIND_DIR=/usr/lib/
+endif
+ifneq ($(USE_VALGRIND),0)
+  CCFLAGS := $(CCFLAGS) -I$(GBP_VALGRIND_DIR)/include/
+  LDFLAGS := $(LDFLAGS) -L$(GBP_VALGRIND_DIR)/lib/
+  LIBS    := $(LIBS) 
 endif
 
 # Add GSL stuff (default off)

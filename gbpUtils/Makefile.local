@@ -6,5 +6,5 @@ OBJFILES  = ran1.o
 LIBFILE   = libgbpUtils.a
 BINFILES  = create_tmpfile gpause random_numbers
 LIBS      = -lgbpUtils
-SCRIPTS   = run_mpi
+SCRIPTS   = run_mpi run_mpi_valgrind
 #############################

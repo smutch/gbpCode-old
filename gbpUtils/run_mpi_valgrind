@@ -18,7 +18,7 @@ endif
 
 if ( ${GBP_QUEUE_TYPE} == 'PBS' ) then
   # Set the mpiexec command
-  set CMD_STRING = ( $GBP_MPI'/bin/mpiexec -mca btl tcp,self '$GBP_BIN'/mpi/'$ARG_CMD )
+  set CMD_STRING = ( $GBP_VALGRIND_DIR'/bin/valgrind '$GBP_MPI'/bin/mpiexec -mca btl tcp,self '$GBP_BIN'/mpi/'$ARG_CMD )
 
   # Add the command arguments
   @ i=$FIRST_ARG
@@ -39,6 +39,7 @@ if ( ${GBP_QUEUE_TYPE} == 'PBS' ) then
   echo                                                                                                  >> $SUBT_FILE
   echo 'setenv PATH            '$GBP_MPI'/bin:$PATH'                                                    >> $SUBT_FILE
   echo 'setenv LD_LIBRARY_PATH '$GBP_MPI'/lib:$LD_LIBRARY_PATH'                                         >> $SUBT_FILE
+  echo 'setenv LD_PRELOAD      '$GBP_VALGRIND_DIR/'/lib/valgrind/libmpiwrap-'$GBP_VALGRIND_PLAT'.so '   >> $SUBT_FILE
   echo 'setenv NPROCS          '$NPROCS                                                                 >> $SUBT_FILE
   echo 'setenv NNODES          `uniq $PBS_NODEFILE | wc -l`'                                            >> $SUBT_FILE
   echo 'setenv DATE_START      `date`'                                                                  >> $SUBT_FILE
@@ -61,8 +62,9 @@ else
   # Set environment variables
   setenv PATH            $GBP_MPI/bin:$PATH
   setenv LD_LIBRARY_PATH $GBP_MPI/lib:$LD_LIBRARY_PATH
+  setenv LD_PRELOAD      $GBP_VALGRIND_DIR//lib/valgrind/libmpiwrap-$GBP_VALGRIND_PLAT.so
   # Set the mpiexec command
-  set CMD_STRING = ( $GBP_MPI'/bin/mpiexec -mca btl tcp,self -n '$NPROCS' '$GBP_BIN'/mpi/'$ARG_CMD )
+  set CMD_STRING = ( $GBP_MPI'/bin/mpiexec -n '$NPROCS' '$GBP_VALGRIND_DIR'/bin/valgrind '$GBP_BIN'/mpi/'$ARG_CMD )
 
   # Add the command arguments
   @ i=$FIRST_ARG
