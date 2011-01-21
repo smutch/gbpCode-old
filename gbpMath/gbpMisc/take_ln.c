@@ -1,5 +1,5 @@
-#include <common.h>
 #include <math.h>
+#include <gbpLib.h>
 
 double take_ln(double val){
   double rval;
