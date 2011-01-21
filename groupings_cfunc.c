@@ -45,12 +45,6 @@ int main(int argc, char *argv[]){
   char    filename_TF[256];
   char    n_string[64];
   int             n[3];
-  int             x_column;
-  int             y_column;
-  int             z_column;
-  int             vx_column;
-  int             vy_column;
-  int             vz_column;
   double          x_in,y_in,z_in,vx_in,vy_in,vz_in;
   double          box_size;
   double          L[3];
@@ -156,10 +150,11 @@ int main(int argc, char *argv[]){
   int        *rank_own;
   int        *rank_own_index;
   size_t      n_rank;
+  int         flag_init_store;
 
   // Initialization -- MPI etc.
   SID_init(&argc,&argv,NULL);
-  if(argc!=12)
+  if(argc!=8)
     SID_trap_error("Incorrect syntax.",ERROR_SYNTAX);
   strcpy(filename_in_root, argv[1]);
   strcpy(filename_out_root,argv[2]);
@@ -265,8 +260,8 @@ int main(int argc, char *argv[]){
   }
 
   // Process each grouping in turn
-  for(i_grouping=i_grouping_start;i_grouping<=i_grouping_stop;i_grouping++){
-    SID_log("Processing grouping #%03d...",SID_LOG_OPEN,i_grouping);
+  for(i_grouping=i_grouping_start,flag_init_store=TRUE;i_grouping<=i_grouping_stop;i_grouping++){
+    SID_log("Processing grouping #%03d...",SID_LOG_OPEN|SID_LOG_TIMER,i_grouping);
 
     // Read catalog
     SID_log("Reading catalog...",SID_LOG_OPEN);
@@ -361,13 +356,9 @@ int main(int argc, char *argv[]){
       if(z_random[i_random]>=box_size)
         z_random[i_random]-=box_size;
     }
-    ADaPS_store(&(plist.data),(void *)&n_random,      "n_all_random",ADaPS_SCALAR_SIZE_T);
-    ADaPS_store(&(plist.data),(void *)&n_random_local,"n_random",    ADaPS_SCALAR_SIZE_T);
-    ADaPS_store(&(plist.data),(void *)x_random,       "x_random",    ADaPS_DEFAULT);
-    ADaPS_store(&(plist.data),(void *)y_random,       "y_random",    ADaPS_DEFAULT);
-    ADaPS_store(&(plist.data),(void *)z_random,       "z_random",    ADaPS_DEFAULT);
     SID_log("Done.",SID_LOG_CLOSE);
 
+    // Loop over 3 velocity sets
     vx_halos=vx_halos_sub;
     vy_halos=vy_halos_sub;
     vz_halos=vz_halos_sub;
@@ -428,25 +419,41 @@ int main(int argc, char *argv[]){
           x_grouping[n_grouping_local] =x_halos[j_halo];
           y_grouping[n_grouping_local] =y_halos[j_halo];
           z_grouping[n_grouping_local] =z_halos[j_halo];
-          vx_grouping[n_grouping_local]=vx_halos_sub[j_halo];
-          vy_grouping[n_grouping_local]=vy_halos_sub[j_halo];
-          vz_grouping[n_grouping_local]=vz_halos_sub[j_halo];
+          vx_grouping[n_grouping_local]=vx_halos[j_halo];
+          vy_grouping[n_grouping_local]=vy_halos[j_halo];
+          vz_grouping[n_grouping_local]=vz_halos[j_halo];
           n_grouping_local++;
         }
       }
     }
     SID_log("Done.",SID_LOG_CLOSE);
     }
+    else{
+      for(j_halo=0,n_grouping_local=0;j_halo<n_grouping;j_halo++){
+        x_grouping[n_grouping_local] =x_halos[j_halo];
+        y_grouping[n_grouping_local] =y_halos[j_halo];
+        z_grouping[n_grouping_local] =z_halos[j_halo];
+        vx_grouping[n_grouping_local]=vx_halos[j_halo];
+        vy_grouping[n_grouping_local]=vy_halos[j_halo];
+        vz_grouping[n_grouping_local]=vz_halos[j_halo];
+        n_grouping_local++;
+      }
+    }
 
-    // Store grouping size
+    // Store grouping
+    ADaPS_store(&(plist.data),(void *)&n_random,        "n_all_random",ADaPS_SCALAR_SIZE_T);
+    ADaPS_store(&(plist.data),(void *)&n_random_local,  "n_random",    ADaPS_SCALAR_SIZE_T);
     ADaPS_store(&(plist.data),(void *)&n_grouping,      "n_all_halos", ADaPS_SCALAR_SIZE_T);
     ADaPS_store(&(plist.data),(void *)&n_grouping_local,"n_halos",     ADaPS_SCALAR_SIZE_T);
+    ADaPS_store(&(plist.data),(void *)x_random,         "x_random",    ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)y_random,         "y_random",    ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)z_random,         "z_random",    ADaPS_DEFAULT);
     ADaPS_store(&(plist.data),(void *)x_grouping,       "x_halos",     ADaPS_DEFAULT);
     ADaPS_store(&(plist.data),(void *)y_grouping,       "y_halos",     ADaPS_DEFAULT);
     ADaPS_store(&(plist.data),(void *)z_grouping,       "z_halos",     ADaPS_DEFAULT);
-    ADaPS_store(&(plist.data),(void *)vx_grouping,      "vx_halos_sub",ADaPS_DEFAULT);
-    ADaPS_store(&(plist.data),(void *)vy_grouping,      "vy_halos_sub",ADaPS_DEFAULT);
-    ADaPS_store(&(plist.data),(void *)vz_grouping,      "vz_halos_sub",ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)vx_grouping,      "vx_halos",    ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)vy_grouping,      "vy_halos",    ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)vz_grouping,      "vz_halos",    ADaPS_DEFAULT);
 
     // Needed to make writing more straight-forward
     n_data_ll  =(long long)n_grouping;
@@ -604,19 +611,32 @@ int main(int argc, char *argv[]){
         fprintf(fp_stats," %le %le",r_o,r_X);
       }
       SID_log("Done.",SID_LOG_CLOSE);
-    }
+    } // Loop over 4 cfuncs
+
+    // Loop over 3 velocity sets
+
     if(SID.I_am_Master)
       fprintf(fp_stats,"\n");
 
-  SID_free(SID_FARG x_random);
-  SID_free(SID_FARG y_random);
-  SID_free(SID_FARG z_random);
-  SID_free(SID_FARG x_grouping);
-  SID_free(SID_FARG y_grouping);
-  SID_free(SID_FARG z_grouping);
-  SID_free(SID_FARG vx_grouping);
-  SID_free(SID_FARG vy_grouping);
-  SID_free(SID_FARG vz_grouping);
+    // Clean-up
+    SID_log("Cleaning-up...",SID_LOG_OPEN);
+    if(SID.I_am_Master){
+      SID_free(SID_FARG rank_own);
+      SID_free(SID_FARG x_halos);
+      SID_free(SID_FARG y_halos);
+      SID_free(SID_FARG z_halos);
+      SID_free(SID_FARG vx_halos_sub);
+      SID_free(SID_FARG vy_halos_sub);
+      SID_free(SID_FARG vz_halos_sub);
+      SID_free(SID_FARG vx_halos_FoF);
+      SID_free(SID_FARG vy_halos_FoF);
+      SID_free(SID_FARG vz_halos_FoF);
+      SID_free(SID_FARG vx_halos_sys);
+      SID_free(SID_FARG vy_halos_sys);
+      SID_free(SID_FARG vz_halos_sys);
+    }
+
+    SID_log("Done.",SID_LOG_CLOSE);
 
     SID_log("Done.",SID_LOG_CLOSE);
   } // Loop over groupings
@@ -656,20 +676,6 @@ int main(int argc, char *argv[]){
   SID_free(SID_FARG COVMTX_2D);
   free_plist(&plist);
   free_RNG(&RNG);
-  if(SID.I_am_Master)
-    SID_free(SID_FARG rank_own);
-  SID_free(SID_FARG x_halos);
-  SID_free(SID_FARG y_halos);
-  SID_free(SID_FARG z_halos);
-  SID_free(SID_FARG vx_halos_sub);
-  SID_free(SID_FARG vy_halos_sub);
-  SID_free(SID_FARG vz_halos_sub);
-  SID_free(SID_FARG vx_halos_FoF);
-  SID_free(SID_FARG vy_halos_FoF);
-  SID_free(SID_FARG vz_halos_FoF);
-  SID_free(SID_FARG vx_halos_sys);
-  SID_free(SID_FARG vy_halos_sys);
-  SID_free(SID_FARG vz_halos_sys);
   
   SID_log("Done.",SID_LOG_CLOSE);
 

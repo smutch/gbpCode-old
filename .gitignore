@@ -1,5 +1,6 @@
 *.o
 *.a
+*._*
 .install*
 .printed_status
 todo
