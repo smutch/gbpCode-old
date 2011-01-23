@@ -6,8 +6,7 @@ OBJFILES  = read_groups.o              \
 	    read_groups_AHF.o          \
 	    compute_group_analysis.o   \
 	    read_group_properties.o    \
-	    write_group_analysis.o     \
-	    match_halos.o
+	    write_group_analysis.o     
 LIBFILE   = libgbpHalos.a
 BINFILES  = make_catalog_ascii make_group_ascii make_group_analysis cat_group_analysis convert_AHF
 LIBS      = -lgbpHalos -lgbpSPH -lgbpCosmo -lgbpMath -lgbpLib
