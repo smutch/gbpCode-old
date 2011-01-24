@@ -77,4 +77,5 @@ void set_MCMC_coverage_size(MCMC_info *MCMC,int coverage_size);
 void set_MCMC_likeliood_function(MCMC_info *MCMC,void (*likelihood_function)(MCMC_info *,double **,double *,double *));
 void set_MCMC_directory(MCMC_info *MCMC,char *directory);
 void set_MCMC_mode(MCMC_info *MCMC,int mode);
+void read_covariance(MCMC_info *MCMC,char *filename);
 
