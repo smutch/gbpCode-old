@@ -6,6 +6,7 @@ LIBFILE  = libgbpMCMC.a
 OBJFILES = add_DS_to_MCMC.o                     \
 	   add_covariance_to_MCMC.o             \
 	   compute_MCMC.o                       \
+	   analyze_MCMC.o                       \
 	   compute_MCMC_chain_stats.o           \
 	   compute_MCMC_ln_likelihood_default.o \
 	   free_MCMC.o                          \
@@ -17,9 +18,9 @@ OBJFILES = add_DS_to_MCMC.o                     \
 	   set_MCMC_likelihood_function.o       \
 	   set_MCMC_iterations.o                \
 	   set_MCMC_temperature.o               \
-	   read_covariance.o
+	   read_MCMC_covariance.o
 SCRIPTS  = allresults_MCMC.py
-BINFILES = covariance2ascii
-LIBS     = -lgbpLib
+BINFILES = covariance2ascii 
+LIBS     = -lgbpMCMC -lgbpMath -lgbpLib
 SUBDIRS  = 
 #############################

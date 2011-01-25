@@ -71,11 +71,13 @@ void generate_new_MCMC_link(MCMC_info *MCMC,double *P_old,int n_P,double tempera
 void compute_MCMC_ln_likelihood_default(MCMC_info *MCMC,double **M,double *P,double *ln_likeliood);
 void compute_MCMC_chain_stats(double **x,int n_x,int n_avg,double *x_min,double *x_bar_in,double *x_max,double *x_sigma,double **auto_cor,double *slopes,double *dP_sub,double *ln_likelihood_in,double *ln_likelihood_min,double *ln_likelihood_avg,double *ln_likelihood_max);
 void compute_MCMC(MCMC_info *MCMC);
+void analyze_MCMC(MCMC_info *MCMC);
 void set_MCMC_temperature(MCMC_info *MCMC,double temperature);
 void set_MCMC_iterations(MCMC_info *MCMC,int n_avg,int n_avg_covariance,int n_thin,int n_burn,int n_integrate);
 void set_MCMC_coverage_size(MCMC_info *MCMC,int coverage_size);
 void set_MCMC_likeliood_function(MCMC_info *MCMC,void (*likelihood_function)(MCMC_info *,double **,double *,double *));
 void set_MCMC_directory(MCMC_info *MCMC,char *directory);
 void set_MCMC_mode(MCMC_info *MCMC,int mode);
-void read_covariance(MCMC_info *MCMC,char *filename);
+void read_MCMC_covariance(MCMC_info *MCMC,char *filename);
+void read_MCMC_state(MCMC_info *MCMC,char *filename_root);
 
