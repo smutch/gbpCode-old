@@ -5,6 +5,7 @@
 todo
 Makefile.mylocal
 my*
+._*
 gbpClustering
 gbpCosmo
 gbpHalos

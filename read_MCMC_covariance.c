@@ -9,7 +9,7 @@
 #include <gsl/gsl_fit.h>
 #include <gsl/gsl_interp.h>
 
-void read_covariance(MCMC_info *MCMC,char *filename){
+void read_MCMC_covariance(MCMC_info *MCMC,char *filename){
   FILE   *fp;
   double *V;
   int     n_P,i_P,j_P;
