@@ -15,6 +15,13 @@
 #define READ_GROUPS_NOPROPERTIES 32
 #define READ_GROUPS_NOIDS        64
 
+#define MATCH_SUBGROUPS     2 // Match subgroups (default)
+#define MATCH_GROUPS        4 // Match groups
+#define MATCH_BACK          8 // Switch the sence of matching between plists
+#define MATCH_STORE_2      16 // Switch which plist results are stored in
+#define MATCH_STORE_SCORE  32 // Store the matching score
+#define MATCH_SUBSTRUCTURE 64 // Search for substructure; ie. ignore self matches
+
 typedef struct halo_properties_info halo_properties_info;
 struct halo_properties_info{
   long long id_MBP;                    // ID of most bound particle in structure
@@ -135,4 +142,14 @@ void write_group_analysis(FILE                 *fp_properties,
                           FILE                 *fp_profiles,
                           halo_properties_info *properties,
                           halo_profile_info    *profile);
+void match_halos(plist_info  *plist_1_in,
+                 int          i_file_1_in,
+                 int         *mark_list_1,
+                 int          n_mark_1,
+                 plist_info  *plist_2_in,
+                 int          i_file_2_in,
+                 int         *mark_list_2,
+                 int          n_mark_2,
+                 char        *catalog_1to2,
+                 int          mode);
 

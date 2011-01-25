@@ -4,6 +4,7 @@
 INCFILES  = gbpHalos.h
 OBJFILES  = read_groups.o              \
 	    read_groups_AHF.o          \
+	    match_halos.o              \
 	    compute_group_analysis.o   \
 	    read_group_properties.o    \
 	    write_group_analysis.o     
