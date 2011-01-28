@@ -20,7 +20,6 @@ void free_MCMC(MCMC_info *MCMC){
   SID_free(SID_FARG MCMC->P_names);
   SID_free(SID_FARG MCMC->problem_name);
   SID_free(SID_FARG MCMC->P_init);
-  SID_free(SID_FARG MCMC->flag_limit);
   SID_free(SID_FARG MCMC->P_limit_min);
   SID_free(SID_FARG MCMC->P_limit_max);
   if(MCMC->n_arrays>0){

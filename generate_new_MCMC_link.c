@@ -39,10 +39,8 @@ void generate_new_MCMC_link(MCMC_info *MCMC,double *P_old,int n_P,double constan
     }
     // Enforce parameter limits
     for(i_P=0;i_P<n_P;i_P++){
-      if(MCMC->flag_limit[i_P]){
-         if(P_new[i_P]<MCMC->P_limit_min[i_P]) P_new[i_P]=2*(MCMC->P_limit_min[i_P])-P_new[i_P];
-         if(P_new[i_P]>MCMC->P_limit_max[i_P]) P_new[i_P]=2*(MCMC->P_limit_max[i_P])-P_new[i_P];
-      }
+       if(P_new[i_P]<MCMC->P_limit_min[i_P]) P_new[i_P]=2*(MCMC->P_limit_min[i_P])-P_new[i_P];
+       if(P_new[i_P]>MCMC->P_limit_max[i_P]) P_new[i_P]=2*(MCMC->P_limit_max[i_P])-P_new[i_P];
     }
   }
   if(!check_mode_for_flag(MCMC->mode,MCMC_MODE_PARALLEL))

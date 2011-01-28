@@ -9,7 +9,7 @@
 #include <gsl/gsl_fit.h>
 #include <gsl/gsl_interp.h>
 
-void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(double *,MCMC_info *,double **),int n_P,double *P_init,char **P_names,int *flag_limit,double *P_limit_min,double *P_limit_max,int n_arrays,...){
+void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(double *,MCMC_info *,double **),int n_P,double *P_init,char **P_names,double *P_limit_min,double *P_limit_max,int n_arrays,...){
   int     i_P;
   int     i_array;
   va_list vargs;
@@ -31,20 +31,32 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
     MCMC->P_names[i_P]=(char *)SID_malloc(sizeof(char)*MCMC_NAME_SIZE);
     sprintf(MCMC->P_names[i_P],"%s\0",P_names[i_P]);
   }
+
+  // Set parameter limits
   MCMC->P_init       =(double *)SID_malloc(sizeof(double)*MCMC->n_P);
-  MCMC->flag_limit   =(int    *)SID_malloc(sizeof(int)*MCMC->n_P);
   MCMC->P_limit_min  =(double *)SID_malloc(sizeof(double)*MCMC->n_P);
   MCMC->P_limit_max  =(double *)SID_malloc(sizeof(double)*MCMC->n_P);
-  if(flag_limit!=NULL){
-    for(i_P=0;i_P<n_P;i_P++){
-      MCMC->flag_limit[i_P]=flag_limit[i_P];
-      if(flag_limit[i_P]){
-        MCMC->P_limit_min[i_P]=P_limit_min[i_P];
-        MCMC->P_limit_max[i_P]=P_limit_max[i_P];
-      }  
-    }
+  if(P_limit_min==NULL){
+    for(i_P=0;i_P<n_P;i_P++)
+      MCMC->P_limit_min[i_P]=DBL_MIN*1e3;
   }
+  else{
+    for(i_P=0;i_P<n_P;i_P++)
+      MCMC->P_limit_min[i_P]=P_limit_min[i_P];
+  }
+  if(P_limit_max==NULL){
+    for(i_P=0;i_P<n_P;i_P++)
+      MCMC->P_limit_max[i_P]=DBL_MAX*1e-3;
+  }
+  else{
+    for(i_P=0;i_P<n_P;i_P++)
+      MCMC->P_limit_max[i_P]=P_limit_max[i_P];
+  }
+
+  // Set parameter initial values
   memcpy(MCMC->P_init,P_init,(size_t)MCMC->n_P*sizeof(double));
+
+  // Set arrays
   MCMC->n_arrays=n_arrays;
   if(n_arrays>0){
     MCMC->array     =(double **)SID_malloc(sizeof(double *)*MCMC->n_arrays);

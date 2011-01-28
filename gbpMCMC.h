@@ -35,7 +35,6 @@ struct MCMC_info {
   void    *params;
   char   **P_names;
   double  *P_init;
-  int     *flag_limit;
   double  *P_limit_min;
   double  *P_limit_max;
   int      n_arrays;
@@ -63,7 +62,7 @@ struct MCMC_info {
   MCMC_DS_info *last;
 };
 
-void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(double *,MCMC_info *,double **),int n_P,double *P_init,char **P_names,int *flag_limit,double *P_limit_min,double *P_limit_max,int n_arrays,...);
+void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(double *,MCMC_info *,double **),int n_P,double *P_init,char **P_names,double *P_limit_min,double *P_limit_max,int n_arrays,...);
 void add_DS_to_MCMC(MCMC_info *MCMC,const char *name,int n_M,double *DS,double *dDS,void *params,int n_arrays,...);
 void add_covariance_to_MCMC(MCMC_info *MCMC,double *V);
 void free_MCMC(MCMC_info *MCMC);

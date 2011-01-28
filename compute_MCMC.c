@@ -39,6 +39,9 @@ void compute_MCMC(MCMC_info *MCMC){
   double    P_init_test;
   double    M_target_test;
   double    dM_target_test;
+  double    array_test;
+  double    P_min_test;
+  double    P_max_test;
   int       i_P,j_P,k_P;
   int       i_M,j_M;
   int       ii_P,jj_P;
@@ -371,12 +374,18 @@ void compute_MCMC(MCMC_info *MCMC){
         if(n_P_test!=n_P)
           SID_trap_error("The number of paramaters is inconsistant (i.e. %d!=%d).",ERROR_LOGIC,n_P,n_P_test);
         for(i_P=0;i_P<n_P;i_P++){
-          fread(P_name_test, sizeof(char),  MCMC_NAME_SIZE,fp_run);
+          fread(P_name_test, sizeof(char),MCMC_NAME_SIZE,fp_run);
           if(strcmp(P_name_test,MCMC->P_names[i_P]))
             SID_trap_error("Parameter #%d's names are inconsistant (i.e. {%s}!={%s}).",ERROR_LOGIC,i_P,MCMC->P_names[i_P],P_name_test);
-          fread(&P_init_test,sizeof(double),1,             fp_run);
+          fread(&P_init_test,sizeof(double),1,fp_run);
           if(P_init_test!=MCMC->P_init[i_P])
             SID_trap_error("Parameter #%d's initial values are inconsistant (i.e. %le!=%le).",ERROR_LOGIC,i_P,MCMC->P_init[i_P],P_init_test);
+          fread(&P_min_test,sizeof(double),1,fp_run);
+          if(P_min_test!=MCMC->P_limit_min[i_P])
+            SID_trap_error("Parameter #%d's minimum values are inconsistant (i.e. %le!=%le).",ERROR_LOGIC,i_P,MCMC->P_limit_min[i_P],P_min_test);
+          fread(&P_max_test,sizeof(double),1,fp_run);
+          if(P_max_test!=MCMC->P_limit_max[i_P])
+            SID_trap_error("Parameter #%d's maximum values are inconsistant (i.e. %le!=%le).",ERROR_LOGIC,i_P,MCMC->P_limit_max[i_P],P_max_test);
         }
         fread(&n_arrays_test,sizeof(int),1,fp_run);
         if(n_arrays_test!=MCMC->n_arrays)
@@ -385,15 +394,15 @@ void compute_MCMC(MCMC_info *MCMC){
           fread(&array_name_test,sizeof(char),MCMC_NAME_SIZE,fp_run);
           if(strcmp(array_name_test,MCMC->array_name[i_array]))
             SID_trap_error("Project array names are inconsisitant (i.e. {%s}!={%s}).",ERROR_LOGIC,MCMC->array_name[i_array],array_name_test);
+          for(i_P=0;i_P<n_P;i_P++){
+            fread(&array_test,sizeof(double),1,fp_run);
+            if(array_test!=MCMC->array[i_array][i_P])
+              SID_trap_error("Project array #%d element #%d is inconsistant (i.e. %le!=%le).",ERROR_LOGIC,i_array,i_P,MCMC->array[i_array][i_P],array_test);
+          }
         }
-        fread(&n_DS_test,sizeof(int),   1,   fp_run);
+        fread(&n_DS_test,sizeof(int),1,fp_run);
         if(n_DS_test!=n_DS)
           SID_trap_error("The number of datasets is inconsistant (i.e. %d!=%d).",ERROR_LOGIC,n_DS,n_DS_test);
-        for(i_DS=0;i_DS<n_DS;i_DS++){
-          fread(&n_M_test,sizeof(int),1,fp_run);
-          if(n_M_test!=n_M[i_DS])
-            SID_trap_error("The sizes of dataset #%d are inconsistant (i.e. %d!=%d).",ERROR_LOGIC,i_DS,n_M_test,n_M[i_DS]);
-        }
         current_DS=MCMC->DS;
         i_DS=0;
         while(current_DS!=NULL){
@@ -401,10 +410,13 @@ void compute_MCMC(MCMC_info *MCMC){
           fread(name_test,     sizeof(char),  MCMC_NAME_SIZE, fp_run);
           if(strcmp(name_test,current_DS->name))
             SID_trap_error("Dataset #%d's names are inconsistant (i.e. {%s}!={%s}).",ERROR_LOGIC,i_DS,current_DS->name,name_test);
+          fread(&n_M_test,sizeof(int),1,fp_run);
+          if(n_M_test!=n_M[i_DS])
+            SID_trap_error("The sizes of dataset #%d are inconsistant (i.e. %d!=%d).",ERROR_LOGIC,i_DS,n_M_test,n_M[i_DS]);
           for(i_M=0;i_M<current_DS->n_M;i_M++){
             fread(&M_target_test, sizeof(double),1,fp_run);
             if(M_target_test!=current_DS->M_target[i_M])
-              SID_trap_error("Dataset #%d, value element #%d is inconsistant (i.e. %le!=%le).",ERROR_LOGIC,i_DS,i_M,current_DS->M_target[i_M],M_target_test);
+              SID_trap_error("Dataset #%d, element #%d is inconsistant (i.e. %le!=%le).",ERROR_LOGIC,i_DS,i_M,current_DS->M_target[i_M],M_target_test);
           }
           for(i_M=0;i_M<current_DS->n_M;i_M++){
             fread(&dM_target_test,sizeof(double),1,fp_run);
@@ -413,11 +425,16 @@ void compute_MCMC(MCMC_info *MCMC){
           }
           fread(&n_arrays_test,sizeof(int),1,fp_run);
           if(n_arrays_test!=current_DS->n_arrays)
-            SID_trap_error("The number arrays in dataset #%d are inconsistant (i.e. %d!=%d).",ERROR_LOGIC,i_DS,n_arrays_test,current_DS->n_arrays);
+            SID_trap_error("The number of arrays in dataset #%d is inconsistant (i.e. %d!=%d).",ERROR_LOGIC,i_DS,n_arrays_test,current_DS->n_arrays);
           for(i_array=0;i_array<current_DS->n_arrays;i_array++){
             fread(array_name_test,sizeof(char),MCMC_NAME_SIZE,fp_run);
             if(strcmp(array_name_test,current_DS->array_name[i_array]))
               SID_trap_error("Array name #%d for dataset #%d is inconsisitant (i.e. {%s}!={%s}).",ERROR_LOGIC,i_array,i_DS,current_DS->array_name[i_array],array_name_test);
+            for(i_M=0;i_M<current_DS->n_M;i_M++){
+              fread(&array_test,sizeof(double),1,fp_run);
+              if(array_test!=current_DS->array[i_array][i_M])
+                SID_trap_error("Array #%d, element #%d for dataset #%d is inconsistant (i.e. %le!=%le).",ERROR_LOGIC,i_array,i_M,i_DS,current_DS->array[i_array][i_M],array_test);
+            }
           }
           current_DS=next_DS;
           i_DS++;
@@ -438,22 +455,28 @@ void compute_MCMC(MCMC_info *MCMC){
         for(i_P=0;i_P<n_P;i_P++){
           fwrite(MCMC->P_names[i_P],  sizeof(char),  MCMC_NAME_SIZE,fp_run);
           fwrite(&(MCMC->P_init[i_P]),sizeof(double),1,             fp_run);
+          fwrite(&(MCMC->P_limit_min[i_P]), sizeof(double),1,             fp_run);
+          fwrite(&(MCMC->P_limit_max[i_P]), sizeof(double),1,             fp_run);
         }
         fwrite(&(MCMC->n_arrays),sizeof(int),1,fp_run);
-        for(i_array=0;i_array<MCMC->n_arrays;i_array++)
-          fwrite(MCMC->array_name[i_array],sizeof(char),MCMC_NAME_SIZE,fp_run);
+        for(i_array=0;i_array<MCMC->n_arrays;i_array++){
+          fwrite(MCMC->array_name[i_array],sizeof(char),  MCMC_NAME_SIZE,fp_run);
+          fwrite(MCMC->array[i_array],     sizeof(double),n_P,           fp_run);
+        }
         // Stuff relating to the constraining datasets
-        fwrite(&n_DS,sizeof(int),   1,   fp_run);
-        fwrite(n_M,  sizeof(int),   n_DS,fp_run);
+        fwrite(&n_DS,sizeof(int),1,   fp_run);
         current_DS=MCMC->DS;
         while(current_DS!=NULL){
           next_DS=current_DS->next;
-          fwrite(current_DS->name,     sizeof(char),  MCMC_NAME_SIZE, fp_run);
-          fwrite(current_DS->M_target, sizeof(double),current_DS->n_M,fp_run);
-          fwrite(current_DS->dM_target,sizeof(double),current_DS->n_M,fp_run);
-          fwrite(&(current_DS->n_arrays),sizeof(int),1,fp_run);
-          for(i_array=0;i_array<current_DS->n_arrays;i_array++)
-            fwrite(current_DS->array_name[i_array],sizeof(char),MCMC_NAME_SIZE,fp_run);
+          fwrite(current_DS->name,       sizeof(char),   MCMC_NAME_SIZE,fp_run);
+          fwrite(&(current_DS->n_M),     sizeof(int),                 1,fp_run);
+          fwrite(current_DS->M_target,   sizeof(double),current_DS->n_M,fp_run);
+          fwrite(current_DS->dM_target,  sizeof(double),current_DS->n_M,fp_run);
+          fwrite(&(current_DS->n_arrays),sizeof(int),                 1,fp_run);
+          for(i_array=0;i_array<current_DS->n_arrays;i_array++){
+            fwrite(current_DS->array_name[i_array],sizeof(char),  MCMC_NAME_SIZE, fp_run);
+            fwrite(current_DS->array[i_array],     sizeof(double),current_DS->n_M,fp_run);
+          }
           current_DS=next_DS;
         }
         fclose(fp_run);
