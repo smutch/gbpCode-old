@@ -46,13 +46,17 @@ print 'flag_autocor=',flag_autocor_on_file
 
 # Read (and print) parameter names to stdout
 print 'MCMC Parameters:'
-n_P_in=fromfile(file=fd,dtype='i',count=1)
-n_P   =n_P_in[0]
-P_name= []
-P_init= []
+n_P_in     =fromfile(file=fd,dtype='i',count=1)
+n_P        =n_P_in[0]
+P_name     = []
+P_init     = []
+P_limit_min= []
+P_limit_max= []
 for i_P in xrange(0,n_P):
 	P_name.append(fromfile(file=fd, dtype=(str_, MCMC_NAME_SIZE), count=1)[0].split('\x00')[0])
 	P_init.append(fromfile(file=fd,dtype='d',count=1))
+	P_limit_min.append(fromfile(file=fd,dtype='d',count=1))
+	P_limit_max.append(fromfile(file=fd,dtype='d',count=1))
 	print '  ',P_name[i_P]
 print
 
@@ -64,6 +68,7 @@ if(n_P_arrays>0):
 	P_array_name= []
 	for i_array in xrange(0,n_P_arrays):
 		P_array_name.append(fromfile(file=fd, dtype=(str_, MCMC_NAME_SIZE), count=1)[0].split('\x00')[0])
+		junk=fromfile(file=fd,dtype='d',count=n_P)
 		print '  ',P_array_name[i_array]
 	print
 
@@ -72,17 +77,18 @@ if(n_P_arrays>0):
 print 'MCMC Datasets:'
 n_DS_in  =fromfile(file=fd,dtype='i',count=1)
 n_DS     =n_DS_in[0]
-n_M      =fromfile(file=fd,dtype='i',count=n_DS)
 n_M_total=sum(n_M)
 DS_name  =[]
 M_target =[]
 dM_target=[]
+n_M      =[]
 DS_array_name    = []
 n_DS_arrays      = []
 DS_arrays_offset = []
 n_DS_arrays_total= 0
 for i_DS in xrange(0,n_DS):
 	DS_name.append(fromfile(file=fd, dtype=(str_, MCMC_NAME_SIZE), count=1)[0].split('\x00')[0])
+	n_M.append(fromfile(file=fd,dtype='i',count=1))
 	M_target.append(fromfile(file=fd,dtype='d',count=n_M[i_DS]))
 	dM_target.append(fromfile(file=fd,dtype='d',count=n_M[i_DS]))
 	n_DS_arrays.append(fromfile(file=fd,dtype='i',count=1))
@@ -90,6 +96,7 @@ for i_DS in xrange(0,n_DS):
 	if(n_DS_arrays[i_DS]>0):
         	for i_array in xrange(0,n_DS_arrays[i_DS]):
 	                DS_array_name.append(fromfile(file=fd, dtype=(str_, MCMC_NAME_SIZE), count=1)[0].split('\x00')[0])
+			junk=fromfile(file=fd,dtype='d',count=n_M[i_DS])
         		print '     array #'+str(i_array+1).zfill(2)+': '+DS_array_name[n_DS_arrays_total+i_array]
         DS_arrays_offset.append(n_DS_arrays_total)
 	n_DS_arrays_total=n_DS_arrays_total+n_DS_arrays[i_DS]
