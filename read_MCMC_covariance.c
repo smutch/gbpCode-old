@@ -22,7 +22,7 @@ void read_MCMC_covariance(MCMC_info *MCMC,char *filename){
   V=(double *)SID_malloc(sizeof(double)*n_P*n_P);
   fread(V,sizeof(double),n_P*n_P,fp);
   fclose(fp);
-  add_covariance_to_MCMC(MCMC,V);
+  set_MCMC_covariance(MCMC,V);
   SID_free(SID_FARG V);
   SID_log("Done.",SID_LOG_CLOSE);
 }

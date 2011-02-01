@@ -9,7 +9,7 @@
 #include <gsl/gsl_fit.h>
 #include <gsl/gsl_interp.h>
 
-void add_covariance_to_MCMC(MCMC_info *MCMC,double *V){
+void set_MCMC_covariance(MCMC_info *MCMC,double *V){
   int i_P,j_P;
   if(V==NULL)
     SID_log("Initializing the covariance matrix...",SID_LOG_OPEN);

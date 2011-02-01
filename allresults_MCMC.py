@@ -38,7 +38,6 @@ filename_plot_root=filename_root+'/plots/'
 fd                  =open(filename_root+'/run.dat','rb')
 problem_name        =fromfile(file=fd, dtype=(str_, MCMC_NAME_SIZE), count=1)[0].split('\x00')[0]
 n_avg               =fromfile(file=fd,dtype='i',count=1)
-n_avg_covariance    =fromfile(file=fd,dtype='i',count=1)
 flag_autocor_on_file=fromfile(file=fd,dtype='i',count=1)
 print 'Problem name=',problem_name
 print 'n_avg       =',n_avg
@@ -77,7 +76,6 @@ if(n_P_arrays>0):
 print 'MCMC Datasets:'
 n_DS_in  =fromfile(file=fd,dtype='i',count=1)
 n_DS     =n_DS_in[0]
-n_M_total=sum(n_M)
 DS_name  =[]
 M_target =[]
 dM_target=[]
@@ -100,11 +98,12 @@ for i_DS in xrange(0,n_DS):
         		print '     array #'+str(i_array+1).zfill(2)+': '+DS_array_name[n_DS_arrays_total+i_array]
         DS_arrays_offset.append(n_DS_arrays_total)
 	n_DS_arrays_total=n_DS_arrays_total+n_DS_arrays[i_DS]
+n_M_total=sum(n_M)
 print
 fd.close()
 
 # Read (and print) the number of iterations
-fd                    =open(filename_root+'/chains/chain_iterations_'+str(my_chain).zfill(6)+'.dat','rb')
+fd                    =open(filename_root+'/chains/chain_config_'+str(my_chain).zfill(6)+'.dat','rb')
 n_iterations          =fromfile(file=fd,dtype='i',count=1)
 n_iterations_burn     =fromfile(file=fd,dtype='i',count=1)
 n_iterations_integrate=n_iterations-n_iterations_burn
@@ -419,12 +418,6 @@ if (flag_trace_on==1):
 		ln_Pr_max_c[i] =fromfile(file=fd,dtype='d',count=1)
 		slopes[i,:]    =fromfile(file=fd,dtype='d',count=n_P)
 		drift[i,:]     =fromfile(file=fd,dtype='d',count=n_P)
-	ln_Pr_min_p/=n_M_total
-	ln_Pr_avg_p/=n_M_total
-	ln_Pr_max_p/=n_M_total
-	ln_Pr_min_c/=n_M_total
-	ln_Pr_avg_c/=n_M_total
-	ln_Pr_max_c/=n_M_total
 	#ln_Pr_limit_min=0.9*min(ln_Pr_min_p[n_iterations_burn:])
 	#ln_Pr_limit_max=1.1*min(ln_Pr_min_p[n_iterations_burn:])
 	ln_Pr_limit_min=-10.00

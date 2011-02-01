@@ -16,7 +16,7 @@ void read_MCMC_state(MCMC_info *MCMC,char *filename_root){
   char      filename_plots_dir[MAX_FILENAME_LENGTH];
   char      filename_run[MAX_FILENAME_LENGTH];
   char      filename_chain[MAX_FILENAME_LENGTH];
-  char      filename_chain_iterations[MAX_FILENAME_LENGTH];
+  char      filename_chain_config[MAX_FILENAME_LENGTH];
   char      filename_stats[MAX_FILENAME_LENGTH];
   char      filename_coverage[MAX_FILENAME_LENGTH];
   char      filename_chain_covariance[MAX_FILENAME_LENGTH];
@@ -28,7 +28,7 @@ void read_MCMC_state(MCMC_info *MCMC,char *filename_root){
   int       i_P,i_DS,i_M,i_array;
   FILE     *fp_run;
   FILE     *fp_chain;
-  FILE     *fp_chain_iterations;
+  FILE     *fp_chain_config;
   FILE     *fp_stats;
   FILE     *fp_coverage;
   FILE     *fp_chain_covariance;
@@ -40,7 +40,6 @@ void read_MCMC_state(MCMC_info *MCMC,char *filename_root){
 
   my_chain=0;
 
-  // Perform integration
     SID_log("Reading MCMC state from {%s}...",SID_LOG_OPEN,filename_root);
     strcpy(MCMC->filename_output_dir,filename_root);
     // Set directories
@@ -51,7 +50,7 @@ void read_MCMC_state(MCMC_info *MCMC,char *filename_root){
     // Set filenames
     sprintf(filename_run,             "%s/run.dat",                  MCMC->filename_output_dir);
     sprintf(filename_chain,           "%s/chain_trace_%06d.dat",     filename_chain_dir,my_chain);
-    sprintf(filename_chain_iterations,"%s/chain_iterations_%06d.dat",filename_chain_dir,my_chain);
+    sprintf(filename_chain_config,    "%s/chain_config_%06d.dat",    filename_chain_dir,my_chain);
     sprintf(filename_chain_covariance,"%s/chain_covariance_%06d.dat",filename_chain_dir,my_chain);
     sprintf(filename_stats,           "%s/chain_stats_%06d.dat",     filename_chain_dir,my_chain);
     sprintf(filename_coverage,        "%s/coverage.dat",             filename_results_dir);
@@ -83,12 +82,10 @@ void read_MCMC_state(MCMC_info *MCMC,char *filename_root){
       fp_run=fopen(filename_run,"rb");
       fread(MCMC->problem_name,       sizeof(char),MCMC_NAME_SIZE,fp_run);
       fread(&(MCMC->n_avg),           sizeof(int),              1,fp_run);
-      fread(&(MCMC->n_avg_covariance),sizeof(int),              1,fp_run);
       fread(&(MCMC->flag_autocor_on), sizeof(int),              1,fp_run);
       fread(&(MCMC->n_P),             sizeof(int),              1,fp_run);
       SID_log("Problem name    ={%s}",SID_LOG_COMMENT,MCMC->problem_name);
       SID_log("n_avg           ={%d}",SID_LOG_COMMENT,MCMC->n_avg);
-      SID_log("n_avg_covariance={%d}",SID_LOG_COMMENT,MCMC->n_avg_covariance);
       SID_log("flag_autocor_on ={%d}",SID_LOG_COMMENT,MCMC->flag_autocor_on);
       MCMC->P_names    =(char  **)SID_malloc(sizeof(char *)*MCMC->n_P);
       MCMC->P_init     =(double *)SID_malloc(sizeof(double)*MCMC->n_P);
@@ -155,11 +152,15 @@ void read_MCMC_state(MCMC_info *MCMC,char *filename_root){
     }
 
     // ... fetch the number of intervals that have already been computed ...
-    fp_chain_iterations=fopen(filename_chain_iterations,"rb");
-    fread(&(MCMC->n_iterations),     sizeof(int),1,fp_chain_iterations);
-    fread(&(MCMC->n_iterations_burn),sizeof(int),1,fp_chain_iterations);
-    SID_log("# burn  iterations = %d",SID_LOG_COMMENT,MCMC->n_iterations_burn);
-    SID_log("# total iterations = %d",SID_LOG_COMMENT,MCMC->n_iterations);
-    fclose(fp_chain_iterations);
+    fp_chain_config=fopen(filename_chain_config,"rb");
+    fread(&(MCMC->n_iterations),     sizeof(int),   1,      fp_chain_config);
+    fread(&(MCMC->n_iterations_burn),sizeof(int),   1,      fp_chain_config);
+    fread(&(MCMC->temperature),      sizeof(double),1,      fp_chain_config);
+    fread(&(MCMC->V),                sizeof(double),MCMC->n_P*MCMC->n_P,fp_chain_config);
+
+    SID_log("# burn  iterations = %d", SID_LOG_COMMENT,MCMC->n_iterations_burn);
+    SID_log("# total iterations = %d", SID_LOG_COMMENT,MCMC->n_iterations);
+    SID_log("Temperature        = %le",SID_LOG_COMMENT,MCMC->temperature);
+    fclose(fp_chain_config);
     SID_log("Done.",SID_LOG_CLOSE);
 }

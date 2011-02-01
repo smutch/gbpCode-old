@@ -9,6 +9,10 @@
 #include <gsl/gsl_fit.h>
 #include <gsl/gsl_interp.h>
 
+//todo: get rid of constant
+//      write T to a file somewhere for restarts
+//      deal with covariance in restarts
+
 void compute_MCMC(MCMC_info *MCMC){
   char      filename_output_dir[MAX_FILENAME_LENGTH];
   char      filename_chain_dir[MAX_FILENAME_LENGTH];
@@ -16,11 +20,10 @@ void compute_MCMC(MCMC_info *MCMC){
   char      filename_plots_dir[MAX_FILENAME_LENGTH];
   char      filename_run[MAX_FILENAME_LENGTH];
   char      filename_chain[MAX_FILENAME_LENGTH];
-  char      filename_chain_iterations[MAX_FILENAME_LENGTH];
+  char      filename_chain_config[MAX_FILENAME_LENGTH];
+  char      filename_chain_covariance[MAX_FILENAME_LENGTH];
   char      filename_stats[MAX_FILENAME_LENGTH];
   char      filename_coverage[MAX_FILENAME_LENGTH];
-  char      filename_chain_covariance[MAX_FILENAME_LENGTH];
-  char      filename_covariance[MAX_FILENAME_LENGTH];
   char      filename_histograms[MAX_FILENAME_LENGTH];
   char      filename_results[MAX_FILENAME_LENGTH];
   char      filename_stop[MAX_FILENAME_LENGTH];
@@ -30,7 +33,6 @@ void compute_MCMC(MCMC_info *MCMC){
   char      name_test[MCMC_NAME_SIZE];
   char      array_name_test[MCMC_NAME_SIZE];
   int       n_avg_test;
-  int       n_avg_covariance_test;
   int       flag_autocor_on_test;
   int       n_P_test;
   int       n_DS_test;
@@ -42,6 +44,7 @@ void compute_MCMC(MCMC_info *MCMC){
   double    array_test;
   double    P_min_test;
   double    P_max_test;
+  int       i_tune;
   int       i_P,j_P,k_P;
   int       i_M,j_M;
   int       ii_P,jj_P;
@@ -111,11 +114,10 @@ void compute_MCMC(MCMC_info *MCMC){
   double    ln_likelihood_new,ln_likelihood_last;
   FILE     *fp_run;
   FILE     *fp_chain;
-  FILE     *fp_chain_iterations;
+  FILE     *fp_chain_config;
+  FILE     *fp_chain_covariance;
   FILE     *fp_stats;
   FILE     *fp_coverage;
-  FILE     *fp_chain_covariance;
-  FILE     *fp_covariance;
   FILE     *fp_histograms;
   FILE     *fp_results;
   FILE     *fp_stop;
@@ -134,7 +136,6 @@ void compute_MCMC(MCMC_info *MCMC){
   int       n_thin_burn;
   int       n_thin_integrate;
   int       i_thin;
-  double    temperature;
   int       flag_autocor_on;
   int       n_coverage;
   int       coverage_size;
@@ -174,19 +175,11 @@ void compute_MCMC(MCMC_info *MCMC){
   double         *P_contour_68;
   double         *P_contour_95;
   double         *P_best;
+  double         *V_compute;
   int             my_chain;
   int             flag_init;
   int             i_column;
   int             dummy_t;
-  double         *P_i_bar_accum;
-  double         *P_ij_bar_accum;
-  double         *P_i_bar;
-  double         *P_ij_bar;
-  double         *V_compute;
-  int             n_covariance;
-  int             i_covariance;
-  int             j_covariance;
-  int             n_avg_covariance;
   int             n_iterations_file_total;
   int             n_iterations_file_burn;
   int             flag_restart=FALSE;
@@ -197,9 +190,7 @@ void compute_MCMC(MCMC_info *MCMC){
 
   n_P                   =MCMC->n_P;
   n_DS                  =MCMC->n_DS;
-  temperature           =MCMC->temperature;
   n_avg                 =MCMC->n_avg;
-  n_avg_covariance      =MCMC->n_avg_covariance;
   n_iterations          =MCMC->n_iterations;
   n_iterations_burn     =MCMC->n_iterations_burn;
   n_iterations_integrate=n_iterations-n_iterations_burn;
@@ -214,11 +205,8 @@ void compute_MCMC(MCMC_info *MCMC){
   
   strcpy(filename_output_dir,MCMC->filename_output_dir);
 
-  constant=MCMC->temperature*2.4/sqrt((double)MCMC->n_M_total);
-
-  SID_log("temperature            = %lf",SID_LOG_COMMENT,temperature);
+  SID_log("temperature            = %lf",SID_LOG_COMMENT,MCMC->temperature);
   SID_log("n_avg                  = %d",SID_LOG_COMMENT,n_avg);
-  SID_log("n_avg_covariance       = %d",SID_LOG_COMMENT,n_avg_covariance);
   SID_log("n_thin                 = %d",SID_LOG_COMMENT,n_thin);
   SID_log("coverage_size          = %d",SID_LOG_COMMENT,coverage_size);
   SID_log("n_iterations           = %d",SID_LOG_COMMENT,n_iterations);
@@ -239,27 +227,6 @@ void compute_MCMC(MCMC_info *MCMC){
   else  
     SID_log("Auto-correlation  is off.",SID_LOG_COMMENT);
 
-  // Initialize arrays used for computing the covariance matrix
-  P_i_bar_accum =(double *)malloc(sizeof(double)*n_P);
-  P_ij_bar_accum=(double *)malloc(sizeof(double)*n_P*n_P);
-  P_i_bar       =(double *)malloc(sizeof(double)*n_P);
-  P_ij_bar      =(double *)malloc(sizeof(double)*n_P*n_P);
-  V_compute     =(double *)malloc(sizeof(double)*n_P*n_P);
-  for(i_P=0,k_P=0;i_P<n_P;i_P++){
-    P_i_bar_accum[i_P]=0.;
-    P_i_bar[i_P]      =0.;
-    for(j_P=0;j_P<n_P;j_P++,k_P++){
-      P_ij_bar_accum[k_P]=0.;
-      P_ij_bar[k_P]      =0.;
-      if(i_P==j_P)
-        V_compute[k_P]=1.;
-      else
-        V_compute[k_P]=0.;
-    }
-  }
-  if(!check_mode_for_flag(MCMC->mode,MCMC_NO_CVM_UPDATE))
-    add_covariance_to_MCMC(MCMC,V_compute);
-
   // Initialize chain arrays
   n_M       =(int      *)SID_malloc(sizeof(int      )*n_DS);
   M_new     =(double  **)SID_malloc(sizeof(double  *)*n_DS);
@@ -274,6 +241,7 @@ void compute_MCMC(MCMC_info *MCMC){
     current_DS  =next_DS;
     i_DS++;
   }
+  V_compute      =(double  *)SID_malloc(sizeof(double)  *n_P*n_P);
   P_new          =(double  *)SID_malloc(sizeof(double)  *n_P);
   P_last         =(double  *)SID_malloc(sizeof(double)  *n_P);
   P_min          =(double  *)SID_malloc(sizeof(double)  *n_P);
@@ -330,12 +298,11 @@ void compute_MCMC(MCMC_info *MCMC){
   // Set filenames
   sprintf(filename_run,             "%s/run.dat",                  filename_output_dir);
   sprintf(filename_chain,           "%s/chain_trace_%06d.dat",     filename_chain_dir,my_chain);
-  sprintf(filename_chain_iterations,"%s/chain_iterations_%06d.dat",filename_chain_dir,my_chain);
+  sprintf(filename_chain_config,    "%s/chain_config_%06d.dat",    filename_chain_dir,my_chain);
   sprintf(filename_chain_covariance,"%s/chain_covariance_%06d.dat",filename_chain_dir,my_chain);
   sprintf(filename_stats,           "%s/chain_stats_%06d.dat",     filename_chain_dir,my_chain);
   sprintf(filename_coverage,        "%s/coverage.dat",             filename_results_dir);
   sprintf(filename_histograms,      "%s/histograms.dat",           filename_results_dir);
-  sprintf(filename_covariance,      "%s/covariance.dat",           filename_results_dir);
   sprintf(filename_stop,            "%s/stop",                     filename_output_dir);
   
   SID_log("Done.",SID_LOG_CLOSE);
@@ -353,7 +320,7 @@ void compute_MCMC(MCMC_info *MCMC){
 
     // Read/Write Header file
     if(SID.I_am_Master){
-      // If the header file already exists, check that it is consistant with the current run
+      // If run.dat already exists, this is a restart.  Check that it is consistant with the current run.
       if((fp_run=fopen(filename_run,"rb"))!=NULL){
         flag_restart=TRUE;
         SID_log("Checking the consistancy of this run with the previous run...",SID_LOG_OPEN);
@@ -364,9 +331,6 @@ void compute_MCMC(MCMC_info *MCMC){
         fread(&n_avg_test,sizeof(int),1,fp_run);
         if(n_avg_test!=n_avg)
           SID_trap_error("Integration averaging intervals are inconsistant (i.e. %d!=%d).",ERROR_LOGIC,n_avg,n_avg_test);
-        fread(&n_avg_covariance_test,sizeof(int),1,fp_run);
-        if(n_avg_covariance_test!=n_avg_covariance)
-          SID_trap_error("Covariance averaging intervals are inconsistant (i.e. %d!=%d).",ERROR_LOGIC,n_avg_covariance,n_avg_covariance_test);
         fread(&flag_autocor_on_test,sizeof(int),1,fp_run);
         if(flag_autocor_on_test!=flag_autocor_on)
           SID_trap_error("Autocorrelation flags are inconsistant (i.e. %d!=%d).",ERROR_LOGIC,flag_autocor_on,flag_autocor_on_test);
@@ -442,14 +406,13 @@ void compute_MCMC(MCMC_info *MCMC){
         fclose(fp_run);
         SID_log("Done.",SID_LOG_CLOSE);
       }
-      // ... else if the header file does not exist, write it
+      // ... else if run.dat does not exist, write it and perform autotuning (if requested).
       else{
         SID_log("Write header file...",SID_LOG_OPEN);
         fp_run=fopen(filename_run,"wb");
-        // Stuff relating to our MCMC project
+        // Stuff relating to this MCMC project
         fwrite(MCMC->problem_name,sizeof(char),MCMC_NAME_SIZE,fp_run);
         fwrite(&n_avg,            sizeof(int),   1,   fp_run);
-        fwrite(&n_avg_covariance, sizeof(int),   1,   fp_run);
         fwrite(&flag_autocor_on,  sizeof(int),   1,   fp_run);
         fwrite(&n_P,              sizeof(int),   1,   fp_run);
         for(i_P=0;i_P<n_P;i_P++){
@@ -485,24 +448,34 @@ void compute_MCMC(MCMC_info *MCMC){
     }
     SID_Bcast(&flag_restart,sizeof(int),MASTER_RANK);
 
-    // Initialize the run parameters
+    // If this is NOT a restart, start from scratch ...
     n_iterations_file_total=0;
     n_iterations_file_burn =0;
-    n_covariance           =0;
-    i_covariance           =0;
-
-    // If this is NOT a restart, start from scratch ...
     if(!flag_restart){
+      // Perform autotuning
+      if(check_mode_for_flag(MCMC->mode,MCMC_MODE_AUTOTUNE)){
+        SID_log("Perform autotuning...",SID_LOG_OPEN|SID_LOG_TIMER);
+        for(i_tune=0;i_tune<MCMC->n_autotune;i_tune++){
+          autotune_MCMC_temperature(MCMC,&RNG);
+          autotune_MCMC_covariance(MCMC,&RNG);
+        }
+        autotune_MCMC_temperature(MCMC,&RNG);
+        SID_log("Done.",SID_LOG_CLOSE);
+      }
+
+      // Set the initial state
       SID_log("Setting initial state...",SID_LOG_OPEN);
       fp_chain           =fopen(filename_chain,"wb");
       fp_stats           =fopen(filename_stats,"wb");
       MCMC->map_P_to_M(P_last,MCMC,M_last);
       MCMC->first_map_call=FALSE;
       MCMC->compute_MCMC_ln_likelihood(MCMC,M_last,P_last,&ln_likelihood_last);
-      fp_chain_iterations=fopen(filename_chain_iterations,"wb");
-      fwrite(&n_iterations_file_total,sizeof(int),1,fp_chain_iterations);
-      fwrite(&n_iterations_file_burn, sizeof(int),1,fp_chain_iterations);
-      fclose(fp_chain_iterations);
+      fp_chain_config=fopen(filename_chain_config,"wb");
+      fwrite(&n_iterations_file_total,sizeof(int),   1,      fp_chain_config);
+      fwrite(&n_iterations_file_burn, sizeof(int),   1,      fp_chain_config);
+      fwrite(&(MCMC->temperature),    sizeof(double),1,      fp_chain_config);
+      fwrite(&(MCMC->V),              sizeof(double),n_P*n_P,fp_chain_config);
+      fclose(fp_chain_config);
       SID_log("Done.",SID_LOG_CLOSE);
     }
     // ... else read the state we left-off from ...
@@ -510,32 +483,16 @@ void compute_MCMC(MCMC_info *MCMC){
       SID_log("Loading previous state...",SID_LOG_OPEN);
       // ... fetch the number of intervals that have already been computed ...
       SID_log("Reading the existant number of iterations...",SID_LOG_OPEN);
-      fp_chain_iterations=fopen(filename_chain_iterations,"rb");
-      fread(&n_iterations_file_total,sizeof(int),1,fp_chain_iterations);
-      fread(&n_iterations_file_burn, sizeof(int),1,fp_chain_iterations);
+      fp_chain_config=fopen(filename_chain_config,"rb");
+      fread(&n_iterations_file_total,sizeof(int),   1,      fp_chain_config);
+      fread(&n_iterations_file_burn, sizeof(int),   1,      fp_chain_config);
+      fread(&(MCMC->temperature),    sizeof(double),1,      fp_chain_config);
+      fread(&(MCMC->V),              sizeof(double),n_P*n_P,fp_chain_config);
       SID_log("# burn  iterations = %d (%d requested)",SID_LOG_COMMENT,n_iterations_file_burn ,n_iterations_burn);
       SID_log("# total iterations = %d (%d requested)",SID_LOG_COMMENT,n_iterations_file_total,n_iterations);
-      fclose(fp_chain_iterations);
+      SID_log("Temperature        = %le",              SID_LOG_COMMENT,MCMC->temperature);
+      fclose(fp_chain_config);
       SID_log("Done.",SID_LOG_CLOSE);
-
-      // ... read the covariance matrix (if it exists) ...
-      if((fp_chain_covariance=fopen(filename_chain_covariance,"rb"))!=NULL){
-        SID_log("Reading the existant covariance matrix...",SID_LOG_OPEN);
-        fread(&i_covariance,sizeof(int),1,fp_chain_covariance);
-        fread(&n_covariance,sizeof(int),1,fp_chain_covariance);
-        SID_log("# iterations = %d (averaging interval=%d)",SID_LOG_COMMENT,i_covariance,n_avg_covariance);
-        SID_log("# samples    = %d",                        SID_LOG_COMMENT,n_covariance);
-        fread(&n_P_test,    sizeof(int),1,fp_chain_covariance);
-        if(n_P_test!=n_P)
-          SID_trap_error("The number of paramaters is inconsistant (i.e. %d!=%d).",ERROR_LOGIC,n_P,n_P_test);        
-        fread(V_compute,     sizeof(double),n_P*n_P,fp_chain_covariance);
-        fread(P_i_bar_accum, sizeof(double),n_P,    fp_chain_covariance);
-        fread(P_ij_bar_accum,sizeof(double),n_P*n_P,fp_chain_covariance);
-        fclose(fp_chain_covariance);
-        SID_log("Done.",SID_LOG_CLOSE);
-        if(!check_mode_for_flag(MCMC->mode,MCMC_NO_CVM_UPDATE))
-          add_covariance_to_MCMC(MCMC,V_compute);
-      }
 
       // ... scan to the end of the chain and read the last-used parameter set
       if(n_iterations_file_total>0){
@@ -561,7 +518,7 @@ void compute_MCMC(MCMC_info *MCMC){
         SID_log("Done.",SID_LOG_CLOSE);
       }
       else{
-        SID_log("Setting initial state...",SID_LOG_OPEN);
+        SID_log("Setting the initial state...",SID_LOG_OPEN);
         MCMC->map_P_to_M(P_last,MCMC,M_last);
         MCMC->first_map_call=FALSE;
         SID_log("Done.",SID_LOG_CLOSE);
@@ -603,7 +560,9 @@ void compute_MCMC(MCMC_info *MCMC){
       // ... open files ...
       fp_chain=fopen(filename_chain,"ab");
       fp_stats=fopen(filename_stats,"ab");        
-    }
+    } // End of restart stuff
+
+    // Report the starting conditions (if requested)
     if(flag_report_props && my_chain==SID.My_rank){
       SID_log("Initial parameters:",SID_LOG_ALLRANKS|SID_LOG_OPEN);
       for(i_P=0;i_P<n_P;i_P++)
@@ -626,6 +585,8 @@ void compute_MCMC(MCMC_info *MCMC){
       i_iteration=n_iterations;
     }
     i_iteration_start=i_iteration;
+
+    // This is the end of the initialization
     SID_log("Done.",SID_LOG_CLOSE);
 
     // Create the chain in 2 phases: a burn-in phase and an integration phase
@@ -642,7 +603,7 @@ void compute_MCMC(MCMC_info *MCMC){
         n_iterations_phase=n_iterations-n_iterations_burn;
         break;
       }
-      
+
       // Initialize progress reporting
       i_report=0;
       if(n_iterations_phase>20)
@@ -651,7 +612,6 @@ void compute_MCMC(MCMC_info *MCMC){
         i_iteration_next_report=20;
 
       // Loop until this phase (burn or integrate) is done
-      j_covariance =0;
       n_success    =0;
       n_success_all=0;
       n_fail       =0;
@@ -662,9 +622,9 @@ void compute_MCMC(MCMC_info *MCMC){
         for(i_avg=0,i_thin=0,i_proposal=0;i_avg<n_avg;){
 
           // Generate new proposal and determine it's chi^2
-          generate_new_MCMC_link(MCMC,P_last,n_P,constant,&RNG,m,b,P_new);
+          generate_new_MCMC_link(MCMC,P_last,n_P,&RNG,m,b,P_new);
           while(MCMC->map_P_to_M(P_new,MCMC,M_new))
-            generate_new_MCMC_link(MCMC,P_last,n_P,constant,&RNG,m,b,P_new);
+            generate_new_MCMC_link(MCMC,P_last,n_P,&RNG,m,b,P_new);
           MCMC->first_map_call=FALSE;
 
           i_thin++;
@@ -719,47 +679,6 @@ void compute_MCMC(MCMC_info *MCMC){
                 fwrite(P_new,        sizeof(double),n_P,fp_chain);
                 for(i_DS=0;i_DS<n_DS;i_DS++)
                   fwrite(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
-              }
-
-              // ... and add it to the covariance matrix
-              n_covariance++;
-              i_covariance++;
-              for(i_P=0,k_P=0;i_P<n_P;i_P++){
-                P_i_bar_accum[i_P]+=P_last[i_P];
-                for(j_P=0;j_P<n_P;j_P++,k_P++)
-                  P_ij_bar_accum[k_P]+=P_last[i_P]*P_last[j_P];
-              }
-
-              // Update the covariance matrix after each covariance averaging interval
-              if(i_covariance>=n_avg_covariance){
-                for(i_P=0;i_P<n_P;i_P++)
-                  P_i_bar[i_P]=P_i_bar_accum[i_P]/(double)n_covariance;
-                for(i_P=0,k_P=0;i_P<n_P;i_P++){
-                  for(j_P=0;j_P<n_P;j_P++,k_P++){
-                    P_ij_bar[k_P] =P_ij_bar_accum[k_P]/(double)n_covariance;
-                    V_compute[k_P]=P_ij_bar[k_P]-P_i_bar[i_P]*P_i_bar[j_P];
-                  }
-                }
-                // Start fresh after the first 2 covariance averaging intervals
-                //   of the burn-in phase but keep accumulating otherwise
-                if(i_phase==0 && j_covariance<2){
-                  for(i_P=0,k_P=0;i_P<n_P;i_P++){
-                    P_i_bar_accum[i_P]=0.;
-                    P_i_bar[i_P]      =0.;
-                    for(j_P=0;j_P<n_P;j_P++,k_P++){
-                      P_ij_bar_accum[k_P]=0.;
-                      P_ij_bar[k_P]      =0.;
-                    }
-                  }
-                  n_covariance=0;
-                }
-                // Update MCMC structure during burn-in only
-                if(i_phase==0){
-                  if(!check_mode_for_flag(MCMC->mode,MCMC_NO_CVM_UPDATE))
-                    add_covariance_to_MCMC(MCMC,V_compute);
-                }
-                i_covariance=0;
-                j_covariance++;
               }
             }
           }
@@ -844,42 +763,21 @@ void compute_MCMC(MCMC_info *MCMC){
       if(my_chain==SID.My_rank){
         // Write the status of the covariance matrix calculation
         fp_chain_covariance=fopen(filename_chain_covariance,"wb");
-        fwrite(&i_covariance, sizeof(int),   1,      fp_chain_covariance);
-        fwrite(&n_covariance, sizeof(int),   1,      fp_chain_covariance);
-        fwrite(&n_P,          sizeof(int),   1,      fp_chain_covariance);
-        fwrite(V_compute,     sizeof(double),n_P*n_P,fp_chain_covariance);
-        fwrite(P_i_bar_accum, sizeof(double),n_P,    fp_chain_covariance);
-        fwrite(P_ij_bar_accum,sizeof(double),n_P*n_P,fp_chain_covariance);
+        fwrite(&n_P,   sizeof(int),   1,      fp_chain_covariance);
+        fwrite(MCMC->V,sizeof(double),n_P*n_P,fp_chain_covariance);
         fclose(fp_chain_covariance);
-
-        // Reset the covariance matrix calculation if this is the end of the burn-in ...
-        if(i_phase==0 && !flag_stop){
-
-          // This is the covariance matrix that will be 
-          //   used for the integration phase
-          if(!check_mode_for_flag(MCMC->mode,MCMC_NO_CVM_UPDATE))
-            add_covariance_to_MCMC(MCMC,V_compute);
-          for(i_P=0,k_P=0;i_P<n_P;i_P++){
-            P_i_bar_accum[i_P]=0.;
-            P_i_bar[i_P]      =0.;
-            for(j_P=0;j_P<n_P;j_P++,k_P++){
-              P_ij_bar_accum[k_P]=0.;
-              P_ij_bar[k_P]      =0.;
-            }
-          }
-          i_covariance=0;
-          n_covariance=0;
-        }
       }
       i_iteration      =0;
       i_iteration_start=i_iteration;
       SID_log("Done.",SID_LOG_CLOSE);
     }
     if(my_chain==SID.My_rank){
-      fp_chain_iterations=fopen(filename_chain_iterations,"wb");
-      fwrite(&n_iterations_file_total,sizeof(int),1,fp_chain_iterations);
-      fwrite(&n_iterations_file_burn, sizeof(int),1,fp_chain_iterations);
-      fclose(fp_chain_iterations);
+      fp_chain_config=fopen(filename_chain_config,"wb");
+      fwrite(&n_iterations_file_total,sizeof(int),   1,      fp_chain_config);
+      fwrite(&n_iterations_file_burn, sizeof(int),   1,      fp_chain_config);
+      fwrite(&(MCMC->temperature),    sizeof(double),1,      fp_chain_config);
+      fwrite(&(MCMC->V),              sizeof(double),n_P*n_P,fp_chain_config);
+      fclose(fp_chain_config);
       fclose(fp_chain);
       fclose(fp_stats);
     }
@@ -894,11 +792,6 @@ void compute_MCMC(MCMC_info *MCMC){
   SID_log("Cleaning-up...",SID_LOG_OPEN);
   free_RNG(&RNG);
   gsl_vector_free(b);
-  SID_free(SID_FARG P_i_bar_accum);
-  SID_free(SID_FARG P_ij_bar_accum);
-  SID_free(SID_FARG P_i_bar);
-  SID_free(SID_FARG P_ij_bar);
-  SID_free(SID_FARG V_compute);
   SID_free(SID_FARG n_M);
   for(i_DS=0;i_DS<n_DS;i_DS++){
     SID_free(SID_FARG M_new[i_DS]);
@@ -923,6 +816,7 @@ void compute_MCMC(MCMC_info *MCMC){
     if(flag_autocor_on)
       SID_free(SID_FARG auto_cor[i_P]);
   }
+  SID_free(SID_FARG V_compute);
   SID_free(SID_FARG P_chain);
   SID_free(SID_FARG P_proposals);
   if(flag_autocor_on)

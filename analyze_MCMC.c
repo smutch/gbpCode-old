@@ -30,7 +30,6 @@ void analyze_MCMC(MCMC_info *MCMC){
   char      name_test[MCMC_NAME_SIZE];
   char      array_name_test[MCMC_NAME_SIZE];
   int       n_avg_test;
-  int       n_avg_covariance_test;
   int       flag_autocor_on_test;
   int       n_P_test;
   int       n_DS_test;
@@ -175,7 +174,6 @@ void analyze_MCMC(MCMC_info *MCMC){
   int             n_covariance;
   int             i_covariance;
   int             j_covariance;
-  int             n_avg_covariance;
   int             n_iterations_file_total;
   int             n_iterations_file_burn;
   int             flag_restart=FALSE;
@@ -194,7 +192,6 @@ void analyze_MCMC(MCMC_info *MCMC){
   n_P                   =MCMC->n_P;
   n_DS                  =MCMC->n_DS;
   n_avg                 =MCMC->n_avg;
-  n_avg_covariance      =MCMC->n_avg_covariance;
   n_iterations          =MCMC->n_iterations;
   n_iterations_burn     =MCMC->n_iterations_burn;
   n_iterations_integrate=n_iterations-n_iterations_burn;
@@ -680,7 +677,6 @@ void analyze_MCMC(MCMC_info *MCMC){
         current_DS=next_DS;
         i_DS++;
       }    
-      SID_log("Done.",SID_LOG_CLOSE);
       SID_log("Done.",SID_LOG_CLOSE);
     }
 

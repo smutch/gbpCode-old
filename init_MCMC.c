@@ -73,7 +73,6 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
 
   // Set defaults to bare minimums
   MCMC->n_avg                 =MAX(10,n_P*n_P);
-  MCMC->n_avg_covariance      =MAX(10,n_P*n_P);
   MCMC->n_iterations_burn     =4;
   MCMC->n_iterations          =8;
   MCMC->n_thin                =1;
@@ -82,13 +81,22 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   MCMC->flag_integrate_on     =TRUE;
   MCMC->flag_analysis_on      =TRUE;
   MCMC->first_map_call        =TRUE;
-  MCMC->mode                  =MCMC_MODE_SERIAL;
+  MCMC->first_link_call       =TRUE;
+  MCMC->mode                  =MCMC_MODE_DEFAULT;
   sprintf(MCMC->filename_output_dir,"./%s_MCMC/",SID.My_binary);
-  MCMC->V                     =NULL;
   MCMC->m                     =NULL;
+  set_MCMC_covariance(MCMC,NULL);
   
   MCMC->DS           =NULL;
   MCMC->last         =NULL;
+
+  // Set autotune defaults
+  MCMC->success_target        =MCMC_DEFAULT_SUCCESS_TARGET;
+  MCMC->success_threshold     =MCMC_DEFAULT_SUCCESS_THRESH;
+  MCMC->covariance_threshold  =MCMC_DEFAULT_COVARIANCE_THRESH;
+  MCMC->n_autotune            =  3;
+  MCMC->n_autotune_temperature=100;
+  MCMC->n_autotune_covariance =  2*n_P*n_P/(1e-2*MCMC->success_target);
 
   SID_log("Done.",SID_LOG_CLOSE);
 

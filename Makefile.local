@@ -3,8 +3,9 @@
 #############################
 INCFILES = gbpMCMC.h
 LIBFILE  = libgbpMCMC.a
-OBJFILES = add_DS_to_MCMC.o                     \
-	   add_covariance_to_MCMC.o             \
+OBJFILES = add_MCMC_DS.o                        \
+	   autotune_MCMC_temperature.o          \
+	   autotune_MCMC_covariance.o           \
 	   compute_MCMC.o                       \
 	   analyze_MCMC.o                       \
 	   read_MCMC_state.o                    \
@@ -13,6 +14,7 @@ OBJFILES = add_DS_to_MCMC.o                     \
 	   free_MCMC.o                          \
 	   generate_new_MCMC_link.o             \
 	   init_MCMC.o                          \
+	   set_MCMC_covariance.o                \
 	   set_MCMC_mode.o                      \
 	   set_MCMC_directory.o                 \
 	   set_MCMC_coverage_size.o             \
