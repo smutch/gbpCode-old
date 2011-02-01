@@ -2,14 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gbpCommon.h>
-int getline(char **string,int *n,FILE *fp){
+int getline(char **string,size_t *n,FILE *fp){
 	size_t  size;
 	size_t  size_old;
 	size_t  len  = 0;
 	size_t  last = 0;
         int     i;
 	int     start_flag=TRUE;
-	size=(size_t)(*n);
+	size=(*n);
 	if(size<=0){
 		size   =BUFSIZ; /* BUFSIZ is defined as "the optimal read size for this platform" */
 		*string=NULL;

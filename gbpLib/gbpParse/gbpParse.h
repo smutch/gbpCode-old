@@ -3,7 +3,7 @@
 #define ERROR_LINE_TOO_SHORT 103
 #define ERROR_FILE_TOO_SHORT 104
 
-int getline(char **string,int *n,FILE *fp);
+int getline(char **string,size_t *n,FILE *fp);
 int count_lines(FILE *fp);
 int count_lines_data(FILE *fp);
 int check_comment(char *line);
@@ -37,3 +37,4 @@ int grab_word(char  *line,
               int   *size);
 int parse_line(char *line,
 	       int   n_return, ...);
+int search_and_replace(char *string,char *search,char *replace);

@@ -75,11 +75,9 @@ else
 endif
 
 # Print a status message
-echo 'PATH           ={'${PATH}'}'
-echo 'LD_LIBRARY_PATH={'${LD_LIBRARY_PATH}'}'
-echo 'QUEUE TYPE     ={'${GBP_QUEUE_TYPE}'}'
-echo 'GBP_MPI_DIR    ={'${GBP_MPI}'}'
-echo 'CMD_STRING     ={'${CMD_STRING}'}'
+echo 'QUEUE TYPE ={'${GBP_QUEUE_TYPE}'}'
+echo 'GBP_MPI_DIR={'${GBP_MPI}'}'
+echo 'CMD_STRING ={'${CMD_STRING}'}'
 
 # Execute command
 if ( ${GBP_QUEUE_TYPE} == 'PBS' ) then

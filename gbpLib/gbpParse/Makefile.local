@@ -17,7 +17,8 @@ OBJFILES = getline.o               \
 	   grab_next_line_data.o   \
 	   grab_nth_line.o         \
 	   grab_size_t.o           \
-	   grab_word.o             
+	   grab_word.o             \
+	   search_and_replace.o
 BINFILES = 
 LIBS     = 
 SUBDIRS  = 

@@ -15,6 +15,16 @@
 #   sudo ln /opt/local/bin/bash /bin/sh           #
 ###################################################
 
+# Add cfitsio
+ifndef USE_CFITSIO
+  USE_CFITSIO    =0
+endif
+ifneq ($(USE_CFITSIO),0)
+  CCFLAGS := $(CCFLAGS) -I$(GBP_CFITSIO_DIR)/include/
+  LDFLAGS := $(LDFLAGS) -L$(GBP_CFITSIO_DIR)/lib/
+  LIBS    := $(LIBS) -lcfitsio
+endif
+
 # Add gdlib
 ifndef USE_GDLIB
   USE_GDLIB    =1
