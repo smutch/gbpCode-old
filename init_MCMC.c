@@ -90,7 +90,10 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   MCMC->DS           =NULL;
   MCMC->last         =NULL;
 
-  // Set autotune defaults
+  // Set autotune defaults (if needed)
+  if(check_mode_for_flag(MCMC->mode,MCMC_MODE_AUTOTUNE))
+    set_MCMC_autotune(MCMC,-1.,-1.,-1.,-1,-1,-1); // Negatives mean use defaults (set in gbpMCMC.h)
+
   MCMC->success_target        =MCMC_DEFAULT_SUCCESS_TARGET;
   MCMC->success_threshold     =MCMC_DEFAULT_SUCCESS_THRESH;
   MCMC->covariance_threshold  =MCMC_DEFAULT_COVARIANCE_THRESH;

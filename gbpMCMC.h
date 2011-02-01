@@ -14,9 +14,13 @@
 #define MCMC_MAP_RETURN_GOOD 0
 #define MCMC_MAP_RETURN_BAD  1
 
-#define MCMC_DEFAULT_SUCCESS_TARGET    35.
-#define MCMC_DEFAULT_SUCCESS_THRESH     5.
-#define MCMC_DEFAULT_COVARIANCE_THRESH 10.
+#define MCMC_DEFAULT_SUCCESS_TARGET          35.
+#define MCMC_DEFAULT_SUCCESS_THRESH           5.
+#define MCMC_DEFAULT_COVARIANCE_THRESH       10.
+#define MCMC_DEFAULT_N_AUTOTUNE               3
+#define MCMC_DEFAULT_N_AUTOTUNE_TEMPERATURE 100
+#define MCMC_DEFAULT_N_AUTOTUNE_COVMTX      (2*MCMC->n_P*MCMC->n_P*(1+(int)(100./MCMC->success_target)))
+
 
 typedef struct MCMC_DS_info MCMC_DS_info;
 struct MCMC_DS_info {
@@ -91,6 +95,13 @@ void set_MCMC_coverage_size(MCMC_info *MCMC,int coverage_size);
 void set_MCMC_likeliood_function(MCMC_info *MCMC,void (*likelihood_function)(MCMC_info *,double **,double *,double *));
 void set_MCMC_directory(MCMC_info *MCMC,char *directory);
 void set_MCMC_mode(MCMC_info *MCMC,int mode);
+void set_MCMC_autotune(MCMC_info *MCMC,
+                       double     success_target,
+                       double     success_threshold,
+                       double     covariance_threshold,
+                       int        n_autotune,
+                       int        n_autotune_temperature,
+                       int        n_autotune_covariance);
 void read_MCMC_covariance(MCMC_info *MCMC,char *filename);
 void read_MCMC_state(MCMC_info *MCMC,char *filename_root);
 
