@@ -24,8 +24,10 @@ void read_MCMC_state(MCMC_info *MCMC,char *filename_root){
   char      filename_histograms[MAX_FILENAME_LENGTH];
   char      filename_results[MAX_FILENAME_LENGTH];
   char      filename_stop[MAX_FILENAME_LENGTH];
+  char      format_string[32];
   int       my_chain;
   int       i_P,i_DS,i_M,i_array;
+  double   *V_read;
   FILE     *fp_run;
   FILE     *fp_chain;
   FILE     *fp_chain_config;
@@ -92,14 +94,19 @@ void read_MCMC_state(MCMC_info *MCMC,char *filename_root){
       MCMC->P_limit_min=(double *)SID_malloc(sizeof(double)*MCMC->n_P);
       MCMC->P_limit_max=(double *)SID_malloc(sizeof(double)*MCMC->n_P);
       SID_log("Parameters (name, initial_value,limit min,limit max):",SID_LOG_OPEN);
+      MCMC->P_name_length=0;
       for(i_P=0;i_P<MCMC->n_P;i_P++){
         MCMC->P_names[i_P]=(char *)SID_malloc(sizeof(char)*MCMC_NAME_SIZE);
         fread(MCMC->P_names[i_P],       sizeof(char),  MCMC_NAME_SIZE,fp_run);
         fread(&(MCMC->P_init[i_P]),     sizeof(double),             1,fp_run);
         fread(&(MCMC->P_limit_min[i_P]),sizeof(double),             1,fp_run);
         fread(&(MCMC->P_limit_max[i_P]),sizeof(double),             1,fp_run);
-        SID_log("{%s} %le %le %le",SID_LOG_COMMENT,MCMC->P_names[i_P],MCMC->P_init[i_P],MCMC->P_limit_min[i_P],MCMC->P_limit_max[i_P]);
+        MCMC->P_name_length=MAX(MCMC->P_name_length,strlen(MCMC->P_names[i_P]));
       }
+      sprintf(MCMC->P_name_format,"%%-%ds",            MCMC->P_name_length);
+      sprintf(format_string,      "%s %%13.6le %%13.6le %%13.6le",MCMC->P_name_format);
+      for(i_P=0;i_P<MCMC->n_P;i_P++)
+        SID_log(format_string,SID_LOG_COMMENT,MCMC->P_names[i_P],MCMC->P_init[i_P],MCMC->P_limit_min[i_P],MCMC->P_limit_max[i_P]);
       SID_log(NULL,SID_LOG_CLOSE|SID_LOG_NOPRINT);
       fread(&(MCMC->n_arrays),sizeof(int),1,fp_run);
       SID_log("n_arrays=%d",  SID_LOG_OPEN,MCMC->n_arrays);
@@ -153,10 +160,15 @@ void read_MCMC_state(MCMC_info *MCMC,char *filename_root){
 
     // ... fetch the number of intervals that have already been computed ...
     fp_chain_config=fopen(filename_chain_config,"rb");
+    V_read=(double *)SID_malloc(sizeof(double)*MCMC->n_P*MCMC->n_P);
     fread(&(MCMC->n_iterations),     sizeof(int),   1,      fp_chain_config);
     fread(&(MCMC->n_iterations_burn),sizeof(int),   1,      fp_chain_config);
-    fread(&(MCMC->temperature),      sizeof(double),1,      fp_chain_config);
-    fread(&(MCMC->V),                sizeof(double),MCMC->n_P*MCMC->n_P,fp_chain_config);
+
+    // ... fetch the temperature and covariance matrix that was being used
+    fread(&(MCMC->temperature),      sizeof(double),1,                  fp_chain_config);
+    fread(V_read,                    sizeof(double),MCMC->n_P*MCMC->n_P,fp_chain_config);
+    set_MCMC_covariance(MCMC,V_read);
+    SID_free(SID_FARG V_read);
 
     SID_log("# burn  iterations = %d", SID_LOG_COMMENT,MCMC->n_iterations_burn);
     SID_log("# total iterations = %d", SID_LOG_COMMENT,MCMC->n_iterations);

@@ -29,6 +29,7 @@ void analyze_MCMC(MCMC_info *MCMC){
   char      P_name_test[MCMC_NAME_SIZE];
   char      name_test[MCMC_NAME_SIZE];
   char      array_name_test[MCMC_NAME_SIZE];
+  char      array_name_temp[MCMC_NAME_SIZE];
   int       n_avg_test;
   int       flag_autocor_on_test;
   int       n_P_test;
@@ -633,10 +634,12 @@ void analyze_MCMC(MCMC_info *MCMC){
       fprintf(fp_results,"# %s (%02d) Lower limit (95%% confidence)\n",column_txt,i_column++);
       fprintf(fp_results,"# %s (%02d) Upper limit (95%% confidence)\n",column_txt,i_column++);
       for(i_P=0;i_P<n_P;i_P++){
-        fprintf(fp_results,"%s",MCMC->P_names[i_P]);
+        strcpy(array_name_temp,MCMC->P_names[i_P]);
+        search_and_replace(array_name_temp," ","~");
+        fprintf(fp_results,MCMC->P_name_format,array_name_temp);
         for(i_array=0;i_array<MCMC->n_arrays;i_array++)
-          fprintf(fp_results," %le",MCMC->array[i_array][i_P]);
-        fprintf(fp_results," %le %le %le %le %le %le %le %le\n",MCMC->P_init[i_P],P_avg[i_P],dP_avg[i_P],P_best[i_P],P_lo_68[i_P],P_hi_68[i_P],P_lo_95[i_P],P_hi_95[i_P]);
+          fprintf(fp_results," %13.6le",MCMC->array[i_array][i_P]);
+        fprintf(fp_results," %13.6le %13.6le %13.6le %13.6le %13.6le %13.6le %13.6le %13.6le\n",MCMC->P_init[i_P],P_avg[i_P],dP_avg[i_P],P_best[i_P],P_lo_68[i_P],P_hi_68[i_P],P_lo_95[i_P],P_hi_95[i_P]);
       }
       fclose(fp_results);
       current_DS=MCMC->DS;
@@ -670,8 +673,8 @@ void analyze_MCMC(MCMC_info *MCMC){
         fprintf(fp_results,"# %s (%02d) Upper limit (95%% confidence)\n",column_txt,i_column++);
         for(i_P=0;i_P<n_M[i_DS];i_P++){
           for(i_array=0;i_array<n_M_arrays[i_DS];i_array++)
-            fprintf(fp_results,"%le ",M_arrays[i_DS][i_array][i_P]);
-          fprintf(fp_results,"%le %le %le %le %le %le %le %le %le\n",M_target[i_P],dM_target[i_P],M_avg[i_DS][i_P],dM_avg[i_DS][i_P],M_best[i_DS][i_P],M_lo_68[i_DS][i_P],M_hi_68[i_DS][i_P],M_lo_95[i_DS][i_P],M_hi_95[i_DS][i_P]);
+            fprintf(fp_results,"%13.6le ",M_arrays[i_DS][i_array][i_P]);
+          fprintf(fp_results,"%13.6le %13.6le %13.6le %13.6le %13.6le %13.6le %13.6le %13.6le %13.6le\n",M_target[i_P],dM_target[i_P],M_avg[i_DS][i_P],dM_avg[i_DS][i_P],M_best[i_DS][i_P],M_lo_68[i_DS][i_P],M_hi_68[i_DS][i_P],M_lo_95[i_DS][i_P],M_hi_95[i_DS][i_P]);
         }
         fclose(fp_results);    
         current_DS=next_DS;

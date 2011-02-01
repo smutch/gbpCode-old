@@ -30,6 +30,7 @@ void compute_MCMC(MCMC_info *MCMC){
   char      column_txt[MAX_FILENAME_LENGTH];
   char      problem_name_test[MCMC_NAME_SIZE];
   char      P_name_test[MCMC_NAME_SIZE];
+  char      format_string[64];
   char      name_test[MCMC_NAME_SIZE];
   char      array_name_test[MCMC_NAME_SIZE];
   int       n_avg_test;
@@ -108,6 +109,7 @@ void compute_MCMC(MCMC_info *MCMC){
   size_t **coverage_true;
   size_t **coverage_false;
   size_t **coverage_keep;
+  double  *V_read;
   double    L_x,L_y,L_z;
   int       n_x,n_y,n_z;
   int       n_C_x;
@@ -186,7 +188,7 @@ void compute_MCMC(MCMC_info *MCMC){
 
   SID_log("Performing MCMC...",SID_LOG_OPEN|SID_LOG_TIMER);
 
-  SID_log("Initializing MCMC...",SID_LOG_OPEN);
+  SID_log("Initializing...",SID_LOG_OPEN);
 
   n_P                   =MCMC->n_P;
   n_DS                  =MCMC->n_DS;
@@ -337,6 +339,7 @@ void compute_MCMC(MCMC_info *MCMC){
         fread(&n_P_test,sizeof(int),1,fp_run);
         if(n_P_test!=n_P)
           SID_trap_error("The number of paramaters is inconsistant (i.e. %d!=%d).",ERROR_LOGIC,n_P,n_P_test);
+        MCMC->P_name_length=0;
         for(i_P=0;i_P<n_P;i_P++){
           fread(P_name_test, sizeof(char),MCMC_NAME_SIZE,fp_run);
           if(strcmp(P_name_test,MCMC->P_names[i_P]))
@@ -350,7 +353,9 @@ void compute_MCMC(MCMC_info *MCMC){
           fread(&P_max_test,sizeof(double),1,fp_run);
           if(P_max_test!=MCMC->P_limit_max[i_P])
             SID_trap_error("Parameter #%d's maximum values are inconsistant (i.e. %le!=%le).",ERROR_LOGIC,i_P,MCMC->P_limit_max[i_P],P_max_test);
+          MCMC->P_name_length=MAX(MCMC->P_name_length,strlen(MCMC->P_names[i_P]));
         }
+        sprintf(MCMC->P_name_format,"%%-%ds",MCMC->P_name_length);
         fread(&n_arrays_test,sizeof(int),1,fp_run);
         if(n_arrays_test!=MCMC->n_arrays)
           SID_trap_error("Numbers of project arrays are inconsistant (i.e. %d!=%d).",ERROR_LOGIC,MCMC->n_arrays,n_arrays_test);
@@ -452,6 +457,13 @@ void compute_MCMC(MCMC_info *MCMC){
     n_iterations_file_total=0;
     n_iterations_file_burn =0;
     if(!flag_restart){
+      // Report the starting conditions 
+      SID_log("Initial parameters:",SID_LOG_ALLRANKS|SID_LOG_OPEN);
+      sprintf(format_string,"%s = %%13.6le",MCMC->P_name_format);
+      for(i_P=0;i_P<n_P;i_P++)
+        SID_log(format_string,SID_LOG_ALLRANKS|SID_LOG_COMMENT,MCMC->P_names[i_P],P_last[i_P]);
+      SID_log("",SID_LOG_ALLRANKS|SID_LOG_NOPRINT|SID_LOG_CLOSE);
+    
       // Perform autotuning
       if(check_mode_for_flag(MCMC->mode,MCMC_MODE_AUTOTUNE)){
         SID_log("Perform autotuning...",SID_LOG_OPEN|SID_LOG_TIMER);
@@ -482,17 +494,21 @@ void compute_MCMC(MCMC_info *MCMC){
     else if(my_chain==SID.My_rank){
       SID_log("Loading previous state...",SID_LOG_OPEN);
       // ... fetch the number of intervals that have already been computed ...
-      SID_log("Reading the existant number of iterations...",SID_LOG_OPEN);
-      fp_chain_config=fopen(filename_chain_config,"rb");
-      fread(&n_iterations_file_total,sizeof(int),   1,      fp_chain_config);
-      fread(&n_iterations_file_burn, sizeof(int),   1,      fp_chain_config);
-      fread(&(MCMC->temperature),    sizeof(double),1,      fp_chain_config);
-      fread(&(MCMC->V),              sizeof(double),n_P*n_P,fp_chain_config);
-      SID_log("# burn  iterations = %d (%d requested)",SID_LOG_COMMENT,n_iterations_file_burn ,n_iterations_burn);
-      SID_log("# total iterations = %d (%d requested)",SID_LOG_COMMENT,n_iterations_file_total,n_iterations);
-      SID_log("Temperature        = %le",              SID_LOG_COMMENT,MCMC->temperature);
-      fclose(fp_chain_config);
-      SID_log("Done.",SID_LOG_CLOSE);
+      if((fp_chain_config=fopen(filename_chain_config,"rb"))!=NULL){
+        SID_log("Reading the existant number of iterations...",SID_LOG_OPEN);
+        V_read=(double *)SID_malloc(sizeof(double)*n_P*n_P);
+        fread(&n_iterations_file_total,sizeof(int),   1,      fp_chain_config);
+        fread(&n_iterations_file_burn, sizeof(int),   1,      fp_chain_config);
+        fread(&(MCMC->temperature),    sizeof(double),1,      fp_chain_config);
+        fread(V_read,                  sizeof(double),n_P*n_P,fp_chain_config);
+        set_MCMC_covariance(MCMC,V_read);
+        SID_free(SID_FARG V_read);
+        SID_log("# burn  iterations = %d (%d requested)",SID_LOG_COMMENT,n_iterations_file_burn ,n_iterations_burn);
+        SID_log("# total iterations = %d (%d requested)",SID_LOG_COMMENT,n_iterations_file_total,n_iterations);
+        SID_log("Temperature        = %le",              SID_LOG_COMMENT,MCMC->temperature);
+        fclose(fp_chain_config);
+        SID_log("Done.",SID_LOG_CLOSE);
+      }
 
       // ... scan to the end of the chain and read the last-used parameter set
       if(n_iterations_file_total>0){
@@ -524,7 +540,14 @@ void compute_MCMC(MCMC_info *MCMC){
         SID_log("Done.",SID_LOG_CLOSE);
       }
       MCMC->compute_MCMC_ln_likelihood(MCMC,M_last,P_last,&ln_likelihood_last);
-      
+
+      // Report the starting conditions 
+      SID_log("Initial parameters:",SID_LOG_ALLRANKS|SID_LOG_OPEN);
+      sprintf(format_string,"%s = %%13.6le",MCMC->P_name_format);
+      for(i_P=0;i_P<n_P;i_P++)
+        SID_log(format_string,SID_LOG_ALLRANKS|SID_LOG_COMMENT,MCMC->P_names[i_P],P_last[i_P]);
+      SID_log("",SID_LOG_ALLRANKS|SID_LOG_NOPRINT|SID_LOG_CLOSE);
+          
       // ... scan to the end of the chain stats and read the last-generated statistics (particularly the drift)
       SID_log("Reading the last-generated statistics...",SID_LOG_OPEN);
       fp_stats=fopen(filename_stats,"rb");
@@ -562,15 +585,6 @@ void compute_MCMC(MCMC_info *MCMC){
       fp_stats=fopen(filename_stats,"ab");        
     } // End of restart stuff
 
-    // Report the starting conditions (if requested)
-    if(flag_report_props && my_chain==SID.My_rank){
-      SID_log("Initial parameters:",SID_LOG_ALLRANKS|SID_LOG_OPEN);
-      for(i_P=0;i_P<n_P;i_P++)
-        SID_log("%s = %le",SID_LOG_ALLRANKS|SID_LOG_COMMENT,MCMC->P_names[i_P],P_last[i_P]);
-      SID_log("ln(likelihood)=%le+constant",SID_LOG_ALLRANKS|SID_LOG_COMMENT,ln_likelihood_last);
-      SID_log("",SID_LOG_ALLRANKS|SID_LOG_NOPRINT|SID_LOG_CLOSE);
-    }
-    
     // Remove the existant iterations from the totals we need to perform still
     if(n_iterations_file_total<n_iterations_burn){
       i_phase    =0;
@@ -657,8 +671,9 @@ void compute_MCMC(MCMC_info *MCMC){
                   SID_log("Proposal #%09d: SUCCEEDED",SID_LOG_ALLRANKS|SID_LOG_OPEN,i_proposal);
                 else
                   SID_log("Proposal #%09d: REJECTED",SID_LOG_ALLRANKS|SID_LOG_OPEN,i_proposal);
+                sprintf(format_string,"%s = %%13.6le (was %%13.6le)",MCMC->P_name_format);
                 for(i_P=0;i_P<n_P;i_P++)
-                  SID_log("%12s=%le (was %le)",SID_LOG_ALLRANKS|SID_LOG_COMMENT,MCMC->P_names[i_P],P_new[i_P],P_last[i_P]);
+                  SID_log(format_string,SID_LOG_ALLRANKS|SID_LOG_COMMENT,MCMC->P_names[i_P],P_new[i_P],P_last[i_P]);
                 SID_log("ln(likelihood) =%le+constant (was %le+constant)",SID_LOG_ALLRANKS|SID_LOG_COMMENT,ln_likelihood_new,ln_likelihood_last);
                 SID_log("ln(probability)=%le", SID_LOG_ALLRANKS|SID_LOG_COMMENT,ln_Pr_new);
                 SID_log("n_success      =%09d",SID_LOG_ALLRANKS|SID_LOG_COMMENT,n_success);
@@ -776,7 +791,7 @@ void compute_MCMC(MCMC_info *MCMC){
       fwrite(&n_iterations_file_total,sizeof(int),   1,      fp_chain_config);
       fwrite(&n_iterations_file_burn, sizeof(int),   1,      fp_chain_config);
       fwrite(&(MCMC->temperature),    sizeof(double),1,      fp_chain_config);
-      fwrite(&(MCMC->V),              sizeof(double),n_P*n_P,fp_chain_config);
+      fwrite(MCMC->V,                 sizeof(double),n_P*n_P,fp_chain_config);
       fclose(fp_chain_config);
       fclose(fp_chain);
       fclose(fp_stats);

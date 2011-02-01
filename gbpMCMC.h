@@ -73,6 +73,8 @@ struct MCMC_info {
   int      n_autotune;   
   int      n_autotune_temperature;   
   int      n_autotune_covariance;   
+  int      P_name_length;
+  char     P_name_format[8];
   double       *P;
   MCMC_DS_info *DS;
   MCMC_DS_info *last;
