@@ -40,7 +40,7 @@ void autotune_MCMC_covariance(MCMC_info *MCMC,RNG_info *RNG){
   double         difference_i;
   int            i_P,j_P,k_P;
 
-  SID_log("Autotuning the covariance matrix (threshold=%6.2lf%%)...",SID_LOG_OPEN|SID_LOG_TIMER,covariance_threshold);
+  SID_log("Autotuning the covariance matrix (threshold=%6.2lf%%)...",SID_LOG_OPEN|SID_LOG_TIMER,MCMC->covariance_threshold);
 
   // Initialize parameter arrays
   SID_log("Initizlizing...",SID_LOG_OPEN);

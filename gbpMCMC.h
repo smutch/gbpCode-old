@@ -17,7 +17,7 @@
 #define MCMC_DEFAULT_SUCCESS_TARGET          35.
 #define MCMC_DEFAULT_SUCCESS_THRESH           5.
 #define MCMC_DEFAULT_COVARIANCE_THRESH       10.
-#define MCMC_DEFAULT_N_AUTOTUNE               3
+#define MCMC_DEFAULT_N_AUTOTUNE               1
 #define MCMC_DEFAULT_N_AUTOTUNE_TEMPERATURE 100
 #define MCMC_DEFAULT_N_AUTOTUNE_COVMTX      (2*MCMC->n_P*MCMC->n_P*(1+(int)(100./MCMC->success_target)))
 
