@@ -458,12 +458,14 @@ void compute_MCMC(MCMC_info *MCMC){
     n_iterations_file_burn =0;
     if(!flag_restart){
       // Report the starting conditions 
-      SID_log("Initial parameters:",SID_LOG_ALLRANKS|SID_LOG_OPEN);
-      sprintf(format_string,"%s = %%13.6le",MCMC->P_name_format);
-      for(i_P=0;i_P<n_P;i_P++)
-        SID_log(format_string,SID_LOG_ALLRANKS|SID_LOG_COMMENT,MCMC->P_names[i_P],P_last[i_P]);
-      SID_log("",SID_LOG_ALLRANKS|SID_LOG_NOPRINT|SID_LOG_CLOSE);
-    
+      if(my_chain==SID.My_rank){
+        SID_log("Initial parameters:",SID_LOG_ALLRANKS|SID_LOG_OPEN);
+        sprintf(format_string,"%s = %%13.6le",MCMC->P_name_format);
+        for(i_P=0;i_P<n_P;i_P++)
+          SID_log(format_string,SID_LOG_ALLRANKS|SID_LOG_COMMENT,MCMC->P_names[i_P],P_last[i_P]);
+        SID_log("",SID_LOG_ALLRANKS|SID_LOG_NOPRINT|SID_LOG_CLOSE);
+      }
+
       // Perform autotuning
       if(check_mode_for_flag(MCMC->mode,MCMC_MODE_AUTOTUNE)){
         SID_log("Perform autotuning...",SID_LOG_OPEN|SID_LOG_TIMER);
@@ -544,11 +546,13 @@ void compute_MCMC(MCMC_info *MCMC){
       MCMC->compute_MCMC_ln_likelihood(MCMC,M_last,P_last,&ln_likelihood_last);
 
       // Report the starting conditions 
-      SID_log("Initial parameters:",SID_LOG_ALLRANKS|SID_LOG_OPEN);
-      sprintf(format_string,"%s = %%13.6le",MCMC->P_name_format);
-      for(i_P=0;i_P<n_P;i_P++)
-        SID_log(format_string,SID_LOG_ALLRANKS|SID_LOG_COMMENT,MCMC->P_names[i_P],P_last[i_P]);
-      SID_log("",SID_LOG_ALLRANKS|SID_LOG_NOPRINT|SID_LOG_CLOSE);
+      if(my_chain==SID.My_rank){
+        SID_log("Initial parameters:",SID_LOG_ALLRANKS|SID_LOG_OPEN);
+        sprintf(format_string,"%s = %%13.6le",MCMC->P_name_format);
+        for(i_P=0;i_P<n_P;i_P++)
+          SID_log(format_string,SID_LOG_ALLRANKS|SID_LOG_COMMENT,MCMC->P_names[i_P],P_last[i_P]);
+        SID_log("",SID_LOG_ALLRANKS|SID_LOG_NOPRINT|SID_LOG_CLOSE);
+      }
           
       // ... scan to the end of the chain stats and read the last-generated statistics (particularly the drift)
       SID_log("Reading the last-generated statistics...",SID_LOG_OPEN);

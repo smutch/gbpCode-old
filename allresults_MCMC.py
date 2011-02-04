@@ -274,7 +274,7 @@ if (flag_histograms_on==1):
                   ax.set_xlim((coverage_min[jj],coverage_max[jj]))
                   ax.set_ylim((0,1.1))
                   ax.set_xlabel(P_name[jj])
-                  ax.set_ylabel('Probability')
+                  ax.set_ylabel('Likelihood')
                   ax.set_title(problem_name)
                   filename_out = 'histogram_'+str(jj).zfill(5)+'.png'
                   print '  Writing',filename_out
@@ -319,7 +319,7 @@ if (flag_coverage_on==1):
 		  ax.set_ylim((coverage_min[kk],coverage_max[kk]))
                   ax.set_xlabel(P_name[jj])
                   ax.set_ylabel(P_name[kk])
-                  ax.set_title('Probability Map')
+                  ax.set_title('Posterior Distribution Function')
                   cb=plt.colorbar(im)
 		  cb.ax.set_ylabel('# of propositions')
                   filename_out = 'probable_'+str(ii).zfill(5)+'.png'
