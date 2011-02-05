@@ -117,9 +117,24 @@ void autotune_MCMC_temperature(MCMC_info *MCMC,RNG_info *RNG){
     }
     success=100.*(double)(n_success)/(double)n_autotune;
     i_autotune++;
-if(i_autotune>40) exit(1);
     SID_log("Iteration #%04d: Temperature=%le Success=%5.1lf%%",SID_LOG_COMMENT,i_autotune,temperature,success);
   }
+
+  // Clean-up
+  current_DS=MCMC->DS;
+  i_DS=0;
+  while(current_DS!=NULL){
+    next_DS     =current_DS->next;
+    SID_free(SID_FARG M_new[i_DS]);
+    SID_free(SID_FARG M_last[i_DS]);
+    current_DS  =next_DS;
+    i_DS++;
+  }
+  SID_free(SID_FARG P_new);
+  SID_free(SID_FARG P_last);
+  SID_free(SID_FARG M_new);
+  SID_free(SID_FARG M_last);
+
   SID_log("Done.",SID_LOG_CLOSE);
 }
 

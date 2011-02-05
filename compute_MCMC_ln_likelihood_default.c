@@ -25,10 +25,8 @@ void compute_MCMC_ln_likelihood_default(MCMC_info *MCMC,double **M,double *P,dou
     n_M      =current_DS->n_M;
     M_target =current_DS->M_target;
     dM_target=current_DS->dM_target;
-    for(i_M=0;i_M<n_M;i_M++){
+    for(i_M=0;i_M<n_M;i_M++)
       (*ln_likelihood)+=pow((M_target[i_M]-M[i_DS][i_M])/dM_target[i_M],2.);
-//printf("  %le %le %le %le -- %le -- %le\n",current_DS->array[0][i_M],M_target[i_M],dM_target[i_M],M[i_DS][i_M],M[i_DS][i_M],(*Chi2)/(*n_DoF));
-    }
     i_DS++;
     current_DS=next_DS;
   }

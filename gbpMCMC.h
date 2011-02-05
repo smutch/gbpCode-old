@@ -94,7 +94,7 @@ void set_MCMC_covariance(MCMC_info *MCMC,double *V);
 void set_MCMC_temperature(MCMC_info *MCMC,double temperature);
 void set_MCMC_iterations(MCMC_info *MCMC,int n_avg,int n_thin,int n_burn,int n_integrate);
 void set_MCMC_coverage_size(MCMC_info *MCMC,int coverage_size);
-void set_MCMC_likeliood_function(MCMC_info *MCMC,void (*likelihood_function)(MCMC_info *,double **,double *,double *));
+void set_MCMC_likelihood_function(MCMC_info *MCMC,void (*likelihood_function)(MCMC_info *,double **,double *,double *));
 void set_MCMC_directory(MCMC_info *MCMC,char *directory);
 void set_MCMC_mode(MCMC_info *MCMC,int mode);
 void set_MCMC_autotune(MCMC_info *MCMC,

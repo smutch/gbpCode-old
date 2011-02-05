@@ -153,7 +153,24 @@ void autotune_MCMC_covariance(MCMC_info *MCMC,RNG_info *RNG){
   // Commit the covariance matrix now that we've computed it
   set_MCMC_covariance(MCMC,V_compute);
 
-  // Clean-up (remove cmatrix stuff from compute_MCMC too)
+  // Clean-up
+  current_DS=MCMC->DS;
+  i_DS=0;
+  while(current_DS!=NULL){
+    next_DS     =current_DS->next;
+    SID_free(SID_FARG M_new[i_DS]);
+    SID_free(SID_FARG M_last[i_DS]);
+    current_DS  =next_DS;
+    i_DS++;
+  }
+  SID_free(SID_FARG P_new);
+  SID_free(SID_FARG P_last);
+  SID_free(SID_FARG M_new);
+  SID_free(SID_FARG M_last);
+  SID_free(SID_FARG P_i_bar_accum);
+  SID_free(SID_FARG P_ij_bar_accum);
+  SID_free(SID_FARG V_compute);
+  SID_free(SID_FARG V_compute_last);
 
   SID_log("Done.",SID_LOG_CLOSE);
 }
