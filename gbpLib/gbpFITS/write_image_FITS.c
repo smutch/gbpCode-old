@@ -11,7 +11,7 @@ int write_image_FITS(void *image,SID_Datatype dtype,int n_D,long *D,char *filena
   long  naxes[2];
   char  keyname[50];
   char  error_msg[80];
-  int   status;
+  int   status=0;
   long  n_pixels=1;
   int   i_D;
 

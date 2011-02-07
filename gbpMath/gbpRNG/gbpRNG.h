@@ -1,3 +1,5 @@
+#ifndef GBPRNG_AWAKE
+#define GBPRNG_AWAKE
 #if USE_SPRNG
   #ifndef USE_MPI
     #define  SIMPLE_SPRNG
@@ -31,3 +33,4 @@ REAL random_number(RNG_info *RNG);
 REAL random_gaussian(RNG_info *RNG);
 REAL random_lognormal(RNG_info *RNG,double mu,double sigma);
 
+#endif
