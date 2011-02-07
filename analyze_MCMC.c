@@ -72,11 +72,6 @@ void analyze_MCMC(MCMC_info *MCMC){
   double   *P_last;
   double   *P_avg;
   double   *dP_avg;
-  double    ln_Pr_last;
-  double    ln_Pr_new;
-  double    ln_Pr_min;
-  double    ln_Pr_avg;
-  double    ln_Pr_max;
   double  **M_best;
   double  **M_min;
   double  **M_max;
@@ -96,7 +91,7 @@ void analyze_MCMC(MCMC_info *MCMC){
   double    L_x,L_y,L_z;
   int       n_x,n_y,n_z;
   int       n_C_x;
-  double    ln_likelihood_new,ln_likelihood_last;
+  double    ln_likelihood_new;
   FILE     *fp_run;
   FILE     *fp_chain;
   FILE     *fp_chain_iterations;
@@ -334,9 +329,9 @@ void analyze_MCMC(MCMC_info *MCMC){
       fp_chain=fopen(filename_chain,"rb");
       for(i_iteration=0,flag_init=TRUE,n_used=0;i_iteration<n_iterations;i_iteration++){
         for(i_avg=0;i_avg<n_avg;i_avg++){
-          fread(&flag_success,sizeof(char),  1,  fp_chain);
-          fread(&ln_Pr_last,  sizeof(double),1,  fp_chain);
-          fread(P_new,        sizeof(double),n_P,fp_chain);
+          fread(&flag_success,     sizeof(char),  1,  fp_chain);
+          fread(&ln_likelihood_new,sizeof(double),1,  fp_chain);
+          fread(P_new,             sizeof(double),n_P,fp_chain);
           for(i_DS=0;i_DS<n_DS;i_DS++)
             fread(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
           if(i_iteration>=n_iterations_burn){
@@ -383,9 +378,9 @@ void analyze_MCMC(MCMC_info *MCMC){
       rewind(fp_chain);
       for(i_iteration=0,flag_init=TRUE;i_iteration<n_iterations;i_iteration++){
         for(i_avg=0;i_avg<n_avg;i_avg++){
-          fread(&flag_success,sizeof(char),  1,  fp_chain);
-          fread(&ln_Pr_last,  sizeof(double),1,  fp_chain);
-          fread(P_new,        sizeof(double),n_P,fp_chain);
+          fread(&flag_success,     sizeof(char),  1,  fp_chain);
+          fread(&ln_likelihood_new,sizeof(double),1,  fp_chain);
+          fread(P_new,             sizeof(double),n_P,fp_chain);
           for(i_DS=0;i_DS<n_DS;i_DS++)
             fread(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
           if(i_iteration>=n_iterations_burn){
@@ -684,8 +679,6 @@ void analyze_MCMC(MCMC_info *MCMC){
   SID_free(SID_FARG P_ij_bar);
   SID_free(SID_FARG V_compute);
   for(i_DS=0;i_DS<n_DS;i_DS++){
-    SID_free(SID_FARG M_new[i_DS]);
-    SID_free(SID_FARG M_last[i_DS]);
     SID_free(SID_FARG M_avg[i_DS]);
     SID_free(SID_FARG dM_avg[i_DS]);
     SID_free(SID_FARG M_best[i_DS]);
@@ -699,9 +692,6 @@ void analyze_MCMC(MCMC_info *MCMC){
       SID_free(SID_FARG M_histogram[i_DS][j_M]);
     SID_free(SID_FARG M_histogram[i_DS]);
   }
-  SID_free(SID_FARG n_M);
-  SID_free(SID_FARG M_new);
-  SID_free(SID_FARG M_last);
   SID_free(SID_FARG M_avg);
   SID_free(SID_FARG dM_avg);
   SID_free(SID_FARG M_best);
@@ -712,8 +702,6 @@ void analyze_MCMC(MCMC_info *MCMC){
   SID_free(SID_FARG M_lo_95);
   SID_free(SID_FARG M_hi_95);
   SID_free(SID_FARG M_histogram);
-  SID_free(SID_FARG P_new);
-  SID_free(SID_FARG P_last);
   SID_free(SID_FARG P_min);
   SID_free(SID_FARG P_max);
   SID_free(SID_FARG P_avg);
@@ -740,7 +728,6 @@ void analyze_MCMC(MCMC_info *MCMC){
   SID_free(SID_FARG coverage_true);
   SID_free(SID_FARG coverage_false);
   SID_free(SID_FARG coverage_keep);
-
 
   SID_log("Done.",SID_LOG_CLOSE);
 

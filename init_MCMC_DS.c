@@ -27,7 +27,6 @@ void init_MCMC_DS(MCMC_info *MCMC){
     while(current_DS!=NULL){
       next_DS           =current_DS->next;
       MCMC->n_M[i_DS]   =current_DS->n_M;
-      SID_log("Dataset #%02d size: %d elements",SID_LOG_COMMENT,i_DS,MCMC->n_M[i_DS]);
       MCMC->M_new[i_DS] =(double *)SID_malloc(sizeof(double)*MCMC->n_M[i_DS]);
       MCMC->M_last[i_DS]=(double *)SID_malloc(sizeof(double)*MCMC->n_M[i_DS]);
       MCMC->n_M_total  +=MCMC->n_M[i_DS];

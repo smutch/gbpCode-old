@@ -16,7 +16,7 @@ void generate_MCMC_parameters(MCMC_info *MCMC){
   static int         n_P;
   static double      factor;
   static double     *P_new;
-  static double     *P_last;
+  static double     *P_chain;
   static double     *P_init;
   static double     *P_limit_min;
   static double     *P_limit_max;
@@ -25,11 +25,11 @@ void generate_MCMC_parameters(MCMC_info *MCMC){
   static RNG_info   *RNG;
 
   // Initialize a few things on the first call
-  switch(MCMC->first_gen_parameter_call){
+  switch(MCMC->first_parameter_call){
     case TRUE:
       n_P        =MCMC->n_P;
       P_new      =MCMC->P_new;
-      P_last     =MCMC->P_last;
+      P_chain    =MCMC->P_chain;
       P_init     =MCMC->P_init;
       P_limit_min=MCMC->P_limit_min;
       P_limit_max=MCMC->P_limit_max;
@@ -37,7 +37,7 @@ void generate_MCMC_parameters(MCMC_info *MCMC){
       m          =MCMC->m;
       RNG        =MCMC->RNG;
       factor     =2.4/sqrt((double)MCMC->n_M_total);
-      MCMC->first_gen_parameter_call=FALSE;
+      MCMC->first_parameter_call=FALSE;
       break;
   }
 
@@ -48,7 +48,7 @@ void generate_MCMC_parameters(MCMC_info *MCMC){
 
   // Use the rotated covariance matrix (if available)
   if(m!=NULL){
-    memcpy(P_new,P_last,n_P*sizeof(double));
+    memcpy(P_new,P_chain,n_P*sizeof(double));
     for(i_P=0;i_P<n_P;i_P++){
       for(j_P=0;j_P<n_P;j_P++)
         P_new[i_P]+=gsl_matrix_get(m,i_P,j_P)*gsl_vector_get(b,j_P);

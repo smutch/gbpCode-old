@@ -83,15 +83,15 @@ struct MCMC_info {
   int      mode;
   int      n_success;
   int      n_fail;
-  int      i_proposal;
+  int      n_propositions;
   double   success_target;
   double   success_threshold;
   double   covariance_threshold;
   int      n_autotune;   
   int      n_autotune_temperature;   
   int      n_autotune_covariance;
-  int      first_gen_parameter_call;
-  int      first_gen_proposition_call;
+  int      first_parameter_call;
+  int      first_chain_call;
   int      first_likelihood_call;
   double   ln_likelihood_last;
   double   ln_likelihood_new;
@@ -132,5 +132,7 @@ void set_MCMC_autotune(MCMC_info *MCMC,
                        int        n_autotune_covariance);
 void read_MCMC_covariance(MCMC_info *MCMC,char *filename);
 void read_MCMC_state(MCMC_info *MCMC,char *filename_root);
+int  generate_MCMC_chain(MCMC_info *MCMC);
+void generate_MCMC_proposition(MCMC_info *MCMC,int flag_chain_init);
 void generate_MCMC_parameters(MCMC_info *MCMC);
-int  generate_MCMC_proposition(MCMC_info *MCMC);
+

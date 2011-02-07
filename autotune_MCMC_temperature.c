@@ -18,7 +18,6 @@ void autotune_MCMC_temperature(MCMC_info *MCMC){
   int    i_autotune;
   double ln_likelihood_last;
   int    i_iteration;
-  int    n_success;
 
   SID_log("Autotuning the temperature (target=%6.2lf%%, threshold=%6.2lf%%)...",SID_LOG_OPEN|SID_LOG_TIMER,MCMC->success_target,MCMC->success_threshold);
 
@@ -56,12 +55,11 @@ void autotune_MCMC_temperature(MCMC_info *MCMC){
     MCMC->flag_init_chain=TRUE;
 
     // Generate a success rate for the current trial temperature
-    for(i_iteration=0,n_success=0;i_iteration<n_autotune;i_iteration++){
-      if(generate_MCMC_proposition(MCMC)) 
-        n_success++;
-    }
-    success=100.*(double)(n_success)/(double)n_autotune;
+    for(i_iteration=0;i_iteration<n_autotune;i_iteration++)
+      generate_MCMC_chain(MCMC);
+
     i_autotune++;
+    success=100.*(double)(MCMC->n_success)/(double)MCMC->n_propositions;
     SID_log("Iteration #%04d: Temperature=%le Success=%5.1lf%%",SID_LOG_COMMENT,i_autotune,temperature,success);
   }
 

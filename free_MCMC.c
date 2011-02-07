@@ -51,7 +51,6 @@ void free_MCMC(MCMC_info *MCMC){
 
   // Dataset arrays
   current_DS=MCMC->DS;
-  SID_free(SID_FARG MCMC->n_M);
   i_DS=0;
   while(current_DS!=NULL){
     next_DS=current_DS->next;
@@ -71,6 +70,7 @@ void free_MCMC(MCMC_info *MCMC){
     current_DS=next_DS;
     i_DS++;
   }
+  SID_free(SID_FARG MCMC->n_M);
   SID_free(SID_FARG MCMC->M_new);
   SID_free(SID_FARG MCMC->M_last);
 

@@ -54,16 +54,15 @@ void autotune_MCMC_covariance(MCMC_info *MCMC){
   n_success           =0;
   n_covariance        =0;
 
+  // Start from the initial conditions for each iteration
+  MCMC->flag_init_chain=TRUE;
+
   // Integrate the covariance matrix until it convergence
   while(difference>covariance_threshold){
 
-    // Start from the initial conditions for each iteration
-    MCMC->flag_init_chain=TRUE;
-
     // Keep adding to the covariance matrix in n_autotune-sized batches
     for(i_iteration=0;i_iteration<n_autotune;i_iteration++){
-      if(generate_MCMC_proposition(MCMC))
-        n_success++;
+      generate_MCMC_chain(MCMC);
 
       // Build the covariance matrix
       for(i_P=0,k_P=0;i_P<n_P;i_P++){
@@ -90,8 +89,8 @@ void autotune_MCMC_covariance(MCMC_info *MCMC){
     memcpy(V_compute_last,V_compute,(size_t)(n_P_squared)*sizeof(double));
 
     // Report status
-    success=100.*(double)(n_success)/(double)n_covariance;
     i_autotune++;
+    success=100.*(double)(MCMC->n_success)/(double)MCMC->n_propositions;
     SID_log("Iteration #%04d: Success=%5.1lf%% Max change=%5.1f%%",SID_LOG_COMMENT,i_autotune,success,difference);
   }
 

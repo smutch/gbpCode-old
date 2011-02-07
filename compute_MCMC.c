@@ -61,7 +61,6 @@ void compute_MCMC(MCMC_info *MCMC){
   int       flag_stop=FALSE;
   int       i_coverage;
   int       j_coverage;
-  int       i_proposal;
   int       bin_x;
   int       bin_y;
   int       n_avg;
@@ -69,8 +68,6 @@ void compute_MCMC(MCMC_info *MCMC){
   int       n_avg_integrate;
   int       n_P,n_C;
   int       n_gals;
-  size_t    n_success,n_fail;
-  size_t    n_success_all,n_fail_all;
   double   *x_P;
   double  **x_M;
   double   *M_target;
@@ -196,7 +193,6 @@ void compute_MCMC(MCMC_info *MCMC){
   n_iterations_burn     =MCMC->n_iterations_burn;
   n_iterations_integrate=n_iterations-n_iterations_burn;
   flag_report_props     =check_mode_for_flag(MCMC->mode,MCMC_REPORT_PROPS);
-  
 
   SID_log("temperature            = %lf",SID_LOG_COMMENT,MCMC->temperature);
   SID_log("n_avg                  = %d",SID_LOG_COMMENT,n_avg);
@@ -397,7 +393,6 @@ void compute_MCMC(MCMC_info *MCMC){
           next_DS=current_DS->next;
           fwrite(current_DS->name,       sizeof(char),   MCMC_NAME_SIZE,fp_run);
           fwrite(&(current_DS->n_M),     sizeof(int),                 1,fp_run);
-          SID_log("Writing %d elements.",SID_LOG_COMMENT,current_DS->n_M);
           fwrite(current_DS->M_target,   sizeof(double),current_DS->n_M,fp_run);
           fwrite(current_DS->dM_target,  sizeof(double),current_DS->n_M,fp_run);
           fwrite(&(current_DS->n_arrays),sizeof(int),                 1,fp_run);
@@ -418,7 +413,7 @@ void compute_MCMC(MCMC_info *MCMC){
     n_iterations_file_burn =0;
     if(!flag_restart){
       SID_log("Initializing state...",SID_LOG_OPEN);
-      MCMC->flag_init_chain=TRUE;
+
       // Report the starting conditions 
       if(my_chain==SID.My_rank){
         SID_log("Initial parameters:",SID_LOG_ALLRANKS|SID_LOG_OPEN);
@@ -431,6 +426,7 @@ void compute_MCMC(MCMC_info *MCMC){
       // Perform autotuning (if requested)
       if(check_mode_for_flag(MCMC->mode,MCMC_MODE_AUTOTUNE))
         autotune_MCMC(MCMC);
+      MCMC->flag_init_chain=TRUE;
 
       // Set the initial state
       SID_log("Writing chain config file...",SID_LOG_OPEN);
@@ -539,7 +535,7 @@ void compute_MCMC(MCMC_info *MCMC){
 
       // Report the starting conditions 
       if(my_chain==SID.My_rank){
-        SID_log("Starting parameters:",SID_LOG_ALLRANKS|SID_LOG_OPEN);
+        SID_log("Resume from parameters:",SID_LOG_ALLRANKS|SID_LOG_OPEN);
         sprintf(format_string,"%s = %%13.6le",MCMC->P_name_format);
         for(i_P=0;i_P<n_P;i_P++)
           SID_log(format_string,SID_LOG_ALLRANKS|SID_LOG_COMMENT,MCMC->P_names[i_P],P_last[i_P]);
@@ -591,27 +587,18 @@ void compute_MCMC(MCMC_info *MCMC){
         i_iteration_next_report=20;
 
       // Loop until this phase (burn or integrate) is done
-      n_success    =0;
-      n_success_all=0;
-      n_fail       =0;
-      n_fail_all   =0;
       flag_continue=TRUE;
       while(flag_continue){
         // Process one averaging interval at a time
-        for(i_avg=0,i_thin=1,i_proposal=0;i_avg<n_avg;i_thin++){
+        for(i_avg=0,i_thin=1;i_avg<n_avg;i_thin++){
 
           // Generate new proposal and determine it's chi^2
-          flag_success=generate_MCMC_proposition(MCMC);
-
-          // If this rank is processing chan information ...
+          flag_success=generate_MCMC_chain(MCMC);
+          // If this rank is processing chain information ...
           if(my_chain==SID.My_rank){
             // ... and this proposal is kept by the thining then ...
             if(i_thin==n_thin){
-              i_proposal++;
-              if(flag_success)
-                n_success++;
-              else
-                n_fail++;
+
               // ... reformat parameter arrays for statistics generation
               for(i_P=0;i_P<n_P;i_P++){
                 P_chain_stats[i_P][i_avg%n_avg]=P_chain[i_P];
@@ -706,17 +693,8 @@ void compute_MCMC(MCMC_info *MCMC){
       } // while continue
       
       // Report success rate
-      SID_Allreduce(&n_success,&n_success_all,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
-      SID_Allreduce(&n_fail,   &n_fail_all,   1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
-      SID_log("Proposal success: %5.3f%% (%lld of %lld)",SID_LOG_COMMENT,1e2*((float)(n_success_all)/(float)(n_success_all+n_fail_all)),n_success_all,n_success_all+n_fail_all);
-  
-      if(my_chain==SID.My_rank){
-        // Write the status of the covariance matrix calculation
-        fp_chain_covariance=fopen(filename_chain_covariance,"wb");
-        fwrite(&n_P,   sizeof(int),   1,      fp_chain_covariance);
-        fwrite(MCMC->V,sizeof(double),n_P*n_P,fp_chain_covariance);
-        fclose(fp_chain_covariance);
-      }
+      SID_log("Proposal success: %5.3f%% (%lld of %lld)",SID_LOG_COMMENT,1e2*((float)(MCMC->n_success)/(float)(MCMC->n_propositions)),MCMC->n_success,MCMC->n_propositions);
+
       i_iteration      =0;
       i_iteration_start=i_iteration;
       SID_log("Done.",SID_LOG_CLOSE);

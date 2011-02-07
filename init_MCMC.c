@@ -30,12 +30,12 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   MCMC->first_map_call          =TRUE;
   MCMC->first_link_call         =TRUE;
   MCMC->flag_init_chain         =TRUE;
-  MCMC->first_gen_parameter_call  =TRUE; 
-  MCMC->first_gen_proposition_call=TRUE; 
-  MCMC->first_likelihood_call     =TRUE; 
-  MCMC->ln_likelihood_last        =0.; 
-  MCMC->ln_likelihood_new         =0.; 
-  MCMC->ln_likelihood_chain       =0.;
+  MCMC->first_chain_call        =TRUE; 
+  MCMC->first_parameter_call    =TRUE; 
+  MCMC->first_likelihood_call   =TRUE; 
+  MCMC->ln_likelihood_last      =0.; 
+  MCMC->ln_likelihood_new       =0.; 
+  MCMC->ln_likelihood_chain     =0.;
   MCMC->P_init                  =NULL;
   MCMC->P_new                   =NULL;
   MCMC->P_last                  =NULL;
@@ -57,7 +57,7 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   MCMC->n_M_total               =0;
   MCMC->n_fail                  =0;
   MCMC->n_success               =0;
-  MCMC->i_proposal              =0;
+  MCMC->n_propositions          =0;
   MCMC->n_map_calls             =0;
 
   // Process the passed arguments
