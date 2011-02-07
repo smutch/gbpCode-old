@@ -17,13 +17,54 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
 
   SID_log("Initializing MCMC structure...",SID_LOG_OPEN);
 
+  // Set defaults to bare minimums
+  sprintf(MCMC->filename_output_dir,"./%s_MCMC/",SID.My_binary);
+  MCMC->n_avg                   =100;
+  MCMC->n_iterations_burn       =4;
+  MCMC->n_iterations            =8;
+  MCMC->n_thin                  =1;
+  MCMC->coverage_size           =10;
+  MCMC->flag_autocor_on         =FALSE;
+  MCMC->flag_integrate_on       =FALSE;
+  MCMC->flag_analysis_on        =TRUE;
+  MCMC->first_map_call          =TRUE;
+  MCMC->first_link_call         =TRUE;
+  MCMC->flag_init_chain         =TRUE;
+  MCMC->first_gen_parameter_call  =TRUE; 
+  MCMC->first_gen_proposition_call=TRUE; 
+  MCMC->first_likelihood_call     =TRUE; 
+  MCMC->ln_likelihood_last        =0.; 
+  MCMC->ln_likelihood_new         =0.; 
+  MCMC->ln_likelihood_chain       =0.;
+  MCMC->P_init                  =NULL;
+  MCMC->P_new                   =NULL;
+  MCMC->P_last                  =NULL;
+  MCMC->P_chain                 =NULL;
+  MCMC->P_limit_min             =NULL;
+  MCMC->P_limit_max             =NULL;
+  MCMC->n_M                     =NULL;
+  MCMC->M_new                   =NULL;
+  MCMC->M_last                  =NULL;
+  MCMC->DS                      =NULL;
+  MCMC->last                    =NULL;
+  MCMC->V                       =NULL;
+  MCMC->m                       =NULL;
+  MCMC->b                       =NULL;
+  MCMC->RNG                     =NULL;
+  MCMC->params                  =NULL;
+  MCMC->temperature             =1.0;
+  MCMC->n_DS                    =0;
+  MCMC->n_M_total               =0;
+  MCMC->n_fail                  =0;
+  MCMC->n_success               =0;
+  MCMC->i_proposal              =0;
+  MCMC->n_map_calls             =0;
+
+  // Process the passed arguments
   MCMC->map_P_to_M                =f;
   MCMC->compute_MCMC_ln_likelihood=compute_MCMC_ln_likelihood_default;
   MCMC->params                    =params;
-  MCMC->temperature               =1.0;
   MCMC->n_P                       =n_P;
-  MCMC->n_DS                      =0;
-  MCMC->n_M_total                 =0;
   MCMC->problem_name=(char *)SID_malloc(sizeof(char)*MCMC_NAME_SIZE);
   sprintf(MCMC->problem_name,"%s\0",problem_name);
   MCMC->P_names      =(char **)SID_malloc(sizeof(char *)*MCMC->n_P);
@@ -35,8 +76,17 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   }
   sprintf(MCMC->P_name_format,"%%-%ds",MCMC->P_name_length);
 
-  // Set parameter limits
+  // Initialize the covariance matrix
+  set_MCMC_covariance(MCMC,NULL);
+
+  // Initialize the MCMC mode and set things associated with it
+  set_MCMC_mode(MCMC,MCMC_MODE_DEFAULT); // MCMC->my_chain is set here
+
+  // Set parameter arrays and limits
   MCMC->P_init       =(double *)SID_malloc(sizeof(double)*MCMC->n_P);
+  MCMC->P_new        =(double *)SID_malloc(sizeof(double)*MCMC->n_P);
+  MCMC->P_last       =(double *)SID_malloc(sizeof(double)*MCMC->n_P);
+  MCMC->P_chain      =(double *)SID_malloc(sizeof(double)*MCMC->n_P);
   MCMC->P_limit_min  =(double *)SID_malloc(sizeof(double)*MCMC->n_P);
   MCMC->P_limit_max  =(double *)SID_malloc(sizeof(double)*MCMC->n_P);
   if(P_limit_min==NULL){
@@ -57,7 +107,10 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   }
 
   // Set parameter initial values
-  memcpy(MCMC->P_init,P_init,(size_t)MCMC->n_P*sizeof(double));
+  memcpy(MCMC->P_init, P_init,(size_t)MCMC->n_P*sizeof(double));
+  memcpy(MCMC->P_new,  P_init,(size_t)MCMC->n_P*sizeof(double));
+  memcpy(MCMC->P_last, P_init,(size_t)MCMC->n_P*sizeof(double));
+  memcpy(MCMC->P_chain,P_init,(size_t)MCMC->n_P*sizeof(double));
 
   // Set arrays
   MCMC->n_arrays=n_arrays;
@@ -74,28 +127,14 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   else
     MCMC->array=NULL;
 
-  // Set defaults to bare minimums
-  MCMC->n_avg                 =MAX(10,n_P*n_P);
-  MCMC->n_iterations_burn     =4;
-  MCMC->n_iterations          =8;
-  MCMC->n_thin                =1;
-  MCMC->coverage_size         =10;
-  MCMC->flag_autocor_on       =FALSE;
-  MCMC->flag_integrate_on     =TRUE;
-  MCMC->flag_analysis_on      =TRUE;
-  MCMC->first_map_call        =TRUE;
-  MCMC->first_link_call       =TRUE;
-  MCMC->mode                  =MCMC_MODE_DEFAULT;
-  sprintf(MCMC->filename_output_dir,"./%s_MCMC/",SID.My_binary);
-  MCMC->V                     =NULL;
-  MCMC->m                     =NULL;
-  set_MCMC_covariance(MCMC,NULL);
-  MCMC->DS           =NULL;
-  MCMC->last         =NULL;
-
   // Set autotune defaults (if needed)
   if(check_mode_for_flag(MCMC->mode,MCMC_MODE_AUTOTUNE))
     set_MCMC_autotune(MCMC,-1.,-1.,-1.,-1,-1,-1); // Negatives mean use defaults (set in gbpMCMC.h)
+
+  // Initilize the random number generator
+  MCMC->RNG=(RNG_info *)SID_malloc(sizeof(RNG_info));
+  init_seed_from_clock(&(MCMC->seed));
+  init_RNG(&(MCMC->seed),MCMC->RNG,RNG_DEFAULT);
 
   SID_log("Done.",SID_LOG_CLOSE);
 

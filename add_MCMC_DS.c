@@ -3,7 +3,6 @@
 #include <string.h>
 #include <math.h>
 #include <gbpLib.h>
-#include <gbpRNG.h>
 #include <gbpMCMC.h>
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_fit.h>
@@ -28,7 +27,7 @@ void add_MCMC_DS(MCMC_info *MCMC,const char *name,int n_M,double *DS,double *dDS
   new->params   =params;
   new->n_arrays =n_arrays;
   if(n_arrays>0){
-    new->array=(double **)SID_malloc(sizeof(double *)*new->n_arrays);
+    new->array     =(double **)SID_malloc(sizeof(double *)*new->n_arrays);
     new->array_name=(char   **)SID_malloc(sizeof(char   *)*new->n_arrays);
     for(i_array=0;i_array<n_arrays;i_array++){
       new->array[i_array]     =(double *)SID_malloc(sizeof(double)*new->n_M);
@@ -49,7 +48,6 @@ void add_MCMC_DS(MCMC_info *MCMC,const char *name,int n_M,double *DS,double *dDS
   MCMC->last=new;
 
   MCMC->n_DS++;
-  MCMC->n_M_total+=new->n_M;
 
   SID_log("Done.",SID_LOG_CLOSE);
 

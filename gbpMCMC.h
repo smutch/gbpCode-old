@@ -1,3 +1,4 @@
+#include <gbpRNG.h>
 #include <gsl/gsl_linalg.h>
 
 #define MCMC_COVERAGE_LINEAR 0
@@ -41,16 +42,27 @@ struct MCMC_info {
   char    *problem_name;
   int     (*map_P_to_M)(double *,MCMC_info *,double **);
   void    (*compute_MCMC_ln_likelihood)(MCMC_info *MCMC,double **M,double *P,double *ln_likeliood);
+  int      my_chain;
   void    *params;
   char   **P_names;
   double  *P_init;
+  double  *P_new;
+  double  *P_last;
+  double  *P_chain;
   double  *P_limit_min;
   double  *P_limit_max;
+  double   ln_Pr_new;
+  double   ln_Pr_last;
+  double   ln_Pr_chain;
+  int     *n_M;
+  double **M_new;
+  double **M_last;
   int      n_arrays;
   char   **array_name;
   double **array;
   double  *V;
   gsl_matrix *m;
+  gsl_vector *b;
   int      n_P;
   int      n_DS;
   int      n_M_total;
@@ -64,28 +76,42 @@ struct MCMC_info {
   int      flag_autocor_on;
   int      flag_integrate_on;
   int      flag_analysis_on;
+  int      flag_init_chain;
   int      first_map_call;
   int      first_link_call;
+  size_t   n_map_calls;
   int      mode;
+  int      n_success;
+  int      n_fail;
+  int      i_proposal;
   double   success_target;
   double   success_threshold;
   double   covariance_threshold;
   int      n_autotune;   
   int      n_autotune_temperature;   
-  int      n_autotune_covariance;   
+  int      n_autotune_covariance;
+  int      first_gen_parameter_call;
+  int      first_gen_proposition_call;
+  int      first_likelihood_call;
+  double   ln_likelihood_last;
+  double   ln_likelihood_new;
+  double   ln_likelihood_chain;
   int      P_name_length;
   char     P_name_format[8];
+  int      seed;
+  RNG_info *RNG;
   double       *P;
   MCMC_DS_info *DS;
   MCMC_DS_info *last;
 };
 
 void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(double *,MCMC_info *,double **),int n_P,double *P_init,char **P_names,double *P_limit_min,double *P_limit_max,int n_arrays,...);
-void add_MCMC_DS(MCMC_info *MCMC,const char *name,int n_M,double *DS,double *dDS,void *params,int n_arrays,...);
-void autotune_MCMC_temperature(MCMC_info *MCMC,RNG_info *RNG);
-void autotune_MCMC_covariance(MCMC_info *MCMC,RNG_info *RNG);
+void init_MCMC_DS(MCMC_info *MCMC);
 void free_MCMC(MCMC_info *MCMC);
-void generate_new_MCMC_link(MCMC_info *MCMC,double *P_old,int n_P,RNG_info *RNG,gsl_matrix *m,gsl_vector *b,double *P_new);
+void add_MCMC_DS(MCMC_info *MCMC,const char *name,int n_M,double *DS,double *dDS,void *params,int n_arrays,...);
+void autotune_MCMC(MCMC_info *MCMC);
+void autotune_MCMC_temperature(MCMC_info *MCMC);
+void autotune_MCMC_covariance(MCMC_info *MCMC);
 void compute_MCMC_ln_likelihood_default(MCMC_info *MCMC,double **M,double *P,double *ln_likeliood);
 void compute_MCMC_chain_stats(double **x,int n_x,int n_avg,double *x_min,double *x_bar_in,double *x_max,double *x_sigma,double **auto_cor,double *slopes,double *dP_sub,double *ln_likelihood_in,double *ln_likelihood_min,double *ln_likelihood_avg,double *ln_likelihood_max);
 void compute_MCMC(MCMC_info *MCMC);
@@ -106,4 +132,5 @@ void set_MCMC_autotune(MCMC_info *MCMC,
                        int        n_autotune_covariance);
 void read_MCMC_covariance(MCMC_info *MCMC,char *filename);
 void read_MCMC_state(MCMC_info *MCMC,char *filename_root);
-
+void generate_MCMC_parameters(MCMC_info *MCMC);
+int  generate_MCMC_proposition(MCMC_info *MCMC);

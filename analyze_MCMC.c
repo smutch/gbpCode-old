@@ -3,7 +3,6 @@
 #include <string.h>
 #include <math.h>
 #include <gbpLib.h>
-#include <gbpRNG.h>
 #include <gbpMCMC.h>
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_fit.h>
@@ -108,7 +107,6 @@ void analyze_MCMC(MCMC_info *MCMC){
   FILE     *fp_histograms;
   FILE     *fp_results;
   FILE     *fp_stop;
-  RNG_info  RNG;
   int       seed=182743;
   int       i_report;
   int       i_iteration_start;
@@ -183,16 +181,14 @@ void analyze_MCMC(MCMC_info *MCMC){
 
   SID_log("Initializing...",SID_LOG_OPEN);
 
-  // Set the local chain number
-  if(check_mode_for_flag(MCMC->mode,MCMC_MODE_PARALLEL))
-    my_chain=SID.My_rank;
-  else
-    my_chain=MASTER_RANK;
+  // Initialize dataset arrays
+  init_MCMC_DS(MCMC);
 
   // Initialize some constants etc.
   n_P                   =MCMC->n_P;
   n_DS                  =MCMC->n_DS;
   n_avg                 =MCMC->n_avg;
+  my_chain              =MCMC->my_chain;
   n_iterations          =MCMC->n_iterations;
   n_iterations_burn     =MCMC->n_iterations_burn;
   n_iterations_integrate=n_iterations-n_iterations_burn;
@@ -200,7 +196,6 @@ void analyze_MCMC(MCMC_info *MCMC){
   coverage_size         =MCMC->coverage_size;
   flag_autocor_on       =MCMC->flag_autocor_on;
   flag_report_props     =check_mode_for_flag(MCMC->mode,MCMC_REPORT_PROPS);  
-  strcpy(filename_output_dir,MCMC->filename_output_dir);
 
   // Initialize arrays used for computing the covariance matrix
   P_i_bar_accum =(double *)SID_malloc(sizeof(double)*n_P);
@@ -222,9 +217,9 @@ void analyze_MCMC(MCMC_info *MCMC){
   }
 
   // Initialize chain arrays etc
-  n_M       =(int      *)SID_malloc(sizeof(int      )*n_DS);
-  M_new     =(double  **)SID_malloc(sizeof(double  *)*n_DS);
-  M_last    =(double  **)SID_malloc(sizeof(double  *)*n_DS);
+  n_M       =MCMC->n_M;
+  M_new     =MCMC->M_new;
+  M_last    =MCMC->M_last;
   n_M_arrays=(int      *)SID_malloc(sizeof(int      )*n_DS);
   M_arrays  =(double ***)SID_malloc(sizeof(double **)*n_DS);
   current_DS=MCMC->DS;
@@ -232,15 +227,13 @@ void analyze_MCMC(MCMC_info *MCMC){
   while(current_DS!=NULL){
     next_DS         =current_DS->next;
     n_M[i_DS]       =current_DS->n_M;
-    M_new[i_DS]     =(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
-    M_last[i_DS]    =(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
     n_M_arrays[i_DS]=current_DS->n_arrays;
     M_arrays[i_DS]  =current_DS->array;
     current_DS      =next_DS;
     i_DS++;
   }
-  P_new          =(double  *)SID_malloc(sizeof(double)*n_P);
-  P_last         =(double  *)SID_malloc(sizeof(double)*n_P);
+  P_new          =MCMC->P_new;
+  P_last         =MCMC->P_last;
   P_min          =(double  *)SID_malloc(sizeof(double)*n_P);
   P_max          =(double  *)SID_malloc(sizeof(double)*n_P);
   P_avg          =(double  *)SID_malloc(sizeof(double)*n_P);

@@ -4,6 +4,7 @@
 INCFILES = gbpMCMC.h
 LIBFILE  = libgbpMCMC.a
 OBJFILES = add_MCMC_DS.o                        \
+	   autotune_MCMC.o                      \
 	   autotune_MCMC_temperature.o          \
 	   autotune_MCMC_covariance.o           \
 	   compute_MCMC.o                       \
@@ -12,8 +13,10 @@ OBJFILES = add_MCMC_DS.o                        \
 	   compute_MCMC_chain_stats.o           \
 	   compute_MCMC_ln_likelihood_default.o \
 	   free_MCMC.o                          \
-	   generate_new_MCMC_link.o             \
+	   generate_MCMC_parameters.o           \
+	   generate_MCMC_proposition.o          \
 	   init_MCMC.o                          \
+	   init_MCMC_DS.o                       \
 	   set_MCMC_autotune.o                  \
 	   set_MCMC_covariance.o                \
 	   set_MCMC_mode.o                      \

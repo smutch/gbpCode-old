@@ -15,10 +15,12 @@ void set_MCMC_covariance(MCMC_info *MCMC,double *V){
     SID_log("Initializing the covariance matrix...",SID_LOG_OPEN);
   else
     SID_log("Updating the covariance matrix...",SID_LOG_OPEN);
-  if(MCMC->V==NULL){
+  if(MCMC->V==NULL)
     MCMC->V=(double *)SID_malloc(sizeof(double)*MCMC->n_P*MCMC->n_P);
+  if(MCMC->m==NULL)
     MCMC->m=gsl_matrix_calloc(MCMC->n_P,MCMC->n_P);
-  }
+  if(MCMC->b==NULL)
+    MCMC->b=gsl_vector_calloc(MCMC->n_P);
   if(V==NULL){
     for(i_P=0;i_P<MCMC->n_P;i_P++){
       for(j_P=0;j_P<MCMC->n_P;j_P++){

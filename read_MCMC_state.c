@@ -127,6 +127,7 @@ void read_MCMC_state(MCMC_info *MCMC,char *filename_root){
         current_DS           =(MCMC_DS_info *)SID_malloc(sizeof(MCMC_DS_info));
         fread(current_DS->name,  sizeof(char),MCMC_NAME_SIZE,fp_run);
         fread(&(current_DS->n_M),sizeof(int),              1,fp_run);
+        MCMC->n_M_total+=current_DS->n_M;
         SID_log("name    ={%s}",SID_LOG_COMMENT,current_DS->name);
         SID_log("n_M     =%d",  SID_LOG_COMMENT,current_DS->n_M);
         current_DS->M_target =(double *)SID_malloc(sizeof(double)*current_DS->n_M);
@@ -169,6 +170,9 @@ void read_MCMC_state(MCMC_info *MCMC,char *filename_root){
     fread(V_read,                    sizeof(double),MCMC->n_P*MCMC->n_P,fp_chain_config);
     set_MCMC_covariance(MCMC,V_read);
     SID_free(SID_FARG V_read);
+
+    // Initialize dataset arrays
+    init_MCMC_DS(MCMC);
 
     SID_log("# burn  iterations = %d", SID_LOG_COMMENT,MCMC->n_iterations_burn);
     SID_log("# total iterations = %d", SID_LOG_COMMENT,MCMC->n_iterations);

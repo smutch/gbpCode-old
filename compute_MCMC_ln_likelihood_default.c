@@ -25,11 +25,14 @@ void compute_MCMC_ln_likelihood_default(MCMC_info *MCMC,double **M,double *P,dou
     n_M      =current_DS->n_M;
     M_target =current_DS->M_target;
     dM_target=current_DS->dM_target;
-    for(i_M=0;i_M<n_M;i_M++)
+    for(i_M=0;i_M<n_M;i_M++){
       (*ln_likelihood)+=pow((M_target[i_M]-M[i_DS][i_M])/dM_target[i_M],2.);
+//fprintf(stderr,"%le %le %le %le\n",M_target[i_M],M[i_DS][i_M],dM_target[i_M],(*ln_likelihood));
+    }
     i_DS++;
     current_DS=next_DS;
   }
+//if(MCMC->n_map_calls>4) exit(1);
   (*ln_likelihood)*=-0.5;
 }
 
