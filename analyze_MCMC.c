@@ -31,6 +31,7 @@ void analyze_MCMC(MCMC_info *MCMC){
   char      array_name_temp[MCMC_NAME_SIZE];
   int       n_avg_test;
   int       flag_autocor_on_test;
+  int       flag_no_map_write;
   int       n_P_test;
   int       n_DS_test;
   int       n_arrays_test;
@@ -88,6 +89,8 @@ void analyze_MCMC(MCMC_info *MCMC){
   size_t **coverage_true;
   size_t **coverage_false;
   size_t **coverage_keep;
+  double **max_L_surface;
+  double **mean_L_surface;
   double    L_x,L_y,L_z;
   int       n_x,n_y,n_z;
   int       n_C_x;
@@ -190,7 +193,8 @@ void analyze_MCMC(MCMC_info *MCMC){
   n_thin                =MCMC->n_thin;
   coverage_size         =MCMC->coverage_size;
   flag_autocor_on       =MCMC->flag_autocor_on;
-  flag_report_props     =check_mode_for_flag(MCMC->mode,MCMC_REPORT_PROPS);  
+  flag_no_map_write     =MCMC->flag_no_map_write;
+  flag_report_props     =check_mode_for_flag(MCMC->mode,MCMC_MODE_REPORT_PROPS);  
 
   // Initialize arrays used for computing the covariance matrix
   P_i_bar_accum =(double *)SID_malloc(sizeof(double)*n_P);
@@ -234,10 +238,10 @@ void analyze_MCMC(MCMC_info *MCMC){
   P_avg          =(double  *)SID_malloc(sizeof(double)*n_P);
   dP_avg         =(double  *)SID_malloc(sizeof(double)*n_P);
   for(i_P=0;i_P<n_P;i_P++){
-    P_min[i_P] =DBL_MAX;
-    P_max[i_P] =DBL_MIN;
-    P_avg[i_P] =0.;
-    dP_avg[i_P]=0.;
+    P_min[i_P] = DBL_MAX;
+    P_max[i_P] =-DBL_MAX;
+    P_avg[i_P] = 0.;
+    dP_avg[i_P]= 0.;
   }
 
   // Set directories
@@ -272,8 +276,8 @@ void analyze_MCMC(MCMC_info *MCMC){
     P_histogram   =(size_t  **)SID_malloc(sizeof(size_t *)*n_P);
     for(i_P=0;i_P<n_P;i_P++){
       P_histogram[i_P]=(size_t *)SID_malloc(sizeof(size_t)*coverage_size);
-      P_min[i_P]      =DBL_MAX;
-      P_max[i_P]      =DBL_MIN;
+      P_min[i_P]      = DBL_MAX;
+      P_max[i_P]      =-DBL_MAX;
       for(j_P=0;j_P<coverage_size;j_P++)
         P_histogram[i_P][j_P]=0;
     }
@@ -302,29 +306,39 @@ void analyze_MCMC(MCMC_info *MCMC){
         M_histogram[i_DS][i_M]=(size_t *)SID_malloc(sizeof(size_t)*coverage_size);
         M_avg[i_DS][i_M]  =0.;
         dM_avg[i_DS][i_M] =0.;
-        M_min[i_DS][i_M]  =DBL_MAX;
-        M_max[i_DS][i_M]  =DBL_MIN;
+        M_min[i_DS][i_M]  = DBL_MAX;
+        M_max[i_DS][i_M]  =-DBL_MAX;
         for(j_M=0;j_M<coverage_size;j_M++)
           M_histogram[i_DS][i_M][j_M]=0;
       }
     }
-    coverage_true =(size_t  **)SID_malloc(sizeof(size_t  *)*n_coverage);
-    coverage_false=(size_t  **)SID_malloc(sizeof(size_t  *)*n_coverage);
-    coverage_keep =(size_t  **)SID_malloc(sizeof(size_t  *)*n_coverage);
+    coverage_true    =(size_t  **)SID_malloc(sizeof(size_t  *)*n_coverage);
+    coverage_false   =(size_t  **)SID_malloc(sizeof(size_t  *)*n_coverage);
+    coverage_keep    =(size_t  **)SID_malloc(sizeof(size_t  *)*n_coverage);
+    max_L_surface    =(double  **)SID_malloc(sizeof(double  *)*n_coverage);
+    mean_L_surface   =(double  **)SID_malloc(sizeof(double  *)*n_coverage);
     for(i_coverage=0;i_coverage<n_coverage;i_coverage++){
-      coverage_true[i_coverage] =(size_t *)SID_malloc(sizeof(size_t)*coverage_size*coverage_size);
-      coverage_false[i_coverage]=(size_t *)SID_malloc(sizeof(size_t)*coverage_size*coverage_size);
-      coverage_keep[i_coverage] =(size_t *)SID_malloc(sizeof(size_t)*coverage_size*coverage_size);
+      coverage_true[i_coverage]    =(size_t *)SID_malloc(sizeof(size_t)*coverage_size*coverage_size);
+      coverage_false[i_coverage]   =(size_t *)SID_malloc(sizeof(size_t)*coverage_size*coverage_size);
+      coverage_keep[i_coverage]    =(size_t *)SID_malloc(sizeof(size_t)*coverage_size*coverage_size);
+      max_L_surface[i_coverage]    =(double *)SID_malloc(sizeof(double)*coverage_size*coverage_size);
+      mean_L_surface[i_coverage]   =(double *)SID_malloc(sizeof(double)*coverage_size*coverage_size);
       for(j_coverage=0;j_coverage<coverage_size*coverage_size;j_coverage++){
-        coverage_true[i_coverage][j_coverage] =0;
-        coverage_false[i_coverage][j_coverage]=0;
-        coverage_keep[i_coverage][j_coverage] =0;
+        coverage_true[i_coverage][j_coverage]    =0;
+        coverage_false[i_coverage][j_coverage]   =0;
+        coverage_keep[i_coverage][j_coverage]    =0;
+        max_L_surface[i_coverage][j_coverage]=0;
+        mean_L_surface[i_coverage][j_coverage]   =0;
       }
     }
     SID_log("Done.",SID_LOG_CLOSE);
 
     // Process the chain(s)
     SID_log("Process chain file(s)...",SID_LOG_OPEN);
+    if(flag_no_map_write)
+      SID_log("Mapping results are *not* available.",SID_LOG_COMMENT);
+    else
+      SID_log("Mapping results are available.",SID_LOG_COMMENT);
     if(my_chain==SID.My_rank){
       fp_chain=fopen(filename_chain,"rb");
       for(i_iteration=0,flag_init=TRUE,n_used=0;i_iteration<n_iterations;i_iteration++){
@@ -332,13 +346,17 @@ void analyze_MCMC(MCMC_info *MCMC){
           fread(&flag_success,     sizeof(char),  1,  fp_chain);
           fread(&ln_likelihood_new,sizeof(double),1,  fp_chain);
           fread(P_new,             sizeof(double),n_P,fp_chain);
-          for(i_DS=0;i_DS<n_DS;i_DS++)
-            fread(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
+          if(!flag_no_map_write){
+            for(i_DS=0;i_DS<n_DS;i_DS++)
+              fread(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
+          }
           if(i_iteration>=n_iterations_burn){
             if(flag_init || flag_success){
               memcpy(P_last,P_new,(size_t)n_P*sizeof(double));      
-              for(i_DS=0;i_DS<n_DS;i_DS++)
-                memcpy(M_last[i_DS],M_new[i_DS],(size_t)n_M[i_DS]*sizeof(double));
+              if(!flag_no_map_write){
+                for(i_DS=0;i_DS<n_DS;i_DS++)
+                  memcpy(M_last[i_DS],M_new[i_DS],(size_t)n_M[i_DS]*sizeof(double));
+              }
               flag_init=FALSE;
             }
             n_used++;
@@ -358,22 +376,27 @@ void analyze_MCMC(MCMC_info *MCMC){
             }
 
             // Compute mapping-space extrema and averages
-            for(i_DS=0;i_DS<n_DS;i_DS++){
-              for(i_M=0;i_M<n_M[i_DS];i_M++){
-                if(M_last[i_DS][i_M]<M_min[i_DS][i_M]) M_min[i_DS][i_M]=M_last[i_DS][i_M];
-                if(M_last[i_DS][i_M]>M_max[i_DS][i_M]) M_max[i_DS][i_M]=M_last[i_DS][i_M];
-                M_avg[i_DS][i_M]+=M_last[i_DS][i_M];
+            if(!flag_no_map_write){
+              for(i_DS=0;i_DS<n_DS;i_DS++){
+                for(i_M=0;i_M<n_M[i_DS];i_M++){
+                  if(M_last[i_DS][i_M]<M_min[i_DS][i_M]) M_min[i_DS][i_M]=M_last[i_DS][i_M];
+                  if(M_last[i_DS][i_M]>M_max[i_DS][i_M]) M_max[i_DS][i_M]=M_last[i_DS][i_M];
+                  M_avg[i_DS][i_M]+=M_last[i_DS][i_M];
+                }
               }
             }
           }
         }
       }
       // Finish averages
-      for(i_P=0;i_P<n_P;i_P++)
+      for(i_P=0;i_P<n_P;i_P++){
         P_avg[i_P]/=(double)n_used;
-      for(i_DS=0;i_DS<n_DS;i_DS++){
-        for(i_M=0;i_M<n_M[i_DS];i_M++)
-          M_avg[i_DS][i_M]/=(double)n_used;
+      }
+      if(!flag_no_map_write){
+        for(i_DS=0;i_DS<n_DS;i_DS++){
+          for(i_M=0;i_M<n_M[i_DS];i_M++)
+            M_avg[i_DS][i_M]/=(double)n_used;
+        }
       }
       rewind(fp_chain);
       for(i_iteration=0,flag_init=TRUE;i_iteration<n_iterations;i_iteration++){
@@ -381,8 +404,10 @@ void analyze_MCMC(MCMC_info *MCMC){
           fread(&flag_success,     sizeof(char),  1,  fp_chain);
           fread(&ln_likelihood_new,sizeof(double),1,  fp_chain);
           fread(P_new,             sizeof(double),n_P,fp_chain);
-          for(i_DS=0;i_DS<n_DS;i_DS++)
-            fread(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
+          if(!flag_no_map_write){
+            for(i_DS=0;i_DS<n_DS;i_DS++)
+              fread(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
+          }
           if(i_iteration>=n_iterations_burn){
             if(flag_init || flag_success){
               memcpy(P_last,P_new,(size_t)n_P*sizeof(double));      
@@ -414,8 +439,11 @@ void analyze_MCMC(MCMC_info *MCMC){
               bin_x=(double)(coverage_size)*(P_last[i_P]-P_min[i_P])/(P_max[i_P]-P_min[i_P]);
               for(j_P=i_P+1;j_P<n_P;j_P++,i_coverage++){
                 bin_y=(double)(coverage_size)*(P_last[j_P]-P_min[j_P])/(P_max[j_P]-P_min[j_P]);
-                if(bin_x>=0 && bin_x<coverage_size && bin_y>=0 && bin_y<coverage_size)
+                if(bin_x>=0 && bin_x<coverage_size && bin_y>=0 && bin_y<coverage_size){
                   coverage_keep[i_coverage][bin_x*coverage_size+bin_y]++;
+                  max_L_surface[i_coverage][bin_x*coverage_size+bin_y]  =MAX(max_L_surface[i_coverage][bin_x*coverage_size+bin_y],ln_likelihood_new);
+                  mean_L_surface[i_coverage][bin_x*coverage_size+bin_y]+=ln_likelihood_new;
+                }
               }
             }
 
@@ -437,21 +465,33 @@ void analyze_MCMC(MCMC_info *MCMC){
             for(i_P=0;i_P<n_P;i_P++){
               dP_avg[i_P]+=pow(P_last[i_P]-P_avg[i_P],2.);
             }
-            for(i_DS=0;i_DS<n_DS;i_DS++){
-              for(i_M=0;i_M<n_M[i_DS];i_M++)
-                dM_avg[i_DS][i_M]+=pow(M_last[i_DS][i_M]-M_avg[i_DS][i_M],2.);
+            if(!flag_no_map_write){
+              for(i_DS=0;i_DS<n_DS;i_DS++){
+                for(i_M=0;i_M<n_M[i_DS];i_M++)
+                  dM_avg[i_DS][i_M]+=pow(M_last[i_DS][i_M]-M_avg[i_DS][i_M],2.);
+              }
             }
           }
         }
       } // i_iteration
       fclose(fp_chain);
 
+      // Finish mean likelihood surfaces
+      for(i_P=0,i_coverage=0;i_P<n_P;i_P++){
+        for(j_P=i_P+1;j_P<n_P;j_P++,i_coverage++){
+          for(j_coverage=0;j_coverage<coverage_size*coverage_size;j_coverage++)
+            mean_L_surface[i_coverage][j_coverage]/=(double)coverage_keep[i_coverage][j_coverage];
+        }
+      }
+
       // Finish standard deviations
       for(i_P=0;i_P<n_P;i_P++)
         dP_avg[i_P]=sqrt(dP_avg[i_P]/(double)n_used);
-      for(i_DS=0;i_DS<n_DS;i_DS++){
-       for(i_M=0;i_M<n_M[i_DS];i_M++)
-         dM_avg[i_DS][i_M]=sqrt(dM_avg[i_DS][i_M]/(double)n_used);
+      if(!flag_no_map_write){
+        for(i_DS=0;i_DS<n_DS;i_DS++){
+          for(i_M=0;i_M<n_M[i_DS];i_M++)
+            dM_avg[i_DS][i_M]=sqrt(dM_avg[i_DS][i_M]/(double)n_used);
+        }
       }
       SID_log("Done.",SID_LOG_CLOSE);    
 
@@ -475,31 +515,33 @@ void analyze_MCMC(MCMC_info *MCMC){
 
       // Compute mapped dataset confidence intervals from histograms
       SID_log("Compute confidence intervals...",SID_LOG_OPEN);
-      for(i_DS=0;i_DS<n_DS;i_DS++){
-        for(i_M=0;i_M<n_M[i_DS];i_M++){
-          merge_sort(M_histogram[i_DS][i_M],(size_t)coverage_size,&histogram_index,SID_SIZE_T,SORT_COMPUTE_INDEX,FALSE);
-          accumulator       =M_histogram[i_DS][i_M][histogram_index[coverage_size-1]];
-          M_best_index      =histogram_index[coverage_size-1];
-          M_lo_68_index     =histogram_index[coverage_size-1];
-          M_hi_68_index     =histogram_index[coverage_size-1];
-          for(j_P=coverage_size-2;j_P>=0 && ((double)accumulator/(double)n_used)<0.68;j_P--){
-            if(histogram_index[j_P]<M_lo_68_index) M_lo_68_index=histogram_index[j_P];
-            if(histogram_index[j_P]>M_hi_68_index) M_hi_68_index=histogram_index[j_P];
-            accumulator+=M_histogram[i_DS][i_M][histogram_index[j_P]];
+      if(!flag_no_map_write){
+        for(i_DS=0;i_DS<n_DS;i_DS++){
+          for(i_M=0;i_M<n_M[i_DS];i_M++){
+            merge_sort(M_histogram[i_DS][i_M],(size_t)coverage_size,&histogram_index,SID_SIZE_T,SORT_COMPUTE_INDEX,FALSE);
+            accumulator       =M_histogram[i_DS][i_M][histogram_index[coverage_size-1]];
+            M_best_index      =histogram_index[coverage_size-1];
+            M_lo_68_index     =histogram_index[coverage_size-1];
+            M_hi_68_index     =histogram_index[coverage_size-1];
+            for(j_P=coverage_size-2;j_P>=0 && ((double)accumulator/(double)n_used)<0.68;j_P--){
+              if(histogram_index[j_P]<M_lo_68_index) M_lo_68_index=histogram_index[j_P];
+              if(histogram_index[j_P]>M_hi_68_index) M_hi_68_index=histogram_index[j_P];
+              accumulator+=M_histogram[i_DS][i_M][histogram_index[j_P]];
+            }
+            M_lo_95_index=M_lo_68_index;
+            M_hi_95_index=M_hi_68_index;
+            for(;j_P>=0 && ((double)accumulator/(double)n_used)<0.95;j_P--){
+              if(histogram_index[j_P]<M_lo_95_index) M_lo_95_index=histogram_index[j_P];
+              if(histogram_index[j_P]>M_hi_95_index) M_hi_95_index=histogram_index[j_P];
+              accumulator+=M_histogram[i_DS][i_M][histogram_index[j_P]];
+            }
+            M_best[i_DS][i_M] =M_min[i_DS][i_M]+(M_max[i_DS][i_M]-M_min[i_DS][i_M])*((double)(M_best_index)+0.5)/(double)coverage_size;
+            M_lo_68[i_DS][i_M]=M_min[i_DS][i_M]+(M_max[i_DS][i_M]-M_min[i_DS][i_M])*((double)(M_lo_68_index)+0.5)/(double)coverage_size;
+            M_hi_68[i_DS][i_M]=M_min[i_DS][i_M]+(M_max[i_DS][i_M]-M_min[i_DS][i_M])*((double)(M_hi_68_index)+0.5)/(double)coverage_size;
+            M_lo_95[i_DS][i_M]=M_min[i_DS][i_M]+(M_max[i_DS][i_M]-M_min[i_DS][i_M])*((double)(M_lo_95_index)+0.5)/(double)coverage_size;
+            M_hi_95[i_DS][i_M]=M_min[i_DS][i_M]+(M_max[i_DS][i_M]-M_min[i_DS][i_M])*((double)(M_hi_95_index)+0.5)/(double)coverage_size;
+            SID_free(SID_FARG histogram_index);
           }
-          M_lo_95_index=M_lo_68_index;
-          M_hi_95_index=M_hi_68_index;
-          for(;j_P>=0 && ((double)accumulator/(double)n_used)<0.95;j_P--){
-            if(histogram_index[j_P]<M_lo_95_index) M_lo_95_index=histogram_index[j_P];
-            if(histogram_index[j_P]>M_hi_95_index) M_hi_95_index=histogram_index[j_P];
-            accumulator+=M_histogram[i_DS][i_M][histogram_index[j_P]];
-          }
-          M_best[i_DS][i_M] =M_min[i_DS][i_M]+(M_max[i_DS][i_M]-M_min[i_DS][i_M])*((double)(M_best_index)+0.5)/(double)coverage_size;
-          M_lo_68[i_DS][i_M]=M_min[i_DS][i_M]+(M_max[i_DS][i_M]-M_min[i_DS][i_M])*((double)(M_lo_68_index)+0.5)/(double)coverage_size;
-          M_hi_68[i_DS][i_M]=M_min[i_DS][i_M]+(M_max[i_DS][i_M]-M_min[i_DS][i_M])*((double)(M_hi_68_index)+0.5)/(double)coverage_size;
-          M_lo_95[i_DS][i_M]=M_min[i_DS][i_M]+(M_max[i_DS][i_M]-M_min[i_DS][i_M])*((double)(M_lo_95_index)+0.5)/(double)coverage_size;
-          M_hi_95[i_DS][i_M]=M_min[i_DS][i_M]+(M_max[i_DS][i_M]-M_min[i_DS][i_M])*((double)(M_hi_95_index)+0.5)/(double)coverage_size;
-          SID_free(SID_FARG histogram_index);
         }
       }
 
@@ -562,6 +604,8 @@ void analyze_MCMC(MCMC_info *MCMC){
           fwrite(coverage_true[i_coverage], sizeof(size_t),coverage_size*coverage_size,fp_coverage);
           fwrite(coverage_false[i_coverage],sizeof(size_t),coverage_size*coverage_size,fp_coverage);
           fwrite(coverage_keep[i_coverage], sizeof(size_t),coverage_size*coverage_size,fp_coverage);
+          fwrite(max_L_surface[i_coverage], sizeof(size_t),coverage_size*coverage_size,fp_coverage);
+          fwrite(mean_L_surface[i_coverage],sizeof(size_t),coverage_size*coverage_size,fp_coverage);
         }
       }
       fclose(fp_coverage);
@@ -578,14 +622,16 @@ void analyze_MCMC(MCMC_info *MCMC){
         fwrite(&P_hi_95[i_P],   sizeof(double),1,            fp_histograms);
         fwrite(P_histogram[i_P],sizeof(size_t),coverage_size,fp_histograms);
       }
-      for(i_DS=0;i_DS<n_DS;i_DS++){
-        for(i_M=0;i_M<n_M[i_DS];i_M++){
-          fwrite(&M_best[i_DS][i_M],    sizeof(double),1,            fp_histograms);
-          fwrite(&M_lo_68[i_DS][i_M],   sizeof(double),1,            fp_histograms);
-          fwrite(&M_hi_68[i_DS][i_M],   sizeof(double),1,            fp_histograms);
-          fwrite(&M_lo_95[i_DS][i_M],   sizeof(double),1,            fp_histograms);
-          fwrite(&M_hi_95[i_DS][i_M],   sizeof(double),1,            fp_histograms);
-          fwrite(M_histogram[i_DS][i_M],sizeof(size_t),coverage_size,fp_histograms);
+      if(!flag_no_map_write){
+        for(i_DS=0;i_DS<n_DS;i_DS++){
+          for(i_M=0;i_M<n_M[i_DS];i_M++){
+            fwrite(&M_best[i_DS][i_M],    sizeof(double),1,            fp_histograms);
+            fwrite(&M_lo_68[i_DS][i_M],   sizeof(double),1,            fp_histograms);
+            fwrite(&M_hi_68[i_DS][i_M],   sizeof(double),1,            fp_histograms);
+            fwrite(&M_lo_95[i_DS][i_M],   sizeof(double),1,            fp_histograms);
+            fwrite(&M_hi_95[i_DS][i_M],   sizeof(double),1,            fp_histograms);
+            fwrite(M_histogram[i_DS][i_M],sizeof(size_t),coverage_size,fp_histograms);
+          }
         }
       }
       fclose(fp_histograms);
@@ -632,42 +678,44 @@ void analyze_MCMC(MCMC_info *MCMC){
       fclose(fp_results);
       current_DS=MCMC->DS;
       i_DS      =0;
-      while(current_DS!=NULL){
-        next_DS  =current_DS->next;
-        M_target =current_DS->M_target;
-        dM_target=current_DS->dM_target;
-        if(n_DS>1)
-          sprintf(filename_results,"%s/fit_for_dataset_%05d.dat",filename_results_dir,i_DS);
-        else
-          sprintf(filename_results,"%s/fit_for_dataset.dat",filename_results_dir);
-        fp_results=fopen(filename_results,"w");
-        fprintf(fp_results,"# MCMC data set fit results for %s\n",current_DS->name);
-        fprintf(fp_results,"#   n_samples_used=%d\n",n_used);
-        fprintf(fp_results,"#   dataset_DoF   =%d\n",n_M[i_DS]);
-        sprintf(column_txt,"Column:");
-        for(i_array=0,i_column=1;i_array<MCMC->n_arrays;i_array++){
-          fprintf(fp_results,"# %s (%02d) %s\n",                         column_txt,i_column++,current_DS->array_name[i_array]);
+      if(!flag_no_map_write){
+        while(current_DS!=NULL){
+          next_DS  =current_DS->next;
+          M_target =current_DS->M_target;
+          dM_target=current_DS->dM_target;
+          if(n_DS>1)
+            sprintf(filename_results,"%s/fit_for_dataset_%05d.dat",filename_results_dir,i_DS);
+          else
+            sprintf(filename_results,"%s/fit_for_dataset.dat",filename_results_dir);
+          fp_results=fopen(filename_results,"w");
+          fprintf(fp_results,"# MCMC data set fit results for %s\n",current_DS->name);
+          fprintf(fp_results,"#   n_samples_used=%d\n",n_used);
+          fprintf(fp_results,"#   dataset_DoF   =%d\n",n_M[i_DS]);
+          sprintf(column_txt,"Column:");
+          for(i_array=0,i_column=1;i_array<MCMC->n_arrays;i_array++){
+            fprintf(fp_results,"# %s (%02d) %s\n",                         column_txt,i_column++,current_DS->array_name[i_array]);
+            sprintf(column_txt,"       ");
+          }
           sprintf(column_txt,"       ");
+          fprintf(fp_results,"# %s (%02d) Dataset\n",                      column_txt,i_column++);
+          fprintf(fp_results,"# %s (%02d) Dataset uncertainty\n",          column_txt,i_column++);
+          fprintf(fp_results,"# %s (%02d) Average\n",                      column_txt,i_column++);
+          fprintf(fp_results,"# %s (%02d) Standard deviation\n",           column_txt,i_column++);
+          fprintf(fp_results,"# %s (%02d) Maximum likelihood value\n",     column_txt,i_column++);
+          fprintf(fp_results,"# %s (%02d) Lower limit (68%% confidence)\n",column_txt,i_column++);
+          fprintf(fp_results,"# %s (%02d) Upper limit (68%% confidence)\n",column_txt,i_column++);
+          fprintf(fp_results,"# %s (%02d) Lower limit (95%% confidence)\n",column_txt,i_column++);
+          fprintf(fp_results,"# %s (%02d) Upper limit (95%% confidence)\n",column_txt,i_column++);
+          for(i_P=0;i_P<n_M[i_DS];i_P++){
+            for(i_array=0;i_array<n_M_arrays[i_DS];i_array++)
+              fprintf(fp_results,"%13.6le ",M_arrays[i_DS][i_array][i_P]);
+            fprintf(fp_results,"%13.6le %13.6le %13.6le %13.6le %13.6le %13.6le %13.6le %13.6le %13.6le\n",M_target[i_P],dM_target[i_P],M_avg[i_DS][i_P],dM_avg[i_DS][i_P],M_best[i_DS][i_P],M_lo_68[i_DS][i_P],M_hi_68[i_DS][i_P],M_lo_95[i_DS][i_P],M_hi_95[i_DS][i_P]);
+          }
+          fclose(fp_results);    
+          current_DS=next_DS;
+          i_DS++;
         }
-        sprintf(column_txt,"       ");
-        fprintf(fp_results,"# %s (%02d) Dataset\n",                      column_txt,i_column++);
-        fprintf(fp_results,"# %s (%02d) Dataset uncertainty\n",          column_txt,i_column++);
-        fprintf(fp_results,"# %s (%02d) Average\n",                      column_txt,i_column++);
-        fprintf(fp_results,"# %s (%02d) Standard deviation\n",           column_txt,i_column++);
-        fprintf(fp_results,"# %s (%02d) Maximum likelihood value\n",     column_txt,i_column++);
-        fprintf(fp_results,"# %s (%02d) Lower limit (68%% confidence)\n",column_txt,i_column++);
-        fprintf(fp_results,"# %s (%02d) Upper limit (68%% confidence)\n",column_txt,i_column++);
-        fprintf(fp_results,"# %s (%02d) Lower limit (95%% confidence)\n",column_txt,i_column++);
-        fprintf(fp_results,"# %s (%02d) Upper limit (95%% confidence)\n",column_txt,i_column++);
-        for(i_P=0;i_P<n_M[i_DS];i_P++){
-          for(i_array=0;i_array<n_M_arrays[i_DS];i_array++)
-            fprintf(fp_results,"%13.6le ",M_arrays[i_DS][i_array][i_P]);
-          fprintf(fp_results,"%13.6le %13.6le %13.6le %13.6le %13.6le %13.6le %13.6le %13.6le %13.6le\n",M_target[i_P],dM_target[i_P],M_avg[i_DS][i_P],dM_avg[i_DS][i_P],M_best[i_DS][i_P],M_lo_68[i_DS][i_P],M_hi_68[i_DS][i_P],M_lo_95[i_DS][i_P],M_hi_95[i_DS][i_P]);
-        }
-        fclose(fp_results);    
-        current_DS=next_DS;
-        i_DS++;
-      }    
+      } 
       SID_log("Done.",SID_LOG_CLOSE);
     }
 
@@ -724,10 +772,14 @@ void analyze_MCMC(MCMC_info *MCMC){
     SID_free(SID_FARG coverage_true[i_P]);
     SID_free(SID_FARG coverage_false[i_P]);
     SID_free(SID_FARG coverage_keep[i_P]);
+    SID_free(SID_FARG max_L_surface[i_P]);
+    SID_free(SID_FARG mean_L_surface[i_P]);
   }
   SID_free(SID_FARG coverage_true);
   SID_free(SID_FARG coverage_false);
   SID_free(SID_FARG coverage_keep);
+  SID_free(SID_FARG max_L_surface);
+  SID_free(SID_FARG mean_L_surface);
 
   SID_log("Done.",SID_LOG_CLOSE);
 

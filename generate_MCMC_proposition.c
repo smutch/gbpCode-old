@@ -46,6 +46,5 @@ void generate_MCMC_proposition(MCMC_info *MCMC,int flag_chain_init){
       MCMC->ln_Pr_new          =0.;
       break;
   }
-
 }
 

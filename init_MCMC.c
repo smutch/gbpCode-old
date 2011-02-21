@@ -33,6 +33,7 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   MCMC->first_chain_call        =TRUE; 
   MCMC->first_parameter_call    =TRUE; 
   MCMC->first_likelihood_call   =TRUE; 
+  MCMC->flag_no_map_write       =TRUE;
   MCMC->ln_likelihood_last      =0.; 
   MCMC->ln_likelihood_new       =0.; 
   MCMC->ln_likelihood_chain     =0.;
@@ -91,7 +92,7 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   MCMC->P_limit_max  =(double *)SID_malloc(sizeof(double)*MCMC->n_P);
   if(P_limit_min==NULL){
     for(i_P=0;i_P<n_P;i_P++)
-      MCMC->P_limit_min[i_P]=DBL_MIN*1e3;
+      MCMC->P_limit_min[i_P]=-DBL_MAX*1e-3;
   }
   else{
     for(i_P=0;i_P<n_P;i_P++)

@@ -138,7 +138,8 @@ void compute_MCMC(MCMC_info *MCMC){
   int       i_array;
   int      *n_M;
   int       flag_initialized;
-  int       flag_report_props;
+  int       flag_no_map_write;
+  int       flag_no_map_write_test;
   int       n_used;
   double      RN;
   double       ***P_arrays;
@@ -192,7 +193,7 @@ void compute_MCMC(MCMC_info *MCMC){
   n_iterations          =MCMC->n_iterations;
   n_iterations_burn     =MCMC->n_iterations_burn;
   n_iterations_integrate=n_iterations-n_iterations_burn;
-  flag_report_props     =check_mode_for_flag(MCMC->mode,MCMC_REPORT_PROPS);
+  flag_no_map_write     =check_mode_for_flag(MCMC->mode,MCMC_MODE_NO_MAP_WRITE);
 
   SID_log("temperature            = %lf",SID_LOG_COMMENT,MCMC->temperature);
   SID_log("n_avg                  = %d",SID_LOG_COMMENT,n_avg);
@@ -288,6 +289,9 @@ void compute_MCMC(MCMC_info *MCMC){
         fread(&n_avg_test,sizeof(int),1,fp_run);
         if(n_avg_test!=n_avg)
           SID_trap_error("Integration averaging intervals are inconsistant (i.e. %d!=%d).",ERROR_LOGIC,n_avg,n_avg_test);
+        fread(&flag_no_map_write,sizeof(int),1,fp_run);
+        if(flag_no_map_write_test!=flag_no_map_write)
+          SID_trap_error("Map write flags are inconsistant (i.e. %d!=%d).",ERROR_LOGIC,flag_no_map_write,flag_no_map_write_test);
         fread(&flag_autocor_on_test,sizeof(int),1,fp_run);
         if(flag_autocor_on_test!=flag_autocor_on)
           SID_trap_error("Autocorrelation flags are inconsistant (i.e. %d!=%d).",ERROR_LOGIC,flag_autocor_on,flag_autocor_on_test);
@@ -374,6 +378,7 @@ void compute_MCMC(MCMC_info *MCMC){
         fwrite(MCMC->problem_name,sizeof(char),MCMC_NAME_SIZE,fp_run);
         fwrite(&n_avg,            sizeof(int),   1,   fp_run);
         fwrite(&flag_autocor_on,  sizeof(int),   1,   fp_run);
+        fwrite(&flag_no_map_write,sizeof(int),   1,   fp_run);
         fwrite(&n_P,              sizeof(int),   1,   fp_run);
         for(i_P=0;i_P<n_P;i_P++){
           fwrite(MCMC->P_names[i_P],  sizeof(char),  MCMC_NAME_SIZE,fp_run);
@@ -406,7 +411,7 @@ void compute_MCMC(MCMC_info *MCMC){
         SID_log("Done.",SID_LOG_CLOSE);
       }
     }
-    SID_Bcast(&flag_restart,sizeof(int),MASTER_RANK);
+    SID_Bcast(&flag_restart,sizeof(int),MASTER_RANK,SID.COMM_WORLD);
 
     // If this is NOT a restart, start from scratch ...
     n_iterations_file_total=0;
@@ -474,13 +479,17 @@ void compute_MCMC(MCMC_info *MCMC){
             if((i_iteration+i_avg)!=0){
               MCMC->ln_likelihood_last=MCMC->ln_likelihood_new;
               memcpy(P_last,P_new,n_P*sizeof(double));
-              for(i_DS=0;i_DS<n_DS;i_DS++)
-                memcpy(M_last[i_DS],M_new[i_DS],n_M[i_DS]*sizeof(double));
+              if(!flag_no_map_write){
+                for(i_DS=0;i_DS<n_DS;i_DS++)
+                  memcpy(M_last[i_DS],M_new[i_DS],n_M[i_DS]*sizeof(double));
+              }
             }
             fread(&(MCMC->ln_likelihood_new),sizeof(double),1,fp_chain);
             fread(P_new,sizeof(double),n_P,fp_chain);
-            for(i_DS=0;i_DS<n_DS;i_DS++)
-              fread(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
+            if(!flag_no_map_write){
+              for(i_DS=0;i_DS<n_DS;i_DS++)
+                fread(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
+            }
             if((i_iteration+i_avg)==0){
               MCMC->ln_likelihood_chain=MCMC->ln_likelihood_new;
               MCMC->ln_likelihood_last =MCMC->ln_likelihood_new;
@@ -612,8 +621,10 @@ void compute_MCMC(MCMC_info *MCMC){
                 fwrite(&flag_success,             sizeof(char),    1,fp_chain);
                 fwrite(&(MCMC->ln_likelihood_new),sizeof(double),  1,fp_chain);
                 fwrite(P_new,                     sizeof(double),n_P,fp_chain);
-                for(i_DS=0;i_DS<n_DS;i_DS++)
-                  fwrite(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
+                if(!flag_no_map_write){
+                  for(i_DS=0;i_DS<n_DS;i_DS++)
+                    fwrite(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
+                }
               }
             }
           }
@@ -628,8 +639,6 @@ void compute_MCMC(MCMC_info *MCMC){
           n_iterations_file_burn++;
         n_iterations_file_total++;
         i_iteration++;
-        if(flag_report_props && my_chain==SID.My_rank)
-          SID_log("Iteration #%07d of #%07d complete for this phase. ",SID_LOG_ALLRANKS|SID_LOG_COMMENT,i_iteration,n_iterations_phase);
 
         // Generate statistics for the averaging interval we just completed
         if(my_chain==SID.My_rank){
@@ -670,7 +679,7 @@ void compute_MCMC(MCMC_info *MCMC){
             flag_stop=TRUE;
           }
         }
-        SID_Bcast(&flag_stop,sizeof(int),MASTER_RANK);
+        SID_Bcast(&flag_stop,sizeof(int),MASTER_RANK,SID.COMM_WORLD);
         
         // ... if so, stop all ranks and cancel the subsequent analysis stage
         if(flag_stop){

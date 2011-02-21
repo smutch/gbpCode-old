@@ -39,9 +39,11 @@ fd                  =open(filename_root+'/run.dat','rb')
 problem_name        =fromfile(file=fd, dtype=(str_, MCMC_NAME_SIZE), count=1)[0].split('\x00')[0]
 n_avg               =fromfile(file=fd,dtype='i',count=1)
 flag_autocor_on_file=fromfile(file=fd,dtype='i',count=1)
-print 'Problem name=',problem_name
-print 'n_avg       =',n_avg
-print 'flag_autocor=',flag_autocor_on_file
+flag_no_map_write   =fromfile(file=fd,dtype='i',count=1)
+print 'Problem name     =',problem_name
+print 'n_avg            =',n_avg
+print 'flag_autocor     =',flag_autocor_on_file
+print 'flag_no_map_write=',flag_no_map_write
 
 # Read (and print) parameter names to stdout
 print 'MCMC Parameters:'
@@ -172,7 +174,7 @@ if (flag_results_on==1 and n_P_arrays>0):
 	print
 
 # Plot dataset fits
-if (flag_datasets_on==1 and n_DS_arrays_total>0):
+if (flag_datasets_on==1 and (not flag_no_map_write) and n_DS_arrays_total>0):
 	print "Creating dataset-fit plots:"
 	for i_DS in xrange(0,n_DS):
 		if(n_DS_arrays[i_DS]>0):

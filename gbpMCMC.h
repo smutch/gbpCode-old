@@ -5,12 +5,12 @@
 #define MCMC_COVERAGE_LOG    1
 #define MCMC_NAME_SIZE       256
 
-#define MCMC_MODE_SERIAL     1
-#define MCMC_MODE_PARALLEL   2
-#define MCMC_MODE_AUTOTUNE   8
-#define MCMC_REPORT_PROPS    4
-#define MCMC_NO_CVM_UPDATE   8
-#define MCMC_MODE_DEFAULT    MCMC_MODE_AUTOTUNE
+#define MCMC_MODE_SERIAL         1
+#define MCMC_MODE_PARALLEL       2
+#define MCMC_MODE_AUTOTUNE       8
+#define MCMC_MODE_NO_MAP_WRITE  16
+#define MCMC_MODE_REPORT_PROPS  32
+#define MCMC_MODE_DEFAULT       MCMC_MODE_AUTOTUNE
 
 #define MCMC_MAP_RETURN_GOOD 0
 #define MCMC_MAP_RETURN_BAD  1
@@ -74,6 +74,7 @@ struct MCMC_info {
   int      n_thin;
   int      coverage_size;
   int      flag_autocor_on;
+  int      flag_no_map_write;
   int      flag_integrate_on;
   int      flag_analysis_on;
   int      flag_init_chain;
@@ -131,7 +132,7 @@ void set_MCMC_autotune(MCMC_info *MCMC,
                        int        n_autotune_temperature,
                        int        n_autotune_covariance);
 void read_MCMC_covariance(MCMC_info *MCMC,char *filename);
-void read_MCMC_state(MCMC_info *MCMC,char *filename_root);
+void read_MCMC_state(MCMC_info *MCMC);
 int  generate_MCMC_chain(MCMC_info *MCMC);
 void generate_MCMC_proposition(MCMC_info *MCMC,int flag_chain_init);
 void generate_MCMC_parameters(MCMC_info *MCMC);

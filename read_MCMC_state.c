@@ -9,7 +9,7 @@
 #include <gsl/gsl_fit.h>
 #include <gsl/gsl_interp.h>
 
-void read_MCMC_state(MCMC_info *MCMC,char *filename_root){
+void read_MCMC_state(MCMC_info *MCMC){
   char      filename_output_dir[MAX_FILENAME_LENGTH];
   char      filename_chain_dir[MAX_FILENAME_LENGTH];
   char      filename_results_dir[MAX_FILENAME_LENGTH];
@@ -40,10 +40,11 @@ void read_MCMC_state(MCMC_info *MCMC,char *filename_root){
   FILE     *fp_stop;
   MCMC_DS_info *current_DS;
 
-  my_chain=0;
+  set_MCMC_mode(MCMC,MCMC_MODE_DEFAULT);
+  my_chain=MCMC->my_chain;
 
-    SID_log("Reading MCMC state from {%s}...",SID_LOG_OPEN,filename_root);
-    strcpy(MCMC->filename_output_dir,filename_root);
+    SID_log("Reading MCMC state from {%s}...",SID_LOG_OPEN,MCMC->filename_output_dir);
+
     // Set directories
     sprintf(filename_output_dir, "%s/",        MCMC->filename_output_dir);
     sprintf(filename_chain_dir,  "%s/chains/", MCMC->filename_output_dir);
@@ -68,9 +69,12 @@ void read_MCMC_state(MCMC_info *MCMC,char *filename_root){
     MCMC->n_DS                      =0;
     MCMC->n_M_total                 =0;
     MCMC->n_arrays                  =0;
+    MCMC->n_M                       =NULL;
     MCMC->array                     =NULL;
     MCMC->V                         =NULL;
     MCMC->m                         =NULL;
+    MCMC->b                         =NULL;
+    MCMC->RNG                       =NULL;
     MCMC->flag_integrate_on         =TRUE;
     MCMC->flag_analysis_on          =TRUE;
     MCMC->first_map_call            =TRUE;
@@ -78,21 +82,30 @@ void read_MCMC_state(MCMC_info *MCMC,char *filename_root){
     MCMC->DS                        =NULL;
     MCMC->last                      =NULL;
     MCMC->problem_name              =(char *)SID_malloc(sizeof(char)*MCMC_NAME_SIZE);
-    strcpy(MCMC->filename_output_dir,filename_root);
+
     // Read/Write Header file
     if((fp_run=fopen(filename_run,"rb"))!=NULL){
       fp_run=fopen(filename_run,"rb");
-      fread(MCMC->problem_name,       sizeof(char),MCMC_NAME_SIZE,fp_run);
-      fread(&(MCMC->n_avg),           sizeof(int),              1,fp_run);
-      fread(&(MCMC->flag_autocor_on), sizeof(int),              1,fp_run);
-      fread(&(MCMC->n_P),             sizeof(int),              1,fp_run);
+      fread(MCMC->problem_name,        sizeof(char),MCMC_NAME_SIZE,fp_run);
+      fread(&(MCMC->n_avg),            sizeof(int),              1,fp_run);
+      fread(&(MCMC->flag_autocor_on),  sizeof(int),              1,fp_run);
+      fread(&(MCMC->flag_no_map_write),sizeof(int),              1,fp_run);
+      fread(&(MCMC->n_P),              sizeof(int),              1,fp_run);
       SID_log("Problem name    ={%s}",SID_LOG_COMMENT,MCMC->problem_name);
       SID_log("n_avg           ={%d}",SID_LOG_COMMENT,MCMC->n_avg);
       SID_log("flag_autocor_on ={%d}",SID_LOG_COMMENT,MCMC->flag_autocor_on);
       MCMC->P_names    =(char  **)SID_malloc(sizeof(char *)*MCMC->n_P);
       MCMC->P_init     =(double *)SID_malloc(sizeof(double)*MCMC->n_P);
-      MCMC->P_limit_min=(double *)SID_malloc(sizeof(double)*MCMC->n_P);
-      MCMC->P_limit_max=(double *)SID_malloc(sizeof(double)*MCMC->n_P);
+      MCMC->P_new        =(double *)SID_malloc(sizeof(double)*MCMC->n_P);
+      MCMC->P_last       =(double *)SID_malloc(sizeof(double)*MCMC->n_P);
+      MCMC->P_chain      =(double *)SID_malloc(sizeof(double)*MCMC->n_P);
+      MCMC->P_limit_min  =(double *)SID_malloc(sizeof(double)*MCMC->n_P);
+      MCMC->P_limit_max  =(double *)SID_malloc(sizeof(double)*MCMC->n_P);
+      for(i_P=0;i_P<MCMC->n_P;i_P++)
+        MCMC->P_limit_min[i_P]=-DBL_MAX*1e-3;
+      for(i_P=0;i_P<MCMC->n_P;i_P++)
+        MCMC->P_limit_max[i_P]=DBL_MAX*1e-3;
+
       SID_log("Parameters (name, initial_value,limit min,limit max):",SID_LOG_OPEN);
       MCMC->P_name_length=0;
       for(i_P=0;i_P<MCMC->n_P;i_P++){
@@ -178,5 +191,6 @@ void read_MCMC_state(MCMC_info *MCMC,char *filename_root){
     SID_log("# total iterations = %d", SID_LOG_COMMENT,MCMC->n_iterations);
     SID_log("Temperature        = %le",SID_LOG_COMMENT,MCMC->temperature);
     fclose(fp_chain_config);
+
     SID_log("Done.",SID_LOG_CLOSE);
 }

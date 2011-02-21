@@ -20,7 +20,8 @@ int main(int argc, char *argv[]){
  
   SID_log("Performing analysis of MCMC dataset {%s}...",SID_LOG_OPEN,filename_root);
 
-  read_MCMC_state(&MCMC,filename_root);
+  set_MCMC_directory(&MCMC,filename_root);
+  read_MCMC_state(&MCMC);
   set_MCMC_coverage_size(&MCMC,coverage_size);
   analyze_MCMC(&MCMC);
 

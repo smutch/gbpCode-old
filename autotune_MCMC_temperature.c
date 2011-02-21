@@ -63,6 +63,10 @@ void autotune_MCMC_temperature(MCMC_info *MCMC){
     SID_log("Iteration #%04d: Temperature=%le Success=%5.1lf%%",SID_LOG_COMMENT,i_autotune,temperature,success);
   }
 
+  SID_Barrier(SID.COMM_WORLD);
+  SID_Barrier(SID.COMM_WORLD);
+  SID_Barrier(SID.COMM_WORLD);
+
   SID_log("Done.",SID_LOG_CLOSE);
 }
 

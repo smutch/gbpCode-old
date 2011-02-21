@@ -36,7 +36,7 @@ int generate_MCMC_chain(MCMC_info *MCMC){
       RNG        =MCMC->RNG;
       n_DS       =MCMC->n_DS;
       n_M        =MCMC->n_M;
-      flag_report_props     =check_mode_for_flag(MCMC->mode,MCMC_REPORT_PROPS);
+      flag_report_props     =check_mode_for_flag(MCMC->mode,MCMC_MODE_REPORT_PROPS);
       MCMC->first_chain_call=FALSE;
       break;
   }
@@ -61,13 +61,15 @@ int generate_MCMC_chain(MCMC_info *MCMC){
     MCMC->ln_Pr_new=0.;
     flag_success=TRUE;
   }
-  else{
+  else if(MCMC->my_chain==SID.My_rank){
     MCMC->ln_Pr_new=MCMC->ln_likelihood_new-MCMC->ln_likelihood_chain;
     if((double)random_number(RNG)<=exp(MCMC->ln_Pr_new))
       flag_success=TRUE;
     else
       flag_success=FALSE;
   }
+  if(!check_mode_for_flag(MCMC->mode,MCMC_MODE_PARALLEL))
+    SID_Bcast(&flag_success,sizeof(int),MASTER_RANK,SID.COMM_WORLD);
 
   // ... if it is, then update the chain ...
   if(flag_success){
