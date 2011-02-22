@@ -317,7 +317,7 @@ void read_gadget_binary_local(char       *filename_root_in,
           SID_log_warning("Problem with GADGET record size (close of header)",ERROR_LOGIC);
         fclose(fp);
       }
-      SID_Bcast(&header,(int)sizeof(gadget_header_info),read_rank);
+      SID_Bcast(&header,(int)sizeof(gadget_header_info),read_rank,SID.COMM_WORLD);
       for(i=0;i<N_GADGET_TYPE;i++){
         for(i_particle=0;i_particle<header.n_file[i];i_particle++){
           scatter_rank=(int)(random_number(RNG)*(REAL)SID.n_proc);
@@ -379,7 +379,7 @@ void read_gadget_binary_local(char       *filename_root_in,
         if(record_length_open!=record_length_close)
           SID_log_warning("Problem with GADGET record size (close of header)",ERROR_LOGIC);
       }
-      SID_Bcast(&header,(int)sizeof(gadget_header_info),read_rank);
+      SID_Bcast(&header,(int)sizeof(gadget_header_info),read_rank,SID.COMM_WORLD);
       for(i=0,n_particles_file=0;i<N_GADGET_TYPE;i++)
         n_particles_file+=(size_t)header.n_file[i];
 
@@ -387,7 +387,7 @@ void read_gadget_binary_local(char       *filename_root_in,
       SID_log("Initializing buffer...",SID_LOG_OPEN|SID_LOG_TIMER);
       if(SID.My_rank==read_rank)
         fread(&record_length_open,4,1,fp);
-      SID_Bcast(&record_length_open,(int)sizeof(int),read_rank);
+      SID_Bcast(&record_length_open,(int)sizeof(int),read_rank,SID.COMM_WORLD);
       buffer=SID_malloc((size_t)record_length_open);
       keep  =(char *)SID_malloc(sizeof(char)*n_particles_file);
       for(i=0,jj=0;i<N_GADGET_TYPE;i++){
@@ -419,7 +419,7 @@ void read_gadget_binary_local(char       *filename_root_in,
       }
       SID_log("1...",SID_LOG_CONTINUE);
       SID_Barrier(SID.COMM_WORLD);
-      SID_Bcast(buffer,(int)record_length_open,read_rank);
+      SID_Bcast(buffer,(int)record_length_open,read_rank,SID.COMM_WORLD);
       SID_log("2...",SID_LOG_CONTINUE);
       for(i=0,jj=0;i<N_GADGET_TYPE;i++){
         for(j=0,k=0;j<header.n_file[i];j++,jj++){
@@ -448,8 +448,8 @@ void read_gadget_binary_local(char       *filename_root_in,
         if(record_length_open!=record_length_close)
         SID_log_warning("Problem with GADGET record size (close of velocities)",ERROR_LOGIC);
         }
-        SID_Bcast(&record_length_open,sizeof(int),read_rank);
-        SID_Bcast(buffer,record_length_open,read_rank);
+        SID_Bcast(&record_length_open,sizeof(int),read_rank,SID.COMM_WORLD);
+        SID_Bcast(buffer,record_length_open,read_rank,SID.COMM_WORLD);
         for(i=0,jj=0;i<N_GADGET_TYPE;i++){
         for(j=0,k=0;j<header.n_file[i];j++,jj++){
         if(keep[jj]){
@@ -488,10 +488,10 @@ void read_gadget_binary_local(char       *filename_root_in,
           SID_log_warning("Problem with GADGET record size (close of IDs)",ERROR_LOGIC);
       }
       SID_log("1...",SID_LOG_CONTINUE);
-      SID_Bcast(&record_length_open,(int)sizeof(int),       read_rank);
+      SID_Bcast(&record_length_open,(int)sizeof(int),       read_rank,SID.COMM_WORLD);
       SID_log("2...",SID_LOG_CONTINUE);
       SID_Barrier(SID.COMM_WORLD);
-      SID_Bcast(buffer,             (int)record_length_open,read_rank);
+      SID_Bcast(buffer,             (int)record_length_open,read_rank,SID.COMM_WORLD);
       SID_log("3...",SID_LOG_CONTINUE);
 
       // Decide what kind of IDs we have
