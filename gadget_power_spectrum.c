@@ -351,14 +351,14 @@ void read_gadget_binary_local(char       *filename_root_in,
         if(record_length_open!=record_length_close)
           SID_log_warning("Problem with GADGET record size (close of header)",ERROR_LOGIC);
       }
-      SID_Bcast(&header,(int)sizeof(gadget_header_info),read_rank);
+      SID_Bcast(&header,(int)sizeof(gadget_header_info),read_rank,SID.COMM_WORLD);
       for(i=0,n_particles_file=0;i<N_GADGET_TYPE;i++)
         n_particles_file+=(size_t)header.n_file[i];
 
       // Initialize buffer
       if(SID.My_rank==read_rank)
         fread(&record_length_open,4,1,fp);
-      SID_Bcast(&record_length_open,(int)sizeof(int),read_rank);
+      SID_Bcast(&record_length_open,(int)sizeof(int),read_rank,SID.COMM_WORLD);
       buffer=SID_malloc((size_t)record_length_open);
       keep  =(char *)SID_malloc(sizeof(char)*n_particles_file);
 
@@ -371,7 +371,7 @@ void read_gadget_binary_local(char       *filename_root_in,
           SID_log_warning("Problem with GADGET record size (close of positions)",ERROR_LOGIC);
       }
       SID_Barrier(SID.COMM_WORLD);
-      SID_Bcast(buffer,(int)record_length_open,read_rank);
+      SID_Bcast(buffer,(int)record_length_open,read_rank,SID.COMM_WORLD);
       for(i=0,jj=0;i<N_GADGET_TYPE;i++){
         n_keep[i]=0;
         for(j=0,k=0;j<header.n_file[i];j++,jj++){
@@ -409,7 +409,7 @@ void read_gadget_binary_local(char       *filename_root_in,
       // Initialize buffer
       if(SID.My_rank==read_rank)
         fread(&record_length_open,4,1,fp);
-      SID_Bcast(&record_length_open,(int)sizeof(int),read_rank);
+      SID_Bcast(&record_length_open,(int)sizeof(int),read_rank,SID.COMM_WORLD);
 
       // Read velocities
       SID_log("Reading velocities...",SID_LOG_OPEN|SID_LOG_TIMER);
@@ -420,7 +420,7 @@ void read_gadget_binary_local(char       *filename_root_in,
           SID_log_warning("Problem with GADGET record size (close of positions)",ERROR_LOGIC);
       }
       SID_Barrier(SID.COMM_WORLD);
-      SID_Bcast(buffer,(int)record_length_open,read_rank);
+      SID_Bcast(buffer,(int)record_length_open,read_rank,SID.COMM_WORLD);
       for(i=0,jj=0;i<N_GADGET_TYPE;i++){
         for(j=0,k=0;j<header.n_file[i];j++,jj++){
           f1_value=((float *)buffer)[3*jj+0];

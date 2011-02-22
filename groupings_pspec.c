@@ -2,15 +2,20 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include <common.h>
-#include <groups.h>
-#include <sph.h>
-#include <clustering.h>
+#include <gbpLib.h>
+#include <gbpMath.h>
+#include <gbpCosmo.h>
+#include <gbpSPH.h>
+#include <gbpHalos.h>
+#include <gbpClustering.h>
 
 int main(int argc, char *argv[]){
   double  a_start;
   int     n_species;
   int     i,j,i_x,i_y,i_z;
+  int     i_jack;
+  int     n_jack_total;
+  int     n_2D_total;
   char    species_name[256];
   double  h_Hubble;
   double  Omega_Lambda;
@@ -21,108 +26,170 @@ int main(int argc, char *argv[]){
   double  sigma_8;
   double  n_spec;
   double  redshift;
-  int     i_group;
-  int     n_groups;
-  size_t  n_group;
-  char    filename_in[MAX_FILE_LENGTH];
-  char    filename_in_model[MAX_FILE_LENGTH];
-  char    filename_out_1D[MAX_FILE_LENGTH];
-  char    filename_out_2D[MAX_FILE_LENGTH];
-  char    filename_out_stats[MAX_FILE_LENGTH];
-  char    filename_out_root[MAX_FILE_LENGTH];
-  char    species_name_modifier[16];
-  int     pspec_mode;
+  int     i_rank;
+  int     i_grouping;
+  int     i_grouping_start;
+  int     i_grouping_stop;
+  int     n_groupings;
+  size_t  n_grouping_local;
+  char    filename_in[MAX_FILENAME_LENGTH];
+  char    filename_in_root[MAX_FILENAME_LENGTH];
+  char    filename_in_model[MAX_FILENAME_LENGTH];
+  char    filename_out_1D[MAX_FILENAME_LENGTH];
+  char    filename_out_2D[MAX_FILENAME_LENGTH];
+  char    filename_out_stats[MAX_FILENAME_LENGTH];
+  char    filename_out_root[MAX_FILENAME_LENGTH];
+  int     cfunc_mode;
   int     i_compute;
-  char    group_name[6];
+  char    grouping_name[6];
   char    filename_TF[256];
   char    n_string[64];
   int             n[3];
+  double          x_in,y_in,z_in,vx_in,vy_in,vz_in;
   double          box_size;
   double          L[3];
   size_t          n_all;
   FILE           *fp_in;
   cosmo_info     *cosmo;
-  FFT_info        FFT;
   plist_info      plist_header;
   plist_info      plist;
-  FILE           *fp;
+  FILE           *fp_stats;
   FILE           *fp_1D;
   FILE           *fp_2D;
-  int     flag_write_header;
+  int     flag_write_header=TRUE;
   int     i_temp;
+  size_t  n_grouping;
   int     n_temp;
-  double *k_temp;
+  double *r_temp;
   double *kmin_temp;
   double *kmax_temp;
-  int      grid_size;
-  halo_properties_info  properties;
-  int   n_halos_per_group,n_halos,n_halos_all,i_halo,j_halo;
+  int      n_jack;
+  int   n_halos,i_halo,j_halo;
   int   n_particles_min;
   REAL *x_halos;
   REAL *y_halos;
   REAL *z_halos;
+  REAL *vx_halos_sub;
+  REAL *vy_halos_sub;
+  REAL *vz_halos_sub;
+  REAL *vx_halos_FoF;
+  REAL *vy_halos_FoF;
+  REAL *vz_halos_FoF;
+  REAL *vx_halos_sys;
+  REAL *vy_halos_sys;
+  REAL *vz_halos_sys;
   REAL *vx_halos;
   REAL *vy_halos;
   REAL *vz_halos;
+  REAL *V_halos;
   double *M_halos;
   size_t *M_halos_index;
-  REAL *x_group;
-  REAL *y_group;
-  REAL *z_group;
-  REAL *vx_group;
-  REAL *vy_group;
-  REAL *vz_group;
+  REAL *x_grouping;
+  REAL *y_grouping;
+  REAL *z_grouping;
+  REAL *vx_grouping;
+  REAL *vy_grouping;
+  REAL *vz_grouping;
   REAL  x_min,x_max;
   REAL  y_min,y_max;
   REAL  z_min,z_max;
   int     n_particles;
   double  M_min,M_max,M_med;
+  double  V_min,V_max,V_med;
   char   *line=NULL;
-  int     line_length=0;
+  size_t  line_length=0;
   int     n_spline,n_model;
-  double *k_spline;
+  double *r_spline;
   double *P_spline;
-  double *k_model;
+  double *r_model;
   double *P_model;
-  int     i_k;
-  interp_info *interp_model;
-  interp_info *interp_spline;
-  double bias,bias_norm;
+  int     i_bin,j_bin;
+  double r_o,r_X;
+  double *x_interp;
+  double *y_interp;
   int    i_file,n_files;
   int    mass_assignment_scheme;
-  double k_min_1D;
-  double k_max_1D;
-  double dk_1D;
-  double k_min_2D;
-  double k_max_2D;
-  double dk_2D;
-  double *P_k_1D=NULL;
-  double *dP_k_1D=NULL;
-  int    *n_modes_1D=NULL;
-  double *P_k_2D=NULL;
-  double *dP_k_2D=NULL;
-  int    *n_modes_2D=NULL;
-  double *k_1D=NULL;
-  int     n_k_1D,n_k_2D;
+  double r_min_l1D;
+  double r_max_1D;
+  double dr_1D;
+  double dlr_l1D;
+  double r_min_2D;
+  double r_max_2D;
+  double dr_2D;
+  double *CFUNC_l1D=NULL;
+  double *dCFUNC_l1D=NULL;
+  double *COVMTX_l1D=NULL;
+  double *CFUNC_1D=NULL;
+  double *dCFUNC_1D=NULL;
+  double *COVMTX_1D=NULL;
+  double *CFUNC_2D=NULL;
+  double *dCFUNC_2D=NULL;
+  double *COVMTX_2D=NULL;
+  int     n_1D,n_2D;
+  int     F_random;
+  size_t  n_random,n_random_local;
+  int     i_random,j_random;
+  RNG_info  RNG;
+  int       seed=1327621;
+  REAL     *x_random;
+  REAL     *y_random;
+  REAL     *z_random;
+  interp_info *interp_model;
+  interp_info *interp_spline;
+  int          flag_compute_RR;
+  long long **DD_l1D;
+  long long **DR_l1D;
+  long long **RR_l1D;
+  long long **DD_1D;
+  long long **DR_1D;
+  long long **RR_1D;
+  long long **DD_2D;
+  long long **DR_2D;
+  long long **RR_2D;
+  long long   n_random_ll;
+  long long   n_data_ll;
+  int        *rank_own;
+  int        *rank_own_index;
+  size_t      n_rank;
+  int         flag_init_store;
 
   // Initialization -- MPI etc.
   SID_init(&argc,&argv,NULL);
-  strcpy(filename_in,      argv[1]);
-  strcpy(filename_in_model,argv[2]);
-  strcpy(filename_out_root,argv[3]);
+  if(argc!=8)
+    SID_trap_error("Incorrect syntax.",ERROR_SYNTAX);
+  strcpy(filename_in_root, argv[1]);
+  strcpy(filename_out_root,argv[2]);
+  redshift         =(double)atof(argv[3]);
   box_size         =(double)atof(argv[4]);
-  grid_size        =(int)   atoi(argv[5]);
-  n_halos_per_group=(int)   atoi(argv[6]);
-  n_particles_min  =(int)   atoi(argv[7]);
-  n_groups         =(int)   atoi(argv[8]);
-  sprintf(filename_out_stats,"%s.stats",      filename_out_root);
-  sprintf(filename_out_1D,   "%s.1D_pow_spec",filename_out_root);
-  sprintf(filename_out_2D,   "%s.2D_pow_spec",filename_out_root);
+  n_jack           =(int)   atoi(argv[5]);
+  i_grouping_start =(int)   atoi(argv[6]);
+  i_grouping_stop  =(int)   atoi(argv[7]);
+  n_groupings      =i_grouping_stop-i_grouping_start+1;
+  if(n_groupings<1)
+      SID_trap_error("No groupings have been selected (you chose start=%d, stop=%d).",ERROR_LOGIC,i_grouping_start,i_grouping_stop);
+  sprintf(filename_out_stats,"%s.stats_cor_func",filename_out_root);
+  sprintf(filename_out_1D,   "%s.1D_cor_func",   filename_out_root);
+  sprintf(filename_out_2D,   "%s.2D_cor_func",   filename_out_root);
 
+  SID_log("Producing correlation function...",SID_LOG_OPEN);
+
+  // Set the k ranges
+  F_random   =    5;
+  n_1D       =   20;
+  r_min_l1D  =  0.1;
+  r_max_1D   =200.0;
+  n_2D       =   25;
+  r_min_2D   =  0.0;
+  r_max_2D   = 50.0;
+  dr_1D      =r_max_1D/(double)(n_1D-1);
+  dlr_l1D    =(take_log10(r_max_1D)-take_log10(r_min_l1D))/(double)(n_1D-1);
+  dr_2D      =(r_max_2D-r_min_2D)/(double)(n_2D-1);
+
+  // Initialization
+  init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
   init_cosmo_std(&cosmo);
-
-  mass_assignment_scheme=PSPEC_DIST_DWT20;
-  //mass_assignment_scheme=PSPEC_DIST_NGP;
+  init_RNG(&seed,&RNG,RNG_DEFAULT);
+  init_FFT(3,n,L,&FFT);
 
   // Read model
   SID_log("Reading model power spectrum from {%s}...",SID_LOG_OPEN,filename_in_model);
@@ -141,210 +208,299 @@ int main(int argc, char *argv[]){
   SID_free(SID_FARG P_model);
   SID_log("Done.",SID_LOG_CLOSE);
 
-  // Set the k ranges
-  k_min_1D=0.0;
-  k_max_1D=0.3;
-  dk_1D   =0.01;
-  k_min_2D=0.0;
-  k_max_2D=0.3;
-  dk_2D   =0.02;
+  // Initialize arrays used for the 1D correlation function
+  SID_log("Initializing arrays...",SID_LOG_OPEN);
+  CFUNC_l1D =(double *)SID_malloc(sizeof(double)*(n_1D)); 
+  dCFUNC_l1D=(double *)SID_malloc(sizeof(double)*(n_1D)); 
+  COVMTX_l1D=(double *)SID_malloc(sizeof(double)*(n_1D*n_1D)); 
+  CFUNC_1D  =(double *)SID_malloc(sizeof(double)*(n_1D)); 
+  dCFUNC_1D =(double *)SID_malloc(sizeof(double)*(n_1D)); 
+  COVMTX_1D =(double *)SID_malloc(sizeof(double)*(n_1D*n_1D)); 
 
-/*
-  k_min_1D=0.2;
-  k_max_1D=0.5;
-  dk_1D   =0.01;
-  k_min_2D=0.2;
-  k_max_2D=1.0;
-  dk_2D   =0.1;
-*/
+  // Initialize arrays used for the 2D correlation function
+  n_2D_total=n_2D*n_2D;
+  CFUNC_2D  =(double *)SID_malloc(sizeof(double)*(n_2D)*(n_2D));
+  dCFUNC_2D =(double *)SID_malloc(sizeof(double)*(n_2D)*(n_2D));
+  COVMTX_2D =(double *)SID_malloc(sizeof(double)*(n_2D_total*n_2D_total)); 
 
-  // Create spline-fit of smooth P(k)
-  SID_log("Generating smooth spline-fit to P(k)...",SID_LOG_OPEN);
-  n_spline=12;
-  k_spline=(double *)SID_malloc(n_spline*sizeof(double));  
-  P_spline=(double *)SID_malloc(n_spline*sizeof(double));  
-  k_spline[0] =0.01e-1;
-  k_spline[1] =0.05e-1;
-  k_spline[2] =0.10e-1;
-  k_spline[3] =0.20e-1;
-  k_spline[4] =0.25e-1;
-  k_spline[5] =0.75e-1;
-  k_spline[6] =1.25e-1;
-  k_spline[7] =1.75e-1;
-  k_spline[8] =2.25e-1;
-  k_spline[9] =2.75e-1;
-  k_spline[10]=3.25e-1;
-  k_spline[11]=3.75e-1;
-  for(i_k=0;i_k<n_spline;i_k++)
-    P_spline[i_k]=interpolate(interp_model,k_spline[i_k]);
-  init_interpolate(k_spline,P_spline,(size_t)n_spline,gsl_interp_cspline,&interp_spline);
-  SID_log("Done.",SID_LOG_CLOSE);
-
-  n[0]=grid_size;
-  n[1]=n[0];
-  n[2]=n[0];
-  L[0]=box_size;
-  L[1]=L[0];
-  L[2]=L[0];
-
-  // Initialization
-  init_FFT(3,n,L,&FFT);
-  init_plist(&plist,&(FFT.slab),GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-
-  SID_log("k_min=%le k_max=%le dk=%le dk_in=%le",SID_LOG_COMMENT,FFT.k_field[0],FFT.k_field[FFT.n[0]-1],FFT.dk[0],dk_2D);
-
-  // Read catalog
-  SID_log("Reading catalog...",SID_LOG_OPEN);
-  fp=fopen(filename_in,"r");
-  fread(&i_file,     sizeof(int),1,fp);
-  fread(&n_files,    sizeof(int),1,fp);
-  fread(&n_halos,    sizeof(int),1,fp);
-  fread(&n_halos_all,sizeof(int),1,fp);
-  SID_log("%d halos...",SID_LOG_CONTINUE,n_halos);
-  n_group =(size_t)n_halos;
-  x_halos =(REAL  *)SID_malloc(sizeof(REAL)*n_halos_all);
-  y_halos =(REAL  *)SID_malloc(sizeof(REAL)*n_halos_all);
-  z_halos =(REAL  *)SID_malloc(sizeof(REAL)*n_halos_all);
-  vx_halos=(REAL  *)SID_malloc(sizeof(REAL)*n_halos_all);
-  vy_halos=(REAL  *)SID_malloc(sizeof(REAL)*n_halos_all);
-  vz_halos=(REAL  *)SID_malloc(sizeof(REAL)*n_halos_all);
-  x_group =(REAL  *)SID_malloc(sizeof(REAL)*n_halos_all);
-  y_group =(REAL  *)SID_malloc(sizeof(REAL)*n_halos_all);
-  z_group =(REAL  *)SID_malloc(sizeof(REAL)*n_halos_all);
-  vx_group=(REAL  *)SID_malloc(sizeof(REAL)*n_halos_all);
-  vy_group=(REAL  *)SID_malloc(sizeof(REAL)*n_halos_all);
-  vz_group=(REAL  *)SID_malloc(sizeof(REAL)*n_halos_all);
-  M_halos=(double *)SID_malloc(sizeof(double)*n_halos_all);
-  x_min=1e10;
-  x_max=0.;
-  y_min=1e10;
-  y_max=0.;
-  z_min=1e10;
-  z_max=0.;
-  for(i_halo=0,n_halos=0;i_halo<n_halos_all;i_halo++){
-    fread(&properties,sizeof(halo_properties_info),1,fp);
-    if(properties.n_particles>=n_particles_min && properties.M_vir>0.){
-      x_halos[n_halos] =(REAL)properties.position_MBP[0];
-      y_halos[n_halos] =(REAL)properties.position_MBP[1];
-      z_halos[n_halos] =(REAL)properties.position_MBP[2];
-      vx_halos[n_halos]=(REAL)properties.velocity_COM[0];
-      vy_halos[n_halos]=(REAL)properties.velocity_COM[1];
-      vz_halos[n_halos]=(REAL)properties.velocity_COM[2];
-      M_halos[n_halos] =(double)properties.M_vir;
-      x_min=MIN(x_min,x_halos[n_halos]);
-      x_max=MAX(x_max,x_halos[n_halos]);
-      y_min=MIN(y_min,y_halos[n_halos]);
-      y_max=MAX(y_max,y_halos[n_halos]);
-      z_min=MIN(z_min,z_halos[n_halos]);
-      z_max=MAX(z_max,z_halos[n_halos]);
-      n_halos++;
+  n_jack_total   =n_jack*n_jack*n_jack;
+  DD_l1D=(long long **)SID_malloc(sizeof(long long *)*(n_jack_total+1));
+  DR_l1D=(long long **)SID_malloc(sizeof(long long *)*(n_jack_total+1));
+  RR_l1D=(long long **)SID_malloc(sizeof(long long *)*(n_jack_total+1));
+  DD_1D =(long long **)SID_malloc(sizeof(long long *)*(n_jack_total+1));
+  DR_1D =(long long **)SID_malloc(sizeof(long long *)*(n_jack_total+1));
+  RR_1D =(long long **)SID_malloc(sizeof(long long *)*(n_jack_total+1));
+  DD_2D =(long long **)SID_malloc(sizeof(long long *)*(n_jack_total+1));
+  DR_2D =(long long **)SID_malloc(sizeof(long long *)*(n_jack_total+1));
+  RR_2D =(long long **)SID_malloc(sizeof(long long *)*(n_jack_total+1));
+  for(i_jack=0;i_jack<=n_jack_total;i_jack++){
+    DD_l1D[i_jack]=(long long *)SID_malloc(sizeof(long long)*n_1D);
+    DR_l1D[i_jack]=(long long *)SID_malloc(sizeof(long long)*n_1D);
+    RR_l1D[i_jack]=(long long *)SID_malloc(sizeof(long long)*n_1D);
+    DD_1D[i_jack] =(long long *)SID_malloc(sizeof(long long)*n_1D);
+    DR_1D[i_jack] =(long long *)SID_malloc(sizeof(long long)*n_1D);
+    RR_1D[i_jack] =(long long *)SID_malloc(sizeof(long long)*n_1D);
+    DD_2D[i_jack] =(long long *)SID_malloc(sizeof(long long)*n_2D*n_2D);
+    DR_2D[i_jack] =(long long *)SID_malloc(sizeof(long long)*n_2D*n_2D);
+    RR_2D[i_jack] =(long long *)SID_malloc(sizeof(long long)*n_2D*n_2D);
+    for(i_bin=0;i_bin<n_1D;i_bin++){
+      DD_l1D[i_jack][i_bin]=0;
+      DR_l1D[i_jack][i_bin]=0;
+      RR_l1D[i_jack][i_bin]=0;
+      DD_1D[i_jack][i_bin] =0;
+      DR_1D[i_jack][i_bin] =0;
+      RR_1D[i_jack][i_bin] =0;
+    }
+    for(i_bin=0;i_bin<n_2D*n_2D;i_bin++){
+      DD_2D[i_jack][i_bin]=0;
+      DR_2D[i_jack][i_bin]=0;
+      RR_2D[i_jack][i_bin]=0;
     }
   }
-  SID_log("x_range=%le->%le",SID_LOG_COMMENT,x_min,x_max);
-  SID_log("y_range=%le->%le",SID_LOG_COMMENT,y_min,y_max);
-  SID_log("z_range=%le->%le",SID_LOG_COMMENT,z_min,z_max);
-  ADaPS_store(&(plist.data),(void *)x_group,  "x_halos", ADaPS_DEFAULT);
-  ADaPS_store(&(plist.data),(void *)y_group,  "y_halos", ADaPS_DEFAULT);
-  ADaPS_store(&(plist.data),(void *)z_group,  "z_halos", ADaPS_DEFAULT);
-  ADaPS_store(&(plist.data),(void *)vx_group, "vx_halos",ADaPS_DEFAULT);
-  ADaPS_store(&(plist.data),(void *)vy_group, "vy_halos",ADaPS_DEFAULT);
-  ADaPS_store(&(plist.data),(void *)vz_group, "vz_halos",ADaPS_DEFAULT);
-  fclose(fp);
   SID_log("Done.",SID_LOG_CLOSE);
 
-  // Sort halos by mass
-  SID_log("Sorting %d halos...",SID_LOG_OPEN,n_halos);
-  merge_sort(M_halos,(size_t)n_halos,&M_halos_index,ADaM_DOUBLE,SORT_COMPUTE_INDEX,FALSE);
-  SID_log("Done.",SID_LOG_CLOSE);
-
-  // Initialize arrays used for the 1D power spectrum
-  SID_log("Initializing arrays...",SID_LOG_OPEN);
-  (n_k_1D)    =(int)(0.5+(k_max_1D-k_min_1D)/dk_1D);
-  (k_1D)      =(double *)SID_malloc(sizeof(double)*(n_k_1D)); 
-  (P_k_1D)    =(double *)SID_malloc(sizeof(double)*(n_k_1D)); 
-  (dP_k_1D)   =(double *)SID_malloc(sizeof(double)*(n_k_1D)); 
-  (n_modes_1D)=(int *)SID_malloc(sizeof(int)*(n_k_1D)); 
-
-  // Initialize arrays used for the 2D power spectrum
-  (n_k_2D)    =(int)(0.5+(k_max_2D-k_min_2D)/dk_1D);
-  (P_k_2D)    =(double *)SID_malloc(sizeof(double)*(n_k_2D)*(n_k_2D));
-  (dP_k_2D)   =(double *)SID_malloc(sizeof(double)*(n_k_2D)*(n_k_2D));
-  (n_modes_2D)=(int *)SID_malloc(sizeof(int)*(n_k_2D)*(n_k_2D));
-  SID_log("Done.",SID_LOG_CLOSE);
+  // Initialize files
+  if(SID.I_am_Master){
+    fp_stats=fopen(filename_out_stats,"w");
+    fp_1D   =fopen(filename_out_1D,"w");
+    fp_2D   =fopen(filename_out_2D,"w");
+    fprintf(fp_stats,"# Correlation function stats for %s\n",filename_out_1D);
+    fprintf(fp_stats,"# Columns:\n");
+    fprintf(fp_stats,"#   (1) # of objects\n");
+    fprintf(fp_stats,"#   (2) r_o [Mpc/h] (real-space)\n");
+    fprintf(fp_stats,"#   (3) r_X [Mpc/h] (real-space)\n");
+    fprintf(fp_stats,"#   (4) r_o [Mpc/h] (v_x redshift-space)\n");
+    fprintf(fp_stats,"#   (5) r_X [Mpc/h] (v_x redshift-space)\n");
+    fprintf(fp_stats,"#   (6) r_o [Mpc/h] (v_y redshift-space)\n");
+    fprintf(fp_stats,"#   (7) r_X [Mpc/h] (v_y redshift-space)\n");
+    fprintf(fp_stats,"#   (8) r_o [Mpc/h] (v_z redshift-space)\n");
+    fprintf(fp_stats,"#   (9) r_X [Mpc/h] (v_z redshift-space)\n");
+  }
 
   // Process each grouping in turn
-  SID_log("Computing power spectra of %d groupings of halos...",SID_LOG_OPEN|SID_LOG_TIMER,n_groups);
-  fp   =fopen(filename_out_stats,"w");
-  fp_1D=fopen(filename_out_1D,"w");
-  fp_2D=fopen(filename_out_2D,"w");
-  fprintf(fp,"# Power spectrum stats for %s\n",filename_out_1D);
-  fprintf(fp,"# n_groupings= %d\n",n_groups);
-  fprintf(fp,"# Columns:\n");
-  fprintf(fp,"#   (1) # of halos\n");
-  fprintf(fp,"#   (2) Minimum mass [M_sol/h]\n");
-  fprintf(fp,"#   (3) Median  mass [M_sol/h]\n");
-  fprintf(fp,"#   (4) Maximum mass [M_sol/h]\n");
-  fprintf(fp,"#   (5) Bias (real-space)\n");
-  fprintf(fp,"#   (6) Bias (v_x redshift-space)\n");
-  fprintf(fp,"#   (7) Bias (v_y redshift-space)\n");
-  fprintf(fp,"#   (8) Bias (v_z redshift-space)\n");
-  for(i_group=0,flag_write_header=TRUE;i_group<n_groups;i_group++){
-    SID_log("Processing grouping %d of %d...",SID_LOG_OPEN|SID_LOG_TIMER,i_group+1,n_groups);
+  for(i_grouping=i_grouping_start,flag_init_store=TRUE;i_grouping<=i_grouping_stop;i_grouping++){
+    SID_log("Processing grouping #%03d...",SID_LOG_OPEN|SID_LOG_TIMER,i_grouping);
 
-    // Set group
-    SID_log("Assembling grouping...",SID_LOG_OPEN);
-    if(i_group==n_groups-1)
-      i_halo=n_halos-1-n_halos_per_group;
-    else
-      i_halo =(int)((float)i_group*(float)(n_halos-n_halos_per_group)/(float)(n_groups));
-    n_group=n_halos_per_group;
-    SID_log("n_halos=%d", SID_LOG_COMMENT,n_group);
-    M_max  =M_halos[M_halos_index[n_halos-i_halo-1]];
-    M_med  =M_halos[M_halos_index[n_halos-i_halo-n_halos_per_group/2-1]];
-    SID_log("offset =%d", SID_LOG_COMMENT,i_halo);
-    for(j_halo=0;j_halo<n_halos_per_group;j_halo++,i_halo++){
-      x_group[j_halo] =x_halos[M_halos_index[n_halos-i_halo-1]];
-      y_group[j_halo] =y_halos[M_halos_index[n_halos-i_halo-1]];
-      z_group[j_halo] =z_halos[M_halos_index[n_halos-i_halo-1]];
-      vx_group[j_halo]=vx_halos[M_halos_index[n_halos-i_halo-1]];
-      vy_group[j_halo]=vy_halos[M_halos_index[n_halos-i_halo-1]];
-      vz_group[j_halo]=vz_halos[M_halos_index[n_halos-i_halo-1]];
+    // Read catalog
+    SID_log("Reading catalog...",SID_LOG_OPEN);
+    sprintf(filename_in,"%s_grouping_%03d.dat",filename_out_root,i_grouping);
+    SID_log("filename ={%s}",SID_LOG_COMMENT,filename_in);
+    if(SID.I_am_Master){
+      fp_in=fopen(filename_in,"r");
+      n_grouping=(size_t)count_lines_data(fp_in);
+      SID_log("n_halos=%lld",SID_LOG_COMMENT,n_grouping);
+      x_halos     =(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
+      y_halos     =(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
+      z_halos     =(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
+      vx_halos_sub=(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
+      vy_halos_sub=(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
+      vz_halos_sub=(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
+      vx_halos_FoF=(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
+      vy_halos_FoF=(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
+      vz_halos_FoF=(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
+      vx_halos_sys=(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
+      vy_halos_sys=(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
+      vz_halos_sys=(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
+      rank_own    =(int   *)SID_malloc(sizeof(int) *n_grouping);
+      x_min=1e10;
+      x_max=0.;
+      y_min=1e10;
+      y_max=0.;
+      z_min=1e10;
+      z_max=0.;
+      for(i_halo=0;i_halo<n_grouping;i_halo++){
+        grab_next_line_data(fp_in,&line,&line_length);
+        grab_double(line,3, &x_in);
+        grab_double(line,4, &y_in);
+        grab_double(line,5, &z_in);
+        x_halos[i_halo] =(REAL)x_in;
+        y_halos[i_halo] =(REAL)y_in;
+        z_halos[i_halo] =(REAL)z_in;
+        x_min=MIN(x_min,x_halos[i_halo]);
+        x_max=MAX(x_max,x_halos[i_halo]);
+        y_min=MIN(y_min,y_halos[i_halo]);
+        y_max=MAX(y_max,y_halos[i_halo]);
+        z_min=MIN(z_min,z_halos[i_halo]);
+        z_max=MAX(z_max,z_halos[i_halo]);
+        grab_double(line,7,&vx_in);
+        grab_double(line,8,&vy_in);
+        grab_double(line,9,&vz_in);
+        vx_halos_sub[i_halo]=(REAL)vx_in;
+        vy_halos_sub[i_halo]=(REAL)vy_in;
+        vz_halos_sub[i_halo]=(REAL)vz_in;
+        grab_double(line,10,&vx_in);
+        grab_double(line,11,&vy_in);
+        grab_double(line,12,&vz_in);
+        vx_halos_FoF[i_halo]=(REAL)vx_in;
+        vy_halos_FoF[i_halo]=(REAL)vy_in;
+        vz_halos_FoF[i_halo]=(REAL)vz_in;
+        grab_double(line,13,&vx_in);
+        grab_double(line,14,&vy_in);
+        grab_double(line,15,&vz_in);
+        vx_halos_sys[i_halo]=(REAL)vx_in;
+        vy_halos_sys[i_halo]=(REAL)vy_in;
+        vz_halos_sys[i_halo]=(REAL)vz_in;
+      }
+      SID_log("x_range=%le->%le",SID_LOG_COMMENT,x_min,x_max);
+      SID_log("y_range=%le->%le",SID_LOG_COMMENT,y_min,y_max);
+      SID_log("z_range=%le->%le",SID_LOG_COMMENT,z_min,z_max);
+      fclose(fp_in);
     }
-    M_min=M_halos[M_halos_index[n_halos-i_halo-1]];
-    SID_log("M_min  =%le",SID_LOG_COMMENT,M_min);
-    SID_log("M_med  =%le",SID_LOG_COMMENT,M_med);
-    SID_log("M_max  =%le",SID_LOG_COMMENT,M_max);
+    SID_Bcast(&n_grouping,sizeof(size_t),MASTER_RANK);
     SID_log("Done.",SID_LOG_CLOSE);
 
-    // Store group size
-    ADaPS_store(&(plist.data),(void *)&n_group,"n_all_halos",ADaPS_SCALAR_SIZE_T);
-    ADaPS_store(&(plist.data),(void *)&n_group,"n_halos",    ADaPS_SCALAR_SIZE_T);
+    // GENERATE RANDOMS
+    n_random=(size_t)F_random*n_grouping;
+    SID_log("Generating %d random halos...",SID_LOG_OPEN,n_random);
+    for(i_rank=0,i_random=0,j_random=0;i_rank<SID.n_proc;i_rank++){
+      if(i_rank==SID.n_proc-1)
+        j_random=n_random-i_random;
+      else
+        j_random=(n_random-i_random)/(SID.n_proc-i_rank);
+      if(SID.My_rank==i_rank)
+        n_random_local=j_random;
+      i_random+=j_random;
+    }
+    x_random=(REAL *)SID_malloc(sizeof(REAL)*n_random_local);
+    y_random=(REAL *)SID_malloc(sizeof(REAL)*n_random_local);
+    z_random=(REAL *)SID_malloc(sizeof(REAL)*n_random_local);
+    for(i_random=0;i_random<n_random_local;i_random++){
+      x_random[i_random]=random_number(&RNG)*box_size;
+      if(x_random[i_random]>=box_size)
+        x_random[i_random]-=box_size;
+      y_random[i_random]=random_number(&RNG)*box_size;
+      if(y_random[i_random]>=box_size)
+        y_random[i_random]-=box_size;
+      z_random[i_random]=random_number(&RNG)*box_size;
+      if(z_random[i_random]>=box_size)
+        z_random[i_random]-=box_size;
+    }
+    flag_compute_RR=TRUE;
+    SID_log("Done.",SID_LOG_CLOSE);
+
+    // Loop over 3 velocity sets
+    vx_halos=vx_halos_sub;
+    vy_halos=vy_halos_sub;
+    vz_halos=vz_halos_sub;
+
+    // Get objects to the appropriate ranks
+    x_grouping =(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
+    y_grouping =(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
+    z_grouping =(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
+    vx_grouping=(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
+    vy_grouping=(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
+    vz_grouping=(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
+    if(SID.n_proc>1){
+    SID_log("Assign rank ownership...",SID_LOG_OPEN|SID_LOG_TIMER);
+    if(SID.I_am_Master){
+      for(j_halo=0;j_halo<n_grouping;j_halo++,i_halo++)
+        rank_own[j_halo]=(int)(random_number(&RNG)*SID.n_proc);
+    }
+
+    // Communicate with other ranks
+    for(i_rank=0;i_rank<SID.n_proc;i_rank++){
+      if(i_rank!=MASTER_RANK){
+        if(SID.I_am_Master){
+          for(j_halo=0,n_rank=0;j_halo<n_grouping;j_halo++){
+            if(rank_own[j_halo]==i_rank){
+              x_grouping[n_rank] =x_halos[j_halo];
+              y_grouping[n_rank] =y_halos[j_halo];
+              z_grouping[n_rank] =z_halos[j_halo];
+              vx_grouping[n_rank]=vx_halos[j_halo];
+              vy_grouping[n_rank]=vy_halos[j_halo];
+              vz_grouping[n_rank]=vz_halos[j_halo];
+              n_rank++;
+            }
+          }
+          SID_Send(&n_rank,              1,SID_SIZE_T,i_rank,136789,SID.COMM_WORLD);
+          SID_Send(x_grouping, (int)n_rank,SID_REAL,  i_rank,136790,SID.COMM_WORLD);
+          SID_Send(y_grouping, (int)n_rank,SID_REAL,  i_rank,136791,SID.COMM_WORLD);
+          SID_Send(z_grouping, (int)n_rank,SID_REAL,  i_rank,136792,SID.COMM_WORLD);
+          SID_Send(vx_grouping,(int)n_rank,SID_REAL,  i_rank,136793,SID.COMM_WORLD);
+          SID_Send(vy_grouping,(int)n_rank,SID_REAL,  i_rank,136794,SID.COMM_WORLD);
+          SID_Send(vz_grouping,(int)n_rank,SID_REAL,  i_rank,136795,SID.COMM_WORLD);
+        }
+        if(SID.My_rank==i_rank){
+          SID_Recv(&n_grouping_local,                    1,SID_SIZE_T,MASTER_RANK,136789,SID.COMM_WORLD);
+          SID_Recv(x_grouping,       (int)n_grouping_local,SID_REAL,  MASTER_RANK,136790,SID.COMM_WORLD);
+          SID_Recv(y_grouping,       (int)n_grouping_local,SID_REAL,  MASTER_RANK,136791,SID.COMM_WORLD);
+          SID_Recv(z_grouping,       (int)n_grouping_local,SID_REAL,  MASTER_RANK,136792,SID.COMM_WORLD);
+          SID_Recv(vx_grouping,      (int)n_grouping_local,SID_REAL,  MASTER_RANK,136793,SID.COMM_WORLD);
+          SID_Recv(vy_grouping,      (int)n_grouping_local,SID_REAL,  MASTER_RANK,136794,SID.COMM_WORLD);
+          SID_Recv(vz_grouping,      (int)n_grouping_local,SID_REAL,  MASTER_RANK,136795,SID.COMM_WORLD);
+        }
+      }
+    }
+
+    // Take care of the master rank
+    if(SID.I_am_Master){
+      for(j_halo=0,n_grouping_local=0;j_halo<n_grouping;j_halo++){
+        if(rank_own[j_halo]==MASTER_RANK){
+          x_grouping[n_grouping_local] =x_halos[j_halo];
+          y_grouping[n_grouping_local] =y_halos[j_halo];
+          z_grouping[n_grouping_local] =z_halos[j_halo];
+          vx_grouping[n_grouping_local]=vx_halos[j_halo];
+          vy_grouping[n_grouping_local]=vy_halos[j_halo];
+          vz_grouping[n_grouping_local]=vz_halos[j_halo];
+          n_grouping_local++;
+        }
+      }
+    }
+    SID_log("Done.",SID_LOG_CLOSE);
+    }
+    else{
+      for(j_halo=0,n_grouping_local=0;j_halo<n_grouping;j_halo++){
+        x_grouping[n_grouping_local] =x_halos[j_halo];
+        y_grouping[n_grouping_local] =y_halos[j_halo];
+        z_grouping[n_grouping_local] =z_halos[j_halo];
+        vx_grouping[n_grouping_local]=vx_halos[j_halo];
+        vy_grouping[n_grouping_local]=vy_halos[j_halo];
+        vz_grouping[n_grouping_local]=vz_halos[j_halo];
+        n_grouping_local++;
+      }
+    }
+
+    // Store grouping
+    ADaPS_store(&(plist.data),(void *)&n_random,        "n_all_random",ADaPS_SCALAR_SIZE_T);
+    ADaPS_store(&(plist.data),(void *)&n_random_local,  "n_random",    ADaPS_SCALAR_SIZE_T);
+    ADaPS_store(&(plist.data),(void *)&n_grouping,      "n_all_halos", ADaPS_SCALAR_SIZE_T);
+    ADaPS_store(&(plist.data),(void *)&n_grouping_local,"n_halos",     ADaPS_SCALAR_SIZE_T);
+    ADaPS_store(&(plist.data),(void *)x_random,         "x_random",    ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)y_random,         "y_random",    ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)z_random,         "z_random",    ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)x_grouping,       "x_halos",     ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)y_grouping,       "y_halos",     ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)z_grouping,       "z_halos",     ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)vx_grouping,      "vx_halos",    ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)vy_grouping,      "vy_halos",    ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)vz_grouping,      "vz_halos",    ADaPS_DEFAULT);
+
+    // Needed to make writing more straight-forward
+    n_data_ll  =(long long)n_grouping;
+    n_random_ll=(long long)n_random;
     
-    fprintf(fp,"%d %le %le %le",n_group,M_min,M_med,M_max);
+    if(SID.I_am_Master)
+      fprintf(fp_stats,"%zu",n_grouping);
     for(i_compute=0;i_compute<4;i_compute++){
       switch(i_compute){
       case 0:
         SID_log("Processing real-space ...",SID_LOG_OPEN|SID_LOG_TIMER);
-        pspec_mode=PSPEC_DEFAULT;
-        sprintf(species_name_modifier,"no_pec_%d", i_group);
+        cfunc_mode=CFUNC_DEFAULT;
         break;
       case 1:
         SID_log("Processing v_x redshift space...",SID_LOG_OPEN|SID_LOG_TIMER);
-        pspec_mode=PSPEC_ADD_VX;
-        sprintf(species_name_modifier,"with_vx_%d",i_group);
+        cfunc_mode=CFUNC_ADD_VX;
         break;
       case 2:
         SID_log("Processing v_y redshift space...",SID_LOG_OPEN|SID_LOG_TIMER);
-        pspec_mode=PSPEC_ADD_VY;
-        sprintf(species_name_modifier,"with_vy_%d",i_group);
+        cfunc_mode=CFUNC_ADD_VY;
         break;
       case 3:
         SID_log("Processing v_z redsift space...",SID_LOG_OPEN|SID_LOG_TIMER);
-        pspec_mode=PSPEC_ADD_VZ;
-        sprintf(species_name_modifier,"with_vz_%d",i_group);
+        cfunc_mode=CFUNC_ADD_VZ;
         break;
       }
-      
+
       // Compute power spectrum
       compute_power_spectrum(&plist,
                              &FFT,
@@ -385,7 +541,7 @@ int main(int argc, char *argv[]){
         // Write 2D power spectra
         if(flag_write_header){
           fwrite(&n_groups,sizeof(int),   1,fp_2D);
-          fwrite(&n_k_2D,  sizeof(int),   1,fp_2D);          
+          fwrite(&n_k_2D,  sizeof(int),   1,fp_2D);
           fwrite(&k_min_2D,sizeof(double),1,fp_2D);
           fwrite(&k_max_2D,sizeof(double),1,fp_2D);
           fwrite(&dk_2D,   sizeof(double),1,fp_2D);
@@ -395,7 +551,7 @@ int main(int argc, char *argv[]){
         fwrite(n_modes_2D,sizeof(int),   n_k_2D*n_k_2D,fp_2D);
 
         flag_write_header=FALSE;
-    
+
         // Compute (and print) bias
         SID_log("Computing bias (%d bins)...",SID_LOG_OPEN,n_k_1D);
         for(i_k=0,bias=0.,bias_norm=0.;i_k<n_k_1D;i_k++){
@@ -407,28 +563,76 @@ int main(int argc, char *argv[]){
         fprintf(fp," %le",bias);
         SID_log("Done.",SID_LOG_CLOSE);
       }
+      
       SID_log("Done.",SID_LOG_CLOSE);
+    } // Loop over 4 cfuncs
+
+    // Loop over 3 velocity sets
+
+    if(SID.I_am_Master)
+      fprintf(fp_stats,"\n");
+
+    // Clean-up
+    SID_log("Cleaning-up...",SID_LOG_OPEN);
+    if(SID.I_am_Master){
+      SID_free(SID_FARG rank_own);
+      SID_free(SID_FARG x_halos);
+      SID_free(SID_FARG y_halos);
+      SID_free(SID_FARG z_halos);
+      SID_free(SID_FARG vx_halos_sub);
+      SID_free(SID_FARG vy_halos_sub);
+      SID_free(SID_FARG vz_halos_sub);
+      SID_free(SID_FARG vx_halos_FoF);
+      SID_free(SID_FARG vy_halos_FoF);
+      SID_free(SID_FARG vz_halos_FoF);
+      SID_free(SID_FARG vx_halos_sys);
+      SID_free(SID_FARG vy_halos_sys);
+      SID_free(SID_FARG vz_halos_sys);
     }
-    fprintf(fp,"\n");
 
     SID_log("Done.",SID_LOG_CLOSE);
+
+    SID_log("Done.",SID_LOG_CLOSE);
+  } // Loop over groupings
+  if(SID.I_am_Master){
+    fclose(fp_stats);
+    fclose(fp_1D);
+    fclose(fp_2D);
   }
-  fclose(fp);
-  fclose(fp_1D);
-  fclose(fp_2D);
-  SID_log("Done.",SID_LOG_CLOSE);
   
   // Clean-up
-  SID_free(SID_FARG k_1D);
-  SID_free(SID_FARG P_k_1D);
-  SID_free(SID_FARG dP_k_1D);
-  SID_free(SID_FARG n_modes_1D);
-  SID_free(SID_FARG P_k_2D);
-  SID_free(SID_FARG dP_k_2D);
-  SID_free(SID_FARG n_modes_2D);
+  SID_log("Cleaning-up...",SID_LOG_OPEN);
+  for(i_jack=0;i_jack<=n_jack_total;i_jack++){
+    SID_free(SID_FARG DD_l1D[i_jack]);
+    SID_free(SID_FARG DR_l1D[i_jack]);
+    SID_free(SID_FARG RR_l1D[i_jack]);
+    SID_free(SID_FARG DD_1D[i_jack]);
+    SID_free(SID_FARG DR_1D[i_jack]);
+    SID_free(SID_FARG RR_1D[i_jack]);
+    SID_free(SID_FARG DD_2D[i_jack]);
+    SID_free(SID_FARG DR_2D[i_jack]);
+    SID_free(SID_FARG RR_2D[i_jack]);
+  }
+  SID_free(SID_FARG DD_1D);
+  SID_free(SID_FARG DR_1D);
+  SID_free(SID_FARG RR_1D);
+  SID_free(SID_FARG DD_2D);
+  SID_free(SID_FARG DR_2D);
+  SID_free(SID_FARG RR_2D);
+  SID_free(SID_FARG CFUNC_l1D);
+  SID_free(SID_FARG dCFUNC_l1D);
+  SID_free(SID_FARG COVMTX_l1D);
+  SID_free(SID_FARG CFUNC_1D);
+  SID_free(SID_FARG dCFUNC_1D);
+  SID_free(SID_FARG COVMTX_1D);
+  SID_free(SID_FARG CFUNC_2D);
+  SID_free(SID_FARG dCFUNC_2D);
+  SID_free(SID_FARG COVMTX_2D);
   free_plist(&plist);
-  free_interpolate(&interp_model);
-  free_interpolate(&interp_spline);
+  free_RNG(&RNG);
+  
+  SID_log("Done.",SID_LOG_CLOSE);
 
+  SID_log("Done.",SID_LOG_CLOSE);
   SID_exit(ERROR_NONE);
 }

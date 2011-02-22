@@ -59,6 +59,7 @@ int main(int argc, char *argv[]){
   int     flag_write_header=TRUE;
   int     i_temp;
   size_t  n_grouping;
+  size_t  n_grouping_last=0;
   int     n_temp;
   double *r_temp;
   double *kmin_temp;
@@ -131,11 +132,11 @@ int main(int argc, char *argv[]){
   int     i_random,j_random;
   RNG_info  RNG;
   int       seed=1327621;
-  REAL     *x_random;
-  REAL     *y_random;
-  REAL     *z_random;
+  REAL     *x_random=NULL;
+  REAL     *y_random=NULL;
+  REAL     *z_random=NULL;
   interp_info *r_o_interp;
-  int          flag_compute_RR;
+  int         flag_compute_RR;
   long long **DD_l1D;
   long long **DR_l1D;
   long long **RR_l1D;
@@ -204,7 +205,6 @@ int main(int argc, char *argv[]){
   dCFUNC_2D =(double *)SID_malloc(sizeof(double)*(n_2D)*(n_2D));
   COVMTX_2D =(double *)SID_malloc(sizeof(double)*(n_2D_total*n_2D_total)); 
 
-  flag_compute_RR=TRUE;
   n_jack_total   =n_jack*n_jack*n_jack;
   DD_l1D=(long long **)SID_malloc(sizeof(long long *)*(n_jack_total+1));
   DR_l1D=(long long **)SID_malloc(sizeof(long long *)*(n_jack_total+1));
@@ -265,11 +265,12 @@ int main(int argc, char *argv[]){
 
     // Read catalog
     SID_log("Reading catalog...",SID_LOG_OPEN);
-    sprintf(filename_in,"%s_grouping_%03d.dat",filename_out_root,i_grouping);
+    sprintf(filename_in,"%s_grouping_%03d.dat",filename_in_root,i_grouping);
+    SID_log("filename ={%s}",SID_LOG_COMMENT,filename_in);
     if(SID.I_am_Master){
       fp_in=fopen(filename_in,"r");
       n_grouping=(size_t)count_lines_data(fp_in);
-      SID_log("%lld halos...",SID_LOG_CONTINUE,n_grouping);
+      SID_log("n_halos=%lld",SID_LOG_COMMENT,n_grouping);
       x_halos     =(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
       y_halos     =(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
       z_halos     =(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
@@ -291,9 +292,9 @@ int main(int argc, char *argv[]){
       z_max=0.;
       for(i_halo=0;i_halo<n_grouping;i_halo++){
         grab_next_line_data(fp_in,&line,&line_length);
-        grab_double(line,3, &x_in);
-        grab_double(line,4, &y_in);
-        grab_double(line,5, &z_in);
+        grab_double(line,7, &x_in);
+        grab_double(line,8, &y_in);
+        grab_double(line,9, &z_in);
         x_halos[i_halo] =(REAL)x_in;
         y_halos[i_halo] =(REAL)y_in;
         z_halos[i_halo] =(REAL)z_in;
@@ -303,60 +304,74 @@ int main(int argc, char *argv[]){
         y_max=MAX(y_max,y_halos[i_halo]);
         z_min=MIN(z_min,z_halos[i_halo]);
         z_max=MAX(z_max,z_halos[i_halo]);
-        grab_double(line,7,&vx_in);
-        grab_double(line,8,&vy_in);
-        grab_double(line,9,&vz_in);
+        grab_double(line,11,&vx_in);
+        grab_double(line,12,&vy_in);
+        grab_double(line,13,&vz_in);
         vx_halos_sub[i_halo]=(REAL)vx_in;
         vy_halos_sub[i_halo]=(REAL)vy_in;
         vz_halos_sub[i_halo]=(REAL)vz_in;
-        grab_double(line,10,&vx_in);
-        grab_double(line,11,&vy_in);
-        grab_double(line,12,&vz_in);
+        grab_double(line,14,&vx_in);
+        grab_double(line,15,&vy_in);
+        grab_double(line,16,&vz_in);
         vx_halos_FoF[i_halo]=(REAL)vx_in;
         vy_halos_FoF[i_halo]=(REAL)vy_in;
         vz_halos_FoF[i_halo]=(REAL)vz_in;
-        grab_double(line,13,&vx_in);
-        grab_double(line,14,&vy_in);
-        grab_double(line,15,&vz_in);
+        grab_double(line,17,&vx_in);
+        grab_double(line,18,&vy_in);
+        grab_double(line,19,&vz_in);
         vx_halos_sys[i_halo]=(REAL)vx_in;
         vy_halos_sys[i_halo]=(REAL)vy_in;
         vz_halos_sys[i_halo]=(REAL)vz_in;
+        rank_own[i_halo]=(int)(random_number(&RNG)*SID.n_proc);
       }
       SID_log("x_range=%le->%le",SID_LOG_COMMENT,x_min,x_max);
       SID_log("y_range=%le->%le",SID_LOG_COMMENT,y_min,y_max);
       SID_log("z_range=%le->%le",SID_LOG_COMMENT,z_min,z_max);
       fclose(fp_in);
     }
-    SID_Bcast(&n_grouping,sizeof(size_t),MASTER_RANK);
+    SID_Bcast(&n_grouping,sizeof(size_t),MASTER_RANK,SID.COMM_WORLD);
     SID_log("Done.",SID_LOG_CLOSE);
 
     // GENERATE RANDOMS
-    n_random=(size_t)F_random*n_grouping;
-    SID_log("Generating %d random halos...",SID_LOG_OPEN,n_random);
-    for(i_rank=0,i_random=0,j_random=0;i_rank<SID.n_proc;i_rank++){
-      if(i_rank==SID.n_proc-1)
-        j_random=n_random-i_random;
-      else
-        j_random=(n_random-i_random)/(SID.n_proc-i_rank);
-      if(SID.My_rank==i_rank)
-        n_random_local=j_random;
-      i_random+=j_random;
+    if(n_grouping!=n_grouping_last){
+      n_random=(size_t)F_random*n_grouping;
+      SID_log("Generating %d random halos...",SID_LOG_OPEN,n_random);
+      for(i_rank=0,i_random=0,j_random=0;i_rank<SID.n_proc;i_rank++){
+        if(i_rank==SID.n_proc-1)
+          j_random=n_random-i_random;
+        else
+          j_random=(n_random-i_random)/(SID.n_proc-i_rank);
+        if(SID.My_rank==i_rank)
+          n_random_local=j_random;
+        i_random+=j_random;
+      }
+      if(x_random!=NULL)
+        SID_free(SID_FARG x_random);
+      x_random=(REAL *)SID_malloc(sizeof(REAL)*n_random_local);
+      if(y_random!=NULL)
+        SID_free(SID_FARG y_random);
+      y_random=(REAL *)SID_malloc(sizeof(REAL)*n_random_local);
+      if(z_random!=NULL)
+        SID_free(SID_FARG z_random);
+      z_random=(REAL *)SID_malloc(sizeof(REAL)*n_random_local);
+      for(i_random=0;i_random<n_random_local;i_random++){
+        x_random[i_random]=random_number(&RNG)*box_size;
+        if(x_random[i_random]>=box_size)
+          x_random[i_random]-=box_size;
+        y_random[i_random]=random_number(&RNG)*box_size;
+        if(y_random[i_random]>=box_size)
+          y_random[i_random]-=box_size;
+        z_random[i_random]=random_number(&RNG)*box_size;
+        if(z_random[i_random]>=box_size)
+          z_random[i_random]-=box_size;
+      }
+      flag_compute_RR=TRUE;
+      ADaPS_store(&(plist.data),(void *)x_random,"x_random",ADaPS_DEFAULT);
+      ADaPS_store(&(plist.data),(void *)y_random,"y_random",ADaPS_DEFAULT);
+      ADaPS_store(&(plist.data),(void *)z_random,"z_random",ADaPS_DEFAULT);
+      SID_log("Done.",SID_LOG_CLOSE);
     }
-    x_random=(REAL *)SID_malloc(sizeof(REAL)*n_random_local);
-    y_random=(REAL *)SID_malloc(sizeof(REAL)*n_random_local);
-    z_random=(REAL *)SID_malloc(sizeof(REAL)*n_random_local);
-    for(i_random=0;i_random<n_random_local;i_random++){
-      x_random[i_random]=random_number(&RNG)*box_size;
-      if(x_random[i_random]>=box_size)
-        x_random[i_random]-=box_size;
-      y_random[i_random]=random_number(&RNG)*box_size;
-      if(y_random[i_random]>=box_size)
-        y_random[i_random]-=box_size;
-      z_random[i_random]=random_number(&RNG)*box_size;
-      if(z_random[i_random]>=box_size)
-        z_random[i_random]-=box_size;
-    }
-    SID_log("Done.",SID_LOG_CLOSE);
+    n_grouping_last=n_grouping;
 
     // Loop over 3 velocity sets
     vx_halos=vx_halos_sub;
@@ -371,11 +386,7 @@ int main(int argc, char *argv[]){
     vy_grouping=(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
     vz_grouping=(REAL  *)SID_malloc(sizeof(REAL)*n_grouping);
     if(SID.n_proc>1){
-    SID_log("Assign rank ownership...",SID_LOG_OPEN|SID_LOG_TIMER);
-    if(SID.I_am_Master){
-      for(j_halo=0;j_halo<n_grouping;j_halo++,i_halo++)
-        rank_own[j_halo]=(int)(random_number(&RNG)*SID.n_proc);
-    }
+      SID_log("Assign rank ownership...",SID_LOG_OPEN|SID_LOG_TIMER);
 
     // Communicate with other ranks
     for(i_rank=0;i_rank<SID.n_proc;i_rank++){
@@ -392,7 +403,7 @@ int main(int argc, char *argv[]){
               n_rank++;
             }
           }
-          SID_Send(&n_rank, 1,          SID_SIZE_T,i_rank,136789,SID.COMM_WORLD);
+          SID_Send(&n_rank,              1,SID_SIZE_T,i_rank,136789,SID.COMM_WORLD);
           SID_Send(x_grouping, (int)n_rank,SID_REAL,  i_rank,136790,SID.COMM_WORLD);
           SID_Send(y_grouping, (int)n_rank,SID_REAL,  i_rank,136791,SID.COMM_WORLD);
           SID_Send(z_grouping, (int)n_rank,SID_REAL,  i_rank,136792,SID.COMM_WORLD);
@@ -401,7 +412,7 @@ int main(int argc, char *argv[]){
           SID_Send(vz_grouping,(int)n_rank,SID_REAL,  i_rank,136795,SID.COMM_WORLD);
         }
         if(SID.My_rank==i_rank){
-          SID_Recv(&n_grouping_local,1,                 SID_SIZE_T,MASTER_RANK,136789,SID.COMM_WORLD);
+          SID_Recv(&n_grouping_local,                    1,SID_SIZE_T,MASTER_RANK,136789,SID.COMM_WORLD);
           SID_Recv(x_grouping,       (int)n_grouping_local,SID_REAL,  MASTER_RANK,136790,SID.COMM_WORLD);
           SID_Recv(y_grouping,       (int)n_grouping_local,SID_REAL,  MASTER_RANK,136791,SID.COMM_WORLD);
           SID_Recv(z_grouping,       (int)n_grouping_local,SID_REAL,  MASTER_RANK,136792,SID.COMM_WORLD);
@@ -445,9 +456,6 @@ int main(int argc, char *argv[]){
     ADaPS_store(&(plist.data),(void *)&n_random_local,  "n_random",    ADaPS_SCALAR_SIZE_T);
     ADaPS_store(&(plist.data),(void *)&n_grouping,      "n_all_halos", ADaPS_SCALAR_SIZE_T);
     ADaPS_store(&(plist.data),(void *)&n_grouping_local,"n_halos",     ADaPS_SCALAR_SIZE_T);
-    ADaPS_store(&(plist.data),(void *)x_random,         "x_random",    ADaPS_DEFAULT);
-    ADaPS_store(&(plist.data),(void *)y_random,         "y_random",    ADaPS_DEFAULT);
-    ADaPS_store(&(plist.data),(void *)z_random,         "z_random",    ADaPS_DEFAULT);
     ADaPS_store(&(plist.data),(void *)x_grouping,       "x_halos",     ADaPS_DEFAULT);
     ADaPS_store(&(plist.data),(void *)y_grouping,       "y_halos",     ADaPS_DEFAULT);
     ADaPS_store(&(plist.data),(void *)z_grouping,       "z_halos",     ADaPS_DEFAULT);
@@ -635,7 +643,6 @@ int main(int argc, char *argv[]){
       SID_free(SID_FARG vy_halos_sys);
       SID_free(SID_FARG vz_halos_sys);
     }
-
     SID_log("Done.",SID_LOG_CLOSE);
 
     SID_log("Done.",SID_LOG_CLOSE);

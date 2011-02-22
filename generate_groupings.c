@@ -24,7 +24,6 @@ int main(int argc, char *argv[]){
   double  Omega_k;
   double  sigma_8;
   double  n_spec;
-  double  redshift;
   int     i_rank;
   int     i_group;
   int     n_groups_all;
@@ -81,6 +80,7 @@ int main(int argc, char *argv[]){
   REAL *vy_halos_sub;
   REAL *vz_halos_sub;
   double *M_halos;
+  double *M_FoF;
   size_t *V_halos_index;
   REAL *x_group;
   REAL *y_group;
@@ -89,6 +89,9 @@ int main(int argc, char *argv[]){
   REAL *vy_group;
   REAL *vz_group;
   REAL *V_halos;
+  REAL *V_FoF;
+  int  *i_FoF;
+  int  *n_FoF;
   REAL  x_min,x_max;
   REAL  y_min,y_max;
   REAL  z_min,z_max;
@@ -207,7 +210,11 @@ int main(int argc, char *argv[]){
   vy_halos_sub=(REAL   *)SID_malloc(sizeof(REAL)*n_subgroups_all);
   vz_halos_sub=(REAL   *)SID_malloc(sizeof(REAL)*n_subgroups_all);
   M_halos     =(double *)SID_malloc(sizeof(double)*n_subgroups_all);
+  M_FoF       =(double *)SID_malloc(sizeof(double)*n_subgroups_all);
   V_halos     =(REAL   *)SID_malloc(sizeof(REAL)*n_subgroups_all);
+  V_FoF       =(REAL   *)SID_malloc(sizeof(REAL)*n_subgroups_all);
+  i_FoF       =(int    *)SID_malloc(sizeof(int)*n_subgroups_all);
+  n_FoF       =(int    *)SID_malloc(sizeof(int)*n_subgroups_all);
   x_min       =1e10;
   x_max       =0.;
   y_min       =1e10;
@@ -221,6 +228,8 @@ int main(int argc, char *argv[]){
     for(i_subhalo=0;i_subhalo<n_subgroups_group[i_halo];i_subhalo++){
       fread(&subgroup_properties,sizeof(halo_properties_info),1,fp_subgroups);
       if(subgroup_properties.n_particles>=n_particles_min && subgroup_properties.M_vir>0.){
+        i_FoF[n_halos]     =i_subhalo;
+        n_FoF[n_halos]     =n_subgroups_group[i_halo];
         x_halos[n_halos]   =(REAL)subgroup_properties.position_MBP[0];
         y_halos[n_halos]   =(REAL)subgroup_properties.position_MBP[1];
         z_halos[n_halos]   =(REAL)subgroup_properties.position_MBP[2];
@@ -234,7 +243,9 @@ int main(int argc, char *argv[]){
         vy_halos_sub[n_halos]=(REAL)subgroup_properties.velocity_COM[1];
         vz_halos_sub[n_halos]=(REAL)subgroup_properties.velocity_COM[2];
         M_halos[n_halos]     =(double)subgroup_properties.M_vir;
+        M_FoF[n_halos]       =(double)group_properties.M_vir;
         V_halos[n_halos]     =(REAL)subgroup_properties.V_max;
+        V_FoF[n_halos]       =(REAL)group_properties.V_max;
         x_min                =MIN(x_min,x_halos[n_halos]);
         x_max                =MAX(x_max,x_halos[n_halos]);
         y_min                =MIN(y_min,y_halos[n_halos]);
@@ -281,25 +292,33 @@ int main(int argc, char *argv[]){
     fprintf(fp,"# V_min  =%le km/s\n",V_min);
     fprintf(fp,"# V_med  =%le km/s\n",V_med);
     fprintf(fp,"# V_max  =%le km/s\n",V_max);
-    fprintf(fp,"# Columns:  1) Mass    [M_sol]\n");
-    fprintf(fp,"#           2) V_max   [km/s]\n");
-    fprintf(fp,"#           3) x       [Mpc/h]\n");
-    fprintf(fp,"#           4) y       [Mpc/h]\n");
-    fprintf(fp,"#           5) z       [Mpc/h]\n");
-    fprintf(fp,"#           6) r_sys   [Mpc/h]\n");
-    fprintf(fp,"#           7) v_x_sub [km/s]\n");
-    fprintf(fp,"#           8) v_y_sub [km/s]\n");
-    fprintf(fp,"#           9) v_z_sub [km/s]\n");
-    fprintf(fp,"#          10) v_x_FoF [km/s]\n");
-    fprintf(fp,"#          11) v_y_FoF [km/s]\n");
-    fprintf(fp,"#          12) v_z_FoF [km/s]\n");
-    fprintf(fp,"#          13) v_x_sys [km/s]\n");
-    fprintf(fp,"#          14) v_y_sys [km/s]\n");
-    fprintf(fp,"#          15) v_z_sys [km/s]\n");
+    fprintf(fp,"# Columns:  1) Mass sub  [M_sol]\n");
+    fprintf(fp,"#           2) V_max sub [km/s]\n");
+    fprintf(fp,"#           3) Mass FoF  [M_sol]\n");
+    fprintf(fp,"#           4) V_max FoF [km/s]\n");
+    fprintf(fp,"#           5) Rank order in FoF group\n");
+    fprintf(fp,"#           6) Number of halos in FoF group\n");
+    fprintf(fp,"#           7) x         [Mpc/h]\n");
+    fprintf(fp,"#           8) y         [Mpc/h]\n");
+    fprintf(fp,"#           9) z         [Mpc/h]\n");
+    fprintf(fp,"#          10) r_sub     [Mpc/h]\n");
+    fprintf(fp,"#          11) v_x_sub   [km/s]\n");
+    fprintf(fp,"#          12) v_y_sub   [km/s]\n");
+    fprintf(fp,"#          13) v_z_sub   [km/s]\n");
+    fprintf(fp,"#          14) v_x_FoF   [km/s]\n");
+    fprintf(fp,"#          15) v_y_FoF   [km/s]\n");
+    fprintf(fp,"#          16) v_z_FoF   [km/s]\n");
+    fprintf(fp,"#          17) v_x_vir   [km/s]\n");
+    fprintf(fp,"#          18) v_y_vir   [km/s]\n");
+    fprintf(fp,"#          19) v_z_vir   [km/s]\n");
     for(j_halo=0;j_halo<n_halos_per_grouping && i_halo<n_halos;i_halo++,j_halo++)
-      fprintf(fp,"%le %le %le %le %le %le %le %le %le %le %le %le %le %le %le\n",
+      fprintf(fp,"%le %le %le %le %d %d %le %le %le %le %le %le %le %le %le %le %le %le %le\n",
                  M_halos[V_halos_index[i_halo]],
                  V_halos[V_halos_index[i_halo]],
+                 M_FoF[V_halos_index[i_halo]],
+                 V_FoF[V_halos_index[i_halo]],
+                 i_FoF[V_halos_index[i_halo]],
+                 n_FoF[V_halos_index[i_halo]],
                  x_halos[V_halos_index[i_halo]],
                  y_halos[V_halos_index[i_halo]],
                  z_halos[V_halos_index[i_halo]],
@@ -332,7 +351,11 @@ int main(int argc, char *argv[]){
   SID_free(SID_FARG vy_halos_sub);
   SID_free(SID_FARG vz_halos_sub);
   SID_free(SID_FARG M_halos);
+  SID_free(SID_FARG M_FoF);
   SID_free(SID_FARG V_halos);
+  SID_free(SID_FARG V_FoF);
+  SID_free(SID_FARG i_FoF);
+  SID_free(SID_FARG n_FoF);
   SID_free(SID_FARG V_halos_index);
   SID_log("Done.",SID_LOG_CLOSE);
 

@@ -168,7 +168,7 @@ void compute_cor_func(plist_info  *plist,
     vx_data_local=(REAL *)ADaPS_fetch(plist->data,"vx_%s",species_name);
     x_data_local =(REAL *)SID_malloc(sizeof(REAL)*n_data_local);
     for(i_data=0;i_data<n_data_local;i_data++){
-      x_temp=x_data_local_temp[i_data]+(REAL)(1e3*((double)vx_data_local[i_data])/(h_Hubble*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+      x_temp=x_data_local_temp[i_data]+(REAL)(1e3*h_Hubble*((double)vx_data_local[i_data])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
       force_periodic(&x_temp,0.,(REAL)box_size);
       x_data_local[i_data]=(REAL)x_temp;
     }
@@ -180,7 +180,7 @@ void compute_cor_func(plist_info  *plist,
     vy_data_local=(REAL *)ADaPS_fetch(plist->data,"vy_%s",species_name);
     y_data_local =(REAL *)SID_malloc(sizeof(REAL)*n_data_local);
     for(i_data=0;i_data<n_data_local;i_data++){
-      y_temp=y_data_local_temp[i_data]+(REAL)(1e3*((double)vy_data_local[i_data])/(h_Hubble*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+      y_temp=y_data_local_temp[i_data]+(REAL)(1e3*h_Hubble*((double)vy_data_local[i_data])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
       force_periodic(&y_temp,0.,(REAL)box_size);
       y_data_local[i_data]=(REAL)y_temp;
     }
@@ -192,7 +192,7 @@ void compute_cor_func(plist_info  *plist,
     vz_data_local=(REAL *)ADaPS_fetch(plist->data,"vz_%s",species_name);
     z_data_local =(REAL *)SID_malloc(sizeof(REAL)*n_data_local);
     for(i_data=0;i_data<n_data_local;i_data++){
-      z_temp=z_data_local_temp[i_data]+(REAL)(1e3*((double)vz_data_local[i_data])/(h_Hubble*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+      z_temp=z_data_local_temp[i_data]+(REAL)(1e3*h_Hubble*((double)vz_data_local[i_data])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
       force_periodic(&z_temp,0.,(REAL)box_size);
       z_data_local[i_data]=(REAL)z_temp;
     }
@@ -862,7 +862,7 @@ void compute_cor_func(plist_info  *plist,
                                          (double)DR_l1D[i_jack][i_bin]/(double)((n_data)*(n_random)),
                                          (double)RR_l1D[i_jack][i_bin]/(double)((n_random)*(n_random-1))),2.);
     std_dev=sqrt(std_dev/(double)n_jack_total);
-    dCFUNC_l1D[i_bin]=std_dev*(double)(n_jack_total-1);
+    dCFUNC_l1D[i_bin]=std_dev*sqrt((double)(n_jack_total-1));
     for(i_jack=1,mean=0.;i_jack<=n_jack_total;i_jack++)
       mean+=calc_CFUNC_local((double)DD_1D[i_jack][i_bin]/(double)((n_data)*(n_data-1)),
                              (double)DR_1D[i_jack][i_bin]/(double)((n_data)*(n_random)),
@@ -873,7 +873,7 @@ void compute_cor_func(plist_info  *plist,
                                          (double)DR_1D[i_jack][i_bin]/(double)((n_data)*(n_random)),
                                          (double)RR_1D[i_jack][i_bin]/(double)((n_random)*(n_random-1))),2.);
     std_dev=sqrt(std_dev/(double)n_jack_total);
-    dCFUNC_1D[i_bin]=std_dev*(double)(n_jack_total-1);
+    dCFUNC_1D[i_bin]=std_dev*sqrt((double)(n_jack_total-1));
   }
 
   // ... 2D case ...
@@ -888,7 +888,7 @@ void compute_cor_func(plist_info  *plist,
                                          (double)DR_2D[i_jack][i_bin]/(double)((n_data)*(n_random)),
                                          (double)RR_2D[i_jack][i_bin]/(double)((n_random)*(n_random-1))),2.);
     std_dev=sqrt(std_dev/(double)n_jack_total);
-    dCFUNC_2D[i_bin]=std_dev*(double)(n_jack_total-1);
+    dCFUNC_2D[i_bin]=std_dev*sqrt((double)(n_jack_total-1));
   }
   SID_log("Done.",SID_LOG_CLOSE);
 

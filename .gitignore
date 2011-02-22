@@ -4,6 +4,7 @@
 .install*
 .printed_status
 todo
+wip
 Makefile.mylocal
 my*
 
