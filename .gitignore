@@ -1,5 +1,6 @@
 *.o
 *.a
+*.dSYM
 .install*
 .printed_status
 todo

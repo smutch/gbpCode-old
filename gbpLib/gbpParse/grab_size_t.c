@@ -13,12 +13,12 @@ int grab_size_t(char   *line,
   strcpy(temp_char_old," ");
   for(k=0,j=0;j<strlen(line);j++) {
     strncpy(temp_char,&(line[j]),sizeof(char));
-    sprintf(temp_char,"%c\0",line[j]);
+    sprintf(temp_char,"%c",line[j]);
     if(strcmp(temp_char," ")) {
       if(!strcmp(temp_char_old," ")) {
 	k++;
 	if(k==n){
-	  sscanf(&(line[j]),"%lld",return_value);
+	  sscanf(&(line[j]),"%zd",return_value);
 	  flag=TRUE;
 	  j=strlen(line);
 	}

@@ -13,13 +13,13 @@ int grab_char_tail(char *line,
   strcpy(temp_char_old," ");
   for(k=0,j=0;j<strlen(line);j++) {
     strncpy(temp_char,&(line[j]),sizeof(char));
-    sprintf(temp_char,"%c\0",line[j]);
+    sprintf(temp_char,"%c",line[j]);
     if(strcmp(temp_char," ")) {
       if(!strcmp(temp_char_old," ")) {
 	k++;
 	if(k==n){
           for(l=-1,m=strlen(line)-1;m>=j;m--){
-            sprintf(temp_char,"%c\0",line[m]);
+            sprintf(temp_char,"%c",line[m]);
             if(l<0 && !strcmp(temp_char_old," "))
               l=m;
           }

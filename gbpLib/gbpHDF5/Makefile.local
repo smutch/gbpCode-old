@@ -1,0 +1,11 @@
+#############################
+# Library-specific settings #
+#############################
+INCFILES  = gbpHDF5.h
+OBJFILES  = read_HDF5_1D.o \
+	    read_HDF5_3D.o
+LIBFILE   = 
+BINFILES  = 
+LIBS      = 
+SUBDIRS   =
+#############################

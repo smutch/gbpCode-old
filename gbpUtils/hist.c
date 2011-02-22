@@ -197,7 +197,7 @@ int main(int argc, char *argv[]){
     fprintf(unit_out,"# Analysis of column #%d of {%s}:\n",data_column,filename_in);
     fprintf(unit_out,"#\n");
     fprintf(unit_out,"# Stats:\n",data_column,filename_in);
-    fprintf(unit_out,"#   n_data   = %11d\n",n_data);
+    fprintf(unit_out,"#   n_data   = %zd\n",   n_data);
     fprintf(unit_out,"#   min      = %11.4e\n",min);
     fprintf(unit_out,"#   max      = %11.4e\n",max);
     fprintf(unit_out,"#   sum      = %11.4e\n",sum);

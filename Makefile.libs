@@ -25,6 +25,16 @@ ifneq ($(USE_CFITSIO),0)
   LIBS    := $(LIBS) -lcfitsio
 endif
 
+# Add hdf5
+ifndef USE_HDF5
+  USE_HDF5    =0
+endif
+ifneq ($(USE_HDF5),0)
+  CCFLAGS := $(CCFLAGS) -I$(GBP_HDF5_DIR)/include/
+  LDFLAGS := $(LDFLAGS) -L$(GBP_HDF5_DIR)/lib/
+  LIBS    := $(LIBS) -lhdf5
+endif
+
 # Add gdlib
 ifndef USE_GDLIB
   USE_GDLIB    =1

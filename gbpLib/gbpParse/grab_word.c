@@ -13,7 +13,7 @@ int grab_word(char  *line,
   int  j,k,l,size_temp,flag=FALSE;
   strcpy(temp_char_old," ");
   for(j=0,k=0;j<strlen(line) && !flag;j++) {
-    sprintf(temp_char,"%c\0",line[j]);
+    sprintf(temp_char,"%c",line[j]);
     if(strcmp(temp_char," ")) {
       if(!strcmp(temp_char_old," ")) {
 	k++;
@@ -21,7 +21,7 @@ int grab_word(char  *line,
           l=j;
           while(strcmp(temp_char," ") && j<strlen(line)){
             j++;
-            sprintf(temp_char,"%c\0",line[j]);
+            sprintf(temp_char,"%c",line[j]);
           }
           size_temp=j-l+1;
           if((*size)<=0)
@@ -31,7 +31,7 @@ int grab_word(char  *line,
             *return_value=(char *)realloc(*return_value,*size);
           }
           strncpy(*return_value,&(line[l]),(size_temp-1)*sizeof(char));
-          sprintf(temp_char,"\0");
+          sprintf(temp_char,"");
           strncpy(&((*return_value)[size_temp-1]),temp_char,sizeof(char));
 	  flag=TRUE;
 	}

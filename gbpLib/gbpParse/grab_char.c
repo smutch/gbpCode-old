@@ -13,13 +13,13 @@ int grab_char(char *line,
   strcpy(temp_char_old," ");
   for(k=0,j=0;j<strlen(line);j++) {
     strncpy(temp_char,&(line[j]),sizeof(char));
-    sprintf(temp_char,"%c\0",line[j]);
+    sprintf(temp_char,"%c",line[j]);
     if(strcmp(temp_char," ")) {
       if(!strcmp(temp_char_old," ")) {
 	k++;
 	if(k==n){
 	  sscanf(&(line[j]),"%s ",temp_string);
-          sprintf(return_value,"%s\0",temp_string);
+          sprintf(return_value,"%s",temp_string);
 	  flag=TRUE;
 	  j=strlen(line);
 	}

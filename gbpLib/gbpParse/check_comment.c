@@ -7,7 +7,7 @@ int check_comment(char *line){
   char temp_char[2];
   int  j,flag=TRUE,rval=FALSE;
   for(j=0;j<strlen(line) && flag;j++) {
-    sprintf(temp_char,"%c\0",line[j]);
+    sprintf(temp_char,"%c",line[j]);
     if(strcmp(temp_char," ")){
       if(!strcmp(temp_char,"#"))
         rval=TRUE;
