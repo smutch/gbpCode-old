@@ -141,10 +141,10 @@ void read_smooth(plist_info *plist,
     fread(&n_files,          sizeof(int),      1,fp);
     fclose(fp);
   }
-  SID_Bcast(&n_particles_file, (int)sizeof(int),      read_rank);
-  SID_Bcast(&offset,           (int)sizeof(int),      read_rank);
-  SID_Bcast(&n_particles_total,(int)sizeof(long long),read_rank);
-  SID_Bcast(&n_files,          (int)sizeof(int),      read_rank);
+  SID_Bcast(&n_particles_file, (int)sizeof(int),      read_rank,SID.COMM_WORLD);
+  SID_Bcast(&offset,           (int)sizeof(int),      read_rank,SID.COMM_WORLD);
+  SID_Bcast(&n_particles_total,(int)sizeof(long long),read_rank,SID.COMM_WORLD);
+  SID_Bcast(&n_files,          (int)sizeof(int),      read_rank,SID.COMM_WORLD);
   SID_log("Done.",SID_LOG_CLOSE);
 
   // Read each file in turn
@@ -167,10 +167,10 @@ void read_smooth(plist_info *plist,
       fread(&n_particles_total,sizeof(long long),1,fp);
       fread(&n_files,          sizeof(int),      1,fp);
     }
-    SID_Bcast(&n_particles_file, (int)sizeof(int),      read_rank);
-    SID_Bcast(&offset,           (int)sizeof(int),      read_rank);
-    SID_Bcast(&n_particles_total,(int)sizeof(long long),read_rank);
-    SID_Bcast(&n_files,          (int)sizeof(int),      read_rank);
+    SID_Bcast(&n_particles_file, (int)sizeof(int),      read_rank,SID.COMM_WORLD);
+    SID_Bcast(&offset,           (int)sizeof(int),      read_rank,SID.COMM_WORLD);
+    SID_Bcast(&n_particles_total,(int)sizeof(long long),read_rank,SID.COMM_WORLD);
+    SID_Bcast(&n_files,          (int)sizeof(int),      read_rank,SID.COMM_WORLD);
     SID_log("(%d of %d particles)...",SID_LOG_CONTINUE,n_particles_file,n_particles_total);
 
     // Read IDs
@@ -183,7 +183,7 @@ void read_smooth(plist_info *plist,
         fread(id_buf,sizeof(long long),n_particles_file,fp);
       }
       SID_Barrier(SID.COMM_WORLD);
-      SID_Bcast(id_buf,(int)(n_particles_file*sizeof(long long)),read_rank);
+      SID_Bcast(id_buf,(int)(n_particles_file*sizeof(long long)),read_rank,SID.COMM_WORLD);
       merge_sort(id_buf,(size_t)n_particles_file,&id_buf_index,SID_SIZE_T,SORT_COMPUTE_INDEX,FALSE);
       id_buf_L=(long long *)id_buf;
     }
@@ -195,7 +195,7 @@ void read_smooth(plist_info *plist,
         fread(id_buf,sizeof(int),n_particles_file,fp);
       }
       SID_Barrier(SID.COMM_WORLD);
-      SID_Bcast(id_buf,(int)(n_particles_file*sizeof(int)),read_rank);
+      SID_Bcast(id_buf,(int)(n_particles_file*sizeof(int)),read_rank,SID.COMM_WORLD);
       merge_sort(id_buf,(size_t)n_particles_file,&id_buf_index,SID_INT,SORT_COMPUTE_INDEX,FALSE);
       id_buf_i=(int *)id_buf;
     }
@@ -236,10 +236,10 @@ void read_smooth(plist_info *plist,
       fread(&n_particles_total,sizeof(long long),1,fp);
       fread(&n_files,          sizeof(int),      1,fp);
     }
-    SID_Bcast(&n_particles_file, (int)sizeof(int),      read_rank);
-    SID_Bcast(&offset,           (int)sizeof(int),      read_rank);
-    SID_Bcast(&n_particles_total,(int)sizeof(long long),read_rank);
-    SID_Bcast(&n_files,          (int)sizeof(int),      read_rank);
+    SID_Bcast(&n_particles_file, (int)sizeof(int),      read_rank,SID.COMM_WORLD);
+    SID_Bcast(&offset,           (int)sizeof(int),      read_rank,SID.COMM_WORLD);
+    SID_Bcast(&n_particles_total,(int)sizeof(long long),read_rank,SID.COMM_WORLD);
+    SID_Bcast(&n_files,          (int)sizeof(int),      read_rank,SID.COMM_WORLD);
     buffer=SID_malloc(sizeof(float)*n_particles_file);
     for(i_quantity=0;i_quantity<n_quantities;i_quantity++){
       switch(i_quantity){
@@ -270,7 +270,7 @@ void read_smooth(plist_info *plist,
       if(SID.My_rank==read_rank)
         fread(buffer,sizeof(float),n_particles_file,fp);
       SID_Barrier(SID.COMM_WORLD);
-      SID_Bcast(buffer,(int)(n_particles_file*sizeof(float)),read_rank);
+      SID_Bcast(buffer,(int)(n_particles_file*sizeof(float)),read_rank,SID.COMM_WORLD);
 
       // Place in final array
       for(i_particle=0;i_particle<n_particles_file;i_particle++){

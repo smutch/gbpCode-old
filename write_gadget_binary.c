@@ -571,7 +571,7 @@ void write_gadget_binary(char        *filename_in,
             }
             fclose(fp);
           }
-          SID_Bcast(&i_p,sizeof(size_t),i_rank);
+          SID_Bcast(&i_p,sizeof(size_t),i_rank,SID.COMM_WORLD);
         }
       }
       if(SID.I_am_Master && flag_recordlength_written){
