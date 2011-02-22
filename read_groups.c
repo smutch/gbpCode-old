@@ -110,7 +110,7 @@ void read_groups(char        *filename_groups_root,
         fread(&n_groups,sizeof(int),1,fp);
       else
         fseeko(fp,sizeof(int),SEEK_CUR);
-      SID_Bcast(&n_groups,sizeof(int),MASTER_RANK);
+      SID_Bcast(&n_groups,sizeof(int),MASTER_RANK,SID.COMM_WORLD);
       
       // Check that >0 groups are being loaded
       n_particles=0;
@@ -164,15 +164,15 @@ void read_groups(char        *filename_groups_root,
         }
 
         // Send results to slave ranks
-        SID_Bcast(&n_groups,                   sizeof(int),    MASTER_RANK);
-        SID_Bcast(&n_subgroups,                sizeof(int),    MASTER_RANK);
-        SID_Bcast(&n_particles,                sizeof(big_int),MASTER_RANK);
-        SID_Bcast(group_length,     n_groups  *sizeof(int),    MASTER_RANK);
-        SID_Bcast(group_offsets,    n_groups  *sizeof(int),    MASTER_RANK);
-        SID_Bcast(n_subgroups_group,n_groups  *sizeof(int),    MASTER_RANK);
-        SID_Bcast(n_groups_rank,    SID.n_proc*sizeof(int),    MASTER_RANK);
-        SID_Bcast(n_subgroups_rank, SID.n_proc*sizeof(int),    MASTER_RANK);
-        SID_Bcast(n_particles_rank, SID.n_proc*sizeof(size_t), MASTER_RANK);
+        SID_Bcast(&n_groups,                   sizeof(int),    MASTER_RANK,SID.COMM_WORLD);
+        SID_Bcast(&n_subgroups,                sizeof(int),    MASTER_RANK,SID.COMM_WORLD);
+        SID_Bcast(&n_particles,                sizeof(big_int),MASTER_RANK,SID.COMM_WORLD);
+        SID_Bcast(group_length,     n_groups  *sizeof(int),    MASTER_RANK,SID.COMM_WORLD);
+        SID_Bcast(group_offsets,    n_groups  *sizeof(int),    MASTER_RANK,SID.COMM_WORLD);
+        SID_Bcast(n_subgroups_group,n_groups  *sizeof(int),    MASTER_RANK,SID.COMM_WORLD);
+        SID_Bcast(n_groups_rank,    SID.n_proc*sizeof(int),    MASTER_RANK,SID.COMM_WORLD);
+        SID_Bcast(n_subgroups_rank, SID.n_proc*sizeof(int),    MASTER_RANK,SID.COMM_WORLD);
+        SID_Bcast(n_particles_rank, SID.n_proc*sizeof(size_t), MASTER_RANK,SID.COMM_WORLD);
 
         // Compute group offsets for this rank
         for(i_rank=0,rank_offset=0;i_rank<SID.My_rank;i_rank++) 
@@ -215,7 +215,7 @@ void read_groups(char        *filename_groups_root,
         fread(&n_subgroups_in,sizeof(int),1,fp);
       else
         fseeko(fp,sizeof(int),SEEK_CUR);
-      SID_Bcast(&n_subgroups_in,sizeof(int),MASTER_RANK);
+      SID_Bcast(&n_subgroups_in,sizeof(int),MASTER_RANK,SID.COMM_WORLD);
       if(n_subgroups_in!=n_subgroups)
         SID_trap_error("n_subgroups_in(%d)!=n_subgroups(%d) in subgroup file {%s}!",ERROR_LOGIC,n_subgroups_in,n_subgroups,filename_subgroups);
       // Check that >0 groups are being loaded
