@@ -1,4 +1,4 @@
-#include <gbpLib.h>
+#include <gbpSID.h>
 #include <gbpFITS.h>
 
 int write_image_FITS(void *image,SID_Datatype dtype,int n_D,long *D,char *filename){

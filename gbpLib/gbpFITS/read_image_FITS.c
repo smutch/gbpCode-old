@@ -1,4 +1,4 @@
-#include <gbpLib.h>
+#include <gbpSID.h>
 #include <gbpFITS.h>
 
 int read_image_FITS(void **image,SID_Datatype *dtype,int *n_D,int **D,char *filename){

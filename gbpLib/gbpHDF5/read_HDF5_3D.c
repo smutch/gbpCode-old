@@ -71,9 +71,8 @@ int read_HDF5_3D(char *arrayName, char *filename, float **data_out, float *themi
  status = H5Sget_simple_extent_dims(hdf5_dataspace_in_file, dims, NULL);  
  
 /* Malloc data_out */
-	if(( *data_out =(float *)malloc(dims[0]*sizeof(float))) == NULL) {
-			fprintf(stderr, "Malloc of %s array failed\n", buf);
-			exit(-1);
+	if(( *data_out =(float *)SID_malloc(dims[0]*sizeof(float))) == NULL) {
+			SID_trap_error("Malloc of %s array failed",ERROR_MEMORY, buf);
 	}
 
   /* Position has x,y,z while other arrays are just vectors */

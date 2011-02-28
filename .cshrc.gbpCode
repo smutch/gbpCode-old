@@ -23,7 +23,7 @@ setenv GBP_FFTW_DIR      ${GBP_SRC}/3rd_Party/fftw
 setenv GBP_SPRNG_DIR     ${GBP_SRC}/3rd_Party/sprng
 setenv GBP_VALGRIND_DIR  ${GBP_SRC}/3rd_Party/valgrind
 setenv GBP_CFITSIO_DIR   ${GBP_SRC}/3rd_Party/cfitsio
-setenv GBP_HDF5_DIR      ${GBP_SRC}/3rd_Party/hdf5
+setenv GBP_HDF5_DIR      ${GBP_SRC}/3rd_Party/
 setenv GBP_VALGRIND_PLAT x86-darwin
 setenv GBP_LIB           ${GBP_SRC}'myLib/'
 setenv GBP_INC           ${GBP_SRC}'myInclude/'

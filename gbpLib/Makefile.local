@@ -10,5 +10,8 @@ SUBDIRS   = gbpCommon gbpSID gbpADaPS gbpParse gbpSort
 ifeq ($(USE_CFITSIO),1)
   SUBDIRS := $(SUBDIRS) gbpFITS
 endif
+ifeq ($(USE_HDF5),1)
+  SUBDIRS := $(SUBDIRS) gbpHDF5
+endif
 #############################
 
