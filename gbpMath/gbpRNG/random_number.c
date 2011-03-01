@@ -10,7 +10,7 @@ REAL random_number(RNG_info *RNG){
           #ifdef USE_SPRNG
             random_local=(REAL)sprng(RNG->stream);
           #else
-            random_local=(REAL)ran1(RNG->stream);
+            random_local=(REAL)ran1(&(RNG->stream));
           #endif
         }
         MPI_Bcast(&random_local,1,MPI_REAL,MASTER_RANK,MPI_COMM_WORLD);
@@ -20,18 +20,17 @@ REAL random_number(RNG_info *RNG){
         #ifdef USE_SPRNG
           return((REAL)(sprng(RNG->stream)));
         #else
-          return((REAL)ran1(RNG->stream));
+          return((REAL)ran1(&(RNG->stream)));
         #endif
       }
     #else
       #ifdef USE_SPRNG
         return((REAL)(sprng()));
       #else
-        return((REAL)ran1(RNG->stream));
+        return((REAL)ran1(&(RNG->stream)));
       #endif
     #endif
   }
   else
     SID_trap_error("RNG_info not initialized in call to random_number.",ERROR_LOGIC);
-fprintf(stderr,"test11\n");
 }

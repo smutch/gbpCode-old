@@ -4,7 +4,7 @@
 void init_RNG(int *seed,RNG_info *RNG,int mode){
   if((*seed)==0)
     init_seed_from_clock(seed);
-  RNG->seed  =(*seed);
+  RNG->seed=(*seed);
   #ifdef USE_SPRNG
     #ifdef USE_MPI
       if(check_mode_for_flag(mode,RNG_GLOBAL))
@@ -17,9 +17,9 @@ void init_RNG(int *seed,RNG_info *RNG,int mode){
     #endif
   #else
     if((*seed)<0)
-      RNG->stream= (*seed)-173*SID.My_rank;
+      RNG->stream= (long)(RNG->seed-(long)(173*SID.My_rank));
     else
-      RNG->stream=-(*seed)-173*SID.My_rank;
+      RNG->stream=-(long)(RNG->seed-(long)(173*SID.My_rank));
   #endif
   RNG->IGauss     =0;
   RNG->GaussBak   =0.;
