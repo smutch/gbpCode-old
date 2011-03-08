@@ -56,10 +56,10 @@ void init_field(int        n_d,
     FFT->n_R_local[i_d]      =FFT->n[i_d];
     FFT->n_k_local[i_d]      =FFT->n[i_d];
   }
-  FFT->n_k_local[FFT->n_d-1]=FFT->n[FFT->n_d-1]/2;
+  FFT->n_k_local[FFT->n_d-1]=FFT->n[FFT->n_d-1]/2+1;
 
   // Initialize FFTW
-  #ifdef USE_MPI
+  #if USE_MPI
     FFT->plan =rfftwnd_mpi_create_plan(MPI_COMM_WORLD,
                                        FFT->n_d,FFT->n,
                                        FFTW_REAL_TO_COMPLEX,

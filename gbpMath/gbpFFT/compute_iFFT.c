@@ -9,7 +9,7 @@ void compute_iFFT(field_info *FFT){
   add_buffer_FFT_k(FFT);
   if(!flag_padded)
     SID_log("Performing iFFT...",SID_LOG_OPEN|SID_LOG_TIMER);
-  #ifdef USE_MPI
+  #if USE_MPI
     rfftwnd_mpi(FFT->iplan,1,FFT->field_local,NULL,FFTW_TRANSPOSED_ORDER);
   #else
     rfftwnd_one_complex_to_real(FFT->iplan,FFT->cfield_local,NULL);

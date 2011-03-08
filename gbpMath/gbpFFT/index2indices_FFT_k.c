@@ -6,7 +6,7 @@ void index2indices_FFT_k(field_info *FFT,size_t index,int *i_k){
   size_t remainder;
   for(j_d=FFT->n_d-1,remainder=index;j_d>=0;j_d--){
     i_d=j_d;
-#ifdef USE_MPI
+#if USE_MPI
     if(j_d==0)      i_d=1;
     else if(j_d==1) i_d=0;
 #endif
