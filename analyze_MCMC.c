@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <math.h>
+#include <stdint.h>
 #include <gbpLib.h>
 #include <gbpMCMC.h>
 #include <gsl/gsl_linalg.h>
@@ -82,15 +83,16 @@ void analyze_MCMC(MCMC_info *MCMC){
   double  **M_lo_95;
   double  **M_hi_95;
   size_t ***M_histogram;
-  double  **M_last;
-  double  **M_avg;
-  double  **dM_avg;
+  double   **M_last;
+  double   **M_avg;
+  double   **dM_avg;
   size_t **P_histogram;
   size_t **coverage_true;
   size_t **coverage_false;
   size_t **coverage_keep;
-  double **max_L_surface;
-  double **mean_L_surface;
+  uint64_t *temp_out;
+  double   **max_L_surface;
+  double   **mean_L_surface;
   double    L_x,L_y,L_z;
   int       n_x,n_y,n_z;
   int       n_C_x;
@@ -266,14 +268,14 @@ void analyze_MCMC(MCMC_info *MCMC){
         for(j_P=i_P+1;j_P<n_P;j_P++)
             n_coverage++;
     }
-    P_contour_68  =(double   *)SID_malloc(sizeof(double)*n_coverage);
-    P_contour_95  =(double   *)SID_malloc(sizeof(double)*n_coverage);
-    P_best        =(double   *)SID_malloc(sizeof(double)*n_P);
-    P_lo_68       =(double   *)SID_malloc(sizeof(double)*n_P);
-    P_hi_68       =(double   *)SID_malloc(sizeof(double)*n_P);
-    P_lo_95       =(double   *)SID_malloc(sizeof(double)*n_P);
-    P_hi_95       =(double   *)SID_malloc(sizeof(double)*n_P);
-    P_histogram   =(size_t  **)SID_malloc(sizeof(size_t *)*n_P);
+    P_contour_68  =(double    *)SID_malloc(sizeof(double)*n_coverage);
+    P_contour_95  =(double    *)SID_malloc(sizeof(double)*n_coverage);
+    P_best        =(double    *)SID_malloc(sizeof(double)*n_P);
+    P_lo_68       =(double    *)SID_malloc(sizeof(double)*n_P);
+    P_hi_68       =(double    *)SID_malloc(sizeof(double)*n_P);
+    P_lo_95       =(double    *)SID_malloc(sizeof(double)*n_P);
+    P_hi_95       =(double    *)SID_malloc(sizeof(double)*n_P);
+    P_histogram   =(size_t **)SID_malloc(sizeof(size_t *)*n_P);
     for(i_P=0;i_P<n_P;i_P++){
       P_histogram[i_P]=(size_t *)SID_malloc(sizeof(size_t)*coverage_size);
       P_min[i_P]      = DBL_MAX;
@@ -327,10 +329,11 @@ void analyze_MCMC(MCMC_info *MCMC){
         coverage_true[i_coverage][j_coverage]    =0;
         coverage_false[i_coverage][j_coverage]   =0;
         coverage_keep[i_coverage][j_coverage]    =0;
-        max_L_surface[i_coverage][j_coverage]=0;
-        mean_L_surface[i_coverage][j_coverage]   =0;
+        max_L_surface[i_coverage][j_coverage]    =0.;
+        mean_L_surface[i_coverage][j_coverage]   =0.;
       }
     }
+    temp_out=(uint64_t *)SID_malloc(sizeof(uint64_t)*coverage_size*coverage_size);
     SID_log("Done.",SID_LOG_CLOSE);
 
     // Process the chain(s)
@@ -599,13 +602,22 @@ void analyze_MCMC(MCMC_info *MCMC){
       fwrite(P_max,         sizeof(double),n_P,fp_coverage);
       for(i_P=0,i_coverage=0;i_P<n_P;i_P++){
         for(j_P=i_P+1;j_P<n_P;j_P++,i_coverage++){
-          fwrite(&P_contour_68[i_coverage], sizeof(double),1,                          fp_coverage);
-          fwrite(&P_contour_95[i_coverage], sizeof(double),1,                          fp_coverage);
-          fwrite(coverage_true[i_coverage], sizeof(size_t),coverage_size*coverage_size,fp_coverage);
-          fwrite(coverage_false[i_coverage],sizeof(size_t),coverage_size*coverage_size,fp_coverage);
-          fwrite(coverage_keep[i_coverage], sizeof(size_t),coverage_size*coverage_size,fp_coverage);
-          fwrite(max_L_surface[i_coverage], sizeof(size_t),coverage_size*coverage_size,fp_coverage);
-          fwrite(mean_L_surface[i_coverage],sizeof(size_t),coverage_size*coverage_size,fp_coverage);
+          fwrite(&P_contour_68[i_coverage],sizeof(double),1,fp_coverage);
+          fwrite(&P_contour_95[i_coverage],sizeof(double),1,fp_coverage);
+
+          // We need to covert to uint64_t so that allresults_MCMC.py works on 32-bit systems
+          for(j_coverage=0;j_coverage<coverage_size*coverage_size;j_coverage++)
+            temp_out[j_coverage]=coverage_true[i_coverage][j_coverage];
+          fwrite(temp_out,sizeof(uint64_t),coverage_size*coverage_size,fp_coverage);
+          for(j_coverage=0;j_coverage<coverage_size*coverage_size;j_coverage++)
+            temp_out[j_coverage]=coverage_false[i_coverage][j_coverage];
+          fwrite(temp_out,sizeof(uint64_t),coverage_size*coverage_size,fp_coverage);
+          for(j_coverage=0;j_coverage<coverage_size*coverage_size;j_coverage++)
+            temp_out[j_coverage]=coverage_keep[i_coverage][j_coverage];
+          fwrite(temp_out,sizeof(uint64_t),coverage_size*coverage_size,fp_coverage);
+
+          fwrite(max_L_surface[i_coverage], sizeof(double),coverage_size*coverage_size,fp_coverage);
+          fwrite(mean_L_surface[i_coverage],sizeof(double),coverage_size*coverage_size,fp_coverage);
         }
       }
       fclose(fp_coverage);
@@ -620,7 +632,10 @@ void analyze_MCMC(MCMC_info *MCMC){
         fwrite(&P_hi_68[i_P],   sizeof(double),1,            fp_histograms);
         fwrite(&P_lo_95[i_P],   sizeof(double),1,            fp_histograms);
         fwrite(&P_hi_95[i_P],   sizeof(double),1,            fp_histograms);
-        fwrite(P_histogram[i_P],sizeof(size_t),coverage_size,fp_histograms);
+        // We need to covert to uint64_t so that allresults_MCMC.py works on 32-bit systems
+        for(j_coverage=0;j_coverage<coverage_size;j_coverage++)
+          temp_out[j_coverage]=P_histogram[i_P][j_coverage];
+        fwrite(temp_out,sizeof(uint64_t),coverage_size,fp_histograms);
       }
       if(!flag_no_map_write){
         for(i_DS=0;i_DS<n_DS;i_DS++){
@@ -630,7 +645,10 @@ void analyze_MCMC(MCMC_info *MCMC){
             fwrite(&M_hi_68[i_DS][i_M],   sizeof(double),1,            fp_histograms);
             fwrite(&M_lo_95[i_DS][i_M],   sizeof(double),1,            fp_histograms);
             fwrite(&M_hi_95[i_DS][i_M],   sizeof(double),1,            fp_histograms);
-            fwrite(M_histogram[i_DS][i_M],sizeof(size_t),coverage_size,fp_histograms);
+            // We need to covert to uint64_t so that allresults_MCMC.py works on 32-bit systems
+            for(j_coverage=0;j_coverage<coverage_size;j_coverage++)
+              temp_out[j_coverage]=M_histogram[i_DS][i_M][j_coverage];
+            fwrite(temp_out,sizeof(uint64_t),coverage_size,fp_histograms);
           }
         }
       }
@@ -780,6 +798,7 @@ void analyze_MCMC(MCMC_info *MCMC){
   SID_free(SID_FARG coverage_keep);
   SID_free(SID_FARG max_L_surface);
   SID_free(SID_FARG mean_L_surface);
+  SID_free(SID_FARG temp_out);
 
   SID_log("Done.",SID_LOG_CLOSE);
 

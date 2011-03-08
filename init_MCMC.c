@@ -33,7 +33,7 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   MCMC->first_chain_call        =TRUE; 
   MCMC->first_parameter_call    =TRUE; 
   MCMC->first_likelihood_call   =TRUE; 
-  MCMC->flag_no_map_write       =TRUE;
+  MCMC->flag_no_map_write       =FALSE;
   MCMC->ln_likelihood_last      =0.; 
   MCMC->ln_likelihood_new       =0.; 
   MCMC->ln_likelihood_chain     =0.;
