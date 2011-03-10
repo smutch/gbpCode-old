@@ -289,12 +289,12 @@ void compute_MCMC(MCMC_info *MCMC){
         fread(&n_avg_test,sizeof(int),1,fp_run);
         if(n_avg_test!=n_avg)
           SID_trap_error("Integration averaging intervals are inconsistant (i.e. %d!=%d).",ERROR_LOGIC,n_avg,n_avg_test);
-        fread(&flag_no_map_write,sizeof(int),1,fp_run);
-        if(flag_no_map_write_test!=flag_no_map_write)
-          SID_trap_error("Map write flags are inconsistant (i.e. %d!=%d).",ERROR_LOGIC,flag_no_map_write,flag_no_map_write_test);
         fread(&flag_autocor_on_test,sizeof(int),1,fp_run);
         if(flag_autocor_on_test!=flag_autocor_on)
           SID_trap_error("Autocorrelation flags are inconsistant (i.e. %d!=%d).",ERROR_LOGIC,flag_autocor_on,flag_autocor_on_test);
+        fread(&flag_no_map_write_test,sizeof(int),1,fp_run);
+        if(flag_no_map_write_test!=flag_no_map_write)
+          SID_trap_error("Map write flags are inconsistant (i.e. %d!=%d).",ERROR_LOGIC,flag_no_map_write,flag_no_map_write_test);
         fread(&n_P_test,sizeof(int),1,fp_run);
         if(n_P_test!=n_P)
           SID_trap_error("The number of paramaters is inconsistant (i.e. %d!=%d).",ERROR_LOGIC,n_P,n_P_test);
