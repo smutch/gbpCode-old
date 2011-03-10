@@ -105,6 +105,10 @@ int read_image_FITS(void **image,SID_Datatype *dtype,int *n_D,int **D,char *file
 
   // Close the file
   fits_close_file(fp,&status);
+
+  // Fits files store data in FORTRAN order, so we need to perform a transpose
+  transpose_array((*image),(*dtype),(*n_D),(*D));
+
   SID_log("Done.",SID_LOG_CLOSE);
 
 }

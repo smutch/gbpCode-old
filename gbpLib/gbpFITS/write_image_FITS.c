@@ -1,7 +1,7 @@
 #include <gbpSID.h>
 #include <gbpFITS.h>
 
-int write_image_FITS(void *image,SID_Datatype dtype,int n_D,long *D,char *filename){
+int write_image_FITS(void *image,SID_Datatype dtype,int n_D,int *D_in,char *filename){
   fitsfile *fp;
   FILE     *fp_test;
   int   naxis=2;
@@ -9,6 +9,7 @@ int write_image_FITS(void *image,SID_Datatype dtype,int n_D,long *D,char *filena
   int   anynull;
   int   i,j;
   long  naxes[2];
+  long *D;
   char  keyname[50];
   char  error_msg[80];
   int   status=0;
@@ -20,6 +21,14 @@ int write_image_FITS(void *image,SID_Datatype dtype,int n_D,long *D,char *filena
     close(fp);
     remove(filename);
   }
+
+  // Fits files store data in FORTRAN order, so we need to perform a transpose
+  transpose_array(image,dtype,n_D,D_in);
+
+  // Convert the array dimensions to a type-long array
+  D=(long *)SID_malloc(sizeof(long)*n_D);
+  for(i_D=0;i_D<n_D;i_D++)
+    D[i_D]=(long)(D_in[i_D]);
 
   // Create the file
   fits_create_file(&fp,filename,&status);
@@ -67,6 +76,11 @@ int write_image_FITS(void *image,SID_Datatype dtype,int n_D,long *D,char *filena
 
   // Close the file
   fits_close_file(fp,&status);
+
+  // Fits files store data in FORTRAN order, so we need to perform a transpose
+  transpose_array(image,dtype,n_D,D_in);
+
+  SID_free(SID_FARG D);
 
 }
 
