@@ -5,12 +5,13 @@
 #define MCMC_COVERAGE_LOG    1
 #define MCMC_NAME_SIZE       256
 
-#define MCMC_MODE_SERIAL         1
-#define MCMC_MODE_PARALLEL       2
-#define MCMC_MODE_AUTOTUNE       8
-#define MCMC_MODE_NO_MAP_WRITE  16
-#define MCMC_MODE_REPORT_PROPS  32
-#define MCMC_MODE_DEFAULT       MCMC_MODE_AUTOTUNE
+#define MCMC_MODE_SERIAL           1
+#define MCMC_MODE_PARALLEL         2
+#define MCMC_MODE_AUTOTUNE         8
+#define MCMC_MODE_NO_MAP_WRITE    16
+#define MCMC_MODE_REPORT_PROPS    32
+#define MCMC_MODE_REFLECT_PRIORS  64
+#define MCMC_MODE_DEFAULT         MCMC_MODE_AUTOTUNE|MCMC_MODE_SERIAL
 
 #define MCMC_MAP_RETURN_GOOD 0
 #define MCMC_MAP_RETURN_BAD  1
@@ -21,7 +22,6 @@
 #define MCMC_DEFAULT_N_AUTOTUNE               1
 #define MCMC_DEFAULT_N_AUTOTUNE_TEMPERATURE 100
 #define MCMC_DEFAULT_N_AUTOTUNE_COVMTX      (2*MCMC->n_P*MCMC->n_P*(1+(int)(100./MCMC->success_target)))
-
 
 typedef struct MCMC_DS_info MCMC_DS_info;
 struct MCMC_DS_info {

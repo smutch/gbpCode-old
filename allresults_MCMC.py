@@ -22,7 +22,8 @@ filename_root = str(sys.argv[1])+'/'
 flag_results_on    =1
 flag_datasets_on   =1
 flag_histograms_on =1
-flag_coverage_on   =1
+flag_coverage_on   =0
+flag_pdf_on        =1
 flag_trace_on      =1
 my_chain           =0
 P_results_ordinate =0
@@ -286,7 +287,7 @@ if (flag_histograms_on==1):
 	print
 
 # Create coverage maps
-if (flag_coverage_on==1):
+if (flag_coverage_on==1 or flag_pdf_on==1):
 	print "Creating",n_coverage,"coverage plots:"
 	fd=open(filename_root+'/results/coverage.dat','rb')
 	n_coverage   =fromfile(file=fd,dtype='i',count=1)
@@ -312,61 +313,64 @@ if (flag_coverage_on==1):
                   coverage_P=transpose(reshape(coverage_P,[coverage_size[0],coverage_size[0]]))
 
 		  # Create probability maps
-                  plt.figure(facecolor='white')
-                  plt.cla()
-                  ax = plt.subplot(111)
-                  im=plt.imshow(coverage_P,origin='lower',interpolation='bicubic',aspect='auto',extent=[coverage_min[jj],coverage_max[jj],coverage_min[kk],coverage_max[kk]])
-                  im.set_clim(coverage_lo,coverage_hi)
-                  cont2 = plt.contour(x,y,coverage_P,[conf_68pc,conf_95pc],colors='red')
-		  pp1=ax.scatter(P_init[jj],P_init[kk],s=250,linewidth=3,c='lawngreen',marker='+')
-		  ax.set_xlim((coverage_min[jj],coverage_max[jj]))
-		  ax.set_ylim((coverage_min[kk],coverage_max[kk]))
-                  ax.set_xlabel(P_name[jj])
-                  ax.set_ylabel(P_name[kk])
-                  ax.set_title('Posterior Distribution Function')
-                  cb=plt.colorbar(im)
-		  cb.ax.set_ylabel('# of propositions')
-                  filename_out = 'probable_'+str(ii).zfill(5)+'.png'
-                  print '  Writing',filename_out
-                  filename_out =filename_plot_root+filename_out
-                  plt.savefig(filename_out)
+		  if (flag_pdf_on==1):
+                  	plt.figure(facecolor='white')
+                  	plt.cla()
+                  	ax = plt.subplot(111)
+                  	im=plt.imshow(coverage_P,origin='lower',interpolation='bicubic',aspect='auto',extent=[coverage_min[jj],coverage_max[jj],coverage_min[kk],coverage_max[kk]])
+                  	im.set_clim(coverage_lo,coverage_hi)
+                  	cont2 = plt.contour(x,y,coverage_P,[conf_68pc,conf_95pc],colors='red')
+		  	pp1=ax.scatter(P_init[jj],P_init[kk],s=250,linewidth=3,c='lawngreen',marker='+')
+		  	ax.set_xlim((coverage_min[jj],coverage_max[jj]))
+		  	ax.set_ylim((coverage_min[kk],coverage_max[kk]))
+                  	ax.set_xlabel(P_name[jj])
+                  	ax.set_ylabel(P_name[kk])
+                  	ax.set_title('Posterior Distribution Function')
+                  	cb=plt.colorbar(im)
+		  	cb.ax.set_ylabel('# of propositions')
+                  	filename_out = 'pdf_'+str(ii).zfill(5)+'.png'
+                  	print '  Writing',filename_out
+                  	filename_out =filename_plot_root+filename_out
+                  	plt.savefig(filename_out)
 
 		  # Create coverage maps
-                  plt.figure(figsize=(8,5))
-                  plt.clf()
-                  ax = axes([0.125,0.225,0.4,0.7],frameon=True)
-		  ax.set_xlim((coverage_min[jj],coverage_max[jj]))
-		  ax.set_ylim((coverage_min[kk],coverage_max[kk]))
-		  ax.xaxis.set_major_locator(MaxNLocator(4))
-		  ax.yaxis.set_major_locator(MaxNLocator(4))
-                  im=plt.imshow(coverage_1,origin='lower',interpolation='bicubic',aspect='auto',extent=[coverage_min[jj],coverage_max[jj],coverage_min[kk],coverage_max[kk]])
-                  im.set_clim(coverage_lo,coverage_hi)
-                  ax.images.append(im)
-		  cont2 = plt.contour(x,y,coverage_P,[conf_68pc,conf_95pc],colors='red')
-                  plt.rcParams['font.size'] = 12.
-                  ax.set_xlabel(P_name[jj])
-                  ax.set_ylabel(P_name[kk])
-                  ax.set_title('Accepted Propositions')
-                  ax = axes([0.525,0.225,0.4,0.7],frameon=True)
-		  ax.set_xlim((coverage_min[jj],coverage_max[jj]))
-		  ax.set_ylim((coverage_min[kk],coverage_max[kk]))
-		  ax.xaxis.set_major_locator(MaxNLocator(4))
-		  ax.yaxis.set_major_formatter(mpl.ticker.ScalarFormatter(useOffset=False))
-		  setp(ax.get_yticklabels(),visible=False)
-	 	  im=plt.imshow(coverage_0,origin='lower',interpolation='bicubic',aspect='auto',extent=[coverage_min[jj],coverage_max[jj],coverage_min[kk],coverage_max[kk]])
-                  im.set_clim(coverage_lo,coverage_hi)
-		  cont2 = plt.contour(x,y,coverage_P,[conf_68pc,conf_95pc],colors='red')
-                  ax.images.append(im)
-                  plt.rcParams['font.size'] = 12.
-                  ax.set_xlabel(P_name[jj])
-                  ax.set_title('Rejected Propositions')
-                  cax = axes([0.125,0.085,0.8,0.025],frameon=False)
-                  cb=plt.colorbar(im,cax=cax,orientation='horizontal')
-                  cb.ax.set_xlabel('# of propositions')
-                  filename_out = 'coverage_'+str(ii).zfill(5)+'.png'
-                  print '  Writing',filename_out
-                  filename_out =filename_plot_root+filename_out
-                  plt.savefig(filename_out,transparent=False)
+                  if (flag_coverage_on==1):
+                  	plt.figure(figsize=(8,5))
+                  	plt.clf()
+                  	ax = axes([0.125,0.225,0.4,0.7],frameon=True)
+		  	ax.set_xlim((coverage_min[jj],coverage_max[jj]))
+		  	ax.set_ylim((coverage_min[kk],coverage_max[kk]))
+		  	ax.xaxis.set_major_locator(MaxNLocator(4))
+		  	ax.yaxis.set_major_locator(MaxNLocator(4))
+                  	im=plt.imshow(coverage_1,origin='lower',interpolation='bicubic',aspect='auto',extent=[coverage_min[jj],coverage_max[jj],coverage_min[kk],coverage_max[kk]])
+                  	im.set_clim(coverage_lo,coverage_hi)
+                  	ax.images.append(im)
+		  	cont2 = plt.contour(x,y,coverage_P,[conf_68pc,conf_95pc],colors='red')
+                  	plt.rcParams['font.size'] = 12.
+                  	ax.set_xlabel(P_name[jj])
+                  	ax.set_ylabel(P_name[kk])
+                  	ax.set_title('Accepted Propositions')
+                  	ax = axes([0.525,0.225,0.4,0.7],frameon=True)
+		  	ax.set_xlim((coverage_min[jj],coverage_max[jj]))
+		  	ax.set_ylim((coverage_min[kk],coverage_max[kk]))
+		  	ax.xaxis.set_major_locator(MaxNLocator(4))
+		  	ax.yaxis.set_major_formatter(mpl.ticker.ScalarFormatter(useOffset=False))
+		  	setp(ax.get_yticklabels(),visible=False)
+	 	  	im=plt.imshow(coverage_0,origin='lower',interpolation='bicubic',aspect='auto',extent=[coverage_min[jj],coverage_max[jj],coverage_min[kk],coverage_max[kk]])
+                  	im.set_clim(coverage_lo,coverage_hi)
+		  	cont2 = plt.contour(x,y,coverage_P,[conf_68pc,conf_95pc],colors='red')
+                  	ax.images.append(im)
+                  	plt.rcParams['font.size'] = 12.
+                  	ax.set_xlabel(P_name[jj])
+                  	ax.set_title('Rejected Propositions')
+                  	cax = axes([0.125,0.085,0.8,0.025],frameon=False)
+                  	cb=plt.colorbar(im,cax=cax,orientation='horizontal')
+                  	cb.ax.set_xlabel('# of propositions')
+                  	filename_out = 'coverage_'+str(ii).zfill(5)+'.png'
+                  	print '  Writing',filename_out
+                  	filename_out =filename_plot_root+filename_out
+                  	plt.savefig(filename_out,transparent=False)
+
                   ii=ii+1
 	fd.close()
         print

@@ -421,10 +421,10 @@ void compute_MCMC(MCMC_info *MCMC){
 
       // Report the starting conditions 
       if(my_chain==SID.My_rank){
-        SID_log("Initial parameters:",SID_LOG_ALLRANKS|SID_LOG_OPEN);
-        sprintf(format_string,"%s = %%13.6le",MCMC->P_name_format);
+        SID_log("Initial parameters & priors:",SID_LOG_ALLRANKS|SID_LOG_OPEN);
+        sprintf(format_string,"%s = %%13.6le (%%13.6le ->%%13.6le)",MCMC->P_name_format);
         for(i_P=0;i_P<n_P;i_P++)
-          SID_log(format_string,SID_LOG_ALLRANKS|SID_LOG_COMMENT,MCMC->P_names[i_P],P_last[i_P]);
+          SID_log(format_string,SID_LOG_ALLRANKS|SID_LOG_COMMENT,MCMC->P_names[i_P],P_last[i_P],MCMC->P_limit_min[i_P],MCMC->P_limit_max[i_P]);
         SID_log("",SID_LOG_ALLRANKS|SID_LOG_NOPRINT|SID_LOG_CLOSE);
       }
 
