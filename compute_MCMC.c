@@ -279,7 +279,7 @@ void compute_MCMC(MCMC_info *MCMC){
     // Read/Write Header file
     if(SID.I_am_Master){
       // If run.dat already exists, this is a restart.  Check that it is consistant with the current run.
-      if((fp_run=fopen(filename_run,"rb"))!=NULL){
+      if((fp_run=fopen(filename_run,"r"))!=NULL){
         flag_restart=TRUE;
         SID_log("Checking the consistancy of this run with the previous run...",SID_LOG_OPEN);
         fp_run=fopen(filename_run,"rb");

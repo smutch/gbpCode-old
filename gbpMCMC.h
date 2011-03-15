@@ -26,6 +26,8 @@
 typedef struct MCMC_DS_info MCMC_DS_info;
 struct MCMC_DS_info {
   char          name[MCMC_NAME_SIZE];
+  int           n_D;
+  int          *D;
   int           n_M;
   double       *M_target;
   double       *dM_target;
@@ -109,7 +111,7 @@ struct MCMC_info {
 void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(double *,MCMC_info *,double **),int n_P,double *P_init,char **P_names,double *P_limit_min,double *P_limit_max,int n_arrays,...);
 void init_MCMC_DS(MCMC_info *MCMC);
 void free_MCMC(MCMC_info *MCMC);
-void add_MCMC_DS(MCMC_info *MCMC,const char *name,int n_M,double *DS,double *dDS,void *params,int n_arrays,...);
+void add_MCMC_DS(MCMC_info *MCMC,const char *name,int n_D,int *D,double *DS,double *dDS,void *params,int n_arrays,...);
 void autotune_MCMC(MCMC_info *MCMC);
 void autotune_MCMC_temperature(MCMC_info *MCMC);
 void autotune_MCMC_covariance(MCMC_info *MCMC);

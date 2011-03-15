@@ -8,8 +8,10 @@
 #include <gsl/gsl_fit.h>
 #include <gsl/gsl_interp.h>
 
-void add_MCMC_DS(MCMC_info *MCMC,const char *name,int n_M,double *DS,double *dDS,void *params,int n_arrays,...){
+void add_MCMC_DS(MCMC_info *MCMC,const char *name,int n_D,int *D,double *DS,double *dDS,void *params,int n_arrays,...){
   int           i_array;
+  int           i_D;
+  int           n_M;
   MCMC_DS_info *new;
   va_list       vargs;
   va_start(vargs,n_arrays);
@@ -19,9 +21,18 @@ void add_MCMC_DS(MCMC_info *MCMC,const char *name,int n_M,double *DS,double *dDS
   // Create new item
   new=(MCMC_DS_info *)SID_malloc(sizeof(MCMC_DS_info));
   strcpy(new->name,name);
+  if(n_D>0){
+    for(i_D=0,n_M=1;i_D<n_D;i_D++)
+      n_M*=D[i_D];
+  }
+  else
+    n_M=0;
+  new->n_D          =n_D;
+  new->D            =(int *)SID_malloc(sizeof(int)*n_D);
   new->n_M          =n_M;
   new->M_target     =(double *)SID_malloc(sizeof(double)*new->n_M);
   new->dM_target    =(double *)SID_malloc(sizeof(double)*new->n_M);
+  memcpy(new->D,          D,(size_t)new->n_D*sizeof(int));
   memcpy(new->M_target,  DS,(size_t)new->n_M*sizeof(double));
   memcpy(new->dM_target,dDS,(size_t)new->n_M*sizeof(double));
   new->params   =params;

@@ -65,6 +65,7 @@ void free_MCMC(MCMC_info *MCMC){
       }
       SID_free(SID_FARG current_DS->array);
       SID_free(SID_FARG current_DS->array_name);
+      SID_free(SID_FARG current_DS->D);
     }
     SID_free(SID_FARG current_DS);
     current_DS=next_DS;

@@ -25,6 +25,7 @@ flag_histograms_on =1
 flag_coverage_on   =0
 flag_pdf_on        =1
 flag_trace_on      =1
+flag_max_L_on      =1
 my_chain           =0
 P_results_ordinate =0
 DS_results_ordinate=0
@@ -126,33 +127,37 @@ coverage_min =fromfile(file=fd,dtype='d',count=n_P)
 coverage_max =fromfile(file=fd,dtype='d',count=n_P)
 fd.close()
 
+# Read best-fit results
+lx       = []
+lP_init  = []
+lP_best  = []
+lP_peak  = []
+lP_lo_68 = []
+lP_hi_68 = []
+lP_lo_95 = []
+lP_hi_95 = []
+for line in file(filename_root+'/results/fit_for_parameters.dat'):
+	line = line.split()
+	if(line[0][0]!='#'):
+		lP_init.append(line[1])
+		lP_best.append(line[4])
+		lP_lo_68.append(line[5])
+		lP_hi_68.append(line[6])
+		lP_lo_95.append(line[7])
+		lP_hi_95.append(line[8])
+		lP_peak.append(line[9])
+x      =array(lx,dtype='d')
+P_init =array(lP_init,dtype='d')
+P_best =array(lP_best,dtype='d')
+P_lo_68=array(lP_lo_68,dtype='d')
+P_hi_68=array(lP_hi_68,dtype='d')
+P_lo_95=array(lP_lo_95,dtype='d')
+P_hi_95=array(lP_hi_95,dtype='d')
+P_peak =array(lP_peak,dtype='d')
+
 # Plot results
 if (flag_results_on==1 and n_P_arrays>0):
 	print "Creating results plots:"
-	lx       = []
-	lP_init  = []
-	lP_best  = []
-	lP_lo_68 = []
-	lP_hi_68 = []
-	lP_lo_95 = []
-	lP_hi_95 = []
-	for line in file(filename_root+'/results/fit_for_parameters.dat'):
-		line = line.split()
-		if(line[0][0]!='#'):
-			lx.append(line[1])
-			lP_init.append(line[2])
-			lP_best.append(line[5])
-			lP_lo_68.append(line[6])
-			lP_hi_68.append(line[7])
-			lP_lo_95.append(line[8])
-			lP_hi_95.append(line[9])
-	x      =array(lx,dtype='d')
-        P_init =array(lP_init,dtype='d')
-        P_best =array(lP_best,dtype='d')
-        P_lo_68=array(lP_lo_68,dtype='d')
-        P_hi_68=array(lP_hi_68,dtype='d')
-        P_lo_95=array(lP_lo_95,dtype='d')
-        P_hi_95=array(lP_hi_95,dtype='d')
 	# Create plot here
         plt.figure()
         plt.cla()
@@ -245,288 +250,331 @@ if (flag_datasets_on==1 and (not flag_no_map_write) and n_DS_arrays_total>0):
 
 # Create histogram plots
 if (flag_histograms_on==1):
-        print "Creating histogram plots:"
-        fd=open(filename_root+'/results/histograms.dat','rb')
-        ii=0
-        for jj in xrange(0,n_P):
-                  best_val  =fromfile(file=fd,dtype='d',count=1)
-                  lo_68pc   =fromfile(file=fd,dtype='d',count=1)
-                  hi_68pc   =fromfile(file=fd,dtype='d',count=1)
-                  lo_95pc   =fromfile(file=fd,dtype='d',count=1)
-                  hi_95pc   =fromfile(file=fd,dtype='d',count=1)
-                  hist_P    =fromfile(file=fd,dtype='uint64',count=coverage_size[0])
-		  x         =linspace(coverage_min[jj],coverage_max[jj],coverage_size)
-		  mask_68   =zeros(coverage_size[0])
-		  mask_95   =zeros(coverage_size[0])
-		  for kk in xrange(0,coverage_size):
-			if(x[kk]>=lo_68pc and x[kk]<=hi_68pc):
-				mask_68[kk]=1
-                        if(x[kk]>=lo_95pc and x[kk]<=hi_95pc):
-                                mask_95[kk]=1
-		  zero_line =linspace(0.,0.,coverage_size)
-		  hist_P=double(hist_P)/double(hist_P.max())
+   print "Creating histogram plots:"
+   fd=open(filename_root+'/results/histograms.dat','rb')
+   ii=0
+   for jj in xrange(0,n_P):
+      best_val  =fromfile(file=fd,dtype='d',count=1)
+      lo_68pc   =fromfile(file=fd,dtype='d',count=1)
+      hi_68pc   =fromfile(file=fd,dtype='d',count=1)
+      lo_95pc   =fromfile(file=fd,dtype='d',count=1)
+      hi_95pc   =fromfile(file=fd,dtype='d',count=1)
+      peak_val  =fromfile(file=fd,dtype='d',count=1)
+      hist_P    =fromfile(file=fd,dtype='uint64',count=coverage_size[0])
+      hist_mean =fromfile(file=fd,dtype='d',     count=coverage_size[0])
+      hist_max  =fromfile(file=fd,dtype='d',     count=coverage_size[0])
+      x         =linspace(coverage_min[jj],coverage_max[jj],coverage_size)
+      mask_68   =zeros(coverage_size[0])
+      mask_95   =zeros(coverage_size[0])
+      for kk in xrange(0,coverage_size):
+         if(x[kk]>=lo_68pc and x[kk]<=hi_68pc):
+            mask_68[kk]=1
+         if(x[kk]>=lo_95pc and x[kk]<=hi_95pc):
+            mask_95[kk]=1
+      zero_line =linspace(0.,0.,coverage_size)
+      hist_P        =double(hist_P)/double(hist_P.max())
+      hist_max_norm =double(hist_max.max())
+      hist_mean_norm=double(hist_mean.max())
+      hist_max      =10**(double(hist_max)-hist_max_norm)
+      hist_mean     =10**(double(hist_mean)-hist_mean_norm)
 
-                  # Create plot
-                  plt.figure()
-                  plt.cla()
-                  ax = plt.subplot(111)
-		  p0=ax.plot(x,hist_P,c='black',linewidth=2)
-                  p2=ax.fill_between(x, zero_line, hist_P, where=mask_95>0, facecolor=color_95pc,label=r'95% Confidence')
-		  p1=ax.fill_between(x, zero_line, hist_P, where=mask_68>0, facecolor=color_68pc,label=r'68% Confidence')
-		  plot([best_val[0],best_val[0]],[0.,1.],c='black',linewidth=2)
-                  ax.set_xlim((coverage_min[jj],coverage_max[jj]))
-                  ax.set_ylim((0,1.1))
-                  ax.set_xlabel(P_name[jj])
-                  ax.set_ylabel('Likelihood')
-                  ax.set_title(problem_name)
-                  filename_out = 'histogram_'+str(jj).zfill(5)+'.png'
-                  print '  Writing',filename_out
-                  filename_out =filename_plot_root+filename_out
-                  plt.savefig(filename_out)
-	fd.close()
-	print
+      # Create plot
+      plt.figure()
+      plt.cla()
+      ax = plt.subplot(111)
+      p0 = ax.plot(x,hist_P,c='black',linewidth=2)
+      p2 = ax.fill_between(x, zero_line, hist_P, where=mask_95>0, facecolor=color_95pc,label=r'95% Confidence')
+      p1 = ax.fill_between(x, zero_line, hist_P, where=mask_68>0, facecolor=color_68pc,label=r'68% Confidence')
+      if (flag_max_L_on):
+        p0a= ax.plot(x,hist_max, c='red', linewidth=1)
+      plot([best_val[0],best_val[0]],[0.,1.],c='black',linewidth=2)
+      ax.set_xlim((coverage_min[jj],coverage_max[jj]))
+      ax.set_ylim((0,1.1))
+      ax.set_xlabel(P_name[jj])
+      ax.set_ylabel('Likelihood')
+      ax.set_title(problem_name)
+      filename_out = 'pdf_1D_'+str(jj).zfill(5)+'.png'
+      print '  Writing',filename_out
+      filename_out =filename_plot_root+filename_out
+      plt.savefig(filename_out)
+   fd.close()
+   print
 
 # Create coverage maps
 if (flag_coverage_on==1 or flag_pdf_on==1):
-	print "Creating",n_coverage,"coverage plots:"
-	fd=open(filename_root+'/results/coverage.dat','rb')
-	n_coverage   =fromfile(file=fd,dtype='i',count=1)
-	coverage_size=fromfile(file=fd,dtype='i',count=1)
-	coverage_min =fromfile(file=fd,dtype='d',count=n_P)
-	coverage_max =fromfile(file=fd,dtype='d',count=n_P)
-	coverage_lo  =0
-	coverage_hi  =10*n_integrate/(coverage_size[0]*coverage_size[0])
-        ii=0
-        for jj in xrange(0,n_P):
-                for kk in xrange(jj+1,n_P):
-		  x=linspace(coverage_min[jj],coverage_max[jj],coverage_size)
-		  y=linspace(coverage_min[kk],coverage_max[kk],coverage_size)
-		  conf_68pc =fromfile(file=fd,dtype='d',count=1)
-		  conf_95pc =fromfile(file=fd,dtype='d',count=1)
-                  coverage_1=fromfile(file=fd,dtype='uint64',count=coverage_size[0]*coverage_size[0])
-                  coverage_0=fromfile(file=fd,dtype='uint64',count=coverage_size[0]*coverage_size[0])
-                  coverage_P=fromfile(file=fd,dtype='uint64',count=coverage_size[0]*coverage_size[0])
-		  max_L     =fromfile(file=fd,dtype='d',     count=coverage_size[0]*coverage_size[0])
-		  mean_L    =fromfile(file=fd,dtype='d',     count=coverage_size[0]*coverage_size[0])
-                  coverage_1=transpose(reshape(coverage_1,[coverage_size[0],coverage_size[0]]))
-                  coverage_0=transpose(reshape(coverage_0,[coverage_size[0],coverage_size[0]]))
-                  coverage_P=transpose(reshape(coverage_P,[coverage_size[0],coverage_size[0]]))
+   print "Creating",n_coverage,"coverage plots:"
+   fd=open(filename_root+'/results/coverage.dat','rb')
+   n_coverage   =fromfile(file=fd,dtype='i',count=1)
+   coverage_size=fromfile(file=fd,dtype='i',count=1)
+   coverage_min =fromfile(file=fd,dtype='d',count=n_P)
+   coverage_max =fromfile(file=fd,dtype='d',count=n_P)
+   coverage_lo  =0
+   coverage_hi  =10*n_integrate/(coverage_size[0]*coverage_size[0])
+   ii=0
+   for jj in xrange(0,n_P):
+      for kk in xrange(jj+1,n_P):
+         x=linspace(coverage_min[jj],coverage_max[jj],coverage_size)
+         y=linspace(coverage_min[kk],coverage_max[kk],coverage_size)
+         conf_68pc =fromfile(file=fd,dtype='d',count=1)
+         conf_95pc =fromfile(file=fd,dtype='d',count=1)
+         coverage_1=fromfile(file=fd,dtype='uint64',count=coverage_size[0]*coverage_size[0])
+         coverage_0=fromfile(file=fd,dtype='uint64',count=coverage_size[0]*coverage_size[0])
+         coverage_P=fromfile(file=fd,dtype='uint64',count=coverage_size[0]*coverage_size[0])
+         max_L     =fromfile(file=fd,dtype='d',     count=coverage_size[0]*coverage_size[0])
+         mean_L    =fromfile(file=fd,dtype='d',     count=coverage_size[0]*coverage_size[0])
+         coverage_1=transpose(reshape(coverage_1,[coverage_size[0],coverage_size[0]]))
+         coverage_0=transpose(reshape(coverage_0,[coverage_size[0],coverage_size[0]]))
+         coverage_P=transpose(reshape(coverage_P,[coverage_size[0],coverage_size[0]]))
+         max_L_norm =double(max_L.max())
+         mean_L_norm=double(mean_L.max())
+         max_L      =10**(transpose(reshape(max_L,[coverage_size[0],coverage_size[0]]))-max_L_norm)
+         mean_L     =10**(transpose(reshape(mean_L,[coverage_size[0],coverage_size[0]]))-mean_L_norm)
 
-		  # Create probability maps
-		  if (flag_pdf_on==1):
-                  	plt.figure(facecolor='white')
-                  	plt.cla()
-                  	ax = plt.subplot(111)
-                  	im=plt.imshow(coverage_P,origin='lower',interpolation='bicubic',aspect='auto',extent=[coverage_min[jj],coverage_max[jj],coverage_min[kk],coverage_max[kk]])
-                  	im.set_clim(coverage_lo,coverage_hi)
-                  	cont2 = plt.contour(x,y,coverage_P,[conf_68pc,conf_95pc],colors='red')
-		  	pp1=ax.scatter(P_init[jj],P_init[kk],s=250,linewidth=3,c='lawngreen',marker='+')
-		  	ax.set_xlim((coverage_min[jj],coverage_max[jj]))
-		  	ax.set_ylim((coverage_min[kk],coverage_max[kk]))
-                  	ax.set_xlabel(P_name[jj])
-                  	ax.set_ylabel(P_name[kk])
-                  	ax.set_title('Posterior Distribution Function')
-                  	cb=plt.colorbar(im)
-		  	cb.ax.set_ylabel('# of propositions')
-                  	filename_out = 'pdf_'+str(ii).zfill(5)+'.png'
-                  	print '  Writing',filename_out
-                  	filename_out =filename_plot_root+filename_out
-                  	plt.savefig(filename_out)
+         # Create probability maps
+         if (flag_pdf_on==1):
+            plt.figure(facecolor='white')
+            plt.cla()
+            ax = plt.subplot(111)
+            im=plt.imshow(coverage_P,origin='lower',interpolation='bicubic',aspect='auto',extent=[coverage_min[jj],coverage_max[jj],coverage_min[kk],coverage_max[kk]])
+            im.set_clim(coverage_lo,coverage_hi)
+            cont2 = plt.contour(x,y,coverage_P,[conf_68pc,conf_95pc],colors='red')
+            pp1=ax.scatter(P_init[jj],P_init[kk],s=200,linewidth=2,c='lawngreen',marker='+')
+            pp2=ax.scatter(P_peak[jj],P_peak[kk],s=150,linewidth=2,c='red',marker='o')
+            pp3=ax.scatter(P_best[jj],P_best[kk],s=150,linewidth=2,c='orange',marker='d')
+            ax.set_xlim((coverage_min[jj],coverage_max[jj]))
+            ax.set_ylim((coverage_min[kk],coverage_max[kk]))
+            ax.set_xlabel(P_name[jj])
+            ax.set_ylabel(P_name[kk])
+            ax.set_title('Posterior Distribution Function')
+            cb=plt.colorbar(im)
+            cb.ax.set_ylabel('# of propositions')
+            filename_out = 'pdf_2D_'+str(ii).zfill(5)+'.png'
+            print '  Writing',filename_out
+            filename_out =filename_plot_root+filename_out
+            plt.savefig(filename_out)
 
-		  # Create coverage maps
-                  if (flag_coverage_on==1):
-                  	plt.figure(figsize=(8,5))
-                  	plt.clf()
-                  	ax = axes([0.125,0.225,0.4,0.7],frameon=True)
-		  	ax.set_xlim((coverage_min[jj],coverage_max[jj]))
-		  	ax.set_ylim((coverage_min[kk],coverage_max[kk]))
-		  	ax.xaxis.set_major_locator(MaxNLocator(4))
-		  	ax.yaxis.set_major_locator(MaxNLocator(4))
-                  	im=plt.imshow(coverage_1,origin='lower',interpolation='bicubic',aspect='auto',extent=[coverage_min[jj],coverage_max[jj],coverage_min[kk],coverage_max[kk]])
-                  	im.set_clim(coverage_lo,coverage_hi)
-                  	ax.images.append(im)
-		  	cont2 = plt.contour(x,y,coverage_P,[conf_68pc,conf_95pc],colors='red')
-                  	plt.rcParams['font.size'] = 12.
-                  	ax.set_xlabel(P_name[jj])
-                  	ax.set_ylabel(P_name[kk])
-                  	ax.set_title('Accepted Propositions')
-                  	ax = axes([0.525,0.225,0.4,0.7],frameon=True)
-		  	ax.set_xlim((coverage_min[jj],coverage_max[jj]))
-		  	ax.set_ylim((coverage_min[kk],coverage_max[kk]))
-		  	ax.xaxis.set_major_locator(MaxNLocator(4))
-		  	ax.yaxis.set_major_formatter(mpl.ticker.ScalarFormatter(useOffset=False))
-		  	setp(ax.get_yticklabels(),visible=False)
-	 	  	im=plt.imshow(coverage_0,origin='lower',interpolation='bicubic',aspect='auto',extent=[coverage_min[jj],coverage_max[jj],coverage_min[kk],coverage_max[kk]])
-                  	im.set_clim(coverage_lo,coverage_hi)
-		  	cont2 = plt.contour(x,y,coverage_P,[conf_68pc,conf_95pc],colors='red')
-                  	ax.images.append(im)
-                  	plt.rcParams['font.size'] = 12.
-                  	ax.set_xlabel(P_name[jj])
-                  	ax.set_title('Rejected Propositions')
-                  	cax = axes([0.125,0.085,0.8,0.025],frameon=False)
-                  	cb=plt.colorbar(im,cax=cax,orientation='horizontal')
-                  	cb.ax.set_xlabel('# of propositions')
-                  	filename_out = 'coverage_'+str(ii).zfill(5)+'.png'
-                  	print '  Writing',filename_out
-                  	filename_out =filename_plot_root+filename_out
-                  	plt.savefig(filename_out,transparent=False)
+         # Create maximum likelihood maps
+         if (flag_max_L_on==1):
+            plt.figure(facecolor='white')
+            plt.cla()
+            ax = plt.subplot(111)
+            im=plt.imshow(max_L,origin='lower',interpolation='bicubic',aspect='auto',extent=[coverage_min[jj],coverage_max[jj],coverage_min[kk],coverage_max[kk]])
+            im.set_clim(0,1)
+            cont2 = plt.contour(x,y,coverage_P,[conf_68pc,conf_95pc],colors='red')
+            pp1=ax.scatter(P_init[jj],P_init[kk],s=200,linewidth=2,c='lawngreen',marker='+')
+            pp2=ax.scatter(P_peak[jj],P_peak[kk],s=150,linewidth=2,c='red',marker='o')
+            pp3=ax.scatter(P_best[jj],P_best[kk],s=150,linewidth=2,c='orange',marker='d')
+            ax.set_xlim((coverage_min[jj],coverage_max[jj]))
+            ax.set_ylim((coverage_min[kk],coverage_max[kk]))
+            ax.set_xlabel(P_name[jj])
+            ax.set_ylabel(P_name[kk])
+            ax.set_title('Maximum Likelihood Distribution')
+            cb=plt.colorbar(im)
+            cb.ax.set_ylabel('Maximum Likelihood (peak-normalized)')
+            filename_out = 'max_L_2D_'+str(ii).zfill(5)+'.png'
+            print '  Writing',filename_out
+            filename_out =filename_plot_root+filename_out
+            plt.savefig(filename_out)
 
-                  ii=ii+1
-	fd.close()
-        print
+         # Create coverage maps
+         if (flag_coverage_on==1):
+            plt.figure(figsize=(8,5))
+            plt.clf()
+            ax = axes([0.125,0.225,0.4,0.7],frameon=True)
+            ax.set_xlim((coverage_min[jj],coverage_max[jj]))
+            ax.set_ylim((coverage_min[kk],coverage_max[kk]))
+            ax.xaxis.set_major_locator(MaxNLocator(4))
+            ax.yaxis.set_major_locator(MaxNLocator(4))
+            im=plt.imshow(coverage_1,origin='lower',interpolation='bicubic',aspect='auto',extent=[coverage_min[jj],coverage_max[jj],coverage_min[kk],coverage_max[kk]])
+            im.set_clim(coverage_lo,coverage_hi)
+            ax.images.append(im)
+            cont2 = plt.contour(x,y,coverage_P,[conf_68pc,conf_95pc],colors='red')
+            plt.rcParams['font.size'] = 12.
+            ax.set_xlabel(P_name[jj])
+            ax.set_ylabel(P_name[kk])
+            ax.set_title('Accepted Propositions')
+            ax = axes([0.525,0.225,0.4,0.7],frameon=True)
+            ax.set_xlim((coverage_min[jj],coverage_max[jj]))
+            ax.set_ylim((coverage_min[kk],coverage_max[kk]))
+            ax.xaxis.set_major_locator(MaxNLocator(4))
+            ax.yaxis.set_major_formatter(mpl.ticker.ScalarFormatter(useOffset=False))
+            setp(ax.get_yticklabels(),visible=False)
+            im=plt.imshow(coverage_0,origin='lower',interpolation='bicubic',aspect='auto',extent=[coverage_min[jj],coverage_max[jj],coverage_min[kk],coverage_max[kk]])
+            im.set_clim(coverage_lo,coverage_hi)
+            cont2 = plt.contour(x,y,coverage_P,[conf_68pc,conf_95pc],colors='red')
+            ax.images.append(im)
+            plt.rcParams['font.size'] = 12.
+            ax.set_xlabel(P_name[jj])
+            ax.set_title('Rejected Propositions')
+            cax = axes([0.125,0.085,0.8,0.025],frameon=False)
+            cb=plt.colorbar(im,cax=cax,orientation='horizontal')
+            cb.ax.set_xlabel('# of propositions')
+            filename_out = 'coverage_'+str(ii).zfill(5)+'.png'
+            print '  Writing',filename_out
+            filename_out =filename_plot_root+filename_out
+            plt.savefig(filename_out,transparent=False)
+
+         ii=ii+1   
+   fd.close()
+   print
 
 #Create trace plots
 if (flag_trace_on==1):
-        print "Creating trace plots:"
-        fd2=open(filename_root+'/results/histograms.dat','rb')
-        ii=0
-	nullfmt        = NullFormatter()
-	left, width    = 0.15, 0.65
-	bottom, height = 0.15, 0.65
-	bottom_h = left_h = left+width+0.02
-	rect_chi2  = [left, bottom, 0.8, height]
-	rect_trace = [left, bottom, width, height]
-	rect_hist  = [left_h, bottom, 0.15, height]
-        fd=open(filename_root+'/chains/chain_stats_000000.dat','rb')
-	P_min_p    = zeros((n_iterations,n_P))
-	P_avg_p    = zeros((n_iterations,n_P))
-	P_max_p    = zeros((n_iterations,n_P))
-	dP_avg_p   = zeros((n_iterations,n_P))
-	dP_sub_p   = zeros((n_iterations,n_P))
-	ln_Pr_min_p= zeros((n_iterations))
-	ln_Pr_avg_p= zeros((n_iterations))
-	ln_Pr_max_p= zeros((n_iterations))
-        P_min_c    = zeros((n_iterations,n_P))
-        P_avg_c    = zeros((n_iterations,n_P))
-        P_max_c    = zeros((n_iterations,n_P))
-        dP_avg_c   = zeros((n_iterations,n_P))
-        dP_sub_c   = zeros((n_iterations,n_P))
-        ln_Pr_min_c= zeros((n_iterations))
-        ln_Pr_avg_c= zeros((n_iterations))
-        ln_Pr_max_c= zeros((n_iterations))
-	slopes     = zeros((n_iterations,n_P))
-	drift      = zeros((n_iterations,n_P))
-	x          = linspace(1,n_iterations,n_iterations)
-	for i in xrange(0,n_iterations):
-		P_min_p[i,:]   =fromfile(file=fd,dtype='d',count=n_P)
-		P_avg_p[i,:]   =fromfile(file=fd,dtype='d',count=n_P)
-		P_max_p[i,:]   =fromfile(file=fd,dtype='d',count=n_P)
-		dP_avg_p[i,:]  =fromfile(file=fd,dtype='d',count=n_P)
-		dP_sub_p[i,:]  =fromfile(file=fd,dtype='d',count=n_P)
-		ln_Pr_min_p[i] =fromfile(file=fd,dtype='d',count=1)
-		ln_Pr_avg_p[i] =fromfile(file=fd,dtype='d',count=1)
-		ln_Pr_max_p[i] =fromfile(file=fd,dtype='d',count=1)
-		P_min_c[i,:]   =fromfile(file=fd,dtype='d',count=n_P)
-		P_avg_c[i,:]   =fromfile(file=fd,dtype='d',count=n_P)
-		P_max_c[i,:]   =fromfile(file=fd,dtype='d',count=n_P)
-		dP_avg_c[i,:]  =fromfile(file=fd,dtype='d',count=n_P)
-		dP_sub_c[i,:]  =fromfile(file=fd,dtype='d',count=n_P)
-		ln_Pr_min_c[i] =fromfile(file=fd,dtype='d',count=1)
-		ln_Pr_avg_c[i] =fromfile(file=fd,dtype='d',count=1)
-		ln_Pr_max_c[i] =fromfile(file=fd,dtype='d',count=1)
-		slopes[i,:]    =fromfile(file=fd,dtype='d',count=n_P)
-		drift[i,:]     =fromfile(file=fd,dtype='d',count=n_P)
-	#ln_Pr_limit_min=0.9*min(ln_Pr_min_p[n_iterations_burn:])
-	#ln_Pr_limit_max=1.1*min(ln_Pr_min_p[n_iterations_burn:])
-	ln_Pr_limit_min=-10.00
-	ln_Pr_limit_max=  0.05
+   print "Creating trace plots:"
+   fd2=open(filename_root+'/results/histograms.dat','rb')
+   nullfmt        = NullFormatter()
+   left, width    = 0.15, 0.65
+   bottom, height = 0.15, 0.65
+   bottom_h = left_h = left+width+0.02
+   rect_chi2  = [left, bottom, 0.8, height]
+   rect_trace = [left, bottom, width, height]
+   rect_hist  = [left_h, bottom, 0.15, height]
+   fd=open(filename_root+'/chains/chain_stats_000000.dat','rb')
+   P_min_p    = zeros((n_iterations,n_P))
+   P_avg_p    = zeros((n_iterations,n_P))
+   P_max_p    = zeros((n_iterations,n_P))
+   dP_avg_p   = zeros((n_iterations,n_P))
+   dP_sub_p   = zeros((n_iterations,n_P))
+   ln_Pr_min_p= zeros((n_iterations))
+   ln_Pr_avg_p= zeros((n_iterations))
+   ln_Pr_max_p= zeros((n_iterations))
+   P_min_c    = zeros((n_iterations,n_P))
+   P_avg_c    = zeros((n_iterations,n_P))
+   P_max_c    = zeros((n_iterations,n_P))
+   dP_avg_c   = zeros((n_iterations,n_P))
+   dP_sub_c   = zeros((n_iterations,n_P))
+   ln_Pr_min_c= zeros((n_iterations))
+   ln_Pr_avg_c= zeros((n_iterations))
+   ln_Pr_max_c= zeros((n_iterations))
+   slopes     = zeros((n_iterations,n_P))
+   drift      = zeros((n_iterations,n_P))
+   x          = linspace(1,n_iterations,n_iterations)
+   for i in xrange(0,n_iterations):
+      P_min_p[i,:]   =fromfile(file=fd,dtype='d',count=n_P)
+      P_avg_p[i,:]   =fromfile(file=fd,dtype='d',count=n_P)
+      P_max_p[i,:]   =fromfile(file=fd,dtype='d',count=n_P)
+      dP_avg_p[i,:]  =fromfile(file=fd,dtype='d',count=n_P)
+      dP_sub_p[i,:]  =fromfile(file=fd,dtype='d',count=n_P)
+      ln_Pr_min_p[i] =fromfile(file=fd,dtype='d',count=1)
+      ln_Pr_avg_p[i] =fromfile(file=fd,dtype='d',count=1)
+      ln_Pr_max_p[i] =fromfile(file=fd,dtype='d',count=1)
+      P_min_c[i,:]   =fromfile(file=fd,dtype='d',count=n_P)
+      P_avg_c[i,:]   =fromfile(file=fd,dtype='d',count=n_P)
+      P_max_c[i,:]   =fromfile(file=fd,dtype='d',count=n_P)
+      dP_avg_c[i,:]  =fromfile(file=fd,dtype='d',count=n_P)
+      dP_sub_c[i,:]  =fromfile(file=fd,dtype='d',count=n_P)
+      ln_Pr_min_c[i] =fromfile(file=fd,dtype='d',count=1)
+      ln_Pr_avg_c[i] =fromfile(file=fd,dtype='d',count=1)
+      ln_Pr_max_c[i] =fromfile(file=fd,dtype='d',count=1)
+      slopes[i,:]    =fromfile(file=fd,dtype='d',count=n_P)
+      drift[i,:]     =fromfile(file=fd,dtype='d',count=n_P)
+      ln_Pr_limit_min=-5.00
+      ln_Pr_limit_max= 0.05
 
-	# ln_Pr trace
-	plt.figure(figsize=(8,6))
-	plt.clf()
-	axTrace = plt.axes(rect_chi2)
-	title(r'$\ln(Pr)$ trace plot for '+problem_name)
-        min_line =linspace(ln_Pr_limit_min,ln_Pr_limit_min,n_iterations)
-        max_line =linspace(ln_Pr_limit_max,ln_Pr_limit_max,n_iterations)
-        axTrace.fill_between(x,ln_Pr_limit_min,ln_Pr_limit_max, where=x<=n_iterations_burn,facecolor='lightgrey',label=r'Burn Interval')
-	axTrace.plot(x,ln_Pr_avg_c,c='black')
-        axTrace.fill_between(x,ln_Pr_min_p,ln_Pr_max_p,facecolor='orange',edgecolor='none')
-        axTrace.fill_between(x,ln_Pr_min_c,ln_Pr_max_c,facecolor='yellow',edgecolor='none')
-        axTrace.set_xlim((1,n_iterations))
-        axTrace.set_ylim((ln_Pr_limit_min,ln_Pr_limit_max))
-	axTrace.set_xlabel("Averaging Interval")
-        axTrace.set_ylabel(r'$\ln(Pr)$')
-	#axHist  = plt.axes(rect_hist)
-	#axHist.yaxis.set_major_formatter(nullfmt)
-	#axHist.xaxis.set_major_formatter(nullfmt)
-        #axHist.plot(hist_P,xx,c='black',linewidth=2)
-        #axHist.fill_betweenx(xx,zero_line,hist_P, where=mask_95>0, facecolor=color_95pc,label=r'95% Confidence')
-        #axHist.fill_betweenx(xx,zero_line,hist_P, where=mask_68>0, facecolor=color_68pc,label=r'68% Confidence')
-        #axHist.plot([0.,1.],[best_val[0],best_val[0]],c='black',linewidth=2)
-        #axHist.set_ylim((coverage_min[i],coverage_max[i]))
-        #axHist.set_xlim((0,1.1))
+   # ln_Pr trace
+   plt.figure(figsize=(8,6))
+   plt.clf()
+   axTrace = plt.axes(rect_chi2)
+   title(r'$\ln(Pr)$ trace plot for '+problem_name)
+   min_line =linspace(ln_Pr_limit_min,ln_Pr_limit_min,n_iterations)
+   max_line =linspace(ln_Pr_limit_max,ln_Pr_limit_max,n_iterations)
+   axTrace.fill_between(x,ln_Pr_limit_min,ln_Pr_limit_max, where=x<=n_iterations_burn,facecolor='lightgrey',label=r'Burn Interval')
+   axTrace.plot(x,ln_Pr_avg_c,c='black')
+   axTrace.fill_between(x,ln_Pr_min_p,ln_Pr_max_p,facecolor='orange',edgecolor='none')
+   axTrace.fill_between(x,ln_Pr_min_c,ln_Pr_max_c,facecolor='yellow',edgecolor='none')
+   axTrace.set_xlim((1,n_iterations))
+   axTrace.set_ylim((ln_Pr_limit_min,ln_Pr_limit_max))
+   axTrace.set_xlabel("Averaging Interval")
+   axTrace.set_ylabel(r'$\ln(Pr)$')
+   #axHist  = plt.axes(rect_hist)
+   #axHist.yaxis.set_major_formatter(nullfmt)
+   #axHist.xaxis.set_major_formatter(nullfmt)
+   #axHist.plot(hist_P,xx,c='black',linewidth=2)
+   #axHist.fill_betweenx(xx,zero_line,hist_P, where=mask_95>0, facecolor=color_95pc,label=r'95% Confidence')
+   #axHist.fill_betweenx(xx,zero_line,hist_P, where=mask_68>0, facecolor=color_68pc,label=r'68% Confidence')
+   #axHist.plot([0.,1.],[best_val[0],best_val[0]],c='black',linewidth=2)
+   #axHist.set_ylim((coverage_min[i],coverage_max[i]))
+   #axHist.set_xlim((0,1.1))
 
-	# Write plot
-        filename_out = 'ln_Pr_trace.png'
-        print '  Writing',filename_out
-        filename_out =filename_plot_root+filename_out
-        plt.savefig(filename_out,transparent=False)
+   # Write plot
+   filename_out = 'chain_trace_000_ln_Pr.png'
+   print '  Writing',filename_out
+   filename_out =filename_plot_root+filename_out
+   plt.savefig(filename_out,transparent=False)
 
-	for i in xrange(0,n_P):
-		# Create trace
-                min_line =linspace(coverage_min[i],coverage_min[i],n_iterations)
-                max_line =linspace(coverage_max[i],coverage_max[i],n_iterations)
-		lo_line_1=P_avg_p[:,i]-dP_avg_p[:,i]
-                hi_line_1=P_avg_p[:,i]+dP_avg_p[:,i]
-                lo_line_2=P_avg_p[:,i]-dP_sub_p[:,i]
-                hi_line_2=P_avg_p[:,i]+dP_sub_p[:,i]
-		lo_line_3=P_avg_c[:,i]-dP_avg_c[:,i]
-                hi_line_3=P_avg_c[:,i]+dP_avg_c[:,i]
-                lo_line_4=P_avg_c[:,i]-dP_sub_c[:,i]
-                hi_line_4=P_avg_c[:,i]+dP_sub_c[:,i]
+   for i in xrange(0,n_P):
+      # Create trace
+      min_line =linspace(coverage_min[i],coverage_min[i],n_iterations)
+      max_line =linspace(coverage_max[i],coverage_max[i],n_iterations)
+      lo_line_1=P_avg_p[:,i]-dP_avg_p[:,i]
+      hi_line_1=P_avg_p[:,i]+dP_avg_p[:,i]
+      lo_line_2=P_avg_p[:,i]-dP_sub_p[:,i]
+      hi_line_2=P_avg_p[:,i]+dP_sub_p[:,i]
+      lo_line_3=P_avg_c[:,i]-dP_avg_c[:,i]
+      hi_line_3=P_avg_c[:,i]+dP_avg_c[:,i]
+      lo_line_4=P_avg_c[:,i]-dP_sub_c[:,i]
+      hi_line_4=P_avg_c[:,i]+dP_sub_c[:,i]
 
-		P_limit_min=0.9*min(P_min_p[n_iterations_burn:,i])
-		P_limit_max=1.1*max(P_max_p[n_iterations_burn:,i])
-		plt.figure(figsize=(8,6))
-		plt.clf()
-		axTrace = plt.axes(rect_trace)
-		title('Trace plot for '+problem_name)
-                axTrace.fill_between(x,min_line,max_line, where=x<=n_iterations_burn,facecolor='lightgrey',label=r'Burn Interval')
-		axTrace.plot(x,P_avg_c[:,i],c='black')
-                axTrace.fill_between(x,lo_line_1,hi_line_1,facecolor='orange',edgecolor='none')
-                axTrace.fill_between(x,lo_line_2,hi_line_2,facecolor='yellow',edgecolor='none')
-                axTrace.fill_between(x,lo_line_3,hi_line_3,facecolor='red',edgecolor='none')
-                axTrace.fill_between(x,lo_line_4,hi_line_4,facecolor='blue',edgecolor='none')
-                axTrace.set_xlim((1,n_iterations))
-                axTrace.set_ylim((coverage_min[i],coverage_max[i]))
-                axTrace.set_ylabel(P_name[i])
-	  	axTrace.set_xlabel("Averaging Interval")
+      P_limit_min=0.9*min(P_min_p[n_iterations_burn:,i])
+      P_limit_max=1.1*max(P_max_p[n_iterations_burn:,i])
+      plt.figure(figsize=(8,6))
+      plt.clf()
+      axTrace = plt.axes(rect_trace)
+      title('Trace plot for '+problem_name)
+      axTrace.fill_between(x,min_line,max_line, where=x<=n_iterations_burn,facecolor='lightgrey',label=r'Burn Interval')
+      axTrace.plot(x,P_avg_c[:,i],c='black')
+      axTrace.fill_between(x,lo_line_1,hi_line_1,facecolor='orange',edgecolor='none')
+      axTrace.fill_between(x,lo_line_2,hi_line_2,facecolor='yellow',edgecolor='none')
+      axTrace.fill_between(x,lo_line_3,hi_line_3,facecolor='red',edgecolor='none')
+      axTrace.fill_between(x,lo_line_4,hi_line_4,facecolor='blue',edgecolor='none')
+      axTrace.set_xlim((1,n_iterations))
+      axTrace.set_ylim((coverage_min[i],coverage_max[i]))
+      axTrace.set_ylabel(P_name[i])
+      axTrace.set_xlabel("Averaging Interval")
 
-                # Create histogram
-                best_val  =fromfile(file=fd2,dtype='d',count=1)
-                lo_68pc   =fromfile(file=fd2,dtype='d',count=1)
-                hi_68pc   =fromfile(file=fd2,dtype='d',count=1)
-                lo_95pc   =fromfile(file=fd2,dtype='d',count=1)
-                hi_95pc   =fromfile(file=fd2,dtype='d',count=1)
-                hist_P    =fromfile(file=fd2,dtype='uint64',count=coverage_size[0])
-                xx        =linspace(coverage_min[i],coverage_max[i],coverage_size[0])
-                hist_P    =double(hist_P)/double(hist_P.max())
-                zero_line =linspace(0.,0.,coverage_size)
-                mask_68   =zeros(coverage_size[0])
-                mask_95   =zeros(coverage_size[0])
-                for kk in xrange(0,coverage_size):
-                        if(xx[kk]>=lo_68pc and xx[kk]<=hi_68pc):
-                                mask_68[kk]=1
-                        if(xx[kk]>=lo_95pc and xx[kk]<=hi_95pc):
-                                mask_95[kk]=1
-		axHist  = plt.axes(rect_hist)
-		axHist.yaxis.set_major_formatter(nullfmt)
-		axHist.xaxis.set_major_formatter(nullfmt)
-                axHist.plot(hist_P,xx,c='black',linewidth=2)
-                axHist.fill_betweenx(xx,zero_line,hist_P, where=mask_95>0, facecolor=color_95pc,label=r'95% Confidence')
-                axHist.fill_betweenx(xx,zero_line,hist_P, where=mask_68>0, facecolor=color_68pc,label=r'68% Confidence')
-                axHist.plot([0.,1.],[best_val[0],best_val[0]],c='black',linewidth=2)
-                axHist.set_ylim((coverage_min[i],coverage_max[i]))
-                axHist.set_xlim((0,1.1))
+      # Create histogram
+      best_val  =fromfile(file=fd2,dtype='d',count=1)
+      lo_68pc   =fromfile(file=fd2,dtype='d',count=1)
+      hi_68pc   =fromfile(file=fd2,dtype='d',count=1)
+      lo_95pc   =fromfile(file=fd2,dtype='d',count=1)
+      hi_95pc   =fromfile(file=fd2,dtype='d',count=1)
+      peak_val  =fromfile(file=fd2,dtype='d',count=1)
+      hist_P    =fromfile(file=fd2,dtype='uint64',count=coverage_size[0])
+      hist_mean =fromfile(file=fd2,dtype='d',     count=coverage_size[0])
+      hist_max  =fromfile(file=fd2,dtype='d',     count=coverage_size[0])
+      xx        =linspace(coverage_min[i],coverage_max[i],coverage_size[0])
+      mask_68   =zeros(coverage_size[0])
+      mask_95   =zeros(coverage_size[0])
+      for kk in xrange(0,coverage_size):
+         if(xx[kk]>=lo_68pc and xx[kk]<=hi_68pc):
+            mask_68[kk]=1
+         if(xx[kk]>=lo_95pc and xx[kk]<=hi_95pc):
+            mask_95[kk]=1
+      zero_line =linspace(0.,0.,coverage_size)
+      hist_P        =double(hist_P)/double(hist_P.max())
+      hist_max_norm =double(hist_max.max())
+      hist_mean_norm=double(hist_mean.max())
+      hist_max      =10**(double(hist_max)-hist_max_norm)
+      hist_mean     =10**(double(hist_mean)-hist_mean_norm)
 
-		# Write plot
-                filename_out = 'chain_trace_000_'+str(i).zfill(5)+'.png'
-                print '  Writing',filename_out
-                filename_out =filename_plot_root+filename_out
-                plt.savefig(filename_out,transparent=False)
-	fd.close()
-	fd2.close()
-        print
+      axHist  = plt.axes(rect_hist)
+      axHist.yaxis.set_major_formatter(nullfmt)
+      axHist.xaxis.set_major_formatter(nullfmt)
+      axHist.plot(hist_P,xx,c='black',linewidth=2)
+      axHist.fill_betweenx(xx,zero_line,hist_P, where=mask_95>0, facecolor=color_95pc,label=r'95% Confidence')
+      axHist.fill_betweenx(xx,zero_line,hist_P, where=mask_68>0, facecolor=color_68pc,label=r'68% Confidence')
+      axHist.plot([0.,1.],[best_val[0],best_val[0]],c='black',linewidth=2)
+      axHist.set_ylim((coverage_min[i],coverage_max[i]))
+      axHist.set_xlim((0,1.1))
+
+      # Write plot
+      filename_out = 'chain_trace_000_'+str(i).zfill(5)+'.png'
+      print '  Writing',filename_out
+      filename_out =filename_plot_root+filename_out
+      plt.savefig(filename_out,transparent=False)
+   fd.close()
+   fd2.close()
+   print
 
 # Finished
 print 'Done'
