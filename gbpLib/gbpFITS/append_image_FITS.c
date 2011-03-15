@@ -1,7 +1,7 @@
 #include <gbpSID.h>
 #include <gbpFITS.h>
 
-int write_image_FITS(void *image,SID_Datatype dtype,int n_D,int *D_in,char *filename,char *ext_name){
+int append_image_FITS(void *image,SID_Datatype dtype,int n_D,int *D_in,char *filename,char *ext_name){
   fitsfile *fp;
   FILE     *fp_test;
   int   naxis=2;
@@ -17,12 +17,6 @@ int write_image_FITS(void *image,SID_Datatype dtype,int n_D,int *D_in,char *file
   int   i_D;
   int   bit_pix;
 
-  // Delete the file if it already exists
-  if(fp_test=fopen(filename,"r")) {
-    close(fp);
-    remove(filename);
-  }
-
   // Fits files store data in FORTRAN order, so we need to perform a transpose
   transpose_array(image,dtype,n_D,D_in);
 
@@ -31,11 +25,11 @@ int write_image_FITS(void *image,SID_Datatype dtype,int n_D,int *D_in,char *file
   for(i_D=0;i_D<n_D;i_D++)
     D[i_D]=(long)(D_in[i_D]);
 
-  // Create the file
-  fits_create_file(&fp,filename,&status);
+  // Open the file
+  fits_open_file(&fp,filename,1,&status);
   if(status){
     ffgmsg(error_msg);
-    SID_trap_error("FITS create file: filename={%s} status=%d message={%s}",ERROR_IO_OPEN,filename,status,error_msg);
+    SID_trap_error("FITS open file: filename={%s} status=%d message={%s}",ERROR_IO_OPEN,filename,status,error_msg);
   }
 
   // Count the number of pixels

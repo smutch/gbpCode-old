@@ -2,9 +2,10 @@
 # Library-specific settings #
 #############################
 INCFILES  = gbpFITS.h
-OBJFILES  = transpose_array.o  \
-	    read_image_FITS.o  \
-	    write_image_FITS.o
+OBJFILES  = transpose_array.o    \
+	    read_image_FITS.o    \
+	    write_image_FITS.o   \
+	    append_image_FITS.o
 LIBFILE   = 
 BINFILES  = 
 LIBS      = 
