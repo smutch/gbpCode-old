@@ -1,3 +1,6 @@
+#ifndef GBPTREES_AWAKE
+#define GBPTREES_AWAKE
+#include <gbpHalos.h>
 
 #define TREE_PROGENITOR_ORDER_DEFAULT 0
 #define TREE_PROGENITOR_ORDER_DELUCIA 2
@@ -60,4 +63,5 @@ void compute_trees_auxiliary(char *filename_root,
                              int   n_files_groups,
                              int   n_files_subgroups,
                              int  *flag_clean);
+#endif
 
