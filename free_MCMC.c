@@ -74,6 +74,12 @@ void free_MCMC(MCMC_info *MCMC){
   SID_free(SID_FARG MCMC->n_M);
   SID_free(SID_FARG MCMC->M_new);
   SID_free(SID_FARG MCMC->M_last);
+  SID_free(SID_FARG MCMC->ln_likelihood_DS);
+  SID_free(SID_FARG MCMC->ln_likelihood_DS_best);
+  SID_free(SID_FARG MCMC->ln_likelihood_DS_peak);
+  SID_free(SID_FARG MCMC->n_DoF_DS);
+  SID_free(SID_FARG MCMC->n_DoF_DS_best);
+  SID_free(SID_FARG MCMC->n_DoF_DS_peak);
 
   SID_log("Done.",SID_LOG_CLOSE);
 }

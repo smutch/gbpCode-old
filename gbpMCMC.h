@@ -21,7 +21,7 @@
 #define MCMC_DEFAULT_COVARIANCE_THRESH       10.
 #define MCMC_DEFAULT_N_AUTOTUNE               1
 #define MCMC_DEFAULT_N_AUTOTUNE_TEMPERATURE 100
-#define MCMC_DEFAULT_N_AUTOTUNE_COVMTX      (2*MCMC->n_P*MCMC->n_P*(1+(int)(100./MCMC->success_target)))
+#define MCMC_DEFAULT_N_AUTOTUNE_COVMTX      (10*MCMC->n_P*MCMC->n_P*(1+(int)(100./MCMC->success_target)))
 
 typedef struct MCMC_DS_info MCMC_DS_info;
 struct MCMC_DS_info {
@@ -43,8 +43,9 @@ struct MCMC_info {
   char     filename_output_dir[256];
   char    *problem_name;
   int     (*map_P_to_M)(double *,MCMC_info *,double **);
-  void    (*compute_MCMC_ln_likelihood)(MCMC_info *MCMC,double **M,double *P,double *ln_likeliood);
+  void    (*compute_MCMC_ln_likelihood)(MCMC_info *MCMC,double **M,double *P,double *ln_likeliood_DS,int *n_DoF_DS,double *ln_likeliood_all,int *n_DoF_all);
   int      my_chain;
+  int      n_chains;
   void    *params;
   char   **P_names;
   double  *P_init;
@@ -109,7 +110,17 @@ struct MCMC_info {
   double   ln_likelihood_last;
   double   ln_likelihood_new;
   double   ln_likelihood_best;
+  double   ln_likelihood_peak;
   double   ln_likelihood_chain;
+  double  *ln_likelihood_DS;
+  double  *ln_likelihood_DS_best;
+  double  *ln_likelihood_DS_peak;
+  int     *n_DoF_DS;
+  int     *n_DoF_DS_best;
+  int     *n_DoF_DS_peak;
+  int      n_DoF;
+  int      n_DoF_best;
+  int      n_DoF_peak;
   int      P_name_length;
   char     P_name_format[8];
   int      seed;
@@ -138,7 +149,7 @@ void add_MCMC_DS(MCMC_info *MCMC,const char *name,int n_D,int *D,double *DS,doub
 void autotune_MCMC(MCMC_info *MCMC);
 void autotune_MCMC_temperature(MCMC_info *MCMC);
 void autotune_MCMC_covariance(MCMC_info *MCMC);
-void compute_MCMC_ln_likelihood_default(MCMC_info *MCMC,double **M,double *P,double *ln_likeliood);
+void compute_MCMC_ln_likelihood_default(MCMC_info *MCMC,double **M,double *P,double *ln_likeliood_DS,int *n_DoF_DS,double *ln_likeliood_all,int *n_DoF_all);
 void compute_MCMC_chain_stats(double **x,
                               int      n_x,
                               int      n_avg,
@@ -159,7 +170,7 @@ void set_MCMC_covariance(MCMC_info *MCMC,double *V);
 void set_MCMC_temperature(MCMC_info *MCMC,double temperature);
 void set_MCMC_iterations(MCMC_info *MCMC,int n_avg,int n_thin,int n_burn,int n_integrate);
 void set_MCMC_coverage_size(MCMC_info *MCMC,int coverage_size);
-void set_MCMC_likelihood_function(MCMC_info *MCMC,void (*likelihood_function)(MCMC_info *,double **,double *,double *));
+void set_MCMC_likelihood_function(MCMC_info *MCMC,void (*likelihood_function)(MCMC_info *,double **,double *,double *,int *,double *,int *));
 void set_MCMC_directory(MCMC_info *MCMC,char *directory);
 void set_MCMC_mode(MCMC_info *MCMC,int mode);
 void set_MCMC_autotune(MCMC_info *MCMC,

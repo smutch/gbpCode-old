@@ -77,6 +77,8 @@ void analyze_MCMC(MCMC_info *MCMC){
   double  **M_best;
   double  **M_best_parameters;
   double  **M_peak_parameters;
+  double   *ln_likelihood_DS_peak;
+  double   *ln_likelihood_DS_best;
   size_t    n_residual;
   double   *residual;
   double  **M_min;
@@ -692,9 +694,9 @@ void analyze_MCMC(MCMC_info *MCMC){
       // Compute best fit models and their likelihoods
       if(MCMC->map_P_to_M!=NULL){
         MCMC->map_P_to_M(P_best,MCMC,M_best_parameters);
-        MCMC->compute_MCMC_ln_likelihood(MCMC,M_best_parameters,P_best,&ln_likelihood_best);
+        MCMC->compute_MCMC_ln_likelihood(MCMC,M_best_parameters,P_best,MCMC->ln_likelihood_DS_best,MCMC->n_DoF_DS_best,&(MCMC->ln_likelihood_best),&(MCMC->n_DoF_best));
         MCMC->map_P_to_M(P_peak,MCMC,M_peak_parameters);
-        MCMC->compute_MCMC_ln_likelihood(MCMC,M_peak_parameters,P_peak,&ln_likelihood_peak);
+        MCMC->compute_MCMC_ln_likelihood(MCMC,M_peak_parameters,P_peak,MCMC->ln_likelihood_DS_peak,MCMC->n_DoF_DS_peak,&(MCMC->ln_likelihood_peak),&(MCMC->n_DoF_peak));
       }
 
       // Write fit results
@@ -703,8 +705,8 @@ void analyze_MCMC(MCMC_info *MCMC){
       fp_results=fopen(filename_results,"w");
       fprintf(fp_results,"# MCMC parameter fit results to %s\n",MCMC->problem_name);
       if(MCMC->map_P_to_M!=NULL){
-        fprintf(fp_results,"#   ln(likelihood)+constant=%le (marginalized PDF)\n",  ln_likelihood_best);
-        fprintf(fp_results,"#   ln(likelihood)+constant=%le (maximum likelihood)\n",ln_likelihood_peak);
+        fprintf(fp_results,"#   ln(likelihood)+constant=%le w/ %d DoF (marginalized PDF)\n",  MCMC->ln_likelihood_best,MCMC->n_DoF_best);
+        fprintf(fp_results,"#   ln(likelihood)+constant=%le w/ %d DoF (maximum likelihood)\n",MCMC->ln_likelihood_peak,MCMC->n_DoF_peak);
       }
       fprintf(fp_results,"#   n_samples_used=%d\n",n_used);
       fprintf(fp_results,"#   n_parameters  =%d\n",n_P);
@@ -755,9 +757,13 @@ void analyze_MCMC(MCMC_info *MCMC){
           else
             sprintf(filename_results,"%s/fit_for_dataset.dat",filename_results_dir);
           fp_results=fopen(filename_results,"w");
-          fprintf(fp_results,"# MCMC data set fit results for %s\n",current_DS->name);
-          fprintf(fp_results,"#   n_samples_used=%d\n",n_used);
-          fprintf(fp_results,"#   dataset_DoF   =%d\n",n_M[i_DS]);
+          fprintf(fp_results,  "# MCMC data set fit results for %s\n",current_DS->name);
+          fprintf(fp_results,  "#   n_samples_used=%d\n",n_used);
+          fprintf(fp_results,  "#   dataset size  =%d\n",n_M[i_DS]);
+          if(MCMC->map_P_to_M!=NULL){
+            fprintf(fp_results,"#   ln(likelihood)+constant=%le w/ %d DoF (marginalized PDF)\n",  MCMC->ln_likelihood_DS_best[i_DS],MCMC->n_DoF_DS_best[i_DS]);
+            fprintf(fp_results,"#   ln(likelihood)+constant=%le w/ %d DoF (maximum likelihood)\n",MCMC->ln_likelihood_DS_peak[i_DS],MCMC->n_DoF_DS_peak[i_DS]);
+          }
           sprintf(column_txt,"Column:");
           for(i_array=0,i_column=1;i_array<MCMC->n_arrays;i_array++){
             fprintf(fp_results,"# %s (%02d) %s\n",                         column_txt,i_column++,current_DS->array_name[i_array]);

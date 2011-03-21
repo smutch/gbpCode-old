@@ -46,6 +46,13 @@ void init_MCMC_arrays(MCMC_info *MCMC){
     MCMC->P_lo_95=(double  *)SID_malloc(sizeof(double)*MCMC->n_P);
     MCMC->P_hi_95=(double  *)SID_malloc(sizeof(double)*MCMC->n_P);
 
+    MCMC->ln_likelihood_DS     =(double *)SID_malloc(sizeof(double)*MCMC->n_DS);
+    MCMC->ln_likelihood_DS_best=(double *)SID_malloc(sizeof(double)*MCMC->n_DS);
+    MCMC->ln_likelihood_DS_peak=(double *)SID_malloc(sizeof(double)*MCMC->n_DS);
+    MCMC->n_DoF_DS             =(int    *)SID_malloc(sizeof(int)*MCMC->n_DS);
+    MCMC->n_DoF_DS_best        =(int    *)SID_malloc(sizeof(int)*MCMC->n_DS);
+    MCMC->n_DoF_DS_peak        =(int    *)SID_malloc(sizeof(int)*MCMC->n_DS);
+
     SID_log("Done.",SID_LOG_CLOSE);
   }
 }

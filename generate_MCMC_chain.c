@@ -46,7 +46,7 @@ int generate_MCMC_chain(MCMC_info *MCMC){
       n_M        =MCMC->n_M;
       flag_report_props     =check_mode_for_flag(MCMC->mode,MCMC_MODE_REPORT_PROPS);
       MCMC->first_chain_call=FALSE;
-      sprintf(filename_report_props,"%s/chains/report_props_%06d.dat",MCMC->directory,MCMC->my_chain);
+      sprintf(filename_report_props,"%s/chains/report_props_%06d.dat",MCMC->filename_output_dir,MCMC->my_chain);
       break;
   }
 

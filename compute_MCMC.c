@@ -131,6 +131,7 @@ void compute_MCMC(MCMC_info *MCMC){
   int       n_thin_burn;
   int       n_thin_integrate;
   int       i_thin;
+  int       n_chains_test;
   int       flag_autocor_on;
   int       n_coverage;
   int       coverage_size;
@@ -286,6 +287,8 @@ void compute_MCMC(MCMC_info *MCMC){
         fread(problem_name_test,sizeof(char),MCMC_NAME_SIZE,fp_run);
         if(strcmp(problem_name_test,MCMC->problem_name))
           SID_trap_error("Problem names are inconsistant (i.e. {%s}!={%s}).",ERROR_LOGIC,MCMC->problem_name,problem_name_test);
+        fread(&n_chains_test,sizeof(int),1,fp_run);
+        MCMC->n_chains=MAX(MCMC->n_chains,n_chains_test);
         fread(&n_avg_test,sizeof(int),1,fp_run);
         if(n_avg_test!=n_avg)
           SID_trap_error("Integration averaging intervals are inconsistant (i.e. %d!=%d).",ERROR_LOGIC,n_avg,n_avg_test);
@@ -376,6 +379,7 @@ void compute_MCMC(MCMC_info *MCMC){
         fp_run=fopen(filename_run,"wb");
         // Stuff relating to this MCMC project
         fwrite(MCMC->problem_name,sizeof(char),MCMC_NAME_SIZE,fp_run);
+        fwrite(&(MCMC->n_chains), sizeof(int),   1,   fp_run);
         fwrite(&n_avg,            sizeof(int),   1,   fp_run);
         fwrite(&flag_autocor_on,  sizeof(int),   1,   fp_run);
         fwrite(&flag_no_map_write,sizeof(int),   1,   fp_run);
@@ -554,7 +558,6 @@ void compute_MCMC(MCMC_info *MCMC){
       SID_log("Done.",SID_LOG_CLOSE);
 
     } // End of restart stuff
-
     // Remove the existant iterations from the totals we need to perform still
     if(n_iterations_file_total<n_iterations_burn){
       i_phase    =0;

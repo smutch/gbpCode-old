@@ -6,7 +6,7 @@
 #include <gbpRNG.h>
 #include <gbpMCMC.h>
 
-void set_MCMC_likelihood_function(MCMC_info *MCMC,void (*likelihood_function)(MCMC_info *,double **,double *,double *)){
+void set_MCMC_likelihood_function(MCMC_info *MCMC,void (*likelihood_function)(MCMC_info *,double **,double *,double *,int *,double *,int *)){
   MCMC->compute_MCMC_ln_likelihood=likelihood_function;
 }
 

@@ -37,7 +37,7 @@ void generate_MCMC_proposition(MCMC_info *MCMC,int flag_chain_init){
   MCMC->n_map_calls++;
 
   // Produce likelihood for this proposition
-  MCMC->compute_MCMC_ln_likelihood(MCMC,MCMC->M_new,MCMC->P_new,&(MCMC->ln_likelihood_new));
+  MCMC->compute_MCMC_ln_likelihood(MCMC,MCMC->M_new,MCMC->P_new,MCMC->ln_likelihood_DS,MCMC->n_DoF_DS,&(MCMC->ln_likelihood_new),&(MCMC->n_DoF));
   MCMC->first_likelihood_call=FALSE;
   if(flag_chain_init){
      MCMC->ln_likelihood_chain=MCMC->ln_likelihood_new;

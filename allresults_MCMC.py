@@ -39,6 +39,7 @@ filename_plot_root=filename_root+'/plots/'
 # Read (and print) header info 
 fd                  =open(filename_root+'/run.dat','rb')
 problem_name        =fromfile(file=fd, dtype=(str_, MCMC_NAME_SIZE), count=1)[0].split('\x00')[0]
+n_chains            =fromfile(file=fd,dtype='i',count=1)
 n_avg               =fromfile(file=fd,dtype='i',count=1)
 flag_autocor_on_file=fromfile(file=fd,dtype='i',count=1)
 flag_no_map_write   =fromfile(file=fd,dtype='i',count=1)
