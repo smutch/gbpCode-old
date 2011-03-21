@@ -12,17 +12,23 @@
 int generate_MCMC_chain(MCMC_info *MCMC){
   int              flag_success;
   int              i_P,i_DS;
-  char             format_string[64];
+  static char      format_string[64];
+  FILE            *fp_report_props;
+  char             filename_report_props[MAX_FILENAME_LENGTH];
   static int       n_P;
   static double   *P_new;
   static double  **M_new;
   static double   *P_last;
   static double   *P_chain;
   static double  **M_last;
+  static double   *P_best;
+  static double   *P_limit_min;
+  static double   *P_limit_max;
   static RNG_info *RNG;
   static int       flag_report_props;
   static int       n_DS;
   static int      *n_M;
+  
   // Initialize a few things on the first call
   switch(MCMC->first_chain_call){
     case TRUE:
@@ -32,11 +38,15 @@ int generate_MCMC_chain(MCMC_info *MCMC){
       P_last     =MCMC->P_last;
       M_last     =MCMC->M_last;
       P_chain    =MCMC->P_chain;
+      P_best     =MCMC->P_best;
+      P_limit_min=MCMC->P_limit_min;
+      P_limit_max=MCMC->P_limit_max;
       RNG        =MCMC->RNG;
       n_DS       =MCMC->n_DS;
       n_M        =MCMC->n_M;
       flag_report_props     =check_mode_for_flag(MCMC->mode,MCMC_MODE_REPORT_PROPS);
       MCMC->first_chain_call=FALSE;
+      sprintf(filename_report_props,"%s/chains/report_props_%06d.dat",MCMC->directory,MCMC->my_chain);
       break;
   }
 
@@ -83,19 +93,29 @@ int generate_MCMC_chain(MCMC_info *MCMC){
 
   // Report the proposition if asked to
   if(flag_report_props && MCMC->my_chain==SID.My_rank){
-    if(flag_success)
-      SID_log("Proposal #%09d: SUCCEEDED",SID_LOG_ALLRANKS|SID_LOG_OPEN,MCMC->n_propositions);
-    else
-      SID_log("Proposal #%09d: REJECTED",SID_LOG_ALLRANKS|SID_LOG_OPEN,MCMC->n_propositions);
-    sprintf(format_string,"%s = %%13.6le (was %%13.6le)",MCMC->P_name_format);
-    for(i_P=0;i_P<n_P;i_P++)
-      SID_log(format_string,SID_LOG_ALLRANKS|SID_LOG_COMMENT,MCMC->P_names[i_P],P_new[i_P],P_last[i_P]);
-    SID_log("ln(likelihood) =%le+constant (was %le+constant)",SID_LOG_ALLRANKS|SID_LOG_COMMENT,MCMC->ln_likelihood_new,MCMC->ln_likelihood_last);
-    SID_log("ln(probability)=%le", SID_LOG_ALLRANKS|SID_LOG_COMMENT,MCMC->ln_Pr_new);
-    SID_log("n_success      =%09d",SID_LOG_ALLRANKS|SID_LOG_COMMENT,MCMC->n_success);
-    SID_log("n_fail         =%09d",SID_LOG_ALLRANKS|SID_LOG_COMMENT,MCMC->n_fail);
-    SID_log("success rate   =%.2f %%",SID_LOG_ALLRANKS|SID_LOG_COMMENT,(double)MCMC->n_success/(double)(MCMC->n_fail+MCMC->n_success)*100.0);
-    SID_log("",SID_LOG_ALLRANKS|SID_LOG_NOPRINT|SID_LOG_CLOSE);
+     fp_report_props=fopen(filename_report_props,"w");
+     if(flag_success)
+        fprintf(fp_report_props,"Proposal #%09d: SUCCEEDED",MCMC->n_propositions);
+     else
+        fprintf(fp_report_props,"Proposal #%09d: REJECTED",MCMC->n_propositions);
+     sprintf(format_string,"%s = %%13.6le (was %%13.6le) (best is %%13.6le) (flat prior =%%13.6le -> %%13.6le)",MCMC->P_name_format);
+     for(i_P=0;i_P<n_P;i_P++)
+        fprintf(fp_report_props,format_string,
+           MCMC->P_names[i_P],
+           P_new[i_P],
+           P_last[i_P],
+           P_best[i_P],
+           P_limit_min[i_P],
+           P_limit_max[i_P]);
+     fprintf(fp_report_props,"ln(likelihood) =%13.6le+constant (was %13.6le+constant) (best is %13.6le+constant)",
+        MCMC->ln_likelihood_new,
+        MCMC->ln_likelihood_last,
+        MCMC->ln_likelihood_best);
+     fprintf(fp_report_props,"ln(probability)=%13.6le",MCMC->ln_Pr_new);
+     fprintf(fp_report_props,"n_success      =%09d",   MCMC->n_success);
+     fprintf(fp_report_props,"n_fail         =%09d",   MCMC->n_fail);
+     fprintf(fp_report_props,"success rate   =%.2f %%",(double)MCMC->n_success/(double)(MCMC->n_fail+MCMC->n_success)*100.0);
+     fclose(fp_report_props);
   }
 
   return(flag_success);

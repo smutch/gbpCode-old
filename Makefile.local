@@ -4,6 +4,9 @@
 INCFILES = gbpMCMC.h
 LIBFILE  = libgbpMCMC.a
 OBJFILES = add_MCMC_DS.o                        \
+	   start_loop_MCMC.o                    \
+           end_loop_MCMC.o                      \
+           restart_MCMC.o                       \
 	   autotune_MCMC.o                      \
 	   autotune_MCMC_temperature.o          \
 	   autotune_MCMC_covariance.o           \
@@ -17,11 +20,12 @@ OBJFILES = add_MCMC_DS.o                        \
 	   generate_MCMC_parameters.o           \
 	   generate_MCMC_proposition.o          \
 	   init_MCMC.o                          \
-	   init_MCMC_DS.o                       \
+	   init_MCMC_arrays.o                   \
 	   set_MCMC_autotune.o                  \
 	   set_MCMC_covariance.o                \
 	   set_MCMC_mode.o                      \
 	   set_MCMC_directory.o                 \
+	   rm_MCMC_directory.o                  \
 	   set_MCMC_coverage_size.o             \
 	   set_MCMC_likelihood_function.o       \
 	   set_MCMC_iterations.o                \

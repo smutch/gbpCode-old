@@ -39,12 +39,17 @@ void generate_MCMC_proposition(MCMC_info *MCMC,int flag_chain_init){
   // Produce likelihood for this proposition
   MCMC->compute_MCMC_ln_likelihood(MCMC,MCMC->M_new,MCMC->P_new,&(MCMC->ln_likelihood_new));
   MCMC->first_likelihood_call=FALSE;
-  switch(flag_chain_init){
-    case TRUE:
-      MCMC->ln_likelihood_chain=MCMC->ln_likelihood_new;
-      MCMC->ln_Pr_chain        =0.;
-      MCMC->ln_Pr_new          =0.;
-      break;
+  if(flag_chain_init){
+     MCMC->ln_likelihood_chain=MCMC->ln_likelihood_new;
+     MCMC->ln_likelihood_best =MCMC->ln_likelihood_new;
+     memcpy(MCMC->P_best,MCMC->P_new,(size_t)MCMC->n_P*sizeof(double));
+     MCMC->ln_Pr_chain        =0.;
+     MCMC->ln_Pr_new          =0.;
+  }
+  // Keep track of the best proposition
+  else if(MCMC->ln_likelihood_new>MCMC->ln_likelihood_best){
+     MCMC->ln_likelihood_best=MCMC->ln_likelihood_new;
+     memcpy(MCMC->P_best,MCMC->P_new,(size_t)MCMC->n_P*sizeof(double));
   }
 }
 

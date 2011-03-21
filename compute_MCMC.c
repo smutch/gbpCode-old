@@ -179,8 +179,8 @@ void compute_MCMC(MCMC_info *MCMC){
 
   SID_log("Initializing...",SID_LOG_OPEN);
 
-  // Initialize dataset arrays
-  init_MCMC_DS(MCMC);
+  // Initialize arrays
+  init_MCMC_arrays(MCMC);
 
   // Grab some stuff from the MCMC structure
   n_P                   =MCMC->n_P;

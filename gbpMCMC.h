@@ -53,6 +53,16 @@ struct MCMC_info {
   double  *P_chain;
   double  *P_limit_min;
   double  *P_limit_max;
+  double  *P_min;
+  double  *P_max;
+  double  *P_avg;
+  double  *dP_avg;
+  double  *P_best;
+  double  *P_peak;
+  double  *P_lo_68;
+  double  *P_hi_68;
+  double  *P_lo_95;
+  double  *P_hi_95;
   double   ln_Pr_new;
   double   ln_Pr_last;
   double   ln_Pr_chain;
@@ -98,6 +108,7 @@ struct MCMC_info {
   int      first_likelihood_call;
   double   ln_likelihood_last;
   double   ln_likelihood_new;
+  double   ln_likelihood_best;
   double   ln_likelihood_chain;
   int      P_name_length;
   char     P_name_format[8];
@@ -108,15 +119,40 @@ struct MCMC_info {
   MCMC_DS_info *last;
 };
 
-void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(double *,MCMC_info *,double **),int n_P,double *P_init,char **P_names,double *P_limit_min,double *P_limit_max,int n_arrays,...);
-void init_MCMC_DS(MCMC_info *MCMC);
+void init_MCMC(MCMC_info  *MCMC,
+               const char *problem_name,
+               void       *params,
+               int         (*f)(double *,MCMC_info *,double **),
+               int         n_P,
+               double     *P_init,
+               char      **P_names,
+               double     *P_limit_min,
+               double     *P_limit_max,
+               int         n_arrays,...);
+void start_loop_MCMC(MCMC_info *MCMC);
+void end_loop_MCMC(MCMC_info *MCMC);
+void restart_MCMC(MCMC_info *MCMC);
+void init_MCMC_arrays(MCMC_info *MCMC);
 void free_MCMC(MCMC_info *MCMC);
 void add_MCMC_DS(MCMC_info *MCMC,const char *name,int n_D,int *D,double *DS,double *dDS,void *params,int n_arrays,...);
 void autotune_MCMC(MCMC_info *MCMC);
 void autotune_MCMC_temperature(MCMC_info *MCMC);
 void autotune_MCMC_covariance(MCMC_info *MCMC);
 void compute_MCMC_ln_likelihood_default(MCMC_info *MCMC,double **M,double *P,double *ln_likeliood);
-void compute_MCMC_chain_stats(double **x,int n_x,int n_avg,double *x_min,double *x_bar_in,double *x_max,double *x_sigma,double **auto_cor,double *slopes,double *dP_sub,double *ln_likelihood_in,double *ln_likelihood_min,double *ln_likelihood_avg,double *ln_likelihood_max);
+void compute_MCMC_chain_stats(double **x,
+                              int      n_x,
+                              int      n_avg,
+                              double  *x_min,
+                              double  *x_bar_in,
+                              double  *x_max,
+                              double  *x_sigma,
+                              double **auto_cor,
+                              double  *slopes,
+                              double  *dP_sub,
+                              double  *ln_likelihood_in,
+                              double  *ln_likelihood_min,
+                              double  *ln_likelihood_avg,
+                              double  *ln_likelihood_max);
 void compute_MCMC(MCMC_info *MCMC);
 void analyze_MCMC(MCMC_info *MCMC);
 void set_MCMC_covariance(MCMC_info *MCMC,double *V);
@@ -135,6 +171,7 @@ void set_MCMC_autotune(MCMC_info *MCMC,
                        int        n_autotune_covariance);
 void read_MCMC_covariance(MCMC_info *MCMC,char *filename);
 void read_MCMC_state(MCMC_info *MCMC);
+void rm_MCMC_directory(MCMC_info *MCMC);
 int  generate_MCMC_chain(MCMC_info *MCMC);
 void generate_MCMC_proposition(MCMC_info *MCMC,int flag_chain_init);
 void generate_MCMC_parameters(MCMC_info *MCMC);

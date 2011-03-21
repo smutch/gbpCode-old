@@ -104,6 +104,8 @@ void analyze_MCMC(MCMC_info *MCMC){
   int       n_C_x;
   double    ln_likelihood_new;
   double    ln_likelihood_last;
+  double    ln_likelihood_best;
+  double    ln_likelihood_peak;
   FILE     *fp_run;
   FILE     *fp_chain;
   FILE     *fp_chain_iterations;
@@ -136,7 +138,6 @@ void analyze_MCMC(MCMC_info *MCMC){
   int       i_array;
   int      *n_M;
   int       flag_initialized;
-  int       flag_report_props;
   int       n_used;
   gsl_matrix *m;
   gsl_vector *b;
@@ -192,7 +193,7 @@ void analyze_MCMC(MCMC_info *MCMC){
   SID_log("Initializing...",SID_LOG_OPEN);
 
   // Initialize dataset arrays
-  init_MCMC_DS(MCMC);
+  init_MCMC_arrays(MCMC);
 
   // Initialize some constants etc.
   n_P                   =MCMC->n_P;
@@ -206,7 +207,6 @@ void analyze_MCMC(MCMC_info *MCMC){
   coverage_size         =MCMC->coverage_size;
   flag_autocor_on       =MCMC->flag_autocor_on;
   flag_no_map_write     =MCMC->flag_no_map_write;
-  flag_report_props     =check_mode_for_flag(MCMC->mode,MCMC_MODE_REPORT_PROPS);  
 
   // Initialize arrays used for computing the covariance matrix
   P_i_bar_accum =(double *)SID_malloc(sizeof(double)*n_P);
@@ -245,16 +245,6 @@ void analyze_MCMC(MCMC_info *MCMC){
   }
   P_new          =MCMC->P_new;
   P_last         =MCMC->P_last;
-  P_min          =(double  *)SID_malloc(sizeof(double)*n_P);
-  P_max          =(double  *)SID_malloc(sizeof(double)*n_P);
-  P_avg          =(double  *)SID_malloc(sizeof(double)*n_P);
-  dP_avg         =(double  *)SID_malloc(sizeof(double)*n_P);
-  for(i_P=0;i_P<n_P;i_P++){
-    P_min[i_P] = DBL_MAX;
-    P_max[i_P] =-DBL_MAX;
-    P_avg[i_P] = 0.;
-    dP_avg[i_P]= 0.;
-  }
 
   // Set directories
   sprintf(filename_output_dir, "%s/",        MCMC->filename_output_dir);
@@ -278,14 +268,18 @@ void analyze_MCMC(MCMC_info *MCMC){
       for(j_P=i_P+1;j_P<n_P;j_P++)
           n_coverage++;
   }
-  P_contour_68  =(double    *)SID_malloc(sizeof(double)*n_coverage);
-  P_contour_95  =(double    *)SID_malloc(sizeof(double)*n_coverage);
-  P_best        =(double    *)SID_malloc(sizeof(double)*n_P);
-  P_peak        =(double    *)SID_malloc(sizeof(double)*n_P);
-  P_lo_68       =(double    *)SID_malloc(sizeof(double)*n_P);
-  P_hi_68       =(double    *)SID_malloc(sizeof(double)*n_P);
-  P_lo_95       =(double    *)SID_malloc(sizeof(double)*n_P);
-  P_hi_95       =(double    *)SID_malloc(sizeof(double)*n_P);
+  P_min         =MCMC->P_min;
+  P_max         =MCMC->P_max;
+  P_avg         =MCMC->P_avg;
+  dP_avg        =MCMC->dP_avg;
+  P_best        =MCMC->P_best;
+  P_peak        =MCMC->P_peak;
+  P_lo_68       =MCMC->P_lo_68;
+  P_hi_68       =MCMC->P_hi_68;
+  P_lo_95       =MCMC->P_lo_95;
+  P_hi_95       =MCMC->P_hi_95;
+  P_contour_68  =(double  *)SID_malloc(sizeof(double)*n_coverage);
+  P_contour_95  =(double  *)SID_malloc(sizeof(double)*n_coverage);
   P_histogram   =(size_t **)SID_malloc(sizeof(size_t *)*n_P);
   mean_L_histogram =(double  **)SID_malloc(sizeof(double *)*n_P);
   max_L_histogram  =(double  **)SID_malloc(sizeof(double *)*n_P);
@@ -293,8 +287,10 @@ void analyze_MCMC(MCMC_info *MCMC){
     P_histogram[i_P]     =(size_t *)SID_malloc(sizeof(size_t)*coverage_size);
     mean_L_histogram[i_P]=(double *)SID_malloc(sizeof(double)*coverage_size);
     max_L_histogram[i_P] =(double *)SID_malloc(sizeof(double)*coverage_size);
-    P_min[i_P]      = DBL_MAX;
-    P_max[i_P]      =-DBL_MAX;
+    P_min[i_P] = DBL_MAX;
+    P_max[i_P] =-DBL_MAX;
+    P_avg[i_P] = 0.;
+    dP_avg[i_P]= 0.;
     for(j_P=0;j_P<coverage_size;j_P++){
       P_histogram[i_P][j_P]     =0;
       mean_L_histogram[i_P][j_P]=0.;
@@ -693,11 +689,23 @@ void analyze_MCMC(MCMC_info *MCMC){
       fclose(fp_histograms);
       SID_log("Done.",SID_LOG_CLOSE);
 
+      // Compute best fit models and their likelihoods
+      if(MCMC->map_P_to_M!=NULL){
+        MCMC->map_P_to_M(P_best,MCMC,M_best_parameters);
+        MCMC->compute_MCMC_ln_likelihood(MCMC,M_best_parameters,P_best,&ln_likelihood_best);
+        MCMC->map_P_to_M(P_peak,MCMC,M_peak_parameters);
+        MCMC->compute_MCMC_ln_likelihood(MCMC,M_peak_parameters,P_peak,&ln_likelihood_peak);
+      }
+
       // Write fit results
       SID_log("Writing final statistics...",SID_LOG_OPEN);
       sprintf(filename_results,"%s/fit_for_parameters.dat",filename_results_dir);
       fp_results=fopen(filename_results,"w");
       fprintf(fp_results,"# MCMC parameter fit results to %s\n",MCMC->problem_name);
+      if(MCMC->map_P_to_M!=NULL){
+        fprintf(fp_results,"#   ln(likelihood)+constant=%le (marginalized PDF)\n",  ln_likelihood_best);
+        fprintf(fp_results,"#   ln(likelihood)+constant=%le (maximum likelihood)\n",ln_likelihood_peak);
+      }
       fprintf(fp_results,"#   n_samples_used=%d\n",n_used);
       fprintf(fp_results,"#   n_parameters  =%d\n",n_P);
       fprintf(fp_results,"#   n_data_sets   =%d\n",n_DS);
@@ -735,10 +743,6 @@ void analyze_MCMC(MCMC_info *MCMC){
       fclose(fp_results);
 
       // Write the fits for each dataset
-      if(MCMC->map_P_to_M!=NULL){
-        MCMC->map_P_to_M(P_best,MCMC,M_best_parameters);
-        MCMC->map_P_to_M(P_peak,MCMC,M_peak_parameters);
-      }
       i_DS=0;
       current_DS=MCMC->DS;
       while(current_DS!=NULL){
@@ -863,18 +867,8 @@ void analyze_MCMC(MCMC_info *MCMC){
   SID_free(SID_FARG M_lo_95);
   SID_free(SID_FARG M_hi_95);
   SID_free(SID_FARG M_histogram);
-  SID_free(SID_FARG P_min);
-  SID_free(SID_FARG P_max);
-  SID_free(SID_FARG P_avg);
-  SID_free(SID_FARG dP_avg);
   SID_free(SID_FARG P_contour_68);
   SID_free(SID_FARG P_contour_95);
-  SID_free(SID_FARG P_best);
-  SID_free(SID_FARG P_peak);
-  SID_free(SID_FARG P_lo_68);
-  SID_free(SID_FARG P_hi_68);
-  SID_free(SID_FARG P_lo_95);
-  SID_free(SID_FARG P_hi_95);
   for(i_P=0;i_P<n_P;i_P++){
     SID_free(SID_FARG P_histogram[i_P]);
     SID_free(SID_FARG mean_L_histogram[i_P]);

@@ -185,7 +185,7 @@ void read_MCMC_state(MCMC_info *MCMC){
     SID_free(SID_FARG V_read);
 
     // Initialize dataset arrays
-    init_MCMC_DS(MCMC);
+    init_MCMC_arrays(MCMC);
 
     SID_log("# burn  iterations = %d", SID_LOG_COMMENT,MCMC->n_iterations_burn);
     SID_log("# total iterations = %d", SID_LOG_COMMENT,MCMC->n_iterations);

@@ -42,6 +42,16 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   MCMC->P_chain                 =NULL;
   MCMC->P_limit_min             =NULL;
   MCMC->P_limit_max             =NULL;
+  MCMC->P_min                   =NULL;
+  MCMC->P_max                   =NULL;
+  MCMC->P_avg                   =NULL;
+  MCMC->dP_avg                  =NULL;
+  MCMC->P_best                  =NULL;
+  MCMC->P_peak                  =NULL;
+  MCMC->P_lo_68                 =NULL;
+  MCMC->P_hi_68                 =NULL;
+  MCMC->P_lo_95                 =NULL;
+  MCMC->P_hi_95                 =NULL;
   MCMC->n_M                     =NULL;
   MCMC->M_new                   =NULL;
   MCMC->M_last                  =NULL;
