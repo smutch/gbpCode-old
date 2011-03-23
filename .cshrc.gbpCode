@@ -1,22 +1,37 @@
 #----------------------------------------------------------------------
 #
-# System-dependant settings
-#   1) Copy this file to .cshrc.myCode
-#   2) Add your own system(s) to the list
-#   3) Place it in $GBP_SRC on each of your systems
-#   3) Source it in your .cshrc
+# This file sets the user's system-dependant settings:
+#   1) Copy this file to .cshrc.myCode (so it doesn't get
+#      overwritten the next time you pull from the repo!)
+#   2) Add your own system to the list
+#   3) Place it in the directory pointed to by $GBP_SRC on your system
+#   3) Source it in your .cshrc, after setting $GBP_SRC
+#        eg. place the following lines in your .cshrc
+#              > setenv GBP_SRC  ${HOME}'/gbpCode/' 
+#              > source ${GBP_SRC}/.cshrc.myCode
+#
+# See the INSTALL file in this directory for more information.
 #
 #----------------------------------------------------------------------
+
+#----------------------------------------------------------------------
 # Defaults (illustrating the set of environment variables that need to
-#           be set in this file; we're assuming GBP_SRC is already set)
+#           be set in this file; we're assuming GBP_SRC is already set
+#           before this file gets sourced)
+#----------------------------------------------------------------------
 setenv GBP_QUEUE_TYPE    NONE
+
+# If any of the following 'USE' flags are set to 1, you must
+#   then set the corresponding GBP_XXX_DIR variable below
+setenv USE_GSL           1
+setenv USE_FFTW          1
+setenv USE_CFITSIO       1
 setenv USE_MPI           0
-setenv USE_GSL           0
-setenv USE_FFTW          0
 setenv USE_SPRNG         0
 setenv USE_VALGRIND      0
-setenv USE_CFITSIO       0
 setenv USE_HDF5          0
+
+# Directories for each of the USE_ flags set to '1' above
 setenv GBP_MPI           ${GBP_SRC}/3rd_Party/openmpi
 setenv GBP_GSL_DIR       ${GBP_SRC}/3rd_Party/gsl
 setenv GBP_FFTW_DIR      ${GBP_SRC}/3rd_Party/fftw
@@ -24,19 +39,23 @@ setenv GBP_SPRNG_DIR     ${GBP_SRC}/3rd_Party/sprng
 setenv GBP_VALGRIND_DIR  ${GBP_SRC}/3rd_Party/valgrind
 setenv GBP_CFITSIO_DIR   ${GBP_SRC}/3rd_Party/cfitsio
 setenv GBP_HDF5_DIR      ${GBP_SRC}/3rd_Party/
-setenv GBP_VALGRIND_PLAT x86-darwin
+
+# This is where the compiled gbpCode libraries, etc will be stored
 setenv GBP_LIB           ${GBP_SRC}'myLib/'
 setenv GBP_INC           ${GBP_SRC}'myInclude/'
 setenv GBP_BIN           ${GBP_SRC}'myBin/'
 setenv GBP_DAT           ${GBP_SRC}'myData/'
 
+# If you're gonna use valgrind with this code, you have to supply your
+#  system's platform here.
+setenv GBP_VALGRIND_PLAT x86-darwin
+
+#----------------------------------------------------------------------
 # Swinburne cluster
+#----------------------------------------------------------------------
 if ( $HOSTTYPE == 'x86_64-linux' ) then
   setenv USE_SPRNG         1
   setenv GBP_MPI           /usr/local/gnu/x86_64/openmpi-1.2.5-nonib/
-  setenv GBP_GSL_DIR       /usr/local/gnu/x86_64/gsl/
-  setenv GBP_FFTW_DIR      /nfs/cluster/evo/gpoole/src/3rd_Party/libs/fftw/
-  setenv GBP_SPRNG_DIR     /nfs/cluster/evo/gpoole/src/3rd_Party/libs/sprng/
   setenv GBP_VALGRIND_PLAT amd64-linux
   # We have to check for the HOSTNAME variable, because scp, sshfs etc does
   #   not define it and things crash if we try to reference it
@@ -45,8 +64,12 @@ if ( $HOSTTYPE == 'x86_64-linux' ) then
       setenv GBP_QUEUE_TYPE PBS
     endif
   endif
+
+#----------------------------------------------------------------------
+# Intel Macintosh
+#----------------------------------------------------------------------
 else if ( $HOSTTYPE == 'intel-mac' ) then
-   # Use defaults
+  
 else
   echo 'Unsupported HOSTTYPE in .cshrc.gbpCode'
 endif
@@ -56,7 +79,6 @@ endif
 #----------------------------------------------------------------------
 
 # Add to the library path
-#
 if ( $?LD_LIBRARY_PATH ) then
   setenv LD_LIBRARY_PATH ${GBP_LIB}:${LD_LIBRARY_PATH}
 else
@@ -64,7 +86,6 @@ else
 endif
 
 # Add to the path
-#
 if ( $?PATH ) then
   setenv PATH ${PATH}:${GBP_BIN}
 else

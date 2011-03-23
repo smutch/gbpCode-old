@@ -71,8 +71,8 @@ int main(int argc, char *argv[]){
         return(SYNTAX_ERROR);
     }
     else if(argc==6){
-        min_bin=atof(argv[5]);
-        max_bin=atof(argv[6]);
+        min_bin=atof(argv[4]);
+        max_bin=atof(argv[5]);
     }
     strcpy(filename_in,argv[1]);
     data_column  =atoi(argv[2]);

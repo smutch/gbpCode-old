@@ -1,19 +1,12 @@
-###################################################
-#  Library information for Greg Poole's Makefile  #
-#                                                 #
-#  Copyright (c) 2008  Gregory B. Poole,          #
-#    Swinburne University of Technology,          #
-#    Melbourne, Australia                         #
-###################################################
-# If you are running OSX-bash, you will           #
-# want to fix a bug in echo.  You can do          #
-# that with the following commands:               #
-#   sudo port install bash                        #
-#   sudo mv /bin/bash /bin/bash.old               #
-#   sudo mv /bin/sh /bin/sh.old                   #
-#   sudo ln /opt/local/bin/bash /bin/bash         #
-#   sudo ln /opt/local/bin/bash /bin/sh           #
-###################################################
+#----------------------------------------------------------------------
+#
+# This file sets the library information needed in CCFLAGS and LDFLAGS
+# for the gbpCode Makefile
+#
+# YOU REALLY SHOULDN'T NEED TO EDIT THIS FILE UNLESS YOU ARE ADDING
+# NEW LIBRARIES TO THE LIST OF LIBRARIES USED BY THE gbpCode CODE BASE.
+#
+#----------------------------------------------------------------------
 
 # Add cfitsio
 ifndef USE_CFITSIO
@@ -72,7 +65,7 @@ ifndef USE_FFTW
   USE_FFTW=0
 endif
 ifneq ($(USE_FFTW),0)
-  ifdef USE_MPI
+  ifneq ($(USE_MPI),0)
     CCFLAGS := $(CCFLAGS) -I$(GBP_FFTW_DIR)/include
     LDFLAGS := $(LDFLAGS) -L$(GBP_FFTW_DIR)/lib
     ifeq ($(USE_DOUBLE),0)
