@@ -34,7 +34,7 @@ int parse_line(char *line,
   if(n_return>0){
     strcpy(temp_char_old," ");
     for(i_word=0,i_line=0,i_parse=0;i_line<strlen(line);i_line++) {
-      strncpy(temp_char,&(line[i_line]),sizeof(char));
+      strncpy(temp_char,&(line[i_line]),1);
       sprintf(temp_char,"%c\0",line[i_line]);
       if(strcmp(temp_char," ")) {
         // If we have whitespace, then we have a new word
