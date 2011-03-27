@@ -606,39 +606,39 @@ int main(int argc, char *argv[]){
   double       RGB_max;
   double       Y_min;
   double       Y_max;
+  FILE        *fp_check;
 
   SID_init(&argc,&argv,NULL);
 
-  // Fetch render file name from passes parameters
+  // Parse cmd line arguments
   strcpy(filename_script,argv[1]);
-  SID_log("Rendering script file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_script);
-
-  // Parse the script file and initialize the render structure
-  parse_render_file(&render,filename_script);
-
-  // Set some defaults
-  i_frame_start=0;
-  i_frame_stop =render->n_frames-1;
-  mode         =SET_RENDER_DEFAULT;
-  
-  // Parse the rest of the passed parameters
-  if(argc==8){
-    mode=SET_RENDER_RESCALE;
-    RGB_min=(double)atof(argv[2]);
-    RGB_max=(double)atof(argv[3]);
-    Y_min  =(double)atof(argv[4]);
-    Y_max  =(double)atof(argv[5]);
-    i_frame_start  =atoi(argv[6]);
-    i_frame_stop   =atoi(argv[7]);
-    set_render_scale(render,RGB_min,RGB_max,Y_min,Y_max);
-  }
-  else if(argc==4){
+  if(argc==4){
     i_frame_start=atoi(argv[2]);
     i_frame_stop =atoi(argv[3]);
   }
   else if(argc!=2)
     SID_trap_error("Invalid number of arguments.",ERROR_SYNTAX);
 
+  SID_log("Rendering script file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_script);
+
+  // Parse the script file and initialize the render structure
+  parse_render_file(&render,filename_script);
+
+  // Set image range (if not given on the cmd line)
+  if(argc!=4){
+    i_frame_start=0;
+    i_frame_stop =render->n_frames-1;
+  }
+
+  // Decide if this is a fresh render based on whether the
+  //   output directory exists or not
+  if((fp_check=fopen((*render).filename_out_dir,"r"))!=NULL){
+    mode=SET_RENDER_RESCALE;
+    fclose(fp_check);
+  }
+  else
+    mode=SET_RENDER_DEFAULT;
+  
   // Loop over all the frames
   for(i_frame=i_frame_start;i_frame<=i_frame_stop;i_frame++){
 

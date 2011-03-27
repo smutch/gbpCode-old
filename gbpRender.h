@@ -129,6 +129,7 @@ struct camera_info{
   int               RGB_mode;
   char              RGB_param[64];
   double            RGB_range[2];
+  interp_info      *RGB_transfer;
   image_info       *image_RGB;
   image_info       *image_RGB_left;
   image_info       *image_RGB_right;
@@ -138,6 +139,7 @@ struct camera_info{
   int               Y_mode;
   char              Y_param[64];
   double            Y_range[2];
+  interp_info      *Y_transfer;
   image_info       *image_Y;
   image_info       *image_Y_left;
   image_info       *image_Y_right;

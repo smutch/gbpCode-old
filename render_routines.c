@@ -309,8 +309,10 @@ void init_camera(camera_info **camera, int mode){
   init_perspective(&((*camera)->perspective),RENDER_INIT_PERSPECTIVE);
 
   // Initialze image information
-  (*camera)->RGB_mode=0;
-  (*camera)->Y_mode  =0;
+  (*camera)->RGB_mode    =0;
+  (*camera)->RGB_transfer=NULL;
+  (*camera)->Y_mode      =0;
+  (*camera)->Y_transfer  =NULL;
   strcpy((*camera)->RGB_param,"");
   strcpy((*camera)->Y_param,  "");
 
@@ -383,6 +385,10 @@ void free_camera(camera_info **camera){
     SID_free(SID_FARG (*camera)->mask_Y_right);
     SID_free(SID_FARG (*camera)->mask_RGBY_right);
   }
+  if((*camera)->RGB_transfer!=NULL)
+    free_interpolate(&((*camera)->RGB_transfer));
+  if((*camera)->Y_transfer!=NULL)
+    free_interpolate(&((*camera)->Y_transfer));
   SID_free((void **)camera);
   SID_log("Done.",SID_LOG_CLOSE);
 }
@@ -424,12 +430,14 @@ void init_render(render_info **render){
 
 void free_render(render_info **render){
   SID_log("Freeing render structure...",SID_LOG_OPEN);
+  SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
   free_camera(&((*render)->camera));
   free_scenes(&((*render)->scenes));
   free_plist(&((*render)->plist));
   if((*render)->snap_a_list!=NULL)
     SID_free(SID_FARG (*render)->snap_a_list);
   SID_free(SID_FARG (*render));
+  SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
   SID_log("Done.",SID_LOG_CLOSE);
 }
 
@@ -566,24 +574,28 @@ int set_render_state(render_info *render,int frame,int mode){
 }
 
 void parse_render_file(render_info **render, char *filename){
-  FILE  *fp;
-  int    n_lines;
-  int    i_line;
-  char  *line=NULL;
-  size_t line_length=0;
-  int    i_word;
-  char   line_print[256];
-  char   command[64];
-  char   parameter[64];
-  char   variable[64];
-  char   image[64];
-  char   c_value[64];
-  double d_value;
-  int    i_value;
-  int    i;
-  FILE  *fp_list;
+  FILE   *fp;
+  int     n_lines;
+  int     i_line;
+  char   *line=NULL;
+  size_t  line_length=0;
+  int     i_word,j_word;
+  char    line_print[256];
+  char    command[64];
+  char    parameter[64];
+  char    variable[64];
+  char    image[64];
+  char    c_value[64];
+  double  d_value;
+  int     i_value;
+  int     i;
+  int     n_transfer;
+  double *transfer_array_x;
+  double *transfer_array_y;
+  FILE   *fp_list;
   
   SID_log("Parsing render file {%s}...",SID_LOG_OPEN,filename);
+  SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
   if((fp=fopen(filename,"r"))==NULL)
     SID_trap_error("Could not open render file {%s}",ERROR_IO_OPEN,filename);
   init_render(render);
@@ -687,6 +699,27 @@ void parse_render_file(render_info **render, char *filename){
             grab_double(line,i_word++,&d_value);
             (*render)->camera->RGB_range[1]=d_value;
           }
+          else if(!strcmp(variable,"RGB_transfer")){
+            n_transfer      =count_words(line)-i_word+1;
+            SID_log("n_transfer=%d",SID_LOG_COMMENT,n_transfer);
+            if(n_transfer>2){
+              transfer_array_x=(double *)SID_malloc(sizeof(double)*n_transfer);
+              transfer_array_y=(double *)SID_malloc(sizeof(double)*n_transfer);
+              if((*render)->camera->RGB_transfer!=NULL)
+                free_interpolate(&((*render)->camera->RGB_transfer));
+              for(j_word=0;j_word<n_transfer;j_word++){
+                grab_double(line,i_word++,&d_value);
+                transfer_array_x[j_word]=255.*(double)j_word/(double)(n_transfer-1);
+                transfer_array_y[j_word]=d_value;
+                SID_log("%le",SID_LOG_COMMENT,d_value);
+              }
+              init_interpolate(transfer_array_x,transfer_array_y,n_transfer,gsl_interp_cspline,&((*render)->camera->RGB_transfer));
+              SID_free(SID_FARG transfer_array_x);
+              SID_free(SID_FARG transfer_array_y);
+            }
+            else
+              SID_log_warning("A transfer array bust be >2 elements long.",ERROR_LOGIC);
+          }
           else if(!strcmp(variable,"Y_param")){
             grab_char(line,i_word++,c_value);
             strcpy((*render)->camera->Y_param,c_value);
@@ -696,6 +729,27 @@ void parse_render_file(render_info **render, char *filename){
             (*render)->camera->Y_range[0]=d_value;
             grab_double(line,i_word++,&d_value);
             (*render)->camera->Y_range[1]=d_value;
+          }
+          else if(!strcmp(variable,"Y_transfer")){
+            n_transfer      =count_words(line)-i_word+1;
+            SID_log("n_transfer=%d",SID_LOG_COMMENT,n_transfer);
+            if(n_transfer>2){
+              transfer_array_x=(double *)SID_malloc(sizeof(double)*n_transfer);
+              transfer_array_y=(double *)SID_malloc(sizeof(double)*n_transfer);
+              if((*render)->camera->Y_transfer!=NULL)
+                free_interpolate(&((*render)->camera->Y_transfer));
+              for(j_word=0;j_word<n_transfer;j_word++){
+                grab_double(line,i_word++,&d_value);
+                transfer_array_x[j_word]=255.*(double)j_word/(double)(n_transfer-1);
+                transfer_array_y[j_word]=d_value;
+                SID_log("%le",SID_LOG_COMMENT,d_value);
+              }
+              init_interpolate(transfer_array_x,transfer_array_y,n_transfer,gsl_interp_cspline,&((*render)->camera->Y_transfer));
+              SID_free(SID_FARG transfer_array_x);
+              SID_free(SID_FARG transfer_array_y);
+            }
+            else
+              SID_log_warning("A transfer array bust be >2 elements long.",ERROR_LOGIC);
           }
           else
             SID_trap_error("Unknown variable {%s} for parameter {%s} for command {%s} on line %d",ERROR_LOGIC,variable,parameter,command,i_line);
@@ -757,6 +811,7 @@ void parse_render_file(render_info **render, char *filename){
   fclose(fp);
   if(!(*render)->sealed)
     seal_render(*render);
+  SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
   SID_log("Done.",SID_LOG_CLOSE);
 }
 
@@ -885,6 +940,8 @@ void set_frame(camera_info *camera){
         for(i_y=0;i_y<image->height;i_y++,i_pixel++){
           pixel_value          =(int)(255.*(values[i_pixel]-image_min)/image_range);
           pixel_value          =MAX(0,MIN(pixel_value,255));
+          if(camera->RGB_transfer!=NULL)
+            pixel_value=(int)((double)pixel_value*interpolate(camera->RGB_transfer,pixel_value));
           image->red[i_pixel]  =image->colour_table[0][pixel_value];
           image->green[i_pixel]=image->colour_table[1][pixel_value];
           image->blue[i_pixel] =image->colour_table[2][pixel_value];
@@ -904,6 +961,8 @@ void set_frame(camera_info *camera){
         for(i_y=0;i_y<image->height;i_y++,i_pixel++){
           pixel_value          =(int)(255.*(values[i_pixel]-image_min)/image_range);
           pixel_value          =MAX(0,MIN(pixel_value,255));
+          if(camera->Y_transfer!=NULL)
+            pixel_value=(int)((double)pixel_value*interpolate(camera->Y_transfer,pixel_value));
           image->red[i_pixel]  =image->colour_table[0][pixel_value];
           image->green[i_pixel]=image->colour_table[1][pixel_value];
           image->blue[i_pixel] =image->colour_table[2][pixel_value];
