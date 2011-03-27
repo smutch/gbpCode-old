@@ -87,7 +87,7 @@ int write_image_FITS(void *image,SID_Datatype dtype,int n_D,int *D_in,char *file
 
   // Throw error if the given dtype is not supported
   else
-    SID_trap_error("Unsupported datatype {%d} in write_image_FITS",ERROR_LOGIC,(int)dtype);
+    SID_trap_error("Unsupported datatype in write_image_FITS",ERROR_LOGIC);
 
   // Set extension name
   if(ext_name!=NULL)

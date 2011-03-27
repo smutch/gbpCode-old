@@ -26,9 +26,9 @@ export GBP_QUEUE_TYPE=NONE
 export USE_GSL=1
 export USE_FFTW=1
 export USE_CFITSIO=1
+export USE_SPRNG=0
 export USE_HDF5=0
 export USE_MPI=0
-export USE_SPRNG=0
 
 # Directories for each of the USE_ flags set to '1' above
 export GBP_GSL_DIR="${GBP_SRC}/3rd_Party/gsl"
@@ -65,7 +65,7 @@ if [ $HOSTTYPE=='x86_64-linux' ]; then
     fi
   fi
 elif [ $HOSTTYPE=='intel-mac' ]; then
-  echo
+  export USE_SPRNG=0
 else
   echo 'Unsupported HOSTTYPE in .cshrc.gbpCode'
 fi
