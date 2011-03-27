@@ -69,7 +69,7 @@ if ( $HOSTTYPE == 'x86_64-linux' ) then
 # Intel Macintosh
 #----------------------------------------------------------------------
 else if ( $HOSTTYPE == 'intel-mac' ) then
-  
+  setenv USE_SPRNG 0  
 else
   echo 'Unsupported HOSTTYPE in .cshrc.gbpCode'
 endif
