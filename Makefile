@@ -28,6 +28,9 @@ MAKE       = make
 ifndef USE_DOUBLE
   USE_DOUBLE=0
 endif
+ifneq ($(USE_DOUBLE),0)
+  CCFLAGS := $(CCFLAGS) -DUSE_DOUBLE
+endif
 export USE_DOUBLE
 
 # Set default MPI support
@@ -45,12 +48,6 @@ ifndef USE_DEBUGGER
   USE_DEBUGGER=0
 endif
 export USE_DEBUGGER
-
-# Set default to no MPI-I/O support
-ifndef USE_MPI_IO
-  USE_MPI_IO=0
-endif
-export USE_MPI_IO
 
 # Set default file locations/destinations
 ifndef GBP_SRC
@@ -138,12 +135,6 @@ else
   BINTOUCH1    = .install_bin_nompi
   LIBTOUCH2    = .install_lib_mpi
   BINTOUCH2    = .install_bin_mpi
-endif
-ifneq ($(USE_MPI_IO),0)
-  CCFLAGS  := $(CCFLAGS) -DUSE_MPI_IO
-endif
-ifneq ($(USE_DOUBLE),0)
-  CCFLAGS := $(CCFLAGS) -DUSE_DOUBLE
 endif
 CCFLAGS := $(CCFLAGS) -DGBP_DATA_DIR='"$(GBP_DAT)"'
 OLDDATE=200701010101

@@ -77,9 +77,9 @@ ifneq ($(USE_FFTW),0)
     CCFLAGS := $(CCFLAGS) -I$(GBP_FFTW_DIR)/include
     LDFLAGS := $(LDFLAGS) -L$(GBP_FFTW_DIR)/lib
     ifeq ($(USE_DOUBLE),0)
-      LIBS  := $(LIBS) -ldrfftw -ldfftw
-    else
       LIBS  := $(LIBS) -lsrfftw -lsfftw
+    else
+      LIBS  := $(LIBS) -ldrfftw -ldfftw
     endif
   endif
   CCFLAGS := $(CCFLAGS) -DUSE_FFTW
@@ -96,4 +96,23 @@ ifneq ($(USE_SPRNG),0)
   CCFLAGS := $(CCFLAGS) -DUSE_SPRNG
 endif
 export USE_SPRNG
+
+# Set default MPI support
+ifndef USE_MPI
+  USE_MPI=0
+endif
+export USE_MPI
+ifndef USE_MPI_IO
+  USE_MPI_IO=0
+endif
+export USE_MPI_IO
+ifneq ($(USE_MPI_IO),0)
+  CCFLAGS  := $(CCFLAGS) -DUSE_MPI_IO
+endif
+
+# Set default debugger support
+ifndef USE_DEBUGGER
+  USE_DEBUGGER=0
+endif
+export USE_DEBUGGER
 

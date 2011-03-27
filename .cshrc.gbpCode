@@ -26,19 +26,19 @@ setenv GBP_QUEUE_TYPE    NONE
 setenv USE_GSL           1
 setenv USE_FFTW          1
 setenv USE_CFITSIO       1
-setenv USE_MPI           0
-setenv USE_SPRNG         0
-setenv USE_VALGRIND      0
+setenv USE_SPRNG         1
+setenv USE_VALGRIND      1
 setenv USE_HDF5          0
+setenv USE_MPI           0
 
 # Directories for each of the USE_ flags set to '1' above
-setenv GBP_MPI           ${GBP_SRC}/3rd_Party/openmpi
-setenv GBP_GSL_DIR       ${GBP_SRC}/3rd_Party/gsl
-setenv GBP_FFTW_DIR      ${GBP_SRC}/3rd_Party/fftw
-setenv GBP_SPRNG_DIR     ${GBP_SRC}/3rd_Party/sprng
-setenv GBP_VALGRIND_DIR  ${GBP_SRC}/3rd_Party/valgrind
-setenv GBP_CFITSIO_DIR   ${GBP_SRC}/3rd_Party/cfitsio
-setenv GBP_HDF5_DIR      ${GBP_SRC}/3rd_Party/
+setenv GBP_MPI           ${HOME}/3rd_Party/openmpi
+setenv GBP_GSL_DIR       ${HOME}/3rd_Party/
+setenv GBP_FFTW_DIR      ${HOME}/3rd_Party/
+setenv GBP_SPRNG_DIR     ${HOME}/3rd_Party/
+setenv GBP_VALGRIND_DIR  ${HOME}/3rd_Party/
+setenv GBP_CFITSIO_DIR   ${HOME}/3rd_Party/
+setenv GBP_HDF5_DIR      ${HOME}/3rd_Party/
 
 # This is where the compiled gbpCode libraries, etc will be stored
 setenv GBP_LIB           ${GBP_SRC}'myLib/'

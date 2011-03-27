@@ -47,7 +47,7 @@ void transpose_array(void *data,SID_Datatype dtype,int n_d,int *d_i){
     int     i_d;
 
     // Get the element size for the data's given datatype
-    SID_type_size(dtype,&type_size);
+    SID_Type_size(dtype,&type_size);
 
     // Compute the number of elements in data
     array_size_local(n_d,d_i,&n_data);
