@@ -12,7 +12,7 @@ int grab_double(char   *line,
   int  j,k,flag=FALSE;
   strcpy(temp_char_old," ");
   for(k=0,j=0;j<strlen(line);j++) {
-    strncpy(temp_char,&(line[j]),sizeof(char));
+    strncpy(temp_char,&(line[j]),1);
     sprintf(temp_char,"%c",line[j]);
     if(strcmp(temp_char," ")) {
       if(!strcmp(temp_char_old," ")) {

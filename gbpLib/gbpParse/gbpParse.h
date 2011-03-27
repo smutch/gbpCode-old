@@ -7,12 +7,12 @@ int getline(char **string,size_t *n,FILE *fp);
 int count_lines(FILE *fp);
 int count_lines_data(FILE *fp);
 int check_comment(char *line);
-int grab_char(char *line,
+int grab_word(char *line,
 	      int   n, 
 	      char *return_value);
-int grab_char_tail(char *line,
-		   int   n, 
-		   char *return_value);
+int grab_tail(char *line,
+	      int   n, 
+              char *return_value);
 int grab_double(char   *line,
 		int     n, 
 		double *return_value);

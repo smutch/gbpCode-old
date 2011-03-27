@@ -6,9 +6,10 @@ LIBFILE  =
 OBJFILES = getline.o               \
 	   count_lines.o           \
 	   count_lines_data.o      \
+	   count_words.o           \
 	   check_comment.o         \
-	   grab_char.o             \
-	   grab_char_tail.o        \
+	   grab_word.o             \
+	   grab_tail.o             \
 	   grab_double.o           \
 	   grab_float.o            \
 	   grab_int.o              \
