@@ -12,12 +12,20 @@ INSTALL GUIDE FOR gbpCode AND ITS PACKAGES
    > sudo ln /opt/local/bin/bash /bin/sh
 
 Installing the needed libraries
--------------------------------
+===============================
 
 To install gbpCode, you need to install several libraries (if you haven't already).  Personally, I place all of these
 in the directory $GBP_SRC/3rd_Party ($GBP_SRC should be set in your .cshrc; see below), but they can be wherever you wish.  You just
-need to edit your .cshrc.myCode (or .bashrc.myCode) file appropriately (again, see below).  If these libraries are already installed,
-you will have to find the paths to them.  If they are not, here's instructions on where to get them and how to install them:
+need to edit your .cshrc.myCode (or .bashrc.myCode) file appropriately (again, see below).  
+
+PRESENTLY, GSL, FFTW and CFITSIO ALL NEED TO BE INSTALLED.
+
+If these libraries are already installed, you will have to find the paths to them.  If they are not, 
+here's some instructions on where to get them and how to install them (if you have already
+configured and sourced your .cshrc/.bashrc as described below, you can use these commads as is, otherwise
+you will have to change all the ${GBP_XXX_DIR} references to the paths where you want each library
+installed, and then make sure that you use these same paths later when you configure your .cshrc/.bashrc 
+as described in the 'Installing gbpCode' section below):
 
 1) Install GSL (http://www.gnu.org/software/gsl/):
    -----------
@@ -63,29 +71,50 @@ And if you want to use MPI:
 > make
 > make install
 
-1) Install MPI (optional; eg. http://www.open-mpi.org/):
-   ----------------------
-> ./configure prefix=${GBP_MPI}
+4) Install Python (semi-optional):
+   --------------
+Several gbpCode packages use python for plotting, etc.  You will need to have python installed
+in these cases.  This can be a bit of a pain and really varries from system-to-system, so
+I will leave you to your own devices to figure this out.
+
+5) Install MPI (optional; eg. http://www.open-mpi.org/):
+   -----------
+> ./configure prefix=${GBP_MPI_DIR}
 > make
 > make install
 
-4) Install SPRNG (optional; http://sprng.fsu.edu/):
-   ------------------------
+6) Install Valgrind (optional; http://valgrind.org/downloads/):
+   ----------------
+> ./configure prefix=${GBP_VALGRIND_DIR}
+> make
+> make install
+
+7) Install SPRNG (optional; http://sprng.fsu.edu/):
+   -------------
 This is needed for large parallel runs to avoid periodicity in RNG streams.  It is really tough
 to compile and GENERALLY NOT NEEDED.  Make sure you use version 1 if you're brave enough to try
 to compile it.
 
+
 Installing gbpCode
-------------------
+==================
 
 1) Clone a copy of this repository using the command 'git clone git@green.ssi.swin.edu.au:gbpCode.git'
 
-2) In the gbpCode directory, edit .cshrc.gbpCode (or .bashrc.gbpCode) and source it in your .cshrc (or .bashrc).  See the file
-   for directions, but briefly you have to do the following:
+2) In the gbpCode directory (referred to as ${GBP_SRC} here), create a .cshrc.myCode (or .bashrc.myCode) file from 
+   ${GBP_SRC}/.cshrc.myCode (or ${GBP_SRC}/.bashrc.myCode) as described in a) below, edit it as described in b) and 
+   source it in your .cshrc (or .bashrc) as described in c):
 
   a) copy ${GBP_SRC}/.cshrc.gbpCode to ${GBP_SRC}/.cshrc.myCode (SO THE FILE DOESN"T GET OVERWRITTEN NEXT TIME YOU PULL FROM THE REPO!)
-  b) EDIT .cshrc.myCode (or .bashrc.myCode); ADD EACH OF THE SYSTEMS THAT YOU USE
-  c) Add the following lines to your .cshrc (or .bashrc; eg. assuming you cloned the repo in ${HOME}):
+  b) EDIT .cshrc.myCode (or .bashrc.myCode); set the USE_XXX variables to the default values you want to use.  You can change them when
+     you compile by passing different values to make.  For example, if you have USE_MPI=0 by default, you can compile with MPI with
+     the command 'make USE_MPI=1'.  For each USE_XXX flag that you anticipate using, you have to supply the path to the library
+     in the GBP_XXX_DIR variable.  Make sure that this directory is where the 'lib' and 'include' directories for the library sit.
+     SEE THE FILE FOR ADDITIONAL INSTRUCTIONS.
+
+** n.b.: Presently, dependancies are not really enforced very well ... so the only libraries that are optional are SPRNG, MPI and Valgrind.
+
+  c) Add the following lines to your .cshrc (or their equivilant in .bashrc if you use bash; eg. assuming you cloned the repo in ${HOME}):
     > setenv GBP_SRC  ${HOME}'/gbpCode/' 
     > source ${GBP_SRC}/.cshrc.myCode
 
@@ -103,7 +132,7 @@ n.b.: MPI versions of executables can be run using the 'run_mpi' script that get
       in $GBP_BIN.  Run it with no arguments to get the syntax.
 
 Installing additional packages:
--------------------------------
+==============================
 
 gbpCode was designed so that you can add packages to it.  Once you have gbpCode installed and compiling correctly,
 it is trivial to add additional packages to it.
