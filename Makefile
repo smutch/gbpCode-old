@@ -1,1 +1,1 @@
-/home/ssi/gpoole/gbpCode//Makefile
+../Makefile

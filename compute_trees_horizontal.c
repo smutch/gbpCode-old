@@ -189,6 +189,7 @@ void compute_trees_horizontal(char *filename_halo_root_in,
     
   // Count the maximum number of substructures in one snapshot; needed to set array sizes
   SID_log("Counting indices...",SID_LOG_OPEN);
+  if(SID.I_am_Master){
   for(i_read=i_read_stop,n_progenitors_max=0;i_read>=i_read_start;i_read-=i_read_step){
 
     sprintf(filename_groups,"%s_%03d.catalog_groups",filename_halo_root_in,i_read);
@@ -204,6 +205,8 @@ void compute_trees_horizontal(char *filename_halo_root_in,
     n_progenitors_max=MAX(n_progenitors_max,n_subgroups_1);
     n_progenitors_max=MAX(n_progenitors_max,n_groups_1);
   }
+  }
+  SID_Bcast(&n_progenitors_max,sizeof(int),1,SID.COMM_WORLD);
   n_search+=2; // Need indices for current and last i_file as well
   SID_log("Done. (max_index=%d)",SID_LOG_CLOSE,n_progenitors_max);
 
@@ -286,11 +289,13 @@ void compute_trees_horizontal(char *filename_halo_root_in,
     tree_id_subgroup[i_file_3%n_search][i_group]      =max_tree_id_subgroup;
     tree_id_subgroup[i_file_2%n_search][i_group]      =max_tree_id_subgroup;
     tree_id_subgroup[i_file_1%n_search][i_group]      =max_tree_id_subgroup;
-    file_offset_subgroup[i_file_3%n_search][i_group]  =0;
-    file_offset_subgroup[i_file_2%n_search][i_group]  =0;
-    file_offset_subgroup[i_file_1%n_search][i_group]  =0;
+    file_offset_subgroup[i_file_3%n_search][i_group]  =0;  // These carry the number of files that
+    file_offset_subgroup[i_file_2%n_search][i_group]  =0;  //   the progenitor is offset from
+    file_offset_subgroup[i_file_1%n_search][i_group]  =0;  //   each descendant
   }
   SID_free((void **)&sort_subgroup_id[i_file_3%n_search]);
+
+  // Create sorting indices for the progenitor IDs
   merge_sort(progenitor_id_subgroup[i_file_3%n_search],
              n_subgroups[i_file_3%n_search],
              &(sort_subgroup_id[i_file_3%n_search]),
@@ -351,11 +356,13 @@ void compute_trees_horizontal(char *filename_halo_root_in,
   SID_log("Done.",SID_LOG_CLOSE);
   SID_log("Done.",SID_LOG_CLOSE);
 
-  // The first snapshot is done now (by default) ... now loop over all other snapshots
-  for(i_read=i_read_stop-i_read_step,i_file=i_read_stop-1,j_file=0,i_write=i_read_stop,k_write=i_read_stop,j_write=0;i_read>=i_read_start;i_read-=i_read_step,j_file++,i_file--){
+  // The first snapshot is done now (set to defaults) ... now loop over all other snapshots
+  for(i_read=i_read_1-i_read_step,i_file=i_file_1-1,j_file=0,i_write=i_read_stop,k_write=i_read_stop,j_write=0; // Check these write indices!
+      i_read>=i_read_start;
+      i_read-=i_read_step,i_file--,j_file++){
     SID_log("Processing snapshot #%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_read);
 
-    // Read group and subgroup information for file_1
+    // Shift the snapshot info up the list
     i_file_3=i_file_2;
     i_file_2=i_file_1;
     i_file_1=i_file;
@@ -368,9 +375,13 @@ void compute_trees_horizontal(char *filename_halo_root_in,
     ADaPS_free(&(plist2.data));
     plist2.data=plist1.data;
     plist1.data=NULL;
+
+    // Read the group info
     SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
     read_groups(filename_halo_root_in,i_read_1,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES,&plist1,filename_cat1_1);
     SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+
+    // Retrieve the number of halos
     n_subgroups_group_1           = (int *)ADaPS_fetch(plist1.data,"n_subgroups_group_%s",filename_cat1_1);
     n_subgroups[i_file_1%n_search]=((int *)ADaPS_fetch(plist1.data,"n_subgroups_%s",filename_cat1_1))[0];
     n_groups[i_file_1%n_search]   =((int *)ADaPS_fetch(plist1.data,"n_groups_%s",filename_cat1_1))[0];
@@ -381,18 +392,18 @@ void compute_trees_horizontal(char *filename_halo_root_in,
     for(k_match=0;k_match<n_k_match;k_match++){
 
       // Initialize counters
-      n_drop               =0;
-      n_mergers_drop       =0;
-      n_found_drop         =0;
+      n_drop              =0;
+      n_mergers_drop      =0;
+      n_found_drop        =0;
       n_strays_drop       =0;
-      n_bridge_candidates  =0;
-      n_bridge_systems     =0;
-      n_found_bridge       =0;
-      n_bridges            =0;
-      n_mergers_bridge     =0;
+      n_bridge_candidates =0;
+      n_bridge_systems    =0;
+      n_found_bridge      =0;
+      n_bridges           =0;
+      n_mergers_bridge    =0;
       n_strays_bridge     =0;
-      n_mergers            =0;
-      n_found              =0;
+      n_mergers           =0;
+      n_found             =0;
       n_strays            =0;
       biggest_stray       =0;
       biggest_stray_drop  =0;
@@ -435,6 +446,7 @@ void compute_trees_horizontal(char *filename_halo_root_in,
         sprintf(group_text_prefix,"");
         break;
       }
+
       SID_log("Processing %d %sgroups of snapshot #%d...",SID_LOG_OPEN|SID_LOG_TIMER,n_groups_1,group_text_prefix,i_read_1);
       n_unprocessed=n_groups_1;
       if(n_groups_1>0 && n_groups_2>0 && n_groups_3>0){
