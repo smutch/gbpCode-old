@@ -6,10 +6,10 @@ OBJFILES  = compute_trees_auxiliary.o  \
 	    compute_trees_horizontal.o \
 	    compute_trees_vertical.o   \
 	    read_AHF_for_trees.o       \
-	    match_halos.o              \
 	    read_trees.o               
 LIBFILE   = libgbpTrees.a
-BINFILES  = make_trees                 \
+BINFILES  = convert_Bolshoi            \
+            make_trees                 \
             find_halo_tree             \
             tree_groups                \
             tree_stats                 \
@@ -18,3 +18,5 @@ BINFILES  = make_trees                 \
 SCRIPTS   = view_tree.py
 LIBS      = -lgbpTrees -lgbpHalos -lgbpSPH -lgbpCosmo -lgbpMath -lgbpLib
 #############################
+USE_FFTW=1
+USE_GSL=1

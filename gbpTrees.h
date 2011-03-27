@@ -1,10 +1,6 @@
-
-#define MATCH_SUBGROUPS     2 // Match subgroups (default)
-#define MATCH_GROUPS        4 // Match groups
-#define MATCH_BACK          8 // Switch the sence of matching between plists
-#define MATCH_STORE_2      16 // Switch which plist results are stored in
-#define MATCH_STORE_SCORE  32 // Store the matching score
-#define MATCH_SUBSTRUCTURE 64 // Search for substructure; ie. ignore self matches
+#ifndef GBPTREES_AWAKE
+#define GBPTREES_AWAKE
+#include <gbpHalos.h>
 
 #define TREE_PROGENITOR_ORDER_DEFAULT 0
 #define TREE_PROGENITOR_ORDER_DELUCIA 2
@@ -40,16 +36,6 @@ void read_trees(char             *filename_trees_root,
                 int               i_file_stop,
                 int               mode,
                 tree_node_info  **trees);
-void match_halos(plist_info  *plist_1_in,
-                 int          i_file_1_in,
-                 int         *mark_list_1,
-                 int          n_mark_1,
-                 plist_info  *plist_2_in,
-                 int          i_file_2_in,
-                 int         *mark_list_2,
-                 int          n_mark_2,
-                 char        *catalog_1to2,
-                 int          mode);
 
 void compute_trees_horizontal(char *filename_halos_root_in,
                               char *filename_cat_root_in,
@@ -77,4 +63,5 @@ void compute_trees_auxiliary(char *filename_root,
                              int   n_files_groups,
                              int   n_files_subgroups,
                              int  *flag_clean);
+#endif
 
