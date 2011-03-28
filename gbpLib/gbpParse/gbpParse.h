@@ -31,10 +31,6 @@ int grab_nth_line(FILE *fp,int n,char *line);
 int grab_size_t(char   *line,
 	   	int     n, 
 		size_t *return_value);
-int grab_word(char  *line,
-	      int    n, 
-	      char **return_value,
-              int   *size);
 int parse_line(char *line,
 	       int   n_return, ...);
 int search_and_replace(char *string,char *search,char *replace);
