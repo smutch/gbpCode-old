@@ -42,6 +42,7 @@ void rotate_particle(double  x_hat,
 
 void init_make_map(plist_info  *plist,
                    char        *parameter,
+                   ADaPS       *transfer_list,
                    double  x_o,
                    double  y_o,
                    double  z_o,
@@ -65,6 +66,7 @@ void init_make_map(plist_info  *plist,
                    size_t      *n_particles);
 void init_make_map(plist_info  *plist,
                    char        *parameter,
+                   ADaPS       *transfer_list,
                    double   x_o,
                    double   y_o,
                    double   z_o,
@@ -113,6 +115,9 @@ void init_make_map(plist_info  *plist,
   double   half_box_size;
   double   particle_radius;
   double   x_tmp,y_tmp,z_tmp;
+  interp_info *transfer;
+  double       transfer_val;
+  int          flag_log;
   
   SID_log("Initializing projection-space...",SID_LOG_OPEN|SID_LOG_TIMER);
 
@@ -149,8 +154,22 @@ void init_make_map(plist_info  *plist,
     (*weight)     = NULL;
     if(ADaPS_exist(plist->data,"rho_dark")){
       rho=(float *)ADaPS_fetch(plist->data,"rho_dark");
-      for(i_particle=0;i_particle<(*n_particles);i_particle++)
-        (*value)[i_particle]=(REAL)rho[i_particle];
+      if(ADaPS_exist(transfer_list,"rho_dark")){
+        if(ADaPS_exist(transfer_list,"rho_dark_log")) 
+          flag_log=TRUE;
+        transfer=(interp_info *)ADaPS_fetch(transfer_list,"rho_dark");
+        for(i_particle=0;i_particle<(*n_particles);i_particle++){
+          if(flag_log)
+            transfer_val=MAX(0.,MIN(1.,interpolate(transfer,take_log10(rho[i_particle]))));
+          else
+            transfer_val=MAX(0.,MIN(1.,interpolate(transfer,rho[i_particle])));
+          (*value)[i_particle]=(REAL)(rho[i_particle]*transfer_val);
+        }
+      }
+      else{ 
+        for(i_particle=0;i_particle<(*n_particles);i_particle++)
+          (*value)[i_particle]=(REAL)rho[i_particle];
+      }
       if(!flag_comoving){
         for(i_particle=0;i_particle<(*n_particles);i_particle++)
           ((*value)[i_particle])/=pow(expansion_factor,3.);
@@ -174,8 +193,22 @@ void init_make_map(plist_info  *plist,
     // Compute a column-weighted average (using densities)
     if(ADaPS_exist(plist->data,"rho_dark")){
       rho=(float *)ADaPS_fetch(plist->data,"rho_dark");
-      for(i_particle=0;i_particle<(*n_particles);i_particle++)
-        (*weight)[i_particle]=(REAL)rho[i_particle];
+      if(ADaPS_exist(transfer_list,"rho_dark")){
+        if(ADaPS_exist(transfer_list,"rho_dark_log")) 
+          flag_log=TRUE;
+        transfer=(interp_info *)ADaPS_fetch(transfer_list,"rho_dark");
+        for(i_particle=0;i_particle<(*n_particles);i_particle++){
+          if(flag_log)
+            transfer_val=MAX(0.,MIN(1.,interpolate(transfer,take_log10(rho[i_particle]))));
+          else
+            transfer_val=MAX(0.,MIN(1.,interpolate(transfer,rho[i_particle])));
+          (*weight)[i_particle]=(REAL)(rho[i_particle]*transfer_val);
+        }
+      }
+      else{
+        for(i_particle=0;i_particle<(*n_particles);i_particle++)
+          (*weight)[i_particle]=(REAL)rho[i_particle];
+      }
       if(!flag_comoving){
         for(i_particle=0;i_particle<(*n_particles);i_particle++)
           ((*weight)[i_particle])/=pow(expansion_factor,3.);
@@ -188,11 +221,26 @@ void init_make_map(plist_info  *plist,
     }
     else
       SID_trap_error("no masses available to compute sigma_v_dark in make_map",ERROR_LOGIC);
+
     // Use sigma_v for values
     if(ADaPS_exist(plist->data,"sigma_v_dark")){
       sigma_v=(float *)ADaPS_fetch(plist->data,"sigma_v_dark");
-      for(i_particle=0;i_particle<(*n_particles);i_particle++)
-        (*value)[i_particle]=(REAL)sigma_v[i_particle];
+      if(ADaPS_exist(transfer_list,"sigma_v_dark")){
+        if(ADaPS_exist(transfer_list,"sigma_v_dark_log")) 
+          flag_log=TRUE;
+        transfer=(interp_info *)ADaPS_fetch(transfer_list,"sigma_v_dark");
+        for(i_particle=0;i_particle<(*n_particles);i_particle++){
+          if(flag_log)
+            transfer_val=MAX(0.,MIN(1.,interpolate(transfer,take_log10(sigma_v[i_particle]))));
+          else
+            transfer_val=MAX(0.,MIN(1.,interpolate(transfer,sigma_v[i_particle])));
+          (*value)[i_particle]=(REAL)(sigma_v[i_particle]*transfer_val);
+        }
+      } 
+      else{
+        for(i_particle=0;i_particle<(*n_particles);i_particle++)
+          (*value)[i_particle]=(REAL)sigma_v[i_particle];
+      }
     }
     else
       SID_trap_error("No sigma_v_dark's available for make_map",ERROR_LOGIC);
@@ -453,6 +501,7 @@ void render_frame(render_info  *render){
   plist_info  *plist;
   int          flag_comoving;
   double       expansion_factor;
+  ADaPS       *transfer;
 
   int          i_image;
 
@@ -485,11 +534,13 @@ void render_frame(render_info  *render){
         parameter=render->camera->RGB_param;
         image    =render->camera->image_RGB->values;
         mask     =render->camera->mask_RGB;
+        transfer =render->camera->RGB_transfer;
         break;
       case 1:
         parameter=render->camera->Y_param;
         image    =render->camera->image_Y->values;
         mask     =render->camera->mask_Y;
+        transfer =render->camera->Y_transfer;
         break;
     }
 
@@ -511,6 +562,7 @@ void render_frame(render_info  *render){
     // Initialize make_map
     init_make_map(plist,
                   parameter,
+                  transfer,
                   x_o,y_o,z_o,
                   x_c,y_c,z_c,
                   box_size,FOV_x,
