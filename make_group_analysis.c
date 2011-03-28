@@ -305,7 +305,7 @@ void read_gadget_binary_local(char       *filename_root_in,
     SID_log("Checking integrity of group particle ids...",SID_LOG_OPEN);  
     for(j=1,n_warning=0;j<n_particles_rank && n_warning<10;j++){
       if(id_list[id_list_index[j]]==id_list[id_list_index[j-1]] && n_warning<100){
-        fprintf(stderr,"WARNING: group particle id=%lld is duplicated on rank=%d!\n",id_list[id_list_index[j]],SID.My_rank);
+        fprintf(stderr,"WARNING: group particle id=%zd is duplicated on rank=%d!\n",id_list[id_list_index[j]],SID.My_rank);
         n_warning++;
       }
     }

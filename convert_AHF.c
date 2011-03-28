@@ -493,7 +493,7 @@ int main(int argc, char *argv[]){
     }
     else
       fp_log=fopen(filename_log,"a");
-    fprintf(fp_log,"%4d %9d %12d %9d %9d %9d %9d %9d %12d %12d\n",
+    fprintf(fp_log,"%4d %9d %12zd %9d %9d %9d %9d %9d %12zd %12zd\n",
       i_file,
       n_groups_AHF,
       n_particles_AHF,

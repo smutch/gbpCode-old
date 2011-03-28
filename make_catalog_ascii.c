@@ -109,7 +109,7 @@ int main(int argc, char *argv[]){
         offset_COM=sqrt(pow(properties.position_COM[0]-properties.position_MBP[0],2.)+pow(properties.position_COM[1]-properties.position_MBP[1],2.)+pow(properties.position_COM[2]-properties.position_MBP[2],2.));
 
         // Perform write
-        fprintf(fp_out,"%9d %9d %9d  %12.5e %12.5e %12.5e %11.5f %11.5f %11.5f  %12.5e %12.5e %12.5e %11.5f %11.5f %11.5f  %10.5le %11.5f %11.5f %11.5f  %11.5f %11.5f %11.5f  %12.5e %12.5e %12.5e %11.5f  %11.5f %11.5f  %11.5f  %11.5f\n",
+        fprintf(fp_out,"%9d %9d %9lld  %12.5e %12.5e %12.5e %11.5f %11.5f %11.5f  %12.5e %12.5e %12.5e %11.5f %11.5f %11.5f  %10.5le %11.5f %11.5f %11.5f  %11.5f %11.5f %11.5f  %12.5e %12.5e %12.5e %11.5f  %11.5f %11.5f  %11.5f  %11.5f\n",
                 i_group,properties.n_particles,properties.id_MBP,
                 properties.position_COM[0],properties.position_COM[1],properties.position_COM[2],
                 properties.velocity_COM[0],properties.velocity_COM[1],properties.velocity_COM[2],
