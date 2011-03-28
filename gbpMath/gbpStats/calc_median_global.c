@@ -17,7 +17,7 @@ double calc_median_global(void   *data_local,
   int     flag_1,flag_2;
   int     rank_1_local,rank_1,rank_2_local,rank_2;
 
-  #ifdef USE_MPI
+  #if USE_MPI
   SID_trap_error("calc_median_global has not been debugged yet!",ERROR_LOGIC);
   MPI_Allreduce(&n_data_local,&n_data,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
   if(n_data>0){

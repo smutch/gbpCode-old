@@ -11,7 +11,7 @@ double calc_mean_global(void   *data_local,
     mean=0.;
   else{
     sum=calc_sum_global(data_local,n_data_local,type);
-    #ifdef USE_MPI
+    #if USE_MPI
       MPI_Allreduce(&n_data_local,&n_data,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
     #else
       n_data=n_data_local;

@@ -26,7 +26,7 @@ double calc_stddev_global(void   *data_local,
           SID_trap_error("Unknown variable type in calc_stddev",ERROR_LOGIC);
     }
   }
-  #ifdef USE_MPI
+  #if USE_MPI
     MPI_Allreduce(&accumulator_local,&accumulator,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
     MPI_Allreduce(&n_data_local,     &n_data,     1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
   #else
