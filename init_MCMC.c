@@ -86,9 +86,6 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   }
   sprintf(MCMC->P_name_format,"%%-%ds",MCMC->P_name_length);
 
-  // Initialize the covariance matrix
-  set_MCMC_covariance(MCMC,NULL);
-
   // Initialize the MCMC mode and set things associated with it
   set_MCMC_mode(MCMC,MCMC_MODE_DEFAULT); // MCMC->my_chain is set here
 
@@ -121,6 +118,9 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   memcpy(MCMC->P_new,  P_init,(size_t)MCMC->n_P*sizeof(double));
   memcpy(MCMC->P_last, P_init,(size_t)MCMC->n_P*sizeof(double));
   memcpy(MCMC->P_chain,P_init,(size_t)MCMC->n_P*sizeof(double));
+
+  // Initialize the covariance matrix
+  set_MCMC_covariance(MCMC,NULL); // First call with NULL must be after P_init is set!
 
   // Set arrays
   MCMC->n_arrays=n_arrays;
