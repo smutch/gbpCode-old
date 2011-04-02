@@ -357,9 +357,16 @@ void compute_trees_horizontal(char *filename_halo_root_in,
   SID_log("Done.",SID_LOG_CLOSE);
 
   // The first snapshot is done now (set to defaults) ... now loop over all other snapshots
-  for(i_read=i_read_1-i_read_step,i_file=i_file_1-1,j_file=0,i_write=i_read_stop,k_write=i_read_stop,j_write=0; // Check these write indices!
-      i_read>=i_read_start;
-      i_read-=i_read_step,i_file--,j_file++){
+  for(i_read=i_read_1-i_read_step, // Check this index
+        i_file=i_file_1-1,         // Check this index
+        j_file=0,                  // Check this index
+        i_write=i_read_stop,       // Check this index
+        j_write=0;                 // Check this index
+        k_write=i_read_stop,       // Check this index
+      i_read>=i_read_start;        // Check this index
+      i_read-=i_read_step,         // Check this index
+        i_file--,                  // Check this index
+        j_file++){                 // Check this index
     SID_log("Processing snapshot #%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_read);
 
     // Shift the snapshot info up the list
@@ -381,7 +388,7 @@ void compute_trees_horizontal(char *filename_halo_root_in,
     read_groups(filename_halo_root_in,i_read_1,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES,&plist1,filename_cat1_1);
     SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
-    // Retrieve the number of halos
+    // Retrieve the number of halos (copy to another array because we need to hold onto it for a while)
     n_subgroups_group_1           = (int *)ADaPS_fetch(plist1.data,"n_subgroups_group_%s",filename_cat1_1);
     n_subgroups[i_file_1%n_search]=((int *)ADaPS_fetch(plist1.data,"n_subgroups_%s",filename_cat1_1))[0];
     n_groups[i_file_1%n_search]   =((int *)ADaPS_fetch(plist1.data,"n_groups_%s",filename_cat1_1))[0];
@@ -462,8 +469,6 @@ void compute_trees_horizontal(char *filename_halo_root_in,
 
         // Perform back-matching; needed when separating bridges from mergers in file_2
         match_halos(&plist1,i_read_1,NULL,0,&plist2,i_read_2,NULL,0,cat_label_2,flag_match_subgroups|MATCH_BACK|MATCH_STORE_2);
-
-        // Sort the back matches created during the previous output for use with this output
         if(j_file>0){
           back_match_id=(int  *)ADaPS_fetch(plist2.data,cat_name_2); // These are the ids in file_3 that back-match to each object in file_2 ...
           merge_sort((void *)back_match_id,(size_t)n_groups_3,&back_match_index,SID_INT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE); // ... and these are their sort indices
@@ -482,8 +487,8 @@ void compute_trees_horizontal(char *filename_halo_root_in,
 //        2) During loops over n_groups, loop over ranks (in a ring) instead, processing the matches made to each rank in turn
 //        3) What info is needed from each rank? projenitor_id[][]  etc
 
-        // Find i_file_2 halos that have been matched to by i_file_1 but which
-        //   do not have assigned progenitors.  They were dropped in i_file_3
+        // Find i_file_2 halos that have been matched to by i_file_1 but which do not have
+        //   assigned progenitors.  They were not matched to anything when i_file_3 was processed
         //   and we need to search for them in previous outputs (done after this).
         SID_log("Searching %d %sgroups for dropped halos...",SID_LOG_OPEN,n_unprocessed,group_text_prefix);
         for(i_group=0,n_drop=0;i_group<n_groups_1;i_group++){
@@ -497,8 +502,8 @@ void compute_trees_horizontal(char *filename_halo_root_in,
             // If the descendant doesn't itself have a descendant (ie. it's progenitor id is not set),
             //   then it has been dropped between file_2 and file_3.  Store information so
             //   we can deal with this afterwards.
-            if(my_descendant<0){
-              // Check to see if this dropped halo has already been listed ...
+            if(my_descendant<-1){  // Do not include halos which were labeled as dropped before
+              // Check to see if this unmatched halo has already been listed ...
               for(i_drop=0,flag_drop=TRUE;i_drop<n_drop;i_drop++){
                 if(drop_list_2[i_drop]==my_descendant_index)
                   flag_drop=FALSE;
@@ -519,6 +524,7 @@ void compute_trees_horizontal(char *filename_halo_root_in,
         // Try to fix any dropped halos found above.  Any not fixed will be labeled
         //   strays and will be discarded.  This needs to be done before we attempt
         //   to fix bridges so that we have progenitor_ids for all possible mergers/bridges.
+// *** TOP ***
         if(n_drop>0){
           SID_log("Looking for %d dropped %sgroups...",SID_LOG_OPEN|SID_LOG_TIMER,n_drop,group_text_prefix);
           SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
@@ -597,7 +603,8 @@ void compute_trees_horizontal(char *filename_halo_root_in,
           else
             SID_log("Done. (no strays)",SID_LOG_CLOSE);
         }
-      
+
+// *** BOTTOM ***
         // Search for and deal with bridged halos
         if(j_file>0){
           // Identify systems with multiple matches and compare to previous
