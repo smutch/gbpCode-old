@@ -41,7 +41,7 @@ struct MCMC_DS_info {
 typedef struct MCMC_info MCMC_info;
 struct MCMC_info {
   char     filename_output_dir[256];
-  char    *problem_name;
+  char     problem_name[MCMC_NAME_SIZE];
   int     (*map_P_to_M)(double *,MCMC_info *,double **);
   void    (*compute_MCMC_ln_likelihood)(MCMC_info *MCMC,double **M,double *P,double *ln_likeliood_DS,int *n_DoF_DS,double *ln_likeliood_all,int *n_DoF_all);
   int      my_chain;
@@ -144,6 +144,9 @@ void start_loop_MCMC(MCMC_info *MCMC);
 void end_loop_MCMC(MCMC_info *MCMC);
 void restart_MCMC(MCMC_info *MCMC);
 void init_MCMC_arrays(MCMC_info *MCMC);
+void free_MCMC_DS(MCMC_info *MCMC);
+void free_MCMC_arrays(MCMC_info *MCMC);
+void free_MCMC_covariance(MCMC_info *MCMC);
 void free_MCMC(MCMC_info *MCMC);
 void add_MCMC_DS(MCMC_info *MCMC,const char *name,int n_D,int *D,double *DS,double *dDS,void *params,int n_arrays,...);
 void autotune_MCMC(MCMC_info *MCMC);

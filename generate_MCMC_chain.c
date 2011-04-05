@@ -28,7 +28,6 @@ int generate_MCMC_chain(MCMC_info *MCMC){
   static int       flag_report_props;
   static int       n_DS;
   static int      *n_M;
-  
   // Initialize a few things on the first call
   switch(MCMC->first_chain_call){
     case TRUE:

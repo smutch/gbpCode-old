@@ -81,7 +81,6 @@ void read_MCMC_state(MCMC_info *MCMC){
     MCMC->mode                      =MCMC_MODE_DEFAULT;
     MCMC->DS                        =NULL;
     MCMC->last                      =NULL;
-    MCMC->problem_name              =(char *)SID_malloc(sizeof(char)*MCMC_NAME_SIZE);
 
     // Read/Write Header file
     if((fp_run=fopen(filename_run,"rb"))!=NULL){

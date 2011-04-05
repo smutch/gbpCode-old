@@ -15,6 +15,9 @@ OBJFILES = add_MCMC_DS.o                        \
 	   read_MCMC_state.o                    \
 	   compute_MCMC_chain_stats.o           \
 	   compute_MCMC_ln_likelihood_default.o \
+	   free_MCMC_covariance.o               \
+	   free_MCMC_arrays.o                   \
+	   free_MCMC_DS.o                       \
 	   free_MCMC.o                          \
 	   generate_MCMC_chain.o                \
 	   generate_MCMC_parameters.o           \

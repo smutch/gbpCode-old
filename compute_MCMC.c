@@ -180,6 +180,9 @@ void compute_MCMC(MCMC_info *MCMC){
 
   SID_log("Initializing...",SID_LOG_OPEN);
 
+  // Initialize the covariance matrix
+  set_MCMC_covariance(MCMC,NULL); // First call with NULL must be after P_init is set!
+
   // Initialize arrays
   init_MCMC_arrays(MCMC);
 
@@ -590,7 +593,6 @@ void compute_MCMC(MCMC_info *MCMC){
         n_iterations_phase=n_iterations-n_iterations_burn;
         break;
       }
-
       // Initialize progress reporting
       i_report=0;
       if(n_iterations_phase>20)

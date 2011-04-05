@@ -75,7 +75,6 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   MCMC->compute_MCMC_ln_likelihood=compute_MCMC_ln_likelihood_default;
   MCMC->params                    =params;
   MCMC->n_P                       =n_P;
-  MCMC->problem_name=(char *)SID_malloc(sizeof(char)*MCMC_NAME_SIZE);
   sprintf(MCMC->problem_name,"%s",problem_name);
   MCMC->P_names      =(char **)SID_malloc(sizeof(char *)*MCMC->n_P);
   MCMC->P_name_length=0;
@@ -118,9 +117,6 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   memcpy(MCMC->P_new,  P_init,(size_t)MCMC->n_P*sizeof(double));
   memcpy(MCMC->P_last, P_init,(size_t)MCMC->n_P*sizeof(double));
   memcpy(MCMC->P_chain,P_init,(size_t)MCMC->n_P*sizeof(double));
-
-  // Initialize the covariance matrix
-  set_MCMC_covariance(MCMC,NULL); // First call with NULL must be after P_init is set!
 
   // Set arrays
   MCMC->n_arrays=n_arrays;

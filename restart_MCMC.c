@@ -27,12 +27,9 @@ void restart_MCMC(MCMC_info *MCMC){
   MCMC->n_success               =0;
   MCMC->n_propositions          =0;
   MCMC->n_map_calls             =0;
-  SID_free(SID_FARG MCMC->V);
-  gsl_matrix_free(MCMC->m);MCMC->m=NULL;
-  gsl_vector_free(MCMC->b);MCMC->b=NULL;
 
-  // Initialize the covariance matrix
-  set_MCMC_covariance(MCMC,NULL);
+  free_MCMC_covariance(MCMC);
+  free_MCMC_arrays(MCMC);
 
   SID_log("Done.",SID_LOG_CLOSE);
 }
