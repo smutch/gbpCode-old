@@ -46,6 +46,8 @@ void compute_trees_horizontal(char *filename_halo_root_in,
   int         i_stray;
   int         n_unlinked;
   int         n_unprocessed;
+  int         n_multimatch;
+  int         n_sputter;
   int         n_bridge_candidates;
   int         n_bridge_systems;
   int         n_mergers;
@@ -53,6 +55,7 @@ void compute_trees_horizontal(char *filename_halo_root_in,
   int         n_mergers_bridge;
   int         n_bridges;
   int         n_match;
+  int         n_match_halos;
   int         n_back_match;
   int         i_match;
   int         j_match;
@@ -113,7 +116,7 @@ void compute_trees_horizontal(char *filename_halo_root_in,
   double      max_mass_fraction;
   int         n_drop;
   int         n_found;
-  int         n_found_drop;
+  int         n_drop_found;
   int         n_found_bridge;
   double      delta_r;
   double      delta_M;
@@ -361,8 +364,8 @@ void compute_trees_horizontal(char *filename_halo_root_in,
         i_file=i_file_1-1,         // Check this index
         j_file=0,                  // Check this index
         i_write=i_read_stop,       // Check this index
-        j_write=0;                 // Check this index
-        k_write=i_read_stop,       // Check this index
+        j_write=0,                 // Check this index
+        k_write=i_read_stop;       // Check this index
       i_read>=i_read_start;        // Check this index
       i_read-=i_read_step,         // Check this index
         i_file--,                  // Check this index
@@ -399,10 +402,12 @@ void compute_trees_horizontal(char *filename_halo_root_in,
     for(k_match=0;k_match<n_k_match;k_match++){
 
       // Initialize counters
+      n_match_halos       =0;
       n_drop              =0;
       n_mergers_drop      =0;
-      n_found_drop        =0;
+      n_drop_found        =0;
       n_strays_drop       =0;
+      n_multimatch        =0;
       n_bridge_candidates =0;
       n_bridge_systems    =0;
       n_found_bridge      =0;
@@ -412,6 +417,7 @@ void compute_trees_horizontal(char *filename_halo_root_in,
       n_mergers           =0;
       n_found             =0;
       n_strays            =0;
+      n_sputter           =0;
       biggest_stray       =0;
       biggest_stray_drop  =0;
       biggest_stray_bridge=0;
@@ -463,6 +469,7 @@ void compute_trees_horizontal(char *filename_halo_root_in,
         sprintf(cat_name_2, "back_match_3to2_%sgroup",group_text_prefix);
 
         // Perform forward-matching
+        SID_log("Performing matching...",SID_LOG_OPEN|SID_LOG_TIMER);
         match_halos(&plist1,i_read_1,NULL,0,&plist2,i_read_2,NULL,0,cat_label_1,flag_match_subgroups|MATCH_STORE_SCORE);
         match_id=(int  *)ADaPS_fetch(plist1.data,cat_name_1); // These are the ids in file_2 that match to each object in file_1 ...
         merge_sort((void *)match_id,(size_t)n_groups_1,&match_index,SID_INT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE); // ... and these are their sort indices
@@ -482,6 +489,7 @@ void compute_trees_horizontal(char *filename_halo_root_in,
           descendant_id[i_file_1%n_search][i_group] =-i_group-2; // Leave -1 free for dropped halos
           file_offset[i_file_1%n_search][i_group]   =-i_group-2; // Leave -1 free for dropped halos
         }
+        SID_log("Done.",SID_LOG_CLOSE);
 
 // To Do: 1) Generate match_rank and match_rank_index arrays in match_halos; also, n_match_rank array saying how many matches to each rank
 //        2) During loops over n_groups, loop over ranks (in a ring) instead, processing the matches made to each rank in turn
@@ -492,29 +500,30 @@ void compute_trees_horizontal(char *filename_halo_root_in,
         //   and we need to search for them in previous outputs (done after this).
         SID_log("Searching %d %sgroups for dropped halos...",SID_LOG_OPEN,n_unprocessed,group_text_prefix);
         for(i_group=0,n_drop=0;i_group<n_groups_1;i_group++){
-          // This is the index of the group in file_2 that the i_group'th group in file_1 has been matched to (-1 if no match)
-          my_descendant_index=match_id[i_group];
-          // If my_descendant_index>=0 then this group (and maybe more) has
-          //   been matched to a descendant in the previous snapshot.
-          if(my_descendant_index>=0){
-            my_descendant=progenitor_id[i_file_2%n_search][my_descendant_index];
-            // This is the (previously assigned) progenitor id of the i_group'th's descendant halo -> this halo's descendant
-            // If the descendant doesn't itself have a descendant (ie. it's progenitor id is not set),
-            //   then it has been dropped between file_2 and file_3.  Store information so
-            //   we can deal with this afterwards.
-            if(my_descendant<-1){  // Do not include halos which were labeled as dropped before
-              // Check to see if this unmatched halo has already been listed ...
-              for(i_drop=0,flag_drop=TRUE;i_drop<n_drop;i_drop++){
-                if(drop_list_2[i_drop]==my_descendant_index)
-                  flag_drop=FALSE;
+           // This is the index of the group in file_2 that the i_group'th group in file_1 has been matched to (-1 if no match)
+           my_descendant_index=match_id[i_group];
+           // If my_descendant_index>=0 then this group (and maybe more) has
+           //   been matched to a descendant in the previous snapshot.
+           if(my_descendant_index>=0){
+              n_match_halos++;
+              my_descendant=progenitor_id[i_file_2%n_search][my_descendant_index];
+              // This is the (previously assigned) progenitor id of the i_group'th's descendant halo -> this halo's descendant
+              // If the descendant doesn't itself have a descendant (ie. it's progenitor id is not set),
+              //   then it has been dropped between file_2 and file_3.  Store information so
+              //   we can deal with this afterwards.
+              if(my_descendant<-1){  
+                 // Check to see if this unmatched halo has already been listed ...
+                 for(i_drop=0,flag_drop=TRUE;i_drop<n_drop;i_drop++){
+                    if(drop_list_2[i_drop]==my_descendant_index)
+                       flag_drop=FALSE;
+                 }
+                 // ... if not, add it to the list
+                 if(flag_drop){
+                    drop_list_1[n_drop]  =i_group;
+                    drop_list_2[n_drop++]=my_descendant_index;
+                 }
               }
-              // ... if not, add it to the list
-              if(flag_drop){
-                drop_list_1[n_drop]  =i_group;
-                drop_list_2[n_drop++]=my_descendant_index;
-              }
-            }
-          }
+           }
         }
         if(n_drop>0)
           SID_log("Done. (%d found)",SID_LOG_CLOSE,n_drop);
@@ -524,21 +533,22 @@ void compute_trees_horizontal(char *filename_halo_root_in,
         // Try to fix any dropped halos found above.  Any not fixed will be labeled
         //   strays and will be discarded.  This needs to be done before we attempt
         //   to fix bridges so that we have progenitor_ids for all possible mergers/bridges.
-// *** TOP ***
         if(n_drop>0){
-          SID_log("Looking for %d dropped %sgroups...",SID_LOG_OPEN|SID_LOG_TIMER,n_drop,group_text_prefix);
-          SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
+          SID_log("Attempting to resolve %d dropped %sgroup candidates...",SID_LOG_OPEN|SID_LOG_TIMER,n_drop,group_text_prefix);
+          //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
           n_strays_drop=n_drop;
           for(j_file_1=i_file_2,
-                j_file_2=i_file_2+2,
+                j_file_2=i_file_2+2, // Manifestly: there was no match at i_file_2+1
                 j_read_1=i_read_2,
                 j_read_2=i_read_2+2*i_read_step,
                 i_search=0,
-                n_found_drop=0;
+                n_drop_found=0;
               j_file_2<=i_read_stop && i_search<n_search-2 && n_strays_drop>0;
-              j_file_2++,j_read_2+=i_read_step,i_search++){
-            sprintf(filename_cat2_1,"%d",j_read_1);
-            sprintf(filename_cat2_2,"%d",j_read_2);
+              j_file_2++,
+                j_read_2+=i_read_step,
+                i_search++){
+            sprintf(filename_cat2_1,"%03d",j_read_1);
+            sprintf(filename_cat2_2,"%03d",j_read_2);
             
             // Read catalog to test against
             read_groups(filename_halo_root_in,j_read_2,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES,&plist3,filename_cat2_2);
@@ -550,31 +560,47 @@ void compute_trees_horizontal(char *filename_halo_root_in,
             // See if we have found any of the dropped halos
             if(n_match>0){
               drop_index=(int *)ADaPS_fetch(plist2.data,"match_drop"); // These are indices of j_file_2'th groups matched to drop list
-              for(i_drop=0,j_drop=0;i_drop<n_strays_drop;i_drop++){
+              for(i_drop=0,j_drop=0,n_sputter=0;i_drop<n_strays_drop;i_drop++){
                 my_descendant_index=drop_index[i_drop];
-                // If the dropped halo was found in the j_file_2'th snapshot and the
-                //   matched halo has been assigned an id, then A DROPPED HALO HAS BEEN FOUND...
+                // If the dropped halo was found in the j_file_2'th snapshot ...
                 if(my_descendant_index>=0){
                   my_descendant=progenitor_id[j_file_2%n_search][my_descendant_index];
+fprintf(stderr,"%d\n",my_descendant);
+                  // ... and the matched halo has a valid id, then A DROPPED HALO HAS BEEN FOUND.
                   if(my_descendant>=0){
+                    // Fix the dropped halo's pointers etc.
                     n_progenitors[j_file_2%n_search][my_descendant_index]++;
+                    // If it is a merger, give it a new id
                     if(n_progenitors[j_file_2%n_search][my_descendant_index]>1)
-                      progenitor_id[i_file_2%n_search][drop_list_2[i_drop]]=max_id++;
+                       progenitor_id[i_file_2%n_search][drop_list_2[i_drop]]=max_id++;
                     else
-                      progenitor_id[i_file_2%n_search][drop_list_2[i_drop]]=my_descendant;
+                       progenitor_id[i_file_2%n_search][drop_list_2[i_drop]]=my_descendant;
                     file_offset[i_file_2%n_search][drop_list_2[i_drop]]    =j_file_2-j_file_1;
                     descendant_id[i_file_2%n_search][drop_list_2[i_drop]]  =my_descendant;
                     tree_id[i_file_2%n_search][drop_list_2[i_drop]]        =tree_id[j_file_2%n_search][my_descendant_index];
-                    n_found_drop++;
+                    n_drop_found++;
                   }
-                  // ... else it is missing in consecutive files and we need to
-                  //     look in the next file (or give-up if we have scanned
-                  //     n_match catalogs and call it an stray; handle later)
-                  else{
-                    drop_list_1[j_drop]=drop_list_1[i_drop];
-                    drop_list_2[j_drop]=drop_list_2[i_drop];
-                    j_drop++;
+                  // ... else this is a sputtering halo ... it has been dropped, found 
+                  //     and dropped again multiple times now
+                  else if(my_descendant==-1){
+                     progenitor_id[i_file_1%n_search][drop_list_1[i_drop]] =-1;
+                     progenitor_id[i_file_2%n_search][drop_list_2[i_drop]] =-1;
+                     descendant_id[i_file_1%n_search][drop_list_1[i_drop]] =-1;
+                     descendant_id[i_file_2%n_search][drop_list_2[i_drop]] =-1;
+                     file_offset[i_file_1%n_search][drop_list_1[i_drop]]   =-1;
+                     file_offset[i_file_2%n_search][drop_list_2[i_drop]]   =-1;
+                     tree_id[i_file_1%n_search][drop_list_1[i_drop]]       =-1;
+                     tree_id[i_file_2%n_search][drop_list_2[i_drop]]       =-1;
+                     match_id[drop_list_1[i_drop]]                         =-1;
+                     n_unprocessed--;
+                     n_sputter++; // This is a sputtering halo ... it's been dropped multiple times
                   }
+                }
+                // ... else it is missing in consecutive files and we need to keep looking for it
+                else{
+                   drop_list_1[j_drop]=drop_list_1[i_drop];
+                   drop_list_2[j_drop]=drop_list_2[i_drop];
+                   j_drop++;                   
                 }
               }
               n_strays_drop=j_drop;
@@ -582,7 +608,7 @@ void compute_trees_horizontal(char *filename_halo_root_in,
             }
           }
 
-          // If any dropped halos were not found, assign them
+          // If any drop-candidates were not found, label them as dropped and assign them
           //   dummy values; ignored later during output.
           for(i_stray=0;i_stray<n_strays_drop;i_stray++){
             biggest_stray_drop=MAX(biggest_stray_drop,n_particles_1[drop_list_1[i_stray]]);
@@ -596,23 +622,28 @@ void compute_trees_horizontal(char *filename_halo_root_in,
             tree_id[i_file_2%n_search][drop_list_2[i_stray]]       =-1;
             match_id[drop_list_1[i_stray]]                         =-1;
             n_unprocessed--;
+//SID_log("%07d",SID_LOG_COMMENT,drop_list_1[i_stray]);
           }
           SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
           if(n_strays_drop>0)
-            SID_log("Done. (%d strays discarded; biggest=%d)",SID_LOG_CLOSE,n_strays_drop,biggest_stray_drop);
+            SID_log("Done. (%d strays discarded and %d are sputtering; biggest new stray=%d)",SID_LOG_CLOSE,n_strays_drop,n_sputter,biggest_stray_drop);
           else
             SID_log("Done. (no strays)",SID_LOG_CLOSE);
         }
 
-// *** BOTTOM ***
-        // Search for and deal with bridged halos
+        // We may have changed the match_ids at this point, so we need to resort
+        SID_free(SID_FARG match_index);
+        merge_sort((void *)match_id,(size_t)n_groups_1,&match_index,SID_INT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE); // ... and these are their sort indices
+
+        // Search for and process multi-matched systems (mergers or bridges) ...
+/*
         if(j_file>0){
-          // Identify systems with multiple matches and compare to previous
-          //   back-matching to decide if they're mergers or bridges.  All scans
-          //   are done over the n_groups_2 halos in file_2 but we collect the
-          //   systems in file_1 which are involved.
-          SID_log("Searching %d %sgroups for potential bridges...",SID_LOG_OPEN,n_unprocessed,group_text_prefix);
-          SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
+
+          // ... Identify systems with multiple matches and do a first pass
+          //     to find bridge candidates.  We will check afterwards if there 
+          //     are any mergers in the candidate bridged mergers.
+          SID_log("Searching %d unprocessed %sgroups for multi-match systems...",SID_LOG_OPEN,n_unprocessed,group_text_prefix);
+          //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
           bridge_list_1=drop_list_1; // Done to make the code more readable
           bridge_list_2=drop_list_2; // Done to make the code more readable
           for(i_group=0,n_bridge_candidates=0,n_bridge_systems=0;i_group<n_groups_2;i_group++){
@@ -629,7 +660,7 @@ void compute_trees_horizontal(char *filename_halo_root_in,
               bridge_list_2[n_bridge_candidates+n_match]=i_group;
               n_match++;
             }
-            // If n_match>1, then we've got a merger &/or bridged system...
+            // If n_match>1, then we've got a multi-matched system...
             if(n_match>1){
               // Count the number of back matches between halos in i_file_3 and the i_group'th halo in i_file_2.
               n_back_match=0;
@@ -643,19 +674,23 @@ void compute_trees_horizontal(char *filename_halo_root_in,
                 n_bridge_candidates+=n_match;
                 n_bridge_systems++;
               }
+              n_multimatch+=n_match;
             }
           }
+//for(i_match=0;i_match<n_multimatch;i_match++) SID_log("%07d",SID_LOG_COMMENT,bridge_list_1[i_match]);
           SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
           if(n_bridge_candidates>0)
-            SID_log("Done. (%d found in %d systems)",SID_LOG_CLOSE,n_bridge_candidates,n_bridge_systems);
+            SID_log("Done. (%d found; %d are in %d bridged systems)",SID_LOG_CLOSE,n_multimatch,n_bridge_candidates,n_bridge_systems);
           else
             SID_log("Done. (none found)",SID_LOG_CLOSE);
 
-          // Try to match merger/bridged systems to previous outputs.
-          //   Any not found will be labeled strays and will be discarded.
+          // ... Compare multi-matched halos to the results of previous
+          //   back-matching to decide if they're mergers or bridges.  All scans
+          //   are done over the n_groups_2 halos in file_2 but we collect the
+          //   systems in file_1 which are involved.
           if(n_bridge_candidates>0){
-            SID_log("Processing %d bridge-candidate %sgroups...",SID_LOG_OPEN|SID_LOG_TIMER,n_bridge_candidates,group_text_prefix);
-            SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
+            SID_log("Searching %d %sgroups in %d bridged systems for mergers...",SID_LOG_OPEN|SID_LOG_TIMER,n_bridge_candidates,group_text_prefix,n_bridge_systems);
+            //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
             n_strays_bridge=n_bridge_candidates;
             for(j_file_1=i_file_1,
                   j_file_2=i_file_2+1,
@@ -667,8 +702,8 @@ void compute_trees_horizontal(char *filename_halo_root_in,
                   n_bridges=0;
                 j_read_2<=i_read_stop && i_search<n_search-2 && n_strays_bridge>0;
                 j_file_2++,j_read_2+=i_read_step,i_search++){
-              sprintf(filename_cat2_1,"%d",j_read_1);
-              sprintf(filename_cat2_2,"%d",j_read_2);
+              sprintf(filename_cat2_1,"%03d",j_read_1);
+              sprintf(filename_cat2_2,"%03d",j_read_2);
             
               // Read catalog to test against
               read_groups(filename_halo_root_in,j_read_2,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES,&plist3,filename_cat2_2);
@@ -740,24 +775,25 @@ void compute_trees_horizontal(char *filename_halo_root_in,
               }
             }
 
-            // If any bridge-candidate halos were not found, they will keep their negative
-            //   dummy values and be ignored during output.
-            for(i_stray=0,biggest_stray_bridge=0;i_stray<n_strays_bridge;i_stray++){
-              biggest_stray_bridge=MAX(biggest_stray_bridge,n_particles_1[bridge_list_1[i_stray]]);
-              progenitor_id[i_file_1%n_search][bridge_list_1[i_stray]]=-1;
-              file_offset[i_file_1%n_search][bridge_list_1[i_stray]]  =-1;
-              descendant_id[i_file_1%n_search][bridge_list_1[i_stray]]=-1;
-              tree_id[i_file_1%n_search][bridge_list_1[i_stray]]      =-1;
+            // If any bridge-candidate halos were not found in previous snaps, call them mergers
+            //   to the trunk (ie. their original matching)
+            for(i_bridge=0;i_bridge<n_strays_bridge;i_bridge++){
+               n_progenitors[i_file_2%n_search][bridge_list_2[i_bridge]]++;
+               if(n_progenitors[i_file_2%n_search][bridge_list_2[i_bridge]]>1){
+                 progenitor_id[i_file_1%n_search][bridge_list_1[i_bridge]]=max_id++;
+                 n_mergers_bridge++;
+               }
+               else
+                 progenitor_id[i_file_1%n_search][bridge_list_1[i_bridge]]=my_descendant;
               n_unprocessed--;
             }
+            n_strays_bridge=0;
 
             SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
-            if(n_strays_bridge>0)
-              SID_log("Done. (%d were mergers, %d were bridges and %d were strayed; biggest=%d)",SID_LOG_CLOSE,n_mergers_bridge,n_bridges,n_strays_bridge,biggest_stray_bridge);
-            else
-              SID_log("Done. (%d were mergers, %d were bridges and none were strayed)",SID_LOG_CLOSE,n_mergers_bridge,n_bridges);
+            SID_log("Done. (%d were called mergers, %d were called bridges)",SID_LOG_CLOSE,n_mergers_bridge,n_bridges);
           }
         }
+        */
 
         // Propagate progenitor and tree ids for the simple matches
         SID_log("Assigning IDs to %d %sgroups...",SID_LOG_OPEN,n_unprocessed,group_text_prefix);
@@ -768,7 +804,7 @@ void compute_trees_horizontal(char *filename_halo_root_in,
           // If my_descendant_index>=0 then this group (and maybe more) has
           //   been matched to a descendant in the previous snapshot.  If
           //   progenitor_id==-1, it was dropped and if it is less than 
-          //   that, it has not been processed yet
+          //   that, it has not been matched to anything yet
           if(my_descendant_index>=0){
             my_descendant=progenitor_id[i_file_2%n_search][my_descendant_index];
             if(my_descendant>=0 && progenitor_id[i_file_1%n_search][i_group]<(-1)){
@@ -784,22 +820,20 @@ void compute_trees_horizontal(char *filename_halo_root_in,
               tree_id[i_file_1%n_search][i_group]        =tree_id[i_file_2%n_search][my_descendant_index];
               n_unprocessed--;
             }
-            else if(progenitor_id[i_file_1%n_search][i_group]<(-1)){
-              biggest_stray_drop=MAX(biggest_stray_drop,n_particles_1[i_group]);
-              progenitor_id[i_file_1%n_search][i_group]=-1;
+            else if(progenitor_id[i_file_1%n_search][i_group]<(-1)){ // Don't set it's progenitor_ID because we need the <-1 value for looking for dropped halos
               file_offset[i_file_1%n_search][i_group]  =-1;
-              descendant_id[i_file_1%n_search][i_group]=-1;
+              //descendant_id[i_file_1%n_search][i_group]=-1;
               tree_id[i_file_1%n_search][i_group]      =-1;            
               n_unprocessed--;
             }
           }
-          else if(progenitor_id[i_file_1%n_search][i_group]<(-1)){
-            biggest_stray_drop=MAX(biggest_stray_drop,n_particles_1[i_group]);
-            progenitor_id[i_file_1%n_search][i_group]=-1;
-            file_offset[i_file_1%n_search][i_group]  =-1;
-            descendant_id[i_file_1%n_search][i_group]=-1;
-            tree_id[i_file_1%n_search][i_group]      =-1;            
-            n_unprocessed--;
+          // This halo was not matched to anything
+          else if(progenitor_id[i_file_1%n_search][i_group]!=(-1)){ // Don't re-process strays
+             progenitor_id[i_file_1%n_search][i_group]=-1;
+             file_offset[i_file_1%n_search][i_group]  =-1;
+             //descendant_id[i_file_1%n_search][i_group]=-1;
+             tree_id[i_file_1%n_search][i_group]      =-1;            
+             n_unprocessed--;
           }
         }
         SID_log("Done. (%d mergers)",SID_LOG_CLOSE,n_mergers);
@@ -821,31 +855,41 @@ void compute_trees_horizontal(char *filename_halo_root_in,
       }
      
       // Write a log file
-      n_mergers    +=n_mergers_bridge;
-      n_found       =n_found_drop+n_found_bridge;
+      n_mergers   +=n_mergers_bridge;
+      n_found      =n_drop_found+n_found_bridge;
       n_strays     =n_strays_drop+n_strays_bridge;
       biggest_stray=MAX(biggest_stray_drop,biggest_stray_bridge);
       if(k_match==0){
         if(j_file==0){
           fp=fopen(filename_log,"w");
           fprintf(fp,"# (1):  filenumber\n");
-          fprintf(fp,"# (2):  n_subgroups\n");
-          fprintf(fp,"# (3):  max_id_subgroup\n");
-          fprintf(fp,"# (4):  n_dropped_subgroups\n");
-          fprintf(fp,"# (5):  n_found_subgroups\n");
-          fprintf(fp,"# (6):  n_mergers_subgroups\n");
-          fprintf(fp,"# (7):  n_bridges_subgroups\n");
-          fprintf(fp,"# (8):  n_strays_subgroups\n");
-          fprintf(fp,"# (9):  biggest_strayed_subgroup\n");
+          fprintf(fp,"# (2):  Maximum subgroup ID\n");
+          fprintf(fp,"# (3):  # of subgroups\n");
+          fprintf(fp,"# (4):  # of matched subgroups\n");
+          fprintf(fp,"# (5):  # of dropped subgroups\n");
+          fprintf(fp,"# (6):  # of dropped subgroups found\n");
+          fprintf(fp,"# (7):  # of sputtering subgroups\n");
+          fprintf(fp,"# (8):  # of subgroups in multiple-match systems (MMSs)\n");
+          fprintf(fp,"# (9):  # of MMSs that are bridge candidates\n");
+          fprintf(fp,"# (10): # of MMSs that ARE in bridge systems\n");
+          fprintf(fp,"# (11): # of MMSs that are mergers in bridges\n");
+          fprintf(fp,"# (12): # of subgroup mergers (total)\n");
+          fprintf(fp,"# (13): # of stray subgroups\n");
+          fprintf(fp,"# (14): biggest strayed subgroup\n");
           if(n_k_match>1){
-            fprintf(fp,"# (10): n_groups\n");
-            fprintf(fp,"# (11): max_id_group\n");
-            fprintf(fp,"# (12): n_dropped_groups\n");
-            fprintf(fp,"# (13): n_found_groups\n");
-            fprintf(fp,"# (14): n_mergers_groups\n");
-            fprintf(fp,"# (15): n_bridges_groups\n");
-            fprintf(fp,"# (16): n_strays_groups\n");
-            fprintf(fp,"# (17): biggest_strayed_group\n");
+             fprintf(fp,"# (15): Maximum group ID\n");
+             fprintf(fp,"# (16): # of groups\n");
+             fprintf(fp,"# (17): # of matched groups\n");
+             fprintf(fp,"# (18): # of dropped groups\n");
+             fprintf(fp,"# (19): # of dropped groups found\n");
+             fprintf(fp,"# (20): # of sputtering subgroups\n");
+             fprintf(fp,"# (21): # of groups in multiple-match systems (MMSs)\n");
+             fprintf(fp,"# (22): # of MMSs that are bridge candidates\n");
+             fprintf(fp,"# (23): # of MMSs that ARE in bridge systems\n");
+             fprintf(fp,"# (24): # of MMSs that are mergers in bridges\n");
+             fprintf(fp,"# (25): # of group mergers (total)\n");
+             fprintf(fp,"# (26): # of stray groups\n");
+             fprintf(fp,"# (27): biggest strayed group\n");
           }
         }
         else
@@ -854,16 +898,22 @@ void compute_trees_horizontal(char *filename_halo_root_in,
       }
       else
         fp=fopen(filename_log,"a");
-      fprintf(fp," %8d %8d %8d %8d %8d %8d %8d %8d",
-              n_groups_1,
+      fprintf(fp," %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d",
               max_id-1,
+              n_groups_1,
+              n_match_halos,
               n_drop,
-              n_found_drop,
-              n_mergers,
+              n_drop_found,
+              n_sputter,
+              n_multimatch,
+              n_bridge_candidates,
+              n_bridge_systems,
+              n_mergers_bridge,
               n_bridges,
+              n_mergers,
               n_strays,
               biggest_stray);
-      if(k_match==1)
+      if(k_match==n_k_match-1)
         fprintf(fp,"\n");
       fclose(fp);
 

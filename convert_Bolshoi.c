@@ -8,8 +8,8 @@
 
 #define N_UPIDS_MAX 100000
 
-void add_uberparent_to_list(int tree_id,int *tree_ids,int *n_tree_ids);
-void add_uberparent_to_list(int tree_id,int *tree_ids,int *n_tree_ids){
+void add_group_to_list(int tree_id,int *tree_ids,int *n_tree_ids);
+void add_group_to_list(int tree_id,int *tree_ids,int *n_tree_ids){
   int flag_found;
   int i_tree_id;
   for(i_tree_id=0,flag_found=FALSE;i_tree_id<(*n_tree_ids) && !flag_found;i_tree_id++){
@@ -84,6 +84,8 @@ float propagate_spins_recursive(tree_node_info *tree,RNG_info *RNG){
 int main(int argc, char *argv[]){
   char        filename_in_root[256];
   char        filename_out_root[256];
+  char        filename_missing_parents_out[256];
+  char        filename_masses_out[256];
   char        filename_in[256];
   char        filename_out[256];
   char        filename_snaps[256];
@@ -91,11 +93,14 @@ int main(int argc, char *argv[]){
   size_t      line_length=0;
   FILE       *fp_in;
   FILE       *fp_out;
+  FILE       *fp_missing_parents_out;
+  FILE       *fp_masses_out;
   FILE       *fp_snaps;
   char        comment_char[2];
   char        first_char[2];
   int   n_halos;
   int   n_trees_out,n_trees_in;
+  int  *n_halos_isotree;
   int  *n_halos_tree;
   int  *n_trees_tree;
   int   i_halo,j_halo;
@@ -167,7 +172,27 @@ int main(int argc, char *argv[]){
   char              filename_root_out[256];
   RNG_info          RNG;
   int               seed=102873;
-  
+
+  float           *halo_scale_array;
+  int             *halo_id_array;
+  float           *descendant_scale_array;
+  int             *descendant_id_array;
+  int             *parent_id_array;
+  int             *uberparent_id_array;
+  float           *M_vir_in_array;
+  float           *M_vir_array;
+  float           *R_vir_array;
+  float           *sigma_v_array;
+  float           *V_max_array;
+  float           *x_array;
+  float           *y_array;
+  float           *z_array;
+  float           *v_x_array;
+  float           *v_y_array;
+  float           *v_z_array;
+  size_t          *halo_id_index=NULL;
+  size_t           halo_index;
+
   SID_init(&argc,&argv,NULL);
 
   SID_log("Converting Bolshoi trees...",SID_LOG_OPEN|SID_LOG_TIMER);
@@ -183,6 +208,8 @@ int main(int argc, char *argv[]){
   //progenitor_mode=TREE_PROGENITOR_ORDER_DELUCIA;
   progenitor_mode=TREE_PROGENITOR_ORDER_DEFAULT;
   tree_mode      =0; // join-on
+  //tree_mode      =1; // every input tree gets its own output tree
+  //tree_mode      =2; // put everything in one file tree
 
   init_RNG(&seed,&RNG,RNG_DEFAULT);
 
@@ -194,21 +221,21 @@ int main(int argc, char *argv[]){
           SID_log("Processing file %d out of %d...",SID_LOG_OPEN|SID_LOG_TIMER,i_write+1,n_write);
 
           // Open file
-          sprintf(filename_in,"/nfs/dset/shrek071/millenium/bolshoi/raw/tree_%d_%d_%d.dat",i_x,i_y,i_z);
+          sprintf(filename_in,"/nfs/dset/shrek071/millenium/bolshoi/raw_depth_first/depth_first_tree_%d_%d_%d.dat",i_x,i_y,i_z);
           SID_log("Open file {%s}...",SID_LOG_OPEN,filename_in);
           fp_in=fopen(filename_in,"r");
           SID_log("Done.",SID_LOG_CLOSE);
 
-          // Skip comment lines at the top
-          SID_log("Skip header comments...",SID_LOG_OPEN);
-          for(i_header=0;i_header<n_header_lines;i_header++)
-            grab_next_line(fp_in,&line,&line_length);
-          SID_log("Done.",SID_LOG_CLOSE);
-
           // Read number of iso-trees
           SID_log("Read number of iso-trees...",SID_LOG_OPEN);
+          for(i_header=0;i_header<n_header_lines;i_header++)
+            grab_next_line(fp_in,&line,&line_length);
           grab_next_line(fp_in,&line,&line_length);
-          grab_int(line,1,&n_trees_in);   
+          grab_int(line,1,&n_trees_in);
+          rewind(fp_in);
+          for(i_header=0;i_header<n_header_lines;i_header++)
+            grab_next_line(fp_in,&line,&line_length);
+          grab_next_line(fp_in,&line,&line_length);   
           SID_log("{%d}...Done.",SID_LOG_CLOSE,n_trees_in);
 
           // Read list of expansion factors
@@ -239,44 +266,105 @@ int main(int argc, char *argv[]){
             }          
           }        
 
+          // Count the number of halos in the file
+          SID_log("Counting halos...",SID_LOG_OPEN|SID_LOG_TIMER);
+          grab_next_line(fp_in,&line,&line_length); // First iso-tree header line
+          n_halos=0;
+          while(!feof(fp_in)){
+            grab_next_line(fp_in,&line,&line_length);
+            if(strlen(line)!=0 && !check_comment(line)) // Ignore blank lines
+              n_halos++;
+          }
+          rewind(fp_in);
+          for(i_header=0;i_header<n_header_lines;i_header++)
+            grab_next_line(fp_in,&line,&line_length);
+          grab_next_line(fp_in,&line,&line_length);
+          SID_log("(%d found)...",SID_LOG_CONTINUE,n_halos);
+          SID_log("Done.",SID_LOG_CLOSE);
+
+          // Allocate RAM for the arrays we will fill from the file
+          SID_log("Allocating arrays for %d halos...",SID_LOG_OPEN|SID_LOG_TIMER,n_halos);
+          halo_scale_array      =(float *)SID_malloc(sizeof(float)*n_halos);
+          halo_id_array         =(int   *)SID_malloc(sizeof(int)*n_halos);
+          descendant_scale_array=(float *)SID_malloc(sizeof(float)*n_halos);
+          descendant_id_array   =(int   *)SID_malloc(sizeof(int)*n_halos);
+          parent_id_array       =(int   *)SID_malloc(sizeof(int)*n_halos);
+          uberparent_id_array   =(int   *)SID_malloc(sizeof(int)*n_halos);
+          M_vir_in_array        =(float *)SID_malloc(sizeof(float)*n_halos);
+          M_vir_array           =(float *)SID_malloc(sizeof(float)*n_halos);
+          R_vir_array           =(float *)SID_malloc(sizeof(float)*n_halos);
+          sigma_v_array         =(float *)SID_malloc(sizeof(float)*n_halos);
+          V_max_array           =(float *)SID_malloc(sizeof(float)*n_halos);
+          x_array               =(float *)SID_malloc(sizeof(float)*n_halos);
+          y_array               =(float *)SID_malloc(sizeof(float)*n_halos);
+          z_array               =(float *)SID_malloc(sizeof(float)*n_halos);
+          v_x_array             =(float *)SID_malloc(sizeof(float)*n_halos);
+          v_y_array             =(float *)SID_malloc(sizeof(float)*n_halos);
+          v_z_array             =(float *)SID_malloc(sizeof(float)*n_halos);
+          SID_log("Done.",SID_LOG_CLOSE);
+
+          // Over-allocated; this wastes RAM!
+          n_halos_isotree=(int *)SID_malloc(sizeof(int)*n_halos);
+
           // Count input-trees and halos and determine output-tree ownership
-          SID_log("Counting trees and halos...",SID_LOG_OPEN|SID_LOG_TIMER);
+          SID_log("Counting trees and parsing the file...",SID_LOG_OPEN|SID_LOG_TIMER);
           grab_next_line(fp_in,&line,&line_length); // First iso-tree header line
           i_tree  =0;
-          n_halos =0;
+          i_halo  =0;
           n_tree_ids =0;
+          i_tree_next_report=n_trees_in/10;
+          i_report          =0;
           // Read each tree in turn
           while(!feof(fp_in)){
             // Process iso-tree halos
-            i_halo=0;
+            j_halo=0;
+            n_halos_isotree[i_tree]=0;
             do{
               grab_next_line(fp_in,&line,&line_length);
-              if(strlen(line)!=0){ // Ignore blank lines
-                // Increment counters (if this isn't a new iso-tree header line)
-                if(!check_comment(line)){
-                    if(i_halo==0){
-                      grab_int(line,7,&uberparent_id);
-                      grab_int(line,6,&parent_id);
-                      grab_int(line,2,&halo_id);
-                      if(uberparent_id>=0)
-                        group_id=uberparent_id;
-                      else if(parent_id>=0)
-                        group_id=parent_id;
-                      else
-                        group_id=halo_id;
-                      if(tree_mode==1)
-                        group_id=halo_id;
-                      else if(tree_mode==2)
-                        group_id=0;
-                      add_uberparent_to_list(group_id,tree_ids,&n_tree_ids);
-                      if(n_tree_ids>N_UPIDS_MAX)
-                        SID_trap_error("Increase N_UPIDS_MAX!",ERROR_LOGIC);
-                    }
-                    n_halos++;
-                    i_halo++;
+              // Increment counters (if this isn't a new iso-tree header line)
+              if(strlen(line)!=0 && !check_comment(line)){ // Ignore blank lines
+                grab_float(line,1, &(halo_scale_array[i_halo]));
+                grab_int(  line,2, &(halo_id_array[i_halo]));
+                grab_float(line,3, &(descendant_scale_array[i_halo]));
+                grab_int(  line,4, &(descendant_id_array[i_halo]));
+                grab_int(  line,6, &(parent_id_array[i_halo]));
+                grab_int(  line,7, &(uberparent_id_array[i_halo]));
+                grab_float(line,11,&(M_vir_in_array[i_halo]));
+                grab_float(line,12,&(R_vir_array[i_halo]));
+                grab_float(line,14,&(sigma_v_array[i_halo]));
+                grab_float(line,17,&(V_max_array[i_halo]));
+                grab_float(line,18,&(x_array[i_halo]));
+                grab_float(line,19,&(y_array[i_halo]));
+                grab_float(line,20,&(z_array[i_halo]));
+                grab_float(line,21,&(v_x_array[i_halo]));
+                grab_float(line,22,&(v_y_array[i_halo]));
+                grab_float(line,23,&(v_z_array[i_halo]));
+                if(j_halo==0){
+                  if(uberparent_id_array[i_halo]>=0)
+                    group_id=uberparent_id_array[i_halo];
+                  else if(parent_id_array[i_halo]>=0)
+                    group_id=parent_id_array[i_halo];
+                  else
+                    group_id=halo_id_array[i_halo];
+                  if(tree_mode==1)
+                    group_id=halo_id_array[i_halo];
+                  else if(tree_mode==2)
+                    group_id=0;
+                  add_group_to_list(group_id,tree_ids,&n_tree_ids);
+                  if(n_tree_ids>N_UPIDS_MAX)
+                    SID_trap_error("Increase N_UPIDS_MAX!",ERROR_LOGIC);
                 }
+                i_halo++;
+                j_halo++;
+                n_halos_isotree[i_tree]++;
               }
             } while(!check_comment(line));
+            // Write a status message
+            if(i_tree==i_tree_next_report){
+              i_report++;
+              SID_log("%3d%% complete.",SID_LOG_COMMENT|SID_LOG_TIMER,10*i_report);
+              i_tree_next_report=MIN(n_trees_in,n_trees_in*(i_report+1)/10);
+            }
             i_tree++;
           }
           if(i_tree!=n_trees_in)
@@ -288,71 +376,71 @@ int main(int argc, char *argv[]){
           SID_log("Initializing trees...",SID_LOG_OPEN|SID_LOG_TIMER);
           n_trees_out =n_tree_ids;
           trees       =(tree_info **)SID_malloc(sizeof(tree_info *)*n_trees_out);
-          n_halos_tree=(int        *)SID_malloc(sizeof(int)*n_trees_out);
-          n_trees_tree=(int        *)SID_malloc(sizeof(int)*n_trees_out);
-          for(i_tree=0;i_tree<n_trees_out;i_tree++){
+          for(i_tree=0;i_tree<n_trees_out;i_tree++)
             init_tree(n_scales,&(trees[i_tree]));
-            n_halos_tree[i_tree]=0;
-            n_trees_tree[i_tree]=0;
-          }
           SID_log("Done.",SID_LOG_CLOSE);
 
-          // Rewind and skip header
-          rewind(fp_in);
-          for(i_header=0;i_header<n_header_lines;i_header++)
-            grab_next_line(fp_in,&line,&line_length);
-          grab_next_line(fp_in,&line,&line_length);
+          // Bolshoi trees have substructure masses included in parent masses.  We need to remove this!
+          SID_log("Correcting masses...",SID_LOG_OPEN|SID_LOG_TIMER);
+          memcpy(M_vir_array,M_vir_in_array,n_halos*sizeof(float));
+          merge_sort(halo_id_array,(size_t)n_halos,&halo_id_index,SID_INT,SORT_COMPUTE_INDEX,FALSE);
+          sprintf(filename_missing_parents_out,"/nfs/dset/shrek071/millenium/bolshoi/wip3/treedata/trees_%d.%d.missing",n_scales-1,i_write);
+          fp_missing_parents_out=fopen(filename_missing_parents_out,"w");
+          for(i_halo=0;i_halo<n_halos;i_halo++){
+            if(parent_id_array[i_halo]>=0){
+              halo_index=find_index_int(halo_id_array,parent_id_array[i_halo],n_halos,halo_id_index);
+              for(;halo_scale_array[halo_id_index[halo_index]]!=halo_scale_array[i_halo] && 
+                   halo_id_array[halo_id_index[halo_index]]==parent_id_array[i_halo]     &&
+                   halo_index<n_halos-1;) halo_index++;
+              halo_index=halo_id_index[halo_index];
+              if(parent_id_array[i_halo]!=halo_id_array[halo_index])
+                fprintf(fp_missing_parents_out,"# Halo %08d parent %08d not found.  Mass= %le Position= %le %le %le \n",
+                        halo_id_array[i_halo],parent_id_array[i_halo],M_vir_array[i_halo],
+                        x_array[i_halo],y_array[i_halo],z_array[i_halo]);
+              else
+                M_vir_array[halo_index]-=M_vir_in_array[i_halo];
+              M_vir_array[halo_index]=MAX(M_vir_array[halo_index],m_p);
+            }
+          }
+          fclose(fp_missing_parents_out);
+
+          // Print some mass statistics
+          sprintf(filename_masses_out,"/nfs/dset/shrek071/millenium/bolshoi/wip3/treedata/trees_%d.%d.masses", n_scales-1,i_write);
+          fp_masses_out=fopen(filename_masses_out,"w");
+          for(i_halo=0;i_halo<n_halos;i_halo++)
+            fprintf(fp_masses_out,"%8d %le %le %le\n",halo_id_array[i_halo],M_vir_in_array[i_halo],M_vir_array[i_halo],1.-M_vir_array[i_halo]/M_vir_in_array[i_halo]);
+          SID_free(SID_FARG halo_id_index);
+          fclose(fp_masses_out);
+          SID_log("Done.",SID_LOG_CLOSE);
 
           // FILE CONVERSION STARTS HERE
           SID_log("Processing trees...",SID_LOG_OPEN|SID_LOG_TIMER);
-          grab_next_line(fp_in,&line,&line_length);
-          i_tree  =0;
-          i_halo  =0;
-          i_report=0;
+          n_halos_tree=(int *)SID_malloc(sizeof(int)*n_trees_out);
+          n_trees_tree=(int *)SID_malloc(sizeof(int)*n_trees_out);
+          for(i_tree=0;i_tree<n_trees_out;i_tree++){
+            n_halos_tree[i_tree]=0;
+            n_trees_tree[i_tree]=0;
+          }
           i_tree_next_report=n_trees_in/10;
-          while(!feof(fp_in)){
-            j_halo=0;
-            do{
-              grab_next_line(fp_in,&line,&line_length);
-              if(strlen(line)!=0 && !check_comment(line)){ // Ignore blank lines
+          for(i_tree=0,i_halo=0,i_report=0;i_tree<n_trees_in;i_tree++){ 
+            for(j_halo=0;j_halo<n_halos_isotree[i_tree];j_halo++,i_halo++){
 
-                // Parse this halo's line
-                /*
-                  parse_line(line,17,
-                  1, &halo_scale,          SID_FLOAT,
-                  2, &halo_id,             SID_INT,
-                  3, &descendant_scale,    SID_FLOAT,
-                  4, &descendant_id,       SID_INT,
-                  5, &num_prog,            SID_INT,
-                  6, &parent_id,           SID_INT,
-                  7, &uberparent_id,       SID_INT,
-                  8, &descendant_parent_id,SID_INT,
-                  9, &merger_type,         SID_INT,
-                  10,&M_vir,               SID_FLOAT,
-                  11,&M_trunc,             SID_FLOAT,
-                  12,&R_vir,               SID_FLOAT,
-                  13,&r_s,                 SID_FLOAT,
-                  14,&R_trunc,             SID_FLOAT,
-                  15,&flag_MMP,            SID_FLOAT,
-                  16,&LMM_scale,           SID_FLOAT,
-                  17,&V_max,               SID_FLOAT);
-                */
-                grab_float(line,1, &halo_scale);
-                grab_int(  line,2, &halo_id);
-                grab_float(line,3, &descendant_scale);
-                grab_int(  line,4, &descendant_id);
-                grab_int(  line,6, &parent_id);
-                grab_int(  line,7, &uberparent_id);
-                grab_float(line,11,&M_vir);
-                grab_float(line,12,&R_vir);
-                grab_float(line,14,&sigma_v);
-                grab_float(line,17,&V_max);
-                grab_float(line,18,&x);
-                grab_float(line,19,&y);
-                grab_float(line,20,&z);
-                grab_float(line,21,&v_x);
-                grab_float(line,22,&v_y);
-                grab_float(line,23,&v_z);
+                halo_scale      =halo_scale_array[i_halo];
+                halo_id         =halo_id_array[i_halo];
+                descendant_scale=descendant_scale_array[i_halo];
+                descendant_id   =descendant_id_array[i_halo];
+                parent_id       =parent_id_array[i_halo];
+                uberparent_id   =uberparent_id_array[i_halo];
+                M_vir           =M_vir_array[i_halo];
+                R_vir           =R_vir_array[i_halo];
+                sigma_v         =sigma_v_array[i_halo];
+                V_max           =V_max_array[i_halo];
+                x               =x_array[i_halo];
+                y               =y_array[i_halo];
+                z               =z_array[i_halo];
+                v_x             =v_x_array[i_halo];
+                v_y             =v_y_array[i_halo];
+                v_z             =v_z_array[i_halo];
 
                 // Determine which output-tree this input-tree belongs to
                 if(j_halo==0){
@@ -424,11 +512,8 @@ int main(int argc, char *argv[]){
                                  halo_snap,
                                  descendant_snap,
                                  &properties);
-                i_halo++;
-                j_halo++;
                 n_halos_tree[j_tree]++;
-              }
-            } while(!check_comment(line));
+            };
 
             // Write a status message
             if(i_tree==i_tree_next_report){
@@ -436,15 +521,32 @@ int main(int argc, char *argv[]){
               SID_log("%3d%% complete.",SID_LOG_COMMENT|SID_LOG_TIMER,10*i_report);
               i_tree_next_report=MIN(n_trees_in,n_trees_in*(i_report+1)/10);
             } 
-            i_tree++;
           }
           fclose(fp_in);
           SID_log("Done.",SID_LOG_CLOSE);
 
+          SID_free(SID_FARG halo_scale_array);
+          SID_free(SID_FARG halo_id_array);
+          SID_free(SID_FARG descendant_scale_array);
+          SID_free(SID_FARG descendant_id_array);
+          SID_free(SID_FARG parent_id_array);
+          SID_free(SID_FARG uberparent_id_array);
+          SID_free(SID_FARG M_vir_in_array);
+          SID_free(SID_FARG M_vir_array);
+          SID_free(SID_FARG R_vir_array);
+          SID_free(SID_FARG sigma_v_array);
+          SID_free(SID_FARG V_max_array);
+          SID_free(SID_FARG x_array);
+          SID_free(SID_FARG y_array);
+          SID_free(SID_FARG z_array);
+          SID_free(SID_FARG v_x_array);
+          SID_free(SID_FARG v_y_array);
+          SID_free(SID_FARG v_z_array);
+
           // Write trees
-          sprintf(filename_out,"/nfs/dset/shrek071/millenium/bolshoi/treedata_wip2/trees_%d.%d",n_scales-1,i_write);
+          sprintf(filename_out,"/nfs/dset/shrek071/millenium/bolshoi/wip3/treedata/trees_%d.%d",n_scales-1,i_write);
           SID_log("Writing output file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_out);
-          fp_out =fopen(filename_out,"w");
+          fp_out=fopen(filename_out,"w");
 
           // ... write header ...
           SID_log("Writing header...",SID_LOG_OPEN|SID_LOG_TIMER);
@@ -531,6 +633,7 @@ int main(int argc, char *argv[]){
 
           // Clean-up
           SID_free(SID_FARG trees);
+          SID_free(SID_FARG n_halos_isotree);
           SID_free(SID_FARG n_halos_tree);
           SID_free(SID_FARG n_trees_tree);
           fclose(fp_out);

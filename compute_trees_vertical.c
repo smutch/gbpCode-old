@@ -182,7 +182,7 @@ void assign_progenitor_order_recursive(tree_node_info *tree,int *M_i,int mode){
   tree_node_info **progenitors;
   int              i_progenitor;
   size_t          *M_iN_index;
-  size_t          *M_iN_index_index; 
+  size_t          *M_iN_rank; 
   int             *M_iN,N_i,max_M_iN; // Defined in Section 2 of De Lucia and Blaizot (2006)
 
   N_i     =tree->halo.n_particles;
@@ -207,15 +207,15 @@ void assign_progenitor_order_recursive(tree_node_info *tree,int *M_i,int mode){
 
     // Assign progenitors by (descending) order of their score
     //   (note: sorting the sort indicies gives each progenitor's ranking in the sort)
-    merge_sort(M_iN,      (size_t)tree->n_progenitors,&M_iN_index,      SID_INT,   SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
-    merge_sort(M_iN_index,(size_t)tree->n_progenitors,&M_iN_index_index,SID_SIZE_T,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
-    first_new=progenitors[M_iN_index[tree->n_progenitors-1]]; 
-    last_new =progenitors[M_iN_index[0]]; 
+    merge_sort(M_iN,      (size_t)tree->n_progenitors,&M_iN_index,SID_INT,   SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
+    merge_sort(M_iN_index,(size_t)tree->n_progenitors,&M_iN_rank, SID_SIZE_T,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
+    first_new=progenitors[M_iN_rank[tree->n_progenitors-1]]; 
+    last_new =progenitors[M_iN_rank[0]]; 
     tree->progenitor_first=first_new;
     tree->progenitor_last =last_new;
     for(i_progenitor=0;i_progenitor<tree->n_progenitors;i_progenitor++){
       if(progenitors[i_progenitor]!=last_new)
-        progenitors[i_progenitor]->progenitor_next=progenitors[M_iN_index[M_iN_index_index[i_progenitor]-1]]; 
+        progenitors[i_progenitor]->progenitor_next=progenitors[M_iN_index[M_iN_rank[i_progenitor]-1]]; 
       else
         progenitors[i_progenitor]->progenitor_next=NULL;
     }
@@ -234,7 +234,7 @@ void assign_progenitor_order_recursive(tree_node_info *tree,int *M_i,int mode){
     SID_free(SID_FARG progenitors);
     SID_free(SID_FARG M_iN);
     SID_free(SID_FARG M_iN_index);
-    SID_free(SID_FARG M_iN_index_index);
+    SID_free(SID_FARG M_iN_rank);
   }
 
   // Add this progenitor's score to the descendant's sum (see De Lucia and Blaizot (2006))
@@ -256,7 +256,7 @@ void assign_group_halo_order(tree_info *tree,int i_snap){
   int             *halo_size;
   size_t          *group_ids_index;
   size_t          *halo_size_index;
-  size_t          *halo_size_index_index;
+  size_t          *halo_size_rank;
 
   n_neighbours=tree->n_neighbours[i_snap];
   if(n_neighbours>0){
@@ -308,20 +308,20 @@ void assign_group_halo_order(tree_info *tree,int i_snap){
         // Correct the ordering within each group ...
         if(n_in_group>1){
           // ... sort halo sizes (ascending) ...
-          merge_sort(halo_size,      (size_t)n_in_group,&halo_size_index,      SID_INT,   SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
-          merge_sort(halo_size_index,(size_t)n_in_group,&halo_size_index_index,SID_SIZE_T,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
+          merge_sort(halo_size,      (size_t)n_in_group,&halo_size_index,SID_INT,   SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
+          merge_sort(halo_size_index,(size_t)n_in_group,&halo_size_rank, SID_SIZE_T,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
           // ... set the new pointers ...
-          new_first=neighbours[group_ids_index[i_halo+halo_size_index[n_in_group-1]]];
-          new_last =neighbours[group_ids_index[i_halo+halo_size_index[0]]];
+          new_first=neighbours[group_ids_index[i_halo+halo_size_rank[n_in_group-1]]];
+          new_last =neighbours[group_ids_index[i_halo+halo_size_rank[0]]];
           for(j_halo=i_halo,k_halo=0;k_halo<n_in_group;j_halo++,k_halo++){
             if(neighbours[group_ids_index[j_halo]]!=new_last)
-              neighbours[group_ids_index[j_halo]]->group_halo_next=neighbours[group_ids_index[i_halo+halo_size_index[halo_size_index_index[k_halo]-1]]];
+              neighbours[group_ids_index[j_halo]]->group_halo_next=neighbours[group_ids_index[i_halo+halo_size_index[halo_size_rank[k_halo]-1]]];
             else
               neighbours[group_ids_index[j_halo]]->group_halo_next=NULL;
             neighbours[group_ids_index[j_halo]]->group_halo_first=new_first;
           }
           SID_free(SID_FARG halo_size_index);
-          SID_free(SID_FARG halo_size_index_index);
+          SID_free(SID_FARG halo_size_rank);
         }
         i_halo+=n_in_group;
       }
