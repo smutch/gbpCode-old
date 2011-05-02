@@ -561,6 +561,7 @@ void compute_MCMC(MCMC_info *MCMC){
       SID_log("Done.",SID_LOG_CLOSE);
 
     } // End of restart stuff
+
     // Remove the existant iterations from the totals we need to perform still
     if(n_iterations_file_total<n_iterations_burn){
       i_phase    =0;
