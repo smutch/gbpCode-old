@@ -140,6 +140,8 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   // Initilize the random number generator
   MCMC->RNG=(RNG_info *)SID_malloc(sizeof(RNG_info));
   init_seed_from_clock(&(MCMC->seed));
+  if(!check_mode_for_flag(MCMC->mode,MCMC_MODE_PARALLEL))
+    SID_Bcast(&(MCMC->seed),sizeof(int),MASTER_RANK,SID.COMM_WORLD);
   init_RNG(&(MCMC->seed),MCMC->RNG,RNG_DEFAULT);
 
   SID_log("Done.",SID_LOG_CLOSE);

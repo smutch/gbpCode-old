@@ -608,6 +608,7 @@ void compute_MCMC(MCMC_info *MCMC){
 
           // Generate new proposal and determine it's chi^2
           flag_success=generate_MCMC_chain(MCMC);
+
           // If this rank is processing chain information ...
           if(my_chain==SID.My_rank){
             // ... and this proposal is kept by the thining then ...
@@ -622,14 +623,12 @@ void compute_MCMC(MCMC_info *MCMC){
               ln_Pr_proposals[i_avg%n_avg]=MCMC->ln_Pr_new;
 
               // ... and write to the chain file
-              if(my_chain==SID.My_rank){
-                fwrite(&flag_success,             sizeof(char),    1,fp_chain);
-                fwrite(&(MCMC->ln_likelihood_new),sizeof(double),  1,fp_chain);
-                fwrite(P_new,                     sizeof(double),n_P,fp_chain);
-                if(!flag_no_map_write){
-                  for(i_DS=0;i_DS<n_DS;i_DS++)
-                    fwrite(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
-                }
+              fwrite(&flag_success,             sizeof(char),    1,fp_chain);
+              fwrite(&(MCMC->ln_likelihood_new),sizeof(double),  1,fp_chain);
+              fwrite(P_new,                     sizeof(double),n_P,fp_chain);
+              if(!flag_no_map_write){
+                for(i_DS=0;i_DS<n_DS;i_DS++)
+                  fwrite(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
               }
             }
           }
