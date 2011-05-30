@@ -23,7 +23,7 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   MCMC->n_iterations_burn       =4;
   MCMC->n_iterations            =8;
   MCMC->n_thin                  =1;
-  MCMC->coverage_size           =10;
+  MCMC->coverage_size           =100;
   MCMC->flag_autocor_on         =FALSE;
   MCMC->flag_integrate_on       =FALSE;
   MCMC->flag_analysis_on        =TRUE;
