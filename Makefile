@@ -157,7 +157,7 @@ clean:                 build_libobjsfile subdirs_clean
         	((i = i + 1)) ; \
 	done
 	@echo -n "Cleaning-up..."
-	@rm -rf .printed_status .print_status .install* .compile* .*.objsfile *.o *~ core.* *.a $(BINFILES)
+	@rm -rf .printed_status .print_status .install* .compile* .*.objsfile *.o *~ core.* *.a $(BINFILES) *.dSYM
 	@echo "Done."
 
 build_libobjsfile:

@@ -62,7 +62,7 @@ else
   setenv PATH            $GBP_MPI/bin:$PATH
   setenv LD_LIBRARY_PATH $GBP_MPI/lib:$LD_LIBRARY_PATH
   # Set the mpiexec command
-  set CMD_STRING = ( $GBP_MPI'/bin/mpiexec -mca btl tcp,self -n '$NPROCS' '$GBP_BIN'/mpi/'$ARG_CMD )
+  set CMD_STRING = ( $GBP_MPI'/bin/mpiexec -mca btl tcp,self -np '$NPROCS' '$GBP_BIN'/mpi/'$ARG_CMD )
 
   # Add the command arguments
   @ i=$FIRST_ARG
