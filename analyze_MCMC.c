@@ -742,14 +742,19 @@ void analyze_MCMC(MCMC_info *MCMC){
       fclose(fp_histograms);
       SID_log("Done.",SID_LOG_CLOSE);
 
-      // Compute best fit models and their likelihoods
-      if(MCMC->map_P_to_M!=NULL){
-        MCMC->map_P_to_M(P_best,MCMC,M_best_parameters);
-        MCMC->compute_MCMC_ln_likelihood(MCMC,M_best_parameters,P_best,MCMC->ln_likelihood_DS_best,MCMC->n_DoF_DS_best,&(MCMC->ln_likelihood_best),&(MCMC->n_DoF_best));
-        MCMC->map_P_to_M(P_peak,MCMC,M_peak_parameters);
-        MCMC->compute_MCMC_ln_likelihood(MCMC,M_peak_parameters,P_peak,MCMC->ln_likelihood_DS_peak,MCMC->n_DoF_DS_peak,&(MCMC->ln_likelihood_peak),&(MCMC->n_DoF_peak));
-      }
+   }
 
+   // Compute best fit models and their likelihoods
+   if(MCMC->map_P_to_M!=NULL){
+      SID_Bcast(P_best,n_P*sizeof(double),my_chain,MCMC->comm);
+      MCMC->map_P_to_M(P_best,MCMC,M_best_parameters);
+      MCMC->compute_MCMC_ln_likelihood(MCMC,M_best_parameters,P_best,MCMC->ln_likelihood_DS_best,MCMC->n_DoF_DS_best,&(MCMC->ln_likelihood_best),&(MCMC->n_DoF_best));
+      SID_Bcast(P_peak,n_P*sizeof(double),my_chain,MCMC->comm);
+      MCMC->map_P_to_M(P_peak,MCMC,M_peak_parameters);
+      MCMC->compute_MCMC_ln_likelihood(MCMC,M_peak_parameters,P_peak,MCMC->ln_likelihood_DS_peak,MCMC->n_DoF_DS_peak,&(MCMC->ln_likelihood_peak),&(MCMC->n_DoF_peak));
+   }
+
+   if(my_chain==SID.My_rank){
       // Write fit results
       SID_log("Writing final statistics...",SID_LOG_OPEN);
       sprintf(filename_results,"%s/fit_for_parameters.dat",filename_results_dir);

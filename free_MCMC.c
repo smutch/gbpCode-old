@@ -46,6 +46,9 @@ void free_MCMC(MCMC_info *MCMC){
   // Dataset arrays
   free_MCMC_arrays(MCMC);
   free_MCMC_DS(MCMC);
+  
+  // Communicators
+  SID_Comm_free(&(MCMC->comm));
 
   SID_log("Done.",SID_LOG_CLOSE);
 }

@@ -81,6 +81,6 @@ void generate_MCMC_parameters(MCMC_info *MCMC){
   }
 
   if(!check_mode_for_flag(MCMC->mode,MCMC_MODE_PARALLEL))
-    SID_Bcast(P_new,n_P*sizeof(double),MASTER_RANK,SID.COMM_WORLD);
+    SID_Bcast(P_new,n_P*sizeof(double),MASTER_RANK,MCMC->comm);
 }
 

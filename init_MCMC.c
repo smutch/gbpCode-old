@@ -144,6 +144,10 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
     SID_Bcast(&(MCMC->seed),sizeof(int),MASTER_RANK,SID.COMM_WORLD);
   init_RNG(&(MCMC->seed),MCMC->RNG,RNG_DEFAULT);
 
+  // Initialize Communicator
+  SID_Comm_init(&(MCMC->comm));
+  SID_Comm_list(SID.COMM_WORLD,MCMC->my_chain,MCMC->comm);
+
   SID_log("Done.",SID_LOG_CLOSE);
 
   va_end(vargs);

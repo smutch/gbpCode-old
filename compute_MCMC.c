@@ -9,10 +9,6 @@
 #include <gsl/gsl_fit.h>
 #include <gsl/gsl_interp.h>
 
-//todo: get rid of constant
-//      write T to a file somewhere for restarts
-//      deal with covariance in restarts
-
 void compute_MCMC(MCMC_info *MCMC){
   char      filename_output_dir[MAX_FILENAME_LENGTH];
   char      filename_chain_dir[MAX_FILENAME_LENGTH];
@@ -424,7 +420,10 @@ void compute_MCMC(MCMC_info *MCMC){
         SID_log("Done.",SID_LOG_CLOSE);
       }
     }
-    SID_Bcast(&flag_restart,sizeof(int),MASTER_RANK,SID.COMM_WORLD);
+    SID_Bcast(&flag_restart,         sizeof(int),MASTER_RANK,SID.COMM_WORLD);
+    SID_Bcast(&(MCMC->n_chains),     sizeof(int),MASTER_RANK,SID.COMM_WORLD);
+    SID_Bcast(&(MCMC->P_name_length),sizeof(int),MASTER_RANK,SID.COMM_WORLD);
+    sprintf(MCMC->P_name_format,"%%-%ds",MCMC->P_name_length);
 
     // If this is NOT a restart, start from scratch ...
     n_iterations_file_total=0;
@@ -665,7 +664,7 @@ void compute_MCMC(MCMC_info *MCMC){
             i_thin=0;
             i_avg++;
           }
-        } // i_avg
+        } // End of averaging interval loop
         if(i_phase==0)
           n_iterations_file_burn++;
         n_iterations_file_total++;
@@ -701,6 +700,13 @@ void compute_MCMC(MCMC_info *MCMC){
           fwrite(slopes,  sizeof(double),n_P,fp_stats);
           fwrite(drift,   sizeof(double),n_P,fp_stats);
         }
+
+        // Report progress
+        if(i_iteration==i_iteration_next_report){
+          i_report++;
+          SID_log("%3d%% complete.",SID_LOG_COMMENT|SID_LOG_TIMER,10*(i_report));
+          i_iteration_next_report=MIN(n_iterations_phase,i_iteration_start+(n_iterations_phase-i_iteration_start)*(i_report+1)/10);
+        }
         
         // Check to see if a stop has been called to the run ...
         if(SID.I_am_Master){
@@ -724,13 +730,7 @@ void compute_MCMC(MCMC_info *MCMC){
         if(i_iteration>=n_iterations_phase)
           flag_continue=FALSE;
 
-        // Report progress
-        if(i_iteration==i_iteration_next_report){
-          i_report++;
-          SID_log("%3d%% complete.",SID_LOG_COMMENT|SID_LOG_TIMER,10*(i_report));
-          i_iteration_next_report=MIN(n_iterations_phase,i_iteration_start+(n_iterations_phase-i_iteration_start)*(i_report+1)/10);
-        }
-      } // while continue
+      } // while flag_continue=TRUE
       
       // Report success rate
       SID_log("Proposal success: %5.3f%% (%lld of %lld)",SID_LOG_COMMENT,1e2*((float)(MCMC->n_success)/(float)(MCMC->n_propositions)),MCMC->n_success,MCMC->n_propositions);

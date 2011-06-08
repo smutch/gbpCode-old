@@ -78,7 +78,7 @@ int generate_MCMC_chain(MCMC_info *MCMC){
       flag_success=FALSE;
   }
   if(!check_mode_for_flag(MCMC->mode,MCMC_MODE_PARALLEL))
-    SID_Bcast(&flag_success,sizeof(int),MASTER_RANK,SID.COMM_WORLD);
+    SID_Bcast(&flag_success,sizeof(int),MASTER_RANK,MCMC->comm);
 
   // ... if it is, then update the chain ...
   if(flag_success){

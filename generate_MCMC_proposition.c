@@ -39,10 +39,10 @@ void generate_MCMC_proposition(MCMC_info *MCMC,int flag_chain_init){
   // Produce likelihood for this proposition
   MCMC->compute_MCMC_ln_likelihood(MCMC,MCMC->M_new,MCMC->P_new,MCMC->ln_likelihood_DS,MCMC->n_DoF_DS,&(MCMC->ln_likelihood_new),&(MCMC->n_DoF));
   if(!check_mode_for_flag(MCMC->mode,MCMC_MODE_PARALLEL)){
-    SID_Bcast(MCMC->ln_likelihood_DS,    MCMC->n_DS*sizeof(double),MASTER_RANK,SID.COMM_WORLD);
-    SID_Bcast(MCMC->n_DoF_DS,            MCMC->n_DS*sizeof(int),   MASTER_RANK,SID.COMM_WORLD);
-    SID_Bcast(&(MCMC->ln_likelihood_new),           sizeof(double),MASTER_RANK,SID.COMM_WORLD);
-    SID_Bcast(&(MCMC->n_DoF),                       sizeof(int),   MASTER_RANK,SID.COMM_WORLD);
+    SID_Bcast(MCMC->ln_likelihood_DS,    MCMC->n_DS*sizeof(double),MASTER_RANK,MCMC->comm);
+    SID_Bcast(MCMC->n_DoF_DS,            MCMC->n_DS*sizeof(int),   MASTER_RANK,MCMC->comm);
+    SID_Bcast(&(MCMC->ln_likelihood_new),           sizeof(double),MASTER_RANK,MCMC->comm);
+    SID_Bcast(&(MCMC->n_DoF),                       sizeof(int),   MASTER_RANK,MCMC->comm);
   }
 
   MCMC->first_likelihood_call=FALSE;

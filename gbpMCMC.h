@@ -41,12 +41,13 @@ struct MCMC_DS_info {
 
 typedef struct MCMC_info MCMC_info;
 struct MCMC_info {
-  char     filename_output_dir[256];
-  char     problem_name[MCMC_NAME_SIZE];
-  int     (*map_P_to_M)(double *,MCMC_info *,double **);
-  void    (*compute_MCMC_ln_likelihood)(MCMC_info *MCMC,double **M,double *P,double *ln_likeliood_DS,int *n_DoF_DS,double *ln_likeliood_all,int *n_DoF_all);
-  int      my_chain;
-  int      n_chains;
+  SID_Comm *comm;
+  char      filename_output_dir[256];
+  char      problem_name[MCMC_NAME_SIZE];
+  int       (*map_P_to_M)(double *,MCMC_info *,double **);
+  void      (*compute_MCMC_ln_likelihood)(MCMC_info *MCMC,double **M,double *P,double *ln_likeliood_DS,int *n_DoF_DS,double *ln_likeliood_all,int *n_DoF_all);
+  int       my_chain;
+  int       n_chains;
   void    *params;
   char   **P_names;
   double  *P_init;
