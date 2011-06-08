@@ -11,7 +11,8 @@
 #define MCMC_MODE_NO_MAP_WRITE    16
 #define MCMC_MODE_REPORT_PROPS    32
 #define MCMC_MODE_REFLECT_PRIORS  64
-#define MCMC_MODE_DEFAULT         MCMC_MODE_AUTOTUNE|MCMC_MODE_SERIAL
+#define MCMC_MODE_MINIMIZE_IO    128
+#define MCMC_MODE_DEFAULT        MCMC_MODE_AUTOTUNE|MCMC_MODE_SERIAL
 
 #define MCMC_MAP_RETURN_GOOD 0
 #define MCMC_MAP_RETURN_BAD  1
@@ -128,6 +129,11 @@ struct MCMC_info {
   double       *P;
   MCMC_DS_info *DS;
   MCMC_DS_info *last;
+  // This stuff is used when MCMC_MODE_MINIMIZE_IO is on
+  char   *flag_success_buffer;
+  double *ln_likelihood_new_buffer;
+  double *P_new_buffer;
+  double *M_new_buffer;
 };
 
 void init_MCMC(MCMC_info  *MCMC,

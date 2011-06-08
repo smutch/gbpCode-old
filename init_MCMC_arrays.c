@@ -53,6 +53,14 @@ void init_MCMC_arrays(MCMC_info *MCMC){
     MCMC->n_DoF_DS_best        =(int    *)SID_malloc(sizeof(int)*MCMC->n_DS);
     MCMC->n_DoF_DS_peak        =(int    *)SID_malloc(sizeof(int)*MCMC->n_DS);
 
+    // If MCMC_MODE_MINIMIZE_IO is on, we need to allocate buffers to store the chain
+    if(check_mode_for_flag(MCMC->mode,MCMC_MODE_MINIMIZE_IO)){
+      MCMC->flag_success_buffer     =(char   *)SID_malloc(sizeof(char)  *MCMC->n_iterations*MCMC->n_avg);
+      MCMC->ln_likelihood_new_buffer=(double *)SID_malloc(sizeof(double)*MCMC->n_iterations*MCMC->n_avg);
+      MCMC->P_new_buffer            =(double *)SID_malloc(sizeof(double)*MCMC->n_iterations*MCMC->n_avg*MCMC->n_P);
+      MCMC->M_new_buffer            =(double *)SID_malloc(sizeof(double)*MCMC->n_iterations*MCMC->n_avg*MCMC->n_M_total);
+    }
+
     SID_log("Done.",SID_LOG_CLOSE);
   }
 }

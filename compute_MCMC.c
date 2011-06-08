@@ -172,9 +172,14 @@ void compute_MCMC(MCMC_info *MCMC){
   int             dummy_t;
   int             n_iterations_file_total;
   int             n_iterations_file_burn;
-  int             flag_restart=FALSE;
+  int             flag_restart    =FALSE;
+  int             flag_minimize_IO=FALSE;
   MCMC_DS_info   *current_DS;
   MCMC_DS_info   *next_DS;
+
+  size_t  i_iteration_buffer;
+  size_t  i_P_buffer;
+  size_t  i_M_buffer;
 
   SID_log("Performing MCMC...",SID_LOG_OPEN|SID_LOG_TIMER);
 
@@ -198,6 +203,7 @@ void compute_MCMC(MCMC_info *MCMC){
   n_iterations_burn     =MCMC->n_iterations_burn;
   n_iterations_integrate=n_iterations-n_iterations_burn;
   flag_no_map_write     =check_mode_for_flag(MCMC->mode,MCMC_MODE_NO_MAP_WRITE);
+  flag_minimize_IO      =check_mode_for_flag(MCMC->mode,MCMC_MODE_MINIMIZE_IO);
 
   SID_log("temperature            = %lf",SID_LOG_COMMENT,MCMC->temperature);
   SID_log("n_avg                  = %d",SID_LOG_COMMENT,n_avg);
@@ -582,6 +588,9 @@ void compute_MCMC(MCMC_info *MCMC){
 
     // Create the chain in 2 phases: a burn-in phase and an integration phase
     SID_log("Performing integration...",SID_LOG_OPEN|SID_LOG_TIMER);
+    i_iteration_buffer=0;
+    i_P_buffer        =0;
+    i_M_buffer        =0;
     for(;i_phase<2;i_phase++){
 
       switch(i_phase){
@@ -624,12 +633,29 @@ void compute_MCMC(MCMC_info *MCMC){
               ln_Pr_proposals[i_avg%n_avg]=MCMC->ln_Pr_new;
 
               // ... and write to the chain file
-              fwrite(&flag_success,             sizeof(char),    1,fp_chain);
-              fwrite(&(MCMC->ln_likelihood_new),sizeof(double),  1,fp_chain);
-              fwrite(P_new,                     sizeof(double),n_P,fp_chain);
-              if(!flag_no_map_write){
-                for(i_DS=0;i_DS<n_DS;i_DS++)
-                  fwrite(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
+              switch(flag_minimize_IO){
+                case TRUE:
+                  MCMC->flag_success_buffer[i_iteration_buffer]     =flag_success;
+                  MCMC->ln_likelihood_new_buffer[i_iteration_buffer]=MCMC->ln_likelihood_new;
+                  i_iteration_buffer++;
+                  memcpy(&(MCMC->P_new_buffer[i_P_buffer]),P_new,(size_t)n_P*sizeof(double));
+                  i_P_buffer+=n_P;
+                  if(!flag_no_map_write){
+                    for(i_DS=0;i_DS<n_DS;i_DS++){
+                      memcpy(&(MCMC->M_new_buffer[i_M_buffer]),M_new[i_DS],(size_t)n_M[i_DS]*sizeof(double));
+                      i_M_buffer+=n_M[i_DS];
+                    }
+                  }
+                  break;
+                default:
+                  fwrite(&flag_success,             sizeof(char),    1,fp_chain);
+                  fwrite(&(MCMC->ln_likelihood_new),sizeof(double),  1,fp_chain);
+                  fwrite(P_new,                     sizeof(double),n_P,fp_chain);
+                  if(!flag_no_map_write){
+                    for(i_DS=0;i_DS<n_DS;i_DS++)
+                      fwrite(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
+                  }
+                  break;
               }
             }
           }

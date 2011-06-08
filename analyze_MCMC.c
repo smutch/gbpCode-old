@@ -190,6 +190,11 @@ void analyze_MCMC(MCMC_info *MCMC){
   int   size_temp1;
   int   size_temp2[2];
 
+  int     flag_minimize_IO;
+  size_t  i_iteration_buffer;
+  size_t  i_P_buffer;
+  size_t  i_M_buffer;
+
   SID_log("Performing MCMC analysis...",SID_LOG_OPEN|SID_LOG_TIMER);
 
   SID_log("Initializing...",SID_LOG_OPEN);
@@ -209,6 +214,7 @@ void analyze_MCMC(MCMC_info *MCMC){
   coverage_size         =MCMC->coverage_size;
   flag_autocor_on       =MCMC->flag_autocor_on;
   flag_no_map_write     =MCMC->flag_no_map_write;
+  flag_minimize_IO      =check_mode_for_flag(MCMC->mode,MCMC_MODE_MINIMIZE_IO);
 
   // Initialize arrays used for computing the covariance matrix
   P_i_bar_accum =(double *)SID_malloc(sizeof(double)*n_P);
@@ -364,17 +370,40 @@ void analyze_MCMC(MCMC_info *MCMC){
     SID_log("Mapping results are *not* available.",SID_LOG_COMMENT);
   else
     SID_log("Mapping results are available.",SID_LOG_COMMENT);
+
   if(my_chain==SID.My_rank){
-      if((fp_chain=fopen(filename_chain,"rb"))==NULL)
-        SID_trap_error("Could not open chain file {%s}.",ERROR_IO_OPEN,filename_chain);
+      if(!flag_minimize_IO){
+        if((fp_chain=fopen(filename_chain,"rb"))==NULL)
+          SID_trap_error("Could not open chain file {%s}.",ERROR_IO_OPEN,filename_chain);
+      }
+      i_iteration_buffer=0;
+      i_P_buffer        =0;
+      i_M_buffer        =0;
       for(i_iteration=0,flag_init=TRUE,n_used=0;i_iteration<n_iterations;i_iteration++){
         for(i_avg=0;i_avg<n_avg;i_avg++){
-          fread(&flag_success,     sizeof(char),  1,  fp_chain);
-          fread(&ln_likelihood_new,sizeof(double),1,  fp_chain);
-          fread(P_new,             sizeof(double),n_P,fp_chain);
-          if(!flag_no_map_write){
-            for(i_DS=0;i_DS<n_DS;i_DS++)
-              fread(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
+          switch(flag_minimize_IO){
+            case TRUE:
+              flag_success     =MCMC->flag_success_buffer[i_iteration_buffer];
+              ln_likelihood_new=MCMC->ln_likelihood_new_buffer[i_iteration_buffer];
+              i_iteration_buffer++;
+              memcpy(P_new,&(MCMC->P_new_buffer[i_P_buffer]),(size_t)n_P*sizeof(double));
+              i_P_buffer+=n_P;
+              if(!flag_no_map_write){
+                for(i_DS=0;i_DS<n_DS;i_DS++){
+                  memcpy(M_new[i_DS],&(MCMC->M_new_buffer[i_M_buffer]),(size_t)n_M[i_DS]*sizeof(double));
+                  i_M_buffer+=n_M[i_DS];
+                }
+              } 
+              break;
+            default:
+              fread(&flag_success,     sizeof(char),  1,  fp_chain);
+              fread(&ln_likelihood_new,sizeof(double),1,  fp_chain);
+              fread(P_new,             sizeof(double),n_P,fp_chain);
+              if(!flag_no_map_write){
+                for(i_DS=0;i_DS<n_DS;i_DS++)
+                  fread(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
+              }
+              break;
           }
           if(i_iteration>=n_iterations_burn){
             if(flag_init || flag_success){
@@ -424,15 +453,36 @@ void analyze_MCMC(MCMC_info *MCMC){
             M_avg[i_DS][i_M]/=(double)n_used;
         }
       }
-      rewind(fp_chain);
+      if(!flag_minimize_IO)
+        rewind(fp_chain);
+      i_iteration_buffer=0;
+      i_P_buffer        =0;
+      i_M_buffer        =0;
       for(i_iteration=0,flag_init=TRUE;i_iteration<n_iterations;i_iteration++){
         for(i_avg=0;i_avg<n_avg;i_avg++){
-          fread(&flag_success,     sizeof(char),  1,  fp_chain);
-          fread(&ln_likelihood_new,sizeof(double),1,  fp_chain);
-          fread(P_new,             sizeof(double),n_P,fp_chain);
-          if(!flag_no_map_write){
-            for(i_DS=0;i_DS<n_DS;i_DS++)
-              fread(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
+          switch(flag_minimize_IO){
+            case TRUE:
+              flag_success     =MCMC->flag_success_buffer[i_iteration_buffer];
+              ln_likelihood_new=MCMC->ln_likelihood_new_buffer[i_iteration_buffer];
+              i_iteration_buffer++;
+              memcpy(P_new,&(MCMC->P_new_buffer[i_P_buffer]),(size_t)n_P*sizeof(double));
+              i_P_buffer+=n_P;
+              if(!flag_no_map_write){
+                for(i_DS=0;i_DS<n_DS;i_DS++){
+                  memcpy(M_new[i_DS],&(MCMC->M_new_buffer[i_M_buffer]),(size_t)n_M[i_DS]*sizeof(double));
+                  i_M_buffer+=n_M[i_DS];
+                }
+              }
+              break;
+            default:
+              fread(&flag_success,     sizeof(char),  1,  fp_chain);
+              fread(&ln_likelihood_new,sizeof(double),1,  fp_chain);
+              fread(P_new,             sizeof(double),n_P,fp_chain);
+              if(!flag_no_map_write){
+                for(i_DS=0;i_DS<n_DS;i_DS++)
+                  fread(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
+              }
+              break;
           }
           if(i_iteration>=n_iterations_burn){
             if(flag_init || flag_success){
@@ -505,7 +555,8 @@ void analyze_MCMC(MCMC_info *MCMC){
           }
         }
       } // i_iteration
-      fclose(fp_chain);
+      if(!flag_minimize_IO)
+        fclose(fp_chain);
 
       // Finish mean likelihood histograms & surfaces
       for(i_P=0,i_coverage=0;i_P<n_P;i_P++){
@@ -898,7 +949,6 @@ void analyze_MCMC(MCMC_info *MCMC){
   SID_free(SID_FARG max_L_surface);
   SID_free(SID_FARG mean_L_surface);
   SID_free(SID_FARG temp_out);
-
   SID_log("Done.",SID_LOG_CLOSE);
 
   SID_log("Done.",SID_LOG_CLOSE);
