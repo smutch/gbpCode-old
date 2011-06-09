@@ -6,7 +6,7 @@
 #include <gbpMath.h>
 #include <gbpTrees.h>
 
-#define N_UPIDS_MAX 100000
+#define N_UPIDS_MAX 500000
 
 void add_group_to_list(int tree_id,int *tree_ids,int *n_tree_ids);
 void add_group_to_list(int tree_id,int *tree_ids,int *n_tree_ids){
@@ -205,8 +205,8 @@ int main(int argc, char *argv[]){
   i_write_start  =atoi(argv[1]);
   i_write_stop   =atoi(argv[2]);
 
-  //progenitor_mode=TREE_PROGENITOR_ORDER_DELUCIA;
-  progenitor_mode=TREE_PROGENITOR_ORDER_DEFAULT;
+  progenitor_mode=TREE_PROGENITOR_ORDER_DELUCIA;
+  //progenitor_mode=TREE_PROGENITOR_ORDER_DEFAULT;
   tree_mode      =0; // join-on
   //tree_mode      =1; // every input tree gets its own output tree
   //tree_mode      =2; // put everything in one file tree
@@ -221,7 +221,8 @@ int main(int argc, char *argv[]){
           SID_log("Processing file %d out of %d...",SID_LOG_OPEN|SID_LOG_TIMER,i_write+1,n_write);
 
           // Open file
-          sprintf(filename_in,"/nfs/dset/shrek071/millenium/bolshoi/raw_depth_first/depth_first_tree_%d_%d_%d.dat",i_x,i_y,i_z);
+          sprintf(filename_in,"/nfs/dset/shrek071/millenium/bolshoi/raw_new/tree_%d_%d_%d.dat",i_x,i_y,i_z);
+//sprintf(filename_in,"/nfs/dset/shrek071/millenium/bolshoi/tree_0_0_1_24596.dat");
           SID_log("Open file {%s}...",SID_LOG_OPEN,filename_in);
           fp_in=fopen(filename_in,"r");
           SID_log("Done.",SID_LOG_CLOSE);
@@ -545,6 +546,7 @@ int main(int argc, char *argv[]){
 
           // Write trees
           sprintf(filename_out,"/nfs/dset/shrek071/millenium/bolshoi/wip3/treedata/trees_%d.%d",n_scales-1,i_write);
+//sprintf(filename_out,"/nfs/dset/shrek071/millenium/bolshoi/wip3/treedata/tree_0_0_1_24596.0");
           SID_log("Writing output file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_out);
           fp_out=fopen(filename_out,"w");
 
@@ -561,7 +563,7 @@ int main(int argc, char *argv[]){
           for(i_tree=0;i_tree<n_trees_out;i_tree++){
             // ... correct group halo ordering ...
             for(i_scale=0;i_scale<n_scales;i_scale++)
-              assign_group_halo_order(trees[i_tree],i_scale);      
+              assign_group_halo_order(trees[i_tree],i_scale,progenitor_mode);      
             // ... correct progenitor ordering ...
             current=trees[i_tree]->root;
             while(current!=NULL){

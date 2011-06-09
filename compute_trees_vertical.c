@@ -174,6 +174,33 @@ int construct_unique_id(tree_node_info *tree_node,int tree_number){
     return(-1);    
 }
 
+void compute_halo_score_recursive(tree_node_info *tree,int *M_i,int mode);
+void compute_halo_score_recursive(tree_node_info *tree,int *M_i,int mode){
+  tree_node_info  *current;
+  int              i_progenitor;
+  int              M_iN,N_i,max_M_iN; // Defined in Section 2 of De Lucia and Blaizot (2006)
+
+  N_i     =tree->halo.n_particles;
+  max_M_iN=0;
+  if(tree->n_progenitors>=1){
+    current=tree->progenitor_first;
+    i_progenitor=0;
+    while(current!=NULL){
+      M_iN=0;
+      compute_halo_score_recursive(current,&M_iN,mode);
+      if(check_mode_for_flag(mode,TREE_PROGENITOR_ORDER_DELUCIA))
+        max_M_iN=MAX(max_M_iN,M_iN);
+      i_progenitor++;
+      current=current->progenitor_next;
+    }
+    if(i_progenitor!=tree->n_progenitors)
+      SID_trap_error("There is a progenitor problem in assign_progenitor_order_recursive! (%d!=%d)",ERROR_LOGIC,i_progenitor!=tree->n_progenitors);
+  }
+
+  // Add this progenitor's score to the descendant's sum (see De Lucia and Blaizot (2006))
+  (*M_i)=N_i+max_M_iN;
+}
+
 void assign_progenitor_order_recursive(tree_node_info *tree,int *M_i,int mode);
 void assign_progenitor_order_recursive(tree_node_info *tree,int *M_i,int mode){
   tree_node_info  *first_new;
@@ -209,8 +236,8 @@ void assign_progenitor_order_recursive(tree_node_info *tree,int *M_i,int mode){
     //   (note: sorting the sort indicies gives each progenitor's ranking in the sort)
     merge_sort(M_iN,      (size_t)tree->n_progenitors,&M_iN_index,SID_INT,   SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
     merge_sort(M_iN_index,(size_t)tree->n_progenitors,&M_iN_rank, SID_SIZE_T,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
-    first_new=progenitors[M_iN_rank[tree->n_progenitors-1]]; 
-    last_new =progenitors[M_iN_rank[0]]; 
+    first_new=progenitors[M_iN_index[tree->n_progenitors-1]]; 
+    last_new =progenitors[M_iN_index[0]]; 
     tree->progenitor_first=first_new;
     tree->progenitor_last =last_new;
     for(i_progenitor=0;i_progenitor<tree->n_progenitors;i_progenitor++){
@@ -224,8 +251,9 @@ void assign_progenitor_order_recursive(tree_node_info *tree,int *M_i,int mode){
     if(tree->n_progenitors>1){
       i_progenitor=0;
       current     =tree->progenitor_first;
+      fprintf(stderr,"\n");
       while(current!=NULL){
-        fprintf(stderr,"i=%4d pf=%p pl=%p f=%p c=%p n=%p n_p=%d M_vir=%le\n",i_progenitor++,tree->progenitor_first,tree->progenitor_last,current->progenitor_last,current,current->progenitor_next,current->halo.n_particles,current->halo.M_vir);
+        fprintf(stderr,"i=%4d n_p=%7d M_vir=%13.6le\n",i_progenitor++,current->halo.n_particles,current->halo.M_vir);
         current=current->progenitor_next;
       }
     }
@@ -241,8 +269,8 @@ void assign_progenitor_order_recursive(tree_node_info *tree,int *M_i,int mode){
   (*M_i)=N_i+max_M_iN;
 }
 
-void assign_group_halo_order(tree_info *tree,int i_snap);
-void assign_group_halo_order(tree_info *tree,int i_snap){
+void assign_group_halo_order(tree_info *tree,int i_snap,int mode);
+void assign_group_halo_order(tree_info *tree,int i_snap,int mode){
   int              n_neighbours;
   int              i_halo,j_halo,k_halo;
   int             *group_ids;
@@ -253,10 +281,10 @@ void assign_group_halo_order(tree_info *tree,int i_snap){
   tree_node_info  *current;
   tree_node_info  *new_first;
   tree_node_info  *new_last;
-  int             *halo_size;
+  int             *halo_score;
   size_t          *group_ids_index;
-  size_t          *halo_size_index;
-  size_t          *halo_size_rank;
+  size_t          *halo_score_index;
+  size_t          *halo_score_rank;
 
   n_neighbours=tree->n_neighbours[i_snap];
   if(n_neighbours>0){
@@ -270,15 +298,16 @@ void assign_group_halo_order(tree_info *tree,int i_snap){
     current=first_neighbour;
     while(current!=NULL){
       if(i_halo>=n_neighbours)
-        SID_trap_error("There's a problem with the number of neighbours in assign_group_halo_order (n_neighbours=%d)!",ERROR_LOGIC,n_neighbours);
+        SID_trap_error("There's a problem with the number of neighbours in assign_group_halo_order (%d>=%d)!",ERROR_LOGIC,i_halo,n_neighbours);
       neighbours[i_halo]=current;
       group_ids[i_halo] =current->group_id;
       current           =current->neighbour_halo_next;
       i_halo++;
     }
+    if(i_halo!=n_neighbours)
+      SID_trap_error("There's a problem with the number of neighbours in assign_group_halo_order (%d!=%d)!",ERROR_LOGIC,i_halo,n_neighbours);
     merge_sort(group_ids,(size_t)n_neighbours,&group_ids_index,SID_INT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
-
-    // Find size of largest group and initialize a temporary array
+    // Find highest group score and initialize a temporary array
     largest_group=0;
     i_halo       =0;
     while(i_halo<n_neighbours){
@@ -292,40 +321,41 @@ void assign_group_halo_order(tree_info *tree,int i_snap){
       i_halo      +=n_in_group;
     }
 
-    // Scan neighbour list (now ordered by ID) and order by size within each group
+    // Scan neighbour list (now ordered by ID) and order by score within each group
     if(largest_group>1){
-      halo_size=(int *)SID_malloc(sizeof(int)*largest_group);
+      halo_score=(int *)SID_malloc(sizeof(int)*largest_group);
       i_halo   =0;
       while(i_halo<n_neighbours){
-        // Create a list of halo sizes for each group
+        // Create a list of halo scores for each group
         n_in_group=0;
         while(group_ids[group_ids_index[i_halo+n_in_group]]==group_ids[group_ids_index[i_halo]]){
-          halo_size[n_in_group]=neighbours[group_ids_index[i_halo+n_in_group]]->halo.n_particles;
+          halo_score[n_in_group]=0;
+          compute_halo_score_recursive(neighbours[group_ids_index[i_halo+n_in_group]],&(halo_score[n_in_group]),mode);
           n_in_group++;
           if((i_halo+n_in_group)>=n_neighbours)
             break;
         }
         // Correct the ordering within each group ...
         if(n_in_group>1){
-          // ... sort halo sizes (ascending) ...
-          merge_sort(halo_size,      (size_t)n_in_group,&halo_size_index,SID_INT,   SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
-          merge_sort(halo_size_index,(size_t)n_in_group,&halo_size_rank, SID_SIZE_T,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
+          // ... sort halo scores (ascending) ...
+          merge_sort(halo_score,      (size_t)n_in_group,&halo_score_index,SID_INT,   SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
+          merge_sort(halo_score_index,(size_t)n_in_group,&halo_score_rank, SID_SIZE_T,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
           // ... set the new pointers ...
-          new_first=neighbours[group_ids_index[i_halo+halo_size_rank[n_in_group-1]]];
-          new_last =neighbours[group_ids_index[i_halo+halo_size_rank[0]]];
+          new_first=neighbours[group_ids_index[i_halo+halo_score_index[n_in_group-1]]];
+          new_last =neighbours[group_ids_index[i_halo+halo_score_index[0]]];
           for(j_halo=i_halo,k_halo=0;k_halo<n_in_group;j_halo++,k_halo++){
             if(neighbours[group_ids_index[j_halo]]!=new_last)
-              neighbours[group_ids_index[j_halo]]->group_halo_next=neighbours[group_ids_index[i_halo+halo_size_index[halo_size_rank[k_halo]-1]]];
+              neighbours[group_ids_index[j_halo]]->group_halo_next=neighbours[group_ids_index[i_halo+halo_score_index[halo_score_rank[k_halo]-1]]];
             else
               neighbours[group_ids_index[j_halo]]->group_halo_next=NULL;
             neighbours[group_ids_index[j_halo]]->group_halo_first=new_first;
           }
-          SID_free(SID_FARG halo_size_index);
-          SID_free(SID_FARG halo_size_rank);
+          SID_free(SID_FARG halo_score_index);
+          SID_free(SID_FARG halo_score_rank);
         }
         i_halo+=n_in_group;
       }
-      SID_free(SID_FARG halo_size);
+      SID_free(SID_FARG halo_score);
     }
 
     SID_free(SID_FARG group_ids);
@@ -375,6 +405,7 @@ int write_tree_vertical_halos_recursive(tree_node_info *tree_node,SID_fp *fp_out
   tree_node_info *current;
   halo_info      *halo;
   halo_MBP_info   halo_MBP;
+  int             i_progenitor;
   int             n_halos_written=0;
 
   // Write tree halos
@@ -395,7 +426,19 @@ int write_tree_vertical_halos_recursive(tree_node_info *tree_node,SID_fp *fp_out
     halo_MBP.vel[2]          =halo->vel[2];
     SID_fwrite(&halo_MBP,sizeof(halo_MBP_info),1,fp_out_MBP);
   }
-  
+ 
+  /*
+  if(tree_node->n_progenitors>1){
+    i_progenitor=0;
+    current     =tree_node->progenitor_first;
+    fprintf(stderr,"\n");
+    while(current!=NULL){
+      fprintf(stderr,"i=%4d n_p=%7d M_vir=%13.6le\n",i_progenitor++,current->halo.n_particles,current->halo.M_vir);
+      current=current->progenitor_next;
+    }
+  }
+  */
+ 
   n_halos_written++;
   current=tree_node->progenitor_first;
   while(current!=NULL){
@@ -926,7 +969,7 @@ void compute_trees_vertical(char *filename_root_out,
 
       // Fix group halo ordering
       for(i_tree=0;i_tree<n_trees_local;i_tree++)
-        assign_group_halo_order(trees[i_tree],halo_snap);      
+        assign_group_halo_order(trees[i_tree],halo_snap,TREE_PROGENITOR_ORDER_DELUCIA);      
 
       // If flag_clean=TRUE, then delete the input files used here.
       if((*flag_clean)==TRUE){
