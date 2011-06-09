@@ -1,0 +1,189 @@
+#! /usr/bin/env python2.6
+# 
+#  greenstat
+#  
+#  Created by Simon Mutch on 2011-05-03.
+#  Copyright 2011 Swinburne University of Technology. All rights reserved.
+# 
+#  Run a series of commands to give a shortened list of useful queue stats.
+#
+
+import sys
+from subprocess import Popen, PIPE
+from termcolor import colored, cprint
+import re
+from numpy import argsort, array
+
+GREEN_STR = colored("Green", "green")
+USERNAME = "gpoole"
+
+def execute_shell_cmd(cmd):
+    """Execute a shell command and then return the stdout."""
+
+    p = Popen(cmd, shell=True, stdout=PIPE)
+    d = p.wait()  # Wait for the process to finish
+    return p.communicate()[0]  # Return stdout
+    
+
+def check_host():
+    """Check to make sure we are on the headnode of Green."""
+    
+    hostname = execute_shell_cmd("hostname")    
+    if re.match("green.ssi.swin.edu.au", hostname):
+        return True
+    else:
+        s1 = colored("You must be on the head node of", "red")
+        s2 = colored("to check the queue...", "red")
+        print s1,GREEN_STR,s2
+        print "Checking the interactive nodes only..."
+        print
+        return False
+        
+
+def my_jobs_status():
+    """Check on the status of any of my running jobs."""
+    
+    cprint("My running jobs:", "blue")
+    myjobs = execute_shell_cmd("qstat -u "+USERNAME)
+    if len(myjobs)==0:
+        print "No jobs currently in queue..."
+        print
+    else:
+        myjobs = myjobs.split('\n')[2:-1]
+        for line in myjobs:
+            print line
+        print
+        
+    # If we have any jobs which are currently queued then print
+    # their estimated start times.
+    showstart_list = []
+    for line in myjobs:
+        cols = line.split()
+        if re.search("Q", cols[-2]):
+            showstart_list.append(cols[0][:cols[0].find('.')])
+
+    for jobid in showstart_list:
+        print
+        start_time = execute_shell_cmd("showstart "+jobid)
+        start_time = start_time.split('\n')
+        cprint(start_time[0], "grey")
+        print start_time[2]
+        print start_time[3]
+        print
+    
+    
+def current_queue_usage():
+    """Check the current usage of the cluster."""
+    
+    cprint("Current cluster usage:", "blue")
+    queue_usage = execute_shell_cmd("showq -n | \grep --color=never\
+ -A 1 'use by local jobs'")
+    print queue_usage
+    
+    
+def immediately_avail_resources():
+    """What are the immediately available resources?"""
+    
+    cprint("Immediately available resources:", "blue")
+    print execute_shell_cmd("showbf")
+    
+    
+def top_users(show_num):
+    """Who are the top N users?"""
+    
+    cprint("Top "+str(show_num)+" users:", "blue")
+    diagnose = execute_shell_cmd("diagnose -f")
+    kept = []
+    percentages = []
+    for line in diagnose.split('\n'):
+        line_split = line.split()
+        if len(line_split)==17:
+            kept.append(line)
+            percentages.append(line_split[1])
+        if "GROUP" in line:
+            break
+    percentages = percentages[3:]
+    header = kept[:3]
+    kept = kept[3:]
+    
+    # Now sort the users by their total percentage
+    sorted_ind = argsort(array(percentages, dtype=float))
+    
+    # Finally print the header and the top N users
+    end_loc = header[0].find(" 1 ")+2
+    for i in xrange(len(header)):
+        cprint(header[i][:end_loc], "grey")
+    print
+    # print "-"*len(header[i])
+    for ind in sorted_ind[-show_num:][::-1]:
+        print kept[ind][:end_loc]
+    print
+    
+    
+def inode_status():
+    """Check the current useage of the interactive nodes."""
+    
+    cprint("Interactive node status:", "blue")
+    for node in xrange(1,12):
+        if node==11:
+            node=301
+        # Get the info
+        node_name='shrek%03d'%node
+        uptime = execute_shell_cmd("ssh "+node_name+".ssi.swin.edu.au 'uptime'")
+        mem_use = execute_shell_cmd("ssh "+node_name+".ssi.swin.edu.au 'free -g'")
+        start_loc = uptime.find("load")
+        uptime = uptime[start_loc:]
+        mem_use = mem_use.split('\n')[:2]
+        
+        # now print it...
+        cprint(node_name, "green")
+        print "\t"+uptime.rstrip("\n")
+        cprint("\t"+mem_use[0], "grey")
+        print "\t"+mem_use[1]
+        
+    
+if __name__ == '__main__':
+    
+    """
+    Print a series of useful status reports for Green and, optionally, the
+    interactive nodes as well.
+    
+    Usage:
+    greenstat [options]
+    
+    Options:
+    --inodes        -- show the interactive node status
+                       (default if not logged on to the head node)
+    
+    """
+    
+    from optparse import OptionParser
+    
+    version = "0.1"
+    usage = "usage: %prog [options]"
+    description = "Print a series of useful status reports for Green and, optionally, the interactive nodes as well."
+    
+    parser = OptionParser(description=description, version=version, usage=usage)
+    
+    parser.add_option("--inodes", dest="inodes" , default=False, 
+                      action="store_true",
+                      help="show the interactive node status")
+    
+    # If we have arguments the parse them.
+    (opt, args) = parser.parse_args()
+    
+    print
+    print "============================================="
+    print "Checking the status of",GREEN_STR,"..."
+    print "============================================="
+    print 
+    
+    green_flag = check_host()
+    if (green_flag==False or opt.inodes==True):
+        inode_status()
+    else:
+        my_jobs_status()
+        current_queue_usage()
+        immediately_avail_resources()
+        top_users(10)
+    
