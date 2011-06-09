@@ -33,7 +33,7 @@ void autotune_MCMC_temperature(MCMC_info *MCMC){
   i_autotune       =0;
 
   // Iterate with a bisection algorythm until convergence
-  while(fabs(success-success_target)>success_threshold){
+  while(fabs(success-success_target)>success_threshold && ((temperature_hi-temperature_lo)/temperature)>MCMC_AUTOTUNE_CONVERGENCE_THRESH){
     // Perform bisection
     if(i_autotune>0){
       // If the success is too high, the temperature has to go up

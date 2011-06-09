@@ -137,16 +137,15 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   if(check_mode_for_flag(MCMC->mode,MCMC_MODE_AUTOTUNE))
     set_MCMC_autotune(MCMC,-1.,-1.,-1.,-1,-1,-1); // Negatives mean use defaults (set in gbpMCMC.h)
 
+  // Initialize Communicator
+  SID_Comm_init(&(MCMC->comm));
+  SID_Comm_split(SID.COMM_WORLD,MCMC->my_chain,SID.My_rank,MCMC->comm);
+
   // Initilize the random number generator
   MCMC->RNG=(RNG_info *)SID_malloc(sizeof(RNG_info));
   init_seed_from_clock(&(MCMC->seed));
-  if(!check_mode_for_flag(MCMC->mode,MCMC_MODE_PARALLEL))
-    SID_Bcast(&(MCMC->seed),sizeof(int),MASTER_RANK,SID.COMM_WORLD);
+  SID_Bcast(&(MCMC->seed),sizeof(int),MASTER_RANK,MCMC->comm);
   init_RNG(&(MCMC->seed),MCMC->RNG,RNG_DEFAULT);
-
-  // Initialize Communicator
-  SID_Comm_init(&(MCMC->comm));
-  SID_Comm_list(SID.COMM_WORLD,MCMC->my_chain,MCMC->comm);
 
   SID_log("Done.",SID_LOG_CLOSE);
 

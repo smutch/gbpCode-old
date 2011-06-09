@@ -8,7 +8,7 @@
 
 void rm_MCMC_directory(MCMC_info *MCMC){
   char command_text[2*MAX_FILENAME_LENGTH];
-  sprintf(command_text,"rm -rf %s",MCMC->filename_output_dir);
+  sprintf(command_text,"rm -rf %s > /dev/null",MCMC->filename_output_dir);
   system(command_text);
 }
 

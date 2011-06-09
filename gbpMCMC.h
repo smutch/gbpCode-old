@@ -23,6 +23,7 @@
 #define MCMC_DEFAULT_N_AUTOTUNE               1
 #define MCMC_DEFAULT_N_AUTOTUNE_TEMPERATURE 100
 #define MCMC_DEFAULT_N_AUTOTUNE_COVMTX      (10*MCMC->n_P*MCMC->n_P*(1+(int)(100./MCMC->success_target)))
+#define MCMC_AUTOTUNE_CONVERGENCE_THRESH     1e-6
 
 typedef struct MCMC_DS_info MCMC_DS_info;
 struct MCMC_DS_info {
