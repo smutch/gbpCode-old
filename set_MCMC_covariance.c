@@ -24,8 +24,18 @@ void set_MCMC_covariance(MCMC_info *MCMC,double *V){
   if(V==NULL){
     for(i_P=0;i_P<MCMC->n_P;i_P++){
       for(j_P=0;j_P<MCMC->n_P;j_P++){
-        if(i_P==j_P)
-          MCMC->V[i_P*MCMC->n_P+j_P]=MAX(DBL_MIN,pow(MCMC->P_init[i_P],2.));
+        if(i_P==j_P){
+          // Matrix decomposition fails if we initialize an element to zero here.
+          //   Check for this and start with an different value if true.
+          if(MCMC->P_init[i_P]==0.){
+            if(MCMC->P_limit_max[i_P]>0.)
+              MCMC->V[i_P*MCMC->n_P+j_P]= 1e-3;
+            else
+              MCMC->V[i_P*MCMC->n_P+j_P]=-1e-3;
+          }
+          else
+            MCMC->V[i_P*MCMC->n_P+j_P]=pow(MCMC->P_init[i_P],2.);
+        }
         else
           MCMC->V[i_P*MCMC->n_P+j_P]=0.;
       }
