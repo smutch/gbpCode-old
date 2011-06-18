@@ -49,7 +49,7 @@ int main(int argc, char *argv[]){
   SID_log("(%d trees and %d halos)...",SID_LOG_CONTINUE,n_trees,n_halos_total);
   n_halos=(int *)SID_malloc(sizeof(int)*n_trees);
   fread(n_halos,sizeof(int),n_trees,fp);
-  n_halos_max=calc_max(n_halos,n_trees,SID_INT);
+  calc_max(n_halos,&n_halos_max,n_trees,SID_INT,CALC_MODE_DEFAULT);
   SID_log("max_size=%d...",SID_LOG_CONTINUE,n_halos_max);
   halos               =(halo_info *)SID_malloc(sizeof(halo_info)*n_halos_max);
   snap_num            =(int       *)SID_malloc(sizeof(int)*n_halos_max);

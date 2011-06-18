@@ -7,14 +7,15 @@
 #include <gbpHalos.h>
 #include <gbpTrees.h>
 
-void compute_trees_horizontal(char *filename_halo_root_in,
-                              char *filename_cat_root_in,
-                              char *filename_root_out,
-                              int   i_read_start,
-                              int   i_read_stop,
-                              int   i_read_step,
-                              int   n_search,
-                              int  *flag_clean){
+void compute_trees_horizontal(char   *filename_halo_root_in,
+                              char   *filename_cat_root_in,
+                              char   *filename_root_out,
+                              double *a_list,
+                              int     i_read_start,
+                              int     i_read_stop,
+                              int     i_read_step,
+                              int     n_search,
+                              int    *flag_clean){
   plist_info  plist1;
   plist_info  plist2;
   plist_info  plist3;
@@ -33,7 +34,7 @@ void compute_trees_horizontal(char *filename_halo_root_in,
   char        text_temp[256];
   char        group_text_prefix[5];
   FILE       *fp;
-  FILE       *fp_matches_out;
+  SID_fp      fp_matches_out;
   SID_fp      fp_group_properties_out;
   SID_fp      fp_subgroup_properties_out;
   FILE       *fp_group_properties_in;
@@ -182,8 +183,9 @@ void compute_trees_horizontal(char *filename_halo_root_in,
   int         flag_keep_strays=FALSE;
   halo_info   properties;
   int         n_k_match=2;
+  int         n_snap;
 
-  sprintf(filename_log,"%s.trees_horizontal_log",filename_root_out);
+  sprintf(filename_log,"%s.log",filename_root_out);
 
   SID_log("Constructing vertical merger trees for snapshots #%d->#%d (step=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read_start,i_read_stop,i_read_step);
 
@@ -193,21 +195,22 @@ void compute_trees_horizontal(char *filename_halo_root_in,
   // Count the maximum number of substructures in one snapshot; needed to set array sizes
   SID_log("Counting indices...",SID_LOG_OPEN);
   if(SID.I_am_Master){
-  for(i_read=i_read_stop,n_progenitors_max=0;i_read>=i_read_start;i_read-=i_read_step){
+    for(i_read=i_read_stop,n_progenitors_max=0,n_snap=0;i_read>=i_read_start;i_read-=i_read_step){
 
-    sprintf(filename_groups,"%s_%03d.catalog_groups",filename_halo_root_in,i_read);
-    fp=fopen(filename_groups,"r");
-    fread(&n_groups_1,sizeof(int),1,fp);
-    fclose(fp);
+      sprintf(filename_groups,"%s_%03d.catalog_groups",filename_halo_root_in,i_read);
+      fp=fopen(filename_groups,"r");
+      fread(&n_groups_1,sizeof(int),1,fp);
+      fclose(fp);
 
-    sprintf(filename_subgroups,"%s_%03d.catalog_subgroups",filename_halo_root_in,i_read);
-    fp=fopen(filename_subgroups,"r");
-    fread(&n_subgroups_1,sizeof(int),1,fp);
-    fclose(fp);
+      sprintf(filename_subgroups,"%s_%03d.catalog_subgroups",filename_halo_root_in,i_read);
+      fp=fopen(filename_subgroups,"r");
+      fread(&n_subgroups_1,sizeof(int),1,fp);
+      fclose(fp);
 
-    n_progenitors_max=MAX(n_progenitors_max,n_subgroups_1);
-    n_progenitors_max=MAX(n_progenitors_max,n_groups_1);
-  }
+      n_progenitors_max=MAX(n_progenitors_max,n_subgroups_1);
+      n_progenitors_max=MAX(n_progenitors_max,n_groups_1);
+      n_snap++;
+    }
   }
   SID_Bcast(&n_progenitors_max,sizeof(int),1,SID.COMM_WORLD);
   n_search+=2; // Need indices for current and last i_file as well
@@ -275,30 +278,22 @@ void compute_trees_horizontal(char *filename_halo_root_in,
   SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
   // ... process subgroups ...
-  n_subgroups[i_file_3%n_search]=((int *)ADaPS_fetch(plist1.data,"n_subgroups_%s",filename_cat1_1))[0];
-  n_subgroups[i_file_2%n_search]=n_subgroups[i_file_3%n_search];
-  n_subgroups[i_file_1%n_search]=n_subgroups[i_file_3%n_search];
-  SID_log("Assigning %d subgroup IDs...",SID_LOG_OPEN,n_subgroups[i_file_1%n_search]);
-  for(i_group=0,max_id_subgroup=0,max_tree_id_subgroup=0;i_group<n_subgroups[i_file_3%n_search];i_group++,max_id_subgroup++,max_tree_id_subgroup++){
-    n_progenitors_subgroup[i_file_3%n_search][i_group]=1; // Default is 1:1 merger history for first snapshot
-    n_progenitors_subgroup[i_file_2%n_search][i_group]=1; // Default is 1:1 merger history for first snapshot
-    n_progenitors_subgroup[i_file_1%n_search][i_group]=0; // Computed later
-    progenitor_id_subgroup[i_file_3%n_search][i_group]=max_id_subgroup;
-    progenitor_id_subgroup[i_file_2%n_search][i_group]=max_id_subgroup;
-    progenitor_id_subgroup[i_file_1%n_search][i_group]=max_id_subgroup;
-    descendant_id_subgroup[i_file_3%n_search][i_group]=max_id_subgroup;
-    descendant_id_subgroup[i_file_2%n_search][i_group]=max_id_subgroup;
-    descendant_id_subgroup[i_file_1%n_search][i_group]=max_id_subgroup;
-    tree_id_subgroup[i_file_3%n_search][i_group]      =max_tree_id_subgroup;
-    tree_id_subgroup[i_file_2%n_search][i_group]      =max_tree_id_subgroup;
-    tree_id_subgroup[i_file_1%n_search][i_group]      =max_tree_id_subgroup;
-    file_offset_subgroup[i_file_3%n_search][i_group]  =0;  // These carry the number of files that
-    file_offset_subgroup[i_file_2%n_search][i_group]  =0;  //   the progenitor is offset from
-    file_offset_subgroup[i_file_1%n_search][i_group]  =0;  //   each descendant
+  for(i_search=0;i_search<n_search;i_search++)
+     n_subgroups[i_search]=((int *)ADaPS_fetch(plist1.data,"n_subgroups_%s",filename_cat1_1))[0];
+  SID_log("Assigning %d subgroup IDs...",SID_LOG_OPEN,n_subgroups[0]);
+  for(i_group=0,max_id_subgroup=0,max_tree_id_subgroup=0;i_group<n_subgroups[0];i_group++,max_id_subgroup++,max_tree_id_subgroup++){
+     for(i_search=0;i_search<n_search;i_search++){
+        n_progenitors_subgroup[i_search][i_group]=1; // Default is 1:1 merger history for first snapshot
+        progenitor_id_subgroup[i_search][i_group]=max_id_subgroup;
+        descendant_id_subgroup[i_search][i_group]=max_id_subgroup;
+        tree_id_subgroup[i_search][i_group]      =max_tree_id_subgroup;
+        file_offset_subgroup[i_search][i_group]  =-1;  // The # of files between progenitor and offset.  Initialize to a dummy value.
+     }
+     n_progenitors_subgroup[i_file_1%n_search][i_group]=0; // Computed later
   }
-  SID_free((void **)&sort_subgroup_id[i_file_3%n_search]);
 
   // Create sorting indices for the progenitor IDs
+  SID_free((void **)&sort_subgroup_id[i_file_3%n_search]); 
   merge_sort(progenitor_id_subgroup[i_file_3%n_search],
              n_subgroups[i_file_3%n_search],
              &(sort_subgroup_id[i_file_3%n_search]),
@@ -316,30 +311,20 @@ void compute_trees_horizontal(char *filename_halo_root_in,
   SID_log("Done.",SID_LOG_CLOSE);
 
   // ... process groups ...
-  n_groups[i_file_3%n_search]=((int *)ADaPS_fetch(plist1.data,"n_groups_%s",filename_cat1_1))[0];
-  n_groups[i_file_2%n_search]=n_groups[i_file_3%n_search];
-  n_groups[i_file_1%n_search]=n_groups[i_file_3%n_search];
-  n_subgroups_group_1        = (int *)ADaPS_fetch(plist1.data,"n_subgroups_group_%s",filename_cat1_1);
-  SID_log("Assigning %d group IDs...",SID_LOG_OPEN,n_groups[i_file_1%n_search]);
-  for(i_group=0,max_id_group=0,max_tree_id_group=0;i_group<n_groups[i_file_1%n_search];i_group++,max_id_group++,max_tree_id_group++){
-    n_progenitors_group[i_file_3%n_search][i_group] = 1; // Default is 1:1 merger history
-    n_progenitors_group[i_file_2%n_search][i_group] = 1; // Default is 1:1 merger history
-    n_progenitors_group[i_file_1%n_search][i_group] = 0; // Computed later
-    progenitor_id_group[i_file_3%n_search][i_group] =max_id_group;
-    progenitor_id_group[i_file_2%n_search][i_group] =max_id_group;
-    progenitor_id_group[i_file_1%n_search][i_group] =max_id_group;
-    descendant_id_group[i_file_3%n_search][i_group] =max_id_group;
-    descendant_id_group[i_file_2%n_search][i_group] =max_id_group;
-    descendant_id_group[i_file_1%n_search][i_group] =max_id_group;
-    tree_id_group[i_file_3%n_search][i_group]       =max_tree_id_group;
-    tree_id_group[i_file_2%n_search][i_group]       =max_tree_id_group;
-    tree_id_group[i_file_1%n_search][i_group]       =max_tree_id_group;
-    n_subgroups_group[i_file_3%n_search][i_group]   =n_subgroups_group_1[i_group];
-    n_subgroups_group[i_file_2%n_search][i_group]   =n_subgroups_group_1[i_group];
-    n_subgroups_group[i_file_1%n_search][i_group]   =n_subgroups_group_1[i_group];
-    file_offset_group[i_file_3%n_search][i_group]   =0; 
-    file_offset_group[i_file_2%n_search][i_group]   =0; 
-    file_offset_group[i_file_1%n_search][i_group]   =0; 
+  for(i_search=0;i_search<n_search;i_search++)
+     n_groups[i_search]=((int *)ADaPS_fetch(plist1.data,"n_groups_%s",filename_cat1_1))[0];
+  n_subgroups_group_1=(int *)ADaPS_fetch(plist1.data,"n_subgroups_group_%s",filename_cat1_1);
+  SID_log("Assigning %d group IDs...",SID_LOG_OPEN,n_groups[0]);
+  for(i_group=0,max_id_group=0,max_tree_id_group=0;i_group<n_groups[0];i_group++,max_id_group++,max_tree_id_group++){
+     for(i_search=0;i_search<n_search;i_search++){
+        n_progenitors_group[i_search][i_group] =1; // Default is 1:1 merger history
+        progenitor_id_group[i_search][i_group] =max_id_group;
+        descendant_id_group[i_search][i_group] =max_id_group;
+        tree_id_group[i_search][i_group]       =max_tree_id_group;
+        n_subgroups_group[i_search][i_group]   =n_subgroups_group_1[i_group];
+        file_offset_group[i_search][i_group]   =-1; 
+     }
+     n_progenitors_group[i_file_1%n_search][i_group] = 0; // Computed later
   }
   SID_free((void **)&sort_group_id[i_file_3%n_search]);
   merge_sort(progenitor_id_group[i_file_3%n_search],
@@ -360,16 +345,16 @@ void compute_trees_horizontal(char *filename_halo_root_in,
   SID_log("Done.",SID_LOG_CLOSE);
 
   // The first snapshot is done now (set to defaults) ... now loop over all other snapshots
-  for(i_read=i_read_1-i_read_step, // Check this index
-        i_file=i_file_1-1,         // Check this index
-        j_file=0,                  // Check this index
-        i_write=i_read_stop,       // Check this index
-        j_write=0,                 // Check this index
-        k_write=i_read_stop;       // Check this index
-      i_read>=i_read_start;        // Check this index
-      i_read-=i_read_step,         // Check this index
-        i_file--,                  // Check this index
-        j_file++){                 // Check this index
+  for(i_read=i_read_1-i_read_step,
+        i_file=i_file_1-1, 
+        j_file=0,             
+        i_write=i_read_stop,      
+        j_write=n_snap-1, 
+        k_write=i_read_stop;      
+      i_read>=i_read_start;
+      i_read-=i_read_step,    
+        i_file--, 
+        j_file++){   
     SID_log("Processing snapshot #%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_read);
 
     // Shift the snapshot info up the list
@@ -499,7 +484,7 @@ void compute_trees_horizontal(char *filename_halo_root_in,
         //   assigned progenitors.  They were not matched to anything when i_file_3 was processed
         //   and we need to search for them in previous outputs (done after this).
         SID_log("Searching %d %sgroups for dropped halos...",SID_LOG_OPEN,n_unprocessed,group_text_prefix);
-        for(i_group=0,n_drop=0;i_group<n_groups_1;i_group++){
+        for(i_group=0,n_drop=0,n_match_halos=0;i_group<n_groups_1;i_group++){
            // This is the index of the group in file_2 that the i_group'th group in file_1 has been matched to (-1 if no match)
            my_descendant_index=match_id[i_group];
            // If my_descendant_index>=0 then this group (and maybe more) has
@@ -531,11 +516,11 @@ void compute_trees_horizontal(char *filename_halo_root_in,
           SID_log("Done. (none found)",SID_LOG_CLOSE);
 
         // Try to fix any dropped halos found above.  Any not fixed will be labeled
-        //   strays and will be discarded.  This needs to be done before we attempt
-        //   to fix bridges so that we have progenitor_ids for all possible mergers/bridges.
+        //   strays.  This needs to be done before we attempt to fix bridges so that 
+        //   we have progenitor_ids for all possible mergers/bridges.
         if(n_drop>0){
           SID_log("Attempting to resolve %d dropped %sgroup candidates...",SID_LOG_OPEN|SID_LOG_TIMER,n_drop,group_text_prefix);
-          //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
+          SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
           n_strays_drop=n_drop;
           for(j_file_1=i_file_2,
                 j_file_2=i_file_2+2, // Manifestly: there was no match at i_file_2+1
@@ -565,7 +550,6 @@ void compute_trees_horizontal(char *filename_halo_root_in,
                 // If the dropped halo was found in the j_file_2'th snapshot ...
                 if(my_descendant_index>=0){
                   my_descendant=progenitor_id[j_file_2%n_search][my_descendant_index];
-fprintf(stderr,"%d\n",my_descendant);
                   // ... and the matched halo has a valid id, then A DROPPED HALO HAS BEEN FOUND.
                   if(my_descendant>=0){
                     // Fix the dropped halo's pointers etc.
@@ -593,7 +577,7 @@ fprintf(stderr,"%d\n",my_descendant);
                      tree_id[i_file_2%n_search][drop_list_2[i_drop]]       =-1;
                      match_id[drop_list_1[i_drop]]                         =-1;
                      n_unprocessed--;
-                     n_sputter++; // This is a sputtering halo ... it's been dropped multiple times
+                     n_sputter++; 
                   }
                 }
                 // ... else it is missing in consecutive files and we need to keep looking for it
@@ -608,8 +592,7 @@ fprintf(stderr,"%d\n",my_descendant);
             }
           }
 
-          // If any drop-candidates were not found, label them as dropped and assign them
-          //   dummy values; ignored later during output.
+          // If any drop-candidates were not found, label them as dropped and assign them dummy values
           for(i_stray=0;i_stray<n_strays_drop;i_stray++){
             biggest_stray_drop=MAX(biggest_stray_drop,n_particles_1[drop_list_1[i_stray]]);
             progenitor_id[i_file_1%n_search][drop_list_1[i_stray]] =-1;
@@ -622,7 +605,6 @@ fprintf(stderr,"%d\n",my_descendant);
             tree_id[i_file_2%n_search][drop_list_2[i_stray]]       =-1;
             match_id[drop_list_1[i_stray]]                         =-1;
             n_unprocessed--;
-//SID_log("%07d",SID_LOG_COMMENT,drop_list_1[i_stray]);
           }
           SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
           if(n_strays_drop>0)
@@ -633,15 +615,14 @@ fprintf(stderr,"%d\n",my_descendant);
 
         // We may have changed the match_ids at this point, so we need to resort
         SID_free(SID_FARG match_index);
-        merge_sort((void *)match_id,(size_t)n_groups_1,&match_index,SID_INT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE); // ... and these are their sort indices
+        merge_sort((void *)match_id,(size_t)n_groups_1,&match_index,SID_INT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
 
         // Search for and process multi-matched systems (mergers or bridges) ...
-/*
         if(j_file>0){
 
           // ... Identify systems with multiple matches and do a first pass
           //     to find bridge candidates.  We will check afterwards if there 
-          //     are any mergers in the candidate bridged mergers.
+          //     are any mergers in the list of candidate bridged mergers.
           SID_log("Searching %d unprocessed %sgroups for multi-match systems...",SID_LOG_OPEN,n_unprocessed,group_text_prefix);
           //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
           bridge_list_1=drop_list_1; // Done to make the code more readable
@@ -677,7 +658,6 @@ fprintf(stderr,"%d\n",my_descendant);
               n_multimatch+=n_match;
             }
           }
-//for(i_match=0;i_match<n_multimatch;i_match++) SID_log("%07d",SID_LOG_COMMENT,bridge_list_1[i_match]);
           SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
           if(n_bridge_candidates>0)
             SID_log("Done. (%d found; %d are in %d bridged systems)",SID_LOG_CLOSE,n_multimatch,n_bridge_candidates,n_bridge_systems);
@@ -688,9 +668,11 @@ fprintf(stderr,"%d\n",my_descendant);
           //   back-matching to decide if they're mergers or bridges.  All scans
           //   are done over the n_groups_2 halos in file_2 but we collect the
           //   systems in file_1 which are involved.
+          //   At this point: bridge_list_1 has the i_file_2 indices of matches in i_file_1 to i_file_2
+          //                  bridge_list_2 has the i_file_2 indices of all the halos involved
           if(n_bridge_candidates>0){
             SID_log("Searching %d %sgroups in %d bridged systems for mergers...",SID_LOG_OPEN|SID_LOG_TIMER,n_bridge_candidates,group_text_prefix,n_bridge_systems);
-            //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
+            SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
             n_strays_bridge=n_bridge_candidates;
             for(j_file_1=i_file_1,
                   j_file_2=i_file_2+1,
@@ -720,7 +702,7 @@ fprintf(stderr,"%d\n",my_descendant);
                   // If the bridge candidate was found in the j_file_2'th snapshot and the
                   //   matched halo has a descendant, then WE HAVE IDENTIFIED THE DESCENDANT
                   //   OF THIS BRIDGE CANDIDATE IN j_file_2...
-                  my_descendant_index=match_id_bridge[i_bridge];
+                  my_descendant_index=match_id_bridge[i_bridge]; // j_file_2 index of a halo matched to i_file_1
                   if(my_descendant_index>=0){
                     my_descendant=progenitor_id[j_file_2%n_search][my_descendant_index];
                     if(my_descendant>=0){
@@ -792,8 +774,7 @@ fprintf(stderr,"%d\n",my_descendant);
             SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
             SID_log("Done. (%d were called mergers, %d were called bridges)",SID_LOG_CLOSE,n_mergers_bridge,n_bridges);
           }
-        }
-        */
+        } // Finished processing multi-matches
 
         // Propagate progenitor and tree ids for the simple matches
         SID_log("Assigning IDs to %d %sgroups...",SID_LOG_OPEN,n_unprocessed,group_text_prefix);
@@ -807,8 +788,10 @@ fprintf(stderr,"%d\n",my_descendant);
           //   that, it has not been matched to anything yet
           if(my_descendant_index>=0){
             my_descendant=progenitor_id[i_file_2%n_search][my_descendant_index];
+            // This is an unprocessed match
             if(my_descendant>=0 && progenitor_id[i_file_1%n_search][i_group]<(-1)){
               n_progenitors[i_file_2%n_search][my_descendant_index]++;
+              // This was a merger
               if(n_progenitors[i_file_2%n_search][my_descendant_index]>1){
                 progenitor_id[i_file_1%n_search][i_group]=max_id++;
                 n_mergers++;
@@ -820,18 +803,17 @@ fprintf(stderr,"%d\n",my_descendant);
               tree_id[i_file_1%n_search][i_group]        =tree_id[i_file_2%n_search][my_descendant_index];
               n_unprocessed--;
             }
+            // This is an unprocessed match to something with an undefined progenitor_id (eg. sputtering halo)
             else if(progenitor_id[i_file_1%n_search][i_group]<(-1)){ // Don't set it's progenitor_ID because we need the <-1 value for looking for dropped halos
               file_offset[i_file_1%n_search][i_group]  =-1;
-              //descendant_id[i_file_1%n_search][i_group]=-1;
               tree_id[i_file_1%n_search][i_group]      =-1;            
               n_unprocessed--;
             }
           }
           // This halo was not matched to anything
-          else if(progenitor_id[i_file_1%n_search][i_group]!=(-1)){ // Don't re-process strays
+          else if(progenitor_id[i_file_1%n_search][i_group]!=(-1)){ // Don't re-process halos previously labeled a stray
              progenitor_id[i_file_1%n_search][i_group]=-1;
              file_offset[i_file_1%n_search][i_group]  =-1;
-             //descendant_id[i_file_1%n_search][i_group]=-1;
              tree_id[i_file_1%n_search][i_group]      =-1;            
              n_unprocessed--;
           }
@@ -852,7 +834,7 @@ fprintf(stderr,"%d\n",my_descendant);
 
         if(n_unprocessed!=0)
           SID_trap_error("n_unprocessed=%d when it should be zero!",ERROR_LOGIC,n_unprocessed);
-      }
+      } // Done processing this file's groups or subgroups
      
       // Write a log file
       n_mergers   +=n_mergers_bridge;
@@ -862,39 +844,42 @@ fprintf(stderr,"%d\n",my_descendant);
       if(k_match==0){
         if(j_file==0){
           fp=fopen(filename_log,"w");
-          fprintf(fp,"# (1):  filenumber\n");
-          fprintf(fp,"# (2):  Maximum subgroup ID\n");
-          fprintf(fp,"# (3):  # of subgroups\n");
-          fprintf(fp,"# (4):  # of matched subgroups\n");
-          fprintf(fp,"# (5):  # of dropped subgroups\n");
-          fprintf(fp,"# (6):  # of dropped subgroups found\n");
-          fprintf(fp,"# (7):  # of sputtering subgroups\n");
-          fprintf(fp,"# (8):  # of subgroups in multiple-match systems (MMSs)\n");
-          fprintf(fp,"# (9):  # of MMSs that are bridge candidates\n");
-          fprintf(fp,"# (10): # of MMSs that ARE in bridge systems\n");
-          fprintf(fp,"# (11): # of MMSs that are mergers in bridges\n");
-          fprintf(fp,"# (12): # of subgroup mergers (total)\n");
-          fprintf(fp,"# (13): # of stray subgroups\n");
-          fprintf(fp,"# (14): biggest strayed subgroup\n");
+          fprintf(fp,"# (1):  expansion factor\n");
+          fprintf(fp,"# (2):  snapshot filenumber\n");
+          fprintf(fp,"# (3):  Maximum subgroup ID\n");
+          fprintf(fp,"# (4):  # of subgroups\n");
+          fprintf(fp,"# (5):  # of matched subgroups\n");
+          fprintf(fp,"# (6):  # of dropped subgroups\n");
+          fprintf(fp,"# (7):  # of dropped subgroups found\n");
+          fprintf(fp,"# (8):  # of sputtering subgroups\n");
+          fprintf(fp,"# (9):  # of subgroups in multiple-match systems (MMSs)\n");
+          fprintf(fp,"# (10): # of MMSs that are bridge candidates\n");
+          fprintf(fp,"# (11): # of bridge systems involved\n");
+          fprintf(fp,"# (12): # of MMSs that ARE in bridge systems\n");
+          fprintf(fp,"# (13): # of MMSs that are mergers in bridges\n");
+          fprintf(fp,"# (14): # of subgroup mergers (total)\n");
+          fprintf(fp,"# (15): # of stray subgroups\n");
+          fprintf(fp,"# (16): biggest strayed subgroup\n");
           if(n_k_match>1){
-             fprintf(fp,"# (15): Maximum group ID\n");
-             fprintf(fp,"# (16): # of groups\n");
-             fprintf(fp,"# (17): # of matched groups\n");
-             fprintf(fp,"# (18): # of dropped groups\n");
-             fprintf(fp,"# (19): # of dropped groups found\n");
-             fprintf(fp,"# (20): # of sputtering subgroups\n");
-             fprintf(fp,"# (21): # of groups in multiple-match systems (MMSs)\n");
-             fprintf(fp,"# (22): # of MMSs that are bridge candidates\n");
-             fprintf(fp,"# (23): # of MMSs that ARE in bridge systems\n");
-             fprintf(fp,"# (24): # of MMSs that are mergers in bridges\n");
-             fprintf(fp,"# (25): # of group mergers (total)\n");
-             fprintf(fp,"# (26): # of stray groups\n");
-             fprintf(fp,"# (27): biggest strayed group\n");
+             fprintf(fp,"# (17): Maximum group ID\n");
+             fprintf(fp,"# (18): # of groups\n");
+             fprintf(fp,"# (19): # of matched groups\n");
+             fprintf(fp,"# (20): # of dropped groups\n");
+             fprintf(fp,"# (21): # of dropped groups found\n");
+             fprintf(fp,"# (22): # of sputtering subgroups\n");
+             fprintf(fp,"# (23): # of groups in multiple-match systems (MMSs)\n");
+             fprintf(fp,"# (24): # of MMSs that are bridge candidates\n");
+             fprintf(fp,"# (25): # of bridge systems involved\n");
+             fprintf(fp,"# (26): # of MMSs that are mergers in bridges\n");
+             fprintf(fp,"# (27): # of MMSs that ARE in bridge systems\n");
+             fprintf(fp,"# (28): # of group mergers (total)\n");
+             fprintf(fp,"# (29): # of stray groups\n");
+             fprintf(fp,"# (30): biggest strayed group\n");
           }
         }
         else
           fp=fopen(filename_log,"a");
-        fprintf(fp,"%4d",i_read);
+        fprintf(fp,"%le %4d",a_list[j_file],i_read);
       }
       else
         fp=fopen(filename_log,"a");
@@ -937,36 +922,46 @@ fprintf(stderr,"%d\n",my_descendant);
       sprintf(filename_subgroup_properties_out,"%s.trees_horizontal_subgroups_properties_%d",filename_root_out,k_write);
       sprintf(filename_group_properties_in,    "%s_%03d.catalog_groups_properties",          filename_cat_root_in, k_write);
       sprintf(filename_subgroup_properties_in, "%s_%03d.catalog_subgroups_properties",       filename_cat_root_in, k_write);
-      fp_matches_out=fopen(filename_matches_out,"w");
+      SID_fopen(filename_matches_out,            "w",&fp_matches_out);
       SID_fopen(filename_group_properties_out,   "w",&fp_group_properties_out);
       SID_fopen(filename_subgroup_properties_out,"w",&fp_subgroup_properties_out);
-      fprintf(fp_matches_out,"%d %d %d %d %d\n",n_groups[i_write%n_search],n_subgroups[i_write%n_search],n_progenitors_max,max_tree_id_subgroup,max_tree_id_group); // max_tree_ids' are actually n_tree_ids ... so no -1
+      SID_fwrite(&(n_groups[i_write%n_search]),   sizeof(int),1,&fp_matches_out);
+      SID_fwrite(&(n_subgroups[i_write%n_search]),sizeof(int),1,&fp_matches_out);
+      SID_fwrite(&(n_progenitors_max),            sizeof(int),1,&fp_matches_out);
+      SID_fwrite(&(max_tree_id_subgroup),         sizeof(int),1,&fp_matches_out);
+      SID_fwrite(&(max_tree_id_group),            sizeof(int),1,&fp_matches_out);
       if(n_groups[i_write%n_search]>0){
-        fp_group_properties_in   =fopen(filename_group_properties_in,"r");
+        fp_group_properties_in   =fopen(filename_group_properties_in,   "r");
         fp_subgroup_properties_in=fopen(filename_subgroup_properties_in,"r");
         fseeko(fp_group_properties_in,   4*sizeof(int),SEEK_CUR);
         fseeko(fp_subgroup_properties_in,4*sizeof(int),SEEK_CUR);
         for(i_group=0,i_subgroup=0;i_group<n_groups[i_write%n_search];i_group++){
-          fprintf(fp_matches_out,"%d %d %d %d %d",progenitor_id_group[i_write%n_search][i_group],descendant_id_group[i_write%n_search][i_group],tree_id_group[i_write%n_search][i_group],file_offset_group[i_write%n_search][i_group],n_subgroups_group[i_write%n_search][i_group]);
-          read_group_properties(fp_group_properties_in,&properties,i_group,k_write);
+          SID_fwrite(&(progenitor_id_group[i_write%n_search][i_group]),sizeof(int),1,&fp_matches_out);
+          SID_fwrite(&(descendant_id_group[i_write%n_search][i_group]),sizeof(int),1,&fp_matches_out);
+          SID_fwrite(&(tree_id_group[i_write%n_search][i_group]),      sizeof(int),1,&fp_matches_out);
+          SID_fwrite(&(file_offset_group[i_write%n_search][i_group]),  sizeof(int),1,&fp_matches_out);
+          SID_fwrite(&(n_subgroups_group[i_write%n_search][i_group]),  sizeof(int),1,&fp_matches_out);
+          read_group_properties(fp_group_properties_in,&properties,i_group,j_write);
           if(progenitor_id_group[i_write%n_search][i_group]>=0)
             SID_fwrite(&properties,sizeof(halo_info),1,&fp_group_properties_out);
           for(j_subgroup=0;j_subgroup<n_subgroups_group[i_write%n_search][i_group];j_subgroup++,i_subgroup++){
-            fprintf(fp_matches_out,"  %d %d %d %d",progenitor_id_subgroup[i_write%n_search][i_subgroup],descendant_id_subgroup[i_write%n_search][i_subgroup],tree_id_subgroup[i_write%n_search][i_subgroup],file_offset_subgroup[i_write%n_search][i_subgroup]);          
-            read_group_properties(fp_subgroup_properties_in,&properties,i_subgroup,k_write);
+            SID_fwrite(&(progenitor_id_subgroup[i_write%n_search][i_subgroup]),sizeof(int),1,&fp_matches_out);
+            SID_fwrite(&(descendant_id_subgroup[i_write%n_search][i_subgroup]),sizeof(int),1,&fp_matches_out);
+            SID_fwrite(&(tree_id_subgroup[i_write%n_search][i_subgroup]),      sizeof(int),1,&fp_matches_out);
+            SID_fwrite(&(file_offset_subgroup[i_write%n_search][i_subgroup]),  sizeof(int),1,&fp_matches_out);
+            read_group_properties(fp_subgroup_properties_in,&properties,i_subgroup,j_write);
             if(progenitor_id_subgroup[i_write%n_search][i_subgroup]>=0)
               SID_fwrite(&properties,sizeof(halo_info),1,&fp_subgroup_properties_out);
           }
-          fprintf(fp_matches_out,"\n");
         }
         fclose(fp_group_properties_in);
         fclose(fp_subgroup_properties_in);
       }
-      fclose(fp_matches_out);
+      SID_fclose(&fp_matches_out);
       SID_fclose(&fp_group_properties_out);
       SID_fclose(&fp_subgroup_properties_out);
       i_write--;
-      j_write++;
+      j_write--;
       k_write-=i_read_step;
       SID_log("Done.",SID_LOG_CLOSE);
     }
@@ -977,39 +972,49 @@ fprintf(stderr,"%d\n",my_descendant);
   free_plist(&plist3);
 
   // Write the remaining tree info
-  for(;k_write>=i_read_start;i_write--,j_write++,k_write-=i_read_step){
+  for(;k_write>=i_read_start;i_write--,j_write--,k_write-=i_read_step){
     SID_log("Writing results for snapshot #%d...",SID_LOG_OPEN,k_write);
     sprintf(filename_matches_out,            "%s.trees_horizontal_%d",                     filename_root_out,   k_write);
     sprintf(filename_group_properties_out,   "%s.trees_horizontal_groups_properties_%d",   filename_root_out,   k_write);
     sprintf(filename_subgroup_properties_out,"%s.trees_horizontal_subgroups_properties_%d",filename_root_out,   k_write);
     sprintf(filename_group_properties_in,    "%s_%03d.catalog_groups_properties",          filename_cat_root_in,k_write);
     sprintf(filename_subgroup_properties_in, "%s_%03d.catalog_subgroups_properties",       filename_cat_root_in,k_write);
-    fp_matches_out=fopen(filename_matches_out,"w");
+    SID_fopen(filename_matches_out,            "w",&fp_matches_out);
     SID_fopen(filename_group_properties_out,   "w",&fp_group_properties_out);
     SID_fopen(filename_subgroup_properties_out,"w",&fp_subgroup_properties_out);
-    fprintf(fp_matches_out,"%d %d %d %d %d\n",n_groups[i_write%n_search],n_subgroups[i_write%n_search],n_progenitors_max,max_tree_id_subgroup,max_tree_id_group); // max_tree_ids' are actually n_tree_ids ... so no -1
+    SID_fwrite(&(n_groups[i_write%n_search]),   sizeof(int),1,&fp_matches_out);
+    SID_fwrite(&(n_subgroups[i_write%n_search]),sizeof(int),1,&fp_matches_out);
+    SID_fwrite(&(n_progenitors_max),            sizeof(int),1,&fp_matches_out);
+    SID_fwrite(&(max_tree_id_subgroup),         sizeof(int),1,&fp_matches_out);
+    SID_fwrite(&(max_tree_id_group),            sizeof(int),1,&fp_matches_out);
     if(n_groups[i_write%n_search]>0){
-      fp_group_properties_in   =fopen(filename_group_properties_in,"r");
+      fp_group_properties_in   =fopen(filename_group_properties_in,   "r");
       fp_subgroup_properties_in=fopen(filename_subgroup_properties_in,"r");
       fseeko(fp_group_properties_in,   4*sizeof(int),SEEK_CUR);
       fseeko(fp_subgroup_properties_in,4*sizeof(int),SEEK_CUR);
       for(i_group=0,i_subgroup=0;i_group<n_groups[i_write%n_search];i_group++){
-        fprintf(fp_matches_out,"%d %d %d %d %d",progenitor_id_group[i_write%n_search][i_group],descendant_id_group[i_write%n_search][i_group],tree_id_group[i_write%n_search][i_group],file_offset_group[i_write%n_search][i_group],n_subgroups_group[i_write%n_search][i_group]);
-        read_group_properties(fp_group_properties_in,&properties,i_group,k_write);        
+        SID_fwrite(&(progenitor_id_group[i_write%n_search][i_group]),sizeof(int),1,&fp_matches_out);
+        SID_fwrite(&(descendant_id_group[i_write%n_search][i_group]),sizeof(int),1,&fp_matches_out);
+        SID_fwrite(&(tree_id_group[i_write%n_search][i_group]),      sizeof(int),1,&fp_matches_out);
+        SID_fwrite(&(file_offset_group[i_write%n_search][i_group]),  sizeof(int),1,&fp_matches_out);
+        SID_fwrite(&(n_subgroups_group[i_write%n_search][i_group]),  sizeof(int),1,&fp_matches_out);
+        read_group_properties(fp_group_properties_in,&properties,i_group,j_write);
         if(progenitor_id_group[i_write%n_search][i_group]>=0)
           SID_fwrite(&properties,sizeof(halo_info),1,&fp_group_properties_out);
         for(j_subgroup=0;j_subgroup<n_subgroups_group[i_write%n_search][i_group];j_subgroup++,i_subgroup++){
-          fprintf(fp_matches_out,"  %d %d %d %d",progenitor_id_subgroup[i_write%n_search][i_subgroup],descendant_id_subgroup[i_write%n_search][i_subgroup],tree_id_subgroup[i_write%n_search][i_subgroup],file_offset_subgroup[i_write%n_search][i_subgroup]);          
-          read_group_properties(fp_subgroup_properties_in,&properties,i_subgroup,k_write);        
+          SID_fwrite(&(progenitor_id_subgroup[i_write%n_search][i_subgroup]),sizeof(int),1,&fp_matches_out);
+          SID_fwrite(&(descendant_id_subgroup[i_write%n_search][i_subgroup]),sizeof(int),1,&fp_matches_out);
+          SID_fwrite(&(tree_id_subgroup[i_write%n_search][i_subgroup]),      sizeof(int),1,&fp_matches_out);
+          SID_fwrite(&(file_offset_subgroup[i_write%n_search][i_subgroup]),  sizeof(int),1,&fp_matches_out);
+          read_group_properties(fp_subgroup_properties_in,&properties,i_subgroup,j_write);
           if(progenitor_id_subgroup[i_write%n_search][i_subgroup]>=0)
             SID_fwrite(&properties,sizeof(halo_info),1,&fp_subgroup_properties_out);
         }
-        fprintf(fp_matches_out,"\n");
       }
       fclose(fp_group_properties_in);
       fclose(fp_subgroup_properties_in);
     }
-    fclose(fp_matches_out);
+    SID_fclose(&fp_matches_out);
     SID_fclose(&fp_group_properties_out);
     SID_fclose(&fp_subgroup_properties_out);
     SID_log("Done.",SID_LOG_CLOSE);

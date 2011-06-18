@@ -83,7 +83,7 @@ float propagate_spins_recursive(tree_node_info *tree,RNG_info *RNG){
 
 int main(int argc, char *argv[]){
   char        filename_in_root[256];
-  char        filename_out_root[256];
+  char        filename_root_out[256];
   char        filename_missing_parents_out[256];
   char        filename_masses_out[256];
   char        filename_in[256];
@@ -169,7 +169,6 @@ int main(int argc, char *argv[]){
   int               flag_clean;
   int               i_x,i_y,i_z,i_write,n_write;
   char              filename_root_in[256];
-  char              filename_root_out[256];
   RNG_info          RNG;
   int               seed=102873;
 
@@ -192,6 +191,9 @@ int main(int argc, char *argv[]){
   float           *v_z_array;
   size_t          *halo_id_index=NULL;
   size_t           halo_index;
+  int              tree_lo_file[1];
+  int              tree_hi_file[1];
+  int              n_halos_file[1];
 
   SID_init(&argc,&argv,NULL);
 
@@ -201,9 +203,10 @@ int main(int argc, char *argv[]){
   m_p              =1.35e8;
   n_write          =5*5*5;
   n_header_lines   =8;
-
   i_write_start  =atoi(argv[1]);
   i_write_stop   =atoi(argv[2]);
+
+  sprintf(filename_root_out,"/nfs/dset/shrek071/millenium/bolshoi/wip3/treedata/");
 
   progenitor_mode=TREE_PROGENITOR_ORDER_DELUCIA;
   //progenitor_mode=TREE_PROGENITOR_ORDER_DEFAULT;
@@ -526,6 +529,8 @@ int main(int argc, char *argv[]){
           fclose(fp_in);
           SID_log("Done.",SID_LOG_CLOSE);
 
+          // Cleaning-up
+          SID_log("Cleaning-up...",SID_LOG_OPEN);
           SID_free(SID_FARG halo_scale_array);
           SID_free(SID_FARG halo_id_array);
           SID_free(SID_FARG descendant_scale_array);
@@ -543,57 +548,12 @@ int main(int argc, char *argv[]){
           SID_free(SID_FARG v_x_array);
           SID_free(SID_FARG v_y_array);
           SID_free(SID_FARG v_z_array);
-
-          // Write trees
-          sprintf(filename_out,"/nfs/dset/shrek071/millenium/bolshoi/wip3/treedata/trees_%d.%d",n_scales-1,i_write);
-//sprintf(filename_out,"/nfs/dset/shrek071/millenium/bolshoi/wip3/treedata/tree_0_0_1_24596.0");
-          SID_log("Writing output file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_out);
-          fp_out=fopen(filename_out,"w");
-
-          // ... write header ...
-          SID_log("Writing header...",SID_LOG_OPEN|SID_LOG_TIMER);
-          fwrite(&n_trees_out,sizeof(int),1,fp_out);
-          fwrite(&n_halos,    sizeof(int),1,fp_out);
-          for(i_tree=0;i_tree<n_trees_out;i_tree++)
-            fwrite(&(n_halos_tree[i_tree]),sizeof(int),1,fp_out);
           SID_log("Done.",SID_LOG_CLOSE);
 
-          // ... construct IDs ...
-          SID_log("Constructing IDs...",SID_LOG_OPEN|SID_LOG_TIMER);
-          for(i_tree=0;i_tree<n_trees_out;i_tree++){
-            // ... correct group halo ordering ...
-            for(i_scale=0;i_scale<n_scales;i_scale++)
-              assign_group_halo_order(trees[i_tree],i_scale,progenitor_mode);      
-            // ... correct progenitor ordering ...
-            current=trees[i_tree]->root;
-            while(current!=NULL){
-              if(current->descendant==NULL){
-                progenitor_score=0;
-                assign_progenitor_order_recursive(current,&progenitor_score,progenitor_mode);
-              }
-              current=current->next;
-            }
-            // ... assign depth-first-indices ...
-            depth_first_index=0;
-            current=trees[i_tree]->root;
-            while(current!=NULL){
-              if(current->descendant==NULL)
-                assign_depth_first_index_recursive(current,&depth_first_index);
-              current=current->next;
-            }
-            if(depth_first_index!=n_halos_tree[i_tree])
-              SID_trap_error("DFI != n_halos (i.e. %d!=%d)",ERROR_LOGIC,depth_first_index,n_halos_tree[i_tree]);
-            // ... assign ids ...
-            current=trees[i_tree]->root;
-            while(current!=NULL){
-              if(current->descendant==NULL)
-                assign_unique_ids_recursive(current,i_tree);
-              current=current->next;
-            }
-          }
-          SID_log("Done.",SID_LOG_CLOSE);
+          // Finalize trees
+          finalize_trees_vertical(trees,n_halos_tree,n_trees_out,n_scales,progenitor_mode);
 
-          // ... construct spins (needs to be done after IDs are assigned)...
+          // ... propagate spins (needs to be done after IDs are assigned)...
           SID_log("Propagating spins...",SID_LOG_OPEN|SID_LOG_TIMER);
           for(i_tree=0;i_tree<n_trees_out;i_tree++){
             current=trees[i_tree]->root;
@@ -605,27 +565,11 @@ int main(int argc, char *argv[]){
           }
           SID_log("Done.",SID_LOG_CLOSE);
 
-          // ... write trees ...
-          SID_log("Writing trees...",SID_LOG_OPEN|SID_LOG_TIMER);
-          for(i_tree=0;i_tree<n_trees_out;i_tree++){
-            n_halos_written=0;
-            current=trees[i_tree]->root;
-            while(current!=NULL){
-              if(current->descendant==NULL)
-                n_halos_written+=write_tree_vertical_halos_recursive(current,&fp_out,NULL);
-              current=current->next;
-            }
-            if(n_halos_written!=n_halos_tree[i_tree])
-              SID_trap_error("Number of halos written is not right (i.e. %d!=%d) for tree #%d",ERROR_LOGIC,n_halos_written,n_halos_tree[i_tree],i_tree);
-          }
-          SID_log("Done.",SID_LOG_CLOSE);
-          SID_log("Done.",SID_LOG_CLOSE);
-
-          // Free trees
-          SID_log("Freeing trees...",SID_LOG_OPEN|SID_LOG_TIMER);
-          for(i_tree=0;i_tree<n_trees_out;i_tree++)
-            free_tree(&(trees[i_tree]));
-          SID_log("Done.",SID_LOG_CLOSE);
+          // Write trees
+          tree_lo_file[0]=0;
+          tree_hi_file[0]=n_trees_out-1;
+          n_halos_file[0]=n_halos;
+          write_trees_vertical(trees,n_halos_tree,n_trees_out,tree_lo_file,tree_hi_file,n_halos_file,1,filename_root_out,"sub");
 
           // Print some stats for this input file
           merge_sort(n_trees_tree,(size_t)n_trees_out,NULL,SID_INT,SORT_INPLACE_ONLY,TRUE);
@@ -633,12 +577,15 @@ int main(int argc, char *argv[]){
           SID_log("Med # of input_trees to a tree: %d",SID_LOG_COMMENT,n_trees_tree[n_trees_out/2]);
           SID_log("Max # of input_trees to a tree: %d",SID_LOG_COMMENT,n_trees_tree[n_trees_out-1]);
 
-          // Clean-up
+          // Free trees
+          SID_log("Freeing trees...",SID_LOG_OPEN|SID_LOG_TIMER);
+          for(i_tree=0;i_tree<n_trees_out;i_tree++)
+            free_tree(&(trees[i_tree]));
           SID_free(SID_FARG trees);
           SID_free(SID_FARG n_halos_isotree);
           SID_free(SID_FARG n_halos_tree);
           SID_free(SID_FARG n_trees_tree);
-          fclose(fp_out);
+          SID_log("Done.",SID_LOG_CLOSE);
 
           SID_log("Done.",SID_LOG_CLOSE);
         }

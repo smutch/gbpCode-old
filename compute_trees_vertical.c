@@ -7,14 +7,14 @@
 #include <gbpHalos.h>
 #include <gbpTrees.h>
 
-void init_tree(int n_search,tree_info **tree);
-void init_tree(int n_search,tree_info **tree){
+void init_tree(int n_snaps,tree_info **tree);
+void init_tree(int n_snaps,tree_info **tree){
   int i_search;
   (*tree)                     =(tree_info       *)SID_malloc(sizeof(tree_info));
-  (*tree)->n_neighbours       =(int             *)SID_malloc(sizeof(int)*n_search);
-  (*tree)->neighbour_halos    =(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_search);
-  (*tree)->neighbour_halo_last=(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_search);
-  for(i_search=0;i_search<n_search;i_search++){
+  (*tree)->n_neighbours       =(int             *)SID_malloc(sizeof(int)*n_snaps);
+  (*tree)->neighbour_halos    =(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_snaps);
+  (*tree)->neighbour_halo_last=(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_snaps);
+  for(i_search=0;i_search<n_snaps;i_search++){
     (*tree)->n_neighbours[i_search]       =0;
     (*tree)->neighbour_halos[i_search]    =NULL;
     (*tree)->neighbour_halo_last[i_search]=NULL;
@@ -194,7 +194,7 @@ void compute_halo_score_recursive(tree_node_info *tree,int *M_i,int mode){
       current=current->progenitor_next;
     }
     if(i_progenitor!=tree->n_progenitors)
-      SID_trap_error("There is a progenitor problem in assign_progenitor_order_recursive! (%d!=%d)",ERROR_LOGIC,i_progenitor!=tree->n_progenitors);
+      SID_trap_error("There is a progenitor problem in compute_halo_score_recursive! (%d!=%d)",ERROR_LOGIC,i_progenitor!=tree->n_progenitors);
   }
 
   // Add this progenitor's score to the descendant's sum (see De Lucia and Blaizot (2006))
@@ -307,6 +307,7 @@ void assign_group_halo_order(tree_info *tree,int i_snap,int mode){
     if(i_halo!=n_neighbours)
       SID_trap_error("There's a problem with the number of neighbours in assign_group_halo_order (%d!=%d)!",ERROR_LOGIC,i_halo,n_neighbours);
     merge_sort(group_ids,(size_t)n_neighbours,&group_ids_index,SID_INT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
+
     // Find highest group score and initialize a temporary array
     largest_group=0;
     i_halo       =0;
@@ -452,11 +453,10 @@ void compute_trees_vertical(char *filename_root_out,
                             int   i_read_start,
                             int   i_read_stop,
                             int   i_read_step,
-                            int   n_search,
                             int   n_files_groups,
                             int   n_files_subgroups,
                             int  *flag_clean){
-  FILE       *fp_in;
+  SID_fp      fp_in;
   SID_fp      fp_out;
   SID_fp      fp_out_MBP;
   SID_fp      fp_properties;
@@ -472,13 +472,11 @@ void compute_trees_vertical(char *filename_root_out,
   int         i_write;
   int         n_files;
   int         i_read;
-  int         j_read;
   int         k_read;
   int         i_file;
   int         j_file;
   int         i_group;
   int         i_subgroup;
-  int         j_subgroup;
   int         k_match;
   int         n_trees_local;
   int         i_rank;
@@ -507,7 +505,6 @@ void compute_trees_vertical(char *filename_root_out,
   int         subgroup_id;
   int         subgroup_tree_id;
   int         min_sum;
-  int         test_sum;
   int         min_bin;
   int         n_write;
   int        *tree_lo_file=NULL;  
@@ -577,93 +574,67 @@ void compute_trees_vertical(char *filename_root_out,
   // Compute a histogram of tree occupation by tree id
   for(i_read=i_read_stop,n_snap=0;i_read>=i_read_start;i_read-=i_read_step) n_snap++;
 
-  n_search=n_search+2;
-  
   // Determining iso-tree id mappings (onto tree structures, ranks and files)
-  //   Loop over each snapshot ...
-  for(i_read=i_read_stop,flag_init=TRUE,n_halos_groups=0,n_halos_subgroups=0;i_read>=i_read_start;i_read-=i_read_step){
-    sprintf(filename_in,"%s.trees_horizontal_%d",filename_root_out,i_read);
-    fp_in=fopen(filename_in,"r");
-    grab_next_line(fp_in,&line,&line_length);
-    grab_int(line,1,&n_groups);
-    grab_int(line,2,&n_subgroups);
-    grab_int(line,4,&n_trees_subgroup);
-    grab_int(line,5,&n_trees_group);
-    // Initialize the mapping of group and subgroup halo tree identities onto the final tree structure identities
-    if(flag_init){
-      // Allocate arrays
-      i_tree_group            =(int *)SID_malloc(sizeof(int)*n_trees_group);    // These are the linked tree ids that
-      i_tree_subgroup         =(int *)SID_malloc(sizeof(int)*n_trees_subgroup); //   will be used for each iso-tree
-      n_halos_tree_group      =(int *)SID_malloc(sizeof(int)*n_trees_group);
-      n_halos_tree_subgroup   =(int *)SID_malloc(sizeof(int)*n_trees_subgroup);
-      tree_lo_group_rank      =(int *)SID_malloc(sizeof(int)*SID.n_proc);  
-      tree_hi_group_rank      =(int *)SID_malloc(sizeof(int)*SID.n_proc);  
-      tree_count_group_rank   =(int *)SID_malloc(sizeof(int)*SID.n_proc);  
-      tree_lo_group_file      =(int *)SID_malloc(sizeof(int)*n_files_groups);
-      tree_hi_group_file      =(int *)SID_malloc(sizeof(int)*n_files_groups);
-      tree_count_group_file   =(int *)SID_malloc(sizeof(int)*n_files_groups);
-      tree_lo_subgroup_rank   =(int *)SID_malloc(sizeof(int)*SID.n_proc);  
-      tree_hi_subgroup_rank   =(int *)SID_malloc(sizeof(int)*SID.n_proc);  
-      tree_count_subgroup_rank=(int *)SID_malloc(sizeof(int)*SID.n_proc);  
-      tree_lo_subgroup_file   =(int *)SID_malloc(sizeof(int)*n_files_subgroups);  
-      tree_hi_subgroup_file   =(int *)SID_malloc(sizeof(int)*n_files_subgroups);  
-      tree_count_subgroup_file=(int *)SID_malloc(sizeof(int)*n_files_subgroups);  
-      // Initialize arrays
-      for(i_tree=0;i_tree<n_trees_group;i_tree++){
-        i_tree_group[i_tree]      =n_trees_group+1;
-        n_halos_tree_group[i_tree]=0;
-      }
-      for(i_tree=0;i_tree<n_trees_subgroup;i_tree++){
-        i_tree_subgroup[i_tree]      =n_trees_subgroup+1;
-        n_halos_tree_subgroup[i_tree]=0;
-      }
-      // Process the first file; initialize tree ids to final group indices
-      for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
-        grab_next_line(fp_in,&line,&line_length);
-        grab_int(line,1,&group_id);
-        grab_int(line,3,&group_tree_id);
-        grab_int(line,5,&n_subgroups_group);
-        if(group_id>=0 && group_tree_id>=0){
-          i_tree_group[group_tree_id]=group_tree_id;
-          n_halos_groups++;
-        }
-        for(i_subgroup=0;i_subgroup<n_subgroups_group;i_subgroup++){
-          grab_int(line,6+i_subgroup*4,&subgroup_id);
-          grab_int(line,8+i_subgroup*4,&subgroup_tree_id);
-          if(subgroup_id>=0 && subgroup_tree_id>=0){
-            if(group_tree_id>=0)
-              i_tree_subgroup[subgroup_tree_id]=group_tree_id;
-            n_halos_subgroups++;
-          }
-        }
-      }
-      flag_init=FALSE;
-    }
-    // Loop over all the other snapshots, linking interwoven trees as we go
-    else{
-      for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
-        grab_next_line(fp_in,&line,&line_length);
-        grab_int(line,1,&group_id);
-        grab_int(line,3,&group_tree_id);
-        grab_int(line,5,&n_subgroups_group);
-        if(group_id>=0 && group_tree_id>=0)
-          n_halos_groups++;
-        for(i_subgroup=0;i_subgroup<n_subgroups_group;i_subgroup++){
-          grab_int(line,6+i_subgroup*4,&subgroup_id);
-          grab_int(line,8+i_subgroup*4,&subgroup_tree_id);
-          if(subgroup_id>=0 && subgroup_tree_id>=0){
-            if(group_tree_id>=0)
-              i_tree_subgroup[subgroup_tree_id]=group_tree_id;
-            n_halos_subgroups++;
-          }
-        }
-      }
-    }
-    fclose(fp_in);
+  sprintf(filename_in,"%s.trees_horizontal_%d",filename_root_out,i_read_stop);
+  SID_fopen(filename_in,"r",&fp_in);
+  SID_fread_all(&n_groups,         sizeof(int),1,&fp_in);
+  SID_fread_all(&n_subgroups,      sizeof(int),1,&fp_in);
+  SID_fread_all(&n_progenitors_max,sizeof(int),1,&fp_in);
+  SID_fread_all(&n_trees_subgroup, sizeof(int),1,&fp_in);
+  SID_fread_all(&n_trees_group,    sizeof(int),1,&fp_in);
+  i_tree_group            =(int *)SID_malloc(sizeof(int)*n_trees_group);    // These are the linked tree ids that
+  i_tree_subgroup         =(int *)SID_malloc(sizeof(int)*n_trees_subgroup); //   will be used for each iso-tree
+  n_halos_tree_group      =(int *)SID_malloc(sizeof(int)*n_trees_group);
+  n_halos_tree_subgroup   =(int *)SID_malloc(sizeof(int)*n_trees_subgroup);
+  tree_lo_group_rank      =(int *)SID_malloc(sizeof(int)*SID.n_proc);  
+  tree_hi_group_rank      =(int *)SID_malloc(sizeof(int)*SID.n_proc);  
+  tree_count_group_rank   =(int *)SID_malloc(sizeof(int)*SID.n_proc);  
+  tree_lo_group_file      =(int *)SID_malloc(sizeof(int)*n_files_groups);
+  tree_hi_group_file      =(int *)SID_malloc(sizeof(int)*n_files_groups);
+  tree_count_group_file   =(int *)SID_malloc(sizeof(int)*n_files_groups);
+  tree_lo_subgroup_rank   =(int *)SID_malloc(sizeof(int)*SID.n_proc);  
+  tree_hi_subgroup_rank   =(int *)SID_malloc(sizeof(int)*SID.n_proc);  
+  tree_count_subgroup_rank=(int *)SID_malloc(sizeof(int)*SID.n_proc);  
+  tree_lo_subgroup_file   =(int *)SID_malloc(sizeof(int)*n_files_subgroups);  
+  tree_hi_subgroup_file   =(int *)SID_malloc(sizeof(int)*n_files_subgroups);  
+  tree_count_subgroup_file=(int *)SID_malloc(sizeof(int)*n_files_subgroups);  
+  // Initialize arrays
+  for(i_tree=0;i_tree<n_trees_group;i_tree++){
+    i_tree_group[i_tree]      =n_trees_group+1;
+    n_halos_tree_group[i_tree]=0;
   }
-  SID_log("(n_groups=%d n_subgroups=%d)...",SID_LOG_CONTINUE,n_halos_groups,n_halos_subgroups);
+  for(i_tree=0;i_tree<n_trees_subgroup;i_tree++){
+    i_tree_subgroup[i_tree]      =n_trees_subgroup+1;
+    n_halos_tree_subgroup[i_tree]=0;
+  }
+  // Loop over each group, grouping together the trees of each's subgroups
+  for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
+    SID_fread(&(group_id),           sizeof(int),1,&fp_in);
+    SID_fread(&(group_descendant_id),sizeof(int),1,&fp_in);
+    SID_fread(&(group_tree_id),      sizeof(int),1,&fp_in);
+    SID_fread(&(group_file_offset),  sizeof(int),1,&fp_in);
+    SID_fread(&(n_subgroups_group),  sizeof(int),1,&fp_in);
+    if(group_id>=0 && group_tree_id>=0){
+      if(group_tree_id>=n_trees_group)
+        SID_trap_error("group_tree_id (%d) exceeds the number of trees (%d) in the %dth file.",ERROR_LOGIC,group_tree_id,n_trees_group,i_read);
+      i_tree_group[group_tree_id]=i_group;
+    }
+    for(i_subgroup=0;i_subgroup<n_subgroups_group;i_subgroup++){
+      SID_fread(&(subgroup_id),           sizeof(int),1,&fp_in);
+      SID_fread(&(subgroup_descendant_id),sizeof(int),1,&fp_in);
+      SID_fread(&(subgroup_tree_id),      sizeof(int),1,&fp_in);
+      SID_fread(&(subgroup_file_offset),  sizeof(int),1,&fp_in);
+      if(subgroup_id>=0 && subgroup_tree_id>=0){
+        if(subgroup_tree_id>=n_trees_subgroup)
+          SID_trap_error("subgroup_tree_id (%d) exceeds the number of trees (%d) in the %dth file.",ERROR_LOGIC,subgroup_tree_id,n_trees_subgroup,i_read);
+        i_tree_subgroup[subgroup_tree_id]=i_group;
+      }
+    }
+  }
+  SID_fclose(&fp_in);
   
   // Due to linking, there may be gaps in the i_tree arrays at this point. Compress them to fix this.
+  //  ... do subgroups first ...
   merge_sort(i_tree_subgroup,(size_t)n_trees_subgroup,&i_tree_subgroup_index,SID_INT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
   for(i_tree=0,k_tree=0;i_tree<n_trees_subgroup;){
     j_tree=i_tree_subgroup[i_tree_subgroup_index[i_tree]];
@@ -675,6 +646,7 @@ void compute_trees_vertical(char *filename_root_out,
   }
   n_trees_subgroup=k_tree;
   SID_free((void **)&i_tree_subgroup_index);
+  //  ... then do groups ...
   merge_sort(i_tree_group,(size_t)n_trees_group,&i_tree_group_index,SID_INT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
   for(i_tree=0,k_tree=0;i_tree<n_trees_group;){
     j_tree=i_tree_group[i_tree_group_index[i_tree]];
@@ -687,28 +659,47 @@ void compute_trees_vertical(char *filename_root_out,
   n_trees_group=k_tree;
   SID_free((void **)&i_tree_group_index);
 
-  // Determine tree halo counts
-  for(i_read=i_read_stop;i_read>=i_read_start;i_read-=i_read_step){
+  // Determine halo counts
+  for(i_read=i_read_stop,n_halos_groups=0,n_halos_subgroups=0;i_read>=i_read_start;i_read-=i_read_step){
     sprintf(filename_in,"%s.trees_horizontal_%d",filename_root_out,i_read);
-    fp_in=fopen(filename_in,"r");
-    grab_next_line(fp_in,&line,&line_length);
-    grab_int(line,1,&n_groups);
+    SID_fopen(filename_in,"r",&fp_in);
+    SID_fread_all(&n_groups,         sizeof(int),1,&fp_in);
+    SID_fread_all(&n_subgroups,      sizeof(int),1,&fp_in);
+    SID_fread_all(&n_progenitors_max,sizeof(int),1,&fp_in);
+    SID_fread_all(&n_trees_subgroup, sizeof(int),1,&fp_in);
+    SID_fread_all(&n_trees_group,    sizeof(int),1,&fp_in);
     for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
-      grab_next_line(fp_in,&line,&line_length);
-      grab_int(line,1,&group_id);
-      grab_int(line,3,&group_tree_id);
-      grab_int(line,5,&n_subgroups_group);
-      if(group_id>=0 && group_tree_id>=0)
-        n_halos_tree_group[i_tree_group[group_tree_id]]++;
-      for(i_subgroup=0,i_tree_subgroup_min=0;i_subgroup<n_subgroups_group;i_subgroup++){
-        grab_int(line,6+i_subgroup*4,&subgroup_id);
-        grab_int(line,8+i_subgroup*4,&subgroup_tree_id);
-        if(subgroup_id>=0 && subgroup_tree_id>=0)
-          n_halos_tree_subgroup[i_tree_subgroup[subgroup_tree_id]]++;
-      }
+       SID_fread_all(&(group_id),           sizeof(int),1,&fp_in);
+       SID_fread_all(&(group_descendant_id),sizeof(int),1,&fp_in);
+       SID_fread_all(&(group_tree_id),      sizeof(int),1,&fp_in);
+       SID_fread_all(&(group_file_offset),  sizeof(int),1,&fp_in);
+       SID_fread_all(&(n_subgroups_group),  sizeof(int),1,&fp_in);
+       if(group_tree_id>=0)
+         group_tree_id=i_tree_group[group_tree_id];
+       else
+         group_tree_id=-1;
+       if(group_id>=0 && group_tree_id>=0){
+         n_halos_tree_group[group_tree_id]++;
+         n_halos_groups++;
+       }
+       for(i_subgroup=0,i_tree_subgroup_min=0;i_subgroup<n_subgroups_group;i_subgroup++){
+         SID_fread_all(&(subgroup_id),           sizeof(int),1,&fp_in);
+         SID_fread_all(&(subgroup_descendant_id),sizeof(int),1,&fp_in);
+         SID_fread_all(&(subgroup_tree_id),      sizeof(int),1,&fp_in);
+         SID_fread_all(&(subgroup_file_offset),  sizeof(int),1,&fp_in);
+         if(subgroup_tree_id>=0)
+           subgroup_tree_id=i_tree_subgroup[subgroup_tree_id];
+         else
+           subgroup_tree_id=-1;
+         if(subgroup_id>=0 && subgroup_tree_id>=0){
+           n_halos_tree_subgroup[subgroup_tree_id]++;
+           n_halos_subgroups++;
+         }
+       }
     }
-    fclose(fp_in);
+    SID_fclose(&fp_in);
   }
+  SID_log("(n_groups=%d n_subgroups=%d)...",SID_LOG_CONTINUE,n_halos_groups,n_halos_subgroups);
 
   // Determine the number of trees we are left with now
   for(i_tree=0;i_tree<n_trees_subgroup;i_tree++)
@@ -818,17 +809,21 @@ void compute_trees_vertical(char *filename_root_out,
   // Report decomposition results
   if(n_files_subgroups>1){
     for(i_bin=0;i_bin<n_files_subgroups;i_bin++)
-      SID_log("Subgroup file #%4d will store %5d subgroup trees (%8d halos in total)",SID_LOG_COMMENT,i_bin+1,tree_hi_subgroup_file[i_bin]-tree_lo_subgroup_file[i_bin]+1,tree_count_subgroup_file[i_bin]);    
+      SID_log("Subgroup file #%4d will store %5d subgroup trees (%8d halos in total)",
+               SID_LOG_COMMENT,i_bin+1,tree_hi_subgroup_file[i_bin]-tree_lo_subgroup_file[i_bin]+1,tree_count_subgroup_file[i_bin]);    
   }
   if(n_files_groups>1){
     for(i_bin=0;i_bin<n_files_groups;i_bin++)
-      SID_log("Group    file #%4d will store %5d group    trees (%8d halos in total)",SID_LOG_COMMENT,i_bin+1,tree_hi_group_file[i_bin]-tree_lo_group_file[i_bin]+1,tree_count_group_file[i_bin]);    
+      SID_log("Group    file #%4d will store %5d group    trees (%8d halos in total)",
+              SID_LOG_COMMENT,i_bin+1,tree_hi_group_file[i_bin]-tree_lo_group_file[i_bin]+1,tree_count_group_file[i_bin]);    
   }
   if(SID.n_proc>1){
     for(i_bin=0;i_bin<SID.n_proc;i_bin++)
-      SID_log("Rank     #%4d will process %5d subgroup trees (%8d halos in total)",SID_LOG_COMMENT,i_bin+1,tree_hi_subgroup_rank[i_bin]-tree_lo_subgroup_rank[i_bin]+1,tree_count_subgroup_rank[i_bin]);
+      SID_log("Rank     #%4d will process %5d subgroup trees (%8d halos in total)",
+              SID_LOG_COMMENT,i_bin+1,tree_hi_subgroup_rank[i_bin]-tree_lo_subgroup_rank[i_bin]+1,tree_count_subgroup_rank[i_bin]);
     for(i_bin=0;i_bin<SID.n_proc;i_bin++)
-      SID_log("Rank     #%4d will process %5d group    trees (%8d halos in total)",SID_LOG_COMMENT,i_bin+1,tree_hi_group_rank[i_bin]-tree_lo_group_rank[i_bin]+1,tree_count_group_rank[i_bin]);
+      SID_log("Rank     #%4d will process %5d group    trees (%8d halos in total)",
+              SID_LOG_COMMENT,i_bin+1,tree_hi_group_rank[i_bin]-tree_lo_group_rank[i_bin]+1,tree_count_group_rank[i_bin]);
   }
 
   SID_log("(%d group and %d subgroup trees)...Done.",SID_LOG_CLOSE,n_trees_group,n_trees_subgroup);
@@ -870,7 +865,7 @@ void compute_trees_vertical(char *filename_root_out,
     // Initialize tree arrays
     trees=(tree_info **)SID_malloc(sizeof(tree_info *)*n_trees_local);
     for(i_tree=0;i_tree<n_trees_local;i_tree++)
-      init_tree(n_search,&trees[i_tree]);
+      init_tree(n_snap,&trees[i_tree]);
     
     // Read matching files
     SID_log("Rendering %sgroup trees vertical...",SID_LOG_OPEN|SID_LOG_TIMER,group_text_prefix);
@@ -878,56 +873,62 @@ void compute_trees_vertical(char *filename_root_out,
       SID_log("(horizontal tree files will be removed)...",SID_LOG_CONTINUE);
 
     // Loop over all the horizontal tree files in order of decreasing snapshot number
-    for(i_read=i_read_stop,i_file=i_read_stop,flag_init=TRUE;i_read>=i_read_start;i_read-=i_read_step,i_file--,flag_init=FALSE){
-      halo_snap=(i_file)%n_search;
-
-      // Only keep track of neighbour lists over the search range; initialize this snapshot's halo list here
+    for(i_read=i_read_stop,i_file=n_snap-1,flag_init=TRUE;i_read>=i_read_start;i_read-=i_read_step,i_file--,flag_init=FALSE){
+      halo_snap=(i_file);
+      // Initialize this snapshot's halo list here
       for(i_tree=0;i_tree<n_trees_local;i_tree++){
-        trees[i_tree]->neighbour_halos[i_file%n_search]=NULL;
-        trees[i_tree]->n_neighbours[i_file%n_search]   =0;
+        trees[i_tree]->neighbour_halos[i_file]=NULL;
+        trees[i_tree]->n_neighbours[i_file]   =0;
       }
       sprintf(filename_in,        "%s.trees_horizontal_%d",                    filename_root_out,i_read);
       sprintf(filename_properties,"%s.trees_horizontal_%sgroups_properties_%d",filename_root_out,group_text_prefix,i_read);
 
       // Open horizontal tree file
-      fp_in=fopen(filename_in,"r");
+      SID_fopen(filename_in,        "r",&fp_in);
       SID_fopen(filename_properties,"r",&fp_properties);
 
       // Read header
-      grab_next_line(fp_in,&line,&line_length);
-      grab_int(line,1,&n_groups);
-      grab_int(line,2,&n_subgroups);
+      SID_fread_all(&n_groups,         sizeof(int),1,&fp_in);
+      SID_fread_all(&n_subgroups,      sizeof(int),1,&fp_in);
+      SID_fread_all(&n_progenitors_max,sizeof(int),1,&fp_in);
+      SID_fread_all(&n_trees_subgroup, sizeof(int),1,&fp_in);
+      SID_fread_all(&n_trees_group,    sizeof(int),1,&fp_in);
       
       // Read each group in turn
       for(i_group=0,i_subgroup=0,k_subgroup=0;i_group<n_groups;i_group++){
-        j_read=1;
-        grab_next_line(fp_in,&line,&line_length);
-        grab_int(line,j_read++,&group_id);            // Unique id assigned to this group halo
-        grab_int(line,j_read++,&group_descendant_id); // Unique id assigned to its descendant
-        grab_int(line,j_read++,&group_tree_id);       // Unique id assigned to this group's tree
-        grab_int(line,j_read++,&group_file_offset);   // Number of files back to the matched descendant
-        grab_int(line,j_read++,&n_subgroups_group);   // Number of subgroups in this group
-        group_tree_id=i_tree_group[group_tree_id];
+        SID_fread_all(&(group_id),           sizeof(int),1,&fp_in);
+        SID_fread_all(&(group_descendant_id),sizeof(int),1,&fp_in);
+        SID_fread_all(&(group_tree_id),      sizeof(int),1,&fp_in);
+        SID_fread_all(&(group_file_offset),  sizeof(int),1,&fp_in);
+        SID_fread_all(&(n_subgroups_group),  sizeof(int),1,&fp_in);
+        if(group_tree_id>=0)
+          group_tree_id=i_tree_group[group_tree_id];
+        else
+          group_tree_id=-1;
         // If we are processing subgroup trees ...
         if(k_match==0){
           // Read each subgroup in turn
-          for(i_subgroup=0,j_subgroup=4;i_subgroup<n_subgroups_group;i_subgroup++){
-            grab_int(line,j_read++,&subgroup_id);              // Unique id assigned to this subgroup
+          for(i_subgroup=0;i_subgroup<n_subgroups_group;i_subgroup++){
+            SID_fread_all(&(subgroup_id),           sizeof(int),1,&fp_in);
+            SID_fread_all(&(subgroup_descendant_id),sizeof(int),1,&fp_in);
+            SID_fread_all(&(subgroup_tree_id),      sizeof(int),1,&fp_in);
+            SID_fread_all(&(subgroup_file_offset),  sizeof(int),1,&fp_in);
+            if(subgroup_id>=0)
+              SID_fread_all(&properties,sizeof(halo_info),1,&fp_properties); // This is written only if subgroup_id>=0
             // Ignore negative ids
-            if(subgroup_id>=0){
-              grab_int(line,j_read++,&subgroup_descendant_id); // Unique id assigned to its descendant halo
-              grab_int(line,j_read++,&subgroup_tree_id);       // Unique id assigned to this subgroup's tree
-              grab_int(line,j_read++,&subgroup_file_offset);   // Number of files back to the matched descendant
-              SID_fread_all(&properties,sizeof(halo_info),1,&fp_properties);
+            if(subgroup_tree_id>=0)
               subgroup_tree_id=i_tree_subgroup[subgroup_tree_id];
-              i_tree          =subgroup_tree_id-tree_lo_rank;
+            else
+              subgroup_tree_id=-1;
+            if(subgroup_id>=0 && subgroup_tree_id>=0){
               // If this subgroup belongs to a local tree ...
-              if(i_tree>=0 && i_tree<n_trees_local){
+              i_tree=subgroup_tree_id-tree_lo_rank;
+              if(i_tree>=0 && i_tree<n_trees_local){ 
                 // ... create a new branch and add it to its tree ...
-                if(subgroup_file_offset==0)
-                  descendant_snap=-1;
+                if(subgroup_file_offset<=0)
+                  descendant_snap=-1; // Needed for halos in the root snapshot
                 else
-                  descendant_snap=(i_file+subgroup_file_offset)%n_search;
+                  descendant_snap=(i_file+subgroup_file_offset);
                 add_node_to_tree(trees[i_tree],
                                  subgroup_id,
                                  group_id,
@@ -937,39 +938,37 @@ void compute_trees_vertical(char *filename_root_out,
                                  &properties);
               }
             }
-            // ... else if it is a dropped halo, skip 3 elements to the next subgroup
-            else
-              j_read+=3;
           }
         }
-        // .. else, if we are processing group trees (again, ignore negative ids)
-        else if(group_id>=0){
-          SID_fread_all(&properties,sizeof(halo_info),1,&fp_properties);
-          group_tree_id=i_tree_group[group_tree_id];
-          i_tree       =group_tree_id-tree_lo_rank;
-          // If this group belongs to a local tree ...
-          if(i_tree>=0 && i_tree<n_trees_local){
-            // ... if so, create a new branch and add it to the tree ...
-            if(group_file_offset==0)
-              descendant_snap=-1;
-            else
-              descendant_snap=(i_file+group_file_offset)%n_search;
-            add_node_to_tree(trees[i_tree],
-                             group_id,
-                             group_id,
-                             group_descendant_id,
-                             halo_snap,
-                             descendant_snap,                      
-                             &properties);
+        // ... else, process group trees 
+        else{
+          SID_fseek(&fp_in,sizeof(int),n_subgroups_group*4,SID_SEEK_CUR);
+          // Ignore negative IDs
+          if(group_id>=0){
+            SID_fread_all(&properties,sizeof(halo_info),1,&fp_properties); // This is written only if subgroup_id>=0
+            if(group_tree_id>=0){
+              i_tree=group_tree_id-tree_lo_rank;
+              // If this group belongs to a local tree ...
+              if(i_tree>=0 && i_tree<n_trees_local){ 
+                // ... if so, create a new branch and add it to the tree ...
+                if(group_file_offset<=0)
+                  descendant_snap=-1; // Needed for halos in the root snapshot
+                else
+                  descendant_snap=(i_file+group_file_offset);
+                add_node_to_tree(trees[i_tree],
+                                 group_id,
+                                 group_id,
+                                 group_descendant_id,
+                                 halo_snap,
+                                 descendant_snap,                      
+                                 &properties);
+              }
+            }
           }
         }
       } // i_group
-      fclose(fp_in);
+      SID_fclose(&fp_in);
       SID_fclose(&fp_properties);
-
-      // Fix group halo ordering
-      for(i_tree=0;i_tree<n_trees_local;i_tree++)
-        assign_group_halo_order(trees[i_tree],halo_snap,TREE_PROGENITOR_ORDER_DELUCIA);      
 
       // If flag_clean=TRUE, then delete the input files used here.
       if((*flag_clean)==TRUE){
@@ -983,169 +982,17 @@ void compute_trees_vertical(char *filename_root_out,
     } // i_read
     SID_log("Done.",SID_LOG_CLOSE);
 
-    // Now that the trees are built, we can traverse them to assign halo ids.
-    SID_log("Constructing %sgroup tree identities...",SID_LOG_OPEN|SID_LOG_TIMER,group_text_prefix);
+    // Finalize trees
+    finalize_trees_vertical(trees,n_halos_tree,n_trees_local,n_snap,TREE_PROGENITOR_ORDER_DELUCIA);
 
-    // Make corrections to progenitor order ...
-    SID_log("Correcting progenitor ordering...",SID_LOG_OPEN|SID_LOG_TIMER,group_text_prefix);
-    for(i_tree=0;i_tree<n_trees_local;i_tree++){
-      // Loop over each tree in the i_tree'th grouping.  They all have NULL descendants.
-      current=trees[i_tree]->root;
-      while(current!=NULL){
-        if(current->descendant==NULL){
-          progenitor_score=0;
-          assign_progenitor_order_recursive(current,&progenitor_score,TREE_PROGENITOR_ORDER_DELUCIA);
-        }
-        current=current->next;
-      }
-    }
-    SID_log("Done.",SID_LOG_CLOSE);    
+    // Write trees
+    write_trees_vertical(trees,n_halos_tree,n_trees_local,tree_lo_file,tree_hi_file,tree_count_file,n_write,filename_root_out,group_text_prefix);
 
-    //  ... then assign depth_first_indices ...
-    SID_log("Assigning depth-first indices...",SID_LOG_OPEN|SID_LOG_TIMER,group_text_prefix);
-    for(i_tree=0;i_tree<n_trees_local;i_tree++){
-      depth_first_index=0;
-      current=trees[i_tree]->root;
-      while(current!=NULL){
-        if(current->descendant==NULL)
-          assign_depth_first_index_recursive(current,&depth_first_index);
-        current=current->next;
-      }
-      if(n_halos_tree[i_tree]!=(int)depth_first_index)
-        SID_trap_error("Halo count mismatch (ie. %d!=%d) in %sgroup tree %d",ERROR_LOGIC,n_halos_tree[i_tree],(int)depth_first_index,i_tree);
-    }
-    SID_log("Done.",SID_LOG_CLOSE);    
-
-    //  ... and then assign unique ids
-    SID_log("Assigning ids...",SID_LOG_OPEN|SID_LOG_TIMER,group_text_prefix);
-    for(i_tree=0;i_tree<n_trees_local;i_tree++){
-      current=trees[i_tree]->root;
-      while(current!=NULL){
-        if(current->descendant==NULL)
-          assign_unique_ids_recursive(current,tree_lo_rank+i_tree);
-        current=current->next;
-      }
-    }
-    SID_log("Done.",SID_LOG_CLOSE);
-     
-    SID_log("Done.",SID_LOG_CLOSE);    
-    
-    SID_log("Writing %sgroup trees (structure size=%lld bytes)...",SID_LOG_OPEN|SID_LOG_TIMER,group_text_prefix,sizeof(halo_info));
-    // Write the tree headers
-    for(i_rank=0,i_write=0,i_tree=0,flag_write_init=TRUE;i_rank<SID.n_proc;i_rank++){
-      if(SID.My_rank==i_rank){
-        if(n_write==1){
-          sprintf(filename_out,    "%s.%sgroup_trees",    filename_root_out,group_text_prefix);
-          sprintf(filename_out_MBP,"%s.%sgroup_trees_MBP",filename_root_out,group_text_prefix);
-        }
-        else{
-          sprintf(filename_out,    "%s.%sgroup_trees.%d",    filename_root_out,group_text_prefix,i_write);
-          sprintf(filename_out_MBP,"%s.%sgroup_trees_MBP.%d",filename_root_out,group_text_prefix,i_write);
-        }
-        if(flag_write_init){
-          SID_fopen(filename_out,    "w",&fp_out);
-          SID_fopen(filename_out_MBP,"w",&fp_out_MBP);
-          n_trees_file=tree_hi_file[i_write]-tree_lo_file[i_write]+1;
-          SID_fwrite(&n_trees_file,sizeof(int),1,&fp_out);
-          SID_fwrite(&n_trees_file,sizeof(int),1,&fp_out_MBP);
-          SID_fwrite(&(tree_count_file[i_write]),sizeof(int),1,&fp_out);
-          SID_fwrite(&(tree_count_file[i_write]),sizeof(int),1,&fp_out_MBP);
-        }
-        else{
-          SID_fopen(filename_out,    "a",&fp_out);
-          SID_fopen(filename_out_MBP,"a",&fp_out_MBP);
-        }
-        // Write all of the trees on this rank
-        for(j_tree=0;j_tree<n_trees_local;i_tree++,j_tree++){
-            
-          // Write halo counts for trees
-          SID_fwrite(&(n_halos_tree[i_tree]),sizeof(int),1,&fp_out);
-          SID_fwrite(&(n_halos_tree[i_tree]),sizeof(int),1,&fp_out_MBP);
-          flag_write_init=FALSE;
-
-          // Move to the next file if this one is done
-          if(i_tree==tree_hi_file[i_write]){
-            i_write++;
-            if(i_write<n_write){
-              flag_write_init=TRUE;
-              SID_fclose(&fp_out);
-              SID_fclose(&fp_out_MBP);
-              sprintf(filename_out,    "%s.%sgroup_trees.%d",    filename_root_out,group_text_prefix,i_write);
-              sprintf(filename_out_MBP,"%s.%sgroup_trees_MBP.%d",filename_root_out,group_text_prefix,i_write);
-              SID_fopen(filename_out,    "w",&fp_out);
-              SID_fopen(filename_out_MBP,"w",&fp_out_MBP);
-              n_trees_file=tree_hi_file[i_write]-tree_lo_file[i_write]+1;
-              SID_fwrite(&n_trees_file,sizeof(int),1,&fp_out);
-              SID_fwrite(&n_trees_file,sizeof(int),1,&fp_out_MBP);
-              SID_fwrite(&(tree_count_file[i_write]),sizeof(int),1,&fp_out);
-              SID_fwrite(&(tree_count_file[i_write]),sizeof(int),1,&fp_out_MBP);
-            }
-          }
-        }
-        SID_fclose(&fp_out);
-        SID_fclose(&fp_out_MBP);
-      }
-      // Update the other ranks on i_rank's progress
-#ifdef USE_MPI
-      MPI_Bcast(&i_write,        1,MPI_INTEGER,i_rank,MPI_COMM_WORLD);
-      MPI_Bcast(&i_tree,         1,MPI_INTEGER,i_rank,MPI_COMM_WORLD);
-      MPI_Bcast(&flag_write_init,1,MPI_INTEGER,i_rank,MPI_COMM_WORLD);
-#endif
-    }
-    
-    // Write the tree halos
-    for(i_rank=0,i_write=0,i_tree=0,flag_write_init=TRUE;i_rank<SID.n_proc;i_rank++){
-      if(SID.My_rank==i_rank){
-        if(n_write==1){
-          sprintf(filename_out,    "%s.%sgroup_trees",    filename_root_out,group_text_prefix);
-          sprintf(filename_out_MBP,"%s.%sgroup_trees_MBP",filename_root_out,group_text_prefix);
-        }
-        else{
-          sprintf(filename_out,    "%s.%sgroup_trees.%d",    filename_root_out,group_text_prefix,i_write);
-          sprintf(filename_out_MBP,"%s.%sgroup_trees_MBP.%d",filename_root_out,group_text_prefix,i_write);
-        }
-        SID_fopen(filename_out,    "a",&fp_out);
-        SID_fopen(filename_out_MBP,"a",&fp_out_MBP);
-        // Write all of the trees on this rank
-        for(j_tree=0,n_halos_written=0;j_tree<n_trees_local;i_tree++,j_tree++){
-          // Loop over each tree in this i_tree'th grouping.  They all have NULL descendants.
-          current=trees[j_tree]->root;
-          while(current!=NULL){
-            if(current->descendant==NULL)
-              n_halos_written+=write_tree_vertical_halos_recursive(current,&fp_out,&fp_out_MBP);
-            current=current->next;
-          }
-          flag_write_init=FALSE;
-          // Move to the next file if this one is done
-          if(i_tree==tree_hi_file[i_write]){
-            i_write++;
-            if(i_write<n_write){
-              flag_write_init=TRUE;
-              SID_fclose(&fp_out);
-              SID_fclose(&fp_out_MBP);
-              sprintf(filename_out,    "%s.%sgroup_trees.%d",    filename_root_out,group_text_prefix,i_write);
-              sprintf(filename_out_MBP,"%s.%sgroup_trees_MBP.%d",filename_root_out,group_text_prefix,i_write);
-              SID_fopen(filename_out,    "a",&fp_out);
-              SID_fopen(filename_out_MBP,"a",&fp_out_MBP);
-            }
-          }
-        }
-        SID_fclose(&fp_out);
-        SID_fclose(&fp_out_MBP);
-      }
-      // Update the other ranks on i_rank's progress
-#ifdef USE_MPI
-      MPI_Bcast(&i_write,        1,MPI_INTEGER,i_rank,MPI_COMM_WORLD);
-      MPI_Bcast(&i_tree,         1,MPI_INTEGER,i_rank,MPI_COMM_WORLD);
-      MPI_Bcast(&flag_write_init,1,MPI_INTEGER,i_rank,MPI_COMM_WORLD);
-      MPI_Bcast(&n_halos_written,1,MPI_INTEGER,i_rank,MPI_COMM_WORLD);
-#endif
-    }
-    SID_log("(%d trees and %d halos written)...Done.",SID_LOG_CLOSE,i_tree,n_halos_written);
     // Free trees
     for(i_tree=0;i_tree<n_trees_local;i_tree++)
       free_tree(&trees[i_tree]);
     SID_free((void **)&trees);
+
   } // k_match
   
   // Clean-up

@@ -79,16 +79,6 @@ int main(int argc, char *argv[]){
   }
 
   SID_log("Constructing merger trees for snapshots #%d->#%d (step=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read_start,i_read_stop,i_read_step);
-  compute_trees_horizontal(filename_halo_root_in,
-                           filename_cat_root_in,
-                           filename_root_out,
-                           a_list_out,
-                           i_read_start,
-                           i_read_stop,
-                           i_read_step,
-                           n_search,
-                           &flag_clean);
-  //flag_clean=FALSE;
   compute_trees_vertical(filename_root_out,
                          i_read_start,
                          i_read_stop,
@@ -96,7 +86,6 @@ int main(int argc, char *argv[]){
                          n_files_groups,
                          n_files_subgroups,
                          &flag_clean);
-
   SID_log("Done.",SID_LOG_CLOSE);
 
   if(SID.I_am_Master)
