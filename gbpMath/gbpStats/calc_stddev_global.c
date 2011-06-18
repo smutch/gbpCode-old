@@ -2,37 +2,41 @@
 #include <gbpLib.h>
 #include <gbpStats.h>
 
-double calc_stddev_global(void   *data_local,
- 		          size_t  n_data_local,
-                          SID_Datatype  type){
-  size_t  i_data;
+void calc_stddev_global(void   *data,
+                        void   *result,
+    		        size_t  n_data_local,
+                        SID_Datatype type,
+                        int          mode,
+                        SID_Comm    *comm){
+  int     i_data;
+  double  stddev;
+  double  mean;
   size_t  n_data;
-  double  accumulator_local,accumulator;
-  double  mean,stddev;
-  if(n_data_local<1)
-    accumulator_local=0.;
-  else{
-    mean=calc_mean_global(data_local,n_data_local,type);
-    for(i_data=0,accumulator_local=0.;i_data<n_data_local;i_data++){
-        if(type==SID_DOUBLE)
-          accumulator_local+=pow((double)((double *)data_local)[i_data]-mean,2.);
-        else if(type==SID_FLOAT)
-          accumulator_local+=pow((double)((float  *)data_local)[i_data]-mean,2.);
-        else if (type==SID_INT)
-          accumulator_local+=pow((double)((int    *)data_local)[i_data]-mean,2.);
-        else if(type==SID_SIZE_T)
-          accumulator_local+=pow((double)((size_t *)data_local)[i_data]-mean,2.);
-        else
-          SID_trap_error("Unknown variable type in calc_stddev",ERROR_LOGIC);
-    }
+  calc_mean_global(data,&mean,n_data,type,CALC_MODE_RETURN_DOUBLE,comm);
+  for(i_data=0,stddev=0.;i_data<n_data;i_data++){
+    if(type==SID_DOUBLE)
+      stddev+=pow((double)((double *)data)[i_data]-mean,2.);
+    else if(type==SID_FLOAT)
+      stddev+=pow((double)((float  *)data)[i_data]-mean,2.);
+    else if(type==SID_INT)
+      stddev+=pow((double)((int    *)data)[i_data]-mean,2.);
+    else if(type==SID_SIZE_T)
+      stddev+=pow((double)((size_t *)data)[i_data]-mean,2.);
+    else
+      SID_trap_error("Unknown variable type in calc_stddev",ERROR_LOGIC);
   }
-  #if USE_MPI
-    MPI_Allreduce(&accumulator_local,&accumulator,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-    MPI_Allreduce(&n_data_local,     &n_data,     1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
-  #else
-    accumulator=accumulator_local;
-    n_data     =n_data_local;
-  #endif
-  stddev=sqrt(accumulator/(double)n_data);
-  return(stddev);
+  SID_Allreduce(SID_IN_PLACE,&stddev, 1,SID_DOUBLE,SID_SUM,comm);
+  SID_Allreduce(&n_data_local,&n_data,1,SID_SIZE_T,SID_SUM,comm);
+  stddev=sqrt(stddev/(double)n_data);
+  if(type==SID_DOUBLE || check_mode_for_flag(mode,CALC_MODE_RETURN_DOUBLE))
+    ((double *)result)[0]=(double)stddev;
+  else if(type==SID_FLOAT)
+    ((float  *)result)[0]=(float)stddev;
+  else if(type==SID_INT)
+    ((int    *)result)[0]=(int)stddev;
+  else if(type==SID_SIZE_T)
+    ((size_t *)result)[0]=(size_t)stddev;
+  else
+    SID_trap_error("Unknown variable type in calc_min",ERROR_LOGIC);
 }
+

@@ -1,9 +1,12 @@
 #include <gbpLib.h>
 #include <gbpStats.h>
 
-double calc_median_global(void   *data_local,
-		          size_t  n_data_local,
-                          SID_Datatype type){
+void calc_median_global(void   *data_local,
+                        void   *result,
+		        size_t  n_data_local,
+                        SID_Datatype type,
+                        int          mode,
+                        SID_Comm    *comm){
   int     i_mid;
   double  median;
   size_t *index;
@@ -18,7 +21,8 @@ double calc_median_global(void   *data_local,
   int     rank_1_local,rank_1,rank_2_local,rank_2;
 
   #if USE_MPI
-  SID_trap_error("calc_median_global has not been debugged yet!",ERROR_LOGIC);
+  SID_trap_error("calc_median_global has not been implemented yet!",ERROR_LOGIC);
+  /*
   MPI_Allreduce(&n_data_local,&n_data,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
   if(n_data>0){
     if(n_data>1){
@@ -129,8 +133,9 @@ double calc_median_global(void   *data_local,
   }
   else
     median=0.;
+  */
   #else
-    median=calc_median(data_local,n_data_local,type);
+    calc_median(data_local,result,n_data_local,type,mode);
   #endif
-  return(median);
 }
+

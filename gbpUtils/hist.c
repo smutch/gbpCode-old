@@ -109,17 +109,17 @@ int main(int argc, char *argv[]){
     /******************************************/
     /* Build simple statistics of data column */
     /******************************************/
-    min    =calc_min(data,n_data,   SID_DOUBLE);
-    SID_log("  min      = %11.4e",SID_LOG_COMMENT,min);
-    max    =calc_max(data,n_data,   SID_DOUBLE);
-    SID_log("  max      = %11.4e",SID_LOG_COMMENT,max);
-    sum    =calc_sum(data,n_data,   SID_DOUBLE);
-    SID_log("  sum      = %11.4e",SID_LOG_COMMENT,sum);
-    mean   =calc_mean(data,n_data,  SID_DOUBLE);
-    SID_log("  mean     = %11.4e",SID_LOG_COMMENT,mean);
-    median =calc_median(data,n_data,SID_DOUBLE);
-    SID_log("  median   = %11.4e",SID_LOG_COMMENT,median);
-    std_dev=calc_stddev(data,n_data,SID_DOUBLE);
+    calc_min(data,&min,n_data,   SID_DOUBLE,CALC_MODE_DEFAULT);
+    SID_log("  min      = %11.4e",SID_LOG_COMMENT,min,CALC_MODE_DEFAULT);
+    calc_max(data,&max,n_data,   SID_DOUBLE,CALC_MODE_DEFAULT);
+    SID_log("  max      = %11.4e",SID_LOG_COMMENT,max,CALC_MODE_DEFAULT);
+    calc_sum(data,&sum,n_data,   SID_DOUBLE,CALC_MODE_DEFAULT);
+    SID_log("  sum      = %11.4e",SID_LOG_COMMENT,sum,CALC_MODE_DEFAULT);
+    calc_mean(data,&mean,n_data,  SID_DOUBLE,CALC_MODE_DEFAULT);
+    SID_log("  mean     = %11.4e",SID_LOG_COMMENT,mean,CALC_MODE_DEFAULT);
+    calc_median(data,&median,n_data,SID_DOUBLE,CALC_MODE_DEFAULT);
+    SID_log("  median   = %11.4e",SID_LOG_COMMENT,median,CALC_MODE_DEFAULT);
+    calc_stddev(data,&std_dev,n_data,SID_DOUBLE,CALC_MODE_DEFAULT);
     SID_log("  std_dev  = %11.4e",SID_LOG_COMMENT,std_dev);
 
     if(argc!=6){

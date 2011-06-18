@@ -1,35 +1,79 @@
 #include <gbpLib.h>
+#include <gbpStats.h>
 
-double calc_max(void   *data,
- 		size_t  n_data,
-                SID_Datatype  type){
+void calc_max(void   *data,
+              void   *result,
+    	      size_t  n_data,
+              SID_Datatype  type,
+              int           mode){
   int     i_data;
-  double  max;
-  if(n_data<1)
-    max=0.;
-  else{
-      if(type==SID_DOUBLE)
-        max=(double)((double *)data)[0];
-      else if(type==SID_FLOAT)
-        max=(double)((float  *)data)[0];
-      else if(type==SID_INT)
-        max=(double)((int    *)data)[0];
-      else if(type==SID_SIZE_T)
-        max=(double)((size_t *)data)[0];
-      else
-        SID_trap_error("Unknown variable type in calc_max\n",ERROR_LOGIC);
-    for(i_data=1;i_data<n_data;i_data++){
-        if(type==SID_DOUBLE)
-          max=MAX(max,(double)((double *)data)[i_data]);
-        else if(type==SID_FLOAT)
-          max=MAX(max,(double)((float  *)data)[i_data]);
-        else if(type==SID_INT)
-          max=MAX(max,(double)((int    *)data)[i_data]);
-        else if(type==SID_SIZE_T)
-          max=MAX(max,(double)((size_t *)data)[i_data]);
-        else
-          SID_trap_error("Unknown datatype in calc_max\n",ERROR_LOGIC);
+  if(n_data<1){
+    if(type==SID_DOUBLE || check_mode_for_flag(mode,CALC_MODE_RETURN_DOUBLE))
+      ((double *)result)[0]=0.;
+    else if(type==SID_FLOAT)
+      ((float  *)result)[0]=0.;
+    else if(type==SID_INT)
+      ((int    *)result)[0]=0;
+    else if(type==SID_SIZE_T)
+      ((size_t *)result)[0]=0;
+    else
+      SID_trap_error("Unknown variable type in calc_max",ERROR_LOGIC);
+  }
+  else if(check_mode_for_flag(mode,CALC_MODE_RETURN_DOUBLE)){
+    if(type==SID_DOUBLE)
+      ((double *)result)[0]=(double)((double *)data)[0];
+    else if(type==SID_FLOAT)
+      ((double *)result)[0]=(double)((float  *)data)[0];
+    else if(type==SID_INT)
+      ((double *)result)[0]=(double)((int    *)data)[0];
+    else if(type==SID_SIZE_T)
+      ((double *)result)[0]=(double)((size_t *)data)[0];
+    else
+      SID_trap_error("Unknown variable type in calc_max\n",ERROR_LOGIC);
+    if(type==SID_DOUBLE){
+      for(i_data=1;i_data<n_data;i_data++)
+        if((double)(((double *)data)[i_data])>(double)(((double *)result)[0])) ((double *)result)[0]=(double)(((double *)data)[i_data]);
+    }
+    else if(type==SID_FLOAT){
+      for(i_data=1;i_data<n_data;i_data++)
+        if((double)(((float  *)data)[i_data])>(double)(((double *)result)[0])) ((double *)result)[0]=(double)(((float  *)data)[i_data]);
+    }
+    else if(type==SID_INT){
+      for(i_data=1;i_data<n_data;i_data++)
+        if((double)(((int    *)data)[i_data])>(double)(((double *)result)[0])) ((double *)result)[0]=(double)(((int    *)data)[i_data]);
+    }
+    else if(type==SID_SIZE_T){
+      for(i_data=1;i_data<n_data;i_data++)
+        if((double)(((size_t *)data)[i_data])>(double)(((double *)result)[0])) ((double *)result)[0]=(double)(((size_t *)data)[i_data]);
     }
   }
-  return(max);
+  else{
+    if(type==SID_DOUBLE)
+      ((double *)result)[0]=((double *)data)[0];
+    else if(type==SID_FLOAT)
+      ((float  *)result)[0]=((float  *)data)[0];
+    else if(type==SID_INT)
+      ((int    *)result)[0]=((int    *)data)[0];
+    else if(type==SID_SIZE_T)
+      ((size_t *)result)[0]=((size_t *)data)[0];
+    else
+      SID_trap_error("Unknown variable type in calc_max\n",ERROR_LOGIC);
+    if(type==SID_DOUBLE){
+      for(i_data=1;i_data<n_data;i_data++)
+        if(((double *)data)[0]>((double *)result)[0]) ((double *)result)[0]=((double *)data)[i_data];
+    }
+    else if(type==SID_FLOAT){
+      for(i_data=1;i_data<n_data;i_data++)
+        if(((float  *)data)[0]>((float  *)result)[0]) ((float  *)result)[0]=((float *)data)[i_data];
+    }
+    else if(type==SID_INT){
+      for(i_data=1;i_data<n_data;i_data++)
+        if(((int    *)data)[0]>((int    *)result)[0]) ((int    *)result)[0]=((int   *)data)[i_data];
+    }
+    else if(type==SID_SIZE_T){
+      for(i_data=1;i_data<n_data;i_data++)
+        if(((size_t *)data)[0]>((size_t *)result)[0]) ((size_t *)result)[0]=((size_t *)data)[i_data];
+    }
+  }
 }
+
