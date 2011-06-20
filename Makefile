@@ -89,9 +89,9 @@ else
   include Makefile.local
 endif
 
-# Start CCFLAGS and LDFLAGS variables
-CCFLAGS = -I$(GBP_INC) -O2
-LDFLAGS = -L$(GBP_LIB_LOCAL) 
+# Set CCFLAGS and LDFLAGS variables
+CCFLAGS := $(CCFLAGS) -I$(GBP_INC) -O2
+LDFLAGS := $(LDFLAGS) -L$(GBP_LIB_LOCAL)  
 
 # Fill a file with a list of all the object files that
 #   will contribute to this directory's archive (if defined)
