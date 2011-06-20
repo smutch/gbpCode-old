@@ -379,6 +379,7 @@ void analyze_MCMC(MCMC_info *MCMC){
       i_iteration_buffer=0;
       i_P_buffer        =0;
       i_M_buffer        =0;
+      ln_likelihood_peak=-1e20;
       for(i_iteration=0,flag_init=TRUE,n_used=0;i_iteration<n_iterations;i_iteration++){
         for(i_avg=0;i_avg<n_avg;i_avg++){
           switch(flag_minimize_IO){
@@ -428,6 +429,16 @@ void analyze_MCMC(MCMC_info *MCMC){
               if(P_last[i_P]<P_min[i_P]) P_min[i_P]=P_last[i_P];
               if(P_last[i_P]>P_max[i_P]) P_max[i_P]=P_last[i_P];
               P_avg[i_P]+=P_last[i_P];
+            }
+
+            // Store parameters with highest likelihood
+            if(ln_likelihood_last>ln_likelihood_peak){
+              memcpy(P_peak,P_last,(size_t)n_P*sizeof(double));
+              if(!flag_no_map_write){
+                for(i_DS=0;i_DS<n_DS;i_DS++)
+                  memcpy(M_peak_parameters,M_last[i_DS],(size_t)n_M[i_DS]*sizeof(double));
+              }
+              ln_likelihood_peak=ln_likelihood_last;
             }
 
             // Compute mapping-space extrema and averages
@@ -638,7 +649,7 @@ void analyze_MCMC(MCMC_info *MCMC){
         P_hi_68_index     =histogram_index[coverage_size-1];
         for(j_P=1,k_P=0;j_P<coverage_size;j_P++)
            if(max_L_histogram[i_P][j_P]>max_L_histogram[i_P][k_P]) k_P=j_P;
-        P_peak[i_P]=P_min[i_P]+(P_max[i_P]-P_min[i_P])*((double)(k_P)+0.5)/(double)coverage_size;
+        //P_peak[i_P]=P_min[i_P]+(P_max[i_P]-P_min[i_P])*((double)(k_P)+0.5)/(double)coverage_size;
         for(j_P=coverage_size-2;j_P>=0 && ((double)accumulator/(double)n_used)<0.68;j_P--){
           if(histogram_index[j_P]<P_lo_68_index) P_lo_68_index=histogram_index[j_P];
           if(histogram_index[j_P]>P_hi_68_index) P_hi_68_index=histogram_index[j_P];
@@ -741,7 +752,6 @@ void analyze_MCMC(MCMC_info *MCMC){
       }
       fclose(fp_histograms);
       SID_log("Done.",SID_LOG_CLOSE);
-
    }
 
    // Compute best fit models and their likelihoods

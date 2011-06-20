@@ -220,6 +220,10 @@ void compute_MCMC(MCMC_info *MCMC){
     SID_log("Auto-correlation  is on.",SID_LOG_COMMENT);
   else  
     SID_log("Auto-correlation  is off.",SID_LOG_COMMENT);
+  if(flag_minimize_IO)
+    SID_log("Minimize I/O      is on.",SID_LOG_COMMENT);
+  else  
+    SID_log("Minimize I/O      is off.",SID_LOG_COMMENT);
 
   // Initialize chain arrays
   n_M            =MCMC->n_M;
