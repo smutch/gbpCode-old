@@ -53,6 +53,7 @@ void init_make_map(plist_info  *plist,
                    double  FOV,
                    int          mode,
                    double   expansion_factor,
+                   double   near_field,
                    int          flag_comoving,
                    int         *flag_weigh,
                    int         *flag_line_integral,
@@ -77,6 +78,7 @@ void init_make_map(plist_info  *plist,
                    double   FOV,
                    int      mode,
                    double   expansion_factor,
+                   double   near_field,
                    int      flag_comoving,
                    int     *flag_weigh,
                    int     *flag_line_integral,
@@ -118,6 +120,7 @@ void init_make_map(plist_info  *plist,
   interp_info *transfer;
   double       transfer_val;
   int          flag_log;
+  double       z_test;
   
   SID_log("Initializing projection-space...",SID_LOG_OPEN|SID_LOG_TIMER);
 
@@ -298,7 +301,7 @@ void init_make_map(plist_info  *plist,
     }
   }
 
-  // Compute the angle and the axis of the roatation
+  // Compute the angle and the axis of the rotation
   //   needed to place the camera at (0,0,-d_o)
   d_x_o=x_o-x_c;
   d_y_o=y_o-y_c;
@@ -370,41 +373,28 @@ void init_make_map(plist_info  *plist,
       (*f_stretch)[i_particle]=0.;
   }
 
-  // Apply dimming
-  if(check_mode_for_flag(mode,MAKE_MAP_APPLY_DIMMING)){
-    if(check_mode_for_flag(mode,MAKE_MAP_LUMINOSITY)){
+  // Apply a (optional) near-field correction
+  if(near_field>0.){
+    if((*flag_weigh)){
       for(i_particle=0;i_particle<(*n_particles);i_particle++){
-        /*
-          particle_radius=sqrt((*x)[i_particle]*(*x)[i_particle]+
-          (*y)[i_particle]*(*y)[i_particle]+
-          ((*z)[i_particle]-d_o)*((*z)[i_particle]-d_o));
-          if(particle_radius>50.*M_PER_MPC){
-          (*value)[i_particle]=0.;
-          }
-          if(particle_radius>FOV){
-          (*value)[i_particle]*=exp(-pow((particle_radius-FOV)/(20.*M_PER_MPC),2.));
-          }
-        */
-        (*value)[i_particle]*=exp(-pow((*z)[i_particle]/(box_size),2.));        
+        z_test=(*z)[i_particle];
+        if(z_test>0. && z_test<(2.*near_field)){
+          z_test/=near_field;
+          (*weight)[i_particle]*=(1.-exp(-z_test*z_test));
+        }
       }
     }
-    else if(check_mode_for_flag(mode,MAKE_MAP_COLOUR) && (*flag_weigh)){
+    else{
       for(i_particle=0;i_particle<(*n_particles);i_particle++){
-        /*
-          particle_radius=sqrt((*x)[i_particle]*(*x)[i_particle]+
-          (*y)[i_particle]*(*y)[i_particle]+
-          ((*z)[i_particle]-d_o)*((*z)[i_particle]-d_o));
-          if(particle_radius>50.*M_PER_MPC){
-          (*weight)[i_particle]=0.;
-          }
-          if(particle_radius>FOV){
-          (*value)[i_particle]*=exp(-pow((particle_radius-FOV)/(10.*M_PER_MPC),2.));
-          }
-        */
-        (*weight)[i_particle]*=exp(-pow((*z)[i_particle]/(box_size),2.));        
-      }      
+        z_test=(*z)[i_particle];
+        if(z_test>0. && z_test<(2.*near_field)){
+          z_test/=near_field;
+          (*value)[i_particle]*=(1.-exp(-z_test*z_test));
+        }
+      }
     }
   }
+
   SID_log("Done.",SID_LOG_CLOSE);
 }
 
@@ -432,6 +422,9 @@ void render_frame(render_info  *render){
   double    *numerator_local;
   double    *denominator;
   double    *denominator_local;
+  double    *z_image;
+  double    *z_frame;
+  double    *z_frame_local;
   int        py;
   int        px;
   int        pixel_pos;
@@ -457,6 +450,8 @@ void render_frame(render_info  *render){
   size_t     n_z;
   double     min_image;
   double     max_image;
+  double     min_z_image;
+  double     max_z_image;
   double     kernel;
   int        flag_weigh;
   int        flag_line_integral;
@@ -502,6 +497,8 @@ void render_frame(render_info  *render){
   int          flag_comoving;
   double       expansion_factor;
   ADaPS       *transfer;
+  double       h_Hubble;
+  double       near_field;
 
   int          i_image;
 
@@ -509,6 +506,7 @@ void render_frame(render_info  *render){
   x_o     =render->camera->perspective->p_o[0];
   y_o     =render->camera->perspective->p_o[1];
   z_o     =render->camera->perspective->p_o[2];
+  d_o     =render->camera->perspective->d_o;
   x_c     =render->camera->perspective->p_c[0];
   y_c     =render->camera->perspective->p_c[1];
   z_c     =render->camera->perspective->p_c[2];
@@ -517,7 +515,9 @@ void render_frame(render_info  *render){
   mode    =render->mode;
   flag_comoving   =render->flag_comoving;
   expansion_factor=render->camera->perspective->time;
-  box_size=((double *)ADaPS_fetch(plist->data,"box_size"))[0];
+  box_size        =((double *)ADaPS_fetch(plist->data,"box_size"))[0];
+  h_Hubble        =render->h_Hubble;
+  near_field      =render->near_field*d_o;
   if(nx>=ny){
     FOV_y=render->camera->perspective->FOV;
     FOV_x=FOV_y*(double)nx/(double)ny;    
@@ -535,12 +535,14 @@ void render_frame(render_info  *render){
         image    =render->camera->image_RGB->values;
         mask     =render->camera->mask_RGB;
         transfer =render->camera->RGB_transfer;
+        z_image  =NULL;
         break;
       case 1:
         parameter=render->camera->Y_param;
         image    =render->camera->image_Y->values;
         mask     =render->camera->mask_Y;
         transfer =render->camera->Y_transfer;
+        z_image  =render->camera->image_Z->values;
         break;
     }
 
@@ -568,6 +570,7 @@ void render_frame(render_info  *render){
                   box_size,FOV_x,
                   mode,
                   expansion_factor,
+                  near_field,
                   flag_comoving,
                   &flag_weigh,
                   &flag_line_integral,
@@ -577,16 +580,21 @@ void render_frame(render_info  *render){
                   &value,
                   &weight,
                   &n_particles);
+
     // Allocate and initialize image arrays
     numerator_local=(double *)SID_malloc(sizeof(double)*n_pixels);
     if(flag_weigh)
       denominator_local=(double *)SID_malloc(sizeof(double)*n_pixels);
+    if(z_frame!=NULL)
+      z_frame_local=(double *)SID_malloc(sizeof(double)*n_pixels);
     mask_local=(int   *)SID_malloc(sizeof(int)*n_pixels);
     for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
+      image[i_pixel]          =0.;
       numerator_local[i_pixel]=0.;
       if(flag_weigh)
         denominator_local[i_pixel]=0.;
-      image[i_pixel]     =0.;
+      if(z_image!=NULL)
+        z_frame_local[i_pixel] =0.;
       mask_local[i_pixel]=FALSE;
     }
 
@@ -634,6 +642,7 @@ void render_frame(render_info  *render){
                   (pixel_pos_x-part_pos_x)*(pixel_pos_x-part_pos_x)+
                   (pixel_pos_y-part_pos_y)*(pixel_pos_y-part_pos_y);
                 radius2*=radius2_norm;
+                // Construct image here
                 if(radius2<radius_kernel_norm2){
                   pos    =ky+kx*ny;
                   f_table=sqrt(radius2);
@@ -644,10 +653,15 @@ void render_frame(render_info  *render){
                   if(flag_weigh){
                     numerator_local[pos]  +=(double)value[i_particle]*(double)weight[i_particle]*kernel;
                     denominator_local[pos]+=(double)weight[i_particle]*kernel;
+                    if(z_image!=NULL)
+                      z_frame_local[pos]+=(double)z[i_particle]*(double)weight[i_particle]*kernel;
                   }
-                  else
+                  else{
                     numerator_local[pos]+=(double)value[i_particle]*kernel;
-                  mask_local[pos]=TRUE;
+                    if(z_image!=NULL)
+                      z_frame_local[pos]+=(double)z[i_particle]*(double)value[i_particle]*kernel;
+                  }
+                  mask_local[pos] =TRUE;
                 }
               }
             }
@@ -670,10 +684,15 @@ void render_frame(render_info  *render){
       denominator=(double *)SID_malloc(sizeof(double)*n_pixels);
       MPI_Allreduce(denominator_local,denominator,n_pixels,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
     }
+    if(z_image!=NULL){
+      z_frame=(double *)SID_malloc(sizeof(double)*n_pixels);
+      MPI_Allreduce(z_frame_local,z_frame,n_pixels,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+    }
 #else
     mask       =mask_local;
     numerator  =numerator_local;
     denominator=denominator_local;
+    z_frame    =z_frame_local;
 #endif
 
     // Normalize image (if needed)
@@ -687,10 +706,29 @@ void render_frame(render_info  *render){
       for(i_pixel=0;i_pixel<n_pixels;i_pixel++)
         image[i_pixel]=numerator[i_pixel];
     }
+
+    // Normalize z-frame
+    if(z_image!=NULL){
+      if(flag_weigh){
+        for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
+          if(mask[i_pixel])
+            z_image[i_pixel]=z_frame[i_pixel]/denominator[i_pixel];
+        }
+      }
+      else{
+        for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
+          if(mask[i_pixel])
+            z_image[i_pixel]=z_frame[i_pixel]/numerator[i_pixel];
+        }
+      }
+    }
+
 #ifdef USE_MPI
-    SID_free((void **)&numerator);
+    SID_free(SID_FARG numerator);
     if(flag_weigh)
-      SID_free((void **)&denominator);
+      SID_free(SID_FARG denominator);
+    if(z_image!=NULL)
+      SID_free(SID_FARG z_frame);
 #endif
 
     // Take log_10 if needed
@@ -704,21 +742,20 @@ void render_frame(render_info  *render){
     }
 
     // Compute some image statistics
-    n_unmasked=0;
-    min_image = 1e90;
-    max_image =-1e90;
-    for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
-      if(mask[i_pixel]){
-        min_image=MIN(min_image,image[i_pixel]);
-        max_image=MAX(max_image,image[i_pixel]);
-        n_unmasked++;
-      }
+    for(i_pixel=0,n_unmasked=0;i_pixel<n_pixels;i_pixel++) if(mask[i_pixel]) n_unmasked++;
+    calc_min(image,&min_image, n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+    calc_max(image,&max_image, n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+    if(z_image!=NULL){
+      calc_min(z_image,&min_z_image, n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+      calc_max(z_image,&max_z_image, n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
     }
     SID_log("Done.",SID_LOG_CLOSE);
   
     // Report image statistics
     if(n_unmasked>0){
-      SID_log("Image statistics: (min,max,coverage)=(%8.3le,%8.3le,%3d%%)",SID_LOG_COMMENT,min_image,max_image,(int)(100.*n_unmasked/n_pixels));
+      SID_log("Image statistics:   (min,max,coverage)=(%8.3le,%8.3le,%3d%%)",SID_LOG_COMMENT,min_image,max_image,(int)(100.*n_unmasked/n_pixels));
+      if(z_image!=NULL)
+        SID_log("Z-frame statistics: (min,max)         =(%8.3le,%8.3le) [Mpc/h]",SID_LOG_COMMENT,h_Hubble*min_z_image/M_PER_MPC,h_Hubble*max_z_image/M_PER_MPC);
     }
     else
       SID_out("Image is empty.",SID_LOG_COMMENT);
@@ -735,6 +772,8 @@ void render_frame(render_info  *render){
       SID_free((void **)&weight);
       SID_free((void **)&denominator_local);
     }
+    if(z_image!=NULL)
+      SID_free(SID_FARG z_frame_local);
   
     SID_log("Done.",SID_LOG_CLOSE);
   }

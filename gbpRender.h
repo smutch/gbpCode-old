@@ -148,6 +148,13 @@ struct camera_info{
   int              *mask_Y;
   int              *mask_Y_left;
   int              *mask_Y_right;
+  int               Z_mode;
+  double            Z_range[2];
+  interp_info      *Z_gamma;
+  ADaPS            *Z_transfer;
+  image_info       *image_Z;
+  image_info       *image_Z_left;
+  image_info       *image_Z_right;
 };
 
 typedef struct render_info render_info;
@@ -168,6 +175,7 @@ struct render_info{
   int          flag_comoving;
   plist_info   plist;
   double       h_Hubble;
+  double       near_field;
   int          mode;
   int          sealed; // TRUE if the render is fully initialized
 };
@@ -193,7 +201,7 @@ void parse_render_file(render_info **render, char *filename);
 void write_frame(render_info *render,int frame,int mode);
 void read_frame(render_info *render,int frame);
 void set_frame(camera_info *camera);
-void set_render_scale(render_info *render,double RGB_min,double RGB_max,double Y_min,double Y_max);
+void set_render_scale(render_info *render,double RGB_min,double RGB_max,double Y_min,double Y_max,double Z_min,double Z_max);
 
 void open_movie(char       *filename,
                 int         width,

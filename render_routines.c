@@ -315,6 +315,9 @@ void init_camera(camera_info **camera, int mode){
   (*camera)->Y_mode      =0;
   (*camera)->Y_gamma     =NULL;
   (*camera)->Y_transfer  =NULL;
+  (*camera)->Z_mode      =0;
+  (*camera)->Z_gamma     =NULL;
+  (*camera)->Z_transfer  =NULL;
   strcpy((*camera)->RGB_param,"");
   strcpy((*camera)->Y_param,  "");
 
@@ -322,12 +325,15 @@ void init_camera(camera_info **camera, int mode){
   (*camera)->colour_table    =4;
   (*camera)->image_RGB       =NULL;
   (*camera)->image_Y         =NULL;
+  (*camera)->image_Z         =NULL;
   (*camera)->image_RGBY      =NULL;
   (*camera)->image_RGB_left  =NULL;
   (*camera)->image_Y_left    =NULL;
+  (*camera)->image_Z_left    =NULL;
   (*camera)->image_RGBY_left =NULL;    
   (*camera)->image_RGB_right =NULL;
   (*camera)->image_Y_right   =NULL;
+  (*camera)->image_Z_right   =NULL;
   (*camera)->image_RGBY_right=NULL;
 
   SID_log("Done.",SID_LOG_CLOSE);
@@ -340,9 +346,10 @@ void seal_render_camera(render_info *render){
   // Initialize the perspective information for this camera
   copy_perspective(render->first_scene->first_perspective,render->camera->perspective);
 
-  // Initialize image buffers
+  // Initialize image buffers (use colour_table=1 ... ie B&W ... for Y and Z images)
   init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGB));
   init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Y));
+  init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Z));
   init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGBY));
   render->camera->mask_RGB =(int *)SID_malloc(sizeof(int)*render->camera->width*render->camera->height);
   render->camera->mask_Y   =(int *)SID_malloc(sizeof(int)*render->camera->width*render->camera->height);
@@ -350,9 +357,11 @@ void seal_render_camera(render_info *render){
   if(check_mode_for_flag(render->camera->camera_mode,CAMERA_STEREO)){
     init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGB_left));
     init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Y_left));
+    init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Z_left));
     init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGBY_left));    
     init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGB_right));
     init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Y_right));
+    init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Z_right));
     init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGBY_right));    
     render->camera->mask_RGB_left  =(int *)SID_malloc(sizeof(int)*render->camera->width*render->camera->height);
     render->camera->mask_Y_left    =(int *)SID_malloc(sizeof(int)*render->camera->width*render->camera->height);
@@ -361,6 +370,10 @@ void seal_render_camera(render_info *render){
     render->camera->mask_Y_right   =(int *)SID_malloc(sizeof(int)*render->camera->width*render->camera->height);
     render->camera->mask_RGBY_right=(int *)SID_malloc(sizeof(int)*render->camera->width*render->camera->height);
   }
+
+  // Convert camera depth-range to Mpc/h
+  render->camera->Z_range[0]*=M_PER_MPC/render->h_Hubble;
+  render->camera->Z_range[1]*=M_PER_MPC/render->h_Hubble;
   SID_log("Done.",SID_LOG_CLOSE);
 }
 
@@ -369,6 +382,7 @@ void free_camera(camera_info **camera){
   free_perspective(&((*camera)->perspective));
   free_image(&((*camera)->image_RGB));
   free_image(&((*camera)->image_Y));
+  free_image(&((*camera)->image_Z));
   free_image(&((*camera)->image_RGBY));
   SID_free(SID_FARG (*camera)->mask_RGB);
   SID_free(SID_FARG (*camera)->mask_Y);
@@ -376,9 +390,11 @@ void free_camera(camera_info **camera){
   if(check_mode_for_flag((*camera)->camera_mode,CAMERA_STEREO)){
     free_image(&((*camera)->image_RGB_left));
     free_image(&((*camera)->image_Y_left));
+    free_image(&((*camera)->image_Z_left));
     free_image(&((*camera)->image_RGBY_left));
     free_image(&((*camera)->image_RGB_right));
     free_image(&((*camera)->image_Y_right));
+    free_image(&((*camera)->image_Z_right));
     free_image(&((*camera)->image_RGBY_right));
     SID_free(SID_FARG (*camera)->mask_RGB_left);
     SID_free(SID_FARG (*camera)->mask_Y_left);
@@ -395,6 +411,10 @@ void free_camera(camera_info **camera){
     free_interpolate(&((*camera)->Y_gamma));
   if((*camera)->Y_transfer!=NULL)
     ADaPS_free(&((*camera)->Y_transfer));
+  if((*camera)->Z_gamma!=NULL)
+    free_interpolate(&((*camera)->Z_gamma));
+  if((*camera)->Z_transfer!=NULL)
+    ADaPS_free(&((*camera)->Z_transfer));
   SID_free((void **)camera);
   SID_log("Done.",SID_LOG_CLOSE);
 }
@@ -420,6 +440,8 @@ void init_render(render_info **render){
   (*render)->snap_number     = 0;
   (*render)->n_snap_a_list   = 0;
   (*render)->snap_a_list     = NULL;
+  (*render)->h_Hubble        = 1.;
+  (*render)->near_field      = 0.;
   (*render)->flag_comoving   = TRUE;
   (*render)->sealed          = FALSE;
   (*render)->mode            = MAKE_MAP_LOG;
@@ -486,7 +508,6 @@ void seal_render(render_info *render){
   seal_scenes(render->scenes);
   seal_render_camera(render);
   render->n_frames=render->last_scene->last_frame+1;
-  
   render->sealed=TRUE;
   
   SID_log("Done.",SID_LOG_CLOSE);
@@ -617,7 +638,6 @@ void parse_render_file(render_info **render, char *filename){
     grab_word(line,i_word++,command);
     if(strlen(line)>0){
       sprintf(line_print,"%s",line);
-      //SID_log("Processing line:{%s}",SID_LOG_COMMENT,line_print);
       // Interpret command
       if(!strcmp(command,"set")){
         grab_word(line,i_word++,parameter);
@@ -682,6 +702,10 @@ void parse_render_file(render_info **render, char *filename){
             SID_log("a[%3d]=%lf",SID_LOG_COMMENT,i,(*render)->snap_a_list[i]);
           SID_log("Done.",SID_LOG_CLOSE);
         }
+        else if(!strcmp(parameter,"h_Hubble"))
+          grab_double(line,i_word++,&((*render)->h_Hubble));
+        else if(!strcmp(parameter,"near_field"))
+          grab_double(line,i_word++,&((*render)->near_field));
         else if(!strcmp(parameter,"snap_number"))
           grab_int(line,i_word++,&((*render)->snap_number));
         else if(!strcmp(parameter,"flag_comoving"))
@@ -858,6 +882,82 @@ void parse_render_file(render_info **render, char *filename){
             else
               SID_log_warning("Transfer arrays must be >2 elements long.",ERROR_LOGIC);
           }
+          else if(!strcmp(variable,"Z_range")){
+            grab_double(line,i_word++,&d_value);
+            (*render)->camera->Z_range[0]=d_value;
+            grab_double(line,i_word++,&d_value);
+            (*render)->camera->Z_range[1]=d_value;
+          }
+          else if(!strcmp(variable,"Z_gamma")){
+            n_transfer=count_words(line)-i_word+1;
+            if(n_transfer>2){
+              transfer_array_x=(double *)SID_malloc(sizeof(double)*n_transfer);
+              transfer_array_y=(double *)SID_malloc(sizeof(double)*n_transfer);
+              if((*render)->camera->Z_gamma!=NULL)
+                free_interpolate(&((*render)->camera->Z_gamma));
+              for(j_word=0;j_word<n_transfer;j_word++){
+                grab_double(line,i_word++,&d_value);
+                transfer_array_x[j_word]=255.*(double)j_word/(double)(n_transfer-1);
+                transfer_array_y[j_word]=d_value;
+              }
+              init_interpolate(transfer_array_x,transfer_array_y,n_transfer,gsl_interp_cspline,&((*render)->camera->Z_gamma));
+              SID_free(SID_FARG transfer_array_x);
+              SID_free(SID_FARG transfer_array_y);
+            }
+            else
+              SID_log_warning("Gamma arrays bust be >2 elements long.",ERROR_LOGIC);
+          }
+          else if(!strcmp(variable,"Z_transfer")){
+            grab_word(line,i_word++,parameter);
+            grab_word(line,i_word++,temp_word);
+            if(!strcmp(temp_word,"log") || !strcmp(temp_word,"LOG"))
+              flag=TRUE;
+            else if(!strcmp(temp_word,"linear") || !strcmp(temp_word,"LINEAR"))
+              flag=FALSE;
+            else
+              SID_trap_error("log/linear flag not set to 'log' or 'linear' {%s}",ERROR_LOGIC,temp_word);
+            n_transfer      =count_words(line)-i_word+1;
+            SID_log("parameter ={%s}",SID_LOG_COMMENT,parameter);
+            SID_log("log/lin   ={%s}",SID_LOG_COMMENT,temp_word);
+            SID_log("n_transfer=%d",SID_LOG_COMMENT,n_transfer);
+            if(n_transfer>2){
+              n_transfer+=2; // We need to add low/hi interpolation anchors
+              transfer_array_x=(double *)SID_malloc(sizeof(double)*n_transfer);
+              transfer_array_y=(double *)SID_malloc(sizeof(double)*n_transfer);
+              for(j_word=1;j_word<n_transfer-1;j_word++){
+                grab_word(line,i_word++,temp_word);
+                search_and_replace(temp_word,","," ");
+                if(count_words(temp_word)!=2)
+                  SID_trap_error("Error in formatting of transfer array {%s}{%s}",ERROR_LOGIC,line,temp_word);
+                grab_double(temp_word,1,&(transfer_array_x[j_word]));
+                grab_double(temp_word,2,&(transfer_array_y[j_word]));
+                SID_log("%le %le",SID_LOG_COMMENT,transfer_array_x[j_word],transfer_array_y[j_word]);
+              }
+              // Create low/hi interpolation anchors
+              transfer_array_y[0]           =transfer_array_y[1];
+              transfer_array_y[n_transfer-1]=transfer_array_y[n_transfer-2];
+              if(transfer_array_x[1]<0.)
+                transfer_array_x[0]=10.*transfer_array_x[1];
+              else
+                transfer_array_x[0]=0.1*transfer_array_x[1];
+              if(transfer_array_x[n_transfer-2]<0.)
+                transfer_array_x[n_transfer-1]= 0.1*transfer_array_x[n_transfer-2];
+              else
+                transfer_array_x[n_transfer-1]=10.0*transfer_array_x[n_transfer-2];
+              // Create interpolation array
+              init_interpolate(transfer_array_x,transfer_array_y,n_transfer,gsl_interp_cspline,&temp_interp);
+              // Add to the transfer function list
+              ADaPS_store(&((*render)->camera->Z_transfer),(void *)temp_interp,parameter,ADaPS_DEFAULT);
+              // If this is a log-defined transfer function, store that fact
+              if(flag)
+                ADaPS_store(&((*render)->camera->Z_transfer),(void *)&flag,"%s_log",ADaPS_SCALAR_INT,parameter);
+              // Free temporary arrays
+              SID_free(SID_FARG transfer_array_x);
+              SID_free(SID_FARG transfer_array_y);
+            }
+            else
+              SID_log_warning("Transfer arrays must be >2 elements long.",ERROR_LOGIC);
+          }
           else
             SID_trap_error("Unknown variable {%s} for parameter {%s} for command {%s} on line %d",ERROR_LOGIC,variable,parameter,command,i_line);
         }
@@ -925,6 +1025,7 @@ void parse_render_file(render_info **render, char *filename){
 void read_frame(render_info *render,int frame){
   char filename_RGB[256];
   char filename_Y[256];
+  char filename_Z[256];
   char filename_RGBY[256];
 
   SID_log("Writing rendered frame...",SID_LOG_OPEN|SID_LOG_TIMER);
@@ -934,9 +1035,11 @@ void read_frame(render_info *render,int frame){
   
   sprintf(filename_RGB, "%s/RGB_M_%05d", render->filename_out_dir,frame);
   sprintf(filename_Y,   "%s/Y_M_%05d",   render->filename_out_dir,frame);
+  sprintf(filename_Z,   "%s/Z_M_%05d",   render->filename_out_dir,frame);
   sprintf(filename_RGBY,"%s/RGBY_M_%05d",render->filename_out_dir,frame);
   read_image(render->camera->image_RGB, filename_RGB);
   read_image(render->camera->image_Y,   filename_Y);
+  read_image(render->camera->image_Z,   filename_Z);
   read_image(render->camera->image_RGBY,filename_RGBY);
 
   // Write stereo-images
@@ -944,17 +1047,21 @@ void read_frame(render_info *render,int frame){
     // Left
     sprintf(filename_RGB, "%s/RGB_L_%05d", render->filename_out_dir,frame);
     sprintf(filename_Y,   "%s/Y_L_%05d",   render->filename_out_dir,frame);
+    sprintf(filename_Z,   "%s/Z_L_%05d",   render->filename_out_dir,frame);
     sprintf(filename_RGBY,"%s/RGBY_L_%05d",render->filename_out_dir,frame);
     read_image(render->camera->image_RGB_left,  filename_RGB);
     read_image(render->camera->image_Y_left,    filename_Y);
+    read_image(render->camera->image_Z_left,    filename_Z);
     read_image(render->camera->image_RGBY_left, filename_RGBY);
 
     // Right
     sprintf(filename_RGB, "%s/RGB_R_%05d", render->filename_out_dir,frame);
     sprintf(filename_Y,   "%s/Y_R_%05d",   render->filename_out_dir,frame);
+    sprintf(filename_Z,   "%s/Z_R_%05d",   render->filename_out_dir,frame);
     sprintf(filename_RGBY,"%s/RGBY_R_%05d",render->filename_out_dir,frame);
     read_image(render->camera->image_RGB_right, filename_RGB);
     read_image(render->camera->image_Y_right,   filename_Y);
+    read_image(render->camera->image_Z_right,   filename_Z);
     read_image(render->camera->image_RGBY_right,filename_RGBY);
   }  
 
@@ -966,6 +1073,7 @@ void read_frame(render_info *render,int frame){
 void write_frame(render_info *render,int frame,int mode){
   char filename_RGB[256];
   char filename_Y[256];
+  char filename_Z[256];
   char filename_RGBY[256];
 
   SID_log("Writing rendered frame...",SID_LOG_OPEN|SID_LOG_TIMER);
@@ -978,9 +1086,11 @@ void write_frame(render_info *render,int frame,int mode){
   
   sprintf(filename_RGB, "%s/RGB_M_%05d", render->filename_out_dir,frame);
   sprintf(filename_Y,   "%s/Y_M_%05d",   render->filename_out_dir,frame);
+  sprintf(filename_Z,   "%s/Z_M_%05d",   render->filename_out_dir,frame);
   sprintf(filename_RGBY,"%s/RGBY_M_%05d",render->filename_out_dir,frame);
   write_image(render->camera->image_RGB, filename_RGB, mode);
   write_image(render->camera->image_Y,   filename_Y,   mode);
+  write_image(render->camera->image_Z,   filename_Z,   mode);
   write_image(render->camera->image_RGBY,filename_RGBY,mode);
 
   // Write stereo-images
@@ -988,17 +1098,21 @@ void write_frame(render_info *render,int frame,int mode){
     // Left
     sprintf(filename_RGB, "%s/RGB_L_%05d", render->filename_out_dir,frame);
     sprintf(filename_Y,   "%s/Y_L_%05d",   render->filename_out_dir,frame);
+    sprintf(filename_Z,   "%s/Z_L_%05d",   render->filename_out_dir,frame);
     sprintf(filename_RGBY,"%s/RGBY_L_%05d",render->filename_out_dir,frame);
     write_image(render->camera->image_RGB_left,  filename_RGB, mode);
     write_image(render->camera->image_Y_left,    filename_Y,   mode);
+    write_image(render->camera->image_Z_left,    filename_Z,   mode);
     write_image(render->camera->image_RGBY_left, filename_RGBY,mode);
 
     // Right
     sprintf(filename_RGB, "%s/RGB_R_%05d", render->filename_out_dir,frame);
     sprintf(filename_Y,   "%s/Y_R_%05d",   render->filename_out_dir,frame);
+    sprintf(filename_Z,   "%s/Z_R_%05d",   render->filename_out_dir,frame);
     sprintf(filename_RGBY,"%s/RGBY_R_%05d",render->filename_out_dir,frame);
     write_image(render->camera->image_RGB_right, filename_RGB, mode);
     write_image(render->camera->image_Y_right,   filename_Y,   mode);
+    write_image(render->camera->image_Z_right,   filename_Z,   mode);
     write_image(render->camera->image_RGBY_right,filename_RGBY,mode);
   }  
   SID_log("Done.",SID_LOG_CLOSE);
@@ -1013,6 +1127,7 @@ void set_frame(camera_info *camera){
   double      brightness;
   image_info *image_RGB;
   image_info *image_Y;
+  image_info *image_Z;
   image_info *image_RGBY;
   image_info *image;
   double     *values;
@@ -1023,16 +1138,19 @@ void set_frame(camera_info *camera){
     case 0:
       image_RGB =camera->image_RGB;      
       image_Y   =camera->image_Y;      
+      image_Z   =camera->image_Z;      
       image_RGBY=camera->image_RGBY;
       break;
     case 1:      
       image_RGB =camera->image_RGB_left;      
       image_Y   =camera->image_Y_left;      
+      image_Z   =camera->image_Z_left;      
       image_RGBY=camera->image_RGBY_left;
       break;
     case 2:
       image_RGB =camera->image_RGB_right;      
       image_Y   =camera->image_Y_right;
+      image_Z   =camera->image_Z_right;
       image_RGBY=camera->image_RGBY_right;
       break;
     }
@@ -1078,6 +1196,27 @@ void set_frame(camera_info *camera){
       }
     }
 
+    // Set Z Image
+    if(image_Z!=NULL){
+      image      =image_Z;
+      values     =image->values;
+      image_min  =camera->Z_range[0];
+      image_max  =camera->Z_range[1];
+      image_range=image_max-image_min;
+      for(i_x=0,i_pixel=0;i_x<image->width;i_x++){
+        for(i_y=0;i_y<image->height;i_y++,i_pixel++){
+          pixel_value          =(int)(255.*(values[i_pixel]-image_min)/image_range);
+          pixel_value          =MAX(0,MIN(pixel_value,255));
+          if(camera->Z_gamma!=NULL)
+            pixel_value=(int)((double)pixel_value*interpolate(camera->Z_gamma,pixel_value));
+          image->red[i_pixel]  =image->colour_table[0][pixel_value];
+          image->green[i_pixel]=image->colour_table[1][pixel_value];
+          image->blue[i_pixel] =image->colour_table[2][pixel_value];
+          gdImageSetPixel(image->gd_ptr,i_x,i_y,gdTrueColorAlpha(image->red[i_pixel],image->green[i_pixel],image->blue[i_pixel],image->alpha[i_pixel]));
+        }
+      }
+    }
+
     // Set RGBY Image
     if(image_RGB!=NULL && image_Y!=NULL && image_RGBY!=NULL){
       image      =image_RGBY;
@@ -1105,9 +1244,11 @@ void set_frame(camera_info *camera){
   }
 }
 
-void set_render_scale(render_info *render,double RGB_min,double RGB_max,double Y_min,double Y_max){
+void set_render_scale(render_info *render,double RGB_min,double RGB_max,double Y_min,double Y_max,double Z_min,double Z_max){
   render->camera->RGB_range[0]=RGB_min;
   render->camera->RGB_range[1]=RGB_max;
   render->camera->Y_range[0]  =Y_min;
   render->camera->Y_range[1]  =Y_max;
+  render->camera->Z_range[0]  =Z_min;
+  render->camera->Z_range[1]  =Z_max;
 }
