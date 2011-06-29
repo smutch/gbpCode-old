@@ -29,6 +29,7 @@ double map_to_grid(size_t      n_particles_local,
   double      m_p;
   int         flag_multimass;
   int         flag_active;
+  int         flag_unused;
   double      k_mag;
   double      dk;
   int         n_powspec;
@@ -48,12 +49,16 @@ double map_to_grid(size_t      n_particles_local,
   REAL        x_particle_i;
   REAL        y_particle_i;
   REAL        z_particle_i;
+  double      kernal_offset;
   int         W_search;
   size_t      n_send;
   size_t      send_size;
   size_t      receive_left_size=0;
   size_t      receive_right_size=0;
   size_t      index_best;
+  field_info  buffer_left;
+  field_info  buffer_right;
+  int         n_buffer[3];
   fftw_real  *send_left;
   fftw_real  *send_right;
   fftw_real  *receive_left=NULL;
@@ -69,9 +74,14 @@ double map_to_grid(size_t      n_particles_local,
   size_t       i_p_next_report;
   int          i_report;
   interp_info *W_r_Daub_interp=NULL;
+  int          i_rank;
+  size_t       buffer_index;
+  size_t      *field_sum_index;
+  int          i_test;
+  double       accumulator;
 
-  n_particles=calc_sum_global(&n_particles_local,1,SID_SIZE_T);
-  SID_log("Distributing %lld items onto a %dx%dx%d grid...",
+  calc_sum_global(&n_particles_local,&n_particles,1,SID_SIZE_T,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+  SID_log("Distributing %zu items onto a %dx%dx%d grid...",
           SID_LOG_OPEN,n_particles,field->n[0],field->n[1],field->n[2]);
 
   if(m_particles_local!=NULL)
@@ -85,14 +95,47 @@ double map_to_grid(size_t      n_particles_local,
   switch(distribution_scheme){
   case MAP2GRID_DIST_DWT20:
     W_search=4;
+    kernal_offset=2.5;
     compute_Daubechies_scaling_fctns(20,5,&r_Daub,&W_Daub,&n_Daub);
     init_interpolate(r_Daub,W_Daub,n_Daub,gsl_interp_cspline,&W_r_Daub_interp);
+    accumulator=0.;
+    for(j_i[0]=-W_search+1;j_i[0]<=W_search;j_i[0]++){
+      for(j_i[1]=-W_search+1;j_i[1]<=W_search;j_i[1]++){
+        for(j_i[2]=-W_search+1;j_i[2]<=W_search;j_i[2]++){
+          for(i_coord=0,W_i=1.;i_coord<3;i_coord++){
+            switch(i_coord){
+            case 0:
+              x_i=(double)(j_i[0]);
+              break;
+            case 1:
+              x_i=(double)(j_i[1]);
+              break;
+            case 2:
+              x_i=(double)(j_i[2]);
+              break;
+            }
+            if(fabs(x_i)<=(double)W_search)
+              W_i*=interpolate(W_r_Daub_interp,x_i-4.);
+          }
+/*
+          r_i=sqrt((double)(j_i[0]*j_i[0])+(double)(j_i[1]*j_i[1])+(double)(j_i[2]*j_i[2]));
+          if(r_i<(double)W_search)
+            W_i=interpolate(W_r_Daub_interp,r_i);
+          else
+            W_i=0.;
+*/
+          accumulator+=W_i;
+        }
+      }
+    }
+    fprintf(stderr,"test %le\n",accumulator);
     SID_free((void **)&r_Daub);
     SID_free((void **)&W_Daub);
     SID_log("(using D20 scale function kernal)...",SID_LOG_CONTINUE);
     break;
   case MAP2GRID_DIST_DWT12:
     W_search=3;
+    kernal_offset=1.75;
     compute_Daubechies_scaling_fctns(12,5,&r_Daub,&W_Daub,&n_Daub);
     init_interpolate(r_Daub,W_Daub,(size_t)n_Daub,gsl_interp_cspline,&W_r_Daub_interp);
     SID_free((void **)&r_Daub);
@@ -113,7 +156,7 @@ double map_to_grid(size_t      n_particles_local,
   }
 
   // Initializing slab buffers
-  n_send       =(size_t)(W_search*field->n[1]*field->n[2]);
+  n_send       =(size_t)(field->n[0]*field->n[1]*W_search);
   send_size    =n_send*sizeof(fftw_real);
   send_left    =(fftw_real *)SID_malloc(send_size);
   send_right   =(fftw_real *)SID_malloc(send_size);
@@ -127,6 +170,7 @@ double map_to_grid(size_t      n_particles_local,
   // Create the mass distribution
   SID_log("Performing grid assignment...",SID_LOG_OPEN|SID_LOG_TIMER);
   clear_field(field);
+  remove_buffer_FFT_R(field); // Essential for the simple way that we add-in the boundary buffers below
   h_Hubble=((double *)ADaPS_fetch(cosmo,"h_Hubble"))[0];
   for(i_p=0,norm_local=0.,i_report=0,i_p_next_report=n_particles_local/10;i_p<n_particles_local;i_p++){     
     if(flag_multimass)
@@ -135,80 +179,82 @@ double map_to_grid(size_t      n_particles_local,
     y_particle_i=(REAL)y_particles_local[i_p];
     z_particle_i=(REAL)z_particles_local[i_p];
     if(vx_particles_local!=NULL)
-      x_particle_i+=1e3*(REAL)vx_particles_local[i_p]/(h_Hubble*M_PER_MPC*H_convert(H_z(redshift,cosmo)));
+      x_particle_i+=(REAL)(1e3*h_Hubble*((double)vx_particles_local[i_p])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
     if(vy_particles_local!=NULL)
-      y_particle_i+=1e3*(REAL)vy_particles_local[i_p]/(h_Hubble*M_PER_MPC*H_convert(H_z(redshift,cosmo)));
+      y_particle_i+=(REAL)(1e3*h_Hubble*((double)vy_particles_local[i_p])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
     if(vz_particles_local!=NULL)
-      z_particle_i+=1e3*(REAL)vz_particles_local[i_p]/(h_Hubble*M_PER_MPC*H_convert(H_z(redshift,cosmo)));
+      z_particle_i+=(REAL)(1e3*h_Hubble*((double)vz_particles_local[i_p])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
     force_periodic(&x_particle_i,0.,field->L[0]);
     force_periodic(&y_particle_i,0.,field->L[1]);
     force_periodic(&z_particle_i,0.,field->L[2]);
-    i_i[0]=(int)((double)x_particle_i/field->dR[0]);
-    i_i[1]=(int)((double)y_particle_i/field->dR[1]);
-    i_i[2]=(int)((double)z_particle_i/field->dR[2]);
+    x_particle_i/=(REAL)field->dR[0];
+    y_particle_i/=(REAL)field->dR[1];
+    z_particle_i/=(REAL)field->dR[2];
+    i_i[0]=(int)x_particle_i; // position in grid-coordinates
+    i_i[1]=(int)y_particle_i; // position in grid-coordinates
+    i_i[2]=(int)z_particle_i; // position in grid-coordinates
+    flag_unused=TRUE;
     for(j_i[0]=-W_search+1;j_i[0]<=W_search;j_i[0]++){
       for(j_i[1]=-W_search+1;j_i[1]<=W_search;j_i[1]++){
         for(j_i[2]=-W_search+1;j_i[2]<=W_search;j_i[2]++){
           // Compute distance to each grid point being searched against ...
-          flag_active=FALSE;
+          flag_active=TRUE;
           for(i_coord=0,W_i=1.;i_coord<3;i_coord++){
             switch(i_coord){
             case 0:
-              x_i=(double)(i_i[0]+j_i[0])-(double)x_particle_i/field->dR[0];
+              x_i=(double)(i_i[0]+j_i[0])-(double)x_particle_i;
               break;
             case 1:
-              x_i=(double)(i_i[1]+j_i[1])-(double)y_particle_i/field->dR[1];
+              x_i=(double)(i_i[1]+j_i[1])-(double)y_particle_i;
               break;
             case 2:
-              x_i=(double)(i_i[2]+j_i[2])-(double)z_particle_i/field->dR[2];
+              x_i=(double)(i_i[2]+j_i[2])-(double)z_particle_i;
               break;
             }
             switch(distribution_scheme){
               // Distribute with a Daubechies wavelet transform of 12th or 20th order a la Cui et al '08
             case MAP2GRID_DIST_DWT12:
             case MAP2GRID_DIST_DWT20:
-              if(fabs(x_i)<=(double)W_search){
-                W_i*=interpolate(W_r_Daub_interp,x_i+(double)W_search);
-                flag_active=TRUE;
-              }
-              else
+              if(fabs(x_i)<=(double)W_search)
+                W_i*=interpolate(W_r_Daub_interp,x_i);
+              else{
                 W_i=0.;
+                flag_active=FALSE;
+              }
               break;
               // Distribute using the triangular shaped cloud (TSC) method
             case MAP2GRID_DIST_TSC:
-              if(x_i<0.5){
+              if(x_i<0.5)
                 W_i*=(0.75-x_i*x_i);
-                flag_active=TRUE;
-              }
-              else if(x_i<1.5){
+              else if(x_i<1.5)
                 W_i*=0.5*(1.5-fabs(x_i))*(1.5-fabs(x_i));
-                flag_active=TRUE;
-              }
-              else
+              else{
                 W_i=0.;
+                flag_active=FALSE;
+              }
               break;
               // Distribute using the cloud-in-cell (CIC) method
             case MAP2GRID_DIST_CIC:
-              if(fabs(x_i)<1.){
+              if(fabs(x_i)<1.)
                 W_i*=(1.-fabs(x_i));
-                flag_active=TRUE;
-              }
-              else
+              else{
                 W_i=0.;
+                flag_active=FALSE;
+              }
               break;
               // Distribute using "nearest grid point" (NGP; ie. the simplest and default) method
             case MAP2GRID_DIST_NGP:
             default:
-              if(fabs(x_i)<0.5){
+              if(fabs(x_i)<=0.5 && flag_unused)
                 W_i*=1.;
-                flag_active=TRUE;
-              }
-              else
+              else{
                 W_i=0.;
+                flag_active=FALSE;
+              }
               break;
             }
           }
-          if(flag_active){
+          if(flag_active){ // W_i can be negative, so we use this flag to decide when we don't need to do this
             W_i*=m_p;
             // Set the grid indices (enforce periodic BCs; do x-coordinate last) ...
             //   ... y-coordinate ...
@@ -239,6 +285,7 @@ double map_to_grid(size_t      n_particles_local,
             else
               field->field_local[index_FFT_R(field,k_i)]+=W_i;
             norm_local+=W_i;
+            flag_unused=FALSE;
           }
         }
       }
@@ -276,15 +323,17 @@ double map_to_grid(size_t      n_particles_local,
   SID_log("Done.",SID_LOG_CLOSE);
   
   // Recompute local normalization (more accurate for large sample sizes)
+  SID_log("Computing normalization...",SID_LOG_OPEN);
   norm_local=0;
   for(i_grid=0;i_grid<field->total_local_size;i_grid++)
-    norm_local+=field->field_local[i_grid];  
-  normalization=calc_sum_global(&norm_local,1,SID_DOUBLE);
+    norm_local+=(double)field->field_local[i_grid];  
+  calc_sum_global(&norm_local,&normalization,1,SID_DOUBLE,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+  SID_log("Done. (normalization=%le)",SID_LOG_CLOSE,normalization);
 
   if(W_r_Daub_interp!=NULL)
     free_interpolate(&W_r_Daub_interp);
 
-  SID_log("Done. (normalization=%le)",SID_LOG_CLOSE,normalization);
+  SID_log("Done.",SID_LOG_CLOSE);
   
   return(normalization);
 }
