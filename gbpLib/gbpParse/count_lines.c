@@ -18,6 +18,7 @@ int count_lines(FILE *fp){
     r=getline(&line,&n,fp);
     if(r>0) n_lines++;
   }
+  SID_free(SID_FARG line);
   rewind(fp);
   return(n_lines);
 }

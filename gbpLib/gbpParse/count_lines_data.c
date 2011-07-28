@@ -10,6 +10,7 @@ int count_lines_data(FILE *fp){
     if(r>0 && !check_comment(line)) 
       n_lines++;
   }
+  SID_free(SID_FARG line);
   rewind(fp);
   return(n_lines);
 }

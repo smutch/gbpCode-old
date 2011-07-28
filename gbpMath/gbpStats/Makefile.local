@@ -2,17 +2,7 @@
 # Library-specific settings #
 #############################
 INCFILES = gbpStats.h 
-OBJFILES = calc_max.o            \
-	   calc_max_global.o     \
-	   calc_mean.o           \
-	   calc_mean_global.o    \
-	   calc_median.o         \
-	   calc_min.o            \
-	   calc_min_global.o     \
-	   calc_stddev.o         \
-	   calc_stddev_global.o  \
-	   calc_sum.o            \
-	   calc_sum_global.o
+OBJFILES = calc_median.o         
 LIBFILE  =
 BINFILES = 
 LIBS     = 
