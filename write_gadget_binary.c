@@ -24,7 +24,7 @@ void write_gadget_binary(char        *filename_in,
   int       n_temp_int[N_GADGET_TYPE];
   int       n_files;
   double    mass_array[N_GADGET_TYPE];
-  int       unused[256];
+  char     *unused;
   double    h_Hubble;
   double    d_value;
   double   *d1_array;
@@ -382,9 +382,11 @@ void write_gadget_binary(char        *filename_in,
             i_value=0;
           n_return =fwrite(&i_value,sizeof(int),1,fp); 
           s_load  +=n_return*sizeof(int);
-          // Unused space 
+          // Unused space
+          unused=(char *)SID_calloc(GADGET_HEADER_SIZE-s_load);
           n_return=fwrite(unused,sizeof(int),(GADGET_HEADER_SIZE-s_load)/sizeof(int),fp);
           n_return=fwrite(&record_length,4,1,fp);
+          SID_free(SID_FARG unused);
           fclose(fp);
         }
         else
@@ -506,6 +508,7 @@ void write_gadget_binary(char        *filename_in,
 
     // Write ids
     SID_log("Writing ids...",SID_LOG_OPEN);
+    
     for(i_file=0,i_p=0;i_file<n_files;i_file++){
       if(n_files>1)
         sprintf(filename,"%s.%d",filename_in,i_file);
@@ -831,7 +834,7 @@ void write_gadget_binary(char        *filename_in,
       }
       SID_log("Done.",SID_LOG_CLOSE);      
     }
-    SID_free((void **)&buffer);
+    SID_free(SID_FARG buffer);
   }
 
   // Clean-up
