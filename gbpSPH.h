@@ -42,6 +42,9 @@
 #define SPH_KERNEL_GADGET   4
 #define SPH_KERNEL_GASOLINE 8
 
+#define READ_GADGET_MODE_DEFAULT   0
+#define READ_GADGET_MODE_NO_HUBBLE 1
+
 /*******************************/
 /* Stuff for marking particles */
 /*******************************/
@@ -250,7 +253,8 @@ void prep_types(char ***pname, int n_type, ... );
 void read_gadget_binary_header(char        *filename,
                                plist_info  *plist);
 void read_gadget_binary(char        *filename,
-                        plist_info  *plist);
+                        plist_info  *plist,
+                        int          mode);
 void write_gadget_binary(char       *filename,
                          plist_info *plist);
 void display_gadget_header(plist_info  *plist);

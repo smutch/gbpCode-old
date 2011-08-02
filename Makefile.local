@@ -16,8 +16,12 @@ OBJFILES  = display_gadget_header.o         \
             smooth_grid.o                   \
             read_mark_file.o                \
 	    read_smooth.o                   \
-            read_gadget_binary.o            \
-            read_gadget_binary_header.o     \
+	    read_gadget_binary.o            \
+	    read_gadget_binary_header.o     \
+	    mark_gadget.o                   \
+	    mark_particles.o                \
+	    read_mark_file.o                \
+	    write_mark_file.o               \
 	    write_smooth.o                  \
             write_mark_file.o               \
             write_ascii.o                   \

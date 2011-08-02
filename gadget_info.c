@@ -27,7 +27,7 @@ int main(int argc, char *argv[]){
 
   // Read GADGET file
   init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-  read_gadget_binary(filename_in,&plist);
+  read_gadget_binary(filename_in,&plist,READ_GADGET_MODE_DEFAULT);
 
   // Display info
   display_gadget_info(&plist);

@@ -35,7 +35,7 @@ int main(int argc, char *argv[]){
   init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
 
   // Read GADGET file
-  read_gadget_binary(filename_in,&plist);
+  read_gadget_binary(filename_in,&plist,READ_GADGET_MODE_DEFAULT);
 
   // Store replication info in data structure; needed by write_gadget_binary
   ADaPS_store(&(plist.data),(void *)(&n_out),"n_files",      ADaPS_SCALAR_INT);

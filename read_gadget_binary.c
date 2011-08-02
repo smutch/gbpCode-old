@@ -70,6 +70,7 @@ int assign_particle_to_rank(plist_info *plist,
       if(scatter_rank!=SID.My_rank)
         keep*=FALSE;
     }
+#endif
     else if(check_mode_for_flag(mode,READ_GADGET_DEFAULT)){
       if(i_p<id_min || i_p>id_max)
         keep*=FALSE;
@@ -98,7 +99,6 @@ int assign_particle_to_rank(plist_info *plist,
       if(z_p>=z_max)
         keep*=FALSE;
     }
-#endif
   }
   else
     keep*=FALSE;
@@ -106,7 +106,8 @@ int assign_particle_to_rank(plist_info *plist,
 }
 
 void read_gadget_binary(char       *filename_in,
-                        plist_info *plist){
+                        plist_info *plist,
+                        int         mode){
   char    **pname;
   char     *name_initpositions;
   char      filename[MAX_FILENAME_LENGTH];
@@ -420,6 +421,8 @@ void read_gadget_binary(char       *filename_in,
     n_return =SID_fread_all(&h_Hubble,sizeof(double),1,&fp);
     s_load  +=n_return*sizeof(double);
     if(h_Hubble<1e-10) h_Hubble=1.;
+    if(check_mode_for_flag(mode,READ_GADGET_MODE_NO_HUBBLE))
+      h_Hubble=1.;
     box_size*=plist->length_unit/h_Hubble;
     ADaPS_store(&(plist->data),(void *)(&box_size),"box_size",ADaPS_SCALAR_DOUBLE);
     ADaPS_store(&(plist->data),(void *)(&h_Hubble),"h_Hubble",ADaPS_SCALAR_DOUBLE);
