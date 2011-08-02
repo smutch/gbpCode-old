@@ -10,6 +10,7 @@
 int main(int argc, char *argv[]){
   char        filename_halo_root_in[256];
   char        filename_cat_root_in[256];
+  char        filename_root_matches[256];
   char        filename_root_out[256];
   char        filename_snap_list_in[256];
   char        filename_snap_list_out[256];
@@ -34,14 +35,15 @@ int main(int argc, char *argv[]){
   // Fetch user inputs
   strcpy(filename_halo_root_in,argv[1]);
   strcpy(filename_cat_root_in, argv[2]);
-  strcpy(filename_root_out,    argv[3]);
-  strcpy(filename_snap_list_in,argv[4]);
-  i_read_start     =atoi(argv[5]);
-  i_read_stop      =atoi(argv[6]);
-  i_read_step      =atoi(argv[7]);
-  n_search         =atoi(argv[8]);
-  n_files_groups   =atoi(argv[9]);
-  n_files_subgroups=atoi(argv[10]);
+  strcpy(filename_root_matches,argv[3]);
+  strcpy(filename_root_out,    argv[4]);
+  strcpy(filename_snap_list_in,argv[5]);
+  i_read_start     =atoi(argv[6]);
+  i_read_stop      =atoi(argv[7]);
+  i_read_step      =atoi(argv[8]);
+  n_search         =atoi(argv[9]);
+  n_files_groups   =atoi(argv[10]);
+  n_files_subgroups=atoi(argv[11]);
 
   // Create snapshot expansion factor list
   if(SID.I_am_Master){
@@ -81,6 +83,7 @@ int main(int argc, char *argv[]){
   SID_log("Constructing merger trees for snapshots #%d->#%d (step=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read_start,i_read_stop,i_read_step);
   compute_trees_horizontal(filename_halo_root_in,
                            filename_cat_root_in,
+                           filename_root_matches,
                            filename_root_out,
                            a_list_out,
                            i_read_start,
