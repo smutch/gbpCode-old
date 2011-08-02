@@ -1,6 +1,7 @@
+#ifndef GBPINTERPOLATE_AWAKE
+#define GBPINTERPOLATE_AWAKE
+#include <gbpLib.h>
 #include <gsl/gsl_interp.h>
-
-#define ADaPS_INTERP 10
 
 typedef struct interp_struct interp_info;
 struct interp_struct{
@@ -18,6 +19,10 @@ void init_interpolate(double                 *x,
 	              size_t                  n,
                       const gsl_interp_type  *T,
 	              interp_info           **interp);
+void ADaPS_store_interp(ADaPS  **list,
+                        void    *data,
+                        char    *name,
+                        ...);
 double interpolate(interp_info *interp, 
 		   double       x) ;
 double interpolate_derivative(interp_info *interp,
@@ -41,3 +46,6 @@ void   interpolate_minimum(interp_info *interp,
 			   double       threshold,
                            double      *x_minima,
                            double      *y_minima);
+
+#endif
+

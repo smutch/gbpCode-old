@@ -16,14 +16,15 @@ void ADaPS_store(ADaPS  **list,
   va_list  vargs;
   va_start(vargs,mode);
 
-  // Create the new item
-  new_item=(ADaPS *)SID_malloc(sizeof(ADaPS));
-  new_item->data=NULL;
-  new_item->mode=mode;
+  // Create the new item (and apply some defaults)
+  new_item               =(ADaPS *)SID_malloc(sizeof(ADaPS));
+  new_item->data         =NULL;
+  new_item->mode         =mode;
+  new_item->free_function=SID_free;
 
   // Add data to the new item and interpret variable arguments
   if(check_mode_for_flag(mode,ADaPS_COPY)){
-    data_size     =sizeof(data);
+    data_size     =(size_t)va_arg(vargs,size_t);
     new_item->data=(void *)SID_malloc(data_size);
     memcpy(new_item->data,data,data_size);
   }

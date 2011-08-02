@@ -4,6 +4,7 @@
 INCFILES = gbpInterpolate.h 
 OBJFILES = free_interpolate.o       \
 	   init_interpolate.o       \
+	   ADaPS_store_interp.o     \
 	   interpolate.o            \
 	   interpolate_derivative.o \
 	   interpolate_integral.o   \

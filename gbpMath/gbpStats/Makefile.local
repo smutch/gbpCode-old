@@ -2,7 +2,8 @@
 # Library-specific settings #
 #############################
 INCFILES = gbpStats.h 
-OBJFILES = calc_max.o            \
+OBJFILES = calc_sep_periodic.o   \
+           calc_max.o            \
 	   calc_max_global.o     \
 	   calc_mean.o           \
 	   calc_mean_global.o    \

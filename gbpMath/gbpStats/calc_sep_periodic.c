@@ -1,5 +1,5 @@
 #include <math.h>
-#include <common.h>
+#include <gbpLib.h>
 
 double calc_sep_periodic(double x_1,
 		         double y_1,

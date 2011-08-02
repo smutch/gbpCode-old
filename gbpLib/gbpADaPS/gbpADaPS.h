@@ -1,8 +1,10 @@
 
 // ADaPS: Adaptive Data Passing Structure
-
 #ifndef ADaPS_ON
 #define ADaPS_ON
+
+#include <gbpCommon.h>
+#include <gbpSID.h>
 
 #define ADaPS_NAME_LENGTH    40
 
@@ -27,6 +29,7 @@
 #define ADaPS_LONG_LONG    5
 #define ADaPS_SIZE_T       6
 #define ADaPS_STRING       7
+#define ADaPS_CUSTOM       8
 #ifdef USE_DOUBLE
   #define ADaPS_REAL ADaPS_DOUBLE
 #else
@@ -36,11 +39,12 @@
 // Define the structure
 typedef struct ADaPS_struct ADaPS;
 struct ADaPS_struct{
-  char   name[ADaPS_NAME_LENGTH];
-  void  *data;
-  int    mode;
-  ADaPS *next;
-  size_t data_size;
+  char    name[ADaPS_NAME_LENGTH];
+  void   *data;
+  int     mode;
+  ADaPS  *next;
+  size_t  data_size;
+  void   (*free_function)(void **);
 };
 
 // Function definitions 
