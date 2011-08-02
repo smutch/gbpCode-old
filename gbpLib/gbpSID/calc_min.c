@@ -31,8 +31,9 @@ void calc_min(void   *data,
     else
       SID_trap_error("Unknown variable type in calc_min\n",ERROR_LOGIC);
     if(type==SID_DOUBLE){
-      for(i_data=1;i_data<n_data;i_data++)
+      for(i_data=1;i_data<n_data;i_data++){
         if((double)(((double *)data)[i_data])<(double)(((double *)result)[0])) ((double *)result)[0]=(double)(((double *)data)[i_data]);
+      }
     }
     else if(type==SID_FLOAT){
       for(i_data=1;i_data<n_data;i_data++)

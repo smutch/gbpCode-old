@@ -1,15 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <common.h>
+#include <gbpLib.h>
+#include <gbpMisc.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_roots.h>
-
-typedef struct bisect_af_params bisect_af_params;
-struct bisect_af_params{
-  interp_info *interp;
-  double       value;  
-};
 
 double bisect_array_function(double  x_interp,
 			     void   *params){

@@ -1,3 +1,15 @@
+#ifndef GBPMISC_AWAKE
+#define GBPMISC_AWAKE
+
+#include <gbpInterpolate.h>
+
+typedef struct bisect_af_params bisect_af_params;
+struct bisect_af_params{
+  interp_info *interp;
+  double       value;
+};
+
+
 double take_aln(double val);
 double take_alog10(double val);
 double take_ln(double val);
@@ -19,4 +31,9 @@ void   compute_triaxiality(double     *x_in,
                            double      return_vectors[3][3]);
 size_t find_index(size_t *y,size_t y_find,size_t  n,size_t *index);
 int    find_index_int(int *y,int y_find,int  n,size_t *index);
+double bisect_array(interp_info *interp,
+                    double       value,
+                    double       threshold);
+
+#endif
 

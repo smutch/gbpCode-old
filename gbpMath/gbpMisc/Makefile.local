@@ -12,6 +12,7 @@ OBJFILES = take_log10.o                        \
 	   find_index_int.o                    \
 	   d_periodic.o                        \
 	   compute_triaxiality.o               \
+           bisect_array.o                      \
 	   compute_Daubechies_scaling_fctns.o                  
 LIBFILE  = 
 BINFILES = 

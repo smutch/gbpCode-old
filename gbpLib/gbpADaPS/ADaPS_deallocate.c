@@ -3,6 +3,6 @@
 #include <gbpADaPS.h>
 
 void ADaPS_deallocate(ADaPS **remove){
-  SID_free((void **)(&((*remove)->data)));
-  SID_free((void **)(remove));
+  ((*remove)->free_function)((void **)(&((*remove)->data)));
+  SID_free(SID_FARG (*remove));
 }
