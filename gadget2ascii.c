@@ -89,7 +89,7 @@ int main(int argc, char *argv[]){
         sprintf(filename,"%s.%d",filename,i_file);
 
       // Read file
-      read_gadget_binary(filename,&plist);
+      read_gadget_binary(filename,&plist,READ_GADGET_MODE_DEFAULT);
 
       // Write ascii file
       write_ascii(filename_out,&plist,i_file);

@@ -63,7 +63,7 @@ int main(int argc, char *argv[]){
 
   RNG_max=1./(REAL)(subsample_factor);
 
-  SID_log("Converting GADGET file to an ascii file...",SID_LOG_OPEN);
+  SID_log("Subsampling GADGET file by a factor of %d...",SID_LOG_OPEN,subsample_factor);
 
   // Grab info from first header
   flag_filefound=init_gadget_read(filename_in_root,i_snap,&flag_multifile,&flag_file_type,&header);
@@ -72,8 +72,10 @@ int main(int argc, char *argv[]){
   else
     n_files=0;
   if(n_files>0){
+  init_seed_from_clock(&seed_init);
+  SID_log("Seed=%d",SID_LOG_COMMENT,seed_init);
   
-  SID_log("Counting particles...",SID_LOG_OPEN);
+  SID_log("Counting particles in %d files...",SID_LOG_OPEN,n_files);
   for(i_type=0;i_type<N_GADGET_TYPE;i_type++)
     n_all_keep[i_type]=0;
   for(i_file=SID.My_rank,j_file=0;j_file<n_files;i_file+=SID.n_proc,j_file+=SID.n_proc){
@@ -81,7 +83,7 @@ int main(int argc, char *argv[]){
     if(i_file<n_files){
       set_gadget_filename(filename_in_root,i_snap,i_file,flag_multifile,flag_file_type,filename_in);
       fp=fopen(filename_in,"r");
-      init_seed_from_clock(&seed);
+      seed=seed_init+1387*i_file;
       init_RNG(&seed,&RNG,RNG_DEFAULT);
       for(i_type=0;i_type<N_GADGET_TYPE;i_type++){
         for(j_particle=0;j_particle<header.n_file[i_type];j_particle++){
@@ -129,7 +131,7 @@ int main(int argc, char *argv[]){
       fread(&record_length_out,sizeof(int),1,fp);
       for(i_type=0;i_type<N_GADGET_TYPE;i_type++){
         n_local[i_type]               =header.n_file[i_type];
-        header.n_file[i_type]        =0;
+        header.n_file[i_type]         =0;
         header.mass_array[i_type]     =mass_array[i_type];
         header.n_all[i_type]          =n_all[i_type];
         header.n_all_high_word[i_type]=n_all_high_word[i_type];
