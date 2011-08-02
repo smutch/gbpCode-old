@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <gbpCommon.h>
+#include <gbpSID.h>
 int count_lines_data(FILE *fp){
   int     n_lines=0;
   char   *line   =NULL;
