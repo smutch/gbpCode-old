@@ -91,30 +91,11 @@ void pspec_names(int   mode,
 /****************************************/
 /* Initialize the power spectrum at z=0 */ 
 /****************************************/
-void init_transfer_function(cosmo_info **cosmo){
-  char   filename_TF[256];
-  char   filename_TF_NL[256];
-  size_t length;
-  sprintf(filename_TF,   "%s/transfer_function.dat",       GBP_DATA_DIR);
-  sprintf(filename_TF_NL,"%s/nonlinear_power_spectrum.dat",GBP_DATA_DIR);
-  length=(size_t)strlen(filename_TF);
-  ADaPS_store((ADaPS **)cosmo,
-             "file_transfer_function",
-             (void *)filename_TF,
-             ADaPS_STRING,
-             1,&length);
-  length=(size_t)strlen(filename_TF_NL);
-  ADaPS_store((ADaPS **)cosmo,
-             "file_power_spectrum_NL",
-             (void *)filename_TF_NL,
-             ADaPS_STRING,
-             1,&length);
-}
 void init_power_spectrum_TF(cosmo_info **cosmo){
   FILE   *fp;
-  char   *line;
-  char   *filename_TF;
-  char   *filename_nl;
+  char   *line=NULL;
+  char    filename_TF[MAX_FILENAME_LENGTH];
+  char    filename_nl[MAX_FILENAME_LENGTH];
   size_t  line_length=0;
   int     i;
   int     n_k;
@@ -146,64 +127,56 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
   double  M_WDM,R_WDM;
 
   // Names of the files where the transfer function and non-linear power spectrum are stored
-  filename_TF= (char   *)ADaPS_fetch((ADaPS *)(*cosmo),"file_transfer_function");  
-  filename_nl= (char   *)ADaPS_fetch((ADaPS *)(*cosmo),"file_power_spectrum_NL");  
+  sprintf(filename_TF,"%s/transfer_function.dat",       GBP_DATA_DIR);
+  sprintf(filename_nl,"%s/nonlinear_power_spectrum.dat",GBP_DATA_DIR);
   
-  n_spectral =((double *)ADaPS_fetch((ADaPS *)(*cosmo),"n_spectral"))[0];
-  h_Hubble   =((double *)ADaPS_fetch((ADaPS *)(*cosmo),"h_Hubble"))[0];
-  Omega_M    =((double *)ADaPS_fetch((ADaPS *)(*cosmo),"Omega_M"))[0];
-  Omega_b    =((double *)ADaPS_fetch((ADaPS *)(*cosmo),"Omega_b"))[0];
+  n_spectral =((double *)ADaPS_fetch((*cosmo),"n_spectral"))[0];
+  h_Hubble   =((double *)ADaPS_fetch((*cosmo),"h_Hubble"))[0];
+  Omega_M    =((double *)ADaPS_fetch((*cosmo),"Omega_M"))[0];
+  Omega_b    =((double *)ADaPS_fetch((*cosmo),"Omega_b"))[0];
 
-  /**************************/
-  /* Read transfer function */
-  /**************************/
+  // Read the transfer function
   fp       =fopen(filename_TF,"r");
-  n_k      =count_lines(fp);
+  n_k      =count_lines_data(fp);
   n_k_dim  =(size_t)n_k;
-  lk_P     =(double *)malloc(sizeof(double)*n_k_dim);
-  lP_k     =(double *)malloc(sizeof(double)*n_k_dim);
-  lP_k_gas =(double *)malloc(sizeof(double)*n_k_dim);
-  lP_k_dark=(double *)malloc(sizeof(double)*n_k_dim);
-  lP_k_nl  =(double *)malloc(sizeof(double)*n_k_dim);
+  lk_P     =(double *)SID_malloc(sizeof(double)*n_k);
+  lP_k     =(double *)SID_malloc(sizeof(double)*n_k);
+  lP_k_gas =(double *)SID_malloc(sizeof(double)*n_k);
+  lP_k_dark=(double *)SID_malloc(sizeof(double)*n_k);
+  lP_k_nl  =(double *)SID_malloc(sizeof(double)*n_k);
   for(i=0;i<n_k;i++){
-    grab_next_line(fp,&line,&line_length);
+    grab_next_line_data(fp,&line,&line_length);
     grab_double(line,1,&(lk_P[i]));
     grab_double(line,2,&(lP_k_dark[i]));
     grab_double(line,3,&(lP_k_gas[i]));
     lP_k[i]=((Omega_M-Omega_b)*lP_k_dark[i]+Omega_b*lP_k_gas[i])/Omega_M;
   }
-  free(line);line_length=0;
   fclose(fp);
 
-  /********************************************/
-  /* Read tabulated non-linear power spectrum */
-  /********************************************/
+  // Read tabulated non-linear power spectrum
   fp      =fopen(filename_nl,"r");
-  n_k_tmp =count_lines(fp);
-  lk_P_tmp=(double *)malloc(sizeof(double)*n_k_tmp);
-  lP_k_tmp=(double *)malloc(sizeof(double)*n_k_tmp);
-  for(i=0;i<n_k;i++){
-    grab_next_line(fp,&line,&line_length);
+  n_k_tmp =count_lines_data(fp);
+  lk_P_tmp=(double *)SID_malloc(sizeof(double)*n_k_tmp);
+  lP_k_tmp=(double *)SID_malloc(sizeof(double)*n_k_tmp);
+  for(i=0;i<n_k_tmp;i++){
+    grab_next_line_data(fp,&line,&line_length);
     grab_double(line,1,&(lk_P_tmp[i]));
     grab_double(line,2,&(lP_k_tmp[i]));
   }
-  free(line);line_length=0;
   fclose(fp);
   init_interpolate(lk_P_tmp,lP_k_tmp,(size_t)n_k_tmp,gsl_interp_cspline,&interp);
   for(i=0;i<n_k;i++)
     lP_k_nl[i]=interpolate(interp,lk_P[i]);
-  free(lk_P_tmp);
-  free(lP_k_tmp);
+  SID_free(SID_FARG lk_P_tmp);
+  SID_free(SID_FARG lP_k_tmp);
   free_interpolate(&interp);
 
   // Take the log of lk_P
   for(i=0;i<n_k;i++)
     lk_P[i]=take_log10(lk_P[i]/(M_PER_MPC/h_Hubble));
   
-  /**********************************************/
-  /* Supress small-scale power following the    */
-  /*    ENS recipe if M_ENS or M_WDM is set > 0 */
-  /**********************************************/
+  // Supress small-scale power following the
+  //    ENS recipe if M_ENS or M_WDM is set > 0
   M_WDM=-1.;
   if(ADaPS_exist(*cosmo,"M_ENS"))
     M_WDM=((double *)ADaPS_fetch(*cosmo,"M_ENS"))[0];
@@ -214,23 +187,21 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
     for(i=0;i<n_k;i++){
       k_P=take_alog10(lk_P[i]);
       if(R_WDM/R_of_k(k_P)>8.){
-	lP_k[i]     =0.;
-	lP_k_gas[i] =0.;
-	lP_k_dark[i]=0.;
-	lP_k_nl[i]  =0.;
+         lP_k[i]     =0.;
+         lP_k_gas[i] =0.;
+         lP_k_dark[i]=0.;
+         lP_k_nl[i]  =0.;
       }
       else{
-	lP_k[i]     *=exp(-0.5*k_P*R_WDM-0.5*pow(k_P*R_WDM,2.));
-	lP_k_gas[i] *=exp(-0.5*k_P*R_WDM-0.5*pow(k_P*R_WDM,2.));
-	lP_k_dark[i]*=exp(-0.5*k_P*R_WDM-0.5*pow(k_P*R_WDM,2.));
-	lP_k_nl[i]  *=exp( 2.0*(-0.5*k_P*R_WDM-0.5*pow(k_P*R_WDM,2.)));
+         lP_k[i]     *=exp(-0.5*k_P*R_WDM-0.5*pow(k_P*R_WDM,2.));
+         lP_k_gas[i] *=exp(-0.5*k_P*R_WDM-0.5*pow(k_P*R_WDM,2.));
+         lP_k_dark[i]*=exp(-0.5*k_P*R_WDM-0.5*pow(k_P*R_WDM,2.));
+         lP_k_nl[i]  *=exp( 2.0*(-0.5*k_P*R_WDM-0.5*pow(k_P*R_WDM,2.)));
       }
     }
   }
     
-  /**************************/
-  /* Compute power spectrum */
-  /**************************/
+  // Compute power spectrum
   for(i=0;i<n_k;i++){
     lP_k[i]     =2.*take_log10(lP_k[i])     +(n_spectral)*lk_P[i];
     lP_k_gas[i] =2.*take_log10(lP_k_gas[i]) +(n_spectral)*lk_P[i];
@@ -238,9 +209,7 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
     lP_k_nl[i]  =   take_log10(lP_k_nl[i]);
   }
 
-  /*****************************/
-  /* Normalize at large scales */
-  /*****************************/
+  // Normalize at large scales
   norm   =lP_k[0];
   norm_nl=lP_k_nl[0];
   for(i=0;i<n_k;i++){
@@ -250,83 +219,45 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
     lP_k_nl[i]  -=norm_nl;
   }
 
-  /*****************************************************************/
-  /* Temporarily store arrays so that we can compute normalization */
-  /*****************************************************************/
-  if(!ADaPS_exist((*cosmo),"n_k")){
-    ADaPS_store((ADaPS **)cosmo,
-	       "n_k",
-	       (void *)(&n_k),
-	       ADaPS_INT,
-	       0,NULL);
-    ADaPS_store((ADaPS **)cosmo,
-	       "lk_P",
-	       (void *)(lk_P),
-	       ADaPS_DOUBLE,
-	       1,&n_k_dim);
-  }
-  else{
-    // Interpolate to the k-grid already set in cosmo
-    init_interpolate(lk_P,lP_k,     (size_t)n_k,gsl_interp_cspline,&interp);
-    init_interpolate(lk_P,lP_k_gas, (size_t)n_k,gsl_interp_cspline,&interp_gas);
-    init_interpolate(lk_P,lP_k_dark,(size_t)n_k,gsl_interp_cspline,&interp_dark);
-    init_interpolate(lk_P,lP_k_nl,  (size_t)n_k,gsl_interp_cspline,&interp_nl);
-    n_k_tmp =((int   *)ADaPS_fetch((*cosmo),"n_k"))[0];
-    lk_P_tmp=(double *)ADaPS_fetch((*cosmo),"lk_P");
-    for(i=0;i<n_k_tmp;i++){
-      lP_k_tmp[i]     =interpolate(interp,     lk_P_tmp[i]);
-      lP_k_gas_tmp[i] =interpolate(interp_gas, lk_P_tmp[i]);
-      lP_k_dark_tmp[i]=interpolate(interp_dark,lk_P_tmp[i]);
-      lP_k_nl_tmp[i]  =interpolate(interp_nl,  lk_P_tmp[i]);
-    }
-    free(lk_P);
-    free(lP_k);
-    free(lP_k_gas);
-    free(lP_k_dark);
-    free(lP_k_nl);
-    free_interpolate(&interp);
-    free_interpolate(&interp_gas);
-    free_interpolate(&interp_dark);
-    free_interpolate(&interp_nl);
-    n_k      =n_k_tmp;
-    lk_P     =lk_P_tmp;
-    lP_k     =lP_k_tmp;
-    lP_k_gas =lP_k_gas_tmp;
-    lP_k_dark=lP_k_dark_tmp;
-    lP_k_nl  =lP_k_nl_tmp;
-  }
+  // Store P(k) arrays now so that the normalization routine can use them
+  ADaPS_store(cosmo,
+              (void *)(&n_k),
+              "n_k",
+              ADaPS_SCALAR_INT);
+  ADaPS_store(cosmo,
+              (void *)(lk_P),
+              "lk_P",
+              ADaPS_DEFAULT);
+  ADaPS_store(cosmo,
+              (void *)(lP_k),
+              "lP_k_TF_all",
+              ADaPS_DEFAULT);
+  ADaPS_store(cosmo,
+              (void *)(lP_k_gas),
+              "lP_k_TF_gas",
+              ADaPS_DEFAULT);
+  ADaPS_store(cosmo,
+              (void *)(lP_k_dark),
+              "lP_k_TF_dark",
+              ADaPS_DEFAULT);
+  ADaPS_store(cosmo,
+              (void *)(lP_k_nl),
+              "lP_k_NL_Smith_all",
+              ADaPS_DEFAULT);
 
+  // Compute and store interpolation information for the unnormalized P(k)
+  //   (needed by the normalization routine)
   init_interpolate(lk_P,lP_k,   (size_t)n_k,gsl_interp_cspline,&interp);
   init_interpolate(lk_P,lP_k_nl,(size_t)n_k,gsl_interp_cspline,&interp_nl);
-  ADaPS_store((ADaPS **)cosmo,
-             "lP_k_TF_all",
-             (void *)(lP_k),
-             ADaPS_DOUBLE,
-             1,&n_k_dim);
-  ADaPS_store((ADaPS **)cosmo,
-             "lP_k_TF_all_interp",
-             (void *)(interp),
-             ADaPS_INTERP,
-             0,NULL);
-  ADaPS_store((ADaPS **)cosmo,
-             "lP_k_NL_Smith_all",
-             (void *)(lP_k_nl),
-             ADaPS_DOUBLE,
-             1,&n_k_dim);
-  ADaPS_store((ADaPS **)cosmo,
-             "lP_k_NL_Smith_all_interp",
-             (void *)(interp_nl),
-             ADaPS_INTERP,
-             0,NULL);
-  free_interpolate(&interp);
-  free_interpolate(&interp_nl);
+  ADaPS_store_interp(cosmo,
+                     (void *)(interp),
+                     "lP_k_TF_all_interp");
+  ADaPS_store_interp(cosmo,
+                     (void *)(interp_nl),
+                     "lP_k_NL_Smith_all_interp");
 
-  /***************************************/
-  /* Normalize power spectrum to sigma_8 */
-  /***************************************/
-  norm=power_spectrum_normalization(*cosmo,
-				    PSPEC_LINEAR_TF,
-				    PSPEC_ALL_MATTER);
+  // Normalize P(k) to sigma_8
+  norm=power_spectrum_normalization(*cosmo,PSPEC_LINEAR_TF,PSPEC_ALL_MATTER);
   norm_nl=lP_k[0]-lP_k_nl[0]+norm;
   for(i=0;i<n_k;i++){
     lP_k[i]     +=norm;
@@ -334,64 +265,33 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
     lP_k_dark[i]+=norm;
     lP_k_nl[i]  +=norm_nl;
   }
+
+  // Create interpolation information for P(k) arrays
+  ADaPS_remove(cosmo,"lP_k_TF_all_interp");
+  ADaPS_remove(cosmo,"lP_k_NL_Smith_all_interp");
   init_interpolate(lk_P,lP_k,     (size_t)n_k,gsl_interp_cspline,&interp);
+  init_interpolate(lk_P,lP_k_nl,  (size_t)n_k,gsl_interp_cspline,&interp_nl);
   init_interpolate(lk_P,lP_k_gas, (size_t)n_k,gsl_interp_cspline,&interp_gas);
   init_interpolate(lk_P,lP_k_dark,(size_t)n_k,gsl_interp_cspline,&interp_dark);
-  init_interpolate(lk_P,lP_k_nl,  (size_t)n_k,gsl_interp_cspline,&interp_nl);
 
-  /*******************************/
-  /* Store the normalized arrays */
-  /*******************************/
-  ADaPS_store((ADaPS **)cosmo,
-             "lP_k_TF_all",
-             (void *)(lP_k),
-             ADaPS_DOUBLE,
-             1,&n_k_dim);
-  ADaPS_store((ADaPS **)cosmo,
-             "lP_k_TF_gas",
-             (void *)(lP_k_gas),
-             ADaPS_DOUBLE,
-             1,&n_k_dim);
-  ADaPS_store((ADaPS **)cosmo,
-             "lP_k_TF_dark",
-             (void *)(lP_k_dark),
-             ADaPS_DOUBLE,
-             1,&n_k_dim);
-  ADaPS_store((ADaPS **)cosmo,
-             "lP_k_NL_Smith_all",
-             (void *)(lP_k_nl),
-             ADaPS_DOUBLE,
-             1,&n_k_dim);
-  ADaPS_store((ADaPS **)cosmo,
-             "lP_k_TF_all_interp",
-             (void *)(interp),
-             ADaPS_INTERP,
-             0,NULL);
-  ADaPS_store((ADaPS **)cosmo,
-             "lP_k_TF_gas_interp",
-             (void *)(interp_gas),
-             ADaPS_INTERP,
-             0,NULL);
-  ADaPS_store((ADaPS **)cosmo,
-             "lP_k_TF_dark_interp",
-             (void *)(interp_dark),
-             ADaPS_INTERP,
-             0,NULL);
-  ADaPS_store((ADaPS **)cosmo,
-             "lP_k_NL_Smith_all_interp",
-             (void *)(interp_nl),
-             ADaPS_INTERP,
-             0,NULL);
+  // Store interpolation information for P(k) arrays
+  ADaPS_store_interp(cosmo,
+                     (void *)(interp),
+                     "lP_k_TF_all_interp");
+  ADaPS_store_interp(cosmo,
+                     (void *)(interp_nl),
+                     "lP_k_NL_Smith_all_interp");
+  ADaPS_store_interp(cosmo,
+                    (void *)(interp_gas),
+                    "lP_k_TF_gas_interp");
+  ADaPS_store_interp(cosmo,
+                     (void *)(interp_dark),
+                     "lP_k_TF_dark_interp");
+  ADaPS_store_interp(cosmo,
+                    (void *)(interp_nl),
+                    "lP_k_NL_Smith_all_interp");
 
-  free(lk_P);
-  free(lP_k);
-  free(lP_k_gas);
-  free(lP_k_dark);
-  free(lP_k_nl);
-  free_interpolate(&interp);
-  free_interpolate(&interp_gas);
-  free_interpolate(&interp_dark);
-  free_interpolate(&interp_nl);
+  SID_free(SID_FARG line);
 }
 
 double power_spectrum(double      k_interp,
@@ -586,29 +486,25 @@ void init_power_spectrum_variance(cosmo_info **cosmo,double z,int mode,int compo
 
   // Make sure k's are initialized
   if(!ADaPS_exist((*cosmo),"n_k")){
-    if(mode==PSPEC_LINEAR_TF){
+    if(mode==PSPEC_LINEAR_TF)
       init_power_spectrum_TF(cosmo);
-    }
     else{
       n_k        =200;
       n_k_dim    =(size_t)n_k;
-      lk_P       =(double *)malloc(sizeof(double)*n_k_dim);
+      lk_P       =(double *)SID_malloc(sizeof(double)*n_k_dim);
       lk_P[0]    =take_log10(k_of_R(1e0*M_PER_KPC));
       lk_P[n_k-1]=take_log10(k_of_R(2e4*M_PER_MPC));
-      lk_step    =linear_step(lk_P[0],lk_P[n_k-1],n_k);
+      lk_step    =(lk_P[n_k-1]-lk_P[0])/(double)(n_k-1);
       for(i=1;i<n_k-1;i++)
-	lk_P[i]=lk_P[i-1]+lk_step;
-      ADaPS_store((ADaPS **)cosmo,
-		 "n_k",
-		 (void *)(&n_k),
-		 ADaPS_INT,
-		 0,NULL);
-      ADaPS_store((ADaPS **)cosmo,
-		 "lk_P",
-		 (void *)(lk_P),
-		 ADaPS_DOUBLE,
-		 1,&n_k_dim);
-      free(lk_P);
+         lk_P[i]=lk_P[i-1]+lk_step;
+      ADaPS_store(cosmo,
+                  (void *)(&n_k),
+                  "n_k",
+                  ADaPS_SCALAR_INT);
+      ADaPS_store(cosmo,
+                  (void *)(lk_P),
+                  "lk_P",
+                  ADaPS_DEFAULT);
     }
   }
   n_k    =((int   *)ADaPS_fetch((*cosmo),"n_k"))[0];
@@ -630,7 +526,7 @@ void init_power_spectrum_variance(cosmo_info **cosmo,double z,int mode,int compo
   wspace            =gsl_integration_workspace_alloc(n_int);
 
   // Loop over the whole range of scales
-  sigma2=(double *)malloc(sizeof(double)*n_k_dim);
+  sigma2=(double *)SID_malloc(sizeof(double)*n_k_dim);
   for(i=0;i<n_k;i++){
 
     // Perform spherical top-hat integral
@@ -649,25 +545,22 @@ void init_power_spectrum_variance(cosmo_info **cosmo,double z,int mode,int compo
   pspec_names(mode,component,mode_name,component_name);
   sprintf(sigma2_name,  "sigma2_k_%s_%s",       mode_name,component_name);
   sprintf(d2sigma2_name,"sigma2_k_%s_%s_interp",mode_name,component_name);
-  ADaPS_store((ADaPS **)cosmo,
-	     sigma2_name,
-	     (void *)(sigma2),
-	     ADaPS_DOUBLE,
-	     1,&n_k_dim);
-  ADaPS_store((ADaPS **)cosmo,
-	     d2sigma2_name,
-	     (void *)(interp),
-	     ADaPS_INTERP,
-	     0,NULL);
+  ADaPS_store(cosmo,
+              (void *)(sigma2),
+              "sigma2_k_%s_%s",
+              ADaPS_DEFAULT,
+              mode_name,component_name);
+  ADaPS_store_interp(cosmo,
+                     (void *)(interp),
+                     "sigma2_k_%s_%s_interp",
+                     mode_name,component_name);
 
   // Clean-up
   gsl_integration_workspace_free(wspace);
-  free(sigma2);
-  free_interpolate(&interp);
 }
 double power_spectrum_normalization(cosmo_info *cosmo,
-				    int         mode,
-				    int         component){
+                                    int         mode,
+                                    int         component){
   double     sigma2_unnorm;
   double     sigma_8;
   double     h_Hubble;
@@ -787,19 +680,19 @@ double dln_Inv_sigma_dlogM(cosmo_info *cosmo,
     lk_P        =(double *)ADaPS_fetch(cosmo,"lk_P");
     // Fetch/initialize M(k)
     if(!ADaPS_exist(cosmo,"lM_k")){
-      lM_k   =(double *)malloc(sizeof(double)*n_k);
+      lM_k   =(double *)SID_malloc(sizeof(double)*n_k);
       n_k_dim=(size_t)n_k;
       for(i=0;i<n_k;i++)
-	lM_k[i]=take_log10(M_of_k(take_alog10(lk_P[i]),z,cosmo));
-      ADaPS_store((ADaPS **)(&cosmo),
+         lM_k[i]=take_log10(M_of_k(take_alog10(lk_P[i]),z,cosmo));
+      ADaPS_store((&cosmo),
 		 "lM_k",
 		 (void *)(lM_k),
 		 ADaPS_DOUBLE,
 		 1,&n_k_dim);
-      free(lM_k);
+      SID_free(SID_FARG lM_k);
     }
     lM_k        =(double  *)ADaPS_fetch(cosmo,"lM_k");
-    ln_Inv_sigma=(double *)malloc(sizeof(double)*n_k);
+    ln_Inv_sigma=(double *)SID_malloc(sizeof(double)*n_k);
     n_k_dim     =(size_t)n_k;
     for(i=0;i<n_k;i++)
       ln_Inv_sigma[i]=take_ln(1./sqrt(power_spectrum_variance(take_alog10(lk_P[i]),
@@ -812,13 +705,10 @@ double dln_Inv_sigma_dlogM(cosmo_info *cosmo,
                      (size_t)n_k,
                      gsl_interp_cspline,
                      &interp_ln_Inv_sigma);
-    ADaPS_store((ADaPS **)(&cosmo),
-               d2ln_Inv_sigma_name,
-               (void *)(interp_ln_Inv_sigma),
-               ADaPS_INTERP,
-               0,NULL);
-    free_interpolate(&interp_ln_Inv_sigma);
-    free(ln_Inv_sigma);
+    ADaPS_store_interp((&cosmo),
+                       (void *)(interp_ln_Inv_sigma),
+                       d2ln_Inv_sigma_name);
+    SID_free(SID_FARG ln_Inv_sigma);
   }
   interp_ln_Inv_sigma=(interp_info *)ADaPS_fetch(cosmo,d2ln_Inv_sigma_name);
   r_val=
@@ -851,12 +741,12 @@ double dln_sigma_dlnM(cosmo_info *cosmo,
   if(!ADaPS_exist(cosmo,d2ln_sigma_name)){
     n_k    =((int   *)ADaPS_fetch(cosmo,"n_k"))[0];
     lk_P   =(double *)ADaPS_fetch(cosmo,"lk_P");
-    lM_k   =(double *)malloc(sizeof(double)*n_k);
+    lM_k   =(double *)SID_malloc(sizeof(double)*n_k);
     n_k_dim=(size_t)n_k;
     for(i=0;i<n_k;i++)
       lM_k[i]=take_ln(M_of_k(take_alog10(lk_P[i]),z,cosmo));
 
-    ln_sigma=(double *)malloc(sizeof(double)*n_k);
+    ln_sigma=(double *)SID_malloc(sizeof(double)*n_k);
     n_k_dim =(size_t)n_k;
     for(i=0;i<n_k;i++)
       ln_sigma[i]=take_ln(sqrt(power_spectrum_variance(take_alog10(lk_P[i]),
@@ -869,14 +759,12 @@ double dln_sigma_dlnM(cosmo_info *cosmo,
                      n_k_dim,
                      gsl_interp_cspline,
                      &interp_ln_sigma);
-    ADaPS_store((ADaPS **)(&cosmo),
-               d2ln_sigma_name,
-               (void *)(interp_ln_sigma),
-               ADaPS_INTERP,
-               0,NULL);
+    ADaPS_store_interp((&cosmo),
+                       (void *)(interp_ln_sigma),
+                       d2ln_sigma_name);
     free_interpolate(&interp_ln_sigma);
-    free(lM_k);
-    free(ln_sigma);
+    SID_free(SID_FARG lM_k);
+    SID_free(SID_FARG ln_sigma);
   }
   interp_ln_sigma=(interp_info *)ADaPS_fetch(cosmo,d2ln_sigma_name);
   r_val=
@@ -922,9 +810,12 @@ double M_sc(double      z,
     
     b_z=linear_growth_factor(z,cosmo);
 
+    /*
     r_val=bisect_array(interp,
 		       delta_sc*delta_sc/(b_z*b_z),
 		       1e-4);
+    */
+    SID_trap_error("Need to implement bisect_array here.",ERROR_LOGIC);
     M_sc_last=M_of_k(take_alog10(r_val),z,cosmo);
     z_last   =z;
   }
