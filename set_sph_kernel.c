@@ -65,12 +65,12 @@ void set_sph_kernel(plist_info *plist,int mode){
         else if(n_temp<=3){
           init_interpolate(kernel_radius_temp,&(kernel_table_3d[i_table]),(size_t)n_temp,gsl_interp_linear,&interp);
           kernel_table_2d[i_table]=2.*interpolate_integral(interp,0.,kernel_radius_temp[n_temp-1]);
-          free_interpolate(&interp);
+          free_interpolate(SID_FARG interp);
         }
         else{
           init_interpolate(kernel_radius_temp,&(kernel_table_3d[i_table]),(size_t)n_temp,gsl_interp_cspline,&interp);
           kernel_table_2d[i_table]=2.*interpolate_integral(interp,0.,kernel_radius_temp[n_temp-1]);
-          free_interpolate(&interp);
+          free_interpolate(SID_FARG interp);
         }
         if(i_table==1)
           kernel_table_2d_average+=PI*kernel_radius[i_table]*kernel_radius[i_table]*0.5*(kernel_table_2d[i_table-1]+kernel_table_2d[i_table]);

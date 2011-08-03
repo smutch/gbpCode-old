@@ -111,7 +111,7 @@ void read_mark_file(plist_info *plist,
 
         // Sort marked particles
         if(n_mark_type_local[i_species]>0){
-          sort(mark_list_local,n_mark_type_local[i_species],NULL,SID_SIZE_T,SORT_LOCAL,SORT_INPLACE_ONLY,SORT_COMPUTE_INPLACE);
+          merge_sort(mark_list_local,n_mark_type_local[i_species],NULL,SID_SIZE_T,SORT_INPLACE_ONLY,SORT_COMPUTE_INPLACE);
           ADaPS_store(&(plist->data),(void *)(mark_list_local),"%s_%s",ADaPS_DEFAULT,mark_name,plist->species[i_species]);
           SID_free((void **)&mark_list_local);
         }
@@ -135,14 +135,14 @@ void read_mark_file(plist_info *plist,
             mark_list[i_particle]=FALSE;
           flag_allocate=TRUE;
         }      
-        sort(ids_local,n_particles_local,&ids_local_index,SID_SIZE_T,SORT_LOCAL,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
+        merge_sort(ids_local,n_particles_local,&ids_local_index,SID_SIZE_T,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
         // Use a buffer to increase speed
         for(i_particle=0;i_particle<header.n_mark_species[i_species];){
           n_buffer=MIN(header.n_mark_species[i_species]-i_particle,MAX_MARK_BUFFER_SIZE);
           SID_fread_chunked_all(mark_list_local,
                                 n_buffer,
                                 &fp_mark_file);
-          sort(mark_list_local,n_buffer,NULL,SID_SIZE_T,SORT_LOCAL,SORT_INPLACE_ONLY,SORT_COMPUTE_INPLACE);
+          merge_sort(mark_list_local,n_buffer,NULL,SID_SIZE_T,SORT_INPLACE_ONLY,SORT_COMPUTE_INPLACE);
           for(j_particle=0,k_particle=find_index(ids_local,mark_list_buffer[0],n_particles_local,ids_local_index);
               j_particle<n_buffer;
               j_particle++,i_particle++){
