@@ -76,7 +76,7 @@ void pspec_names(int   mode,
 		 char *component_name);
 void   init_transfer_function(cosmo_info **cosmo);
 void   init_power_spectrum_TF(cosmo_info **cosmo);
-double power_spectrum(double k, double z, cosmo_info *cosmo, int mode,int component);
+double power_spectrum(double k, double z, cosmo_info **cosmo, int mode,int component);
 void   init_power_spectrum_variance(cosmo_info **cosmo,double z,int mode,int component);
 double power_spectrum_normalization(cosmo_info *cosmo,
 				    int         mode,

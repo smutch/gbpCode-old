@@ -126,6 +126,8 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
   double  n_spectral;
   double  M_WDM,R_WDM;
 
+  SID_log("Initializing P(k)...",SID_LOG_OPEN);
+
   // Names of the files where the transfer function and non-linear power spectrum are stored
   sprintf(filename_TF,"%s/transfer_function.dat",       GBP_DATA_DIR);
   sprintf(filename_nl,"%s/nonlinear_power_spectrum.dat",GBP_DATA_DIR);
@@ -169,7 +171,7 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
     lP_k_nl[i]=interpolate(interp,lk_P[i]);
   SID_free(SID_FARG lk_P_tmp);
   SID_free(SID_FARG lP_k_tmp);
-  free_interpolate(&interp);
+  free_interpolate(SID_FARG interp);
 
   // Take the log of lk_P
   for(i=0;i<n_k;i++)
@@ -244,7 +246,6 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
               (void *)(lP_k_nl),
               "lP_k_NL_Smith_all",
               ADaPS_DEFAULT);
-
   // Compute and store interpolation information for the unnormalized P(k)
   //   (needed by the normalization routine)
   init_interpolate(lk_P,lP_k,   (size_t)n_k,gsl_interp_cspline,&interp);
@@ -292,13 +293,14 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
                     "lP_k_NL_Smith_all_interp");
 
   SID_free(SID_FARG line);
+  SID_log("Done.",SID_LOG_CLOSE);
 }
 
-double power_spectrum(double      k_interp,
-		      double      redshift,
-		      cosmo_info *cosmo,
-		      int         mode,
-		      int         component){
+double power_spectrum(double       k_interp,
+		      double       redshift,
+		      cosmo_info **cosmo,
+		      int          mode,
+		      int          component){
   int     n_k;
   double *lk_P;
   double *lP_k;
@@ -320,14 +322,15 @@ double power_spectrum(double      k_interp,
 		component_name);
     sprintf(lP_name,  "lP_k_%s_%s",       mode_name,component_name);
     sprintf(d2lP_name,"lP_k_%s_%s_interp",mode_name,component_name);
-    if(!ADaPS_exist(cosmo,lP_name))
-      init_power_spectrum_TF(&cosmo);
-    n_k   =((int   *)ADaPS_fetch(cosmo,"n_k"))[0];
-    lk_P  =(double *)ADaPS_fetch(cosmo,"lk_P");
-    lP_k  =(double *)ADaPS_fetch(cosmo,lP_name);
-    interp=(interp_info *)ADaPS_fetch(cosmo,d2lP_name);
+    if(!ADaPS_exist(*cosmo,lP_name)){
+      init_power_spectrum_TF(cosmo);
+    }
+    n_k   =((int   *)ADaPS_fetch(*cosmo,"n_k"))[0];
+    lk_P  =(double *)ADaPS_fetch(*cosmo,"lk_P");
+    lP_k  =(double *)ADaPS_fetch(*cosmo,lP_name);
+    interp=(interp_info *)ADaPS_fetch(*cosmo,d2lP_name);
     if(redshift!=0.)
-      norm=pow(linear_growth_factor(redshift,cosmo),2.);
+      norm=pow(linear_growth_factor(redshift,*cosmo),2.);
     else
       norm=1.;
     rval=norm*take_alog10(interpolate(interp,take_log10(k_interp)));
@@ -448,7 +451,7 @@ double sigma2_integrand(double  k,
   double r_val;
   sigma2_integrand_params *params;
   params =(sigma2_integrand_params *)params_in;
-  P_k_tmp=power_spectrum(k,params->z,params->cosmo,params->mode,params->component);
+  P_k_tmp=power_spectrum(k,params->z,&(params->cosmo),params->mode,params->component);
   W_k_tmp=W_k_tophat(k*params->R);
   r_val  =k*k*P_k_tmp*W_k_tmp*W_k_tmp;
   return(r_val);
@@ -762,7 +765,7 @@ double dln_sigma_dlnM(cosmo_info *cosmo,
     ADaPS_store_interp((&cosmo),
                        (void *)(interp_ln_sigma),
                        d2ln_sigma_name);
-    free_interpolate(&interp_ln_sigma);
+    free_interpolate(SID_FARG interp_ln_sigma);
     SID_free(SID_FARG lM_k);
     SID_free(SID_FARG ln_sigma);
   }
