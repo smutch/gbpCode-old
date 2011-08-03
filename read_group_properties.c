@@ -16,7 +16,7 @@ void read_group_properties(FILE *fp,halo_info *properties_out,int halo_index,int
   properties_out->group_halo_first=0;
   properties_out->group_halo_next =0;             
   properties_out->n_particles     =properties_in.n_particles;
-  properties_out->M_vir           =properties_in.M_vir/1e10;
+  properties_out->M_vir           =(float)(properties_in.M_vir/1e10);
   properties_out->R_vir           =properties_in.R_vir;
   properties_out->pos[0]          =properties_in.position_MBP[0];
   properties_out->pos[1]          =properties_in.position_MBP[1];
@@ -32,5 +32,7 @@ void read_group_properties(FILE *fp,halo_info *properties_out,int halo_index,int
   properties_out->most_bound_id   =properties_in.id_MBP;
   properties_out->snap_num        =i_read;
   properties_out->halo_index      =halo_index;
+  properties_out->halo_id         =0;
+  properties_out->group_id        =0;
                 
 }

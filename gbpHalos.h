@@ -1,5 +1,5 @@
-#ifndef GBPSPH_AWAKE
-#define GBPSPH_AWAKE
+#ifndef GBPHALOS_AWAKE
+#define GBPHALOS_AWAKE
 
 #include <gbpSPH.h>
 #include <gbpCosmo.h>
@@ -155,6 +155,5 @@ void match_halos(plist_info  *plist_1_in,
                  int          n_mark_2,
                  char        *catalog_1to2,
                  int          mode);
-
 #endif
 
