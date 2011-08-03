@@ -5,12 +5,10 @@ INCFILES  = gbpSPH.h
 OBJFILES  = display_gadget_header.o         \
 	    init_gadget_read.o              \
 	    set_gadget_filename.o           \
-            display_gadget_info.o           \
             free_plist.o                    \
             free_types.o                    \
             init_plist.o                    \
             mark_particles.o                \
-	    map_to_grid.o                   \
             prep_types.o                    \
 	    set_sph_kernel.o                \
             smooth_grid.o                   \
@@ -31,7 +29,6 @@ LIBFILE   = libgbpSPH.a
 BINFILES  = gadget2ascii               \
             gadget2csv                 \
             gadget_header              \
-            gadget_info                \
             gadget_replicate           \
             gadget_splitmerge          \
             gadget_subsample           \

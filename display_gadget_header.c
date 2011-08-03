@@ -158,14 +158,14 @@ void display_gadget_header(plist_info  *plist){
     sprintf(var_name,"n_%s",pname[i]);
     if(ADaPS_exist(plist->data,var_name)){
       sprintf(var_name2,"n_[%s]",pname[i]);
-      fprintf(stderr,"%20s = %lld\n",var_name2,((size_t *)ADaPS_fetch(plist->data,var_name))[0]);
+      fprintf(stderr,"%20s = %zd\n",var_name2,((size_t *)ADaPS_fetch(plist->data,var_name))[0]);
     }
   }
   for(i=0;i<plist->n_species;i++){
     sprintf(var_name,"n_all_%s",pname[i]);
     if(ADaPS_exist(plist->data,var_name)){
       sprintf(var_name2,"n_all_[%s]",pname[i]);
-      fprintf(stderr,"%20s = %lld\n",var_name2,((size_t *)ADaPS_fetch(plist->data,var_name))[0]);
+      fprintf(stderr,"%20s = %zd\n",var_name2,((size_t *)ADaPS_fetch(plist->data,var_name))[0]);
     }
   }
     

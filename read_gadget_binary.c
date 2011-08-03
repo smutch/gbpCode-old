@@ -671,7 +671,7 @@ void read_gadget_binary(char       *filename_in,
         }
         s_load+=(4+4);                                   // skip velocity block size
         s_load+=4;                                       // skip ids block size
-        SID_fseek(&fp_ids,1,s_load,SID_SEEK_CUR);
+        SID_fseek(&fp_ids,1,s_load,SID_SEEK_SET);
       }
 
       // Read positions and count the number needed by this rank from this file
@@ -807,7 +807,7 @@ void read_gadget_binary(char       *filename_in,
 
       // Skip to the ids for the second fp (if needed)
       if(flag_read_marked || flag_read_catalog)
-        SID_fseek(&fp_ids,1,s_load,SID_SEEK_CUR);
+         SID_fseek(&fp_ids,1,s_load,SID_SEEK_SET);
       
       // Generate array listing particles needed by this rank from this file
       if(ADaPS_exist(plist->data,"flag_read_scatter"))
