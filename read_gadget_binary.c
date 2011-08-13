@@ -5,17 +5,6 @@
 #include <gbpMath.h>
 #include <gbpSPH.h>
 
-#define READ_GADGET_NONE         2
-#define READ_GADGET_DEFAULT      4
-#define READ_GADGET_RANDOM       8
-#define READ_GADGET_MARKED      16
-#define READ_GADGET_X_MIN       32
-#define READ_GADGET_X_MAX       64
-#define READ_GADGET_Y_MIN      128
-#define READ_GADGET_Y_MAX      256
-#define READ_GADGET_Z_MIN      512
-#define READ_GADGET_Z_MAX     1024
-
 int assign_particle_to_rank(plist_info *plist,
                             double      x_p,
                             double      y_p,
