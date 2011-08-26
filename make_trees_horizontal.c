@@ -14,6 +14,7 @@ int main(int argc, char *argv[]){
   char        filename_root_out[256];
   char        filename_snap_list_in[256];
   char        filename_snap_list_out[256];
+  char        filename_output_file_root[256];
   int         i_read_start;
   int         i_read_stop;
   int         i_read_step;
@@ -29,8 +30,12 @@ int main(int argc, char *argv[]){
   int         n_snaps,i_read,i_next,i_write,n_keep;
   double     *a_list_in;
   double     *a_list_out;
+  cosmo_info *cosmo;
 
   SID_init(&argc,&argv,NULL);
+
+  // Initialize cosmology
+ init_cosmo_std(&cosmo); 
 
   // Fetch user inputs
   strcpy(filename_halo_root_in,argv[1]);
@@ -45,9 +50,14 @@ int main(int argc, char *argv[]){
   n_files_groups   =atoi(argv[10]);
   n_files_subgroups=atoi(argv[11]);
 
+  SID_log("Constructing horizontal merger trees for snapshots #%d->#%d (step=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read_start,i_read_stop,i_read_step);
+
   // Create snapshot expansion factor list
   if(SID.I_am_Master){
-    sprintf(filename_snap_list_out,"%s.a_list",filename_root_out);
+    strcpy(filename_output_file_root,filename_root_out);
+    strip_path(filename_output_file_root);
+    mkdir(filename_root_out,02755);
+    sprintf(filename_snap_list_out,"%s/%s.a_list",filename_root_out,filename_output_file_root);
     SID_log("Creating snapshot list {%s}...",SID_LOG_OPEN,filename_snap_list_out);
 
     // Read the original list
@@ -86,6 +96,7 @@ int main(int argc, char *argv[]){
                            filename_root_matches,
                            filename_root_out,
                            a_list_out,
+                           &cosmo,
                            i_read_start,
                            i_read_stop,
                            i_read_step,
@@ -96,5 +107,6 @@ int main(int argc, char *argv[]){
   if(SID.I_am_Master)
      SID_free(SID_FARG a_list_out);
   
+  SID_log("Done.",SID_LOG_CLOSE);
   SID_exit(ERROR_NONE);
 }

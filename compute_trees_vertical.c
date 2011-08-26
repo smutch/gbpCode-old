@@ -463,8 +463,19 @@ void compute_trees_vertical(char *filename_root_out,
   char        filename_in[256];
   char        filename_out[256];
   char        filename_out_MBP[256];
-  char        filename_out_dir[256];
+  char        filename_output_file_root[256];
   char        filename_properties[256];
+  char        filename_output_dir_horizontal[256];
+  char        filename_output_dir_horizontal_trees[256];
+  char        filename_output_dir_vertical[256];
+  char        filename_output_dir_vertical_groups[256];
+  char        filename_output_dir_vertical_subgroups[256];
+  char        filename_output_dir_horizontal_groups_properties[256];
+  char        filename_output_dir_horizontal_groups[256];
+  char        filename_output_dir_horizontal_subgroups_properties[256];
+  char        filename_output_dir_horizontal_subgroups[256];
+  char        filename_output_vertical_root[256];
+  char       *filename_output_dir_horizontal_properties;
   char       *line=NULL;
   size_t      line_length=0;
   int         i_bin;
@@ -576,11 +587,23 @@ void compute_trees_vertical(char *filename_root_out,
   for(i_read=i_read_stop,n_snap=0;i_read>=i_read_start;i_read-=i_read_step) n_snap++;
 
   // Determine the directory that the horizontal tree files are in
-  strcpy(filename_out_dir,filename_root_out);
-  strip_path(filename_out_dir);
+  strcpy(filename_output_file_root,filename_root_out);
+  strip_path(filename_output_file_root);
+  sprintf(filename_output_dir_horizontal,          "%s/horizontal",filename_root_out);
+  sprintf(filename_output_dir_horizontal_groups,   "%s/groups",    filename_output_dir_horizontal);
+  sprintf(filename_output_dir_horizontal_subgroups,"%s/subgroups", filename_output_dir_horizontal);
+  sprintf(filename_output_dir_horizontal_trees,    "%s/trees",     filename_output_dir_horizontal);
+  sprintf(filename_output_dir_vertical,            "%s/vertical",  filename_root_out);
+  sprintf(filename_output_dir_vertical_groups,     "%s/groups",    filename_output_dir_vertical);
+  sprintf(filename_output_dir_vertical_subgroups,  "%s/subgroups", filename_output_dir_vertical);
+  sprintf(filename_output_dir_horizontal_groups_properties,   "%s/properties",filename_output_dir_horizontal_groups);
+  sprintf(filename_output_dir_horizontal_subgroups_properties,"%s/properties",filename_output_dir_horizontal_subgroups);
+  mkdir(filename_output_dir_vertical,          02755);
+  mkdir(filename_output_dir_vertical_groups,   02755);
+  mkdir(filename_output_dir_vertical_subgroups,02755);
 
   // Determining iso-tree id mappings (onto tree structures, ranks and files)
-  sprintf(filename_in,"%s/%s.trees_horizontal_%d",filename_root_out,filename_out_dir,i_read_stop);
+  sprintf(filename_in,"%s/%s.trees_horizontal_%d",filename_output_dir_horizontal_trees,filename_output_file_root,i_read_stop);
   SID_fopen(filename_in,"r",&fp_in);
   SID_fread_all(&n_groups,         sizeof(int),1,&fp_in);
   SID_fread_all(&n_subgroups,      sizeof(int),1,&fp_in);
@@ -666,7 +689,7 @@ void compute_trees_vertical(char *filename_root_out,
 
   // Determine halo counts
   for(i_read=i_read_stop,n_halos_groups=0,n_halos_subgroups=0;i_read>=i_read_start;i_read-=i_read_step){
-    sprintf(filename_in,"%s/%s.trees_horizontal_%d",filename_root_out,filename_out_dir,i_read);
+    sprintf(filename_in,"%s/%s.trees_horizontal_%d",filename_output_dir_horizontal_trees,filename_output_file_root,i_read);
     SID_fopen(filename_in,"r",&fp_in);
     SID_fread_all(&n_groups,         sizeof(int),1,&fp_in);
     SID_fread_all(&n_subgroups,      sizeof(int),1,&fp_in);
@@ -840,6 +863,8 @@ void compute_trees_vertical(char *filename_root_out,
     switch(k_match){
       // Process subgroups
     case 0:
+      filename_output_dir_horizontal_properties=filename_output_dir_horizontal_subgroups_properties;
+      sprintf(filename_output_vertical_root,"%s/%s",filename_output_dir_vertical_subgroups,filename_output_file_root);
       n_halos_tree   =n_halos_tree_subgroup;
       n_trees_local  =n_trees_subgroup_local;
       tree_lo_rank   =tree_lo_subgroup_rank[SID.My_rank];
@@ -851,6 +876,8 @@ void compute_trees_vertical(char *filename_root_out,
       break;
       // Process groups
     case 1:
+      filename_output_dir_horizontal_properties=filename_output_dir_horizontal_groups_properties;
+      sprintf(filename_output_vertical_root,"%s/%s",filename_output_dir_vertical_groups,filename_output_file_root);
       n_halos_tree   =n_halos_tree_group;
       n_trees_local  =n_trees_group_local;
       tree_lo_rank   =tree_lo_group_rank[SID.My_rank];
@@ -885,8 +912,8 @@ void compute_trees_vertical(char *filename_root_out,
         trees[i_tree]->neighbour_halos[i_file]=NULL;
         trees[i_tree]->n_neighbours[i_file]   =0;
       }
-      sprintf(filename_in,        "%s/%s.trees_horizontal_%d",                    filename_root_out,filename_out_dir,                  i_read);
-      sprintf(filename_properties,"%s/%s.trees_horizontal_%sgroups_properties_%d",filename_root_out,filename_out_dir,group_text_prefix,i_read);
+      sprintf(filename_in,        "%s/%s.trees_horizontal_%d",                    filename_output_dir_horizontal_trees,     filename_output_file_root,                  i_read);
+      sprintf(filename_properties,"%s/%s.trees_horizontal_%sgroups_properties_%d",filename_output_dir_horizontal_properties,filename_output_file_root,group_text_prefix,i_read);
 
       // Open horizontal tree file
       SID_fopen(filename_in,        "r",&fp_in);
@@ -978,10 +1005,10 @@ void compute_trees_vertical(char *filename_root_out,
       // If flag_clean=TRUE, then delete the input files used here.
       if((*flag_clean)==TRUE){
         if(k_match==1){
-          sprintf(filename_in,"%s/%s.trees_horizontal_%d",filename_root_out,filename_out_dir,i_read);
+          sprintf(filename_in,"%s/%s.trees_horizontal_%d",filename_output_dir_horizontal_trees,filename_output_file_root,i_read);
           remove(filename_in);
         }
-        sprintf(filename_properties,"%s/%s.trees_horizontal_%sgroups_properties_%d",filename_root_out,group_text_prefix,filename_out_dir,i_read);
+        sprintf(filename_properties,"%s/%s.trees_horizontal_%sgroups_properties_%d",filename_output_dir_horizontal_properties,filename_output_file_root,group_text_prefix,i_read);
         remove(filename_properties);
       }      
     } // i_read
@@ -991,7 +1018,7 @@ void compute_trees_vertical(char *filename_root_out,
     finalize_trees_vertical(trees,n_halos_tree,n_trees_local,n_snap,TREE_PROGENITOR_ORDER_DELUCIA);
 
     // Write trees
-    write_trees_vertical(trees,n_halos_tree,n_trees_local,tree_lo_file,tree_hi_file,tree_count_file,n_write,filename_root_out,group_text_prefix);
+    write_trees_vertical(trees,n_halos_tree,n_trees_local,tree_lo_file,tree_hi_file,tree_count_file,n_write,filename_output_vertical_root,group_text_prefix);
 
     // Free trees
     for(i_tree=0;i_tree<n_trees_local;i_tree++)

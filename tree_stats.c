@@ -354,6 +354,7 @@ int main(int argc, char *argv[]){
           if(branch_count[branch_desc[i_branch]]>4){
             M_desc=interpolate(M_interp[branch_desc[i_branch]],a_branch[i_branch][0]);
             printf("%le ",a_list[((mil_halo_info *)halos)[branch_root[i_branch]].snap_num]);
+            printf("%le ",t_branch[i_branch][0]);
             printf("%le ",M_desc);
             printf("%le ",M_desc/((mil_halo_info *)halos)[branch_root[i_branch]].M_vir);
             printf("\n");
@@ -367,6 +368,7 @@ int main(int argc, char *argv[]){
           if(branch_count[branch_desc[i_branch]]>4){
             M_desc=interpolate(M_interp[branch_desc[i_branch]],a_branch[i_branch][0]);
             printf("%le ",a_list[((halo_info *)halos)[branch_root[i_branch]].snap_num]);
+            printf("%le ",t_branch[i_branch][0]);
             printf("%le ",M_desc);
             printf("%le ",M_desc/((halo_info *)halos)[branch_root[i_branch]].M_vir);
             printf("\n");
@@ -400,12 +402,12 @@ int main(int argc, char *argv[]){
     SID_free(SID_FARG branch_desc);
     for(i_branch=0;i_branch<n_branches;i_branch++){
       if(branch_count[i_branch]>4){
-        free_interpolate(&(x_interp[i_branch]));
-        free_interpolate(&(y_interp[i_branch]));
-        free_interpolate(&(z_interp[i_branch]));
-        free_interpolate(&(vx_interp[i_branch]));
-        free_interpolate(&(vy_interp[i_branch]));
-        free_interpolate(&(vz_interp[i_branch]));
+        free_interpolate(SID_FARG x_interp[i_branch]);
+        free_interpolate(SID_FARG y_interp[i_branch]);
+        free_interpolate(SID_FARG z_interp[i_branch]);
+        free_interpolate(SID_FARG vx_interp[i_branch]);
+        free_interpolate(SID_FARG vy_interp[i_branch]);
+        free_interpolate(SID_FARG vz_interp[i_branch]);
       }
     }
     SID_free(SID_FARG x_interp);

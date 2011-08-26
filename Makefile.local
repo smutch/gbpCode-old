@@ -11,8 +11,8 @@ OBJFILES  = compute_trees_matches.o    \
 	    read_AHF_for_trees.o       \
 	    read_trees.o               
 LIBFILE   = libgbpTrees.a
-BINFILES  = make_trees                 \
-            tree_stats                 \
+BINFILES  = tree_stats                 \
+	    make_trees                 \
 	    make_trees_horizontal      \
 	    make_trees_vertical        \
 	    convert_Bolshoi            \

@@ -83,6 +83,7 @@ float propagate_spins_recursive(tree_node_info *tree,RNG_info *RNG){
 
 int main(int argc, char *argv[]){
   char        filename_in_root[256];
+  char        filename_dir_out[256];
   char        filename_root_out[256];
   char        filename_missing_parents_out[256];
   char        filename_masses_out[256];
@@ -206,8 +207,8 @@ int main(int argc, char *argv[]){
   i_write_start  =atoi(argv[1]);
   i_write_stop   =atoi(argv[2]);
 
-  sprintf(filename_root_out,"/nfs/dset/shrek071/millenium/bolshoi/wip3/treedata/");
-
+  sprintf(filename_dir_out,"/nfs/dset/shrek071/millenium/bolshoi/wip3/treedata/");
+  sprintf(filename_dir_out,"/nfs/dset/shrek071/millenium/bolshoi/rockstar_trees/");
   progenitor_mode=TREE_PROGENITOR_ORDER_DELUCIA;
   //progenitor_mode=TREE_PROGENITOR_ORDER_DEFAULT;
   tree_mode      =0; // join-on
@@ -220,12 +221,12 @@ int main(int argc, char *argv[]){
   for(i_x=0,i_write=0;i_x<5 && i_write<n_write;i_x++){
     for(i_y=0;i_y<5 && i_write<n_write;i_y++){
       for(i_z=0;i_z<5 && i_write<n_write;i_z++,i_write++){
+        sprintf(filename_root_out,"%s/tree_%d_%d_%d",filename_dir_out,i_x,i_y,i_z);
         if(i_write>=i_write_start && i_write<=i_write_stop){
           SID_log("Processing file %d out of %d...",SID_LOG_OPEN|SID_LOG_TIMER,i_write+1,n_write);
 
           // Open file
-          sprintf(filename_in,"/nfs/dset/shrek071/millenium/bolshoi/raw_new/tree_%d_%d_%d.dat",i_x,i_y,i_z);
-//sprintf(filename_in,"/nfs/dset/shrek071/millenium/bolshoi/tree_0_0_1_24596.dat");
+          sprintf(filename_in,"/nfs/dset/shrek071/millenium/bolshoi/rockstar_trees/tree_%d_%d_%d.dat",i_x,i_y,i_z);
           SID_log("Open file {%s}...",SID_LOG_OPEN,filename_in);
           fp_in=fopen(filename_in,"r");
           SID_log("Done.",SID_LOG_CLOSE);

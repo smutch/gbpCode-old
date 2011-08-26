@@ -11,9 +11,13 @@ int main(int argc, char *argv[]){
   char        filename_halo_root_in[256];
   char        filename_cat_root_in[256];
   char        filename_root_out[256];
+  char        filename_output_dir_horizontal_trees[256];
+  char        filename_output_dir[256];
+  char        filename_output_dir_horizontal[256];
   char        filename_root_matches[256];
   char        filename_snap_list_in[256];
   char        filename_snap_list_out[256];
+  char        filename_output_file_root[256];
   int         i_read_start;
   int         i_read_stop;
   int         i_read_step;
@@ -29,8 +33,12 @@ int main(int argc, char *argv[]){
   int         n_snaps,i_read,i_next,i_write,n_keep;
   double     *a_list_in;
   double     *a_list_out;
+  cosmo_info *cosmo;
 
   SID_init(&argc,&argv,NULL);
+
+  // Initialize cosmology
+  init_cosmo_std(&cosmo);
 
   // Fetch user inputs
   strcpy(filename_halo_root_in,argv[1]);
@@ -49,7 +57,10 @@ int main(int argc, char *argv[]){
 
   // Read snapshot expansion factor list
   if(SID.I_am_Master){
-    sprintf(filename_snap_list_out,"%s.a_list",filename_root_out);
+    strcpy(filename_output_file_root,filename_root_out);
+    strip_path(filename_output_file_root);
+    mkdir(filename_root_out,02755);
+    sprintf(filename_snap_list_out,"%s/%s.a_list",filename_root_out,filename_output_file_root);
     SID_log("Reading snapshot list {%s}...",SID_LOG_OPEN,filename_snap_list_out);
 
     // Read the original list
@@ -63,7 +74,7 @@ int main(int argc, char *argv[]){
     }
     fclose(fp_in);
 
-    // Select the snapshots we've used
+    // Select the snapshots we'll use
     for(i_read=i_read_stop,i_next=i_read_stop,n_keep=0;i_read>=i_read_start;i_read--){
       if(i_read==i_next){
         a_list_out[n_keep++]=a_list_in[i_read];
@@ -73,9 +84,8 @@ int main(int argc, char *argv[]){
 
     // Write them to a file
     fp_out=fopen(filename_snap_list_out,"w");
-    for(i_write=n_keep-1;i_write>=0;i_write--){
+    for(i_write=n_keep-1;i_write>=0;i_write--)
       fprintf(fp_out,"%le\n",a_list_out[i_write]);
-    }
     fclose(fp_out);
 
     SID_free(SID_FARG a_list_in);
@@ -87,6 +97,7 @@ int main(int argc, char *argv[]){
                            filename_root_matches,
                            filename_root_out,
                            a_list_out,
+                           &cosmo,
                            i_read_start,
                            i_read_stop,
                            i_read_step,
@@ -103,8 +114,10 @@ int main(int argc, char *argv[]){
 
   SID_log("Done.",SID_LOG_CLOSE);
 
+  // Clean-up
   if(SID.I_am_Master)
      SID_free(SID_FARG a_list_out);
-  
+  ADaPS_free((ADaPS **) &cosmo);  
+
   SID_exit(ERROR_NONE);
 }

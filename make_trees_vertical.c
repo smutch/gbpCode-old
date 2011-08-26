@@ -13,6 +13,7 @@ int main(int argc, char *argv[]){
   char        filename_root_out[256];
   char        filename_snap_list_in[256];
   char        filename_snap_list_out[256];
+  char        filename_output_file_root[256];
   int         i_read_start;
   int         i_read_stop;
   int         i_read_step;
@@ -43,6 +44,8 @@ int main(int argc, char *argv[]){
   n_files_groups   =atoi(argv[9]);
   n_files_subgroups=atoi(argv[10]);
 
+  SID_log("Constructing vertical merger trees for snapshots #%d->#%d (step=%d, n_search=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read_start,i_read_stop,i_read_step,n_search);
+
   // Create snapshot expansion factor list
   if(SID.I_am_Master){
     sprintf(filename_snap_list_out,"%s.a_list",filename_root_out);
@@ -68,6 +71,10 @@ int main(int argc, char *argv[]){
     }
 
     // Write them to a file
+    strcpy(filename_output_file_root,filename_root_out);
+    strip_path(filename_output_file_root);
+    mkdir(filename_root_out,02755);
+    sprintf(filename_snap_list_out,"%s/%s.a_list",filename_root_out,filename_output_file_root);
     fp_out=fopen(filename_snap_list_out,"w");
     for(i_write=n_keep-1;i_write>=0;i_write--){
       fprintf(fp_out,"%le\n",a_list_out[i_write]);
@@ -91,5 +98,6 @@ int main(int argc, char *argv[]){
   if(SID.I_am_Master)
      SID_free(SID_FARG a_list_out);
   
+  SID_log("Done.",SID_LOG_CLOSE);
   SID_exit(ERROR_NONE);
 }

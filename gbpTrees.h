@@ -1,6 +1,7 @@
 #ifndef GBPTREES_AWAKE
 #define GBPTREES_AWAKE
 #include <gbpHalos.h>
+#include <gbpCosmo.h>
 
 #define TREE_PROGENITOR_ORDER_DEFAULT 0
 #define TREE_PROGENITOR_ORDER_DELUCIA 2
@@ -16,8 +17,10 @@
 #define TREE_CASE_BRIDGED                       256
 #define TREE_CASE_EMERGED                       512
 #define TREE_CASE_BRIDGE_PROGENITOR             1024
+#define TREE_CASE_BRIDGE_DEFAULT                2048
 #define TREE_CASE_BRIDGE_PROGENITOR_UNPROCESSED 4096
 #define TREE_CASE_BRIDGE_FINALIZE               8192
+#define TREE_CASE_MAIN_PROGENITOR               16384
 
 typedef struct tree_horizontal_stats_info tree_horizontal_stats_info;
 struct tree_horizontal_stats_info {
@@ -49,23 +52,57 @@ typedef struct match_info match_info;
 struct match_info{
   int    id;
   int    file;
-  float  score;
   size_t index;
+#if USE_MPI
+  int    rank;
+#endif
+  float  score;
   int    n_particles;
+//  int    n_particles_parent;
 };
+
+/*
+typedef struct tree_horizontal_info tree_horizontal_info;
+struct tree_horizontal_info{
+  int         tree_id;                // This halo's tree id
+  int         type;                   // A flag list characterising this halo's matching
+  int         n_particles;            // Number of particles in this halo
+  int         n_bridges;              // The number of bridges back-matched to this halo
+  int         n_progenitors;          // The number of progenitors pointing to this halo
+  match_info  halo;                   // Holds all the information about this halo
+  match_info  descendant;             // Contains all the needed pointers to the descendant
+  match_info *first_progenitor;
+  match_info *last_progenitor;
+  match_info *next_progenitor;
+  match_info *main_progenitor;
+  match_info *bridges;                // Contains the pointer information for all of the back-matches to this halo
+  match_info *bridge_match;           // In the event that this halo gets matched to a bridge initially,
+                                      //   this holds the information about the bridge for statistics writing
+  match_info *bridge_backmatch;       // Info about any possible halos this one is back-matched to
+};
+*/
 
 typedef struct tree_horizontal_info tree_horizontal_info;
 struct tree_horizontal_info{
-  int         id;            // This halo's id
-  int         tree_id;       // This halo's tree id
-  match_info  descendant;    // Contains all the needed pointers to the descendant
-  int         n_progenitors; // The number of progenitors pointing to this halo
-  int         type;          // A flag list characterising this halo's matching
-  int         n_particles;   // Number of particles in this halo
-  int         n_bridges;     // The number of bridges back-matched to this halo
-  match_info *bridges;       // Contains the pointer information for all of the back-matches to this halo
-  match_info *bridge_match;  // In the event that this halo gets matched to a bridge initially,
-                             //   this holds the information about the bridge for statistics writing
+  int         id;                     // This halo's id
+  int         tree_id;                // This halo's tree id
+  int         type;                   // A flag list characterising this halo's matching
+  int         n_particles;            // Number of particles in this halo
+  int         n_particles_parent;     // Number of particles in this halo's parent
+  int         n_bridges;              // The number of bridges back-matched to this halo
+  int         n_progenitors;          // The number of progenitors pointing to this halo
+  int         file_first_progenitor;  // The file number of the first progenitor
+  int         index_first_progenitor; // The index       of the first progenitor
+  int         file_last_progenitor;   // The file number of the last  progenitor
+  int         index_last_progenitor;  // The index       of the last  progenitor
+  int         file_next_progenitor;   // The file number of the next  progenitor
+  int         index_next_progenitor;  // The index       of the next  progenitor
+  int         size_main_progenitor;   // Number of particles in the main progenitor
+  match_info *bridges;                // Contains the pointer information for all of the back-matches to this halo
+  match_info *bridge_match;           // In the event that this halo gets matched to a bridge initially,
+                                      //   this holds the information about the bridge for statistics writing
+  match_info *bridge_backmatch;       // Info about any possible halos this one is back-matched to
+  match_info  descendant;             // Contains all the needed pointers to the descendant
 };
 
 typedef struct tree_node_info tree_node_info;
@@ -114,6 +151,7 @@ void compute_trees_horizontal(char   *filename_halos_root_in,
                               char   *filename_root_matches,
                               char   *filename_root_out,
                               double *a_list,
+                              cosmo_info **cosmo,
                               int     i_read_start,
                               int     i_read_stop,
                               int     i_read_step,
