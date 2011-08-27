@@ -43,7 +43,7 @@ int main(int argc, char *argv[]){
   // Read GADGET file
   SID_log("Reading GADGET file...",SID_LOG_OPEN|SID_LOG_TIMER);
   init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-  read_gadget_binary(filename_in,&plist,READ_GADGET_MODE_DEFAULT);
+  read_gadget_binary(filename_in,&plist,READ_GADGET_DEFAULT);
   h_Hubble=((double *)ADaPS_fetch(plist.data,"h_Hubble"))[0];
   SID_log("Done.",SID_LOG_CLOSE);
 

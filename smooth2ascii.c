@@ -34,7 +34,7 @@ int main(int argc, char *argv[]){
 
   // Read snapshot files
   init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-  read_gadget_binary(filename_snapshot,&plist,READ_GADGET_MODE_DEFAULT);
+  read_gadget_binary(filename_snapshot,&plist,READ_GADGET_DEFAULT);
   read_smooth(&plist,filename_smooth,0,SMOOTH_DEFAULT);
   h_Hubble=((double *)ADaPS_fetch(plist.data,"h_Hubble",species_name))[0];
 

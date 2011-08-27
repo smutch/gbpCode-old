@@ -5,17 +5,6 @@
 #include <gbpMath.h>
 #include <gbpSPH.h>
 
-#define READ_GADGET_NONE         2
-#define READ_GADGET_DEFAULT      4
-#define READ_GADGET_RANDOM       8
-#define READ_GADGET_MARKED      16
-#define READ_GADGET_X_MIN       32
-#define READ_GADGET_X_MAX       64
-#define READ_GADGET_Y_MIN      128
-#define READ_GADGET_Y_MAX      256
-#define READ_GADGET_Z_MIN      512
-#define READ_GADGET_Z_MAX     1024
-
 int assign_particle_to_rank(plist_info *plist,
                             double      x_p,
                             double      y_p,
@@ -421,7 +410,7 @@ void read_gadget_binary(char       *filename_in,
     n_return =SID_fread_all(&h_Hubble,sizeof(double),1,&fp);
     s_load  +=n_return*sizeof(double);
     if(h_Hubble<1e-10) h_Hubble=1.;
-    if(check_mode_for_flag(mode,READ_GADGET_MODE_NO_HUBBLE))
+    if(check_mode_for_flag(mode,READ_GADGET_NO_HUBBLE))
       h_Hubble=1.;
     box_size*=plist->length_unit/h_Hubble;
     ADaPS_store(&(plist->data),(void *)(&box_size),"box_size",ADaPS_SCALAR_DOUBLE);

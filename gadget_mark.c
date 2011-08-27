@@ -73,7 +73,7 @@ int main(int argc, char *argv[]){
   ADaPS_store(&(plist.data),(void *)(&y_max),"rank_y_max",ADaPS_SCALAR_DOUBLE);
   ADaPS_store(&(plist.data),(void *)(&z_min),"rank_z_min",ADaPS_SCALAR_DOUBLE);
   ADaPS_store(&(plist.data),(void *)(&z_max),"rank_z_max",ADaPS_SCALAR_DOUBLE);
-  read_gadget_binary(filename_in,&plist,READ_GADGET_MODE_NO_HUBBLE);
+  read_gadget_binary(filename_in,&plist,READ_GADGET_NO_HUBBLE);
   SID_log("Done.",SID_LOG_CLOSE);
 
   // Mark particles

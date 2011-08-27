@@ -42,8 +42,17 @@
 #define SPH_KERNEL_GADGET   4
 #define SPH_KERNEL_GASOLINE 8
 
-#define READ_GADGET_MODE_DEFAULT   0
-#define READ_GADGET_MODE_NO_HUBBLE 1
+#define READ_GADGET_DEFAULT      0
+#define READ_GADGET_NO_HUBBLE    1
+#define READ_GADGET_NONE         2
+#define READ_GADGET_RANDOM       8
+#define READ_GADGET_MARKED      16
+#define READ_GADGET_X_MIN       32
+#define READ_GADGET_X_MAX       64
+#define READ_GADGET_Y_MIN      128
+#define READ_GADGET_Y_MAX      256
+#define READ_GADGET_Z_MIN      512
+#define READ_GADGET_Z_MAX     1024
 
 /*******************************/
 /* Stuff for marking particles */

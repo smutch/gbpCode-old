@@ -33,7 +33,7 @@ int main(int argc, char *argv[]){
   /****************************************/
   init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
   SID_log("Reading GADGET file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_in);
-  read_gadget_binary(filename_in,&plist,READ_GADGET_MODE_DEFAULT);
+  read_gadget_binary(filename_in,&plist,READ_GADGET_DEFAULT);
   SID_log("Done.",SID_LOG_CLOSE);
 
   /********************/

@@ -29,7 +29,7 @@ int main(int argc, char *argv[]){
 
   // Read GADGET file into data structure
   init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-  read_gadget_binary(filename_in,&plist,READ_GADGET_MODE_DEFAULT);
+  read_gadget_binary(filename_in,&plist,READ_GADGET_DEFAULT);
 
   // Rewrite file
   ADaPS_store(&(plist.data),(void *)(&n_files),"n_files",ADaPS_SCALAR_INT);
