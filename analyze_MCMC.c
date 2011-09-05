@@ -436,7 +436,7 @@ void analyze_MCMC(MCMC_info *MCMC){
               memcpy(P_peak,P_last,(size_t)n_P*sizeof(double));
               if(!flag_no_map_write){
                 for(i_DS=0;i_DS<n_DS;i_DS++)
-                  memcpy(M_peak_parameters,M_last[i_DS],(size_t)n_M[i_DS]*sizeof(double));
+                  memcpy(M_peak_parameters[i_DS],M_last[i_DS],(size_t)n_M[i_DS]*sizeof(double));
               }
               ln_likelihood_peak=ln_likelihood_last;
             }
