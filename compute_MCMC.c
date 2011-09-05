@@ -424,9 +424,9 @@ void compute_MCMC(MCMC_info *MCMC){
         SID_log("Done.",SID_LOG_CLOSE);
       }
     }
-    SID_Bcast(&flag_restart,         sizeof(int),MASTER_RANK,SID.COMM_WORLD);
-    SID_Bcast(&(MCMC->n_chains),     sizeof(int),MASTER_RANK,SID.COMM_WORLD);
-    SID_Bcast(&(MCMC->P_name_length),sizeof(int),MASTER_RANK,SID.COMM_WORLD);
+    SID_Bcast(&flag_restart,         sizeof(int),MASTER_RANK,MCMC->comm);
+    SID_Bcast(&(MCMC->n_chains),     sizeof(int),MASTER_RANK,MCMC->comm);
+    SID_Bcast(&(MCMC->P_name_length),sizeof(int),MASTER_RANK,MCMC->comm);
     sprintf(MCMC->P_name_format,"%%-%ds",MCMC->P_name_length);
 
     // If this is NOT a restart, start from scratch ...
@@ -570,6 +570,9 @@ void compute_MCMC(MCMC_info *MCMC){
       SID_log("Done.",SID_LOG_CLOSE);
 
     } // End of restart stuff
+    SID_Bcast(&n_iterations_file_total,sizeof(int),my_chain,MCMC->comm);
+    SID_Bcast(&n_iterations_file_burn, sizeof(int),my_chain,MCMC->comm);
+    SID_Bcast(&n_iterations,           sizeof(int),my_chain,MCMC->comm);
 
     // Remove the existant iterations from the totals we need to perform still
     if(n_iterations_file_total<n_iterations_burn){
@@ -720,7 +723,7 @@ void compute_MCMC(MCMC_info *MCMC){
             flag_stop=TRUE;
           }
         }
-        SID_Bcast(&flag_stop,sizeof(int),MASTER_RANK,SID.COMM_WORLD);
+        SID_Bcast(&flag_stop,sizeof(int),MASTER_RANK,MCMC->comm);
         
         // ... if so, stop all ranks and cancel the subsequent analysis stage
         if(flag_stop){
