@@ -739,6 +739,9 @@ void compute_MCMC(MCMC_info *MCMC){
 
       } // while flag_continue=TRUE
       
+      // Report progress
+      SID_log("Completed iterations in this phase: %d (%d requested)", SID_LOG_COMMENT, i_iteration, n_iterations_phase);      
+      
       // Report success rate
       SID_log("Proposal success: %5.3f%% (%lld of %lld)",SID_LOG_COMMENT,1e2*((float)(MCMC->n_success)/(float)(MCMC->n_propositions)),MCMC->n_success,MCMC->n_propositions);
 
