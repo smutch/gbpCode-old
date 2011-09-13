@@ -89,8 +89,8 @@ void compute_trees_matches(char   *filename_halo_root_in,
         fclose(fp_test);
         SID_log("Checking if existing %sgroup matching file is adequate...",SID_LOG_OPEN,group_text_prefix);
         SID_fopen(filename_out,"r",&fp_in);
-        SID_fread(&i_read_start_file, sizeof(int),1,&fp_in);
-        SID_fread(&i_read_stop_file,sizeof(int),1,&fp_in);
+        SID_fread(&i_read_start_file,sizeof(int),1,&fp_in);
+        SID_fread(&i_read_stop_file, sizeof(int),1,&fp_in);
         SID_fread(&n_search_file,    sizeof(int),1,&fp_in);
         SID_fread(&n_files,          sizeof(int),1,&fp_in);
         SID_fclose(&fp_in);
@@ -108,9 +108,9 @@ void compute_trees_matches(char   *filename_halo_root_in,
         SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
         SID_fopen(filename_out,"w",&fp_out);
         offset=0;
-        SID_fwrite(&i_read_start,   sizeof(int),1,&fp_out);offset+=sizeof(int);
-        SID_fwrite(&i_read_stop,  sizeof(int),1,&fp_out);  offset+=sizeof(int);
-        SID_fwrite(&n_search_total,sizeof(int),1,&fp_out); offset+=sizeof(int);
+        SID_fwrite(&i_read_start,  sizeof(int),1,&fp_out);offset+=sizeof(int);
+        SID_fwrite(&i_read_stop,   sizeof(int),1,&fp_out);offset+=sizeof(int);
+        SID_fwrite(&n_search_total,sizeof(int),1,&fp_out);offset+=sizeof(int);
         // Count the number of matches and files that we will store
         for(i_read=i_read_stop,n_matches=0,n_files=0;i_read>=i_read_start;i_read--){
            for(j_read=i_read+n_search_total;j_read>=i_read-n_search_total;j_read--){
@@ -228,16 +228,16 @@ void compute_trees_matches(char   *filename_halo_root_in,
      SID_fread(&n_search,         sizeof(int),1,&fp_in);
      SID_fread(&n_files,          sizeof(int),1,&fp_in);
      for(i_read=i_read_stop_file,j_read=i_read,k_read=0;i_read>=i_read_start_file;i_read--){
-       SID_fread(&l_read,    sizeof(int),1,         &fp_in);
-       SID_fread(&n_groups_1,sizeof(int),1,         &fp_in);
-       if(flag_match_subgroups==MATCH_GROUPS)
-          SID_fseek(&fp_in,2*sizeof(int),n_groups_1,SID_SEEK_CUR);
-       else
-          SID_fseek(&fp_in,sizeof(int),n_groups_1,SID_SEEK_CUR);
-       if(j_read==l_read){
-         n_return[k_read++]=n_groups_1;
-         j_read-=i_read_step;
-       }
+        SID_fread(&l_read,    sizeof(int),1,         &fp_in);
+        SID_fread(&n_groups_1,sizeof(int),1,         &fp_in);
+        if(flag_match_subgroups==MATCH_GROUPS)
+           SID_fseek(&fp_in,2*sizeof(int),n_groups_1,SID_SEEK_CUR);
+        else
+           SID_fseek(&fp_in,sizeof(int),n_groups_1,SID_SEEK_CUR);
+        if(j_read==l_read){
+           n_return[k_read++]=n_groups_1;
+           j_read-=i_read_step;
+        }
      }
      SID_fclose(&fp_in);
      if(k_read!=(*n_files_return)) SID_trap_error("%sgroup size arrays not properly populated (i.e. %d!=%d).",ERROR_LOGIC,group_text_prefix,k_read,(*n_files_return));

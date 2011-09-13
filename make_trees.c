@@ -34,6 +34,7 @@ int main(int argc, char *argv[]){
   double     *a_list_in;
   double     *a_list_out;
   cosmo_info *cosmo;
+  int         flag_fix_bridges;
 
   SID_init(&argc,&argv,NULL);
 
@@ -41,6 +42,8 @@ int main(int argc, char *argv[]){
   init_cosmo_std(&cosmo);
 
   // Fetch user inputs
+  if(argc!=13)
+    SID_trap_error("Incorrect syntax",ERROR_SYNTAX);
   strcpy(filename_halo_root_in,argv[1]);
   strcpy(filename_cat_root_in, argv[2]);
   strcpy(filename_root_matches,argv[3]);
@@ -52,6 +55,7 @@ int main(int argc, char *argv[]){
   n_search         =atoi(argv[9]);
   n_files_groups   =atoi(argv[10]);
   n_files_subgroups=atoi(argv[11]);
+  flag_fix_bridges =atoi(argv[12]);
 
   SID_log("Constructing merger trees for snapshots #%d->#%d (step=%d, n_search=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read_start,i_read_stop,i_read_step,n_search);
 
@@ -102,6 +106,7 @@ int main(int argc, char *argv[]){
                            i_read_stop,
                            i_read_step,
                            n_search,
+                           flag_fix_bridges,
                            &flag_clean);
   flag_clean=FALSE;
   compute_trees_vertical(filename_root_out,
@@ -117,7 +122,7 @@ int main(int argc, char *argv[]){
   // Clean-up
   if(SID.I_am_Master)
      SID_free(SID_FARG a_list_out);
-  ADaPS_free((ADaPS **) &cosmo);  
+  ADaPS_free(SID_FARG cosmo);  
 
   SID_exit(ERROR_NONE);
 }
