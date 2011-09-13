@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.6
+#! /usr/bin/env python
 import sys
 from pylab import *
 from matplotlib.font_manager import FontProperties
