@@ -14,6 +14,8 @@ int main(int argc, char *argv[]){
   
   SID_init(&argc,&argv,NULL);
 
+  init_MCMC(&MCMC,"",NULL,NULL,0, NULL, NULL, NULL, NULL, 0); 
+
   strcpy(filename_root,argv[1]);
   if(argc>2)
     coverage_size=atoi(argv[2]);
