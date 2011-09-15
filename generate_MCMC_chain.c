@@ -14,7 +14,7 @@ int generate_MCMC_chain(MCMC_info *MCMC){
   int              i_P,i_DS;
   static char      format_string[256];
   FILE            *fp_report_props;
-  char             filename_report_props[MAX_FILENAME_LENGTH];
+  static char      filename_report_props[MAX_FILENAME_LENGTH];
   static int       n_P;
   static double   *P_new;
   static double  **M_new;
