@@ -18,6 +18,8 @@ void autotune_MCMC_temperature(MCMC_info *MCMC){
   int    i_autotune;
   double ln_likelihood_last;
   int    i_iteration;
+  char   time_string[48];
+  time_t time_start, time_stop, time_diff;
 
   SID_log("Autotuning the temperature (target=%6.2lf%%, threshold=%6.2lf%%)...",SID_LOG_OPEN|SID_LOG_TIMER,MCMC->success_target,MCMC->success_threshold);
 
@@ -54,13 +56,23 @@ void autotune_MCMC_temperature(MCMC_info *MCMC){
     // Start from the initial conditions for each iteration
     MCMC->flag_init_chain=TRUE;
 
+    // Start timer
+    time(&time_start);
+
     // Generate a success rate for the current trial temperature
     for(i_iteration=0;i_iteration<n_autotune;i_iteration++)
       generate_MCMC_chain(MCMC);
 
+    // Stop timer
+    time(&time_stop);
+    time_diff = time_stop-time_start;
+
     i_autotune++;
     success=100.*(double)(MCMC->n_success)/(double)MCMC->n_propositions;
     SID_log("Iteration #%04d: Temperature=%le Success=%5.1lf%%",SID_LOG_COMMENT,i_autotune,temperature,success);
+    time_diff /= n_autotune;
+    seconds2ascii(time_diff,time_string);
+    SID_log("\tMean time for single model call: %s", SID_LOG_COMMENT, time_string);
   }
 
   SID_log("Done.",SID_LOG_CLOSE);

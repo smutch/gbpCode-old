@@ -115,6 +115,8 @@ void compute_MCMC(MCMC_info *MCMC){
   FILE     *fp_stop;
   int       seed=182743;
   int       i_report;
+  time_t    time_start, time_stop, time_diff;
+  char      time_string[48];
   int       i_iteration_start;
   int       i_iteration_next_report;
   int       n_accepted;
@@ -612,7 +614,7 @@ void compute_MCMC(MCMC_info *MCMC){
       // Initialize progress reporting
       i_report=0;
       if(n_iterations_phase>20)
-        i_iteration_next_report=i_iteration_start+(n_iterations_phase-i_iteration_start)/10;
+        i_iteration_next_report=i_iteration_start+(n_iterations_phase-i_iteration_start)/5;
       else
         i_iteration_next_report=20;
 
@@ -620,6 +622,10 @@ void compute_MCMC(MCMC_info *MCMC){
       flag_continue=TRUE;
       while(flag_continue){
         // Process one averaging interval at a time
+        
+        // Start timer
+        time(&time_start);
+
         for(i_avg=0,i_thin=1;i_avg<n_avg;i_thin++){
 
           // Generate new proposal and determine it's chi^2
@@ -677,6 +683,10 @@ void compute_MCMC(MCMC_info *MCMC){
         n_iterations_file_total++;
         i_iteration++;
 
+        // Stop timer
+        time(&time_stop);
+        time_diff = time_stop-time_start;
+
         // Generate statistics for the averaging interval we just completed
         if(my_chain==SID.My_rank){
           // Write the statistics to the chain stats file
@@ -711,8 +721,11 @@ void compute_MCMC(MCMC_info *MCMC){
         // Report progress
         if(i_iteration==i_iteration_next_report){
           i_report++;
-          SID_log("%3d%% complete.",SID_LOG_COMMENT|SID_LOG_TIMER,10*(i_report));
-          i_iteration_next_report=MIN(n_iterations_phase,i_iteration_start+(n_iterations_phase-i_iteration_start)*(i_report+1)/10);
+          SID_log("%3d%% complete.",SID_LOG_COMMENT|SID_LOG_TIMER,5*(i_report));
+          time_diff /= (i_iteration*n_avg);
+          seconds2ascii(time_diff,time_string);
+          SID_log("\tMean time for single model call: %s", SID_LOG_COMMENT, time_string);
+          i_iteration_next_report=MIN(n_iterations_phase,i_iteration_start+(n_iterations_phase-i_iteration_start)*(i_report+1)/5);
         }
         
         // Check to see if a stop has been called to the run ...
