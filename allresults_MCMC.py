@@ -1,5 +1,7 @@
-#! /usr/bin/env python2.6
+#! /usr/bin/env python
 import sys
+import matplotlib
+matplotlib.use('Agg')
 from pylab import *
 from matplotlib.font_manager import FontProperties
 from string import *

@@ -25,7 +25,9 @@ void autotune_MCMC_covariance(MCMC_info *MCMC){
   double        *V_compute_last;
   double         difference;
   double         difference_i;
-  int            i_P,j_P,k_P;
+  int            i_P,j_P,k_P;  
+  char           time_string[48];
+  time_t         time_start, time_stop, time_diff;
 
   SID_log("Autotuning the covariance matrix (threshold=%6.2lf%%)...",SID_LOG_OPEN|SID_LOG_TIMER,MCMC->covariance_threshold);
 
@@ -60,6 +62,9 @@ void autotune_MCMC_covariance(MCMC_info *MCMC){
   // Integrate the covariance matrix until it convergence
   while(difference>covariance_threshold){
 
+    // Start timer
+    time(&time_start);
+
     // Keep adding to the covariance matrix in n_autotune-sized batches
     for(i_iteration=0;i_iteration<n_autotune;i_iteration++){
       generate_MCMC_chain(MCMC);
@@ -72,6 +77,10 @@ void autotune_MCMC_covariance(MCMC_info *MCMC){
       }
       n_covariance++;
     }
+
+    // Stop timer
+    time(&time_stop);
+    time_diff = time_stop-time_start;
 
     // Finish the covariance matrix
     for(i_P=0,k_P=0;i_P<n_P;i_P++)
@@ -92,6 +101,9 @@ void autotune_MCMC_covariance(MCMC_info *MCMC){
     i_autotune++;
     success=100.*(double)(MCMC->n_success)/(double)MCMC->n_propositions;
     SID_log("Iteration #%04d: Success=%5.1lf%% Max change=%5.1f%%",SID_LOG_COMMENT,i_autotune,success,difference);
+    time_diff /= n_autotune;
+    seconds2ascii(time_diff,time_string);
+    SID_log("\tMean time for single model call: %s", SID_LOG_COMMENT, time_string);
   }
 
   // Commit the covariance matrix now that we've computed it

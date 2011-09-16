@@ -86,6 +86,7 @@ void read_MCMC_state(MCMC_info *MCMC){
     if((fp_run=fopen(filename_run,"rb"))!=NULL){
       fp_run=fopen(filename_run,"rb");
       fread(MCMC->problem_name,        sizeof(char),MCMC_NAME_SIZE,fp_run);
+      fread(&(MCMC->n_chains),         sizeof(int),              1,fp_run);
       fread(&(MCMC->n_avg),            sizeof(int),              1,fp_run);
       fread(&(MCMC->flag_autocor_on),  sizeof(int),              1,fp_run);
       fread(&(MCMC->flag_no_map_write),sizeof(int),              1,fp_run);
