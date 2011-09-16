@@ -572,22 +572,10 @@ void compute_MCMC(MCMC_info *MCMC){
       SID_log("Done.",SID_LOG_CLOSE);
 
     } // End of restart stuff
-    
-    // Broadcast restart stuff
-    if(!flag_restart){    
-       SID_Bcast(&(MCMC->temperature),      sizeof(double),        my_chain,MCMC->comm);
-       SID_Bcast(V_read,                    sizeof(double)*n_P*n_P,my_chain,MCMC->comm);
-       SID_Bcast(&flag_success,             sizeof(char),          my_chain,MCMC->comm);
-       SID_Bcast(&(MCMC->ln_likelihood_new),sizeof(double),        my_chain,MCMC->comm);
-       SID_Bcast(P_new,                     sizeof(double)*n_P,    my_chain,MCMC->comm);
-       if(!flag_no_map_write){
-          for(i_DS=0;i_DS<n_DS;i_DS++)
-             SID_Bcast(M_new[i_DS],sizeof(double)*n_M[i_DS],my_chain,MCMC->comm);
-       }
-    }
     SID_Bcast(&n_iterations_file_total,sizeof(int),my_chain,MCMC->comm);
     SID_Bcast(&n_iterations_file_burn, sizeof(int),my_chain,MCMC->comm);
     SID_Bcast(&n_iterations,           sizeof(int),my_chain,MCMC->comm);
+    SID_Bcast(&(MCMC->flag_init_chain), sizeof(int),  my_chain,MCMC->comm);
 
     // Remove the existant iterations from the totals we need to perform still
     if(n_iterations_file_total<n_iterations_burn){
