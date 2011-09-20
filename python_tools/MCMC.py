@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 import numpy as np
-from utility import line_break
+from utility import line_break, mkdir
 
-class MCMCrun:
+class MCMCrun(object):
 
     """ MCMC run class."""
 
@@ -212,26 +212,31 @@ class MCMCrun:
 
 
 
-class Chain:
+class Chain(object):
 
     """Class representing an MCMC chain."""
 
-    def __init__(self, run, my_chain):
+    def __init__(self, run, i_chain):
 
         print
         line_break()
-        print "Chain %03d:" %(my_chain)
+        print "Chain %03d:" %(i_chain)
+        print "----------"
 
-        self.my_chain = my_chain
+        self.i_chain = i_chain
+        self.run = run
 
         # Read (and print) the number of iterations
-        fd                         =open(run.filename_root+'/chains/chain_config_'+str(my_chain).zfill(6)+'.dat','rb')
-        self.n_iterations          =np.fromfile(file=fd,dtype='i',count=1)[0]
-        self.n_iterations_burn     =np.fromfile(file=fd,dtype='i',count=1)[0]
-        self.n_iterations_integrate=self.n_iterations-self.n_iterations_burn
-        self.n_burn                =run.n_avg*self.n_iterations_burn
-        self.n_integrate           =run.n_avg*self.n_iterations_integrate
-        self.n_total               =self.n_burn+self.n_integrate
+        fd                         = open(run.filename_root+'/chains/chain_config_'+str(i_chain).zfill(6)+'.dat','rb')
+        self.n_iterations          = np.fromfile(file=fd,dtype='i',count=1)[0]
+        self.n_iterations_burn     = np.fromfile(file=fd,dtype='i',count=1)[0]
+        self.temp                  = np.fromfile(file=fd,dtype=np.float64,count=1)[0]
+        self.n_iterations_integrate= self.n_iterations-self.n_iterations_burn
+        self.n_burn                = run.n_avg*self.n_iterations_burn
+        self.n_integrate           = run.n_avg*self.n_iterations_integrate
+        self.n_total               = self.n_burn+self.n_integrate
+        self.covariance_matrix     = np.fromfile(file=fd,dtype=np.float64, count=run.n_P*run.n_P)
+        self.covariance_matrix.reshape((run.n_P, run.n_P))
         fd.close()  # close the file
         print 'n_iterations           =',self.n_iterations
         print 'n_iterations_burn      =',self.n_iterations_burn
@@ -239,7 +244,71 @@ class Chain:
         print 'n_burn                 =',self.n_burn
         print 'n_integrate            =',self.n_integrate
         print 'n_total                =',self.n_total
+        print 'temperature            =',self.temp
 
         line_break()
 
+
+def check_param_compatibility(run_list, param):
+
+    set_vals = set( [ run.__getattribute__(param) for run in run_list ] )
+    if not len(set_vals)==1:
+        raise ValueError('Run parameters `%s` do not match!...')
+
+
+def join_runs(run_list, joined_fname_root):
+
+    try:
+        shutil.__name__
+    except NameError:
+        import shutil
+
+    # Create the directory structure
+    mkdir(joined_fname_root+'/chains/')
+    mkdir(joined_fname_root+'/results/')
+    mkdir(joined_fname_root+'/plots/')
+
+    # Do some checks to ensure that the runs we are joining are compatible with
+    # each other...
+    for param in ['problem_name', 'n_avg', 'flag_autocor_on_file',
+            'flag_no_map_write', 'n_P', 'P_name', 'P_limit_min', 'P_limit_max',
+            'n_DS_arrays_total', 'n_DS']:
+        check_param_compatibility(param)
+
+    # Concatenate all of the chain trace files together
+    fout = open(joined_fname_root+'/chains/chain_trace_%06d.dat'%(0), 'wb')
+    for run in run_list:
+        for i_chain in run.n_chains:
+            fin = open(run.filename_root+'/chains/chain_trace_%06d.dat'%(i_chain), 'rb')
+            shutil.copyfileobj(fin, fout)
+            fin.close()
+    fout.close()
+
+    # Concatenate all of the chain stats files together
+    fout = open(joined_fname_root+'/chains/chain_stats_%06d.dat'%(0), 'wb')
+    for run in run_list:
+        for i_chain in run.n_chains:
+            fin = open(run.filename_root+'/chains/chain_stats_%06d.dat'%(i_chain), 'rb')
+            shutil.copyfileobj(fin, fout)
+            fin.close()
+    fout.close()
+
+    # Read in the chain config files and work out the values for our new file
+    n_iterations = 0
+    n_iterations_burn = 0
+    temp = -999
+    covariance_matrix = np.ones((run.n_P,run.n_P), dtype=np.float64)*-999
+    for run in run_list:
+        for i_chain in run.n_chains:
+            chain = Chain(run, i_chain)
+            n_iterations += chain.n_iterations
+            n_iterations_burn += chain.n_iterations_burn
+    
+    # Write the new chain config file 
+    fout = open(joined_fname_root+'/chains/chain_config_%06d.dat'%(0), 'wb')
+    np.array([n_iterations], dtype=np.int32).tofile(fout)
+    np.array([n_iterations_burn], dtype=np.int32).tofile(fout)
+    np.array([temp], dtype=np.float64).tofile(fout)
+    covariance_matrix.flatten().tofile(fout)
+    fout.close()
 
