@@ -216,12 +216,13 @@ class Chain(object):
 
     """Class representing an MCMC chain."""
 
-    def __init__(self, run, i_chain):
+    def __init__(self, run, i_chain, quiet=False):
 
-        print
-        line_break()
-        print "Chain %03d:" %(i_chain)
-        print "----------"
+        if quiet == False:
+            print
+            line_break()
+            print "Chain %03d:" %(i_chain)
+            print "----------"
 
         self.i_chain = i_chain
         self.run = run
@@ -238,15 +239,15 @@ class Chain(object):
         self.covariance_matrix     = np.fromfile(file=fd,dtype=np.float64, count=run.n_P*run.n_P)
         self.covariance_matrix.reshape((run.n_P, run.n_P))
         fd.close()  # close the file
-        print 'n_iterations           =',self.n_iterations
-        print 'n_iterations_burn      =',self.n_iterations_burn
-        print 'n_iterations_integrate =',self.n_iterations_integrate
-        print 'n_burn                 =',self.n_burn
-        print 'n_integrate            =',self.n_integrate
-        print 'n_total                =',self.n_total
-        print 'temperature            =',self.temp
-
-        line_break()
+        if quiet == False:
+            print 'n_iterations           =',self.n_iterations
+            print 'n_iterations_burn      =',self.n_iterations_burn
+            print 'n_iterations_integrate =',self.n_iterations_integrate
+            print 'n_burn                 =',self.n_burn
+            print 'n_integrate            =',self.n_integrate
+            print 'n_total                =',self.n_total
+            print 'temperature            =',self.temp
+            line_break()
 
 
 def check_param_compatibility(run_list, param):
@@ -260,8 +261,10 @@ def join_runs(run_list, joined_fname_root):
 
     try:
         shutil.__name__
+        deque.__name__
     except NameError:
         import shutil
+        from collections import deque
 
     # Create the directory structure
     mkdir(joined_fname_root+'/chains/')
@@ -271,38 +274,27 @@ def join_runs(run_list, joined_fname_root):
     # Do some checks to ensure that the runs we are joining are compatible with
     # each other...
     for param in ['problem_name', 'n_avg', 'flag_autocor_on_file',
-            'flag_no_map_write', 'n_P', 'P_name', 'P_limit_min', 'P_limit_max',
-            'n_DS_arrays_total', 'n_DS']:
-        check_param_compatibility(param)
+            'flag_no_map_write', 'n_P', 'P_init', 'P_name', 'P_limit_min', 
+            'P_limit_max', 'n_DS_arrays_total', 'n_DS']:
+        check_param_compatibility(run_list, param)
+    
+    # Copy the run.dat file for the first run as our new run.dat file
+    shutil.copy(run_list[0].file_name_root+'/run.dat',
+            joined_fname_root+'/run.dat')
 
-    # Concatenate all of the chain trace files together
-    fout = open(joined_fname_root+'/chains/chain_trace_%06d.dat'%(0), 'wb')
-    for run in run_list:
-        for i_chain in run.n_chains:
-            fin = open(run.filename_root+'/chains/chain_trace_%06d.dat'%(i_chain), 'rb')
-            shutil.copyfileobj(fin, fout)
-            fin.close()
-    fout.close()
-
-    # Concatenate all of the chain stats files together
-    fout = open(joined_fname_root+'/chains/chain_stats_%06d.dat'%(0), 'wb')
-    for run in run_list:
-        for i_chain in run.n_chains:
-            fin = open(run.filename_root+'/chains/chain_stats_%06d.dat'%(i_chain), 'rb')
-            shutil.copyfileobj(fin, fout)
-            fin.close()
-    fout.close()
 
     # Read in the chain config files and work out the values for our new file
     n_iterations = 0
-    n_iterations_burn = 0
+    n_iterations_burn = None
     temp = -999
-    covariance_matrix = np.ones((run.n_P,run.n_P), dtype=np.float64)*-999
+    covariance_matrix = np.ones((run_list[0].n_P,run_list[0].n_P), dtype=np.float64)*-999
+    chain_list = deque()
     for run in run_list:
         for i_chain in run.n_chains:
             chain = Chain(run, i_chain)
+            chain_list.append(chain)
+            if n_iterations_burn==None: n_iterations_burn=chain.n_iterations_burn
             n_iterations += chain.n_iterations
-            n_iterations_burn += chain.n_iterations_burn
     
     # Write the new chain config file 
     fout = open(joined_fname_root+'/chains/chain_config_%06d.dat'%(0), 'wb')
@@ -311,4 +303,49 @@ def join_runs(run_list, joined_fname_root):
     np.array([temp], dtype=np.float64).tofile(fout)
     covariance_matrix.flatten().tofile(fout)
     fout.close()
+
+
+    # Concatenate all of the chain stats files together
+    fout = open(joined_fname_root+'/chains/chain_stats_%06d.dat'%(0), 'wb')
+    first_burn = True
+    for i_run, run in enumerate(run_list):
+        for i_chain in run.n_chains:
+            fin = open(run.filename_root+'/chains/chain_stats_%06d.dat'%(i_chain), 'rb')
+            if first_burn==False:
+                # Seek past the burn of this chain
+                n_iterations_burn = chain_list[i_run+i_chain].n_iterations_burn
+                byte_seek = (8*run.n_P*12)+(8*6)
+                if run.flag_autocor_on_file==1:
+                    byte_seek+=(run.n_avg-1)*8
+                fin.seek(byte_seek*n_iterations_burn,1)
+            else:
+                first_burn = False
+            shutil.copyfileobj(fin, fout)
+            fin.close()
+    fout.close()
+
+
+    # Concatenate all of the chain trace files together
+    fout = open(joined_fname_root+'/chains/chain_trace_%06d.dat'%(0), 'wb')
+    first_burn = True
+    for run in run_list:
+        for i_chain in run.n_chains:
+            fin = open(run.filename_root+'/chains/chain_trace_%06d.dat'%(i_chain), 'rb')
+            if first_burn == False:
+                # Seek past the burn of this chain
+                chain = chain_list[i_run+i_chain]
+                n_iterations_burn = chain.n_iterations_burn
+                n_avg = chain.n_avg
+                byte_seek = 1+8+(8*run.n_P)
+                if run.flag_no_map_write==0:
+                    for i_DS in xrange(run.n_DS):
+                        byte_seek += 8*run.n_M[i_DS]
+                fin.seek(byte_seek*n_iterations_burn*n_avg,1)
+            else:
+                first_burn = False
+            shutil.copyfileobj(fin, fout)
+            fin.close()
+    fout.close()
+
+
 
