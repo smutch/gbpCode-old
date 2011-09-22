@@ -43,6 +43,7 @@ int main(int argc, char *argv[]){
   snap_number_step =atoi(argv[4]);
 
   sprintf(prefix_text,"sub");
+  sprintf(prefix_text,"");
 
   if(SID.I_am_Master){
 

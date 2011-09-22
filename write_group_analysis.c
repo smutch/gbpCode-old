@@ -15,8 +15,8 @@ void write_group_analysis(FILE                 *fp_properties,
   fwrite(properties,sizeof(halo_properties_info),1,fp_properties);
 
   // Write profiles
-  fwrite(&(profile->n_bins),sizeof(int),                  1,              fp_profiles);
-  fwrite(profile->bins,     sizeof(halo_profile_bin_info),profile->n_bins,fp_profiles);
+  //fwrite(&(profile->n_bins),sizeof(int),                  1,              fp_profiles);
+  //fwrite(profile->bins,     sizeof(halo_profile_bin_info),profile->n_bins,fp_profiles);
 
 }
 

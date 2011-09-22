@@ -133,7 +133,7 @@ void read_gadget_binary_local(char       *filename_root_in,
   double    z_max_bcast;
   gadget_header_info header;
   int                read_rank;
- 
+  
   // Determine file format
   n_files=1;
   for(i_file=0;i_file<3 && !flag_filefound;i_file++){  
@@ -162,8 +162,8 @@ void read_gadget_binary_local(char       *filename_root_in,
   }
 
   // A file was found ... 
+  SID_log("Reading GADGET binary file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_root_in);
   if(flag_filefound){
-    SID_log("Reading GADGET binary file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_root_in);
 
     pname=plist->species;
 
@@ -604,7 +604,7 @@ int main(int argc, char *argv[]){
   char        filename_groups_root[256];
   char        filename_snapshot_root[256];
   char        filename_snapshot[256];
-  char        filename_number[256];
+  char       *filename_number;
   char        filename_output_properties_dir[256];
   char        filename_output_properties[256];
   char        filename_output_profiles_dir[256];
@@ -671,6 +671,8 @@ int main(int argc, char *argv[]){
   halo_profile_info     profile;
   int                   n_temp;
   int                   n_truncated;
+  int                   largest_truncated;
+  int                   largest_truncated_local;
 
   SID_init(&argc,&argv,NULL);
 
@@ -684,17 +686,19 @@ int main(int argc, char *argv[]){
   SID_log("Processing group/subgroup statistics for files #%d->#%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file_lo,i_file_hi);
 
   for(i_file=i_file_lo;i_file<=i_file_hi;i_file+=i_file_skip){
+    filename_number=(char *)SID_malloc(sizeof(char)*10);
     sprintf(filename_number,"%03d", i_file);
     SID_log("Processing file #%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file);
 
     // Read group and particle info
     init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-    ADaPS_store(&(plist.data),(void *)filename_number,"read_catalog",ADaPS_COPY);
+    //sprintf(filename_number,"read_catalog");
+    ADaPS_store(&(plist.data),(void *)filename_number,"read_catalog",ADaPS_DEFAULT);
     read_groups(filename_groups_root,i_file,READ_GROUPS_ALL,&plist,filename_number);
-    n_particles_in_groups=((size_t *)ADaPS_fetch(plist.data,"n_particles_%s", filename_number))[0];
+    n_particles_in_groups=((size_t *)ADaPS_fetch(plist.data,"n_particles_%s",filename_number))[0];
     if(n_particles_in_groups>0){
       read_gadget_binary_local(filename_snapshot_root,i_file,&plist);
-      //read_gadget_binary(filename_snapshot_root,&plist);
+      //read_gadget_binary(filename_snapshot_root,&plist,READ_GADGET_DEFAULT);
       n_particles_snapshot =((size_t *)ADaPS_fetch(plist.data,"n_dark"))[0];
       ids_snapshot         = (size_t *)ADaPS_fetch(plist.data,"id_dark");
       ids_groups           = (size_t *)ADaPS_fetch(plist.data,"particle_ids_%s",filename_number);
@@ -788,21 +792,21 @@ int main(int argc, char *argv[]){
           // Open files
           SID_log("Processing %sgroups...",SID_LOG_OPEN|SID_LOG_TIMER,group_text_prefix);
           fp_properties_temp=fopen(filename_output_properties_temp,"w");
-          fp_profiles_temp  =fopen(filename_output_profiles_temp,  "w");
+          //fp_profiles_temp  =fopen(filename_output_profiles_temp,  "w");
 
           // Write header
           fwrite(&(SID.My_rank), sizeof(int),1,fp_properties_temp);
           fwrite(&(SID.n_proc),  sizeof(int),1,fp_properties_temp);
           fwrite(&n_groups,      sizeof(int),1,fp_properties_temp);
           fwrite(&n_groups_all,  sizeof(int),1,fp_properties_temp);
-          fwrite(&(SID.My_rank), sizeof(int),1,fp_profiles_temp);
-          fwrite(&(SID.n_proc),  sizeof(int),1,fp_profiles_temp);
-          fwrite(&n_groups,      sizeof(int),1,fp_profiles_temp);
-          fwrite(&n_groups_all,  sizeof(int),1,fp_profiles_temp);
+          //fwrite(&(SID.My_rank), sizeof(int),1,fp_profiles_temp);
+          //fwrite(&(SID.n_proc),  sizeof(int),1,fp_profiles_temp);
+          //fwrite(&n_groups,      sizeof(int),1,fp_profiles_temp);
+          //fwrite(&n_groups_all,  sizeof(int),1,fp_profiles_temp);
           
           // Create and write the properties and profiles of each group/subgroup in turn;
           //   write to a separate temporary file for each rank
-          for(i_group=0,n_truncated=0;i_group<n_groups;i_group++){
+          for(i_group=0,n_truncated=0,largest_truncated_local=0;i_group<n_groups;i_group++){
             if(compute_group_analysis(&properties,
                                       &profile,
                                       ids_snapshot,
@@ -819,15 +823,20 @@ int main(int argc, char *argv[]){
                                       particle_mass,
                                       n_particles_groups[i_group],
                                       redshift,
-                                      cosmo)!=TRUE) n_truncated++;
+                                      cosmo)!=TRUE){
+               n_truncated++;
+               largest_truncated_local=MAX(largest_truncated_local,n_particles_groups[i_group]);
+            }
             write_group_analysis(fp_properties_temp,
                                  fp_profiles_temp,
                                  &properties,
                                  &profile);
           }
           fclose(fp_properties_temp);
-          fclose(fp_profiles_temp);
-          SID_log("Done. (f_truncated=%6.2lf%%)",SID_LOG_CLOSE,100.*(double)n_truncated/(double)n_groups);
+          //fclose(fp_profiles_temp);
+          calc_max_global(&largest_truncated_local,&largest_truncated,1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+
+          SID_log("Done. (f_truncated=%6.2lf%% largest=%d)",SID_LOG_CLOSE,100.*(double)n_truncated/(double)n_groups,largest_truncated);
         }
       }
 
@@ -859,12 +868,12 @@ int main(int argc, char *argv[]){
         fwrite(&n_groups_all,  sizeof(int),1,fp_properties);
         fclose(fp_properties);
         sprintf(filename_output_profiles,  "%s_%s.catalog_%sgroups_profiles",filename_groups_root,filename_number,group_text_prefix);
-        fp_profiles  =fopen(filename_output_profiles,  "w");
-        fwrite(&n_temp,        sizeof(int),1,fp_profiles);
-        fwrite(&n_temp,        sizeof(int),1,fp_profiles);
-        fwrite(&n_groups_all,  sizeof(int),1,fp_profiles);
-        fwrite(&n_groups_all,  sizeof(int),1,fp_profiles);
-        fclose(fp_profiles);
+        //fp_profiles  =fopen(filename_output_profiles,  "w");
+        //fwrite(&n_temp,        sizeof(int),1,fp_profiles);
+        //fwrite(&n_temp,        sizeof(int),1,fp_profiles);
+        //fwrite(&n_groups_all,  sizeof(int),1,fp_profiles);
+        //fwrite(&n_groups_all,  sizeof(int),1,fp_profiles);
+        //fclose(fp_profiles);
       }
       SID_log("Done.",SID_LOG_CLOSE);
     }
