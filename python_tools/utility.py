@@ -15,7 +15,7 @@ def mkdir(dir_name):
         import os, errno
     
     try:
-        os.makedirs('a/b/c')
+        os.makedirs(dir_name)
     except OSError, e:
         if e.errno != errno.EEXIST:
             raise

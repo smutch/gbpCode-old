@@ -251,10 +251,12 @@ class Chain(object):
 
 
 def check_param_compatibility(run_list, param):
-
-    set_vals = set( [ run.__getattribute__(param) for run in run_list ] )
-    if not len(set_vals)==1:
+    
+    param1 = run_list[0].__getattribute__(param)
+    if any([run.__getattribute__(param) !=param1 for run in run_list[1:]]):
         raise ValueError('Run parameters `%s` do not match!...')
+    else:
+        return True
 
 
 def join_runs(run_list, joined_fname_root):
@@ -267,6 +269,7 @@ def join_runs(run_list, joined_fname_root):
         from collections import deque
 
     # Create the directory structure
+    mkdir(joined_fname_root+'/')
     mkdir(joined_fname_root+'/chains/')
     mkdir(joined_fname_root+'/results/')
     mkdir(joined_fname_root+'/plots/')
@@ -279,23 +282,26 @@ def join_runs(run_list, joined_fname_root):
         check_param_compatibility(run_list, param)
     
     # Copy the run.dat file for the first run as our new run.dat file
-    shutil.copy(run_list[0].file_name_root+'/run.dat',
-            joined_fname_root+'/run.dat')
+    shutil.copy(run_list[0].filename_root+'/run.dat',
+            joined_fname_root)
 
 
     # Read in the chain config files and work out the values for our new file
     n_iterations = 0
     n_iterations_burn = None
-    temp = -999
-    covariance_matrix = np.ones((run_list[0].n_P,run_list[0].n_P), dtype=np.float64)*-999
     chain_list = deque()
     for run in run_list:
-        for i_chain in run.n_chains:
+        for i_chain in xrange(run.n_chains):
             chain = Chain(run, i_chain)
             chain_list.append(chain)
-            if n_iterations_burn==None: n_iterations_burn=chain.n_iterations_burn
-            n_iterations += chain.n_iterations
-    
+            if n_iterations_burn==None: 
+                n_iterations_burn=chain.n_iterations_burn
+                n_iterations += chain.n_iterations
+            else:
+                n_iterations += chain.n_iterations-chain.n_iterations_burn
+    covariance_matrix = chain_list[0].covariance_matrix
+    temp = chain_list[0].temp
+
     # Write the new chain config file 
     fout = open(joined_fname_root+'/chains/chain_config_%06d.dat'%(0), 'wb')
     np.array([n_iterations], dtype=np.int32).tofile(fout)
@@ -309,7 +315,7 @@ def join_runs(run_list, joined_fname_root):
     fout = open(joined_fname_root+'/chains/chain_stats_%06d.dat'%(0), 'wb')
     first_burn = True
     for i_run, run in enumerate(run_list):
-        for i_chain in run.n_chains:
+        for i_chain in xrange(run.n_chains):
             fin = open(run.filename_root+'/chains/chain_stats_%06d.dat'%(i_chain), 'rb')
             if first_burn==False:
                 # Seek past the burn of this chain
@@ -329,13 +335,13 @@ def join_runs(run_list, joined_fname_root):
     fout = open(joined_fname_root+'/chains/chain_trace_%06d.dat'%(0), 'wb')
     first_burn = True
     for run in run_list:
-        for i_chain in run.n_chains:
+        for i_chain in xrange(run.n_chains):
             fin = open(run.filename_root+'/chains/chain_trace_%06d.dat'%(i_chain), 'rb')
             if first_burn == False:
                 # Seek past the burn of this chain
                 chain = chain_list[i_run+i_chain]
                 n_iterations_burn = chain.n_iterations_burn
-                n_avg = chain.n_avg
+                n_avg = run.n_avg
                 byte_seek = 1+8+(8*run.n_P)
                 if run.flag_no_map_write==0:
                     for i_DS in xrange(run.n_DS):
