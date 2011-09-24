@@ -23,8 +23,8 @@ int main(int argc, char *argv[]){
   SID_init(&argc,&argv,NULL);
 
   strcpy(filename_in_root,argv[1]);
-  sprintf(filename_in1,"%s/results/covariance.dat",  filename_in_root);
-  sprintf(filename_in2,"%s/chain_config_%06d.dat",   filename_in_root,0);
+  sprintf(filename_in2,"%s/results/covariance.dat",  filename_in_root);
+  sprintf(filename_in1,"%s/chains/chain_config_%06d.dat",   filename_in_root,0);
   sprintf(filename_out,"%s/results/covariance.ascii",filename_in_root);
 
   // Skip chain config file's header
@@ -32,8 +32,11 @@ int main(int argc, char *argv[]){
     fread(&n_iterations_file_total,sizeof(int),   1,      fp_in1);
     fread(&n_iterations_file_burn, sizeof(int),   1,      fp_in1);
     fread(&temperature,            sizeof(double),1,      fp_in1);
-  }
-  else
+    SID_log("n_iterations_file_total = %d", SID_LOG_COMMENT, n_iterations_file_total);
+    SID_log("n_iterations_file_burn  = %d", SID_LOG_COMMENT, n_iterations_file_burn);
+    SID_log("temperature             = %.3f", SID_LOG_COMMENT, temperature);
+ }
+   else
     SID_trap_error("Could not open file {%s}.",ERROR_IO_READ,filename_in1);
 
   SID_log("Converting covariance matrix file to ascii format...",SID_LOG_OPEN);
