@@ -13,8 +13,8 @@ OBJFILES  = compute_trees_matches.o    \
 LIBFILE   = libgbpTrees.a
 BINFILES  = tree_stats                 \
 	    make_trees                 \
-	    make_trees_horizontal      \
 	    make_trees_vertical        \
+	    make_trees_horizontal      \
 	    convert_Bolshoi            \
             find_halo_tree             \
             tree_groups                \

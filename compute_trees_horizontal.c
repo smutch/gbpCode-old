@@ -40,7 +40,7 @@ void compute_trees_horizontal_stats(tree_horizontal_info *halos,int n_halos,int 
    stats->n_bridged                   =0;
    stats->n_bridge_progenitors        =0;
    stats->n_emerged                   =0;
-   stats->n_emerged_lost              =0;
+   stats->n_fragmented                =0;
    stats->n_emerged_progenitors       =0;
    stats->max_strayed_size            =0;
    stats->max_sputtered_size          =0;
@@ -48,9 +48,7 @@ void compute_trees_horizontal_stats(tree_horizontal_info *halos,int n_halos,int 
    stats->max_bridged_size            =0;
    stats->max_bridge_progenitor_size  =0;
    stats->max_emerged_size            =0;
-   stats->max_emerged_lost_size       =0;
-   stats->max_emerged_found_diff      =0;
-   stats->max_emerged_found_diff_size =0;
+   stats->max_fragmented_size         =0;
    stats->max_emerged_progenitor_size =0;
    stats->max_id                      =0;
 
@@ -96,22 +94,14 @@ void compute_trees_horizontal_stats(tree_horizontal_info *halos,int n_halos,int 
          if(!check_mode_for_flag(halos[i_halo].type,TREE_CASE_BRIDGE_DEFAULT)){
             stats->max_emerged_progenitor_size=MAX(stats->max_emerged_progenitor_size,halos[i_halo].n_particles);
             stats->n_emerged_progenitors++;
-            if(halos[i_halo].n_particles>halos[i_halo].descendant.halo->n_particles)
-               emerged_diff=halos[i_halo].n_particles-halos[i_halo].descendant.halo->n_particles;
-            else
-               emerged_diff=halos[i_halo].descendant.halo->n_particles-halos[i_halo].n_particles;
-            if(emerged_diff>stats->max_emerged_found_diff){
-               stats->max_emerged_found_diff     =emerged_diff;
-               stats->max_emerged_found_diff_size=halos[i_halo].n_particles;
-            }
          }
       }
       if(check_mode_for_flag(halos[i_halo].type,TREE_CASE_EMERGED)){
          stats->max_emerged_size=MAX(stats->max_emerged_size,halos[i_halo].n_particles);
          stats->n_emerged++;
          if(!check_mode_for_flag(halos[i_halo].type,TREE_CASE_FOUND)){
-            stats->max_emerged_lost_size=MAX(stats->max_emerged_lost_size,halos[i_halo].n_particles);
-            stats->n_emerged_lost++;
+            stats->max_fragmented_size=MAX(stats->max_fragmented_size,halos[i_halo].n_particles);
+            stats->n_fragmented++;
          }
       }
 
@@ -237,8 +227,8 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
    char        filename_bridged_out[MAX_FILENAME_LENGTH];
    char        filename_bridged_progenitor_out[MAX_FILENAME_LENGTH];
    char        filename_emerged_progenitor_out[MAX_FILENAME_LENGTH];
-   char        filename_emerged_found_out[MAX_FILENAME_LENGTH];
-   char        filename_emerged_unfound_out[MAX_FILENAME_LENGTH];
+   char        filename_emerged_out[MAX_FILENAME_LENGTH];
+   char        filename_fragmented_out[MAX_FILENAME_LENGTH];
    char       *filename_output_dir_stats;
    FILE       *fp_matching_out;
    FILE       *fp_mergers_out;
@@ -248,8 +238,8 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
    FILE       *fp_bridged_out;
    FILE       *fp_bridged_progenitor_out;
    FILE       *fp_emerged_progenitor_out;
-   FILE       *fp_emerged_found_out;
-   FILE       *fp_emerged_unfound_out;
+   FILE       *fp_emerged_out;
+   FILE       *fp_fragmented_out;
    int         i_halo;
    char        group_text_prefix[5];
    SID_fp      fp_matches_out;
@@ -307,8 +297,10 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
    mkdir(filename_output_dir_horizontal_subgroups_properties,02755);
    strcpy(filename_output_file_root,filename_output_dir);
    strip_path(filename_output_file_root);
-   sprintf(filename_group_properties_out,   "%s/%s.trees_horizontal_groups_properties_%d",   filename_output_dir_horizontal_groups_properties,   filename_output_file_root,j_write);
-   sprintf(filename_subgroup_properties_out,"%s/%s.trees_horizontal_subgroups_properties_%d",filename_output_dir_horizontal_subgroups_properties,filename_output_file_root,j_write);
+   sprintf(filename_group_properties_out,   "%s/%s.trees_horizontal_groups_properties_%d",   filename_output_dir_horizontal_groups_properties,   
+                                                                                             filename_output_file_root,j_write);
+   sprintf(filename_subgroup_properties_out,"%s/%s.trees_horizontal_subgroups_properties_%d",filename_output_dir_horizontal_subgroups_properties,
+                                                                                             filename_output_file_root,j_write);
    sprintf(filename_group_properties_in,    "%s_%03d.catalog_groups_properties",             filename_cat_root_in,j_write);
    sprintf(filename_subgroup_properties_in, "%s_%03d.catalog_subgroups_properties",          filename_cat_root_in,j_write);
    sprintf(filename_matches_out,            "%s/%s.trees_horizontal_%d",                     filename_output_dir_horizontal_trees,filename_output_file_root,j_write);
@@ -406,26 +398,22 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
             }            
             fprintf(fp,"# (%02d): Maximum %sgroup ID\n",                    i_column++,group_text_prefix);
             fprintf(fp,"# (%02d): # of %sgroups\n",                         i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): # of simple       %sgroups\n",            i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): # of merging      %sgroups\n",            i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): # of strayed      %sgroups\n",            i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): # of sputtering   %sgroups\n",            i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): # of dropped      %sgroups\n",            i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): # of bridged      %sgroups\n",            i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): # of bridged      %sgroups progenitors\n",i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): # of emerged      %sgroups\n",            i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): # of emerged lost %sgroups\n",            i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): # of emerged      %sgroups progenitors\n",i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): Largest strayed   %sgroup\n",             i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): Largest sputtered %sgroup\n",             i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): Largest dropped   %sgroup\n",             i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): Largest bridged   %sgroup\n",             i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): Largest bridged   %sgroup progenitor\n",  i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): Largest emerged   %sgroup\n",             i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): Largest emerged   %sgroup lost\n",        i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): Largest emerged   %sgroup found diff\n",       i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): Largest emerged   %sgroup found diff size\n",  i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): Largest emerged   %sgroup progenitor size\n",  i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): # of simple        %sgroups\n",           i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): # of merging       %sgroups\n",           i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): # of strayed       %sgroups\n",           i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): # of sputtering    %sgroups\n",           i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): # of dropped       %sgroups\n",           i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): # of bridged       %sgroups\n",           i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): # of bridged       %sgroup progenitors\n",i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): # of emerged       %sgroups\n",           i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): # of fragmented    %sgroups\n",           i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): # of emerged       %sgroup progenitors\n",i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): Largest strayed    %sgroup\n",            i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): Largest sputtered  %sgroup\n",            i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): Largest dropped    %sgroup\n",            i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): Largest bridged    %sgroup\n",            i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): Largest emerged    %sgroup\n",            i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): Largest fragmented %sgroup\n",            i_column++,group_text_prefix);
          }
          fclose(fp);
       }
@@ -436,7 +424,7 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
          else
            fprintf(fp,"%le %4d %10.4lf",a_list[l_write],j_write,deltat_a(cosmo,a_list[l_write+1],a_list[l_write])/S_PER_YEAR);
       }
-      fprintf(fp," %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d",
+      fprintf(fp," %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d",
               stats.max_id,
               stats.n_halos,         
               stats.n_simple,         
@@ -447,18 +435,14 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
               stats.n_bridged,
               stats.n_bridge_progenitors,
               stats.n_emerged,
-              stats.n_emerged_lost,
+              stats.n_fragmented,
               stats.n_emerged_progenitors,
               stats.max_strayed_size,
               stats.max_sputtered_size,
               stats.max_dropped_size,
               stats.max_bridged_size,
-              stats.max_bridge_progenitor_size,
               stats.max_emerged_size,
-              stats.max_emerged_lost_size,
-              stats.max_emerged_found_diff,
-              stats.max_emerged_found_diff_size,
-              stats.max_emerged_progenitor_size);
+              stats.max_fragmented_size);
       if(i_k_match==n_k_match-1)
          fprintf(fp,"\n");
       fclose(fp);
@@ -482,8 +466,8 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
       sprintf(filename_bridged_out,           "%s/%s.%sgroups_bridges",            filename_output_dir_stats,filename_output_file_root,group_text_prefix);      
       sprintf(filename_bridged_progenitor_out,"%s/%s.%sgroups_bridged_progenitors",filename_output_dir_stats,filename_output_file_root,group_text_prefix);      
       sprintf(filename_emerged_progenitor_out,"%s/%s.%sgroups_emerged_progenitors",filename_output_dir_stats,filename_output_file_root,group_text_prefix);      
-      sprintf(filename_emerged_found_out,     "%s/%s.%sgroups_emerged_found",      filename_output_dir_stats,filename_output_file_root,group_text_prefix);      
-      sprintf(filename_emerged_unfound_out,   "%s/%s.%sgroups_emerged_unfound",    filename_output_dir_stats,filename_output_file_root,group_text_prefix);      
+      sprintf(filename_emerged_out,           "%s/%s.%sgroups_emerged",            filename_output_dir_stats,filename_output_file_root,group_text_prefix);      
+      sprintf(filename_fragmented_out,        "%s/%s.%sgroups_fragmented",         filename_output_dir_stats,filename_output_file_root,group_text_prefix);      
       fp_matching_out=fopen(filename_matching_out,"w");
       fp             =fp_matching_out;
       i_column=1;
@@ -508,8 +492,8 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
          fp_bridged_out           =fopen(filename_bridged_out,           "w");
          fp_bridged_progenitor_out=fopen(filename_bridged_progenitor_out,"w");
          fp_emerged_progenitor_out=fopen(filename_emerged_progenitor_out,"w");
-         fp_emerged_found_out     =fopen(filename_emerged_found_out,     "w");
-         fp_emerged_unfound_out   =fopen(filename_emerged_unfound_out,   "w");
+         fp_emerged_out     =fopen(filename_emerged_out,     "w");
+         fp_fragmented_out   =fopen(filename_fragmented_out,   "w");
       }
       else{
          fp_mergers_out           =fopen(filename_mergers_out,           "a");
@@ -519,8 +503,8 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
          fp_bridged_out           =fopen(filename_bridged_out,           "a");
          fp_bridged_progenitor_out=fopen(filename_bridged_progenitor_out,"a");
          fp_emerged_progenitor_out=fopen(filename_emerged_progenitor_out,"a");
-         fp_emerged_found_out     =fopen(filename_emerged_found_out,     "a");
-         fp_emerged_unfound_out   =fopen(filename_emerged_unfound_out,   "a");
+         fp_emerged_out     =fopen(filename_emerged_out,     "a");
+         fp_fragmented_out   =fopen(filename_fragmented_out,   "a");
       }
 
       // Loop over each halo
@@ -600,7 +584,7 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
                     halos[i_halo].n_particles,
                     halos[i_halo].n_particles_parent,
                     match_n_particles_local(&(halos[i_halo].descendant)),
-                    match_n_particles_local(&(halos[i_halo].first_progenitor)),
+                    match_n_particles_local(&(halos[i_halo].descendant.halo->first_progenitor)),
                     match_score_local(&(halos[i_halo].descendant)),
                     match_score_local(&(halos[i_halo].first_progenitor)));
 
@@ -812,7 +796,7 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
          }
 
          // Write emerged halos (found and unfound)
-         fp=fp_emerged_found_out;
+         fp=fp_emerged_out;
          if(l_write==0 && i_halo==0){
             i_column=1;
             fprintf(fp,"# (%02d): %sgroup expansion factor\n",                                i_column++,group_text_prefix);
@@ -827,14 +811,14 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
             fprintf(fp,"# (%02d): %sgroup bridge id\n",                                       i_column++,group_text_prefix);
             fprintf(fp,"# (%02d): match score for the %sgroup's bridge\n",                    i_column++,group_text_prefix);
             fprintf(fp,"# (%02d): match score for the %sgroup's descendant\n",                i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): match score for the %sgroup's first_progenitor\n",          i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): match score for the %sgroup's main progenitor\n",           i_column++,group_text_prefix);
             fprintf(fp,"# (%02d): number of particles in the %sgroup\n",                      i_column++,group_text_prefix);
             fprintf(fp,"# (%02d): number of particles in the %sgroup's descendant\n",         i_column++,group_text_prefix);
             fprintf(fp,"# (%02d): number of particles in the %sgroup's FoF group\n",          i_column++,group_text_prefix);
             fprintf(fp,"# (%02d): number of particles in the %sgroup's bridge\n",             i_column++,group_text_prefix);
             fprintf(fp,"# (%02d): number of particles in the %sgroup's main progenitor\n",    i_column++,group_text_prefix);
          }
-         fp=fp_emerged_unfound_out;
+         fp=fp_fragmented_out;
          if(l_write==0 && i_halo==0){
             i_column=1;
             fprintf(fp,"# (%02d): %sgroup expansion factor\n",                       i_column++,group_text_prefix);
@@ -855,7 +839,7 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
          }
          if(check_mode_for_flag(halos[i_halo].type,TREE_CASE_EMERGED)){
             if(check_mode_for_flag(halos[i_halo].type,TREE_CASE_FOUND)){
-               fp=fp_emerged_found_out;
+               fp=fp_emerged_out;
                fprintf(fp,"%10.3le %10.3le %8d %8d %8d %8d %8d %8d %8d %8d %10.3f %10.3f %10.3f %8d %8d %8d %8d %8d\n",
                        a_list[l_write],
                        dt_progenitor,
@@ -877,7 +861,7 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
                        match_n_particles_local(&(halos[i_halo].first_progenitor)));
             }
             else{
-               fp=fp_emerged_unfound_out;
+               fp=fp_fragmented_out;
                fprintf(fp,"%10.3le %8d %8d %8d %8d %8d %8d %8d %8d %10.3f %10.3f %8d %8d %8d %8d\n",
                        a_list[l_write],
                        j_write,
@@ -905,8 +889,8 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
       fclose(fp_bridged_out);
       fclose(fp_bridged_progenitor_out);
       fclose(fp_emerged_progenitor_out);
-      fclose(fp_emerged_found_out);
-      fclose(fp_emerged_unfound_out);
+      fclose(fp_emerged_out);
+      fclose(fp_fragmented_out);
    }
 
    SID_log("Done.",SID_LOG_CLOSE);
@@ -2181,8 +2165,8 @@ void compute_trees_horizontal(char   *filename_halo_root_in,
        else
           SID_log("# of bridge progenitors =%-7d",SID_LOG_COMMENT,stats.n_bridge_progenitors);
        if(stats.n_emerged_progenitors>0){
-          SID_log("# of emerged progenitors=%-7d (largest=%d particles; max. diff=%d/%d)",SID_LOG_COMMENT,
-             stats.n_emerged_progenitors,stats.max_emerged_progenitor_size,stats.max_emerged_found_diff,stats.max_emerged_found_diff_size);
+          SID_log("# of emerged progenitors=%-7d (largest=%d particles)",SID_LOG_COMMENT,
+             stats.n_emerged_progenitors,stats.max_emerged_progenitor_size);
        }
        else
           SID_log("# of emerged progenitors=%-7d",SID_LOG_COMMENT,stats.n_emerged_progenitors);      

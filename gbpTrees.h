@@ -7,20 +7,20 @@
 #define TREE_PROGENITOR_ORDER_DELUCIA 2
 
 #define TREE_CASE_SIMPLE                        1
-#define TREE_CASE_UNPROCESSED                   2
-#define TREE_CASE_INVALID                       4
-#define TREE_CASE_STRAYED                       8
-#define TREE_CASE_SPUTTERED                     16
-#define TREE_CASE_DROPPED                       32
-#define TREE_CASE_FOUND                         64
-#define TREE_CASE_MERGER                        128
-#define TREE_CASE_BRIDGED                       256
-#define TREE_CASE_EMERGED                       512
-#define TREE_CASE_BRIDGE_PROGENITOR             1024
-#define TREE_CASE_BRIDGE_DEFAULT                2048
-#define TREE_CASE_BRIDGE_PROGENITOR_UNPROCESSED 4096
-#define TREE_CASE_BRIDGE_FINALIZE               8192
-#define TREE_CASE_MAIN_PROGENITOR               16384
+#define TREE_CASE_STRAYED                       2
+#define TREE_CASE_SPUTTERED                     4
+#define TREE_CASE_DROPPED                       8
+#define TREE_CASE_MERGER                        16
+#define TREE_CASE_BRIDGED                       32
+#define TREE_CASE_EMERGED                       64
+#define TREE_CASE_BRIDGE_PROGENITOR             128
+#define TREE_CASE_BRIDGE_PROGENITOR_UNPROCESSED 256
+#define TREE_CASE_BRIDGE_FINALIZE               512
+#define TREE_CASE_BRIDGE_DEFAULT                1024
+#define TREE_CASE_FOUND                         2048
+#define TREE_CASE_MAIN_PROGENITOR               4096
+#define TREE_CASE_UNPROCESSED                   8192
+#define TREE_CASE_INVALID                       16384
 
 // Data structures for horizontal tree construction
 
@@ -35,7 +35,7 @@ struct tree_horizontal_stats_info {
    int n_bridged;
    int n_bridge_progenitors;
    int n_emerged;
-   int n_emerged_lost;
+   int n_fragmented;
    int n_emerged_progenitors;
    int max_strayed_size;
    int max_sputtered_size;
@@ -43,9 +43,7 @@ struct tree_horizontal_stats_info {
    int max_bridged_size;
    int max_bridge_progenitor_size;
    int max_emerged_size;
-   int max_emerged_lost_size;
-   int max_emerged_found_diff;
-   int max_emerged_found_diff_size;
+   int max_fragmented_size;
    int max_emerged_progenitor_size;
    int max_id;
 };

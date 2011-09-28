@@ -31,6 +31,7 @@ int main(int argc, char *argv[]){
   double     *a_list_in;
   double     *a_list_out;
   cosmo_info *cosmo;
+  int         flag_fix_bridges=TRUE;
 
   SID_init(&argc,&argv,NULL);
 
@@ -49,6 +50,7 @@ int main(int argc, char *argv[]){
   n_search         =atoi(argv[9]);
   n_files_groups   =atoi(argv[10]);
   n_files_subgroups=atoi(argv[11]);
+  flag_fix_bridges =atoi(argv[12]);
 
   SID_log("Constructing horizontal merger trees for snapshots #%d->#%d (step=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read_start,i_read_stop,i_read_step);
 
@@ -101,6 +103,7 @@ int main(int argc, char *argv[]){
                            i_read_stop,
                            i_read_step,
                            n_search,
+                           flag_fix_bridges,
                            &flag_clean);
   SID_log("Done.",SID_LOG_CLOSE);
 
