@@ -12,13 +12,15 @@
 void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(double *,MCMC_info *,double **),int n_P,double *P_init,char **P_names,double *P_limit_min,double *P_limit_max,int n_arrays,...){
   int     i_P;
   int     i_array;
+  int     i;
+  FILE    *ft;
+  char    test_dir[256];
   va_list vargs;
   va_start(vargs,n_arrays);
 
   SID_log("Initializing MCMC structure...",SID_LOG_OPEN);
 
   // Set defaults to bare minimums
-  sprintf(MCMC->filename_output_dir,"./%s_MCMC/",SID.My_binary);
   MCMC->n_avg                   =100;
   MCMC->n_iterations_burn       =4;
   MCMC->n_iterations            =8;
@@ -69,6 +71,21 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   MCMC->n_success               =0;
   MCMC->n_propositions          =0;
   MCMC->n_map_calls             =0;
+
+  // Set the base output directory
+  sprintf(test_dir,"./%s_MCMC/",SID.My_binary);
+  i=0;
+  ft=fopen(test_dir, "r");
+  if (ft!=NULL) {
+    do {
+      fclose(ft);
+      i++;
+      sprintf(test_dir,"./%s_MCMC.%d/",SID.My_binary,i);
+      ft=fopen(test_dir, "r");
+    } while(ft!=NULL);
+  }
+  strcpy(MCMC->filename_output_dir,test_dir);
+  SID_log("ouput_dir set to: %s", SID_LOG_COMMENT, MCMC->filename_output_dir);
 
   // Process the passed arguments
   MCMC->map_P_to_M                =f;
