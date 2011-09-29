@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 #include <gbpLib.h>
 #include <gbpRNG.h>
 #include <gbpMCMC.h>
@@ -26,8 +27,8 @@ void autotune_MCMC_covariance(MCMC_info *MCMC){
   double         difference;
   double         difference_i;
   int            i_P,j_P,k_P;  
-  char           time_string[48];
-  time_t         time_start, time_stop, time_diff;
+  time_t         time_start, time_stop;
+  double         time_diff;
 
   SID_log("Autotuning the covariance matrix (threshold=%6.2lf%%)...",SID_LOG_OPEN|SID_LOG_TIMER,MCMC->covariance_threshold);
 
@@ -80,7 +81,7 @@ void autotune_MCMC_covariance(MCMC_info *MCMC){
 
     // Stop timer
     time(&time_stop);
-    time_diff = time_stop-time_start;
+    time_diff = difftime(time_stop,time_start);
 
     // Finish the covariance matrix
     for(i_P=0,k_P=0;i_P<n_P;i_P++)
@@ -101,9 +102,8 @@ void autotune_MCMC_covariance(MCMC_info *MCMC){
     i_autotune++;
     success=100.*(double)(MCMC->n_success)/(double)MCMC->n_propositions;
     SID_log("Iteration #%04d: Success=%5.1lf%% Max change=%5.1f%%",SID_LOG_COMMENT,i_autotune,success,difference);
-    time_diff /= n_autotune;
-    seconds2ascii(time_diff,time_string);
-    SID_log("\tMean time for single model call: %s", SID_LOG_COMMENT, time_string);
+    time_diff /= (double)n_autotune;
+    SID_log("\tMean time for single model call: %.1f", SID_LOG_COMMENT, time_diff);
   }
 
   // Commit the covariance matrix now that we've computed it

@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 #include <gbpLib.h>
 #include <gbpRNG.h>
 #include <gbpMCMC.h>
@@ -115,8 +116,8 @@ void compute_MCMC(MCMC_info *MCMC){
   FILE     *fp_stop;
   int       seed=182743;
   int       i_report;
-  time_t    time_start, time_stop, time_diff;
-  char      time_string[48];
+  time_t    time_start, time_stop; 
+  double    time_diff;
   int       i_iteration_start;
   int       i_iteration_next_report;
   int       n_accepted;
@@ -576,6 +577,8 @@ void compute_MCMC(MCMC_info *MCMC){
     SID_Bcast(&n_iterations_file_burn, sizeof(int),my_chain,MCMC->comm);
     SID_Bcast(&n_iterations,           sizeof(int),my_chain,MCMC->comm);
     SID_Bcast(&(MCMC->flag_init_chain), sizeof(int),  my_chain,MCMC->comm);
+    SID_Bcast(&(MCMC->ln_likelihood_chain), sizeof(double), my_chain, MCMC->comm);
+    SID_Bcast(&(MCMC->ln_likelihood_new), sizeof(double), my_chain, MCMC->comm);
 
     // Remove the existant iterations from the totals we need to perform still
     if(n_iterations_file_total<n_iterations_burn){
@@ -686,7 +689,7 @@ void compute_MCMC(MCMC_info *MCMC){
 
         // Stop timer
         time(&time_stop);
-        time_diff = time_stop-time_start;
+        time_diff = difftime(time_stop,time_start);
 
         // Generate statistics for the averaging interval we just completed
         if(my_chain==SID.My_rank){
@@ -723,9 +726,8 @@ void compute_MCMC(MCMC_info *MCMC){
         if(i_iteration==i_iteration_next_report){
           i_report++;
           SID_log("%3d%% complete.",SID_LOG_COMMENT|SID_LOG_TIMER,5*(i_report));
-          time_diff /= (i_iteration*n_avg);
-          seconds2ascii(time_diff,time_string);
-          SID_log("\tMean time for single model call: %s", SID_LOG_COMMENT, time_string);
+          time_diff /= (double)(n_avg);
+          SID_log("\tMean time for single model call: %.1f", SID_LOG_COMMENT, time_diff);
           i_iteration_next_report=MIN(n_iterations_phase,i_iteration_start+(n_iterations_phase-i_iteration_start)*(i_report+1)/5);
         }
         
