@@ -277,7 +277,7 @@ def join_runs(run_list, joined_fname_root):
     # Do some checks to ensure that the runs we are joining are compatible with
     # each other...
     for param in ['problem_name', 'n_avg', 'flag_autocor_on_file',
-            'flag_no_map_write', 'n_P', 'P_init', 'P_name', 'P_limit_min', 
+            'flag_no_map_write', 'n_P', 'P_name', 'P_limit_min', 
             'P_limit_max', 'n_DS_arrays_total', 'n_DS']:
         check_param_compatibility(run_list, param)
     
