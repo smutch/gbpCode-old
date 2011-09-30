@@ -735,7 +735,7 @@ void compute_MCMC(MCMC_info *MCMC){
         if(SID.I_am_Master){
           if((fp_stop=fopen(filename_stop,"r"))!=NULL){
             fclose(fp_stop);
-            remove(filename_stop);
+            // remove(filename_stop);
             flag_stop=TRUE;
           }
         }

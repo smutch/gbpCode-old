@@ -13,8 +13,8 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   int     i_P;
   int     i_array;
   int     i;
-  FILE    *ft;
-  char    test_dir[256];
+  FILE    *ft, *ft_restart;
+  char    test_dir[256], test_restart[256];
   va_list vargs;
   va_start(vargs,n_arrays);
 
@@ -72,20 +72,6 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   MCMC->n_propositions          =0;
   MCMC->n_map_calls             =0;
 
-  // Set the base output directory
-  sprintf(test_dir,"./%s_MCMC/",SID.My_binary);
-  i=0;
-  ft=fopen(test_dir, "r");
-  if (ft!=NULL) {
-    do {
-      fclose(ft);
-      i++;
-      sprintf(test_dir,"./%s_MCMC.%d/",SID.My_binary,i);
-      ft=fopen(test_dir, "r");
-    } while(ft!=NULL);
-  }
-  strcpy(MCMC->filename_output_dir,test_dir);
-  SID_log("ouput_dir set to: %s", SID_LOG_COMMENT, MCMC->filename_output_dir);
 
   // Process the passed arguments
   MCMC->map_P_to_M                =f;
@@ -157,6 +143,41 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
   // Initialize Communicator
   SID_Comm_init(&(MCMC->comm));
   SID_Comm_split(SID.COMM_WORLD,MCMC->my_chain,SID.My_rank,MCMC->comm);
+
+  // Set the base output directory
+  if (MCMC->my_chain == SID.My_rank) {
+    // Generate directory and stop filenames
+    sprintf(test_dir,"./%s_MCMC/",SID.My_binary);
+    sprintf(test_restart,"./%s_MCMC/stop",SID.My_binary);
+    i=0;
+    // Try to open them ...
+    ft=fopen(test_dir, "r");
+    ft_restart=fopen(test_restart, "r");
+    // If the directory exists & there is no stop file in it then...
+    if ((ft!=NULL)&&(ft_restart==NULL)) {
+      // Increment the directory suffix until we don't find a directory,
+      // whilst always ensuring we don't come across a stop file (which indicates
+      // the previous run was stopped prematurely and we want restart the run).
+      do {
+        fclose(ft);
+        i++;
+        sprintf(test_dir,"./%s_MCMC.%d/",SID.My_binary,i);
+        ft=fopen(test_dir, "r");
+        sprintf(test_restart,"./%s_MCMC.%d/stop",SID.My_binary, i);
+        ft_restart=fopen(test_restart, "r");
+      } while((ft!=NULL)&&(ft_restart==NULL));
+    }
+    // Finally, if we did find a stop file then close it and remove it.
+    if (ft_restart!=NULL) {
+      fclose(ft_restart);
+      remove(test_restart);
+    }
+    // Copy the directory name we settled on to the MCMC structure
+    strcpy(MCMC->filename_output_dir,test_dir);
+    SID_log("ouput_dir set to: %s", SID_LOG_COMMENT, MCMC->filename_output_dir);
+  }
+  // Broadcast the output directory to all the other cores.
+  SID_Bcast(MCMC->filename_output_dir, sizeof(char)*MAX_FILENAME_LENGTH, MCMC->my_chain, MCMC->comm);
 
   // Initilize the random number generator
   MCMC->RNG=(RNG_info *)SID_malloc(sizeof(RNG_info));
