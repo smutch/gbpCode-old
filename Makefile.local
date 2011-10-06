@@ -35,7 +35,7 @@ OBJFILES = add_MCMC_DS.o                        \
 	   set_MCMC_temperature.o               \
 	   read_MCMC_covariance.o
 SCRIPTS  = allresults_MCMC.py
-BINFILES = covariance2ascii reanalyze_MCMC
+BINFILES = example_line_fit covariance2ascii reanalyze_MCMC 
 LIBS     = -lgbpMCMC -lgbpMath -lgbpLib
 SUBDIRS  = 
 #############################
