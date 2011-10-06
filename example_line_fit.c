@@ -77,6 +77,7 @@ int main(int argc, char *argv[]){
 
   // This must be called at the very beginning of the main function  
   SID_init(&argc,&argv,NULL);
+
   SID_log("Running the MCMC example code '%s'...",SID_LOG_OPEN,argv[0]);
 
   // Parse the parameters passed to the code from stdin.  On this case, 
@@ -166,7 +167,7 @@ int main(int argc, char *argv[]){
       //   the MCMC fit will get caught in an infinite loop
       uncertainties[i_M]=0.;
       while(uncertainties[i_M]<=0.)
-        uncertainties[i_M]=data_values[i_M]*(double)random_number(&RNG)/10.;    // Choose an uncertainty from (0% to 10%)
+        uncertainties[i_M]=data_values[i_M]*(double)random_number(&RNG)/5.;     // Choose an uncertainty from (0% to 20%)
       data_values[i_M]+=uncertainties[i_M]*(1.-2.*(double)random_number(&RNG)); // Scatter the data value by this uncertainty
       SID_log("%10.3lf %10.3lf %10.3lf",SID_LOG_COMMENT,ordinate_values[i_M],data_values[i_M],uncertainties[i_M]);
     }
@@ -186,7 +187,15 @@ int main(int argc, char *argv[]){
     SID_log("Done.",SID_LOG_CLOSE);
   }
 
-  // Clean-up dataset arrays
+  // Clean-up arrays (not needed anymore because they get copied to the MCMC structure)
+  for(i_DS=0,i_P=0;i_DS<n_DS;i_DS++){
+     SID_free(SID_FARG P_names[i_P++]);
+     SID_free(SID_FARG P_names[i_P++]);
+  }
+  SID_free(SID_FARG P_names);
+  SID_free(SID_FARG P_init);
+  SID_free(SID_FARG P_limit_min);
+  SID_free(SID_FARG P_limit_max);
   SID_free(SID_FARG ordinate_values);
   SID_free(SID_FARG data_values);
   SID_free(SID_FARG uncertainties);
@@ -255,24 +264,15 @@ int main(int argc, char *argv[]){
   //   results of the fit will be in the 'results' directory
   //   of the MCMC output directory.
 
-  // Once the MCMC calculation is done and this code exits,
-  //   run the 'allresults_MCMC.py' script on the directory
-  //   and it will generate all the plots you could need.
-
   // Clean-up
-  SID_log("Cleaning-up...",SID_LOG_OPEN);
-  for(i_DS=0,i_P=0;i_DS<n_DS;i_DS++){
-     SID_free(SID_FARG P_names[i_P++]);
-     SID_free(SID_FARG P_names[i_P++]);
-  }
-  SID_free(SID_FARG P_names);
-  SID_free(SID_FARG P_init);
-  SID_free(SID_FARG P_limit_min);
-  SID_free(SID_FARG P_limit_max);
   free_MCMC(&MCMC);
-  SID_log("Done.",SID_LOG_CLOSE);
 
   // Exit
   SID_log("Done.",SID_LOG_CLOSE);
   SID_exit(ERROR_NONE);
+
+  // Once the code exits, run the 'allresults_MCMC.py'
+  //   script on the directory and it will generate 
+  //   all the diagnostic plots.  You need to have 
+  //   python installed for it to work though.
 }
