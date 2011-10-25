@@ -20,7 +20,7 @@ void strip_path(char *string){
   if(i_start>0){
     for(i_char=0,j_char=i_start;j_char<string_size;i_char++,j_char++)
       strncpy(&(string[i_char]),&(string[j_char]),1);
-    sprintf(&(string[i_char]),"\0");
+    sprintf(&(string[i_char]),"");
   }
 }
 
