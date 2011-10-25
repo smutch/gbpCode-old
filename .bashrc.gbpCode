@@ -59,7 +59,7 @@ if [ $HOSTTYPE=='x86_64-linux' ]; then
   export GBP_SPRNG_DIR=/nfs/cluster/evo/gpoole/src/3rd_Party/libs/sprng/
   # We have to check for the HOSTNAME variable, because scp, sshfs etc does
   #   not define it and things crash if we try to reference it
-  if [[$HOSTNAME]]; then
+  if [ -z "$HOSTNAME" ]; then
     if [ $HOSTNAME=='green.ssi.swin.edu.au' ]; then
       export GBP_QUEUE_TYPE=PBS
     fi

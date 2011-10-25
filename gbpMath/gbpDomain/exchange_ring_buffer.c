@@ -8,12 +8,24 @@ void exchange_ring_buffer(void     *send_buffer,
                           size_t    buffer_type_size,
                           size_t    send_count,
                           void     *receive_buffer,
-                          size_t   *receive_count,
+                          size_t   *receive_count_in,
                           int       i_rank){
-  size_t send_buffer_size;
-  size_t receive_buffer_size;
+  size_t  send_buffer_size;
+  size_t  receive_buffer_size;
+  size_t  receive_count_temp;
+  size_t *receive_count;
+  int     rank_to,rank_from;
+
+  // At times, we may not want to bother
+  //   returning the number of received items
+  //   (perhaps because it's fixed and known)
+  //   This takes care of that if receive_count_in
+  //   is set to NULL.
+  if(receive_count_in==NULL)
+    receive_count=&receive_count_temp;
+  else
+    receive_count=receive_count_in;
 #ifdef USE_MPI
-  int    rank_to,rank_from;
   // Exchange buffer sizes
   send_buffer_size=send_count*buffer_type_size;
   if(send_buffer==NULL || send_buffer_size<=0)

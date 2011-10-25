@@ -18,7 +18,9 @@ endif
 
 if ( ${GBP_QUEUE_TYPE} == 'PBS' ) then
   # Set the mpiexec command
-  set CMD_STRING = ( $GBP_MPI'/bin/mpiexec -mca btl tcp,self '$GBP_BIN'/mpi/'$ARG_CMD )
+  # May want to try --mca btl_tcp_if_include eth0 
+  #set CMD_STRING = ( $GBP_MPI'/bin/mpiexec -mca btl tcp,self '$GBP_BIN'/mpi/'$ARG_CMD )
+  set CMD_STRING = ( $GBP_MPI'/bin/mpiexec --mca btl self,openib '$GBP_BIN'/mpi/'$ARG_CMD )
 
   # Add the command arguments
   @ i=$FIRST_ARG

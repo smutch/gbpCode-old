@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <gbpADaPS.h>
 
-void ADaPS_free(ADaPS **list){
+void ADaPS_free(void **list){
   ADaPS *current;
   ADaPS *next;
   current=(*list);

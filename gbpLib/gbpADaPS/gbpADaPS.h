@@ -57,7 +57,7 @@ void *ADaPS_fetch(ADaPS *list,
                   char  *name_in,...);
 int  ADaPS_exist(ADaPS *list,
                  char  *name, ...);
-void ADaPS_free(ADaPS **list);
+void ADaPS_free(void **list);
 void ADaPS_deallocate(ADaPS **remove);
 void ADaPS_remove(ADaPS **list, 
                   char   *name,...);
