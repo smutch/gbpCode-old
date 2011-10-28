@@ -319,8 +319,8 @@ void compute_MCMC(MCMC_info *MCMC){
           if(strcmp(P_name_test,MCMC->P_names[i_P]))
             SID_trap_error("Parameter #%d's names are inconsistant (i.e. {%s}!={%s}).",ERROR_LOGIC,i_P,MCMC->P_names[i_P],P_name_test);
           fread(&P_init_test,sizeof(double),1,fp_run);
-          if(P_init_test!=MCMC->P_init[i_P])
-            SID_trap_error("Parameter #%d's initial values are inconsistant (i.e. %le!=%le).",ERROR_LOGIC,i_P,MCMC->P_init[i_P],P_init_test);
+          // if(P_init_test!=MCMC->P_init[i_P])
+          //   SID_trap_error("Parameter #%d's initial values are inconsistant (i.e. %le!=%le).",ERROR_LOGIC,i_P,MCMC->P_init[i_P],P_init_test);
           fread(&P_min_test,sizeof(double),1,fp_run);
           if(P_min_test!=MCMC->P_limit_min[i_P])
             SID_trap_error("Parameter #%d's minimum values are inconsistant (i.e. %le!=%le).",ERROR_LOGIC,i_P,MCMC->P_limit_min[i_P],P_min_test);
