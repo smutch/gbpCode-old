@@ -97,9 +97,11 @@ void compute_trees_horizontal_stats(tree_horizontal_info *halos,int n_halos,int 
          }
       }
       if(check_mode_for_flag(halos[i_halo].type,TREE_CASE_EMERGED)){
-         stats->max_emerged_size=MAX(stats->max_emerged_size,halos[i_halo].n_particles);
-         stats->n_emerged++;
-         if(!check_mode_for_flag(halos[i_halo].type,TREE_CASE_FOUND)){
+         if(check_mode_for_flag(halos[i_halo].type,TREE_CASE_FOUND)){
+            stats->max_emerged_size=MAX(stats->max_emerged_size,halos[i_halo].n_particles);
+            stats->n_emerged++;
+         }
+         else{
             stats->max_fragmented_size=MAX(stats->max_fragmented_size,halos[i_halo].n_particles);
             stats->n_fragmented++;
          }
@@ -225,8 +227,6 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
    char        filename_sputtered_out[MAX_FILENAME_LENGTH];
    char        filename_dropped_out[MAX_FILENAME_LENGTH];
    char        filename_bridged_out[MAX_FILENAME_LENGTH];
-   char        filename_bridged_progenitor_out[MAX_FILENAME_LENGTH];
-   char        filename_emerged_progenitor_out[MAX_FILENAME_LENGTH];
    char        filename_emerged_out[MAX_FILENAME_LENGTH];
    char        filename_fragmented_out[MAX_FILENAME_LENGTH];
    char       *filename_output_dir_stats;
@@ -236,8 +236,6 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
    FILE       *fp_sputtered_out;
    FILE       *fp_dropped_out;
    FILE       *fp_bridged_out;
-   FILE       *fp_bridged_progenitor_out;
-   FILE       *fp_emerged_progenitor_out;
    FILE       *fp_emerged_out;
    FILE       *fp_fragmented_out;
    int         i_halo;
@@ -262,9 +260,12 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
    int         i_k_match;
    int         j_k_match;
    int         i_column;
-   int         n_particles_residual;
+   int         n_particles_emerged;
+   int         n_particles_emerged_main;
+   int         n_particles_fragmented;
    int         n_p_largest_main;
-   int         n_particles_residual_main;
+   int         n_p_largest_i;
+   int         n_p_largest_index;
    double      dt_descendant;
    double      dt_progenitor;
    char       *line=NULL;
@@ -464,8 +465,6 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
       sprintf(filename_sputtered_out,         "%s/%s.%sgroups_sputters",           filename_output_dir_stats,filename_output_file_root,group_text_prefix);
       sprintf(filename_dropped_out,           "%s/%s.%sgroups_drops",              filename_output_dir_stats,filename_output_file_root,group_text_prefix);
       sprintf(filename_bridged_out,           "%s/%s.%sgroups_bridges",            filename_output_dir_stats,filename_output_file_root,group_text_prefix);      
-      sprintf(filename_bridged_progenitor_out,"%s/%s.%sgroups_bridged_progenitors",filename_output_dir_stats,filename_output_file_root,group_text_prefix);      
-      sprintf(filename_emerged_progenitor_out,"%s/%s.%sgroups_emerged_progenitors",filename_output_dir_stats,filename_output_file_root,group_text_prefix);      
       sprintf(filename_emerged_out,           "%s/%s.%sgroups_emerged",            filename_output_dir_stats,filename_output_file_root,group_text_prefix);      
       sprintf(filename_fragmented_out,        "%s/%s.%sgroups_fragmented",         filename_output_dir_stats,filename_output_file_root,group_text_prefix);      
       fp_matching_out=fopen(filename_matching_out,"w");
@@ -490,8 +489,6 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
          fp_sputtered_out         =fopen(filename_sputtered_out,         "w");
          fp_dropped_out           =fopen(filename_dropped_out,           "w");
          fp_bridged_out           =fopen(filename_bridged_out,           "w");
-         fp_bridged_progenitor_out=fopen(filename_bridged_progenitor_out,"w");
-         fp_emerged_progenitor_out=fopen(filename_emerged_progenitor_out,"w");
          fp_emerged_out     =fopen(filename_emerged_out,     "w");
          fp_fragmented_out   =fopen(filename_fragmented_out,   "w");
       }
@@ -501,8 +498,6 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
          fp_sputtered_out         =fopen(filename_sputtered_out,         "a");
          fp_dropped_out           =fopen(filename_dropped_out,           "a");
          fp_bridged_out           =fopen(filename_bridged_out,           "a");
-         fp_bridged_progenitor_out=fopen(filename_bridged_progenitor_out,"a");
-         fp_emerged_progenitor_out=fopen(filename_emerged_progenitor_out,"a");
          fp_emerged_out     =fopen(filename_emerged_out,     "a");
          fp_fragmented_out   =fopen(filename_fragmented_out,   "a");
       }
@@ -525,8 +520,8 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
 
          // Compute the time between the halo and it's progenitor
          if(halos[i_halo].first_progenitor.halo!=NULL){
-            if(halos[i_halo].first_progenitor.halo->file>i_write){ // This isn't true for first snapshot for instance
-              dt_progenitor=deltat_a(cosmo,a_list[l_write],a_list[l_write-(i_write-halos[i_halo].first_progenitor.halo->file)])/S_PER_YEAR;
+            if(halos[i_halo].first_progenitor.halo->file<i_write){ // This isn't true for first snapshot for instance
+              dt_progenitor=deltat_a(cosmo,a_list[l_write+(i_write-halos[i_halo].first_progenitor.halo->file)],a_list[l_write])/S_PER_YEAR;
             }
             else
               dt_progenitor=0.;
@@ -662,44 +657,64 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
                halos[i_halo].n_particles,
                halos[i_halo].n_particles_parent,
                match_n_particles_local(&(halos[i_halo].descendant)),
-               match_n_particles_local(&(halos[i_halo].main_progenitor)),
+               match_n_particles_local(&(halos[i_halo].first_progenitor)),
                match_score_local(&(halos[i_halo].descendant)),
-               match_score_local(&(halos[i_halo].main_progenitor)));
+               match_score_local(&(halos[i_halo].first_progenitor)));
 
          // Write bridged halos
          fp=fp_bridged_out;
          if(l_write==0 && i_halo==0){
             i_column=1;
-            fprintf(fp,"# (%02d): %sgroup expansion factor\n",                                              i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup snapshot number\n",                                               i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup snapshot index\n",                                                i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup id\n",                                                            i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup match type\n",                                                    i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of %sgroups emerging from this bridge\n",                          i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of %sgroups emerging from this bridge found\n",                    i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the %sgroup\n",                                    i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the %sgroup's FoF group\n",                        i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the largest emerged %sgroup\n",                    i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the largest emerged %sgroup's main progenitor\n",  i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the other   emerged %sgroups\n",                   i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the other   emerged %sgroups's main progenitors\n",i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): %sgroup expansion factor\n",                                                      i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): %sgroup snapshot number\n",                                                       i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): %sgroup snapshot index\n",                                                        i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): %sgroup id\n",                                                                    i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): %sgroup match type\n",                                                            i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): number of back-matched %sgroups identified with this bridge\n",                   i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): number of back-matched %sgroups identified as emerging halos\n",                  i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): number of particles in the %sgroup\n",                                            i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): number of particles in the %sgroup's FoF group\n",                                i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): number of particles in the %sgroup's main progenitor\n",                          i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): number of particles in the largest    back-matched %sgroup\n",                    i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): number of particles in the largest    back-matched %sgroup's main progenitor\n",  i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): number of particles in the emerged    back-matched %sgroups\n",                   i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): number of particles in the emerged    back-matched %sgroups's main progenitors\n",i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): number of particles in the fragmented back-matched %sgroups\n",                   i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): number of particles in the fragmented back-matched %sgroups's main progenitors\n",i_column++,group_text_prefix);
          }
          if(check_mode_for_flag(halos[i_halo].type,TREE_CASE_BRIDGED)){
-            // Compute some statistics for this halo
-            n_p_largest_main=match_n_particles_local(&(halos_all[match_file_local(&(halos[i_halo].bridges[0]))%n_wrap]
-                                                                [match_index_local(&(halos[i_halo].bridges[0]))].first_progenitor));
-            if(check_mode_for_flag(match_type_local(&(halos[i_halo].bridges[0])),TREE_CASE_FOUND))
-              n_found=1;
-            else
-              n_found=0;
-            for(j_halo=1,n_particles_residual=0,n_particles_residual_main=0;j_halo<halos[i_halo].n_bridges;j_halo++){
-               n_particles_residual     +=match_n_particles_local(&(halos[i_halo].bridges[j_halo]));
-               n_particles_residual_main+=match_n_particles_local(&(halos_all[match_file_local(&(halos[i_halo].bridges[j_halo]))%n_wrap]
-                                                                             [match_index_local(&(halos[i_halo].bridges[j_halo]))].first_progenitor));
-               if(check_mode_for_flag(match_type_local(&(halos[i_halo].bridges[j_halo])),TREE_CASE_FOUND))
-                  n_found++;
+            // Find the largest back-matched halo
+            j_halo=0;
+            n_p_largest_i=match_n_particles_local(&(halos_all[match_file_local(&(halos[i_halo].bridges[j_halo]))%n_wrap]
+                                                             [match_index_local(&(halos[i_halo].bridges[j_halo]))].first_progenitor));
+            n_p_largest_main =n_p_largest_i;
+            n_p_largest_index=j_halo;
+            for(j_halo=1,n_p_largest_main=0,n_p_largest_index=0;j_halo<halos[i_halo].n_bridges;j_halo++){
+               n_p_largest_i=match_n_particles_local(&(halos_all[match_file_local(&(halos[i_halo].bridges[j_halo]))%n_wrap]
+                                                                [match_index_local(&(halos[i_halo].bridges[j_halo]))].first_progenitor));
+               if(n_p_largest_i>n_p_largest_main){
+                  n_p_largest_main =n_p_largest_i;
+                  n_p_largest_index=j_halo;
+               }
             }
-            fprintf(fp,"%10.3le %8d %8d %8d %8d %8d %8d %8d %8d %8d %8d %8d %8d\n",
+
+            // Count the number of emerged/fragmented halos and the number of particles
+            //   in each set, as well as the number of particles in their main progenitors
+            n_found=0;
+            n_particles_emerged        =0;
+            n_particles_emerged_main   =0;
+            n_particles_fragmented     =0;
+            for(j_halo=0;j_halo<halos[i_halo].n_bridges;j_halo++){
+               if(check_mode_for_flag(match_type_local(&(halos[i_halo].bridges[j_halo])),TREE_CASE_FOUND)){
+                  n_particles_emerged     +=match_n_particles_local(&(halos[i_halo].bridges[j_halo]));
+                  n_particles_emerged_main+=match_n_particles_local(&(halos_all[match_file_local(&(halos[i_halo].bridges[j_halo]))%n_wrap]
+                                                                             [match_index_local(&(halos[i_halo].bridges[j_halo]))].first_progenitor));
+                  n_found++;
+               }
+               else
+                  n_particles_fragmented+=match_n_particles_local(&(halos[i_halo].bridges[j_halo]));
+            }
+            fprintf(fp,"%10.3le %8d %8d %8d %8d %8d %8d %8d %8d %8d %8d %8d %8d %8d %8d\n",
                     a_list[l_write],
                     j_write,
                     i_halo,
@@ -709,93 +724,15 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
                     n_found,
                     halos[i_halo].n_particles,
                     halos[i_halo].n_particles_parent,
-                    match_n_particles_local(&(halos[i_halo].bridges[0])),
+                    match_n_particles_local(&(halos[i_halo].first_progenitor)),
+                    match_n_particles_local(&(halos[i_halo].bridges[n_p_largest_index])),
                     n_p_largest_main,
-                    n_particles_residual,
-                    n_particles_residual_main);
+                    n_particles_emerged,
+                    n_particles_emerged_main,
+                    n_particles_fragmented);
          }
 
-         // Write bridged and emerged halo progenitors
-         fp=fp_emerged_progenitor_out;
-         if(l_write==0 && i_halo==0){
-            i_column=1;
-            fprintf(fp,"# (%02d): %sgroup expansion factor\n",                                     i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup->descendant interval [yrs]\n",                           i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup snapshot number\n",                                      i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup snapshot index\n",                                       i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup id\n",                                                   i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup match type\n",                                           i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup descendant file offset\n",                               i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup descendant id\n",                                        i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup bridge id\n",                                            i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup bridge snapshot\n",                                      i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup bridge index\n",                                         i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the %sgroup\n",                           i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the %sgroup's descendant\n",              i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the %sgroup's FoF group\n",               i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the %sgroup's bridge\n",                  i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the %sgroup's bridge's main progenitor\n",i_column++,group_text_prefix);
-         }
-         fp=fp_bridged_progenitor_out;
-         if(l_write==0 && i_halo==0){
-            i_column=1;
-            fprintf(fp,"# (%02d): %sgroup expansion factor\n",                                     i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup snapshot number\n",                                      i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup snapshot index\n",                                       i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup id\n",                                                   i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup match type\n",                                           i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup descendant file offset\n",                               i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup bridge id\n",                                            i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup bridge snapshot\n",                                      i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup bridge index\n",                                         i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the %sgroup\n",                           i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the %sgroup's descendant\n",              i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the %sgroup's FoF group\n",               i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the %sgroup's bridge\n",                  i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the %sgroup's bridge's main progenitor\n",i_column++,group_text_prefix);
-         }
-         if(check_mode_for_flag(halos[i_halo].type,TREE_CASE_BRIDGE_PROGENITOR)){
-            if(!check_mode_for_flag(halos[i_halo].type,TREE_CASE_BRIDGE_DEFAULT)){
-               fp=fp_emerged_progenitor_out;
-               fprintf(fp,"%10.3le %10.3le %8d %8d %8d %8d %8d %8d %8d %8d %8d %8d %8d %8d %8d %8d\n",
-                       a_list[l_write],
-                       dt_descendant,
-                       j_write,
-                       i_halo,
-                       halos[i_halo].id,
-                       halos[i_halo].type,
-                       match_file_local(&(halos[i_halo].descendant))-i_write,
-                       match_id_local(&(halos[i_halo].descendant)),
-                       match_id_local(&(halos[i_halo].bridge_forematch)),
-                       match_file_local(&(halos[i_halo].bridge_forematch)),
-                       match_index_local(&(halos[i_halo].bridge_forematch)),
-                       halos[i_halo].n_particles,
-                       match_n_particles_local(&(halos[i_halo].descendant)),
-                       halos[i_halo].n_particles_parent,
-                       match_n_particles_local(&(halos[i_halo].bridge_forematch)),
-                       match_n_particles_local(&(halos[i_halo].bridge_forematch.halo->main_progenitor)));
-            }
-            else if(!check_mode_for_flag(halos[i_halo].type,TREE_CASE_MAIN_PROGENITOR)){
-               fp=fp_bridged_progenitor_out;
-               fprintf(fp,"%10.3le %8d %8d %8d %8d %8d %8d %8d %8d %8d %8d %8d %8d %8d\n",
-                       a_list[l_write],
-                       j_write,
-                       i_halo,
-                       halos[i_halo].id,
-                       halos[i_halo].type,
-                       match_file_local(&(halos[i_halo].descendant))-i_write,
-                       match_id_local(&(halos[i_halo].bridge_forematch)),
-                       match_file_local(&(halos[i_halo].bridge_forematch)),
-                       match_index_local(&(halos[i_halo].bridge_forematch)),
-                       halos[i_halo].n_particles,
-                       match_n_particles_local(&(halos[i_halo].descendant)),
-                       halos[i_halo].n_particles_parent,
-                       match_n_particles_local(&(halos[i_halo].bridge_forematch)),
-                       match_n_particles_local(&(halos[i_halo].bridge_forematch.halo->main_progenitor)));
-            }
-         }
-
-         // Write emerged halos (found and unfound)
+         // Write emerged and fragmented halos
          fp=fp_emerged_out;
          if(l_write==0 && i_halo==0){
             i_column=1;
@@ -887,159 +824,12 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
       fclose(fp_sputtered_out);
       fclose(fp_dropped_out);
       fclose(fp_bridged_out);
-      fclose(fp_bridged_progenitor_out);
-      fclose(fp_emerged_progenitor_out);
       fclose(fp_emerged_out);
       fclose(fp_fragmented_out);
    }
 
    SID_log("Done.",SID_LOG_CLOSE);
 
-}
-
-void read_matches_local(char    *filename_root_matches,
-                        int      i_read,
-                        int      j_read,
-                        int      mode,
-                        int     *n_groups_i,
-                        int     *n_groups_j,
-                        int     *n_particles_i,
-                        int     *n_particles_j,
-                        int     *n_sub_group_i,
-                        int     *n_sub_group_j,
-                        int     *match_ids,
-                        float   *match_score,
-                        size_t  *match_index);
-void read_matches_local(char    *filename_root_matches,
-                        int      i_read,
-                        int      j_read,
-                        int      mode,
-                        int     *n_groups_i,
-                        int     *n_groups_j,
-                        int     *n_particles_i,
-                        int     *n_particles_j,
-                        int     *n_sub_group_i,
-                        int     *n_sub_group_j,
-                        int     *match_ids,
-                        float   *match_score,
-                        size_t  *match_index){
-   char   group_text_prefix[5];
-   char   filename_in[MAX_FILENAME_LENGTH];
-   SID_fp fp_in;
-   int k_read;
-   int l_read;
-   int i_read_stop;
-   int i_read_start;
-   int n_search;
-   int n_files;
-   int n_matches;
-   size_t offset;
-   int flag_continue;
-   int i_read_file;
-   int j_read_file;
-   int n_groups_file;
-   int n_groups_file_1;
-   int n_groups_file_2;
-   int n_groups;
-   int n_groups_i_file;
-   int n_groups_j_file;
-   
-   switch(mode){
-      case MATCH_SUBGROUPS:
-      sprintf(group_text_prefix,"sub");
-      break;
-      case MATCH_GROUPS:
-      sprintf(group_text_prefix,"");
-      break;
-   }
-   sprintf(filename_in,"%s.%sgroup_matches",filename_root_matches,group_text_prefix);
-
-   if(i_read==j_read)
-     SID_trap_error("i_read=j_read in read_matches",ERROR_LOGIC);
-
-   SID_fopen(filename_in,"r",&fp_in);
-   SID_fread(&i_read_start,sizeof(int),1,&fp_in);
-   SID_fread(&i_read_stop, sizeof(int),1,&fp_in);
-   SID_fread(&n_search,    sizeof(int),1,&fp_in);
-   SID_fread(&n_files,     sizeof(int),1,&fp_in);
-   for(k_read=0,n_groups_i_file=-1,n_groups_j_file=-1;k_read<n_files;k_read++){
-      SID_fread(&l_read,  sizeof(int),1,&fp_in);
-      SID_fread(&n_groups,sizeof(int),1,&fp_in);
-      if(i_read==l_read){
-         n_groups_i_file=n_groups;
-         if(n_particles_i!=NULL)
-            SID_fread(n_particles_i,sizeof(int),n_groups,&fp_in);
-         else
-            SID_fseek(&fp_in,sizeof(int),n_groups,SID_SEEK_CUR);
-         if(mode==MATCH_GROUPS){
-            if(n_sub_group_i!=NULL)
-               SID_fread(n_sub_group_i,sizeof(int),n_groups,&fp_in);
-            else
-               SID_fseek(&fp_in,sizeof(int),n_groups,SID_SEEK_CUR);
-         }
-      }
-      else if(j_read==l_read){
-         n_groups_j_file=n_groups;
-         if(n_particles_j!=NULL)
-            SID_fread(n_particles_j,sizeof(int),n_groups,&fp_in);
-         else
-            SID_fseek(&fp_in,sizeof(int),n_groups,SID_SEEK_CUR);
-         if(mode==MATCH_GROUPS){
-            if(n_sub_group_j!=NULL)
-               SID_fread(n_sub_group_j,sizeof(int),n_groups,&fp_in);
-            else
-               SID_fseek(&fp_in,sizeof(int),n_groups,SID_SEEK_CUR);
-         }
-      }
-      else{
-         SID_fseek(&fp_in,sizeof(int),n_groups,SID_SEEK_CUR);
-         if(mode==MATCH_GROUPS)
-            SID_fseek(&fp_in,sizeof(int),n_groups,SID_SEEK_CUR);
-      }
-   }
-
-   // Sanity check
-   if(n_groups_i_file<0) SID_trap_error("File 1 (%d) group count not validly set (%d)",ERROR_LOGIC,i_read,n_groups_i_file);
-   if(n_groups_j_file<0) SID_trap_error("File 2 (%d) group count not validly set (%d)",ERROR_LOGIC,j_read,n_groups_j_file);
-
-   // Find the match we are looking for and read the offset to it's matching data
-   SID_fread(&n_matches,   sizeof(int),1,&fp_in);
-   for(k_read=0,offset=0,flag_continue=TRUE;k_read<n_matches && flag_continue;k_read++){
-      SID_fread(&i_read_file,sizeof(int),   1,&fp_in);
-      SID_fread(&j_read_file,sizeof(int),   1,&fp_in);
-      SID_fread(&offset,     sizeof(size_t),1,&fp_in);
-      if(flag_continue){
-         if(i_read_file==i_read && j_read_file==j_read){
-            (*n_groups_i)=n_groups_i_file;
-            (*n_groups_j)=n_groups_j_file;
-            flag_continue=FALSE;
-         }
-      }
-   }
-
-   // Sanity check
-   if(flag_continue)
-      SID_trap_error("Requested matching combination (%d->%d) not present in the matching file.",ERROR_LOGIC,i_read,j_read);
-
-   // Offset to the matching data
-   SID_fseek(&fp_in,1,offset,SID_SEEK_SET);
-
-   // Sanity check
-   SID_fread(&i_read_file,    sizeof(int),1,&fp_in);
-   SID_fread(&j_read_file,    sizeof(int),1,&fp_in);
-   SID_fread(&n_groups_file_1,sizeof(int),1,&fp_in);
-   SID_fread(&n_groups_file_2,sizeof(int),1,&fp_in);
-   if(i_read_file==i_read && j_read_file==j_read){
-      // Read matching data
-      SID_fread(match_ids,  sizeof(int),   (*n_groups_i),&fp_in);
-      SID_fread(match_index,sizeof(size_t),(*n_groups_i),&fp_in);
-      SID_fread(match_score,sizeof(float), (*n_groups_i),&fp_in);
-      SID_fclose(&fp_in);
-   }
-   else{
-      SID_fclose(&fp_in);
-      SID_trap_error("Error encountered in the matching file",ERROR_LOGIC);      
-   }
 }
 
 // Set halo_i[i_halo] so it points to halo_j[j_halo]
@@ -1095,7 +885,7 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
       if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGE_PROGENITOR_UNPROCESSED) && 
          !check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGE_FINALIZE)){
         // ... the score must be good ...
-        if((halos_i[i_halo].bridge_forematch.score)>0.5*score)
+        if(score<0.5*(halos_i[i_halo].bridge_forematch.score))
           flag_process=FALSE;
         // ... the change in halo size must be better ...
         n_p_diff_old=IABS(halos_i[i_halo].bridge_forematch.halo->n_particles-halos_i[i_halo].n_particles);
@@ -1139,16 +929,17 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
             new_progenitor.halo->type|=TREE_CASE_MAIN_PROGENITOR;
          }
          else{
-            // If we have a new largest (ie main) progenitor, insert it at the 
+            // If we have a higher-score (ie a new main) progenitor, insert it at the 
             //   beginning of the list and swap IDs with the main progenitor so that
             //   the correct halo gets the main progenitor ID and all others get a new one ...
-            if(halos_i[i_halo].n_particles>halos_j[j_halo].first_progenitor.halo->n_particles){
+            memcpy(&old_progenitor,&(halos_j[j_halo].first_progenitor),sizeof(match_info));
+            if(score>old_progenitor.score){
                // ... set new main progenitor ...
-               memcpy(&old_progenitor,                                          &(halos_j[j_halo].first_progenitor),sizeof(match_info));
-               memcpy(&(halos_j[j_halo].first_progenitor),                      &new_progenitor,                    sizeof(match_info));
-               memcpy(&(halos_j[j_halo].first_progenitor.halo->next_progenitor),&old_progenitor,                    sizeof(match_info));
-               // ... set new main progenitor id ...
+               memcpy(&(halos_j[j_halo].first_progenitor),                      &new_progenitor,sizeof(match_info));
+               memcpy(&(halos_j[j_halo].first_progenitor.halo->next_progenitor),&old_progenitor,sizeof(match_info));
+               // ... let the new main progenitor inherit the descendant's id ...
                halos_i[i_halo].id=halos_j[j_halo].id;
+               // ... and give the old main progenitor the new id ...
                change_horizontal_ID_recursive(old_progenitor.halo,old_progenitor.halo->id,(*max_id)++);
                // ... set new main progenitor type ...
                old_progenitor.halo->type|=  TREE_CASE_MERGER;
@@ -1371,8 +1162,6 @@ void compute_trees_horizontal(char   *filename_halo_root_in,
   int     k_index;
   int     k_file_temp;
   int     k_index_temp;
-  int     main_progenitor_index;
-  float   main_progenitor_score;
 
   int     n_wrap;
   
@@ -1451,18 +1240,18 @@ void compute_trees_horizontal(char   *filename_halo_root_in,
   SID_log("Initializing tree roots...",SID_LOG_OPEN|SID_LOG_TIMER);
 
   // Initialize everything to a 1:1 simple match
-  read_matches_local(filename_root_matches,
-                     i_read_stop,i_read_stop-i_read_step,
-                     MATCH_GROUPS,
-                     &n_halos_1_matches,
-                     &n_halos_2_matches,
-                     n_particles_groups,
-                     NULL,
-                     n_subgroups_group[0],
-                     n_subgroups_group[1],
-                     match_id,
-                     match_score,
-                     match_index);
+  read_matches(filename_root_matches,
+               i_read_stop,i_read_stop-i_read_step,
+               MATCH_GROUPS,
+               &n_halos_1_matches,
+               &n_halos_2_matches,
+               n_particles_groups,
+               NULL,
+               n_subgroups_group[0],
+               n_subgroups_group[1],
+               match_id,
+               match_score,
+               match_index);
   for(i_search=1;i_search<n_wrap;i_search++)
     memcpy(n_subgroups_group[i_search],n_subgroups_group[0],n_halos_1_matches*sizeof(int));
 
@@ -1522,18 +1311,18 @@ void compute_trees_horizontal(char   *filename_halo_root_in,
   }
 
   // Initialize everything to a 1:1 simple match
-  read_matches_local(filename_root_matches,
-                     i_read_stop,i_read_stop-i_read_step,
-                     MATCH_SUBGROUPS,
-                     &n_halos_1_matches,
-                     &n_halos_2_matches,
-                     n_particles_subgroups,
-                     NULL,
-                     NULL,
-                     NULL,
-                     match_id,
-                     match_score,
-                     match_index);
+  read_matches(filename_root_matches,
+               i_read_stop,i_read_stop-i_read_step,
+               MATCH_SUBGROUPS,
+               &n_halos_1_matches,
+               &n_halos_2_matches,
+               n_particles_subgroups,
+               NULL,
+               NULL,
+               NULL,
+               match_id,
+               match_score,
+               match_index);
                      
   for(i_halo=0,j_halo=0,k_halo=0,max_id_subgroup=0,max_tree_id_subgroup=0;i_halo<n_subgroups_max;i_halo++,j_halo++){
      if(j_halo>n_subgroups_group[0][k_halo] && i_halo<n_halos_1_matches){
@@ -1691,18 +1480,18 @@ void compute_trees_horizontal(char   *filename_halo_root_in,
              SID_log("Counting matches between files %d->%d...",SID_LOG_OPEN,j_read_1,j_read_2);
 
              // Read back-matching
-             read_matches_local(filename_root_matches,
-                                j_read_1,j_read_2,
-                                flag_match_subgroups,
-                                &n_halos_1_matches,
-                                &n_halos_2_matches,
-                                NULL,
-                                n_particles,
-                                NULL,
-                                NULL,
-                                match_id,
-                                match_score,
-                                match_index);
+             read_matches(filename_root_matches,
+                          j_read_1,j_read_2,
+                          flag_match_subgroups,
+                          &n_halos_1_matches,
+                          &n_halos_2_matches,
+                          NULL,
+                          n_particles,
+                          NULL,
+                          NULL,
+                          match_id,
+                          match_score,
+                          match_index);
 
              // Store halo sizes
              if(i_search==0){
@@ -1734,7 +1523,7 @@ void compute_trees_horizontal(char   *filename_halo_root_in,
              halos_i[i_halo].n_bridges =0;
           }
 
-          //    ... third, assemble the list of unique halos.
+          //    ... third, assemble the list of unique back-matched halos.
           for(j_file_1  =i_file+1,
                 j_file_2=i_file,
                 j_read_1=i_read+i_read_step,
@@ -1748,26 +1537,29 @@ void compute_trees_horizontal(char   *filename_halo_root_in,
              SID_log("Finding unique matches between files %d->%d...",SID_LOG_OPEN,j_read_1,j_read_2);
           
              // Read back-matching
-             read_matches_local(filename_root_matches,
-                                j_read_1,j_read_2,
-                                flag_match_subgroups,
-                                &n_halos_1_matches,
-                                &n_halos_2_matches,
-                                NULL,
-                                NULL,
-                                NULL,
-                                NULL,
-                                match_id,
-                                match_score,
-                                match_index);
+             read_matches(filename_root_matches,
+                          j_read_1,j_read_2,
+                          flag_match_subgroups,
+                          &n_halos_1_matches,
+                          &n_halos_2_matches,
+                          NULL,
+                          NULL,
+                          NULL,
+                          NULL,
+                          match_id,
+                          match_score,
+                          match_index);
                              
              // For all the halos in i_file_1 with back-matches ...
              for(i_halo=0;i_halo<n_halos_i;i_halo++){
                 if((halos_i[i_halo].bridges)!=NULL){
+                   // Scan over the list of halos from snapshot=j_read_1 
+                   //   that match this halo in j_read_2 ...
                    bridges=halos_i[i_halo].bridges;
                    j_halo =find_index_int(match_id,i_halo,n_halos_1_matches,match_index);
+                   // Loop over all but the last halo in the list ...
                    while(match_id[match_index[j_halo]]==i_halo && j_halo<(n_halos_1_matches-1)){
-                      // Check to see if this halo is already in the list ...
+                      // Check to see if this halo is already in the bridge list ...
                       for(k_halo=0,flag_continue=TRUE;k_halo<halos_i[i_halo].n_bridges && flag_continue;k_halo++){
                          if(bridges[k_halo].halo->id==halos[j_file_1%n_wrap][match_index[j_halo]].id)
                             flag_continue=FALSE;
@@ -1780,6 +1572,7 @@ void compute_trees_horizontal(char   *filename_halo_root_in,
                       }
                       j_halo++;
                    }
+                   // ... then do the last halo in the list ...
                    if(match_id[match_index[j_halo]]==i_halo && j_halo==(n_halos_1_matches-1)){
                       // Check to see if this halo is already in the list ...
                       for(k_halo=0,flag_continue=TRUE;k_halo<halos_i[i_halo].n_bridges && flag_continue;k_halo++){
@@ -1807,7 +1600,8 @@ void compute_trees_horizontal(char   *filename_halo_root_in,
                 // We may need to remove several halos from the list.  This array will keep track of this.
                 bridge_keep=(int *)SID_malloc(sizeof(int)*halos_i[i_halo].n_bridges);
 
-                // Reorder the bridges by their score.  We make a temporary copy of the list to do this.
+                // Reorder the bridges by their score.  We make a temporary copy of the list 
+                //   to do this and initially set all bridges as halos to keep..
                 bridges=(bridge_info *)SID_calloc(sizeof(bridge_info)*(halos_i[i_halo].n_bridges));
                 for(j_halo=0;j_halo<halos_i[i_halo].n_bridges;j_halo++){
                    bridge=&(halos_i[i_halo].bridges[j_halo]);
@@ -1908,18 +1702,18 @@ void compute_trees_horizontal(char   *filename_halo_root_in,
              i_search++){
 
           // Read forward-matching
-          read_matches_local(filename_root_matches,
-                             j_read_1,j_read_2,
-                             flag_match_subgroups,
-                             &n_halos_1_matches,
-                             &n_halos_2_matches,
-                             n_particles,
-                             NULL,
-                             n_subgroups_group[j_file_1%n_wrap],
-                             n_subgroups_group[j_file_2%n_wrap],
-                             match_id,
-                             match_score,
-                             match_index);
+          read_matches(filename_root_matches,
+                       j_read_1,j_read_2,
+                       flag_match_subgroups,
+                       &n_halos_1_matches,
+                       &n_halos_2_matches,
+                       n_particles,
+                       NULL,
+                       n_subgroups_group[j_file_1%n_wrap],
+                       n_subgroups_group[j_file_2%n_wrap],
+                       match_id,
+                       match_score,
+                       match_index);
 
           // Store halo sizes
           if(!flag_fix_bridges){
@@ -2207,7 +2001,8 @@ void compute_trees_horizontal(char   *filename_halo_root_in,
        l_write++;
        j_write-=i_read_step;
     }
-    
+//if(i_read<=828) SID_exit(ERROR_NONE);  
+
     SID_log("Done.",SID_LOG_CLOSE);
   } // loop over snaps
 

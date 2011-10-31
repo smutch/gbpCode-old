@@ -9,10 +9,13 @@ OBJFILES  = compute_trees_matches.o    \
 	    finalize_trees_vertical.o  \
 	    write_trees_vertical.o     \
 	    read_AHF_for_trees.o       \
+	    read_matches.o             \
 	    read_trees.o               
 LIBFILE   = libgbpTrees.a
 BINFILES  = tree_stats                 \
+	    query_match_file           \
 	    make_trees                 \
+	    make_trees_matches         \
 	    make_trees_vertical        \
 	    make_trees_horizontal      \
 	    convert_Bolshoi            \

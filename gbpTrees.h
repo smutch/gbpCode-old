@@ -61,16 +61,14 @@ struct tree_horizontal_info{
   int          type;               // A flag list characterising this halo's matching
   int          file;               // This halo's file number
   int          n_particles;        // Number of particles in this halo
-  int          n_particles_parent; // Number of particles in this halo's parent
+  int          n_particles_parent; // Number of particles in this halo's parent halo
   int          n_bridges;          // The number of bridges back-matched to this halo
   int          n_progenitors;      // The number of progenitors pointing to this halo
-  float        progenitor_score;   // Match score of this halo to it's progenitor
-  float        descendant_score;   // Match score of this halo to it's descendant
   size_t       index;              // This halo's file index
   match_info   first_progenitor;   // Pointer to this halo's first progenitor
   match_info   last_progenitor;    // Pointer to this halo's last  progenitor
   match_info   next_progenitor;    // Pointer to this halo's next  progenitor
-  match_info   main_progenitor;    // Pointer to this halo's main  progenitor
+  //match_info   main_progenitor;    // Pointer to this halo's main  progenitor
   bridge_info *bridges;            // Contains the pointer information for all of the back-matches to this halo
   match_info   bridge_forematch;   // Pointer to a possible initial match to a bridged halo
   match_info   bridge_backmatch;   // Pointer to a possible back-matched bridged halo
@@ -110,7 +108,19 @@ void read_trees(char             *filename_trees_root,
                 int               i_file_stop,
                 int               mode,
                 tree_node_info  **trees);
-
+void read_matches(char    *filename_root_matches,
+                  int      i_read,
+                  int      j_read,
+                  int      mode,
+                  int     *n_groups_i,
+                  int     *n_groups_j,
+                  int     *n_particles_i,
+                  int     *n_particles_j,
+                  int     *n_sub_group_i,
+                  int     *n_sub_group_j,
+                  int     *match_ids,
+                  float   *match_score,
+                  size_t  *match_index);
 void compute_trees_matches(char   *filename_halo_root_in,
                            char   *filename_root_out,
                            int     i_read_stop,
