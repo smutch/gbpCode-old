@@ -24,7 +24,8 @@ void read_groups(char        *filename_groups_root,
   int     i_rank;
   int     i_group;
   int     j_group;
-  int     rank_offset;
+  int     rank_offset_groups;
+  int     rank_offset_subgroups;
   size_t  n_particles;
   size_t  n_particles_left;
   int     n_particles_group;
@@ -81,6 +82,7 @@ void read_groups(char        *filename_groups_root,
   int test_max;
 
   SID_profile_start("read_groups",SID_PROFILE_DEFAULT);
+  //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
   // Set filenames
   sprintf(filename_cat,      "%03d",                   i_file);
@@ -174,33 +176,39 @@ void read_groups(char        *filename_groups_root,
         SID_Bcast(n_subgroups_rank, SID.n_proc*sizeof(int),    MASTER_RANK,SID.COMM_WORLD);
         SID_Bcast(n_particles_rank, SID.n_proc*sizeof(size_t), MASTER_RANK,SID.COMM_WORLD);
 
-        // Compute group offsets for this rank
-        for(i_rank=0,rank_offset=0;i_rank<SID.My_rank;i_rank++) 
-          rank_offset+=n_groups_rank[i_rank];
+        // Compute group and subgroup offsets for this rank
+        for(i_rank=0,rank_offset_groups=0;i_rank<SID.My_rank;i_rank++)
+          rank_offset_groups+=n_groups_rank[i_rank];
+        for(i_rank=0,rank_offset_subgroups=0;i_rank<SID.My_rank;i_rank++)
+          rank_offset_subgroups+=n_subgroups_rank[i_rank];
 
         // Store results
-        ADaPS_store(&(plist->data),(void *)(&(group_length[rank_offset])),     "n_particles_group_%s",    ADaPS_COPY_SUBARRAY_INT,n_groups_rank[i_rank],catalog_name);
-        ADaPS_store(&(plist->data),(void *)(&(group_offsets[rank_offset])),    "particle_offset_group_%s",ADaPS_COPY_SUBARRAY_INT,n_groups_rank[i_rank],catalog_name);
-        ADaPS_store(&(plist->data),(void *)(&(n_subgroups_group[rank_offset])),"n_subgroups_group_%s",    ADaPS_COPY_SUBARRAY_INT,n_groups_rank[i_rank],catalog_name);
+        ADaPS_store(&(plist->data),(void *)(&(rank_offset_groups)),                   "rank_offset_group_%s",    ADaPS_SCALAR_INT,   catalog_name);
+        ADaPS_store(&(plist->data),(void *)(&(rank_offset_subgroups)),                "rank_offset_subgroup_%s", ADaPS_SCALAR_INT,   catalog_name);
+        ADaPS_store(&(plist->data),(void *)(&(group_length[rank_offset_groups])),     "n_particles_group_%s",    ADaPS_COPY_SUBARRAY_INT,n_groups_rank[i_rank],catalog_name);
+        ADaPS_store(&(plist->data),(void *)(&(group_offsets[rank_offset_groups])),    "particle_offset_group_%s",ADaPS_COPY_SUBARRAY_INT,n_groups_rank[i_rank],catalog_name);
+        ADaPS_store(&(plist->data),(void *)(&(n_subgroups_group[rank_offset_groups])),"n_subgroups_group_%s",    ADaPS_COPY_SUBARRAY_INT,n_groups_rank[i_rank],catalog_name);
         SID_free((void **)(&group_length));     group_length     =(int *)ADaPS_fetch(plist->data,"n_particles_group_%s",    catalog_name);
         SID_free((void **)(&group_offsets));    group_offsets    =(int *)ADaPS_fetch(plist->data,"particle_offset_group_%s",catalog_name);
         SID_free((void **)(&n_subgroups_group));n_subgroups_group=(int *)ADaPS_fetch(plist->data,"n_subgroups_group_%s",    catalog_name);
 
         // Transform global offsets to local offsets
-        for(i_group=0,offset_0=group_offsets[0];i_group<n_groups_rank[i_rank];i_group++)
-          group_offsets[i_group]-=offset_0;
+        if(n_groups_rank[i_rank]>0){
+          for(i_group=0,offset_0=group_offsets[0];i_group<n_groups_rank[i_rank];i_group++)
+            group_offsets[i_group]-=offset_0;
+        }
 
         SID_log("Done. (%d groups)",SID_LOG_CLOSE,n_groups);
       }
       else
         SID_log("NO GROUPS TO READ!",SID_LOG_CLOSE);
       // Store results
-      ADaPS_store(&(plist->data),(void *)(&(n_groups_rank[SID.My_rank])),   "n_groups_%s",       ADaPS_SCALAR_INT,   catalog_name);
-      ADaPS_store(&(plist->data),(void *)(&(n_groups)),                     "n_groups_all_%s",   ADaPS_SCALAR_INT,   catalog_name);
-      ADaPS_store(&(plist->data),(void *)(&(n_subgroups_rank[SID.My_rank])),"n_subgroups_%s",    ADaPS_SCALAR_INT,   catalog_name);
-      ADaPS_store(&(plist->data),(void *)(&(n_subgroups)),                  "n_subgroups_all_%s",ADaPS_SCALAR_INT,   catalog_name);
-      ADaPS_store(&(plist->data),(void *)(&(n_particles_rank[SID.My_rank])),"n_particles_%s",    ADaPS_SCALAR_SIZE_T,catalog_name);
-      ADaPS_store(&(plist->data),(void *)(&(n_particles)),                  "n_particles_all_%s",ADaPS_SCALAR_SIZE_T,catalog_name);
+      ADaPS_store(&(plist->data),(void *)(&(n_groups_rank[SID.My_rank])),   "n_groups_%s",          ADaPS_SCALAR_INT,   catalog_name);
+      ADaPS_store(&(plist->data),(void *)(&(n_groups)),                     "n_groups_all_%s",      ADaPS_SCALAR_INT,   catalog_name);
+      ADaPS_store(&(plist->data),(void *)(&(n_subgroups_rank[SID.My_rank])),"n_subgroups_%s",       ADaPS_SCALAR_INT,   catalog_name);
+      ADaPS_store(&(plist->data),(void *)(&(n_subgroups)),                  "n_subgroups_all_%s",   ADaPS_SCALAR_INT,   catalog_name);
+      ADaPS_store(&(plist->data),(void *)(&(n_particles_rank[SID.My_rank])),"n_particles_%s",       ADaPS_SCALAR_SIZE_T,catalog_name);
+      ADaPS_store(&(plist->data),(void *)(&(n_particles)),                  "n_particles_all_%s",   ADaPS_SCALAR_SIZE_T,catalog_name);
       fclose(fp);
     }
     else
@@ -225,14 +233,14 @@ void read_groups(char        *filename_groups_root,
         subgroup_offset=(int *)SID_malloc(sizeof(int)*n_subgroups_rank[SID.My_rank]);
         // Read subgroup lengths
         for(i_rank=0;i_rank<SID.n_proc;i_rank++){
-          if(i_rank==SID.My_rank)
+          if(i_rank==SID.My_rank && n_subgroups_rank[i_rank]>0)
             fread(subgroup_length,sizeof(int),n_subgroups_rank[i_rank],fp);
           else
             fseeko(fp,n_subgroups_rank[i_rank]*sizeof(int),SEEK_CUR);
         }
         // Read subgroup offsets
         for(i_rank=0;i_rank<SID.n_proc;i_rank++){
-          if(i_rank==SID.My_rank){
+          if(i_rank==SID.My_rank && n_subgroups_rank[i_rank]>0){
             fread(subgroup_offset,sizeof(int),n_subgroups_rank[i_rank],fp);
             // Transform global offsets to local offsets
             for(i_group=0,offset_0=subgroup_offset[0];i_group<n_subgroups_rank[i_rank];i_group++)
@@ -244,9 +252,7 @@ void read_groups(char        *filename_groups_root,
         // Count substructure particles
         for(i_group=0,n_particles=0;i_group<n_subgroups_rank[SID.My_rank];i_group++)
           n_particles+=subgroup_length[i_group];
-#ifdef USE_MPI
-        MPI_Allreduce(MPI_IN_PLACE,&n_particles,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
-#endif
+        SID_Allreduce(SID_IN_PLACE,&n_particles,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
         // Store results
         ADaPS_store(&(plist->data),(void *)(subgroup_length),"n_particles_subgroup_%s",    ADaPS_DEFAULT,catalog_name);
         ADaPS_store(&(plist->data),(void *)(subgroup_offset),"particle_offset_subgroup_%s",ADaPS_DEFAULT,catalog_name);
@@ -302,6 +308,6 @@ void read_groups(char        *filename_groups_root,
   }
   
   SID_log("Done.",SID_LOG_CLOSE);
-  
+  //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);  
   SID_profile_stop(SID_PROFILE_DEFAULT);
 }

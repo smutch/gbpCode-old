@@ -18,12 +18,14 @@
 #define READ_GROUPS_NOPROPERTIES 32
 #define READ_GROUPS_NOIDS        64
 
-#define MATCH_SUBGROUPS     2 // Match subgroups (default)
-#define MATCH_GROUPS        4 // Match groups
-#define MATCH_BACK          8 // Switch the sence of matching between plists
-#define MATCH_STORE_2      16 // Switch which plist results are stored in
-#define MATCH_STORE_SCORE  32 // Store the matching score
-#define MATCH_SUBSTRUCTURE 64 // Search for substructure; ie. ignore self matches
+#define MATCH_SUBGROUPS       2 // Match subgroups (default)
+#define MATCH_GROUPS          4 // Match groups
+#define MATCH_BACK            8 // Switch the sence of matching between plists
+#define MATCH_STORE_2        16 // Switch which plist results are stored in
+#define MATCH_STORE_SCORE    32 // Store the matching score
+#define MATCH_SUBSTRUCTURE   64 // Search for substructure; ie. ignore self matches
+#define MATCH_APPLY_OFFSETS 128 // When matching across multiple cores, apply
+                                //   rank offsets so that match_ids are global indices
 
 typedef struct halo_properties_info halo_properties_info;
 struct halo_properties_info{
