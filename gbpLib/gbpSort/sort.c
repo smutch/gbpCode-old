@@ -6,13 +6,13 @@
 #include <gbpSID.h>
 #include <gbpSort.h>
 
-void sort(void    *sval,
-	  size_t   nval,
-	  size_t **index,
-	  int      type,
-	  int      flag_local,
-	  int      flag_compute_index,
-	  int      flag_in_place){
+void sort(void          *sval,
+	  size_t         nval,
+	  size_t       **index,
+	  SID_Datatype   data_type,
+	  int            flag_local,
+	  int            flag_compute_index,
+	  int            flag_in_place){
   int     i_rank;
   int     j_rank;
   int     rank_send_to;
@@ -23,22 +23,24 @@ void sort(void    *sval,
   size_t  nval_all;
   size_t *index_tmp;
   size_t *increment;
+  int     data_type_size_i;
+  size_t  data_type_size;
   void   *sval_tmp;
+
+  //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+  SID_log("Performing sort...",SID_LOG_OPEN|SID_LOG_TIMER);
 
   // Process passed arguments:
   //   ... check for nonsensical flag combinations
-  if(flag_local        ==SORT_GLOBAL && 
-     flag_compute_index!=SORT_COMPUTE_RANK)
-    fprintf(stderr,"ERROR: Global sorts returning indices are not possible.\n");
-  else if(flag_local   ==SORT_GLOBAL && 
-	  flag_in_place!=SORT_COMPUTE_NOT_INPLACE)
-    fprintf(stderr,"ERROR: Global in-place sorts are not possible.\n");
+  if(flag_local   ==SORT_GLOBAL && 
+     flag_in_place!=SORT_COMPUTE_NOT_INPLACE)
+    SID_trap_error("Global in-place sorts are not possible.",ERROR_LOGIC);
   //   ... use a heap_sort for most situations (it uses less RAM!)
-  else if(flag_local==SORT_LOCAL){
+  else if(flag_local==SORT_LOCAL || SID.n_proc==1){
     heap_sort(sval,
 	      nval,
 	      index,
-	      type,
+	      data_type,
 	      flag_compute_index,
 	      flag_in_place);
   }
@@ -47,191 +49,62 @@ void sort(void    *sval,
     // Rank local array in ascending order; must
     //   use merge_sort (despite extra RAM use) 
     //   because it is "stable"
+    SID_log("Sorting local items...",SID_LOG_OPEN|SID_LOG_TIMER);
     merge_sort(sval,
 	       nval,
 	       index,
-	       type,
+	       data_type,
 	       SORT_COMPUTE_RANK,
 	       SORT_COMPUTE_NOT_INPLACE);
+    SID_log("Done.",SID_LOG_CLOSE);
 
     // If this is being run in parallel, consider
     //   the arrays on the other ranks as well
     //   if flag_local is set to SORT_GLOBAL
-    #ifdef USE_MPI
+    #if USE_MPI
     if(flag_local==SORT_GLOBAL && SID.n_proc>1){
-      MPI_Allreduce(&nval,&nval_max,1,MPI_SIZE_T,MPI_MAX,MPI_COMM_WORLD);
-      switch(type){
-      case ADaM_INT:
-	sval_tmp=(void *)malloc(sizeof(int)*(nval+nval_max));
-	break;
-      case ADaM_LONG:
-	sval_tmp=(void *)malloc(sizeof(long)*(nval+nval_max));
-	break;
-      case ADaM_SIZE_T:
-	sval_tmp=(void *)malloc(sizeof(size_t)*(nval+nval_max));
-	break;
-      case ADaM_DOUBLE:
-	sval_tmp=(void *)malloc(sizeof(double)*(nval+nval_max));
-	break;
-      case ADaM_FLOAT:
-	sval_tmp=(void *)malloc(sizeof(float)*(nval+nval_max));
-	break;
-      }
-      increment=(size_t *)malloc(sizeof(size_t)*nval);
-      for(i=0;i<nval;i++) 
-	increment[i]=0;
-      rank_send_to     =SID.My_rank;
-      rank_receive_from=SID.My_rank;
-      for(i_rank=0;i_rank<SID.n_proc-1;i_rank++){
-	rank_send_to++;
-	rank_receive_from--;
-	if(rank_receive_from<0)      rank_receive_from+=SID.n_proc;
-	if(rank_send_to>=SID.n_proc) rank_send_to     -=SID.n_proc;
-	MPI_Send(&nval,
-		 1, 
-		 MPI_SIZE_T,
-		 rank_send_to,   
-		 0,
-		 MPI_COMM_WORLD);
-	MPI_Recv(&nval_tmp,  
-		 1,
-		 MPI_SIZE_T,
-		 rank_receive_from,
-		 MPI_ANY_TAG,
-		 MPI_COMM_WORLD, 
-		 MPI_STATUS_IGNORE);
-	MPI_Barrier(MPI_COMM_WORLD);
-	nval_all=nval+nval_tmp;
+      SID_log("Sorting distributed items...",SID_LOG_OPEN|SID_LOG_TIMER);
+      // ... get the largest number of items on any rank ...
+      SID_Allreduce(&nval,&nval_max,1,SID_SIZE_T,SID_MAX,SID.COMM_WORLD);
+      // ... get the size of our data-type ...
+      SID_Type_size(data_type,&data_type_size_i);
+      data_type_size=(size_t)data_type_size_i;
+      // ... create two temporary directories that are needed for the sort ...
+      sval_tmp =(void   *)SID_malloc((size_t)data_type_size*(nval+nval_max));
+      increment=(size_t *)SID_calloc(sizeof(size_t)*nval);
+
+      // ... perform exchanges and sorts ...
+      for(i_rank=1;i_rank<SID.n_proc;i_rank++){
+        SID_log("Rank exchange %d of %d...",SID_LOG_OPEN|SID_LOG_TIMER,i_rank,SID.n_proc-1);
+
 	// Ranks < My_rank are placed first in the new data list
 	//  so that duplicate entries are placed in a unique order
-	switch(type){
-	case ADaM_INT:
-	  MPI_Send(sval,
-		   nval, 
-		   MPI_INTEGER,
-		   rank_send_to,   
-		   0,
-		   MPI_COMM_WORLD);
-	  if(rank_receive_from<SID.My_rank){
-	    MPI_Recv(sval_tmp,  
-		     nval_tmp,
-		     MPI_INTEGER,
-		     rank_receive_from,
-		     MPI_ANY_TAG,
-		     MPI_COMM_WORLD, 
-		     MPI_STATUS_IGNORE);
-	    for(i=nval_tmp;i<nval_all;i++)
-	      ((int *)sval_tmp)[i]=((int *)sval)[i-nval_tmp];
-	  }
-	  else{
-	    MPI_Recv(&(((int *)sval_tmp)[nval]),  
-		     nval_tmp,
-		     MPI_INTEGER,
-		     rank_receive_from,
-		     MPI_ANY_TAG,
-		     MPI_COMM_WORLD, 
-		     MPI_STATUS_IGNORE);
-	    for(i=0;i<nval;i++)
-	      ((int *)sval_tmp)[i]=((int *)sval)[i];
-	  }
-	  break;
-	case ADaM_SIZE_T:
-	  MPI_Send(sval,
-		   nval, 
-		   MPI_SIZE_T,
-		   rank_send_to,   
-		   0,
-		   MPI_COMM_WORLD);
-	  if(rank_receive_from<SID.My_rank){
-	    MPI_Recv(sval_tmp,  
-		     nval_tmp,
-		     MPI_SIZE_T,
-		     rank_receive_from,
-		     MPI_ANY_TAG,
-		     MPI_COMM_WORLD, 
-		     MPI_STATUS_IGNORE);
-	    for(i=nval_tmp;i<nval_all;i++)
-	      ((size_t *)sval_tmp)[i]=((size_t *)sval)[i-nval_tmp];
-	  }
-	  else{
-	    MPI_Recv(&(((size_t *)sval_tmp)[nval]),  
-		     nval_tmp,
-		     MPI_SIZE_T,
-		     rank_receive_from,
-		     MPI_ANY_TAG,
-		     MPI_COMM_WORLD, 
-		     MPI_STATUS_IGNORE);
-	    for(i=0;i<nval;i++)
-	      ((size_t *)sval_tmp)[i]=((size_t *)sval)[i];
-	  }
-	  break;
-	case ADaM_DOUBLE:
-	  MPI_Send(sval,
-		   nval, 
-		   MPI_DOUBLE,
-		   rank_send_to,   
-		   0,
-		   MPI_COMM_WORLD);
-	  if(rank_receive_from<SID.My_rank){
-	    MPI_Recv(sval_tmp,  
-		     nval_tmp,
-		     MPI_DOUBLE,
-		     rank_receive_from,
-		     MPI_ANY_TAG,
-		     MPI_COMM_WORLD, 
-		     MPI_STATUS_IGNORE);
-	    for(i=nval_tmp;i<nval_all;i++)
-	      ((double *)sval_tmp)[i]=((double *)sval)[i-nval_tmp];
-	  }
-	  else{
-	    MPI_Recv(&(((double *)sval_tmp)[nval]),  
-		     nval_tmp,
-		     MPI_DOUBLE,
-		     rank_receive_from,
-		     MPI_ANY_TAG,
-		     MPI_COMM_WORLD, 
-		     MPI_STATUS_IGNORE);
-	    for(i=0;i<nval;i++)
-	      ((double *)sval_tmp)[i]=((double *)sval)[i];
-	  }
-	  break;
-	case ADaM_FLOAT:
-	  MPI_Send(sval,
-		   nval, 
-		   MPI_FLOAT,
-		   rank_send_to,   
-		   0,
-		   MPI_COMM_WORLD);
-	  if(rank_receive_from<SID.My_rank){
-	    MPI_Recv(sval_tmp,  
-		     nval_tmp,
-		     MPI_FLOAT,
-		     rank_receive_from,
-		     MPI_ANY_TAG,
-		     MPI_COMM_WORLD, 
-		     MPI_STATUS_IGNORE);
-	    for(i=nval_tmp;i<nval_all;i++)
-	      ((float *)sval_tmp)[i]=((float *)sval)[i-nval_tmp];
-	  }
-	  else{
-	    MPI_Recv(&(((float *)sval_tmp)[nval]),  
-		     nval_tmp,
-		     MPI_FLOAT,
-		     rank_receive_from,
-		     MPI_ANY_TAG,
-		     MPI_COMM_WORLD, 
-		     MPI_STATUS_IGNORE);
-	    for(i=0;i<nval;i++)
-	      ((float *)sval_tmp)[i]=((float *)sval)[i];
-	  }
-	  break;
-	}
-	MPI_Barrier(MPI_COMM_WORLD);
+        set_exchange_ring_ranks(&rank_send_to,&rank_receive_from,i_rank);
+        if(rank_receive_from<SID.My_rank){
+           exchange_ring_buffer(sval,
+                                data_type_size,
+                                nval,
+                                sval_tmp,
+                                &nval_tmp,
+                                i_rank);
+           memcpy(&(((char *)sval_tmp)[nval_tmp*data_type_size]),sval,nval*data_type_size);
+        }
+        else{
+           exchange_ring_buffer(sval,
+                                data_type_size,
+                                nval,
+                                &(((char *)sval_tmp)[nval*data_type_size]),
+                                &nval_tmp,
+                                i_rank);
+           memcpy(sval_tmp,sval,nval*data_type_size);
+        }
+        nval_all=nval+nval_tmp;
 
+        // A STABLE sort algorythm MUST be used here!
 	merge_sort(sval_tmp,
 		   nval_all,
 		   &index_tmp,
-		   type,
+		   data_type,
 		   SORT_COMPUTE_RANK,
 		   SORT_COMPUTE_INPLACE);
 
@@ -246,14 +119,68 @@ void sort(void    *sval,
 	  for(i=0,j=0;i<nval;i++)
 	    increment[i]+=index_tmp[i]-(*index)[i];
 	}
-	free(index_tmp);
-      }
+
+        // Free sort ranks
+	SID_free(SID_FARG index_tmp);
+        SID_log("Done.",SID_LOG_CLOSE);
+      } // loop over ranks
+
       for(i=0;i<nval;i++)
 	(*index)[i]+=increment[i];
     
-      free(increment);
-      free(sval_tmp);
+      SID_free(SID_FARG increment);
+      SID_free(SID_FARG sval_tmp);
+      SID_log("Done.",SID_LOG_CLOSE);
+    } // if rank exchange is needed
+
+    if(flag_local        ==SORT_GLOBAL && 
+       flag_compute_index!=SORT_COMPUTE_RANK){
+      size_t *sort_ranks;
+      SID_log("Generating sort indices from sort ranks...",SID_LOG_OPEN|SID_LOG_TIMER);
+      // ... get the largest number of items on any rank ...
+      SID_Allreduce(&nval,&nval_max,1,SID_SIZE_T,SID_MAX,SID.COMM_WORLD);
+      // ... get the size of our data-type ...
+      SID_Type_size(data_type,&data_type_size_i);
+      data_type_size=(size_t)data_type_size_i;
+      // ... determine what the first element of the sort indices
+      //     is for each rank ..
+      size_t first_index;
+      for(i_rank=0,first_index=0;i_rank<SID.n_proc;i_rank++){
+        nval_tmp=nval;
+        SID_Bcast(&nval_tmp,sizeof(size_t),i_rank,SID.COMM_WORLD);
+        if(i_rank<SID.My_rank)
+          first_index+=nval_tmp;
+      }
+      // ... move the sort ranks (generated above) to a temp array and allocate
+      //     a new array for the sort indices ...
+      size_t *rank_rank;
+      size_t  offset;
+      size_t  i_val;
+      sort_ranks=(*index);
+      (*index)  =(size_t *)SID_malloc(sizeof(size_t)*nval);
+      rank_rank =(size_t *)SID_malloc(sizeof(size_t)*nval_max);
+      // ... perform exchanges and set indices ...
+      for(i_rank=0,offset=0;i_rank<SID.n_proc;i_rank++){
+        nval_tmp=nval;
+        SID_Bcast(&nval_tmp,sizeof(size_t),i_rank,SID.COMM_WORLD);
+        if(i_rank==SID.My_rank)
+           memcpy(rank_rank,sort_ranks,nval*sizeof(size_t));
+        SID_Bcast(rank_rank,nval_tmp*sizeof(size_t),i_rank,SID.COMM_WORLD);
+        // ... scan the sort ranks we've just received and see if any of them
+        //     are supposed to be pointed to by the indices stored locally ...
+        for(i_val=0;i_val<nval_tmp;i_val++){
+          rank_rank[i_val]-=first_index;
+          if(rank_rank[i_val]>=0 && rank_rank[i_val]<nval)
+            (*index)[rank_rank[i_val]]=offset+i_val;
+        }
+        offset+=nval_tmp;
+      }
+
+      SID_free(SID_FARG sort_ranks);
+      SID_free(SID_FARG rank_rank);
+      SID_log("Done.",SID_LOG_CLOSE);
     }
     #endif
   }
+  SID_log("Done.",SID_LOG_CLOSE);
 }

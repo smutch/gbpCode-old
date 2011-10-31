@@ -3,7 +3,8 @@
 #############################
 INCFILES  = gbpSort.h
 OBJFILES  = heap_sort.o  \
-	    merge_sort.o 
+	    merge_sort.o \
+	    sort.o
 LIBFILE   = 
 BINFILES  = 
 LIBS      = 

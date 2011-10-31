@@ -30,23 +30,18 @@ void exchange_ring_buffer(void     *send_buffer,
   send_buffer_size=send_count*buffer_type_size;
   if(send_buffer==NULL || send_buffer_size<=0)
     send_buffer_size=0;
+  set_exchange_ring_ranks(&rank_to,&rank_from,i_rank);
   if(i_rank!=0){
-    rank_to=SID.My_rank-i_rank;
-    if(rank_to<0)                rank_to+=SID.n_proc;
-    else if(rank_to>=SID.n_proc) rank_to-=SID.n_proc;
-    rank_from=SID.My_rank+i_rank;
-    if(rank_from<0)                rank_from+=SID.n_proc;
-    else if(rank_from>=SID.n_proc) rank_from-=SID.n_proc;
     MPI_Sendrecv(&send_count,
                  1,
                  MPI_SIZE_T,
                  rank_to,
-                 1236269,
+                 1236267,
                  receive_count,
                  1,
                  MPI_SIZE_T,
                  rank_from,
-                 1236269,
+                 1236267,
                  MPI_COMM_WORLD,
                  MPI_STATUS_IGNORE);
     receive_buffer_size=(*receive_count)*buffer_type_size;

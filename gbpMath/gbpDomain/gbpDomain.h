@@ -76,6 +76,9 @@ void init_field(int       n_d,
                 field_info *FFT);
 void free_field(field_info *FFT);
 void clear_field(field_info *FFT);
+void set_exchange_ring_ranks(int *rank_to,
+                             int *rank_from,
+                             int  i_rank);
 void exchange_ring_buffer(void     *send_buffer,
                           size_t    buffer_type_size,
                           size_t    send_count,

@@ -3,7 +3,8 @@
 #############################
 INCFILES  = gbpDomain.h
 LIBFILE   = 
-OBJFILES  = exchange_ring_buffer.o        \
+OBJFILES  = set_exchange_ring_ranks.o     \
+	    exchange_ring_buffer.o        \
 	    exchange_slab_buffer_left.o   \
 	    exchange_slab_buffer_right.o  \
 	    clear_field.o                 \
