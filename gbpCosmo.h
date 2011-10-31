@@ -21,10 +21,14 @@
 #define DELTA_BRYAN_NORMAN 0
 #define DELTA_LINEAR       1
 
+#define DELTAT_A_MIN_A     1e-5
+
 typedef ADaPS cosmo_info;
 
 double a_of_z(double z);
 double z_of_a(double a);
+void init_deltat_a(cosmo_info **cosmo);
+double deltat_a(cosmo_info **cosmo,double a_1,double a_2);
 double R_Delta_z(double      M_Delta,
 		 double      Delta,
 		 double      redshift,
