@@ -448,6 +448,7 @@ $(BINFILES): $(LIBFILE)
 ifneq ($(USE_CUDA),0)
 	@echo -n "Compiling "$@"..."
 	@$(CC_CUDA) $(CCFLAGS) $(CCFLAGS_CUDA) -c $*.cu
+	@mv $*.o $*.ou
 	@echo "Done."
 else
 	 @echo "Skipping "$@" (USE_CUDA is off)"
