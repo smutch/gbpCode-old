@@ -71,13 +71,24 @@ ifndef GBP_BIN
 endif
 export GBP_BIN
 
-# We need to tag-on the /mpi/ if USE_MPI=1
-ifeq ($(USE_MPI),1)
-  GBP_BIN_LOCAL:= $(GBP_BIN)/mpi/
-  GBP_LIB_LOCAL:= $(GBP_LIB)/mpi/
+# Are we using CUDA?
+ifeq ($(USE_CUDA),1)
+  CC_CUDA=nvcc
+endif
+
+# We need to tag-on the /cuda/ if USE_CUDA=1
+ifeq ($(USE_CUDA),1)
+  GBP_BIN_LOCAL:= $(GBP_BIN)/cuda/
+  GBP_LIB_LOCAL:= $(GBP_LIB)/cuda/
 else
   GBP_BIN_LOCAL:= $(GBP_BIN)/
   GBP_LIB_LOCAL:= $(GBP_LIB)/
+endif
+
+# We need to tag-on the /mpi/ if USE_MPI=1
+ifeq ($(USE_MPI),1)
+  GBP_BIN_LOCAL:= $(GBP_BIN_LOCAL)/mpi/
+  GBP_LIB_LOCAL:= $(GBP_LIB_LOCAL)/mpi/
 endif
 export GBP_BIN_LOCAL
 export GBP_LIB_LOCAL
@@ -93,6 +104,15 @@ endif
 CCFLAGS := $(CCFLAGS) -I$(GBP_INC) -O2
 LDFLAGS := $(LDFLAGS) -L$(GBP_LIB_LOCAL)  
 
+# Filter-out Cuda files if USE_CUDA!=1
+ifneq ($(USE_CUDA),1)
+	OBJEXCLUDE:=$(patsubst %.o,%.ou,$(OBJFILES))
+	OBJFILES_LIB:=$(filter-out $(OBJEXCLUDE),$(OBJFILES))
+else
+	OBJFILES_LIB:=$(OBJFILES)
+endif
+
+
 # Fill a file with a list of all the object files that
 #   will contribute to this directory's archive (if defined)
 ifneq ($(strip $(LIBFILE)),)
@@ -101,7 +121,7 @@ ifneq ($(strip $(LIBFILE)),)
   $(shell touch $(LIBOBJSFILE))
   MAKE:=$(MAKE) LIBOBJSFILE=$(LIBOBJSFILE)
 endif
-LISTOBJ:=$(addprefix $(shell pwd)/,$(OBJFILES))' '
+LISTOBJ:=$(addprefix $(shell pwd)/,$(OBJFILES_LIB))' '
 objfiles = $(shell cat $(LIBOBJSFILE))
 
 # Set library information
@@ -111,6 +131,9 @@ include $(GBP_SRC)/Makefile.libs
 ifeq ($(USE_DEBUGGER),1)
   CCFLAGS := $(CCFLAGS) -g
   LDFLAGS := $(LDFLAGS) -g
+  ifeq ($(USE_CUDA),1)
+    CCFLAGS_CUDA := $(CCFLAGS_CUDA) -G
+  endif
 endif
 export USE_DEBUGGER
 
@@ -162,7 +185,7 @@ clean:                 build_libobjsfile subdirs_clean
 
 build_libobjsfile:
 ifdef LIBOBJSFILE
-	@echo -n $(LISTOBJ)" " >> $(LIBOBJSFILE)
+	@echo -n $(LISTOBJ_LIB)" " >> $(LIBOBJSFILE)
 endif
 
 # Print a status message
@@ -415,4 +438,18 @@ $(BINFILES): $(LIBFILE)
 	@echo -n "Compiling "$@"..."
 	@$(CC) $(CCFLAGS) -c $*.c
 	@echo "Done."
+
+# Generate CUDA object files (implicit rule)
+%.ou: %.cu $(INCFILES) $(DEPENCIES) $(LIBTOUCH2)
+	@i=1 ; while [[ $$i -le $(MAKELEVEL) ]] ; do \
+		echo -n "  " ; \
+		((i = i + 1)) ; \
+	done
+ifneq ($(USE_CUDA),0)
+	@echo -n "Compiling "$@"..."
+	@$(CC_CUDA) $(CCFLAGS) $(CCFLAGS_CUDA) -c $*.cu
+	@echo "Done."
+else
+	 @echo "Skipping "$@" (USE_CUDA is off)"
+endif
 
