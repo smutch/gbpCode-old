@@ -112,7 +112,6 @@ else
 	OBJFILES_LIB:=$(OBJFILES)
 endif
 
-
 # Fill a file with a list of all the object files that
 #   will contribute to this directory's archive (if defined)
 ifneq ($(strip $(LIBFILE)),)
@@ -125,6 +124,7 @@ LISTOBJ:=$(addprefix $(shell pwd)/,$(OBJFILES_LIB))' '
 objfiles = $(shell cat $(LIBOBJSFILE))
 
 # Set library information
+export LIBS
 include $(GBP_SRC)/Makefile.libs
 
 # Turn on debugging information
@@ -185,7 +185,7 @@ clean:                 build_libobjsfile subdirs_clean
 
 build_libobjsfile:
 ifdef LIBOBJSFILE
-	@echo -n $(LISTOBJ_LIB)" " >> $(LIBOBJSFILE)
+	@echo -n $(LISTOBJ)" " >> $(LIBOBJSFILE)
 endif
 
 # Print a status message

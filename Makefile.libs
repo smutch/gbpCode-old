@@ -3,8 +3,7 @@
 # This file sets the library information needed in CCFLAGS and LDFLAGS
 # for the gbpCode Makefile
 #
-# YOU REALLY SHOULDN'T NEED TO EDIT THIS FILE UNLESS YOU ARE ADDING
-# NEW LIBRARIES TO THE LIST OF LIBRARIES USED BY THE gbpCode CODE BASE.
+# YOU REALLY SHOULDN'T NEED TO EDIT THIS FILE!
 #
 #----------------------------------------------------------------------
 
@@ -49,6 +48,7 @@ endif
 ifndef USE_CUDA
   USE_CUDA    =0
 endif
+export USE_CUDA
 
 # Add valgrind
 ifndef USE_VALGRIND
