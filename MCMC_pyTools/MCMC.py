@@ -167,8 +167,8 @@ class MCMCrun(object):
             p_y  - Index of the y-axis parameter
             swap - Swap the axis round (true/false)
 
-        Returns:
-            coverage_lo, coverage_hi, conf_68pc, conf_95pc, coverage_1, coverage_0, coverage_P
+        Returns a dict with the following entries:
+            conf_68pc, conf_95pc, coverage_1, coverage_0, coverage_P
         """
 
         fd=open(self.filename_root+'/results/coverage.dat','rb')
@@ -177,8 +177,6 @@ class MCMCrun(object):
         self.coverage_min =np.fromfile(file=fd,dtype='d',count=self.n_P)
         self.coverage_max =np.fromfile(file=fd,dtype='d',count=self.n_P)
         coverage_size = self.coverage_size
-        coverage_lo  =0
-        coverage_hi  =10*self.n_integrate/(coverage_size*coverage_size)
 
         jj=0
         for jj in xrange(0,p_x):
@@ -208,8 +206,90 @@ class MCMCrun(object):
 
         fd.close()
 
-        return coverage_lo, coverage_hi, conf_68pc, conf_95pc, coverage_1, coverage_0, coverage_P
+        coverage_dict = {
+                'conf_68pc':conf_68pc,
+                'conf_95pc':conf_95pc,
+                'coverage_1':coverage_1,
+                'coverage_0':coverage_0,
+                'coverage_P':coverage_P
+                }
 
+        return coverage_dict
+
+
+    def read_best_fit_params(self):
+
+        """ Read in and return the best fit parameters. """
+
+        lP_best  = []
+
+        for line in file(self.filename_root+'/results/fit_for_parameters.dat'):
+            line = line.split()
+            if(line[0][0]!='#'):
+                lP_best.append(line[4])
+            self.P_best =np.array(lP_best,dtype='d')
+
+
+    def read_histogram(self, i_DS):
+
+        """ Read in the histogram for a single parameter. 
+        
+        Args:
+            i_DS   :   The index of the parameter.
+        
+        Returns:
+            x :        Parameters values
+            hist_P :   Histogram values
+        """
+
+        fd=open(self.filename_root+'/results/histograms.dat','rb')
+        ii=0
+        for jj in xrange(0,i_DS+1):
+            best_val  =np.fromfile(file=fd,dtype='d',count=1)[0]
+            lo_68pc   =np.fromfile(file=fd,dtype='d',count=1)[0]
+            hi_68pc   =np.fromfile(file=fd,dtype='d',count=1)[0]
+            lo_95pc   =np.fromfile(file=fd,dtype='d',count=1)[0]
+            hi_95pc   =np.fromfile(file=fd,dtype='d',count=1)[0]
+            hist_P    =np.fromfile(file=fd,dtype='int64',count=self.coverage_size)
+
+        x         =np.linspace(self.coverage_min[jj],self.coverage_max[jj],self.coverage_size)
+        mask_68   =np.zeros(self.coverage_size)
+        mask_95   =np.zeros(self.coverage_size)
+        for kk in xrange(0,self.coverage_size):
+            if(x[kk]>=lo_68pc and x[kk]<=hi_68pc):
+                mask_68[kk]=1
+            if(x[kk]>=lo_95pc and x[kk]<=hi_95pc):
+                mask_95[kk]=1
+        zero_line =np.linspace(0.,0.,self.coverage_size)
+        hist_P=np.double(hist_P)/np.double(hist_P.max())
+
+        fd.close()
+
+        return x, hist_P
+
+
+
+
+    def print_most_likely(self, i_DS=None):
+
+        """ Print the most likely values for 1 or all parameters. """
+
+        print
+        print "-----------------------------"
+        print "Most likely parameter values:"
+        print "-----------------------------"
+
+        if i_DS == None:
+            for i, best in enumerate(self.P_best):
+                print "%-25s\t=\t%-1.3e" % (self.P_name[i], 10.0**best)
+        else:
+            if type(i_DS) == type(list()):
+                for i in i_DS: print "%15s\t=\t%-1.3e" % (self.P_name[i], 10.0**(self.P_best[i]))
+            else:
+                assert type(i_DS) == type(int())
+                print "%-25s\t=\t%-1.3e" % (self.P_name[i_DS], 10.0**(self.P_best[i_DS]))
+        print "------------------------"
+        print
 
 
 class Chain(object):
