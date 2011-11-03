@@ -6,7 +6,7 @@ LIBFILE   = libgbpLib.a
 OBJFILES  = 
 BINFILES  =
 LIBS      =
-SUBDIRS   = gbpCommon gbpSID gbpADaPS gbpParse gbpSort
+SUBDIRS   = gbpCommon gbpSID gbpParse gbpADaPS gbpSort
 ifeq ($(USE_CFITSIO),1)
   SUBDIRS := $(SUBDIRS) gbpFITS
 endif

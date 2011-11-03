@@ -4,7 +4,7 @@
 void ADaPS_free(void **list){
   ADaPS *current;
   ADaPS *next;
-  current=(*list);
+  current=(ADaPS *)(*list);
   while(current!=NULL){
     next=current->next;
     ADaPS_deallocate(&current);

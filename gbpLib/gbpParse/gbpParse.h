@@ -1,9 +1,16 @@
+#ifndef GBPPARSE_AWAKE
+#define GBPPARSE_AWAKE
+
 #define MAX_LINE_LENGTH      7500
 #define ERROR_LINE_TOO_LONG  102
 #define ERROR_LINE_TOO_SHORT 103
 #define ERROR_FILE_TOO_SHORT 104
 
-int getline(char **string,size_t *n,FILE *fp);
+// Function declarations
+#ifdef __cplusplus
+extern "C" {
+#endif
+//int getline(char **string,size_t *n,FILE *fp);
 int count_lines(FILE *fp);
 int count_lines_data(FILE *fp);
 int check_comment(char *line);
@@ -34,3 +41,9 @@ int grab_size_t(char   *line,
 int parse_line(char *line,
 	       int   n_return, ...);
 int search_and_replace(char *string,char *search,char *replace);
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+

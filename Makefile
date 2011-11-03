@@ -106,11 +106,12 @@ LDFLAGS := $(LDFLAGS) -L$(GBP_LIB_LOCAL)
 
 # Filter-out Cuda files if USE_CUDA!=1
 ifneq ($(USE_CUDA),1)
-	OBJEXCLUDE:=$(patsubst %.o,%.ou,$(OBJFILES))
-	OBJFILES_LIB:=$(filter-out $(OBJEXCLUDE),$(OBJFILES))
+	OBJEXCLUDE   :=$(patsubst %.o,%.ou,$(OBJFILES))
+	OBJFILES_LIB1:=$(filter-out $(OBJEXCLUDE),$(OBJFILES))
 else
-	OBJFILES_LIB:=$(OBJFILES)
+	OBJFILES_LIB1:=$(OBJFILES)
 endif
+OBJFILES_LIB:=$(patsubst %.ou,%.o,$(OBJFILES_LIB1))
 
 # Fill a file with a list of all the object files that
 #   will contribute to this directory's archive (if defined)
@@ -120,8 +121,9 @@ ifneq ($(strip $(LIBFILE)),)
   $(shell touch $(LIBOBJSFILE))
   MAKE:=$(MAKE) LIBOBJSFILE=$(LIBOBJSFILE)
 endif
-LISTOBJ:=$(addprefix $(shell pwd)/,$(OBJFILES_LIB))' '
-objfiles = $(shell cat $(LIBOBJSFILE))
+LISTOBJ :=$(addprefix $(shell pwd)/,$(OBJFILES_LIB))' '
+objfiles=$(shell cat $(LIBOBJSFILE))
+#objfiles =$(call reverse,$(objfiles1))
 
 # Set library information
 export LIBS
@@ -180,7 +182,7 @@ clean:                 build_libobjsfile subdirs_clean
         	((i = i + 1)) ; \
 	done
 	@echo -n "Cleaning-up..."
-	@rm -rf .printed_status .print_status .install* .compile* .*.objsfile *.o *~ core.* *.a $(BINFILES) *.dSYM
+	@rm -rf .printed_status .print_status .install* .compile* .*.objsfile *.o *.ou *~ core.* *.a $(BINFILES) *.dSYM
 	@echo "Done."
 
 build_libobjsfile:
@@ -398,11 +400,11 @@ $(addprefix $(GBP_DAT)/,$(DATAFILES)):
 	@echo "Done."
 
 # Generate library
-$(LIBTOUCH1): $(LIBFILE) $(OBJFILES)
+$(LIBTOUCH1): $(LIBFILE) $(OBJFILES_LIB1)
 	@touch $(LIBTOUCH1)
 $(LIBTOUCH2):
 	@touch -t $(OLDDATE) $(LIBTOUCH2)
-$(LIBFILE): $(OBJFILES)
+$(LIBFILE): $(OBJFILES_LIB1)
 ifneq ($(strip $(LIBFILE)),)
 	@i=1 ; while [[ $$i -le $(MAKELEVEL) ]] ; do \
 		echo -n "  " ;  \
@@ -425,7 +427,11 @@ $(BINFILES): $(LIBFILE)
 		((i = i + 1)) ; \
 	done
 	@echo -n "Generating binary '"$@"'..."
-	@$(CC) $(CCFLAGS) $@.c $(LDFLAGS) -o $@ 
+ifneq ($(USE_CUDA),0)
+	@$(CC_CUDA) $(CCFLAGS) $(CCFLAGS_CUDA) $@.c -o $@  $(LDFLAGS) -lcuda 
+else
+	@$(CC) $(CCFLAGS) $@.c -o $@  $(LDFLAGS)
+endif
 	@cp $@ $(GBP_BIN_LOCAL)
 	@echo "Done."
 
@@ -448,7 +454,7 @@ $(BINFILES): $(LIBFILE)
 ifneq ($(USE_CUDA),0)
 	@echo -n "Compiling "$@"..."
 	@$(CC_CUDA) $(CCFLAGS) $(CCFLAGS_CUDA) -c $*.cu
-	@mv $*.o $*.ou
+	@touch $*.ou
 	@echo "Done."
 else
 	 @echo "Skipping "$@" (USE_CUDA is off)"

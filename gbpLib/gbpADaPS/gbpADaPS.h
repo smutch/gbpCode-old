@@ -47,7 +47,10 @@ struct ADaPS_struct{
   void   (*free_function)(void **);
 };
 
-// Function definitions 
+// Function declarations
+#ifdef __cplusplus
+extern "C" {
+#endif
 void ADaPS_init(ADaPS **list);
 void ADaPS_store(ADaPS **list,
                  void   *data,
@@ -62,5 +65,7 @@ void ADaPS_deallocate(ADaPS **remove);
 void ADaPS_remove(ADaPS **list, 
                   char   *name,...);
 void ADaPS_status(ADaPS *list);
-
+#ifdef __cplusplus
+}
+#endif
 #endif

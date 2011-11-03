@@ -4,6 +4,7 @@
 INCFILES = gbpCommon.h
 LIBFILE  = 
 OBJFILES = check_mode_for_flag.o \
+	   strip_path.o          \
 	   seconds2ascii.o
 BINFILES = 
 LIBS     = 
