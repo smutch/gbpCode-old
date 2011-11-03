@@ -14,7 +14,7 @@ void strip_path(char *string){
   for(i_char=0,i_start=0;i_char<string_size;i_char++){
     strncpy(temp_char,&(string[i_char]),1);
     sprintf(temp_char,"%c",string[i_char]);
-    if(!strcmp(temp_char,"/")) 
+    if(!strcmp(temp_char,"/"))
       i_start=i_char+1;
   }
   if(i_start>0){
