@@ -43,6 +43,12 @@ ifndef USE_MPI_IO
 endif
 export USE_MPI_IO
 
+# Set default Cuda support
+ifndef USE_CUDA
+  USE_CUDA=0
+endif
+export USE_CUDA
+
 # Set default debugger support
 ifndef USE_DEBUGGER
   USE_DEBUGGER=0
@@ -221,6 +227,12 @@ ifneq ($(USE_SPRNG),0)
 else
 	@echo "USE_SPRNG  is OFF"
 endif
+ifneq ($(USE_CUDA),0)
+	@echo "USE_CUDA   is ON"
+else
+	@echo "USE_CUDA   is OFF"
+endif
+
 
         # Check if lib, include and bin directories exist.  If any do not, make them.
 	@echo
