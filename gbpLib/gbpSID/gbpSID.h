@@ -4,11 +4,11 @@
 #include <gbpCommon.h>
 
 #if USE_MPI
-#ifndef MPI_DEFINED
-#include <mpi.h>
-#else
-#define MPI_DEFINED 1
-#endif
+  #ifndef MPI_AWAKE
+    #include <mpi.h>
+  #else
+    #define MPI_AWAKE 
+  #endif
 #endif 
 
 #ifndef _FILE_H
@@ -25,6 +25,11 @@ _FILE_C_CLASS int b;
 #ifndef SID_AWAKE
 #define SID_AWAKE
 
+// Declare some stuff needed by Cuda code
+//#if USE_CUDA
+  #define SID_CUDA_MAX_THREADS_PER_BLOCK 32
+//#endif
+
 #define MASTER_RANK    0
 #define DEFAULT_MODE   0
 
@@ -33,6 +38,8 @@ _FILE_C_CLASS int b;
 #define SID_ERROR_HEADER      "ERROR:"
 #define SID_WARNING_HEADER    "WARNING:"
 #define SID_LOG_INDENT_STRING "   "
+
+#define SID_WARNING_DEFAULT 0
 
 #define SID_FARG (void **)&
 
@@ -117,6 +124,10 @@ _FILE_C_CLASS int b;
 #else
   #define SID_REAL SID_FLOAT
 #endif
+
+#define CALC_MODE_DEFAULT       DEFAULT_MODE
+#define CALC_MODE_RETURN_DOUBLE 1
+#define CALC_MODE_ABS           2
 
 // Structures for parsing the command line
 typedef void** SID_args;
@@ -228,6 +239,9 @@ struct SID_fp{
 };
 
 // Function declarations 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void SID_init(int *argc,char **argv[],SID_args args[]);
 void SID_Comm_init(SID_Comm **comm);
 void SID_Comm_free(SID_Comm **comm);
@@ -235,6 +249,7 @@ void SID_Comm_split(SID_Comm *comm_in,int colour,int key,SID_Comm *comm_out);
 int  SID_parse_args(int argc,char *argv[],SID_args args[]);
 void SID_print_syntax(int argc,char *argv[],SID_args args[]);
 void SID_Bcast(void *buffer,int data_size,int source_rank,SID_Comm *comm);
+void SID_Type_size(SID_Datatype type,int *size);
 void SID_Allreduce(void *sendbuf,void *recvbuf,int count,SID_Datatype datatype,SID_Op op,SID_Comm *comm);
 void SID_Send(void         *sendbuf,
               int           sendcount,
@@ -322,6 +337,7 @@ int  check_mode_for_flag(int mode, int flag);
 
 void SID_input(char *fmt, SID_Datatype type, void *input, ...);
 void SID_log(char *fmt, int mode, ...);
+void SID_free(void **ptr);
 void SID_log_error(char *fmt, ...);
 void SID_log_warning(char *fmt, int mode, ...);
 void SID_out(char *fmt, int mode, ...);
@@ -334,12 +350,7 @@ void SID_profile_start(char *function_name, int mode, ...);
 void *SID_malloc(size_t allocation_size);
 void *SID_malloc_array(size_t allocation_size_i,int n_D,...);
 void *SID_calloc(size_t allocation_size);
-void SID_free(void **ptr);
 void SID_free_array(void **ptr,int n_D,...);
-
-#define CALC_MODE_DEFAULT       DEFAULT_MODE
-#define CALC_MODE_RETURN_DOUBLE 1
-#define CALC_MODE_ABS           2
 
 void calc_max(void   *data,
               void   *result,
@@ -396,4 +407,16 @@ void calc_sum_global(void   *data_local,
                      SID_Datatype type,
                      int          mode,
                      SID_Comm    *comm);
+
+// Cuda functions
+void calc_array_multiply(void         *data_1,
+                         void         *data_2,
+                         void         *result,
+                         size_t        n_data,
+                         SID_Datatype  type,
+                         int           mode);
+
+#ifdef __cplusplus
+}
+#endif
 #endif

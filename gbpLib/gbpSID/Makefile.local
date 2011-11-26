@@ -1,7 +1,7 @@
 #############################
 # Library-specific settings #
 #############################
-INCFILES  = gbpSID.h
+INCFILES  = gbpSID.h 
 LIBFILE   = 
 OBJFILES  = SID_init.o              \
 	    SID_test.o              \
@@ -56,6 +56,7 @@ OBJFILES  = SID_init.o              \
 	    SID_fskip.o             \
             SID_frewind.o           \
             SID_cat_files.o         \
+	    calc_array_multiply.ou  \
 	    calc_min.o              \
 	    calc_min_global.o       \
 	    calc_max.o              \

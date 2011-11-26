@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <gbpSID.h>
 #include <gbpFITS.h>
 
@@ -19,7 +20,7 @@ int write_image_FITS(void *image,SID_Datatype dtype,int n_D,int *D_in,char *file
 
   // Delete the file if it already exists
   if(fp_test=fopen(filename,"r")) {
-    close(fp);
+    fclose(fp_test);
     remove(filename);
   }
 

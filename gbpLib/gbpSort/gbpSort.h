@@ -1,3 +1,6 @@
+#ifndef GBPSORT_AWAKE
+#define GBPSORT_AWAKE
+
 #define SORT_LOCAL               1
 #define SORT_GLOBAL              0
 #define SORT_COMPUTE_INPLACE     1
@@ -6,6 +9,10 @@
 #define SORT_COMPUTE_INDEX       101
 #define SORT_INPLACE_ONLY        102
 
+// Function declarations
+#ifdef __cplusplus
+extern "C" {
+#endif
 void sort(void          *sval,
 	  size_t         nval,
 	  size_t       **index,
@@ -33,3 +40,8 @@ void merge_sort(void    *data_in,
                 SID_Datatype      data_type,
                 int      flag_compute_index,
                 int      flag_in_place);
+#ifdef __cplusplus
+}
+#endif
+#endif
+

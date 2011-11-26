@@ -3,12 +3,10 @@
 #############################
 INCFILES = gbpParse.h
 LIBFILE  = 
-OBJFILES = getline.o               \
-	   count_lines.o           \
+OBJFILES = count_lines.o           \
 	   count_lines_data.o      \
 	   count_words.o           \
 	   check_comment.o         \
-	   strip_path.o            \
 	   grab_word.o             \
 	   grab_tail.o             \
 	   grab_double.o           \

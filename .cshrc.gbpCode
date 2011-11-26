@@ -81,7 +81,7 @@ endif
 
 # Add to the library path
 if ( $?LD_LIBRARY_PATH ) then
-  setenv LD_LIBRARY_PATH ${GBP_LIB}:${LD_LIBRARY_PATH}
+  setenv LD_LIBRARY_PATH ${GBP_LIB}/cuda/:${LD_LIBRARY_PATH}
 else
   setenv LD_LIBRARY_PATH ${GBP_LIB}
 endif

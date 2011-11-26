@@ -3,10 +3,15 @@
 # This file sets the library information needed in CCFLAGS and LDFLAGS
 # for the gbpCode Makefile
 #
-# YOU REALLY SHOULDN'T NEED TO EDIT THIS FILE UNLESS YOU ARE ADDING
-# NEW LIBRARIES TO THE LIST OF LIBRARIES USED BY THE gbpCode CODE BASE.
+# YOU REALLY SHOULDN'T NEED TO EDIT THIS FILE!
 #
 #----------------------------------------------------------------------
+
+# Set default debugger support
+ifndef USE_DEBUGGER
+  USE_DEBUGGER=0
+endif
+export USE_DEBUGGER
 
 # Add cfitsio
 ifndef USE_CFITSIO
@@ -38,6 +43,12 @@ ifneq ($(USE_GDLIB),0)
   LDFLAGS := $(LDFLAGS) -L$(GBP_GSL_DIR)/lib/
   LIBS    := $(LIBS) -lgd
 endif
+
+# Add Cuda
+ifndef USE_CUDA
+  USE_CUDA    =0
+endif
+export USE_CUDA
 
 # Add valgrind
 ifndef USE_VALGRIND
@@ -109,10 +120,4 @@ export USE_MPI_IO
 ifneq ($(USE_MPI_IO),0)
   CCFLAGS  := $(CCFLAGS) -DUSE_MPI_IO
 endif
-
-# Set default debugger support
-ifndef USE_DEBUGGER
-  USE_DEBUGGER=0
-endif
-export USE_DEBUGGER
 

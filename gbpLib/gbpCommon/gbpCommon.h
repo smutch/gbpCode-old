@@ -1,5 +1,5 @@
-#ifndef COMMON_AWAKE
-#define COMMON_AWAKE
+#ifndef GBPCOMMON_AWAKE
+#define GBPCOMMON_AWAKE
 #include <stdio.h> // Needed here for type FILE
 
 #define CALC_STAT_RETURN_DOUBLE    2
@@ -150,7 +150,15 @@
 #define ERROR_3RD_PARTY 32
 #define ERROR_MEMORY    64
 
+// Function declarations 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int  check_mode_for_flag(int mode, int flag);
 void seconds2ascii(int n_secs, char *string);
+void strip_path(char *string);
+#ifdef __cplusplus
+}
+#endif
 
 #endif
