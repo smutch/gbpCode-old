@@ -89,8 +89,8 @@ size_t calc_stat(void     *data_local,
       n_data_used=n_data_used_local;
 #if USE_MPI
       if(check_mode_for_flag(mode,CALC_STAT_GLOBAL)){
-        MPI_Allreduce(&result_local_d,   &result_d,   1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
+        MPI_Allreduce(&result_local_d,   &result_d,   1,MPI_DOUBLE,MPI_SUM,SID.COMM_WORLD->comm);
+        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,SID.COMM_WORLD->comm);
       }
 #endif
       break;
@@ -113,8 +113,8 @@ size_t calc_stat(void     *data_local,
       n_data_used=n_data_used_local;
 #if USE_MPI
       if(check_mode_for_flag(mode,CALC_STAT_GLOBAL)){
-        MPI_Allreduce(&result_local_d,   &result_d,   1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
+        MPI_Allreduce(&result_local_d,   &result_d,   1,MPI_DOUBLE,MPI_SUM,SID.COMM_WORLD->comm);
+        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,SID.COMM_WORLD->comm);
       }
 #endif
       break;
@@ -137,8 +137,8 @@ size_t calc_stat(void     *data_local,
       n_data_used=n_data_used_local;
 #if USE_MPI
       if(check_mode_for_flag(mode,CALC_STAT_GLOBAL)){
-        MPI_Allreduce(&result_local_t,   &result_t,   1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
-        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
+        MPI_Allreduce(&result_local_t,   &result_t,   1,MPI_SIZE_T,MPI_SUM,SID.COMM_WORLD->comm);
+        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,SID.COMM_WORLD->comm);
       }
 #endif
       result_d=(double)result_t;
@@ -162,8 +162,8 @@ size_t calc_stat(void     *data_local,
       n_data_used=n_data_used_local;
 #if USE_MPI
       if(check_mode_for_flag(mode,CALC_STAT_GLOBAL)){
-        MPI_Allreduce(&result_local_t,   &result_t,   1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
-        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
+        MPI_Allreduce(&result_local_t,   &result_t,   1,MPI_SIZE_T,MPI_SUM,SID.COMM_WORLD->comm);
+        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,SID.COMM_WORLD->comm);
       }
 #endif
       result_d=(double)result_t;
@@ -205,8 +205,8 @@ size_t calc_stat(void     *data_local,
 #if USE_MPI
       // STILL NEED TO CHECK HERE THAT ALL PROCS HAVE N_DATA_LOCAL>0 ... INCORRECT RESULTS OTHERWISE!
       if(check_mode_for_flag(mode,CALC_STAT_GLOBAL)){
-        MPI_Allreduce(&result_local_d,   &result_d,   1,MPI_DOUBLE,MPI_MIN,MPI_COMM_WORLD);
-        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
+        MPI_Allreduce(&result_local_d,   &result_d,   1,MPI_DOUBLE,MPI_MIN,SID.COMM_WORLD->comm);
+        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,SID.COMM_WORLD->comm);
       }
 #endif
       break;
@@ -236,8 +236,8 @@ size_t calc_stat(void     *data_local,
 #if USE_MPI
       // STILL NEED TO CHECK HERE THAT ALL PROCS HAVE N_DATA_LOCAL>0 ... INCORRECT RESULTS OTHERWISE!
       if(check_mode_for_flag(mode,CALC_STAT_GLOBAL)){
-        MPI_Allreduce(&result_local_d,   &result_d,   1,MPI_DOUBLE,MPI_MIN,MPI_COMM_WORLD);
-        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
+        MPI_Allreduce(&result_local_d,   &result_d,   1,MPI_DOUBLE,MPI_MIN,SID.COMM_WORLD->comm);
+        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,SID.COMM_WORLD->comm);
       }
 #endif
       break;
@@ -267,8 +267,8 @@ size_t calc_stat(void     *data_local,
 #if USE_MPI
       // STILL NEED TO CHECK HERE THAT ALL PROCS HAVE N_DATA_LOCAL>0 ... INCORRECT RESULTS OTHERWISE!
       if(check_mode_for_flag(mode,CALC_STAT_GLOBAL)){
-        MPI_Allreduce(&result_local_t,   &result_t,   1,MPI_SIZE_T,MPI_MIN,MPI_COMM_WORLD);
-        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
+        MPI_Allreduce(&result_local_t,   &result_t,   1,MPI_SIZE_T,MPI_MIN,SID.COMM_WORLD->comm);
+        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,SID.COMM_WORLD->comm);
       }
 #endif
       result_d=(double)result_t;
@@ -299,8 +299,8 @@ size_t calc_stat(void     *data_local,
 #if USE_MPI
       // STILL NEED TO CHECK HERE THAT ALL PROCS HAVE N_DATA_LOCAL>0 ... INCORRECT RESULTS OTHERWISE!
       if(check_mode_for_flag(mode,CALC_STAT_GLOBAL)){
-        MPI_Allreduce(&result_local_t,   &result_t,   1,MPI_SIZE_T,MPI_MIN,MPI_COMM_WORLD);
-        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
+        MPI_Allreduce(&result_local_t,   &result_t,   1,MPI_SIZE_T,MPI_MIN,SID.COMM_WORLD->comm);
+        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,SID.COMM_WORLD->comm);
       }
 #endif
       result_d=(double)result_t;
@@ -342,8 +342,8 @@ size_t calc_stat(void     *data_local,
 #if USE_MPI
       // STILL NEED TO CHECK HERE THAT ALL PROCS HAVE N_DATA_LOCAL>0 ... INCORRECT RESULTS OTHERWISE!
       if(check_mode_for_flag(mode,CALC_STAT_GLOBAL)){
-        MPI_Allreduce(&result_local_d,   &result_d,   1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
-        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
+        MPI_Allreduce(&result_local_d,   &result_d,   1,MPI_DOUBLE,MPI_MAX,SID.COMM_WORLD->comm);
+        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,SID.COMM_WORLD->comm);
       }
 #endif
       break;
@@ -373,8 +373,8 @@ size_t calc_stat(void     *data_local,
 #if USE_MPI
       // STILL NEED TO CHECK HERE THAT ALL PROCS HAVE N_DATA_LOCAL>0 ... INCORRECT RESULTS OTHERWISE!
       if(check_mode_for_flag(mode,CALC_STAT_GLOBAL)){
-        MPI_Allreduce(&result_local_d,   &result_d,   1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
-        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
+        MPI_Allreduce(&result_local_d,   &result_d,   1,MPI_DOUBLE,MPI_MAX,SID.COMM_WORLD->comm);
+        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,SID.COMM_WORLD->comm);
       }
 #endif
       break;
@@ -404,8 +404,8 @@ size_t calc_stat(void     *data_local,
 #if USE_MPI
       // STILL NEED TO CHECK HERE THAT ALL PROCS HAVE N_DATA_LOCAL>0 ... INCORRECT RESULTS OTHERWISE!
       if(check_mode_for_flag(mode,CALC_STAT_GLOBAL)){
-        MPI_Allreduce(&result_local_t,   &result_t,   1,MPI_SIZE_T,MPI_MAX,MPI_COMM_WORLD);
-        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
+        MPI_Allreduce(&result_local_t,   &result_t,   1,MPI_SIZE_T,MPI_MAX,SID.COMM_WORLD->comm);
+        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,SID.COMM_WORLD->comm);
       }
 #endif
       result_d=(double)result_t;
@@ -436,8 +436,8 @@ size_t calc_stat(void     *data_local,
 #if USE_MPI
       // STILL NEED TO CHECK HERE THAT ALL PROCS HAVE N_DATA_LOCAL>0 ... INCORRECT RESULTS OTHERWISE!
       if(check_mode_for_flag(mode,CALC_STAT_GLOBAL)){
-        MPI_Allreduce(&result_local_t,   &result_t,   1,MPI_SIZE_T,MPI_MAX,MPI_COMM_WORLD);
-        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
+        MPI_Allreduce(&result_local_t,   &result_t,   1,MPI_SIZE_T,MPI_MAX,SID.COMM_WORLD->comm);
+        MPI_Allreduce(&n_data_used_local,&n_data_used,1,MPI_SIZE_T,MPI_SUM,SID.COMM_WORLD->comm);
       }
 #endif
       result_d=(double)result_t;
@@ -523,7 +523,7 @@ size_t calc_stat(void     *data_local,
     result_d=result_local_d;
 #if USE_MPI
     if(check_mode_for_flag(mode,CALC_STAT_GLOBAL))
-      MPI_Allreduce(&result_local_d,&result_d,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+      MPI_Allreduce(&result_local_d,&result_d,1,MPI_DOUBLE,MPI_SUM,SID.COMM_WORLD->comm);
 #endif
     result_d=sqrt(result_d/(double)n_data_used);
     result_t=(size_t)result_d;
@@ -591,7 +591,7 @@ size_t calc_stat(void     *data_local,
 #if USE_MPI
     else{
       SID_trap_error("parallel global medians have not been debugged yet!",ERROR_LOGIC);
-      MPI_Allreduce(&n_data_local,&n_data,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
+      MPI_Allreduce(&n_data_local,&n_data,1,MPI_SIZE_T,MPI_SUM,SID.COMM_WORLD->comm);
       if(n_data>0){
         if(n_data>1){
           sort(data_local,
@@ -665,9 +665,9 @@ size_t calc_stat(void     *data_local,
             }
             else
               rank_1_local=-1;
-            MPI_Allreduce(&rank_1_local,&rank_1,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD);
-            MPI_Bcast(&value_1_t,1,MPI_SIZE_T,rank_1,MPI_COMM_WORLD);
-            MPI_Bcast(&value_1_d,1,MPI_DOUBLE,rank_1,MPI_COMM_WORLD);
+            MPI_Allreduce(&rank_1_local,&rank_1,1,MPI_INT,MPI_MAX,SID.COMM_WORLD->comm);
+            MPI_Bcast(&value_1_t,1,MPI_SIZE_T,rank_1,SID.COMM_WORLD->comm);
+            MPI_Bcast(&value_1_d,1,MPI_DOUBLE,rank_1,SID.COMM_WORLD->comm);
           }
           if(flag_2){
             rank_2_local=SID.My_rank;
@@ -691,9 +691,9 @@ size_t calc_stat(void     *data_local,
           }
           else
             rank_2_local=-1;
-          MPI_Allreduce(&rank_2_local,&rank_2,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD);
-          MPI_Bcast(&value_2_t,1,MPI_SIZE_T,rank_2,MPI_COMM_WORLD);          
-          MPI_Bcast(&value_2_d,1,MPI_DOUBLE,rank_2,MPI_COMM_WORLD);          
+          MPI_Allreduce(&rank_2_local,&rank_2,1,MPI_INT,MPI_MAX,SID.COMM_WORLD->comm);
+          MPI_Bcast(&value_2_t,1,MPI_SIZE_T,rank_2,SID.COMM_WORLD->comm);          
+          MPI_Bcast(&value_2_d,1,MPI_DOUBLE,rank_2,SID.COMM_WORLD->comm);          
           free(idx);
           free(sort_index_local);
 

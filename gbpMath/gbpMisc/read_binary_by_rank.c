@@ -21,7 +21,7 @@ size_t read_binary_by_rank(void    *array,
   void   *buffer=NULL;
   int     flag_continue;
   int     master_rank;
-#ifdef USE_MPI
+#if USE_MPI
   MPI_Datatype mpi_type;
   MPI_Status   status;
 #endif
@@ -31,25 +31,25 @@ size_t read_binary_by_rank(void    *array,
   switch(type){
   case ADaM_INT:
     bytes_per_read=sizeof(int);
-#ifdef USE_MPI
+#if USE_MPI
     mpi_type      =MPI_INT;
 #endif
     break;
   case ADaM_LONG:
     bytes_per_read=sizeof(long int);
-#ifdef USE_MPI
+#if USE_MPI
     mpi_type      =MPI_LONG;
 #endif
     break;
   case ADaM_FLOAT:
     bytes_per_read=sizeof(float);
-#ifdef USE_MPI
+#if USE_MPI
     mpi_type      =MPI_FLOAT;
 #endif
     break;
   case ADaM_DOUBLE:
     bytes_per_read=sizeof(double);
-#ifdef USE_MPI
+#if USE_MPI
     mpi_type      =MPI_DOUBLE;
 #endif
     break;
@@ -59,8 +59,8 @@ size_t read_binary_by_rank(void    *array,
     break;
   }
 
-#ifdef USE_MPI
-  MPI_Allreduce(&My_rank,&master_rank,1,MPI_INTEGER,MPI_MIN,MPI_COMM_WORLD);
+#if USE_MPI
+  MPI_Allreduce(&My_rank,&master_rank,1,MPI_INTEGER,MPI_MIN,SID.COMM_WORLD->comm);
 #else
   master_rank=MASTER_RANK;
 #endif
@@ -75,7 +75,7 @@ size_t read_binary_by_rank(void    *array,
 
   // Read for each rank in turn
   for(i_rank=0;i_rank<SID.n_proc && !flag_error;i_rank++){
-#ifdef USE_MPI
+#if USE_MPI
     if(i_rank!=master_rank){
       if(My_rank==master_rank)
 	MPI_Send(&n_remaining_local,
@@ -83,14 +83,14 @@ size_t read_binary_by_rank(void    *array,
 		 MPI_SIZE_T,
 		 i_rank,   
 		 0,
-		 MPI_COMM_WORLD);
+		 SID.COMM_WORLD->comm);
       else if(My_rank==i_rank)
 	MPI_Recv(&n_remaining_read,
 		 1,
 		 MPI_SIZE_T,
 		 master_rank,
 		 MPI_ANY_TAG,
-		 MPI_COMM_WORLD, 
+		 SID.COMM_WORLD->comm, 
 		 &status);
     }
 #endif
@@ -115,7 +115,7 @@ size_t read_binary_by_rank(void    *array,
       }
 
       // Make sure something was read ...
-#ifdef USE_MPI
+#if USE_MPI
       if(i_rank!=master_rank){
 	if(My_rank==master_rank)
 	  MPI_Send(&n_actual,
@@ -123,14 +123,14 @@ size_t read_binary_by_rank(void    *array,
 		   MPI_SIZE_T,
 		   i_rank,   
 		   0,
-		   MPI_COMM_WORLD);
+		   SID.COMM_WORLD->comm);
 	else if(My_rank==i_rank)
 	  MPI_Recv(&n_actual,  
 		   1,
 		   MPI_SIZE_T,
 		   master_rank,
 		   MPI_ANY_TAG,
-		   MPI_COMM_WORLD, 
+		   SID.COMM_WORLD->comm, 
 		   &status);
       }
 #endif
@@ -144,14 +144,14 @@ size_t read_binary_by_rank(void    *array,
 		     mpi_type,
 		     i_rank,   
 		     0,
-		     MPI_COMM_WORLD);
+		     SID.COMM_WORLD->comm);
 	  else if(My_rank==i_rank)
 	    MPI_Recv(&buffer,  
 		     n_actual,
 		     mpi_type,
 		     master_rank,
 		     MPI_ANY_TAG,
-		     MPI_COMM_WORLD, 
+		     SID.COMM_WORLD->comm, 
 		     &status);
 	}
 	if(My_rank==master_rank){
@@ -181,7 +181,7 @@ size_t read_binary_by_rank(void    *array,
       n_remaining_local=n_remaining_read;
 
     // Update this rank's n_remaining
-#ifdef USE_MPI
+#if USE_MPI
     if(i_rank!=master_rank){
       if(My_rank==master_rank)
 	MPI_Send(&n_remaining_read,
@@ -189,23 +189,23 @@ size_t read_binary_by_rank(void    *array,
 		 MPI_SIZE_T,
 		 i_rank,   
 		 0,
-		 MPI_COMM_WORLD);
+		 SID.COMM_WORLD->comm);
       else if(My_rank==i_rank)
 	MPI_Recv(&n_remaining_local,  
 		 1,
 		 MPI_SIZE_T,
 		 master_rank,
 		 MPI_ANY_TAG,
-		 MPI_COMM_WORLD, 
+		 SID.COMM_WORLD->comm, 
 		 &status);
     }
-    MPI_Bcast(&flag_error,1,MPI_INT,master_rank,MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Bcast(&flag_error,1,MPI_INT,master_rank,SID.COMM_WORLD->comm);
+    MPI_Barrier(SID.COMM_WORLD->comm);
 #endif
   }
 
-#ifdef USE_MPI
-  MPI_Allreduce(&n_remaining_local,&n_remaining,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
+#if USE_MPI
+  MPI_Allreduce(&n_remaining_local,&n_remaining,1,MPI_SIZE_T,MPI_SUM,SID.COMM_WORLD->comm);
 #else
   n_remaining=n_remaining_local;
 #endif

@@ -60,11 +60,11 @@ void init_field(int        n_d,
 
   // Initialize FFTW
   #if USE_MPI
-    FFT->plan =rfftwnd_mpi_create_plan(MPI_COMM_WORLD,
+    FFT->plan =rfftwnd_mpi_create_plan(SID.COMM_WORLD->comm,
                                        FFT->n_d,FFT->n,
                                        FFTW_REAL_TO_COMPLEX,
                                        FFTW_ESTIMATE);
-    FFT->iplan=rfftwnd_mpi_create_plan(MPI_COMM_WORLD,
+    FFT->iplan=rfftwnd_mpi_create_plan(SID.COMM_WORLD->comm,
                                        FFT->n_d,FFT->n,
                                        FFTW_COMPLEX_TO_REAL,
                                        FFTW_ESTIMATE);
@@ -165,7 +165,7 @@ void init_field(int        n_d,
     FFT->slab.x_max_local  =FFT->slab.x_min_local;
   FFT->slab.x_max          =FFT->R_field[0][FFT->n[0]];
 
-#ifdef USE_MPI
+#if USE_MPI
 
   // All ranks are not necessarily assigned any slices, so
   //   we need to figure out what ranks are to the right and the left for
@@ -176,11 +176,11 @@ void init_field(int        n_d,
     flag_active=TRUE;
   else
     flag_active=FALSE;
-  MPI_Allreduce(&flag_active,          &n_active,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
-  MPI_Allreduce(&n_x_rank[SID.My_rank],&min_size,1,MPI_INT,MPI_MIN,MPI_COMM_WORLD);
-  MPI_Allreduce(&n_x_rank[SID.My_rank],&max_size,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD);
+  SID_Allreduce(&flag_active,          &n_active,1,SID_INT,SID_SUM,SID.COMM_WORLD);
+  SID_Allreduce(&n_x_rank[SID.My_rank],&min_size,1,SID_INT,SID_MIN,SID.COMM_WORLD);
+  SID_Allreduce(&n_x_rank[SID.My_rank],&max_size,1,SID_INT,SID_MAX,SID.COMM_WORLD);
   for(i_rank=0;i_rank<SID.n_proc;i_rank++)
-    MPI_Bcast(&(n_x_rank[i_rank]),1,MPI_INT,i_rank,MPI_COMM_WORLD);
+    SID_Bcast(&(n_x_rank[i_rank]),sizeof(int),i_rank,SID.COMM_WORLD);
   FFT->slab.rank_to_right=-1;
   for(i_rank=SID.My_rank+1;i_rank<SID.My_rank+SID.n_proc && FFT->slab.rank_to_right<0;i_rank++){
     j_rank=i_rank%SID.n_proc;

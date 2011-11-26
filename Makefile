@@ -15,14 +15,17 @@
 #   sudo ln /opt/local/bin/bash /bin/sh    #
 ############################################
 
-# Executables
-CC_NO_MPI  = gcc
+# Executables (use C99 standard so we have the trunc() function)
+CC_NO_MPI  = gcc -std=c99
 ifndef GBP_MPI
   GBP_MPI=/usr/
 endif
 export GBP_MPI
 CC_USE_MPI = $(GBP_MPI)/bin/mpicc
 MAKE       = make
+
+# This is needed to fix compilation errors re: undefined trunc() function
+#CCFLAGS := $(CCFLAGS) -lm
 
 # Set default so that real=float
 ifndef USE_DOUBLE

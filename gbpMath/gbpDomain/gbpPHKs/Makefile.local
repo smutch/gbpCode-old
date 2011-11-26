@@ -1,0 +1,14 @@
+#############################
+# Library-specific settings #
+#############################
+INCFILES  = hilbert_Moore.h SK_hilbert_util.h SK_sfc_boundary.h SK_sfc_curve.h gbpPHKs.h
+LIBFILE   = 
+OBJFILES  = hilbert_Moore.o               \
+	    SK_hilbert_util.o             \
+	    SK_sfc_boundary.o             \
+	    SK_sfc_curve.o                \
+	    compute_PHK_from_Cartesian.o 
+BINFILES  = 
+LIBS      = 
+SUBDIRS   =
+#############################

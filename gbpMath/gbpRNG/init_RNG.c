@@ -5,8 +5,8 @@ void init_RNG(int *seed,RNG_info *RNG,int mode){
   if((*seed)==0)
     init_seed_from_clock(seed);
   RNG->seed=(*seed);
-  #ifdef USE_SPRNG
-    #ifdef USE_MPI
+  #if USE_SPRNG
+    #if USE_MPI
       if(check_mode_for_flag(mode,RNG_GLOBAL))
         RNG->global=TRUE;
       else

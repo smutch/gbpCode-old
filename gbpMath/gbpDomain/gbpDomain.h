@@ -95,4 +95,6 @@ void exchange_slab_buffer_right(void      *send_buffer,
                                 void      *receive_buffer,
                                 size_t    *receive_buffer_size,
                                 slab_info *slab);
+
 #endif
+

@@ -15,7 +15,7 @@ void free_field(field_info *FFT){
   free(FFT->i_k_stop_local);
 
   // Free FFTs
-  #ifdef USE_MPI
+  #if USE_MPI
     rfftwnd_mpi_destroy_plan(FFT->plan);
     rfftwnd_mpi_destroy_plan(FFT->iplan);
   #else
