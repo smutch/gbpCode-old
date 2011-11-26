@@ -17,6 +17,7 @@
 
 # Executables (use C99 standard so we have the trunc() function)
 CC_NO_MPI  = gcc -std=c99
+CC_NO_MPI  = g++
 ifndef GBP_MPI
   GBP_MPI=/usr/
 endif

@@ -2,7 +2,8 @@
 /* Generate a random field with a lognormal distribution */
 /*********************************************************/
 #include <math.h>
-#include <gbpCommon.h>
+#include <gbpLib.h>
+#include <gbpMisc.h>
 #include <gbpRNG.h>
 
 double calc_pdf_local(double x,double mu,double sigma);

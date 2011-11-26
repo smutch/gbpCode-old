@@ -58,7 +58,7 @@ void calc_median(void   *data,
       else
         SID_trap_error("type not supported in calc_median.",ERROR_LOGIC);
     }
-    free(index);
+    SID_free(SID_FARG index);
     if(type==SID_DOUBLE || check_mode_for_flag(mode,CALC_MODE_RETURN_DOUBLE))
       ((double *)result)[0]=(double)median;
     else if(type==SID_FLOAT)
