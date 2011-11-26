@@ -17,6 +17,8 @@
   #endif
 #endif
 
+#include <gbpPHKs.h>
+
 typedef struct slab_info slab_info;
 struct slab_info{
   double x_min_local;

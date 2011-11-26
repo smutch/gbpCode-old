@@ -13,6 +13,6 @@ OBJFILES  = set_exchange_ring_ranks.o     \
 
 BINFILES  = 
 LIBS      = 
-SUBDIRS   =
+SUBDIRS   = gbpPHKs
 #############################
 USE_FFTW=1

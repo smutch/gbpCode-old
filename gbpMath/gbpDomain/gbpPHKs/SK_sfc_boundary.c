@@ -11,13 +11,16 @@
 /***********************************************************************\
  *    Includes                                                         * 
 \***********************************************************************/
-#include <gbpLib.h>
-#include "SK_sfc_boundary.h"
-#include <inttypes.h>
+#define __STDC_CONSTANT_MACROS
+#define __STDC_LIMIT_MACROS
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include <math.h>
-
+#include <gbpLib.h>
+#include <gbpPHKs.h>
 
 /***********************************************************************\
  *    Local defines, structure definitions and typedefs                * 

@@ -17,8 +17,13 @@
 #	include <replace_math.h>
 #endif
 */
-#include "SK_hilbert_util.h"
+#define __STDC_CONSTANT_MACROS
+#include <stdio.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include <math.h>
+#include <gbpLib.h>
+#include <gbpPHKs.h>
 
 /***********************************************************************\
  *    Local defines, structure definitions and typedefs                * 
