@@ -332,7 +332,7 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
        SID_fwrite(&(groups[i_write%n_wrap][i_group].tree_id),   sizeof(int),1,&fp_matches_out);
        SID_fwrite(&(file_offset),                               sizeof(int),1,&fp_matches_out);
        SID_fwrite(&(n_subgroups_group[i_write%n_wrap][i_group]),sizeof(int),1,&fp_matches_out);
-       read_group_properties(fp_group_properties_in,properties,i_group,j_write);
+       read_group_properties(fp_group_properties_in,properties,i_group,i_write);
        if(groups[i_write%n_wrap][i_group].id>=0)
          SID_fwrite(properties,sizeof(halo_info),1,&fp_group_properties_out);
        for(j_subgroup=0;j_subgroup<n_subgroups_group[i_write%n_wrap][i_group];j_subgroup++,i_subgroup++){
@@ -346,7 +346,7 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
          SID_fwrite(&(desc_id),                                      sizeof(int),1,&fp_matches_out);
          SID_fwrite(&(subgroups[i_write%n_wrap][i_subgroup].tree_id),sizeof(int),1,&fp_matches_out);
          SID_fwrite(&(file_offset),                                  sizeof(int),1,&fp_matches_out);
-         read_group_properties(fp_subgroup_properties_in,properties,i_subgroup,j_write);
+         read_group_properties(fp_subgroup_properties_in,properties,i_subgroup,i_write);
          if(subgroups[i_write%n_wrap][i_subgroup].id>=0)
            SID_fwrite(properties,sizeof(halo_info),1,&fp_subgroup_properties_out);
        }
@@ -2001,7 +2001,6 @@ void compute_trees_horizontal(char   *filename_halo_root_in,
        l_write++;
        j_write-=i_read_step;
     }
-//if(i_read<=828) SID_exit(ERROR_NONE);  
 
     SID_log("Done.",SID_LOG_CLOSE);
   } // loop over snaps
