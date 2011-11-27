@@ -4,7 +4,7 @@
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpCosmo.h>
-//#include <gsl/gsl_sf_expint.h>
+#include <gsl/gsl_sf_expint.h>
 
 double Delta_vir_z(double z, cosmo_info *cosmo,int select){
   double Omega_M;

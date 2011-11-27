@@ -24,40 +24,35 @@ int main(int argc, char *argv[]){
   if(argc>2){
     h_Hubble=(double)atof(argv[2]);
     ADaPS_store(&cosmo,
-               "h_Hubble",
                (void *)(&h_Hubble),
-               ADaPS_DOUBLE,
-               0,NULL);
+               "h_Hubble",
+               ADaPS_SCALAR_DOUBLE);
   }
   if(argc>3){
     Omega_M     =(double)atof(argv[3]);
     Omega_Lambda=1.-Omega_M;
     ADaPS_store(&cosmo,
-               "Omega_M",
                (void *)(&Omega_M),
-               ADaPS_DOUBLE,
-               0,NULL);
+               "Omega_M",
+               ADaPS_SCALAR_DOUBLE);
     ADaPS_store(&cosmo,
-               "Omega_Lambda",
                (void *)(&Omega_Lambda),
-               ADaPS_DOUBLE,
-               0,NULL);
+               "Omega_Lambda",
+               ADaPS_SCALAR_DOUBLE);
   }
   if(argc>4){
     Omega_Lambda=(double)atof(argv[4]);
     ADaPS_store(&cosmo,
-               "Omega_Lambda",
                (void *)(&Omega_Lambda),
-               ADaPS_DOUBLE,
-               0,NULL);
+               "Omega_Lambda",
+               ADaPS_SCALAR_DOUBLE);
   }
   if(argc>5){
     Omega_k=(double)atof(argv[5]);
     ADaPS_store(&cosmo,
-               "Omega_k",
                (void *)(&Omega_k),
-               ADaPS_DOUBLE,
-               0,NULL);
+               "Omega_k",
+               ADaPS_SCALAR_DOUBLE);
   }
   h_Hubble=((double *)ADaPS_fetch(cosmo,"h_Hubble"))[0];
   printf("rho_crit  = %13.6le Msol/(Mpc^3)\n",rho_crit_z(z,cosmo)*(M_PER_MPC/M_SOL)*M_PER_MPC*M_PER_MPC);

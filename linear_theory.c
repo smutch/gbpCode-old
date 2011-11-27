@@ -688,10 +688,9 @@ double dln_Inv_sigma_dlogM(cosmo_info *cosmo,
       for(i=0;i<n_k;i++)
          lM_k[i]=take_log10(M_of_k(take_alog10(lk_P[i]),z,cosmo));
       ADaPS_store((&cosmo),
-		 "lM_k",
 		 (void *)(lM_k),
-		 ADaPS_DOUBLE,
-		 1,&n_k_dim);
+		 "lM_k",
+		 ADaPS_DEFAULT);
       SID_free(SID_FARG lM_k);
     }
     lM_k        =(double  *)ADaPS_fetch(cosmo,"lM_k");

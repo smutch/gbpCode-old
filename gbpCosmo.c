@@ -48,7 +48,7 @@ double deltat_a(cosmo_info **cosmo,double a_1,double a_2){
    interp_info *interp;
    if(!ADaPS_exist(*cosmo,"deltat_a_interp"))
       init_deltat_a(cosmo);
-   interp=ADaPS_fetch(*cosmo,"deltat_a_interp");
+   interp=(interp_info *)ADaPS_fetch(*cosmo,"deltat_a_interp");
    a_lo=MAX(MIN(a_1,a_2),DELTAT_A_MIN_A);
    a_hi=MAX(a_1,a_2);
    return(interpolate_integral(interp,a_lo,a_hi));
@@ -324,5 +324,5 @@ void init_cosmo(cosmo_info **cosmo,
 }
 
 void free_cosmo(cosmo_info **cosmo){
-  ADaPS_free((ADaPS **)cosmo);
+  ADaPS_free(SID_FARG cosmo);
 }
