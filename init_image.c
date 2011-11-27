@@ -2,9 +2,9 @@
 #include <gbpLib.h>
 #include <gbpRender.h>
 
-void init_image(int          width,
-                int          height,
-                int          colourmapselect,
+void init_image(int           width,
+                int           height,
+                int           colourmapselect,
                 image_info **image){
   int i_pixel;
 
@@ -17,21 +17,12 @@ void init_image(int          width,
   (*image)->n_pixels =width*height;
 
   // Init gdlib stuff
-  (*image)->gd_ptr   =gdImageCreateTrueColor((*image)->width,(*image)->height);
+  (*image)->gd_ptr=gdImageCreateTrueColor((*image)->width,(*image)->height);
 
   // Allocate image buffers
-  (*image)->red   =(int    *)malloc(sizeof(int)   *(*image)->n_pixels);
-  (*image)->green =(int    *)malloc(sizeof(int)   *(*image)->n_pixels);
-  (*image)->blue  =(int    *)malloc(sizeof(int)   *(*image)->n_pixels);
-  (*image)->alpha =(int    *)malloc(sizeof(int)   *(*image)->n_pixels);
   (*image)->values=(double *)malloc(sizeof(double)*(*image)->n_pixels);
-  for(i_pixel=0;i_pixel<(*image)->n_pixels;i_pixel++){
-    (*image)->red[i_pixel]   =0;
-    (*image)->green[i_pixel] =0;
-    (*image)->blue[i_pixel]  =0;
-    (*image)->alpha[i_pixel] =gdAlphaOpaque;    
+  for(i_pixel=0;i_pixel<(*image)->n_pixels;i_pixel++)
     (*image)->values[i_pixel]=0.;
-  }
 
   // Set colourtable
   (*image)->n_colours=256;

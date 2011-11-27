@@ -11,8 +11,8 @@ OBJFILES  = close_movie.o             \
             read_image.o              \
             render_frame.o            \
             render_routines.o         \
-            set_image_alpha.o         \
             set_image_RGB.o           \
+            set_image_RGBY.o          \
             write_image.o             \
             write_image_to_movie.o
 LIBFILE   = libgbpRender.a

@@ -56,12 +56,12 @@ void read_gadget_binary_local(char       *filename_root_in,
   int       i2_value;
   int       i3_value;
   int       n_warning;
-  REAL     *x_array[N_GADGET_TYPE];
-  REAL     *y_array[N_GADGET_TYPE];
-  REAL     *z_array[N_GADGET_TYPE];
-  REAL     *vx_array[N_GADGET_TYPE];
-  REAL     *vy_array[N_GADGET_TYPE];
-  REAL     *vz_array[N_GADGET_TYPE];
+  GBPREAL     *x_array[N_GADGET_TYPE];
+  GBPREAL     *y_array[N_GADGET_TYPE];
+  GBPREAL     *z_array[N_GADGET_TYPE];
+  GBPREAL     *vx_array[N_GADGET_TYPE];
+  GBPREAL     *vy_array[N_GADGET_TYPE];
+  GBPREAL     *vz_array[N_GADGET_TYPE];
   size_t   *id_array[N_GADGET_TYPE];
   size_t   *id_list;
   size_t   *id_list_offset;
@@ -83,7 +83,6 @@ void read_gadget_binary_local(char       *filename_root_in,
   int       flag_initpositions =FALSE;
   int       flag_no_velocities =FALSE;
   int       flag_LONGIDs       =FALSE;
-  int       flag_read_marked   =FALSE;
   int       flag_read_catalog  =FALSE;
   int       flag_all_read_all  =FALSE;
   int       i_file;
@@ -190,8 +189,10 @@ void read_gadget_binary_local(char       *filename_root_in,
     ADaPS_store(&(plist->data),(void *)(&d_value),"redshift",ADaPS_SCALAR_DOUBLE);
 
     // Number of particles for each species in all files
-    for(i=0;i<N_GADGET_TYPE;i++)
-      n_all[i]=(size_t)header.n_all[i];
+    for(i=0;i<N_GADGET_TYPE;i++){
+      n_all[i]     =(size_t)header.n_all[i];
+      mass_array[i]=header.mass_array[i];
+    }
 
     // Number of files in this snapshot 
     ADaPS_store(&(plist->data),(void *)(&(header.n_files)),"n_files",ADaPS_SCALAR_INT);
@@ -320,7 +321,7 @@ void read_gadget_binary_local(char       *filename_root_in,
       SID_Bcast(&header,(int)sizeof(gadget_header_info),read_rank,SID.COMM_WORLD);
       for(i=0;i<N_GADGET_TYPE;i++){
         for(i_particle=0;i_particle<header.n_file[i];i_particle++){
-          scatter_rank=(int)(random_number(RNG)*(REAL)SID.n_proc);
+          scatter_rank=(int)(random_number(RNG)*(GBPREAL)SID.n_proc);
           if(scatter_rank<0)
             scatter_rank=0;
           else if(scatter_rank>=SID.n_proc)
@@ -338,13 +339,13 @@ void read_gadget_binary_local(char       *filename_root_in,
     // Allocate data arrays
     for(i=0;i<N_GADGET_TYPE;i++){
       if(n_of_type_rank[i]>0){
-        x_array[i] =(REAL   *)SID_malloc(sizeof(REAL)  *(size_t)n_of_type_rank[i]);
-        y_array[i] =(REAL   *)SID_malloc(sizeof(REAL)  *(size_t)n_of_type_rank[i]);
-        z_array[i] =(REAL   *)SID_malloc(sizeof(REAL)  *(size_t)n_of_type_rank[i]);
+        x_array[i] =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
+        y_array[i] =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
+        z_array[i] =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
 /*
-        vx_array[i]=(REAL   *)SID_malloc(sizeof(REAL)  *(size_t)n_of_type_rank[i]);
-        vy_array[i]=(REAL   *)SID_malloc(sizeof(REAL)  *(size_t)n_of_type_rank[i]);
-        vz_array[i]=(REAL   *)SID_malloc(sizeof(REAL)  *(size_t)n_of_type_rank[i]);
+        vx_array[i]=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
+        vy_array[i]=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
+        vz_array[i]=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
 */
         id_array[i]=(size_t *)SID_malloc(sizeof(size_t)*(size_t)n_of_type_rank[i]);
       }
@@ -393,7 +394,7 @@ void read_gadget_binary_local(char       *filename_root_in,
       for(i=0,jj=0;i<N_GADGET_TYPE;i++){
         n_keep[i]=0;
         for(j=0,k=0;j<header.n_file[i];j++,jj++){
-          scatter_rank=(int)(random_number(RNG)*(REAL)SID.n_proc);
+          scatter_rank=(int)(random_number(RNG)*(GBPREAL)SID.n_proc);
           if(scatter_rank<0)
             scatter_rank=0;
           else if(scatter_rank>=SID.n_proc)
@@ -417,19 +418,17 @@ void read_gadget_binary_local(char       *filename_root_in,
         if(record_length_open!=record_length_close)
           SID_log_warning("Problem with GADGET record size (close of positions)",ERROR_LOGIC);
       }
-      SID_log("1...",SID_LOG_CONTINUE);
       SID_Barrier(SID.COMM_WORLD);
       SID_Bcast(buffer,(int)record_length_open,read_rank,SID.COMM_WORLD);
-      SID_log("2...",SID_LOG_CONTINUE);
       for(i=0,jj=0;i<N_GADGET_TYPE;i++){
         for(j=0,k=0;j<header.n_file[i];j++,jj++){
           if(keep[jj]){
             f1_value=((float *)buffer)[3*jj+0];
             f2_value=((float *)buffer)[3*jj+1];
             f3_value=((float *)buffer)[3*jj+2];
-            x_array[i][k+k_offset[i]]=((REAL)(f1_value))*(REAL)(plist->length_unit/h_Hubble);
-            y_array[i][k+k_offset[i]]=((REAL)(f2_value))*(REAL)(plist->length_unit/h_Hubble);
-            z_array[i][k+k_offset[i]]=((REAL)(f3_value))*(REAL)(plist->length_unit/h_Hubble);
+            x_array[i][k+k_offset[i]]=((GBPREAL)(f1_value))*(GBPREAL)(plist->length_unit/h_Hubble);
+            y_array[i][k+k_offset[i]]=((GBPREAL)(f2_value))*(GBPREAL)(plist->length_unit/h_Hubble);
+            z_array[i][k+k_offset[i]]=((GBPREAL)(f3_value))*(GBPREAL)(plist->length_unit/h_Hubble);
             k++;
           }
         }
@@ -456,9 +455,9 @@ void read_gadget_binary_local(char       *filename_root_in,
         f1_value=((float *)buffer)[3*jj+0];
         f2_value=((float *)buffer)[3*jj+1];
         f3_value=((float *)buffer)[3*jj+2];
-        vx_array[i][k+k_offset[i]]=((REAL)(f1_value))*(REAL)(plist->velocity_unit*sqrt(expansion_factor));
-        vy_array[i][k+k_offset[i]]=((REAL)(f2_value))*(REAL)(plist->velocity_unit*sqrt(expansion_factor));
-        vz_array[i][k+k_offset[i]]=((REAL)(f3_value))*(REAL)(plist->velocity_unit*sqrt(expansion_factor));
+        vx_array[i][k+k_offset[i]]=((GBPREAL)(f1_value))*(GBPREAL)(plist->velocity_unit*sqrt(expansion_factor));
+        vy_array[i][k+k_offset[i]]=((GBPREAL)(f2_value))*(GBPREAL)(plist->velocity_unit*sqrt(expansion_factor));
+        vz_array[i][k+k_offset[i]]=((GBPREAL)(f3_value))*(GBPREAL)(plist->velocity_unit*sqrt(expansion_factor));
         k++;
         }
         }
@@ -487,12 +486,9 @@ void read_gadget_binary_local(char       *filename_root_in,
         if(record_length_open!=record_length_close)
           SID_log_warning("Problem with GADGET record size (close of IDs)",ERROR_LOGIC);
       }
-      SID_log("1...",SID_LOG_CONTINUE);
       SID_Bcast(&record_length_open,(int)sizeof(int),       read_rank,SID.COMM_WORLD);
-      SID_log("2...",SID_LOG_CONTINUE);
       SID_Barrier(SID.COMM_WORLD);
       SID_Bcast(buffer,             (int)record_length_open,read_rank,SID.COMM_WORLD);
-      SID_log("3...",SID_LOG_CONTINUE);
 
       // Decide what kind of IDs we have
       if(record_length_open/(int)n_particles_file==sizeof(long long)){
@@ -543,11 +539,7 @@ void read_gadget_binary_local(char       *filename_root_in,
 
     //   ... particle counts ...
     for(i=0,n_particles_kept_all=0;i<N_GADGET_TYPE;i++){
-#ifdef USE_MPI
-      MPI_Allreduce(&(n_of_type_rank[i]),&(n_of_type[i]),1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
-#else
-      n_of_type[i]=n_of_type_rank[i];
-#endif
+      SID_Allreduce(&(n_of_type_rank[i]),&(n_of_type[i]),1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
       if(n_of_type[i]>0){
         n_particles_kept_all+=n_of_type[i];
         ADaPS_store(&(plist->data),(void *)(&(n_of_type_rank[i])),"n_%s",    ADaPS_SCALAR_SIZE_T,pname[i]);

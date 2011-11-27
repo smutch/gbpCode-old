@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <gd.h>
 #include <gbpLib.h>
 #include <gbpSPH.h>
@@ -77,43 +79,43 @@ void init_perspective_interp(perspective_interp_info **perspective_interp){
 
 void free_perspective_interp(perspective_interp_info **perspective_interp){
   SID_log("Freeing perspective interpolation structures...",SID_LOG_OPEN);
-  free_interpolate(&((*perspective_interp)->p_o[0]));
-  free_interpolate(&((*perspective_interp)->p_o[1]));
-  free_interpolate(&((*perspective_interp)->p_o[2]));
-  free_interpolate(&((*perspective_interp)->theta));
-  free_interpolate(&((*perspective_interp)->FOV));
-  free_interpolate(&((*perspective_interp)->zeta));
-  free_interpolate(&((*perspective_interp)->phi));
-  free_interpolate(&((*perspective_interp)->time));
+  free_interpolate(SID_FARG (*perspective_interp)->p_o[0]);
+  free_interpolate(SID_FARG (*perspective_interp)->p_o[1]);
+  free_interpolate(SID_FARG (*perspective_interp)->p_o[2]);
+  free_interpolate(SID_FARG (*perspective_interp)->theta);
+  free_interpolate(SID_FARG (*perspective_interp)->FOV);
+  free_interpolate(SID_FARG (*perspective_interp)->zeta);
+  free_interpolate(SID_FARG (*perspective_interp)->phi);
+  free_interpolate(SID_FARG (*perspective_interp)->time);
   SID_free(SID_FARG (*perspective_interp));
   SID_log("Done.",SID_LOG_CLOSE);
 }
 
 void add_scene_perspective(scene_info *scene){
-  perspective_info *current;
-  perspective_info *last;
-  perspective_info *new;
+  perspective_info *current_p;
+  perspective_info *last_p;
+  perspective_info *new_p;
   SID_log("Adding scene perspective...",SID_LOG_OPEN);
   // Create a new scene
-  init_perspective(&new,RENDER_INIT_PERSPECTIVE);
+  init_perspective(&new_p,RENDER_INIT_PERSPECTIVE);
   // Attach it to the end of the linked list
-  current=scene->perspectives;
-  last   =current;
-  while(current!=NULL){
-    last   =current;
-    current=current->next;
+  current_p=scene->perspectives;
+  last_p   =current_p;
+  while(current_p!=NULL){
+    last_p   =current_p;
+    current_p=current_p->next;
   }
   // Set first perspective pointer
-  if(last==NULL){
-    scene->first_perspective=new;
-    scene->perspectives     =new;
+  if(last_p==NULL){
+    scene->first_perspective=new_p;
+    scene->perspectives     =new_p;
   }
   // Set last (ie last added) scene pointers; use previous perspective as new defaults
   else{
-    copy_perspective(last,new);
-    last->next=new;
+    copy_perspective(last_p,new_p);
+    last_p->next=new_p;
   }
-  scene->last_perspective=new;
+  scene->last_perspective=new_p;
   scene->n_perspectives++;
   SID_log("Done.",SID_LOG_CLOSE);
 }
@@ -121,7 +123,7 @@ void add_scene_perspective(scene_info *scene){
 void init_scene(scene_info **scene){
   SID_log("Initializing scene...",SID_LOG_OPEN);
   (*scene)=(scene_info *)SID_malloc(sizeof(scene_info));
-  (*scene)->n_frames         =0;
+  (*scene)->n_frames         =1;
   (*scene)->n_perspectives   =0;
   (*scene)->perspectives     =NULL;
   (*scene)->first_perspective=NULL;
@@ -309,15 +311,16 @@ void init_camera(camera_info **camera, int mode){
   init_perspective(&((*camera)->perspective),RENDER_INIT_PERSPECTIVE);
 
   // Initialze image information
-  (*camera)->RGB_mode    =0;
-  (*camera)->RGB_gamma   =NULL;
-  (*camera)->RGB_transfer=NULL;
-  (*camera)->Y_mode      =0;
-  (*camera)->Y_gamma     =NULL;
-  (*camera)->Y_transfer  =NULL;
-  (*camera)->Z_mode      =0;
-  (*camera)->Z_gamma     =NULL;
-  (*camera)->Z_transfer  =NULL;
+  (*camera)->stereo_ratio =0.;
+  (*camera)->RGB_mode     =0;
+  (*camera)->RGB_gamma    =NULL;
+  (*camera)->RGB_transfer =NULL;
+  (*camera)->Y_mode       =0;
+  (*camera)->Y_gamma      =NULL;
+  (*camera)->Y_transfer   =NULL;
+  (*camera)->Z_mode       =0;
+  (*camera)->Z_gamma      =NULL;
+  (*camera)->Z_transfer   =NULL;
   strcpy((*camera)->RGB_param,"");
   strcpy((*camera)->Y_param,  "");
 
@@ -343,32 +346,39 @@ void seal_render_camera(render_info *render){
   
   SID_log("Sealing camera...",SID_LOG_OPEN);
 
+  // Decide if we're producing a stereo image based on stereo_factor
+  if(render->camera->stereo_ratio>0.) 
+    render->camera->camera_mode|=CAMERA_STEREO;
+
   // Initialize the perspective information for this camera
   copy_perspective(render->first_scene->first_perspective,render->camera->perspective);
 
   // Initialize image buffers (use colour_table=1 ... ie B&W ... for Y and Z images)
   init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGB));
   init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Y));
-  init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Z));
+  if(!check_mode_for_flag(render->camera->camera_mode,CAMERA_PLANE_PARALLEL))
+    init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Z));
   init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGBY));
-  render->camera->mask_RGB =(int *)SID_malloc(sizeof(int)*render->camera->width*render->camera->height);
-  render->camera->mask_Y   =(int *)SID_malloc(sizeof(int)*render->camera->width*render->camera->height);
-  render->camera->mask_RGBY=(int *)SID_malloc(sizeof(int)*render->camera->width*render->camera->height);
+  render->camera->mask_RGB =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
+  render->camera->mask_Y   =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
+  render->camera->mask_RGBY=(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
   if(check_mode_for_flag(render->camera->camera_mode,CAMERA_STEREO)){
     init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGB_left));
     init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Y_left));
-    init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Z_left));
+    if(!check_mode_for_flag(render->camera->camera_mode,CAMERA_PLANE_PARALLEL))
+      init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Z_left));
     init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGBY_left));    
     init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGB_right));
     init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Y_right));
-    init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Z_right));
+    if(!check_mode_for_flag(render->camera->camera_mode,CAMERA_PLANE_PARALLEL))
+      init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Z_right));
     init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGBY_right));    
-    render->camera->mask_RGB_left  =(int *)SID_malloc(sizeof(int)*render->camera->width*render->camera->height);
-    render->camera->mask_Y_left    =(int *)SID_malloc(sizeof(int)*render->camera->width*render->camera->height);
-    render->camera->mask_RGBY_left =(int *)SID_malloc(sizeof(int)*render->camera->width*render->camera->height);
-    render->camera->mask_RGB_right =(int *)SID_malloc(sizeof(int)*render->camera->width*render->camera->height);
-    render->camera->mask_Y_right   =(int *)SID_malloc(sizeof(int)*render->camera->width*render->camera->height);
-    render->camera->mask_RGBY_right=(int *)SID_malloc(sizeof(int)*render->camera->width*render->camera->height);
+    render->camera->mask_RGB_left  =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
+    render->camera->mask_Y_left    =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
+    render->camera->mask_RGBY_left =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
+    render->camera->mask_RGB_right =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
+    render->camera->mask_Y_right   =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
+    render->camera->mask_RGBY_right=(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
   }
 
   // Convert camera depth-range to Mpc/h
@@ -404,17 +414,17 @@ void free_camera(camera_info **camera){
     SID_free(SID_FARG (*camera)->mask_RGBY_right);
   }
   if((*camera)->RGB_gamma!=NULL)
-    free_interpolate(&((*camera)->RGB_gamma));
+    free_interpolate(SID_FARG (*camera)->RGB_gamma);
   if((*camera)->RGB_transfer!=NULL)
-    ADaPS_free(&((*camera)->RGB_transfer));
+    ADaPS_free(SID_FARG (*camera)->RGB_transfer);
   if((*camera)->Y_gamma!=NULL)
-    free_interpolate(&((*camera)->Y_gamma));
+    free_interpolate(SID_FARG (*camera)->Y_gamma);
   if((*camera)->Y_transfer!=NULL)
-    ADaPS_free(&((*camera)->Y_transfer));
+    ADaPS_free(SID_FARG (*camera)->Y_transfer);
   if((*camera)->Z_gamma!=NULL)
-    free_interpolate(&((*camera)->Z_gamma));
+    free_interpolate(SID_FARG (*camera)->Z_gamma);
   if((*camera)->Z_transfer!=NULL)
-    ADaPS_free(&((*camera)->Z_transfer));
+    ADaPS_free(SID_FARG (*camera)->Z_transfer);
   SID_free((void **)camera);
   SID_log("Done.",SID_LOG_CLOSE);
 }
@@ -435,16 +445,18 @@ void init_render(render_info **render){
   (*render)->first_scene=(*render)->scenes;
   (*render)->last_scene =(*render)->scenes;
 
-  (*render)->n_frames        = 0;
-  (*render)->snap_number_read=-1;
-  (*render)->snap_number     = 0;
-  (*render)->n_snap_a_list   = 0;
-  (*render)->snap_a_list     = NULL;
-  (*render)->h_Hubble        = 1.;
-  (*render)->near_field      = 0.;
-  (*render)->flag_comoving   = TRUE;
-  (*render)->sealed          = FALSE;
-  (*render)->mode            = MAKE_MAP_LOG;
+  (*render)->n_frames           = 0;
+  (*render)->snap_number_read   =-1;
+  (*render)->snap_number        = 0;
+  (*render)->n_snap_a_list      = 0;
+  (*render)->snap_a_list        = NULL;
+  (*render)->h_Hubble           = 1.;
+  (*render)->near_field         = 0.;
+  (*render)->flag_read_marked   = FALSE;
+  (*render)->flag_comoving      = TRUE;
+  (*render)->flag_force_periodic= FALSE;
+  (*render)->sealed             = FALSE;
+  (*render)->mode               = MAKE_MAP_LOG;
 
   // Initialize the structure that holds the particle data
   init_plist(&((*render)->plist),NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
@@ -470,34 +482,34 @@ void free_render(render_info **render){
 }
 
 void add_render_scene(render_info *render){
-  scene_info *current;
-  scene_info *last;
-  scene_info *next;
-  scene_info *new;
+  scene_info *current_s;
+  scene_info *last_s;
+  scene_info *next_s;
+  scene_info *new_s;
   SID_log("Adding render scene...",SID_LOG_OPEN);
   // Seal the previous scene
   seal_scenes(render->scenes);
   // Create a new scene
-  init_scene(&new);
+  init_scene(&new_s);
   // Attach it to the end of the linked list
-  current=render->scenes;
-  last   =current;
-  while(current!=NULL){
-    last   =current;
-    current=current->next;
+  current_s=render->scenes;
+  last_s   =current_s;
+  while(current_s!=NULL){
+    last_s   =current_s;
+    current_s=current_s->next;
   }
   // Set first scene pointer
-  if(last==NULL){
-    render->first_scene=new;
-    render->scenes     =new;
+  if(last_s==NULL){
+    render->first_scene=new_s;
+    render->scenes     =new_s;
   }
   // Set last (ie last added) scene pointers
   //   (Carry last scene's last perspective as new starting perspective)
   else{
-    copy_perspective(last->last_perspective,new->first_perspective);
-    last->next=new;
+    copy_perspective(last_s->last_perspective,new_s->first_perspective);
+    last_s->next=new_s;
   }
-  render->last_scene=new;
+  render->last_scene=new_s;
   SID_log("Done.",SID_LOG_CLOSE);
 }
 
@@ -549,8 +561,11 @@ int set_render_state(render_info *render,int frame,int mode){
       r_val=FALSE;
     current_scene=current_scene->next;
   }
-  
-  perspective->radius*=perspective->phi;
+  if(!check_mode_for_flag(render->camera->camera_mode,CAMERA_PLANE_PARALLEL)) 
+    perspective->radius*=perspective->phi;
+  else
+    perspective->radius=1e8*M_PER_MPC;
+
   perspective->FOV   *=perspective->phi;
   perspective->p_c[0] =perspective->p_o[0]+perspective->radius*cos(perspective->zeta)*sin(perspective->theta);
   perspective->p_c[1] =perspective->p_o[1]+perspective->radius*cos(perspective->zeta)*cos(perspective->theta);
@@ -579,7 +594,11 @@ int set_render_state(render_info *render,int frame,int mode){
 
     // Check (and read if necessary) snapshots and smooth files here
     if(render->snap_number_read!=render->snap_number){
-      read_gadget_binary_local(render->snap_filename_root,render->snap_number,&(render->plist));
+      if(render->flag_read_marked){
+         read_mark_file(&(render->plist),"mark",render->mark_filename_root,MARK_LIST_ONLY);
+         render->flag_read_marked=FALSE;
+      }
+      read_gadget_binary(render->snap_filename_root,render->snap_number,&(render->plist),READ_GADGET_DEFAULT);
       render->h_Hubble=((double *)ADaPS_fetch(render->plist.data,"h_Hubble"))[0];
       read_smooth(&(render->plist),render->smooth_filename_root,render->snap_number,SMOOTH_DEFAULT);
       render->snap_number_read=render->snap_number;
@@ -684,6 +703,10 @@ void parse_render_file(render_info **render, char *filename){
         }
         else if(!strcmp(parameter,"snap_file"))
           grab_word(line,i_word++,(*render)->snap_filename_root);
+        else if(!strcmp(parameter,"mark_file")){
+          grab_word(line,i_word++,(*render)->mark_filename_root);
+          (*render)->flag_read_marked=TRUE;
+        }
         else if(!strcmp(parameter,"smooth_file"))
           grab_word(line,i_word++,(*render)->smooth_filename_root);
         else if(!strcmp(parameter,"snap_a_list_file")){
@@ -710,6 +733,8 @@ void parse_render_file(render_info **render, char *filename){
           grab_int(line,i_word++,&((*render)->snap_number));
         else if(!strcmp(parameter,"flag_comoving"))
           grab_int(line,i_word++,&((*render)->flag_comoving));
+        else if(!strcmp(parameter,"force_periodic"))
+          (*render)->flag_force_periodic=TRUE;
         else if(!strcmp(parameter,"camera")){
           grab_word(line,i_word++,variable);
           if(!strcmp(variable,"size")){
@@ -717,10 +742,17 @@ void parse_render_file(render_info **render, char *filename){
             (*render)->camera->width =i_value;
             grab_int(line,i_word++,&i_value);
             (*render)->camera->height=i_value;
-          }  
+          }
+          else if(!strcmp(variable,"stereo_factor")){
+            grab_double(line,i_word++,&d_value);
+            (*render)->camera->stereo_ratio=d_value;
+          }
           else if(!strcmp(variable,"colour_table")){
             grab_int(line,i_word++,&i_value);
             (*render)->camera->colour_table=i_value;
+          }
+          else if(!strcmp(variable,"plane_parallel")){
+            (*render)->camera->camera_mode|=CAMERA_PLANE_PARALLEL|CAMERA_MONO;
           }
           else if(!strcmp(variable,"RGB_param")){
             grab_word(line,i_word++,c_value);
@@ -738,7 +770,7 @@ void parse_render_file(render_info **render, char *filename){
               transfer_array_x=(double *)SID_malloc(sizeof(double)*n_transfer);
               transfer_array_y=(double *)SID_malloc(sizeof(double)*n_transfer);
               if((*render)->camera->RGB_gamma!=NULL)
-                free_interpolate(&((*render)->camera->RGB_gamma));
+                free_interpolate(SID_FARG (*render)->camera->RGB_gamma);
               for(j_word=0;j_word<n_transfer;j_word++){
                 grab_double(line,i_word++,&d_value);
                 transfer_array_x[j_word]=255.*(double)j_word/(double)(n_transfer-1);
@@ -818,7 +850,7 @@ void parse_render_file(render_info **render, char *filename){
               transfer_array_x=(double *)SID_malloc(sizeof(double)*n_transfer);
               transfer_array_y=(double *)SID_malloc(sizeof(double)*n_transfer);
               if((*render)->camera->Y_gamma!=NULL)
-                free_interpolate(&((*render)->camera->Y_gamma));
+                free_interpolate(SID_FARG (*render)->camera->Y_gamma);
               for(j_word=0;j_word<n_transfer;j_word++){
                 grab_double(line,i_word++,&d_value);
                 transfer_array_x[j_word]=255.*(double)j_word/(double)(n_transfer-1);
@@ -894,7 +926,7 @@ void parse_render_file(render_info **render, char *filename){
               transfer_array_x=(double *)SID_malloc(sizeof(double)*n_transfer);
               transfer_array_y=(double *)SID_malloc(sizeof(double)*n_transfer);
               if((*render)->camera->Z_gamma!=NULL)
-                free_interpolate(&((*render)->camera->Z_gamma));
+                free_interpolate(SID_FARG (*render)->camera->Z_gamma);
               for(j_word=0;j_word<n_transfer;j_word++){
                 grab_double(line,i_word++,&d_value);
                 transfer_array_x[j_word]=255.*(double)j_word/(double)(n_transfer-1);
@@ -1042,7 +1074,7 @@ void read_frame(render_info *render,int frame){
   read_image(render->camera->image_Z,   filename_Z);
   read_image(render->camera->image_RGBY,filename_RGBY);
 
-  // Write stereo-images
+  // Read stereo-images
   if(check_mode_for_flag(render->camera->camera_mode,CAMERA_STEREO)){
     // Left
     sprintf(filename_RGB, "%s/RGB_L_%05d", render->filename_out_dir,frame);
@@ -1090,7 +1122,8 @@ void write_frame(render_info *render,int frame,int mode){
   sprintf(filename_RGBY,"%s/RGBY_M_%05d",render->filename_out_dir,frame);
   write_image(render->camera->image_RGB, filename_RGB, mode);
   write_image(render->camera->image_Y,   filename_Y,   mode);
-  write_image(render->camera->image_Z,   filename_Z,   mode);
+  if(!check_mode_for_flag(render->camera->camera_mode,CAMERA_PLANE_PARALLEL))
+     write_image(render->camera->image_Z,   filename_Z,   mode);
   write_image(render->camera->image_RGBY,filename_RGBY,mode);
 
   // Write stereo-images
@@ -1102,7 +1135,8 @@ void write_frame(render_info *render,int frame,int mode){
     sprintf(filename_RGBY,"%s/RGBY_L_%05d",render->filename_out_dir,frame);
     write_image(render->camera->image_RGB_left,  filename_RGB, mode);
     write_image(render->camera->image_Y_left,    filename_Y,   mode);
-    write_image(render->camera->image_Z_left,    filename_Z,   mode);
+    if(!check_mode_for_flag(render->camera->camera_mode,CAMERA_PLANE_PARALLEL))
+      write_image(render->camera->image_Z_left,    filename_Z,   mode);
     write_image(render->camera->image_RGBY_left, filename_RGBY,mode);
 
     // Right
@@ -1112,7 +1146,8 @@ void write_frame(render_info *render,int frame,int mode){
     sprintf(filename_RGBY,"%s/RGBY_R_%05d",render->filename_out_dir,frame);
     write_image(render->camera->image_RGB_right, filename_RGB, mode);
     write_image(render->camera->image_Y_right,   filename_Y,   mode);
-    write_image(render->camera->image_Z_right,   filename_Z,   mode);
+    if(!check_mode_for_flag(render->camera->camera_mode,CAMERA_PLANE_PARALLEL))
+      write_image(render->camera->image_Z_right,   filename_Z,   mode);
     write_image(render->camera->image_RGBY_right,filename_RGBY,mode);
   }  
   SID_log("Done.",SID_LOG_CLOSE);
@@ -1123,7 +1158,7 @@ void set_frame(camera_info *camera){
   int         i_image;
   double      image_min,image_max;
   double      image_range;
-  int         pixel_value;
+  char        pixel_value;
   double      brightness;
   image_info *image_RGB;
   image_info *image_Y;
@@ -1154,93 +1189,29 @@ void set_frame(camera_info *camera){
       image_RGBY=camera->image_RGBY_right;
       break;
     }
+
     // Set RGB Image
-    if(image_RGB!=NULL){
-      image      =image_RGB;
-      image_min  =camera->RGB_range[0];
-      image_max  =camera->RGB_range[1];
-      image_range=image_max-image_min;
-      values     =image->values;
-      for(i_x=0,i_pixel=0;i_x<image->width;i_x++){
-        for(i_y=0;i_y<image->height;i_y++,i_pixel++){
-          pixel_value          =(int)(255.*(values[i_pixel]-image_min)/image_range);
-          pixel_value          =MAX(0,MIN(pixel_value,255));
-          if(camera->RGB_gamma!=NULL)
-            pixel_value=(int)((double)pixel_value*interpolate(camera->RGB_gamma,pixel_value));
-          image->red[i_pixel]  =image->colour_table[0][pixel_value];
-          image->green[i_pixel]=image->colour_table[1][pixel_value];
-          image->blue[i_pixel] =image->colour_table[2][pixel_value];
-          gdImageSetPixel(image->gd_ptr,i_x,i_y,gdTrueColorAlpha(image->red[i_pixel],image->green[i_pixel],image->blue[i_pixel],image->alpha[i_pixel]));
-        }
-      }
-    }
+    if(image_RGB!=NULL)
+       set_image_RGB(image_RGB,camera->RGB_range[0],camera->RGB_range[1]);
   
     // Set Y Image
-    if(image_Y!=NULL){
-      image      =image_Y;
-      image_min  =camera->Y_range[0];
-      image_max  =camera->Y_range[1];
-      image_range=image_max-image_min;
-      values     =image->values;
-      for(i_x=0,i_pixel=0;i_x<image->width;i_x++){
-        for(i_y=0;i_y<image->height;i_y++,i_pixel++){
-          pixel_value          =(int)(255.*(values[i_pixel]-image_min)/image_range);
-          pixel_value          =MAX(0,MIN(pixel_value,255));
-          if(camera->Y_gamma!=NULL)
-            pixel_value=(int)((double)pixel_value*interpolate(camera->Y_gamma,pixel_value));
-          image->red[i_pixel]  =image->colour_table[0][pixel_value];
-          image->green[i_pixel]=image->colour_table[1][pixel_value];
-          image->blue[i_pixel] =image->colour_table[2][pixel_value];
-          gdImageSetPixel(image->gd_ptr,i_x,i_y,gdTrueColorAlpha(image->red[i_pixel],image->green[i_pixel],image->blue[i_pixel],image->alpha[i_pixel]));
-        }
-      }
-    }
+    if(image_Y!=NULL)
+       set_image_RGB(image_Y,camera->Y_range[0],camera->Y_range[1]);
 
     // Set Z Image
-    if(image_Z!=NULL){
-      image      =image_Z;
-      values     =image->values;
-      image_min  =camera->Z_range[0];
-      image_max  =camera->Z_range[1];
-      image_range=image_max-image_min;
-      for(i_x=0,i_pixel=0;i_x<image->width;i_x++){
-        for(i_y=0;i_y<image->height;i_y++,i_pixel++){
-          pixel_value          =(int)(255.*(values[i_pixel]-image_min)/image_range);
-          pixel_value          =MAX(0,MIN(pixel_value,255));
-          if(camera->Z_gamma!=NULL)
-            pixel_value=(int)((double)pixel_value*interpolate(camera->Z_gamma,pixel_value));
-          image->red[i_pixel]  =image->colour_table[0][pixel_value];
-          image->green[i_pixel]=image->colour_table[1][pixel_value];
-          image->blue[i_pixel] =image->colour_table[2][pixel_value];
-          gdImageSetPixel(image->gd_ptr,i_x,i_y,gdTrueColorAlpha(image->red[i_pixel],image->green[i_pixel],image->blue[i_pixel],image->alpha[i_pixel]));
-        }
-      }
-    }
+    if(image_Z!=NULL)
+       set_image_RGB(image_Z,camera->Z_range[0],camera->Z_range[1]);
 
     // Set RGBY Image
-    if(image_RGB!=NULL && image_Y!=NULL && image_RGBY!=NULL){
-      image      =image_RGBY;
-      image_min  =camera->Y_range[0];
-      image_max  =camera->Y_range[1];
-      image_range=image_max-image_min;
-      for(i_x=0,i_pixel=0;i_x<image->width;i_x++){
-        for(i_y=0;i_y<image->height;i_y++,i_pixel++){
-          // Compute the brightness of the pixel [0.->1.]
-          brightness            =(image_Y->values[i_pixel]-image_min)/image_range;
-          brightness            =MAX(0.,MIN(brightness,1.));
-          // Scale colours
-          image->red[i_pixel]   =(int)(brightness*(double)image_RGB->red[i_pixel]);
-          image->green[i_pixel] =(int)(brightness*(double)image_RGB->green[i_pixel]);
-          image->blue[i_pixel]  =(int)(brightness*(double)image_RGB->blue[i_pixel]);
-          // Make sure colours are still in the range [0->255]
-          image->red[i_pixel]   =MAX(0,MIN(image_RGBY->red[i_pixel],  255));
-          image->blue[i_pixel]  =MAX(0,MIN(image_RGBY->blue[i_pixel], 255));
-          image->green[i_pixel] =MAX(0,MIN(image_RGBY->green[i_pixel],255));
-          // Apply changes
-          gdImageSetPixel(image->gd_ptr,i_x,i_y,gdTrueColorAlpha(image->red[i_pixel],image->green[i_pixel],image->blue[i_pixel],image->alpha[i_pixel]));
-        }
-      }
-    }
+    if(image_RGBY!=NULL && image_RGB!=NULL && image_Y!=NULL)
+       set_image_RGBY(image_RGBY,
+                      image_RGB,
+                      image_Y,
+                      camera->RGB_range[0],
+                      camera->RGB_range[1],
+                      camera->Y_range[0],
+                      camera->Y_range[1]);
+
   }
 }
 

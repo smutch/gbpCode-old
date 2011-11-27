@@ -43,10 +43,6 @@ struct image_info{
   int              n_pixels;
   double           range[2];
   int            **colour_table;
-  int             *red;
-  int             *green;
-  int             *blue;
-  int             *alpha;
   double          *values;
   int              colourmapselect;
   int              n_colours;
@@ -75,7 +71,7 @@ struct movie_info{
 typedef struct perspective_info perspective_info;
 struct perspective_info{
   double p_o[3];  // Object position
-  double p_c[3];  // Camera position; computed from p_o, radius and theta
+  double p_c[3];  // Camera position; computed from p_o, radius zeta and theta
   double d_o;     // Separation between object and camera
   double radius;  // Separation between object and camera modulo phi
   double theta;   // Rotation angle (azimuthal)   of camera position about x,y,z_o (after c-o transformation)
@@ -116,16 +112,17 @@ struct scene_info{
 typedef struct camera_info camera_info;
 struct camera_info{
   int               camera_mode;
+  int               colour_table;
   int               width;
   int               height;
-  int               colour_table;
+  double            stereo_ratio;
   perspective_info *perspective; // Present perspective state of camera
   image_info       *image_RGBY;
   image_info       *image_RGBY_left;
   image_info       *image_RGBY_right;
-  int              *mask_RGBY;
-  int              *mask_RGBY_left;
-  int              *mask_RGBY_right;
+  char             *mask_RGBY;
+  char             *mask_RGBY_left;
+  char             *mask_RGBY_right;
   int               RGB_mode;
   char              RGB_param[64];
   double            RGB_range[2];
@@ -134,9 +131,9 @@ struct camera_info{
   image_info       *image_RGB;
   image_info       *image_RGB_left;
   image_info       *image_RGB_right;
-  int              *mask_RGB;
-  int              *mask_RGB_left;
-  int              *mask_RGB_right;
+  char             *mask_RGB;
+  char             *mask_RGB_left;
+  char             *mask_RGB_right;
   int               Y_mode;
   char              Y_param[64];
   double            Y_range[2];
@@ -145,9 +142,9 @@ struct camera_info{
   image_info       *image_Y;
   image_info       *image_Y_left;
   image_info       *image_Y_right;
-  int              *mask_Y;
-  int              *mask_Y_left;
-  int              *mask_Y_right;
+  char             *mask_Y;
+  char             *mask_Y_left;
+  char             *mask_Y_right;
   int               Z_mode;
   double            Z_range[2];
   interp_info      *Z_gamma;
@@ -166,6 +163,7 @@ struct render_info{
   int          n_frames;
   char         filename_out_dir[256];
   char         snap_filename_root[256];
+  char         mark_filename_root[256];
   char         smooth_filename_root[256];
   char         snap_a_list_filename[256];
   int          n_snap_a_list;
@@ -173,6 +171,8 @@ struct render_info{
   int          snap_number;
   int          snap_number_read;
   int          flag_comoving;
+  int          flag_force_periodic;
+  int          flag_read_marked;
   plist_info   plist;
   double       h_Hubble;
   double       near_field;
@@ -180,6 +180,10 @@ struct render_info{
   int          sealed; // TRUE if the render is fully initialized
 };
 
+// Function definitions
+#ifdef __cplusplus
+extern "C" {
+#endif
 void init_perspective(perspective_info **perspective,int mode);
 void free_perspective(perspective_info **perspective);
 void copy_perspective(perspective_info *from,perspective_info *to);
@@ -203,6 +207,8 @@ void read_frame(render_info *render,int frame);
 void set_frame(camera_info *camera);
 void set_render_scale(render_info *render,double RGB_min,double RGB_max,double Y_min,double Y_max,double Z_min,double Z_max);
 
+void render_frame(render_info  *render);
+
 void open_movie(char       *filename,
                 int         width,
                 int         height,
@@ -216,19 +222,27 @@ void init_image(int          width,
                 int          colourmapselect,
                 image_info **image);
 void free_image(image_info **image);
-void create_colour_table(int    colourmapselect,
-                         int    n_colours,
-                         int ***colour_table);
+void create_colour_table(int     colourmapselect,
+                         int     n_colours,
+                         int  ***colour_table);
 
-void set_image_alpha(image_info *image,
-                     double     *image_in,
-                     double      image_min,
-                     double      image_max);
 void set_image_RGB(image_info *image,
-                   double     *image_in,
                    double      image_min,
                    double      image_max);
+void set_image_RGBY(image_info *image_RGBY_in,
+                    image_info *image_RGB_in,
+                    image_info *image_Y_in,
+                    double      RGB_min,
+                    double      RGB_max,
+                    double      Y_min,
+                    double      Y_max);
 
 void write_image(image_info *image,char *filename,int mode);
 void read_image(image_info *image,char *filename_root);
+
+#ifdef __cplusplus
+}
 #endif
+
+#endif
+

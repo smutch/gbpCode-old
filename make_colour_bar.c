@@ -28,18 +28,16 @@ int main(int argc, char *argv[]){
 
   // Initialize movie
   init_image(width,height,colour_table,&image);
-  image_array=SID_malloc(sizeof(double)*width*height);
+  image_array=image->values;
   for(i_x=0,i_pixel=0;i_x<width;i_x++){
     for(i_y=0;i_y<height;i_y++,i_pixel++){
       image_array[i_pixel]=(double)(i_x+1)/(double)width;
     }
   }
   set_image_RGB(image,
-                image_array,
                 0.,
                 1.);
   write_image(image,file_out,WRITE_IMAGE_DEFAULT);
-  SID_free((void **)&image_array);
   free_image(&image);
   SID_log("Done.",SID_LOG_CLOSE);
 
