@@ -26,10 +26,10 @@ int main(int argc, char *argv[]){
   int     i_grouping;
   int     i_grouping_start;
   int     i_grouping_stop;
-  int     n_groupings;
+  size_t  n_groupings;
   size_t  n_grouping_local;
+  size_t  n_grouping_test;
   char    filename_in[MAX_FILENAME_LENGTH];
-  char    filename_in_root[MAX_FILENAME_LENGTH];
   char    filename_in_model[MAX_FILENAME_LENGTH];
   char    filename_out_1D[MAX_FILENAME_LENGTH];
   char    filename_out_2D[MAX_FILENAME_LENGTH];
@@ -39,7 +39,7 @@ int main(int argc, char *argv[]){
   char    filename_TF[256];
   char    n_string[64];
   int             n[3];
-  double          x_in,y_in,z_in,vx_in,vy_in,vz_in;
+  double          x_in,y_in,z_in,vx_in,vy_in,vz_in,x_z_in;
   double          box_size;
   double          L[3];
   size_t          n_all;
@@ -89,12 +89,7 @@ int main(int argc, char *argv[]){
   int    i_file,n_files;
   int    mass_assignment_scheme;
   int     n_1D,n_2D;
-  RNG_info  RNG;
   int       seed=1327621;
-  long long   n_data_ll;
-  int        *rank_own;
-  int        *rank_own_index;
-  size_t      n_rank;
   int         flag_init_store;
   
   int        grid_size; 
@@ -115,26 +110,35 @@ int main(int argc, char *argv[]){
   double    *dP_k_2D; 
   int       *n_modes_2D;
   int        pspec_mode;
+  int        x_column;
+  int        y_column;
+  int        z_column;
+  int        vx_column;
+  int        vy_column;
+  int        vz_column;
 
   // Initialization -- MPI etc.
   SID_init(&argc,&argv,NULL);
-  if(argc!=8)
+  if(argc!=12)
     SID_trap_error("Incorrect syntax.",ERROR_SYNTAX);
-  strcpy(filename_in_root, argv[1]);
+  strcpy(filename_in,      argv[1]);
   strcpy(filename_out_root,argv[2]);
   redshift         =(double)atof(argv[3]);
   grid_size        =(int)   atoi(argv[4]);
   box_size         =(double)atof(argv[5]);
-  i_grouping_start =(int)   atoi(argv[6]);
-  i_grouping_stop  =(int)   atoi(argv[7]);
-  n_groupings      =i_grouping_stop-i_grouping_start+1;
-  if(n_groupings<1)
-      SID_trap_error("No groupings have been selected (you chose start=%d, stop=%d).",ERROR_LOGIC,i_grouping_start,i_grouping_stop);
+  x_column         =(int)   atoi(argv[6]);
+  y_column         =(int)   atoi(argv[7]);
+  z_column         =(int)   atoi(argv[8]);
+  vx_column        =(int)   atoi(argv[9]);
+  vy_column        =(int)   atoi(argv[10]);
+  vz_column        =(int)   atoi(argv[11]);
+
+  n_groupings      =1;
 
   sprintf(filename_out_1D,   "%s.1D_pspec",   filename_out_root);
   sprintf(filename_out_2D,   "%s.2D_pspec",   filename_out_root);
 
-  SID_log("Producing P(k)'s...",SID_LOG_OPEN);
+  SID_log("Computing P(k) for file {%s}...",SID_LOG_OPEN,filename_in);
 
   // Set the k ranges
   k_min_1D=0.0;
@@ -145,6 +149,7 @@ int main(int argc, char *argv[]){
   dk_2D   =0.02;
 
   // Set mass assignment scheme
+  //mass_assignment_scheme=MAP2GRID_DIST_NGP;
   mass_assignment_scheme=MAP2GRID_DIST_DWT20;
 
   // Initialization
@@ -154,10 +159,9 @@ int main(int argc, char *argv[]){
   L[0]=box_size;
   L[1]=L[0];
   L[2]=L[0];
-  init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
   init_cosmo_std(&cosmo);
+  h_Hubble=((double *)ADaPS_fetch(cosmo,"h_Hubble"))[0];
   init_field(3,n,L,&FFT);
-  init_RNG(&seed,&RNG,RNG_DEFAULT); // Needed for rank assignment
 
   // Initialize arrays
   SID_log("Initializing arrays...",SID_LOG_OPEN);
@@ -177,103 +181,6 @@ int main(int argc, char *argv[]){
     fp_1D   =fopen(filename_out_1D,   "w");
     fp_2D   =fopen(filename_out_2D,   "w");
   }
-
-  // Process each grouping in turn
-  for(i_grouping=i_grouping_start,flag_init_store=TRUE;i_grouping<=i_grouping_stop;i_grouping++){
-    SID_log("Processing grouping #%03d...",SID_LOG_OPEN|SID_LOG_TIMER,i_grouping);
-
-    // Read catalog
-    SID_log("Reading catalog {%s}...",SID_LOG_OPEN,filename_in);
-    if(SID.I_am_Master){
-      fp_in=fopen(filename_in,"r");
-      n_grouping=(size_t)count_lines_data(fp_in);
-      for(i_halo=0,n_grouping_local=0;i_halo<n_grouping;i_halo++){
-         grab_next_line_data(fp_in,&line,&line_length);
-         grab_double(line,7, &x_in);
-         if(x_in>=FFT.slab.x_min_local && x_in<FFT.slab.x_max_local)
-            n_grouping_local++;
-      }
-      rewind(fp_in);
-      x_grouping  =(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping_local);
-      y_grouping  =(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping_local);
-      z_grouping  =(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping_local);
-      vx_halos_sub=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping_local);
-      vy_halos_sub=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping_local);
-      vz_halos_sub=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping_local);
-      vx_halos_FoF=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping_local);
-      vy_halos_FoF=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping_local);
-      vz_halos_FoF=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping_local);
-      vx_halos_sys=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping_local);
-      vy_halos_sys=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping_local);
-      vz_halos_sys=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping_local);
-      rank_own    =(int   *)SID_malloc(sizeof(int) *n_grouping_local);
-      x_min=1e10;
-      x_max=0.;
-      y_min=1e10;
-      y_max=0.;
-      z_min=1e10;
-      z_max=0.;
-      for(i_halo=0,n_grouping_local=0;i_halo<n_grouping;i_halo++){
-        grab_next_line_data(fp_in,&line,&line_length);
-        grab_double(line,7, &x_in);
-        if(x_in>=FFT.slab.x_min_local && x_in<FFT.slab.x_max_local){
-           grab_double(line,8, &y_in);
-           grab_double(line,9, &z_in);
-           grab_double(line,11,&vx_in);
-           grab_double(line,12,&vy_in);
-           grab_double(line,13,&vz_in);
-           x_grouping[n_grouping_local] =(GBPREAL)x_in;
-           y_grouping[n_grouping_local] =(GBPREAL)y_in;
-           z_grouping[n_grouping_local] =(GBPREAL)z_in;
-           x_min=MIN(x_min,x_halos[i_halo]);
-           x_max=MAX(x_max,x_halos[i_halo]);
-           y_min=MIN(y_min,y_halos[i_halo]);
-           y_max=MAX(y_max,y_halos[i_halo]);
-           z_min=MIN(z_min,z_halos[i_halo]);
-           z_max=MAX(z_max,z_halos[i_halo]);
-           vx_halos_sub[i_halo]=(GBPREAL)vx_in;
-           vy_halos_sub[i_halo]=(GBPREAL)vy_in;
-           vz_halos_sub[i_halo]=(GBPREAL)vz_in;
-           grab_double(line,14,&vx_in);
-           grab_double(line,15,&vy_in);
-           grab_double(line,16,&vz_in);
-           vx_halos_FoF[i_halo]=(GBPREAL)vx_in;
-           vy_halos_FoF[i_halo]=(GBPREAL)vy_in;
-           vz_halos_FoF[i_halo]=(GBPREAL)vz_in;
-           grab_double(line,17,&vx_in);
-           grab_double(line,18,&vy_in);
-           grab_double(line,19,&vz_in);
-           vx_halos_sys[i_halo]=(GBPREAL)vx_in;
-           vy_halos_sys[i_halo]=(GBPREAL)vy_in;
-           vz_halos_sys[i_halo]=(GBPREAL)vz_in;           
-           n_grouping_local++;
-        }
-      }
-      SID_log("x_range=%le->%le",SID_LOG_COMMENT,x_min,x_max);
-      SID_log("y_range=%le->%le",SID_LOG_COMMENT,y_min,y_max);
-      SID_log("z_range=%le->%le",SID_LOG_COMMENT,z_min,z_max);
-      fclose(fp_in);
-    }
-    SID_Bcast(&n_grouping,sizeof(size_t),MASTER_RANK,SID.COMM_WORLD);
-
-    // Loop over 3 velocity sets
-    vx_grouping=vx_halos_sub;
-    vy_grouping=vy_halos_sub;
-    vz_grouping=vz_halos_sub;
-
-    // Store grouping
-    ADaPS_store(&(plist.data),(void *)&n_grouping,      "n_all_halos", ADaPS_SCALAR_SIZE_T);
-    ADaPS_store(&(plist.data),(void *)&n_grouping_local,"n_halos",     ADaPS_SCALAR_SIZE_T);
-    ADaPS_store(&(plist.data),(void *)x_grouping,       "x_halos",     ADaPS_DEFAULT);
-    ADaPS_store(&(plist.data),(void *)y_grouping,       "y_halos",     ADaPS_DEFAULT);
-    ADaPS_store(&(plist.data),(void *)z_grouping,       "z_halos",     ADaPS_DEFAULT);
-    ADaPS_store(&(plist.data),(void *)vx_grouping,      "vx_halos",    ADaPS_DEFAULT);
-    ADaPS_store(&(plist.data),(void *)vy_grouping,      "vy_halos",    ADaPS_DEFAULT);
-    ADaPS_store(&(plist.data),(void *)vz_grouping,      "vz_halos",    ADaPS_DEFAULT);
-    SID_log("Done.",SID_LOG_CLOSE);
-
-    // Needed to make writing more straight-forward
-    n_data_ll  =(long long)n_grouping;
     
     for(i_compute=0;i_compute<4;i_compute++){
       switch(i_compute){
@@ -294,6 +201,82 @@ int main(int argc, char *argv[]){
         pspec_mode=PSPEC_ADD_VZ;
         break;
       }
+
+      // Read catalog (z-space distortions can move things out of local slabs, so we need to keep redoing this)
+      SID_log("Reading catalog {%s}...",SID_LOG_OPEN,filename_in);
+      init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
+      fp_in=fopen(filename_in,"r");
+      n_grouping=(size_t)count_lines_data(fp_in);
+      for(i_halo=0,n_grouping_local=0;i_halo<n_grouping;i_halo++){
+         grab_next_line_data(fp_in,&line,&line_length);
+         grab_double(line,x_column, &x_in);
+         grab_double(line,vx_column,&vx_in);
+         x_z_in=x_in;
+         if(i_compute==1)
+            x_z_in+=(GBPREAL)(1e3*h_Hubble*((double)vx_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+         if(x_z_in>=FFT.L[0]) x_z_in-=FFT.L[0];
+         if(x_z_in<0.)        x_z_in+=FFT.L[0];
+         if(x_z_in>=FFT.slab.x_min_local && x_z_in<FFT.slab.x_max_local)
+            n_grouping_local++;
+      }
+      rewind(fp_in);
+      x_grouping  =(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping_local);
+      y_grouping  =(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping_local);
+      z_grouping  =(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping_local);
+      vx_halos_sub=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping_local);
+      vy_halos_sub=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping_local);
+      vz_halos_sub=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping_local);
+      for(i_halo=0,n_grouping_local=0;i_halo<n_grouping;i_halo++){
+         grab_next_line_data(fp_in,&line,&line_length);
+         grab_double(line,x_column, &x_in);
+         grab_double(line,vx_column,&vx_in);
+         x_z_in=x_in;
+         if(i_compute==1)
+            x_z_in+=(GBPREAL)(1e3*h_Hubble*((double)vx_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+         if(x_z_in>=FFT.L[0]) x_z_in-=FFT.L[0];
+         if(x_z_in<0.)        x_z_in+=FFT.L[0];
+         if(x_z_in>=FFT.slab.x_min_local && x_z_in<FFT.slab.x_max_local){
+           grab_double(line,y_column, &y_in);
+           grab_double(line,z_column, &z_in);
+           grab_double(line,vy_column,&vy_in);
+           grab_double(line,vz_column,&vz_in);
+           x_grouping[n_grouping_local]  =(GBPREAL)x_in;
+           y_grouping[n_grouping_local]  =(GBPREAL)y_in;
+           z_grouping[n_grouping_local]  =(GBPREAL)z_in;
+           vx_halos_sub[n_grouping_local]=(GBPREAL)vx_in;
+           vy_halos_sub[n_grouping_local]=(GBPREAL)vy_in;
+           vz_halos_sub[n_grouping_local]=(GBPREAL)vz_in;
+           n_grouping_local++;
+        }
+      }
+      calc_min_global(x_grouping,&x_min,n_grouping_local,SID_REAL,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+      calc_max_global(x_grouping,&x_max,n_grouping_local,SID_REAL,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+      calc_min_global(y_grouping,&y_min,n_grouping_local,SID_REAL,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+      calc_max_global(y_grouping,&y_max,n_grouping_local,SID_REAL,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+      calc_min_global(z_grouping,&z_min,n_grouping_local,SID_REAL,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+      calc_max_global(z_grouping,&z_max,n_grouping_local,SID_REAL,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+      calc_sum_global(&n_grouping_local,&n_grouping_test,1,SID_SIZE_T,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+      if(n_grouping_test!=n_grouping)
+         SID_trap_error("n_grouping_test!=n_grouping (i.e. %d!=%d)",ERROR_LOGIC,n_grouping_test,n_grouping);
+      SID_log("x_range=%le->%le",SID_LOG_COMMENT,x_min,x_max);
+      SID_log("y_range=%le->%le",SID_LOG_COMMENT,y_min,y_max);
+      SID_log("z_range=%le->%le",SID_LOG_COMMENT,z_min,z_max);
+      fclose(fp_in);
+
+      vx_grouping=vx_halos_sub;
+      vy_grouping=vy_halos_sub;
+      vz_grouping=vz_halos_sub;
+
+      // Store grouping
+      ADaPS_store(&(plist.data),(void *)&n_grouping,      "n_all_halos", ADaPS_SCALAR_SIZE_T);
+      ADaPS_store(&(plist.data),(void *)&n_grouping_local,"n_halos",     ADaPS_SCALAR_SIZE_T);
+      ADaPS_store(&(plist.data),(void *)x_grouping,       "x_halos",     ADaPS_DEFAULT);
+      ADaPS_store(&(plist.data),(void *)y_grouping,       "y_halos",     ADaPS_DEFAULT);
+      ADaPS_store(&(plist.data),(void *)z_grouping,       "z_halos",     ADaPS_DEFAULT);
+      ADaPS_store(&(plist.data),(void *)vx_grouping,      "vx_halos",    ADaPS_DEFAULT);
+      ADaPS_store(&(plist.data),(void *)vy_grouping,      "vy_halos",    ADaPS_DEFAULT);
+      ADaPS_store(&(plist.data),(void *)vz_grouping,      "vz_halos",    ADaPS_DEFAULT);
+      SID_log("Done.",SID_LOG_CLOSE);
 
       // Compute power spectrum
       compute_power_spectrum(&plist,
@@ -347,33 +330,15 @@ int main(int argc, char *argv[]){
         flag_write_header=FALSE;
       }
       
+      // Clean-up
+      SID_log("Cleaning-up...",SID_LOG_OPEN);
+      free_plist(&plist);
+      SID_log("Done.",SID_LOG_CLOSE);
+      
       SID_log("Done.",SID_LOG_CLOSE);
     } // Loop over 4 P(k)'s
 
     // Loop over 3 velocity sets
-
-    // Clean-up
-    SID_log("Cleaning-up...",SID_LOG_OPEN);
-    if(SID.I_am_Master){
-      SID_free(SID_FARG rank_own);
-      SID_free(SID_FARG x_grouping);
-      SID_free(SID_FARG y_grouping);
-      SID_free(SID_FARG z_grouping);
-      SID_free(SID_FARG vx_halos_sub);
-      SID_free(SID_FARG vy_halos_sub);
-      SID_free(SID_FARG vz_halos_sub);
-      SID_free(SID_FARG vx_halos_FoF);
-      SID_free(SID_FARG vy_halos_FoF);
-      SID_free(SID_FARG vz_halos_FoF);
-      SID_free(SID_FARG vx_halos_sys);
-      SID_free(SID_FARG vy_halos_sys);
-      SID_free(SID_FARG vz_halos_sys);
-    }
-
-    SID_log("Done.",SID_LOG_CLOSE);
-
-    SID_log("Done.",SID_LOG_CLOSE);
-  } // Loop over groupings
 
   // Close files
   if(SID.I_am_Master){
@@ -383,8 +348,6 @@ int main(int argc, char *argv[]){
   
   // Clean-up
   SID_log("Cleaning-up...",SID_LOG_OPEN);
-  free_plist(&plist);
-  free_RNG(&RNG);
   SID_free(SID_FARG k_1D);
   SID_free(SID_FARG P_k_1D); 
   SID_free(SID_FARG dP_k_1D);

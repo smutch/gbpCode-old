@@ -27,13 +27,9 @@ int main(int argc, char *argv[]){
   double  n_spec;
   double  redshift;
   int     i_rank;
-  int     i_grouping;
-  int     i_grouping_start;
-  int     i_grouping_stop;
   int     n_groupings;
   size_t  n_grouping_local;
   char    filename_in[MAX_FILENAME_LENGTH];
-  char    filename_in_root[MAX_FILENAME_LENGTH];
   char    filename_in_model[MAX_FILENAME_LENGTH];
   char    filename_out_1D[MAX_FILENAME_LENGTH];
   char    filename_out_2D[MAX_FILENAME_LENGTH];
@@ -41,7 +37,6 @@ int main(int argc, char *argv[]){
   char    filename_out_root[MAX_FILENAME_LENGTH];
   int     cfunc_mode;
   int     i_compute;
-  char    grouping_name[6];
   char    filename_TF[256];
   char    n_string[64];
   int             n[3];
@@ -59,7 +54,6 @@ int main(int argc, char *argv[]){
   int     flag_write_header=TRUE;
   int     i_temp;
   size_t  n_grouping;
-  size_t  n_grouping_last=0;
   int     n_temp;
   double *r_temp;
   double *kmin_temp;
@@ -152,21 +146,30 @@ int main(int argc, char *argv[]){
   int        *rank_own_index;
   size_t      n_rank;
   int         flag_init_store;
+  int         x_column;
+  int         y_column;
+  int         z_column;
+  int         vx_column;
+  int         vy_column;
+  int         vz_column;
 
   // Initialization -- MPI etc.
   SID_init(&argc,&argv,NULL);
-  if(argc!=8)
+  if(argc!=12)
     SID_trap_error("Incorrect syntax.",ERROR_SYNTAX);
-  strcpy(filename_in_root, argv[1]);
+  strcpy(filename_in, argv[1]);
   strcpy(filename_out_root,argv[2]);
   redshift         =(double)atof(argv[3]);
   box_size         =(double)atof(argv[4]);
   n_jack           =(int)   atoi(argv[5]);
-  i_grouping_start =(int)   atoi(argv[6]);
-  i_grouping_stop  =(int)   atoi(argv[7]);
-  n_groupings      =i_grouping_stop-i_grouping_start+1;
-  if(n_groupings<1)
-      SID_trap_error("No groupings have been selected (you chose start=%d, stop=%d).",ERROR_LOGIC,i_grouping_start,i_grouping_stop);
+  x_column         =(int)   atoi(argv[6]);
+  y_column         =(int)   atoi(argv[7]);
+  z_column         =(int)   atoi(argv[8]);
+  vx_column        =(int)   atoi(argv[9]);
+  vy_column        =(int)   atoi(argv[10]);
+  vz_column        =(int)   atoi(argv[11]);
+
+  n_groupings      =1;
   sprintf(filename_out_stats,"%s.stats_cor_func",filename_out_root);
   sprintf(filename_out_1D,   "%s.1D_cor_func",   filename_out_root);
   sprintf(filename_out_2D,   "%s.2D_cor_func",   filename_out_root);
@@ -259,30 +262,20 @@ int main(int argc, char *argv[]){
     fprintf(fp_stats,"#   (9) r_X [Mpc/h] (v_z redshift-space)\n");
   }
 
-  // Process each grouping in turn
-  for(i_grouping=i_grouping_start,flag_init_store=TRUE;i_grouping<=i_grouping_stop;i_grouping++){
-    SID_log("Processing grouping #%03d...",SID_LOG_OPEN|SID_LOG_TIMER,i_grouping);
 
     // Read catalog
     SID_log("Reading catalog...",SID_LOG_OPEN);
-    sprintf(filename_in,"%s_grouping_%03d.dat",filename_in_root,i_grouping);
     SID_log("filename ={%s}",SID_LOG_COMMENT,filename_in);
     if(SID.I_am_Master){
       fp_in=fopen(filename_in,"r");
       n_grouping=(size_t)count_lines_data(fp_in);
-      SID_log("n_halos=%lld",SID_LOG_COMMENT,n_grouping);
+      SID_log("n_objects=%lld",SID_LOG_COMMENT,n_grouping);
       x_halos     =(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping);
       y_halos     =(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping);
       z_halos     =(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping);
       vx_halos_sub=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping);
       vy_halos_sub=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping);
       vz_halos_sub=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping);
-      vx_halos_FoF=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping);
-      vy_halos_FoF=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping);
-      vz_halos_FoF=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping);
-      vx_halos_sys=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping);
-      vy_halos_sys=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping);
-      vz_halos_sys=(GBPREAL  *)SID_malloc(sizeof(GBPREAL)*n_grouping);
       rank_own    =(int   *)SID_malloc(sizeof(int) *n_grouping);
       x_min=1e10;
       x_max=0.;
@@ -292,9 +285,9 @@ int main(int argc, char *argv[]){
       z_max=0.;
       for(i_halo=0;i_halo<n_grouping;i_halo++){
         grab_next_line_data(fp_in,&line,&line_length);
-        grab_double(line,7, &x_in);
-        grab_double(line,8, &y_in);
-        grab_double(line,9, &z_in);
+        grab_double(line,x_column, &x_in);
+        grab_double(line,y_column, &y_in);
+        grab_double(line,z_column, &z_in);
         x_halos[i_halo] =(GBPREAL)x_in;
         y_halos[i_halo] =(GBPREAL)y_in;
         z_halos[i_halo] =(GBPREAL)z_in;
@@ -304,24 +297,12 @@ int main(int argc, char *argv[]){
         y_max=MAX(y_max,y_halos[i_halo]);
         z_min=MIN(z_min,z_halos[i_halo]);
         z_max=MAX(z_max,z_halos[i_halo]);
-        grab_double(line,11,&vx_in);
-        grab_double(line,12,&vy_in);
-        grab_double(line,13,&vz_in);
+        grab_double(line,vx_column,&vx_in);
+        grab_double(line,vy_column,&vy_in);
+        grab_double(line,vz_column,&vz_in);
         vx_halos_sub[i_halo]=(GBPREAL)vx_in;
         vy_halos_sub[i_halo]=(GBPREAL)vy_in;
         vz_halos_sub[i_halo]=(GBPREAL)vz_in;
-        grab_double(line,14,&vx_in);
-        grab_double(line,15,&vy_in);
-        grab_double(line,16,&vz_in);
-        vx_halos_FoF[i_halo]=(GBPREAL)vx_in;
-        vy_halos_FoF[i_halo]=(GBPREAL)vy_in;
-        vz_halos_FoF[i_halo]=(GBPREAL)vz_in;
-        grab_double(line,17,&vx_in);
-        grab_double(line,18,&vy_in);
-        grab_double(line,19,&vz_in);
-        vx_halos_sys[i_halo]=(GBPREAL)vx_in;
-        vy_halos_sys[i_halo]=(GBPREAL)vy_in;
-        vz_halos_sys[i_halo]=(GBPREAL)vz_in;
         rank_own[i_halo]=(int)(random_number(&RNG)*SID.n_proc);
       }
       SID_log("x_range=%le->%le",SID_LOG_COMMENT,x_min,x_max);
@@ -333,10 +314,9 @@ int main(int argc, char *argv[]){
     SID_log("Done.",SID_LOG_CLOSE);
 
     // GENERATE RANDOMS
-    if(n_grouping!=n_grouping_last){
-      n_random=(size_t)F_random*n_grouping;
-      SID_log("Generating %d random halos...",SID_LOG_OPEN,n_random);
-      for(i_rank=0,i_random=0,j_random=0;i_rank<SID.n_proc;i_rank++){
+    n_random=(size_t)F_random*n_grouping;
+    SID_log("Generating %d random halos...",SID_LOG_OPEN,n_random);
+    for(i_rank=0,i_random=0,j_random=0;i_rank<SID.n_proc;i_rank++){
         if(i_rank==SID.n_proc-1)
           j_random=n_random-i_random;
         else
@@ -344,17 +324,17 @@ int main(int argc, char *argv[]){
         if(SID.My_rank==i_rank)
           n_random_local=j_random;
         i_random+=j_random;
-      }
-      if(x_random!=NULL)
+    }
+    if(x_random!=NULL)
         SID_free(SID_FARG x_random);
-      x_random=(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_random_local);
-      if(y_random!=NULL)
+    x_random=(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_random_local);
+    if(y_random!=NULL)
         SID_free(SID_FARG y_random);
-      y_random=(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_random_local);
-      if(z_random!=NULL)
+    y_random=(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_random_local);
+    if(z_random!=NULL)
         SID_free(SID_FARG z_random);
-      z_random=(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_random_local);
-      for(i_random=0;i_random<n_random_local;i_random++){
+    z_random=(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_random_local);
+    for(i_random=0;i_random<n_random_local;i_random++){
         x_random[i_random]=random_number(&RNG)*box_size;
         if(x_random[i_random]>=box_size)
           x_random[i_random]-=box_size;
@@ -364,14 +344,12 @@ int main(int argc, char *argv[]){
         z_random[i_random]=random_number(&RNG)*box_size;
         if(z_random[i_random]>=box_size)
           z_random[i_random]-=box_size;
-      }
-      flag_compute_RR=TRUE;
-      ADaPS_store(&(plist.data),(void *)x_random,"x_random",ADaPS_DEFAULT);
-      ADaPS_store(&(plist.data),(void *)y_random,"y_random",ADaPS_DEFAULT);
-      ADaPS_store(&(plist.data),(void *)z_random,"z_random",ADaPS_DEFAULT);
-      SID_log("Done.",SID_LOG_CLOSE);
     }
-    n_grouping_last=n_grouping;
+    flag_compute_RR=TRUE;
+    ADaPS_store(&(plist.data),(void *)x_random,"x_random",ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)y_random,"y_random",ADaPS_DEFAULT);
+    ADaPS_store(&(plist.data),(void *)z_random,"z_random",ADaPS_DEFAULT);
+    SID_log("Done.",SID_LOG_CLOSE);
 
     // Loop over 3 velocity sets
     vx_halos=vx_halos_sub;
@@ -636,17 +614,9 @@ int main(int argc, char *argv[]){
       SID_free(SID_FARG vx_halos_sub);
       SID_free(SID_FARG vy_halos_sub);
       SID_free(SID_FARG vz_halos_sub);
-      SID_free(SID_FARG vx_halos_FoF);
-      SID_free(SID_FARG vy_halos_FoF);
-      SID_free(SID_FARG vz_halos_FoF);
-      SID_free(SID_FARG vx_halos_sys);
-      SID_free(SID_FARG vy_halos_sys);
-      SID_free(SID_FARG vz_halos_sys);
     }
     SID_log("Done.",SID_LOG_CLOSE);
 
-    SID_log("Done.",SID_LOG_CLOSE);
-  } // Loop over groupings
   if(SID.I_am_Master){
     fclose(fp_stats);
     fclose(fp_1D);

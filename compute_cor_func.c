@@ -67,35 +67,35 @@ void compute_cor_func(plist_info  *plist,
   size_t      n_random_allocate;
   size_t      n_data_rank;
   size_t      n_temp;
-  REAL       *x_data_rank;
-  REAL       *y_data_rank;
-  REAL       *z_data_rank;
+  GBPREAL       *x_data_rank;
+  GBPREAL       *y_data_rank;
+  GBPREAL       *z_data_rank;
   size_t      n_random_rank;
-  REAL       *x_random_rank;
-  REAL       *y_random_rank;
-  REAL       *z_random_rank;
+  GBPREAL       *x_random_rank;
+  GBPREAL       *y_random_rank;
+  GBPREAL       *z_random_rank;
   size_t     *x_data_rank_index;
   size_t     *x_random_rank_index;
-  REAL       *x_random_local_swap;
-  REAL       *y_random_local_swap;
-  REAL       *z_random_local_swap;
-  REAL       *x_data_local_swap;
-  REAL       *y_data_local_swap;
-  REAL       *z_data_local_swap;
-  REAL       *x_data_local_temp;
-  REAL       *y_data_local_temp;
-  REAL       *z_data_local_temp;
-  REAL       *x_data_local;
-  REAL       *y_data_local;
-  REAL       *z_data_local;
-  REAL       *vx_data_local;
-  REAL       *vy_data_local;
-  REAL       *vz_data_local;
-  REAL       *x_random_local;
-  REAL       *y_random_local;
-  REAL       *z_random_local;
-  REAL        x_i,y_i,z_i;
-  REAL        x_j,y_j,z_j;
+  GBPREAL       *x_random_local_swap;
+  GBPREAL       *y_random_local_swap;
+  GBPREAL       *z_random_local_swap;
+  GBPREAL       *x_data_local_swap;
+  GBPREAL       *y_data_local_swap;
+  GBPREAL       *z_data_local_swap;
+  GBPREAL       *x_data_local_temp;
+  GBPREAL       *y_data_local_temp;
+  GBPREAL       *z_data_local_temp;
+  GBPREAL       *x_data_local;
+  GBPREAL       *y_data_local;
+  GBPREAL       *z_data_local;
+  GBPREAL       *vx_data_local;
+  GBPREAL       *vy_data_local;
+  GBPREAL       *vz_data_local;
+  GBPREAL       *x_random_local;
+  GBPREAL       *y_random_local;
+  GBPREAL       *z_random_local;
+  GBPREAL        x_i,y_i,z_i;
+  GBPREAL        x_j,y_j,z_j;
   int         flag_alloc_x;
   int         flag_alloc_y;
   int         flag_alloc_z;
@@ -133,14 +133,16 @@ void compute_cor_func(plist_info  *plist,
   double      dr_l1D;
   double      dr_1D;
   double      dr_2D;
-  REAL        x_temp;
-  REAL        y_temp;
-  REAL        z_temp;
+  GBPREAL        x_temp;
+  GBPREAL        y_temp;
+  GBPREAL        z_temp;
   long long  *temp_array;
   double      bar_i;
   double      bar_j;
   double      bar_ij;
   double      h_Hubble;
+
+  SID_trap_error("This code is broken.  Pairs are being counted multiple times.  There is a problem with the last JK region.",ERROR_LOGIC);
 
   SID_log("Computing correlation function (%d 1D bins and %d 2D bins)...",SID_LOG_OPEN|SID_LOG_TIMER,n_1D,n_2D);
   r_max    =MAX(r_max_1D,r_max_2D);
@@ -157,44 +159,44 @@ void compute_cor_func(plist_info  *plist,
   SID_log("Initializing...",SID_LOG_OPEN);
   n_data           =((size_t *)ADaPS_fetch(plist->data,"n_all_%s",species_name))[0]; 
   n_data_local     =((size_t *)ADaPS_fetch(plist->data,"n_%s",    species_name))[0]; 
-  x_data_local_temp= (REAL   *)ADaPS_fetch(plist->data,"x_%s",    species_name);
-  y_data_local_temp= (REAL   *)ADaPS_fetch(plist->data,"y_%s",    species_name);
-  z_data_local_temp= (REAL   *)ADaPS_fetch(plist->data,"z_%s",    species_name);
+  x_data_local_temp= (GBPREAL   *)ADaPS_fetch(plist->data,"x_%s",    species_name);
+  y_data_local_temp= (GBPREAL   *)ADaPS_fetch(plist->data,"y_%s",    species_name);
+  z_data_local_temp= (GBPREAL   *)ADaPS_fetch(plist->data,"z_%s",    species_name);
   flag_alloc_x     =FALSE;
   flag_alloc_y     =FALSE;
   flag_alloc_z     =FALSE;
   h_Hubble=((double *)ADaPS_fetch(cosmo,"h_Hubble"))[0];
   if(check_mode_for_flag(mode,CFUNC_ADD_VX)){
-    vx_data_local=(REAL *)ADaPS_fetch(plist->data,"vx_%s",species_name);
-    x_data_local =(REAL *)SID_malloc(sizeof(REAL)*n_data_local);
+    vx_data_local=(GBPREAL *)ADaPS_fetch(plist->data,"vx_%s",species_name);
+    x_data_local =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_data_local);
     for(i_data=0;i_data<n_data_local;i_data++){
-      x_temp=x_data_local_temp[i_data]+(REAL)(1e3*h_Hubble*((double)vx_data_local[i_data])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-      force_periodic(&x_temp,0.,(REAL)box_size);
-      x_data_local[i_data]=(REAL)x_temp;
+      x_temp=x_data_local_temp[i_data]+(GBPREAL)(1e3*h_Hubble*((double)vx_data_local[i_data])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+      force_periodic(&x_temp,0.,(GBPREAL)box_size);
+      x_data_local[i_data]=(GBPREAL)x_temp;
     }
     flag_alloc_x =TRUE;
   }
   else
     x_data_local=x_data_local_temp;
   if(check_mode_for_flag(mode,CFUNC_ADD_VY)){
-    vy_data_local=(REAL *)ADaPS_fetch(plist->data,"vy_%s",species_name);
-    y_data_local =(REAL *)SID_malloc(sizeof(REAL)*n_data_local);
+    vy_data_local=(GBPREAL *)ADaPS_fetch(plist->data,"vy_%s",species_name);
+    y_data_local =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_data_local);
     for(i_data=0;i_data<n_data_local;i_data++){
-      y_temp=y_data_local_temp[i_data]+(REAL)(1e3*h_Hubble*((double)vy_data_local[i_data])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-      force_periodic(&y_temp,0.,(REAL)box_size);
-      y_data_local[i_data]=(REAL)y_temp;
+      y_temp=y_data_local_temp[i_data]+(GBPREAL)(1e3*h_Hubble*((double)vy_data_local[i_data])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+      force_periodic(&y_temp,0.,(GBPREAL)box_size);
+      y_data_local[i_data]=(GBPREAL)y_temp;
     }
     flag_alloc_y =TRUE;
   }
   else
     y_data_local=y_data_local_temp;
   if(check_mode_for_flag(mode,CFUNC_ADD_VZ)){
-    vz_data_local=(REAL *)ADaPS_fetch(plist->data,"vz_%s",species_name);
-    z_data_local =(REAL *)SID_malloc(sizeof(REAL)*n_data_local);
+    vz_data_local=(GBPREAL *)ADaPS_fetch(plist->data,"vz_%s",species_name);
+    z_data_local =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_data_local);
     for(i_data=0;i_data<n_data_local;i_data++){
-      z_temp=z_data_local_temp[i_data]+(REAL)(1e3*h_Hubble*((double)vz_data_local[i_data])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-      force_periodic(&z_temp,0.,(REAL)box_size);
-      z_data_local[i_data]=(REAL)z_temp;
+      z_temp=z_data_local_temp[i_data]+(GBPREAL)(1e3*h_Hubble*((double)vz_data_local[i_data])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+      force_periodic(&z_temp,0.,(GBPREAL)box_size);
+      z_data_local[i_data]=(GBPREAL)z_temp;
     }
     flag_alloc_z =TRUE;
   }
@@ -203,9 +205,9 @@ void compute_cor_func(plist_info  *plist,
 
   n_random      =((size_t *)ADaPS_fetch(plist->data,"n_all_%s",random_name))[0]; 
   n_random_local=((size_t *)ADaPS_fetch(plist->data,"n_%s",    random_name))[0]; 
-  x_random_local= (REAL   *)ADaPS_fetch(plist->data,"x_%s",    random_name);
-  y_random_local= (REAL   *)ADaPS_fetch(plist->data,"y_%s",    random_name);
-  z_random_local= (REAL   *)ADaPS_fetch(plist->data,"z_%s",    random_name);
+  x_random_local= (GBPREAL   *)ADaPS_fetch(plist->data,"x_%s",    random_name);
+  y_random_local= (GBPREAL   *)ADaPS_fetch(plist->data,"y_%s",    random_name);
+  z_random_local= (GBPREAL   *)ADaPS_fetch(plist->data,"z_%s",    random_name);
 
   // Make the z-coordinate the redshift-space coordinate
   flag_alloc_x_swap  =flag_alloc_x;
@@ -255,9 +257,9 @@ void compute_cor_func(plist_info  *plist,
   d_jack=box_size/(double)n_jack;
   data_zone_local=(int *)SID_malloc(sizeof(int)*n_data_local);
   for(i_data=0;i_data<n_data_local;i_data++){
-    i_x_jack=(int)x_data_local[i_data]/d_jack;
-    i_y_jack=(int)y_data_local[i_data]/d_jack;
-    i_z_jack=(int)z_data_local[i_data]/d_jack;
+    i_x_jack=(int)(x_data_local[i_data]/d_jack);
+    i_y_jack=(int)(y_data_local[i_data]/d_jack);
+    i_z_jack=(int)(z_data_local[i_data]/d_jack);
     if(i_x_jack<0)       i_x_jack=0;
     if(i_x_jack>=n_jack) i_x_jack=n_jack-1;
     if(i_y_jack<0)       i_y_jack=0;
@@ -268,9 +270,9 @@ void compute_cor_func(plist_info  *plist,
   }
   random_zone_local=(int *)SID_malloc(sizeof(int)*n_random_local);
   for(i_random=0;i_random<n_random_local;i_random++){
-    i_x_jack=(int)x_random_local[i_random]/d_jack;
-    i_y_jack=(int)y_random_local[i_random]/d_jack;
-    i_z_jack=(int)z_random_local[i_random]/d_jack;
+    i_x_jack=(int)(x_random_local[i_random]/d_jack);
+    i_y_jack=(int)(y_random_local[i_random]/d_jack);
+    i_z_jack=(int)(z_random_local[i_random]/d_jack);
     if(i_x_jack<0)       i_x_jack=0;
     if(i_x_jack>=n_jack) i_x_jack=n_jack-1;
     if(i_y_jack<0)       i_y_jack=0;
@@ -333,25 +335,25 @@ void compute_cor_func(plist_info  *plist,
         SID_log("n_random_max=%lld",SID_LOG_COMMENT,n_random_allocate);
         SID_log("Done.",SID_LOG_CLOSE);
         SID_log("Allocating arrays...",SID_LOG_OPEN|SID_LOG_CHECKPOINT);
-        x_data_rank     =(REAL *)SID_malloc(sizeof(REAL)*n_data_allocate);
-        y_data_rank     =(REAL *)SID_malloc(sizeof(REAL)*n_data_allocate);
-        z_data_rank     =(REAL *)SID_malloc(sizeof(REAL)*n_data_allocate);
-        x_random_rank   =(REAL *)SID_malloc(sizeof(REAL)*n_random_allocate);
-        y_random_rank   =(REAL *)SID_malloc(sizeof(REAL)*n_random_allocate);
-        z_random_rank   =(REAL *)SID_malloc(sizeof(REAL)*n_random_allocate);
+        x_data_rank     =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_data_allocate);
+        y_data_rank     =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_data_allocate);
+        z_data_rank     =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_data_allocate);
+        x_random_rank   =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_random_allocate);
+        y_random_rank   =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_random_allocate);
+        z_random_rank   =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_random_allocate);
         data_zone_rank  =(int  *)SID_malloc(sizeof(int)*n_data_allocate);
         random_zone_rank=(int  *)SID_malloc(sizeof(int)*n_random_allocate);        
         SID_log("Done.",SID_LOG_CLOSE);
       }
       SID_log("Performing exchange...",SID_LOG_OPEN|SID_LOG_TIMER);
-      exchange_ring_buffer(x_data_local,     sizeof(REAL),n_data_local,  x_data_rank,     &n_data_rank,  i_rank);
-      exchange_ring_buffer(y_data_local,     sizeof(REAL),n_data_local,  y_data_rank,     &n_data_rank,  i_rank);
-      exchange_ring_buffer(z_data_local,     sizeof(REAL),n_data_local,  z_data_rank,     &n_data_rank,  i_rank);
-      exchange_ring_buffer(data_zone_local,  sizeof(REAL),n_data_local,  data_zone_rank,  &n_data_rank,  i_rank);
-      exchange_ring_buffer(x_random_local,   sizeof(REAL),n_random_local,x_random_rank,   &n_random_rank,i_rank);
-      exchange_ring_buffer(y_random_local,   sizeof(REAL),n_random_local,y_random_rank,   &n_random_rank,i_rank);
-      exchange_ring_buffer(z_random_local,   sizeof(REAL),n_random_local,z_random_rank,   &n_random_rank,i_rank);
-      exchange_ring_buffer(random_zone_local,sizeof(REAL),n_random_local,random_zone_rank,&n_random_rank,i_rank);
+      exchange_ring_buffer(x_data_local,     sizeof(GBPREAL),n_data_local,  x_data_rank,     &n_data_rank,  i_rank);
+      exchange_ring_buffer(y_data_local,     sizeof(GBPREAL),n_data_local,  y_data_rank,     &n_data_rank,  i_rank);
+      exchange_ring_buffer(z_data_local,     sizeof(GBPREAL),n_data_local,  z_data_rank,     &n_data_rank,  i_rank);
+      exchange_ring_buffer(data_zone_local,  sizeof(GBPREAL),n_data_local,  data_zone_rank,  &n_data_rank,  i_rank);
+      exchange_ring_buffer(x_random_local,   sizeof(GBPREAL),n_random_local,x_random_rank,   &n_random_rank,i_rank);
+      exchange_ring_buffer(y_random_local,   sizeof(GBPREAL),n_random_local,y_random_rank,   &n_random_rank,i_rank);
+      exchange_ring_buffer(z_random_local,   sizeof(GBPREAL),n_random_local,z_random_rank,   &n_random_rank,i_rank);
+      exchange_ring_buffer(random_zone_local,sizeof(GBPREAL),n_random_local,random_zone_rank,&n_random_rank,i_rank);
       SID_log("Done.",SID_LOG_CLOSE);
       merge_sort(x_data_rank,  (size_t)n_data_rank,  &x_data_rank_index,  SID_REAL,SORT_COMPUTE_INDEX,FALSE);
       merge_sort(x_random_rank,(size_t)n_random_rank,&x_random_rank_index,SID_REAL,SORT_COMPUTE_INDEX,FALSE);
@@ -389,8 +391,8 @@ void compute_cor_func(plist_info  *plist,
           // ... 1D case ...
           sep_1D=sqrt(dx*dx+dy*dy+dz*dz);
           if(sep_1D<r_max_1D){
-            bin_l1D=(take_log10(sep_1D)-r_min_l1D)/dr_l1D;
-            bin_1D =(sep_1D-r_min_1D)/dr_1D;
+            bin_l1D=(int)((take_log10(sep_1D)-r_min_l1D)/dr_l1D);
+            bin_1D =(int)((sep_1D-r_min_1D)/dr_1D);
             if(bin_1D>=0 && bin_1D<n_1D){
               DD_1D[0][bin_1D]++;
               for(i_jack=1;i_jack<=n_jack_total;i_jack++){
@@ -408,10 +410,10 @@ void compute_cor_func(plist_info  *plist,
           }
           // ... 2D case ...
           sep_2D_x=sqrt(dx*dx+dy*dy);
-          bin_2D_x=(sep_2D_x-r_min_2D)/dr_2D;
+          bin_2D_x=(int)((sep_2D_x-r_min_2D)/dr_2D);
           if(bin_2D_x>=0 && bin_2D_x<n_2D){
             sep_2D_y=sqrt(dz*dz);
-            bin_2D_y=(sep_2D_y-r_min_2D)/dr_2D;
+            bin_2D_y=(int)((sep_2D_y-r_min_2D)/dr_2D);
             if(bin_2D_y>=0 && bin_2D_y<n_2D){
               bin_2D  =bin_2D_y*n_2D+bin_2D_x;
               DD_2D[0][bin_2D]++;
@@ -443,8 +445,8 @@ void compute_cor_func(plist_info  *plist,
           // ... 1D case ...
           sep_1D=sqrt(dx*dx+dy*dy+dz*dz);
           if(sep_1D<r_max_1D){
-            bin_l1D=(take_log10(sep_1D)-r_min_l1D)/dr_l1D;
-            bin_1D =(sep_1D-r_min_1D)/dr_1D;
+            bin_l1D=(int)((take_log10(sep_1D)-r_min_l1D)/dr_l1D);
+            bin_1D =(int)((sep_1D-r_min_1D)/dr_1D);
             if(bin_1D>=0 && bin_1D<n_1D){
               DD_1D[0][bin_1D]++;
               for(i_jack=1;i_jack<=n_jack_total;i_jack++){
@@ -462,10 +464,10 @@ void compute_cor_func(plist_info  *plist,
           }
           // ... 2D case ...
           sep_2D_x=sqrt(dx*dx+dy*dy);
-          bin_2D_x=(sep_2D_x-r_min_2D)/dr_2D;
+          bin_2D_x=(int)((sep_2D_x-r_min_2D)/dr_2D);
           if(bin_2D_x>=0 && bin_2D_x<n_2D){
             sep_2D_y=sqrt(dz*dz);
-            bin_2D_y=(sep_2D_y-r_min_2D)/dr_2D;
+            bin_2D_y=(int)((sep_2D_y-r_min_2D)/dr_2D);
             if(bin_2D_y>=0 && bin_2D_y<n_2D){
               bin_2D  =bin_2D_y*n_2D+bin_2D_x;
               DD_2D[0][bin_2D]++;
@@ -511,8 +513,8 @@ void compute_cor_func(plist_info  *plist,
         // ... 1D case ...
         sep_1D=sqrt(dx*dx+dy*dy+dz*dz);
         if(sep_1D<r_max_1D){
-          bin_l1D=(take_log10(sep_1D)-r_min_l1D)/dr_l1D;
-          bin_1D =(sep_1D-r_min_1D)/dr_1D;
+          bin_l1D=(int)((take_log10(sep_1D)-r_min_l1D)/dr_l1D);
+          bin_1D =(int)((sep_1D-r_min_1D)/dr_1D);
           if(bin_1D>=0 && bin_1D<n_1D){
             DR_1D[0][bin_1D]++;
             for(i_jack=1;i_jack<=n_jack_total;i_jack++){
@@ -530,10 +532,10 @@ void compute_cor_func(plist_info  *plist,
         }
         // ... 2D case ...
         sep_2D_x=sqrt(dx*dx+dy*dy);
-        bin_2D_x=(sep_2D_x-r_min_2D)/dr_2D;
+        bin_2D_x=(int)((sep_2D_x-r_min_2D)/dr_2D);
         if(bin_2D_x>=0 && bin_2D_x<n_2D){
           sep_2D_y=sqrt(dz*dz);
-          bin_2D_y=(sep_2D_y-r_min_2D)/dr_2D;
+          bin_2D_y=(int)((sep_2D_y-r_min_2D)/dr_2D);
           if(bin_2D_y>=0 && bin_2D_y<n_2D){
             bin_2D  =bin_2D_y*n_2D+bin_2D_x;
             DR_2D[0][bin_2D]++;
@@ -562,8 +564,8 @@ void compute_cor_func(plist_info  *plist,
         // ... 1D case ...
         sep_1D=sqrt(dx*dx+dy*dy+dz*dz);
         if(sep_1D<r_max_1D){
-          bin_l1D=(take_log10(sep_1D)-r_min_l1D)/dr_l1D;
-          bin_1D =(sep_1D-r_min_1D)/dr_1D;
+          bin_l1D=(int)((take_log10(sep_1D)-r_min_l1D)/dr_l1D);
+          bin_1D =(int)((sep_1D-r_min_1D)/dr_1D);
           if(bin_1D>=0 && bin_1D<n_1D){
             DR_1D[0][bin_1D]++;
             for(i_jack=1;i_jack<=n_jack_total;i_jack++){
@@ -581,10 +583,10 @@ void compute_cor_func(plist_info  *plist,
         }
         // ... 2D case ...
         sep_2D_x=sqrt(dx*dx+dy*dy);
-        bin_2D_x=(sep_2D_x-r_min_2D)/dr_2D;
+        bin_2D_x=(int)((sep_2D_x-r_min_2D)/dr_2D);
         if(bin_2D_x>=0 && bin_2D_x<n_2D){
           sep_2D_y=sqrt(dz*dz);
-          bin_2D_y=(sep_2D_y-r_min_2D)/dr_2D;
+          bin_2D_y=(int)((sep_2D_y-r_min_2D)/dr_2D);
           if(bin_2D_y>=0 && bin_2D_y<n_2D){
             bin_2D  =bin_2D_y*n_2D+bin_2D_x;
             DR_2D[0][bin_2D]++;
@@ -630,8 +632,8 @@ void compute_cor_func(plist_info  *plist,
           // ... 1D case ...
           sep_1D=sqrt(dx*dx+dy*dy+dz*dz);
           if(sep_1D<r_max_1D){
-            bin_l1D=(take_log10(sep_1D)-r_min_l1D)/dr_l1D;
-            bin_1D =(sep_1D-r_min_1D)/dr_1D;
+            bin_l1D=(int)((take_log10(sep_1D)-r_min_l1D)/dr_l1D);
+            bin_1D =(int)((sep_1D-r_min_1D)/dr_1D);
             if(bin_1D>=0 && bin_1D<n_1D){
               RR_1D[0][bin_1D]++;
               for(i_jack=1;i_jack<=n_jack_total;i_jack++){
@@ -649,10 +651,10 @@ void compute_cor_func(plist_info  *plist,
           }
           // ... 2D case ...
           sep_2D_x=sqrt(dx*dx+dy*dy);
-          bin_2D_x=(sep_2D_x-r_min_2D)/dr_2D;
+          bin_2D_x=(int)((sep_2D_x-r_min_2D)/dr_2D);
           if(bin_2D_x>=0 && bin_2D_x<n_2D){
             sep_2D_y=sqrt(dz*dz);
-            bin_2D_y=(sep_2D_y-r_min_2D)/dr_2D;
+            bin_2D_y=(int)((sep_2D_y-r_min_2D)/dr_2D);
             if(bin_2D_y>=0 && bin_2D_y<n_2D){
               bin_2D  =bin_2D_y*n_2D+bin_2D_x;
               RR_2D[0][bin_2D]++;
@@ -681,8 +683,8 @@ void compute_cor_func(plist_info  *plist,
           // ... 1D case ...
           sep_1D=sqrt(dx*dx+dy*dy+dz*dz);
           if(sep_1D<r_max_1D){
-            bin_l1D=(take_log10(sep_1D)-r_min_l1D)/dr_l1D;
-            bin_1D =(sep_1D-r_min_1D)/dr_1D;
+            bin_l1D=(int)((take_log10(sep_1D)-r_min_l1D)/dr_l1D);
+            bin_1D =(int)((sep_1D-r_min_1D)/dr_1D);
             if(bin_1D>=0 && bin_1D<n_1D){
               RR_1D[0][bin_1D]++;
               for(i_jack=1;i_jack<=n_jack_total;i_jack++){
@@ -700,10 +702,10 @@ void compute_cor_func(plist_info  *plist,
           }
           // ... 2D case ...
           sep_2D_x=sqrt(dx*dx+dy*dy);
-          bin_2D_x=(sep_2D_x-r_min_2D)/dr_2D;
+          bin_2D_x=(int)((sep_2D_x-r_min_2D)/dr_2D);
           if(bin_2D_x>=0 && bin_2D_x<n_2D){
             sep_2D_y=sqrt(dz*dz);
-            bin_2D_y=(sep_2D_y-r_min_2D)/dr_2D;
+            bin_2D_y=(int)((sep_2D_y-r_min_2D)/dr_2D);
             if(bin_2D_y>=0 && bin_2D_y<n_2D){
               bin_2D  =bin_2D_y*n_2D+bin_2D_x;
               RR_2D[0][bin_2D]++;

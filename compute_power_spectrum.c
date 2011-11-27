@@ -3,6 +3,7 @@
 #include <gbpLib.h>
 #include <gbpCosmo.h>
 #include <gbpClustering.h>
+#include <gbpSPH.h>
 
 void compute_power_spectrum(plist_info  *plist,
                             field_info  *FFT,
@@ -46,13 +47,13 @@ void compute_power_spectrum(plist_info  *plist,
   size_t      n_particles_local;
   size_t      n_particles;
   size_t     *cell_index_local;
-  REAL       *x_particles_local;
-  REAL       *y_particles_local;
-  REAL       *z_particles_local;
-  REAL       *vx_particles_local;
-  REAL       *vy_particles_local;
-  REAL       *vz_particles_local;
-  REAL       *m_particles_local;
+  GBPREAL       *x_particles_local;
+  GBPREAL       *y_particles_local;
+  GBPREAL       *z_particles_local;
+  GBPREAL       *vx_particles_local;
+  GBPREAL       *vy_particles_local;
+  GBPREAL       *vz_particles_local;
+  GBPREAL       *m_particles_local;
   double      m_p;
   double     *k_2D;
   double     *k_2D_local;
@@ -109,23 +110,23 @@ void compute_power_spectrum(plist_info  *plist,
   // Fetch the needed information
   n_particles        =((size_t *)ADaPS_fetch(plist->data,"n_all_%s",species_name))[0]; 
   n_particles_local  =((size_t *)ADaPS_fetch(plist->data,"n_%s",    species_name))[0]; 
-  x_particles_local  = (REAL   *)ADaPS_fetch(plist->data,"x_%s",    species_name);
-  y_particles_local  = (REAL   *)ADaPS_fetch(plist->data,"y_%s",    species_name);
-  z_particles_local  = (REAL   *)ADaPS_fetch(plist->data,"z_%s",    species_name);
+  x_particles_local  = (GBPREAL   *)ADaPS_fetch(plist->data,"x_%s",    species_name);
+  y_particles_local  = (GBPREAL   *)ADaPS_fetch(plist->data,"y_%s",    species_name);
+  z_particles_local  = (GBPREAL   *)ADaPS_fetch(plist->data,"z_%s",    species_name);
   if(check_mode_for_flag(mode,PSPEC_ADD_VX))
-    vx_particles_local=(REAL *)ADaPS_fetch(plist->data,"vx_%s",species_name);
+    vx_particles_local=(GBPREAL *)ADaPS_fetch(plist->data,"vx_%s",species_name);
   else
     vx_particles_local=NULL;
   if(check_mode_for_flag(mode,PSPEC_ADD_VY))
-    vy_particles_local=(REAL *)ADaPS_fetch(plist->data,"vy_%s",species_name);
+    vy_particles_local=(GBPREAL *)ADaPS_fetch(plist->data,"vy_%s",species_name);
   else
     vy_particles_local=NULL;
   if(check_mode_for_flag(mode,PSPEC_ADD_VZ))
-    vz_particles_local=(REAL *)ADaPS_fetch(plist->data,"vz_%s",species_name);
+    vz_particles_local=(GBPREAL *)ADaPS_fetch(plist->data,"vz_%s",species_name);
   else
     vz_particles_local=NULL;
   if(ADaPS_exist(plist->data,"M_%s",species_name))
-    m_particles_local=(REAL *)ADaPS_fetch(plist->data,"M_%s",species_name);
+    m_particles_local=(GBPREAL *)ADaPS_fetch(plist->data,"M_%s",species_name);
   else
     m_particles_local=NULL;
 
@@ -188,12 +189,15 @@ void compute_power_spectrum(plist_info  *plist,
     }
   }
   for(i_k=0;i_k<(n_k_1D);i_k++){
-    (n_modes_1D)[i_k]=(int)calc_sum_global(&(n_modes_1D_local[i_k]),1,SID_INT);
-    (k_1D)[i_k]      =calc_sum_global(&(k_1D_local[i_k]),1,SID_DOUBLE)/(double)((n_modes_1D)[i_k]);
-    (P_k_1D)[i_k]    =calc_sum_global(&(P_k_1D_local[i_k]),1,SID_DOUBLE)/(double)((n_modes_1D)[i_k]);
+    calc_sum_global(&(n_modes_1D_local[i_k]),&(n_modes_1D[i_k]),1,SID_INT,   CALC_MODE_DEFAULT,SID.COMM_WORLD);
+    calc_sum_global(&(k_1D_local[i_k]),      &(k_1D[i_k]),      1,SID_DOUBLE,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+    calc_sum_global(&(P_k_1D_local[i_k]),    &(P_k_1D[i_k]),    1,SID_DOUBLE,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+    k_1D[i_k]  /=(double)((n_modes_1D)[i_k]);
+    P_k_1D[i_k]/=(double)((n_modes_1D)[i_k]);
   }
   for(i_k=0;i_k<(n_k_1D);i_k++){
-    (P_k_1D)[i_k] *=FFT->L[0]*FFT->L[1]*FFT->L[2]/pow(n_particles,2.);
+    //(P_k_1D)[i_k] *=FFT->L[0]*FFT->L[1]*FFT->L[2]/pow(n_particles,2.);
+    (P_k_1D)[i_k] *=FFT->L[0]*FFT->L[1]*FFT->L[2]/pow(normalization,2.);
     (dP_k_1D)[i_k] =(P_k_1D)[i_k]/sqrt((n_modes_1D)[i_k]);
     switch(distribution_scheme){
     case MAP2GRID_DIST_CIC:
@@ -223,7 +227,6 @@ void compute_power_spectrum(plist_info  *plist,
     k_2D_local[i_k]=0.;
     k_2D[i_k]      =0.;
   }
-  
   for(i_i[0]=FFT->i_k_start_local[0],j_i[0]=0;i_i[0]<=FFT->i_k_stop_local[0];i_i[0]++,j_i[0]++){
     for(i_i[1]=FFT->i_k_start_local[1],j_i[1]=0;i_i[1]<=FFT->i_k_stop_local[1];i_i[1]++,j_i[1]++){
       for(i_i[2]=FFT->i_k_start_local[2],j_i[2]=0;i_i[2]<=FFT->i_k_stop_local[2];i_i[2]++,j_i[2]++){
@@ -252,12 +255,15 @@ void compute_power_spectrum(plist_info  *plist,
     }
   }
   for(i_k=0;i_k<(n_k_2D)*(n_k_2D);i_k++){
-    (n_modes_2D)[i_k]=calc_sum_global(&(n_modes_2D_local[i_k]),1,SID_INT);
-    (P_k_2D)[i_k]    =calc_sum_global(&(P_k_2D_local[i_k]),1,SID_DOUBLE)/(n_modes_2D)[i_k];
-    k_2D[i_k]        =calc_sum_global(&(k_2D_local[i_k]),1,SID_DOUBLE)/(n_modes_2D)[i_k];
+    calc_sum_global(&(n_modes_2D_local[i_k]),&(n_modes_2D[i_k]),1,SID_INT,   CALC_MODE_DEFAULT,SID.COMM_WORLD);
+    calc_sum_global(&(k_2D_local[i_k]),      &(k_2D[i_k]),      1,SID_DOUBLE,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+    calc_sum_global(&(P_k_2D_local[i_k]),    &(P_k_2D[i_k]),    1,SID_DOUBLE,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+    k_2D[i_k]  /=(double)((n_modes_2D)[i_k]);
+    P_k_2D[i_k]/=(double)((n_modes_2D)[i_k]);
   }
   for(i_k=0;i_k<(n_k_2D)*(n_k_2D);i_k++){
-    (P_k_2D)[i_k] *=FFT->L[0]*FFT->L[1]*FFT->L[2]/pow(n_particles,2.);
+    //(P_k_2D)[i_k] *=FFT->L[0]*FFT->L[1]*FFT->L[2]/pow(n_particles,2.);
+    (P_k_2D)[i_k] *=FFT->L[0]*FFT->L[1]*FFT->L[2]/pow(normalization,2.);
     (dP_k_2D)[i_k] =(P_k_2D)[i_k]/sqrt((n_modes_2D)[i_k]);
     switch(distribution_scheme){
     case MAP2GRID_DIST_CIC:

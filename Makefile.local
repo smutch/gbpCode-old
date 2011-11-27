@@ -5,6 +5,6 @@ INCFILES  = gbpClustering.h
 OBJFILES  = compute_power_spectrum.o  \
             compute_cor_func.o              
 LIBFILE   = libgbpClustering.a
-BINFILES  = gadget_power_spectrum generate_groupings groupings_cfunc 
+BINFILES  = file_pspec groupings_pspec groupings_stats file_cfunc gadget_power_spectrum generate_groupings groupings_cfunc 
 LIBS      = -lgbpClustering -lgbpSPH -lgbpHalos -lgbpCosmo -lgbpMath -lgbpLib
 #############################

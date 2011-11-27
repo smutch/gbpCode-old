@@ -62,12 +62,12 @@ void read_gadget_binary_local(char       *filename_root_in,
   int       i2_value;
   int       i3_value;
   int       n_warning;
-  REAL     *x_array[N_GADGET_TYPE];
-  REAL     *y_array[N_GADGET_TYPE];
-  REAL     *z_array[N_GADGET_TYPE];
-  REAL     *vx_array[N_GADGET_TYPE];
-  REAL     *vy_array[N_GADGET_TYPE];
-  REAL     *vz_array[N_GADGET_TYPE];
+  GBPREAL     *x_array[N_GADGET_TYPE];
+  GBPREAL     *y_array[N_GADGET_TYPE];
+  GBPREAL     *z_array[N_GADGET_TYPE];
+  GBPREAL     *vx_array[N_GADGET_TYPE];
+  GBPREAL     *vy_array[N_GADGET_TYPE];
+  GBPREAL     *vz_array[N_GADGET_TYPE];
   size_t   *id_array[N_GADGET_TYPE];
   size_t   *id_list;
   size_t   *id_list_offset;
@@ -297,7 +297,7 @@ void read_gadget_binary_local(char       *filename_root_in,
     if(SID.n_proc>1){
       for(i=0;i<N_GADGET_TYPE;i++){
         n_of_type_rank[i]=0;
-        n_allocate[i]     =ALLOC_FACTOR_LOCAL*(size_t)((float)n_all[i]/(float)SID.n_proc);
+        n_allocate[i]     =(size_t)(ALLOC_FACTOR_LOCAL*((float)n_all[i]/(float)SID.n_proc));
         n_unallocated[i]  =0;
       }
     }
@@ -312,12 +312,12 @@ void read_gadget_binary_local(char       *filename_root_in,
     // Allocate data arrays
     for(i=0;i<N_GADGET_TYPE;i++){
       if(n_allocate[i]>0){
-        x_array[i] =(REAL   *)SID_malloc(sizeof(REAL)  *(size_t)n_allocate[i]);
-        y_array[i] =(REAL   *)SID_malloc(sizeof(REAL)  *(size_t)n_allocate[i]);
-        z_array[i] =(REAL   *)SID_malloc(sizeof(REAL)  *(size_t)n_allocate[i]);
-        vx_array[i]=(REAL   *)SID_malloc(sizeof(REAL)  *(size_t)n_allocate[i]);
-        vy_array[i]=(REAL   *)SID_malloc(sizeof(REAL)  *(size_t)n_allocate[i]);
-        vz_array[i]=(REAL   *)SID_malloc(sizeof(REAL)  *(size_t)n_allocate[i]);
+        x_array[i] =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_allocate[i]);
+        y_array[i] =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_allocate[i]);
+        z_array[i] =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_allocate[i]);
+        vx_array[i]=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_allocate[i]);
+        vy_array[i]=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_allocate[i]);
+        vz_array[i]=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_allocate[i]);
       }
     }
     
@@ -385,9 +385,9 @@ void read_gadget_binary_local(char       *filename_root_in,
             if(k+k_offset[i]>=n_allocate[i])
               n_unallocated[i]++;
             else{
-              x_array[i][k+k_offset[i]]=((REAL)(f1_value))*(REAL)(plist->length_unit/M_PER_MPC);
-              y_array[i][k+k_offset[i]]=((REAL)(f2_value))*(REAL)(plist->length_unit/M_PER_MPC);
-              z_array[i][k+k_offset[i]]=((REAL)(f3_value))*(REAL)(plist->length_unit/M_PER_MPC);
+              x_array[i][k+k_offset[i]]=((GBPREAL)(f1_value))*(GBPREAL)(plist->length_unit/M_PER_MPC);
+              y_array[i][k+k_offset[i]]=((GBPREAL)(f2_value))*(GBPREAL)(plist->length_unit/M_PER_MPC);
+              z_array[i][k+k_offset[i]]=((GBPREAL)(f3_value))*(GBPREAL)(plist->length_unit/M_PER_MPC);
               k++;
               n_keep[i]++;
               n_particles_kept++;
@@ -401,7 +401,7 @@ void read_gadget_binary_local(char       *filename_root_in,
         if(n_unallocated[i]>0)
           SID_log_warning("Rank %d has exceeded it's memory allocation (%lld) for particle type %d",ERROR_LOGIC,SID.My_rank,n_allocate[i],i);
       }
-      n_unallocated_all=calc_sum_global(n_unallocated,N_GADGET_TYPE,SID_SIZE_T);
+      calc_sum_global(n_unallocated,&n_unallocated_all,N_GADGET_TYPE,SID_SIZE_T,CALC_MODE_DEFAULT,SID.COMM_WORLD);
       if(n_unallocated_all>0)
         SID_trap_error("You need to increase ALLOC_FACTOR",ERROR_LOGIC);
       SID_log("Done.",SID_LOG_CLOSE);
@@ -430,9 +430,9 @@ void read_gadget_binary_local(char       *filename_root_in,
             if(k+k_offset[i]>=n_allocate[i])
               n_unallocated[i]++;
             else{
-              vx_array[i][k+k_offset[i]]=((REAL)(f1_value))*(REAL)(plist->velocity_unit*sqrt(expansion_factor)*1e-3);
-              vy_array[i][k+k_offset[i]]=((REAL)(f2_value))*(REAL)(plist->velocity_unit*sqrt(expansion_factor)*1e-3);
-              vz_array[i][k+k_offset[i]]=((REAL)(f3_value))*(REAL)(plist->velocity_unit*sqrt(expansion_factor)*1e-3);
+              vx_array[i][k+k_offset[i]]=((GBPREAL)(f1_value))*(GBPREAL)(plist->velocity_unit*sqrt(expansion_factor)*1e-3);
+              vy_array[i][k+k_offset[i]]=((GBPREAL)(f2_value))*(GBPREAL)(plist->velocity_unit*sqrt(expansion_factor)*1e-3);
+              vz_array[i][k+k_offset[i]]=((GBPREAL)(f3_value))*(GBPREAL)(plist->velocity_unit*sqrt(expansion_factor)*1e-3);
               k++;
             }
           }
@@ -444,7 +444,7 @@ void read_gadget_binary_local(char       *filename_root_in,
         if(n_unallocated[i]>0)
           SID_log_warning("Rank %d has exceeded it's memory allocation (%lld) for particle type %d",ERROR_LOGIC,SID.My_rank,n_allocate[i],i);
       }
-      n_unallocated_all=calc_sum_global(n_unallocated,N_GADGET_TYPE,SID_SIZE_T);
+      calc_sum_global(n_unallocated,&n_unallocated_all,N_GADGET_TYPE,SID_SIZE_T,CALC_MODE_DEFAULT,SID.COMM_WORLD);
       if(n_unallocated_all>0)
         SID_trap_error("You need to increase ALLOC_FACTOR",ERROR_LOGIC);
       SID_log("Done.",SID_LOG_CLOSE);
@@ -471,11 +471,7 @@ void read_gadget_binary_local(char       *filename_root_in,
 
     //   ... particle counts ...
     for(i=0,n_particles_kept_all=0;i<N_GADGET_TYPE;i++){
-#ifdef USE_MPI
-      MPI_Allreduce(&(n_of_type_rank[i]),&(n_of_type[i]),1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
-#else
-      n_of_type[i]=n_of_type_rank[i];
-#endif
+      SID_Allreduce(&(n_of_type_rank[i]),&(n_of_type[i]),1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
       if(n_of_type[i]>0){
         n_particles_kept_all+=n_of_type[i];
         ADaPS_store(&(plist->data),(void *)(&(n_of_type_rank[i])),"n_%s",    ADaPS_SCALAR_SIZE_T,pname[i]);

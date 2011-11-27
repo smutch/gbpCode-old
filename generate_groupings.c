@@ -69,32 +69,32 @@ int main(int argc, char *argv[]){
   int   n_halos_per_grouping,n_halos,n_halos_all,i_halo,j_halo;
   int   n_particles_min;
   int  *n_subgroups_group;
-  REAL *x_halos;
-  REAL *y_halos;
-  REAL *z_halos;
-  REAL *r_halos;
-  REAL *vx_halos_FoF;
-  REAL *vy_halos_FoF;
-  REAL *vz_halos_FoF;
-  REAL *vx_halos_sub;
-  REAL *vy_halos_sub;
-  REAL *vz_halos_sub;
+  GBPREAL *x_halos;
+  GBPREAL *y_halos;
+  GBPREAL *z_halos;
+  GBPREAL *r_halos;
+  GBPREAL *vx_halos_FoF;
+  GBPREAL *vy_halos_FoF;
+  GBPREAL *vz_halos_FoF;
+  GBPREAL *vx_halos_sub;
+  GBPREAL *vy_halos_sub;
+  GBPREAL *vz_halos_sub;
   double *M_halos;
   double *M_FoF;
   size_t *V_halos_index;
-  REAL *x_group;
-  REAL *y_group;
-  REAL *z_group;
-  REAL *vx_group;
-  REAL *vy_group;
-  REAL *vz_group;
-  REAL *V_halos;
-  REAL *V_FoF;
+  GBPREAL *x_group;
+  GBPREAL *y_group;
+  GBPREAL *z_group;
+  GBPREAL *vx_group;
+  GBPREAL *vy_group;
+  GBPREAL *vz_group;
+  GBPREAL *V_halos;
+  GBPREAL *V_FoF;
   int  *i_FoF;
   int  *n_FoF;
-  REAL  x_min,x_max;
-  REAL  y_min,y_max;
-  REAL  z_min,z_max;
+  GBPREAL  x_min,x_max;
+  GBPREAL  y_min,y_max;
+  GBPREAL  z_min,z_max;
   int     n_particles;
   double  M_min,M_max,M_med;
   double  V_min,V_max,V_med;
@@ -132,9 +132,9 @@ int main(int argc, char *argv[]){
   int     i_random,j_random;
   RNG_info  RNG;
   int       seed=1327621;
-  REAL     *x_random;
-  REAL     *y_random;
-  REAL     *z_random;
+  GBPREAL     *x_random;
+  GBPREAL     *y_random;
+  GBPREAL     *z_random;
   interp_info *r_o_interp;
   int          flag_log_1D;
   int          flag_compute_RR;
@@ -150,7 +150,7 @@ int main(int argc, char *argv[]){
   long long   n_random_ll;
   long long   n_data_ll;
   size_t      n_rank;
-  REAL        V_grouping,V_max_lo,V_max_hi,delta_V_max;
+  GBPREAL        V_grouping,V_max_lo,V_max_hi,delta_V_max;
 
   // Initialization -- MPI etc.
   SID_init(&argc,&argv,NULL);
@@ -160,8 +160,8 @@ int main(int argc, char *argv[]){
   i_snap              =(int) atoi(argv[4]);
   n_halos_per_grouping=(int) atoi(argv[5]);
   n_particles_min     =(int) atoi(argv[6]);
-  V_max_lo            =(REAL)atof(argv[7]);
-  V_max_hi            =(REAL)atof(argv[8]);
+  V_max_lo            =(GBPREAL)atof(argv[7]);
+  V_max_hi            =(GBPREAL)atof(argv[8]);
   n_groupings         =(int) atoi(argv[9]);
   delta_V_max         =(V_max_hi-V_max_lo)/(double)(n_groupings-1);
 
@@ -199,20 +199,20 @@ int main(int argc, char *argv[]){
 
   //   ... allocate arrays ...
   n_group     =(size_t)n_halos;
-  x_halos     =(REAL   *)SID_malloc(sizeof(REAL)*n_subgroups_all);
-  y_halos     =(REAL   *)SID_malloc(sizeof(REAL)*n_subgroups_all);
-  z_halos     =(REAL   *)SID_malloc(sizeof(REAL)*n_subgroups_all);
-  r_halos     =(REAL   *)SID_malloc(sizeof(REAL)*n_subgroups_all);
-  vx_halos_FoF=(REAL   *)SID_malloc(sizeof(REAL)*n_subgroups_all);
-  vy_halos_FoF=(REAL   *)SID_malloc(sizeof(REAL)*n_subgroups_all);
-  vz_halos_FoF=(REAL   *)SID_malloc(sizeof(REAL)*n_subgroups_all);
-  vx_halos_sub=(REAL   *)SID_malloc(sizeof(REAL)*n_subgroups_all);
-  vy_halos_sub=(REAL   *)SID_malloc(sizeof(REAL)*n_subgroups_all);
-  vz_halos_sub=(REAL   *)SID_malloc(sizeof(REAL)*n_subgroups_all);
+  x_halos     =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  y_halos     =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  z_halos     =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  r_halos     =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  vx_halos_FoF=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  vy_halos_FoF=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  vz_halos_FoF=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  vx_halos_sub=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  vy_halos_sub=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  vz_halos_sub=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
   M_halos     =(double *)SID_malloc(sizeof(double)*n_subgroups_all);
   M_FoF       =(double *)SID_malloc(sizeof(double)*n_subgroups_all);
-  V_halos     =(REAL   *)SID_malloc(sizeof(REAL)*n_subgroups_all);
-  V_FoF       =(REAL   *)SID_malloc(sizeof(REAL)*n_subgroups_all);
+  V_halos     =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  V_FoF       =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
   i_FoF       =(int    *)SID_malloc(sizeof(int)*n_subgroups_all);
   n_FoF       =(int    *)SID_malloc(sizeof(int)*n_subgroups_all);
   x_min       =1e10;
@@ -230,22 +230,22 @@ int main(int argc, char *argv[]){
       if(subgroup_properties.n_particles>=n_particles_min && subgroup_properties.M_vir>0.){
         i_FoF[n_halos]     =i_subhalo;
         n_FoF[n_halos]     =n_subgroups_group[i_halo];
-        x_halos[n_halos]   =(REAL)subgroup_properties.position_MBP[0];
-        y_halos[n_halos]   =(REAL)subgroup_properties.position_MBP[1];
-        z_halos[n_halos]   =(REAL)subgroup_properties.position_MBP[2];
-        r_halos[n_halos]   =(REAL)sqrt(pow(group_properties.position_MBP[0]-subgroup_properties.position_MBP[0],2.0)+
+        x_halos[n_halos]   =(GBPREAL)subgroup_properties.position_MBP[0];
+        y_halos[n_halos]   =(GBPREAL)subgroup_properties.position_MBP[1];
+        z_halos[n_halos]   =(GBPREAL)subgroup_properties.position_MBP[2];
+        r_halos[n_halos]   =(GBPREAL)sqrt(pow(group_properties.position_MBP[0]-subgroup_properties.position_MBP[0],2.0)+
                                        pow(group_properties.position_MBP[1]-subgroup_properties.position_MBP[1],2.0)+
                                        pow(group_properties.position_MBP[2]-subgroup_properties.position_MBP[2],2.0));
-        vx_halos_FoF[n_halos]=(REAL)group_properties.velocity_COM[0];
-        vy_halos_FoF[n_halos]=(REAL)group_properties.velocity_COM[1];
-        vz_halos_FoF[n_halos]=(REAL)group_properties.velocity_COM[2];
-        vx_halos_sub[n_halos]=(REAL)subgroup_properties.velocity_COM[0];
-        vy_halos_sub[n_halos]=(REAL)subgroup_properties.velocity_COM[1];
-        vz_halos_sub[n_halos]=(REAL)subgroup_properties.velocity_COM[2];
+        vx_halos_FoF[n_halos]=(GBPREAL)group_properties.velocity_COM[0];
+        vy_halos_FoF[n_halos]=(GBPREAL)group_properties.velocity_COM[1];
+        vz_halos_FoF[n_halos]=(GBPREAL)group_properties.velocity_COM[2];
+        vx_halos_sub[n_halos]=(GBPREAL)subgroup_properties.velocity_COM[0];
+        vy_halos_sub[n_halos]=(GBPREAL)subgroup_properties.velocity_COM[1];
+        vz_halos_sub[n_halos]=(GBPREAL)subgroup_properties.velocity_COM[2];
         M_halos[n_halos]     =(double)subgroup_properties.M_vir;
         M_FoF[n_halos]       =(double)group_properties.M_vir;
-        V_halos[n_halos]     =(REAL)subgroup_properties.V_max;
-        V_FoF[n_halos]       =(REAL)group_properties.V_max;
+        V_halos[n_halos]     =(GBPREAL)subgroup_properties.V_max;
+        V_FoF[n_halos]       =(GBPREAL)group_properties.V_max;
         x_min                =MIN(x_min,x_halos[n_halos]);
         x_max                =MAX(x_max,x_halos[n_halos]);
         y_min                =MIN(y_min,y_halos[n_halos]);
