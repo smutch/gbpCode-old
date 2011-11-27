@@ -3,9 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <gbpLib.h>
-#include <gbpHalos.h>
 #include <sys/stat.h>
+#include <gbpLib.h>
+#include <gbpMath.h>
+#include <gbpSPH.h>
+#include <gbpHalos.h>
 
 #define GADGET_BUFFER_SIZE_LOCAL  128*SIZE_OF_MEGABYTE
 
@@ -59,9 +61,6 @@ void read_gadget_binary_local(char       *filename_root_in,
   GBPREAL     *x_array[N_GADGET_TYPE];
   GBPREAL     *y_array[N_GADGET_TYPE];
   GBPREAL     *z_array[N_GADGET_TYPE];
-  GBPREAL     *vx_array[N_GADGET_TYPE];
-  GBPREAL     *vy_array[N_GADGET_TYPE];
-  GBPREAL     *vz_array[N_GADGET_TYPE];
   size_t   *id_array[N_GADGET_TYPE];
   size_t   *id_list;
   size_t   *id_list_offset;
@@ -319,9 +318,6 @@ void read_gadget_binary_local(char       *filename_root_in,
         x_array[i] =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
         y_array[i] =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
         z_array[i] =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
-        vx_array[i]=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
-        vy_array[i]=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
-        vz_array[i]=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
         id_array[i]=(size_t *)SID_malloc(sizeof(size_t)*(size_t)n_of_type_rank[i]);
       }
     }
@@ -506,35 +502,6 @@ void read_gadget_binary_local(char       *filename_root_in,
       }
       SID_log("Done.",SID_LOG_CLOSE);
 
-      // Read velocities
-      SID_log("Reading velocities...",SID_LOG_OPEN|SID_LOG_TIMER);
-      if(SID.My_rank==read_rank){
-        fread(&record_length_open,4,1,fp);
-        fread(buffer,record_length_open,1,fp);
-        fread(&record_length_close,4,1,fp);
-        if(record_length_open!=record_length_close)
-          SID_log_warning("Problem with GADGET record size (close of velocities)",ERROR_LOGIC);
-      }
-      SID_Bcast(&record_length_open,sizeof(int),read_rank,SID.COMM_WORLD);
-      SID_Barrier(SID.COMM_WORLD);
-      SID_Bcast(buffer,record_length_open,read_rank,SID.COMM_WORLD);
-      for(i=0,jj=0;i<N_GADGET_TYPE;i++){
-        for(j=0,k=0;j<header.n_file[i];j++,jj++){
-          if(keep[jj]){
-            f1_value=((float *)buffer)[3*jj+0];
-            f2_value=((float *)buffer)[3*jj+1];
-            f3_value=((float *)buffer)[3*jj+2];
-            vx_array[i][k+k_offset[i]]=((GBPREAL)(f1_value))*(GBPREAL)(plist->velocity_unit*sqrt(expansion_factor));
-            vy_array[i][k+k_offset[i]]=((GBPREAL)(f2_value))*(GBPREAL)(plist->velocity_unit*sqrt(expansion_factor));
-            vz_array[i][k+k_offset[i]]=((GBPREAL)(f3_value))*(GBPREAL)(plist->velocity_unit*sqrt(expansion_factor));
-            k++;
-          }
-        }
-        if(k!=n_keep[i])
-          SID_trap_error("Particle count mismatch during velocity read",ERROR_LOGIC);
-      }
-      SID_log("Done.",SID_LOG_CLOSE);
-        
       // Update offsets
       for(i=0;i<N_GADGET_TYPE;i++)
         k_offset[i]+=n_keep[i];
@@ -573,15 +540,6 @@ void read_gadget_binary_local(char       *filename_root_in,
       }
     }
 
-    //  ... velocities ...
-    for(i=0;i<N_GADGET_TYPE;i++){
-      if(n_of_type_rank[i]>0){
-        ADaPS_store(&(plist->data),(void *)vx_array[i],"vx_%s",ADaPS_DEFAULT,pname[i]);
-        ADaPS_store(&(plist->data),(void *)vy_array[i],"vy_%s",ADaPS_DEFAULT,pname[i]);
-        ADaPS_store(&(plist->data),(void *)vz_array[i],"vz_%s",ADaPS_DEFAULT,pname[i]);
-      }
-    }
-
     //  ... ids ...
     for(i=0;i<N_GADGET_TYPE;i++){
       if(n_of_type_rank[i]>0)
@@ -597,7 +555,7 @@ void read_gadget_binary_local(char       *filename_root_in,
 
 int main(int argc, char *argv[]){
   plist_info  plist;
-  char        filename_groups_root[256];
+  char        filename_PHKs_root[256];
   char        filename_snapshot_root[256];
   char        filename_snapshot[256];
   char       *filename_number;
@@ -625,9 +583,6 @@ int main(int argc, char *argv[]){
   GBPREAL       *x_array;
   GBPREAL       *y_array;
   GBPREAL       *z_array;
-  GBPREAL       *vx_array;
-  GBPREAL       *vy_array;
-  GBPREAL       *vz_array;
   int        *n_particles_groups_process;
   int        *n_particles_groups;
   int        *n_particles_subgroups;
@@ -658,9 +613,9 @@ int main(int argc, char *argv[]){
   size_t      n_bytes_buffer;
   void       *buffer;
   
-  FILE       *fp_properties;
+  FILE       *fp_PHKs;
   FILE       *fp_profiles;
-  FILE       *fp_properties_temp;
+  FILE       *fp_PHKs_temp;
   FILE       *fp_profiles_temp;
   cosmo_info *cosmo;
   halo_properties_info  properties;
@@ -674,12 +629,12 @@ int main(int argc, char *argv[]){
 
   // Fetch user inputs
   strcpy(filename_snapshot_root,argv[1]);
-  strcpy(filename_groups_root,  argv[2]);
+  strcpy(filename_PHKs_root,  argv[2]);
   i_file_lo  =atoi(argv[3]);
   i_file_hi  =atoi(argv[4]);
   i_file_skip=atoi(argv[5]);
 
-  SID_log("Processing group/subgroup statistics for files #%d->#%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file_lo,i_file_hi);
+  SID_log("Generating group PH keys for files #%d->#%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file_lo,i_file_hi);
 
   for(i_file=i_file_lo;i_file<=i_file_hi;i_file+=i_file_skip){
     filename_number=(char *)SID_malloc(sizeof(char)*10);
@@ -687,193 +642,47 @@ int main(int argc, char *argv[]){
     SID_log("Processing file #%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file);
 
     // Read group and particle info
+    int    *PHK_group;
+    size_t *PHK_group_index;
     init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-    //sprintf(filename_number,"read_catalog");
     ADaPS_store(&(plist.data),(void *)filename_number,"read_catalog",ADaPS_DEFAULT);
-    read_groups(filename_groups_root,i_file,READ_GROUPS_ALL,&plist,filename_number);
-    n_particles_in_groups=((size_t *)ADaPS_fetch(plist.data,"n_particles_%s",filename_number))[0];
-    if(n_particles_in_groups>0){
-      read_gadget_binary_local(filename_snapshot_root,i_file,&plist);
-      //read_gadget_binary(filename_snapshot_root,&plist,READ_GADGET_DEFAULT);
-      n_particles_snapshot =((size_t *)ADaPS_fetch(plist.data,"n_dark"))[0];
-      ids_snapshot         = (size_t *)ADaPS_fetch(plist.data,"id_dark");
-      ids_groups           = (size_t *)ADaPS_fetch(plist.data,"particle_ids_%s",filename_number);
-      box_size             =((double *)ADaPS_fetch(plist.data,"box_size"))[0];
+    read_groups(filename_PHKs_root,i_file,READ_GROUPS_ALL|READ_GROUPS_MBP_IDS_ONLY,&plist,filename_number);
+    n_groups_all       = ((int  *)ADaPS_fetch(plist.data,"n_groups_all_%s",     filename_number))[0];
+    n_groups           = ((int  *)ADaPS_fetch(plist.data,"n_groups_%s",         filename_number))[0];
+    box_size           = ((int  *)ADaPS_fetch(plist.data,"box_size",            filename_number))[0];
+    n_particles_groups =  (int  *)ADaPS_fetch(plist.data,"n_particles_group_%s",filename_number);
+    x_array            =  (GBPREAL *)ADaPS_fetch(plist.data,"x_dark");
+    y_array            =  (GBPREAL *)ADaPS_fetch(plist.data,"y_dark");
+    z_array            =  (GBPREAL *)ADaPS_fetch(plist.data,"z_dark");
+    PHK_group          =  (int  *)SID_malloc(sizeof(int)*n_groups);
 
-      // Initialize cosmology
-      h_Hubble    =((double *)ADaPS_fetch(plist.data,"h_Hubble"))[0];
-      redshift    =((double *)ADaPS_fetch(plist.data,"redshift"))[0];
-      Omega_M     =((double *)ADaPS_fetch(plist.data,"Omega_M"))[0];
-      Omega_Lambda=((double *)ADaPS_fetch(plist.data,"Omega_Lambda"))[0];
-      f_gas  =Omega_b/Omega_M;
-      Omega_k=1.-Omega_Lambda-Omega_M;
-      Omega_b=0.;
-      sigma_8=0.;
-      n_spec =0.;
-      init_cosmo(&cosmo,
-                 Omega_Lambda,
-                 Omega_M,
-                 Omega_k,
-                 Omega_b,
-                 f_gas,
-                 h_Hubble,
-                 sigma_8,
-                 n_spec);
+    // Compute PHKs
+    for(i_group=0;i_group<n_groups;i_group++)
+      PHK_group[i_group]=compute_PHK_from_Cartesian(10,3,x_array[i_group]/box_size,y_array[i_group]/box_size,z_array[i_group]/box_size);
 
-      particle_mass=((double *)ADaPS_fetch(plist.data,"mass_array_dark"))[0];
-      x_array      =(GBPREAL *)ADaPS_fetch(plist.data,"x_dark");
-      y_array      =(GBPREAL *)ADaPS_fetch(plist.data,"y_dark");
-      z_array      =(GBPREAL *)ADaPS_fetch(plist.data,"z_dark");
-      vx_array     =(GBPREAL *)ADaPS_fetch(plist.data,"vx_dark");
-      vy_array     =(GBPREAL *)ADaPS_fetch(plist.data,"vy_dark");
-      vz_array     =(GBPREAL *)ADaPS_fetch(plist.data,"vz_dark");
+    // Sort PHKs
+    merge_sort((void *)PHK_group,n_particles_snapshot,&PHK_group_index,SID_SIZE_T,SORT_COMPUTE_INDEX,FALSE);
 
-      // Compute sort indices for ids in snapshot and group catalog
-      SID_log("Sorting IDs...",SID_LOG_OPEN|SID_LOG_TIMER);
-      merge_sort((void *)ids_snapshot,n_particles_snapshot, &ids_snapshot_sort_index,SID_SIZE_T,SORT_COMPUTE_INDEX,FALSE);
-      merge_sort((void *)ids_groups,  n_particles_in_groups,&ids_groups_sort_index,  SID_SIZE_T,SORT_COMPUTE_INDEX,FALSE);
+    // Create a PHK-ranked cumulative particle count
+    size_t *n_particles_PHK;
+    n_particles_PHK=(size_t *)SID_malloc(sizeof(size_t)*n_groups);
+    n_particles_PHK[0]=n_particles_groups[PHK_group_index[0]];
+    for(i_group=1;i_group<n_groups;i_group++)
+      n_particles_PHK[i_group]=n_particles_PHK[i_group-1]+n_particles_groups[PHK_group_index[i_group]];
 
-      // Create snapshot-indices for each particle in the group catalog
-      ids_sort_index=(size_t *)SID_malloc(sizeof(size_t)*n_particles_in_groups);
-      for(i_particle=0,j_particle=0;i_particle<n_particles_in_groups;i_particle++){
-        while(ids_snapshot[ids_snapshot_sort_index[j_particle]]<ids_groups[ids_groups_sort_index[i_particle]]){
-          j_particle++;
-          if(j_particle>=n_particles_snapshot)
-            SID_trap_error("There's a particle id in the group catalog that's not in the snapshot!",ERROR_LOGIC);
-        }
-        ids_sort_index[ids_groups_sort_index[i_particle]]=ids_snapshot_sort_index[j_particle];
-      }
-      SID_log("Done.",SID_LOG_CLOSE);
+    // Write results
+    sprintf(filename_output_properties,"%s_%s.catalog_%sgroups_properties",filename_PHKs_root,filename_number,group_text_prefix);
+    fp_PHKs=fopen(filename_output_properties,"w");
+    fwrite(&n_groups,      sizeof(int),   1,       fp_PHKs);
+    fwrite(PHK_group,      sizeof(int),   n_groups,fp_PHKs);
+    fwrite(n_particles_PHK,sizeof(size_t),n_groups,fp_PHKs);
+    fclose(fp_PHKs);
 
-      // Print stats; groups first and then subgroups
-      for(i_process=0;i_process<2;i_process++){
-      
-        // Initialize a bunch of stuff depending on whether we are
-        //   computing group or subgroup properties
-        switch(i_process){
-        case 0:
-          sprintf(group_text_prefix,"");
-          break;
-        case 1:
-          sprintf(group_text_prefix,"sub");
-          break;
-        }
-        n_groups_all=((int *)ADaPS_fetch(plist.data,"n_%sgroups_all_%s",group_text_prefix,filename_number))[0];
-        n_groups    =((int *)ADaPS_fetch(plist.data,"n_%sgroups_%s",    group_text_prefix,filename_number))[0];
-        if(n_groups_all>0){
-          n_particles_groups = (int    *)ADaPS_fetch(plist.data,"n_particles_%sgroup_%s"    ,group_text_prefix,filename_number);
-          group_offset       = (int    *)ADaPS_fetch(plist.data,"particle_offset_%sgroup_%s",group_text_prefix,filename_number);
-
-          // Generate and write statistics
-          sprintf(filename_output_properties,     "%s_%s.catalog_%sgroups_properties",   filename_groups_root,filename_number,group_text_prefix);
-          sprintf(filename_output_profiles,       "%s_%s.catalog_%sgroups_profiles",     filename_groups_root,filename_number,group_text_prefix);
-          if(SID.n_proc>1){
-            // Properties filenames
-            sprintf(filename_output_properties_dir,"%s.x",filename_output_properties);
-            if(SID.I_am_Master)
-              mkdir(filename_output_properties_dir,02755);
-            sprintf(filename_output_properties_temp,"%s/catalog_%sgroups_properties_%09d_%09d",filename_output_properties_dir,group_text_prefix,i_file,SID.My_rank);
-            // Profiles filenames
-            sprintf(filename_output_profiles_dir,"%s.x",filename_output_profiles);
-            if(SID.I_am_Master)
-              mkdir(filename_output_profiles_dir,02755);
-            sprintf(filename_output_profiles_temp,"%s/catalog_%sgroups_profiles_%09d_%09d",filename_output_profiles_dir,group_text_prefix,i_file,SID.My_rank);
-          }
-          else{
-            sprintf(filename_output_properties_temp,"%s_%s.catalog_%sgroups_properties",filename_groups_root,filename_number,group_text_prefix);
-            sprintf(filename_output_profiles_temp,  "%s_%s.catalog_%sgroups_profiles",  filename_groups_root,filename_number,group_text_prefix);            
-          }
-          SID_Barrier(SID.COMM_WORLD);
-
-          // Open files
-          SID_log("Processing %sgroups...",SID_LOG_OPEN|SID_LOG_TIMER,group_text_prefix);
-          fp_properties_temp=fopen(filename_output_properties_temp,"w");
-          //fp_profiles_temp  =fopen(filename_output_profiles_temp,  "w");
-
-          // Write header
-          fwrite(&(SID.My_rank), sizeof(int),1,fp_properties_temp);
-          fwrite(&(SID.n_proc),  sizeof(int),1,fp_properties_temp);
-          fwrite(&n_groups,      sizeof(int),1,fp_properties_temp);
-          fwrite(&n_groups_all,  sizeof(int),1,fp_properties_temp);
-          //fwrite(&(SID.My_rank), sizeof(int),1,fp_profiles_temp);
-          //fwrite(&(SID.n_proc),  sizeof(int),1,fp_profiles_temp);
-          //fwrite(&n_groups,      sizeof(int),1,fp_profiles_temp);
-          //fwrite(&n_groups_all,  sizeof(int),1,fp_profiles_temp);
-          
-          // Create and write the properties and profiles of each group/subgroup in turn;
-          //   write to a separate temporary file for each rank
-          for(i_group=0,n_truncated=0,largest_truncated_local=0;i_group<n_groups;i_group++){
-            if(compute_group_analysis(&properties,
-                                      &profile,
-                                      ids_snapshot,
-                                      x_array,
-                                      y_array,
-                                      z_array,
-                                      vx_array,
-                                      vy_array,
-                                      vz_array,
-                                      &(ids_sort_index[group_offset[i_group]]),
-                                      box_size,
-                                      h_Hubble,
-                                      Omega_M,
-                                      particle_mass,
-                                      n_particles_groups[i_group],
-                                      redshift,
-                                      cosmo)!=TRUE){
-               n_truncated++;
-               largest_truncated_local=MAX(largest_truncated_local,n_particles_groups[i_group]);
-            }
-            write_group_analysis(fp_properties_temp,
-                                 fp_profiles_temp,
-                                 &properties,
-                                 &profile);
-          }
-          fclose(fp_properties_temp);
-          //fclose(fp_profiles_temp);
-          calc_max_global(&largest_truncated_local,&largest_truncated,1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-
-          SID_log("Done. (f_truncated=%6.2lf%% largest=%d)",SID_LOG_CLOSE,100.*(double)n_truncated/(double)n_groups,largest_truncated);
-        }
-      }
-
-      // Clean-up
-      free_cosmo(&cosmo);
-      SID_free((void **)&ids_snapshot_sort_index);
-      SID_free((void **)&ids_groups_sort_index);
-      SID_free((void **)&ids_sort_index);
-    }
-    // If the group catalog or snapshot is empty, create an empty file
-    else{
-      SID_log("Creating empty analysis files...",SID_LOG_OPEN);
-      for(i_process=0;i_process<2;i_process++){
-        switch(i_process){
-        case 0:
-          sprintf(group_text_prefix,"");
-          break;
-        case 1:
-          sprintf(group_text_prefix,"sub");
-          break;
-        }
-        n_groups_all=0;
-        sprintf(filename_output_properties,"%s_%s.catalog_%sgroups_properties",filename_groups_root,filename_number,group_text_prefix);
-        fp_properties=fopen(filename_output_properties,"w");
-        n_temp=1;
-        fwrite(&n_temp,        sizeof(int),1,fp_properties);
-        fwrite(&n_temp,        sizeof(int),1,fp_properties);
-        fwrite(&n_groups_all,  sizeof(int),1,fp_properties);
-        fwrite(&n_groups_all,  sizeof(int),1,fp_properties);
-        fclose(fp_properties);
-        sprintf(filename_output_profiles,  "%s_%s.catalog_%sgroups_profiles",filename_groups_root,filename_number,group_text_prefix);
-        //fp_profiles  =fopen(filename_output_profiles,  "w");
-        //fwrite(&n_temp,        sizeof(int),1,fp_profiles);
-        //fwrite(&n_temp,        sizeof(int),1,fp_profiles);
-        //fwrite(&n_groups_all,  sizeof(int),1,fp_profiles);
-        //fwrite(&n_groups_all,  sizeof(int),1,fp_profiles);
-        //fclose(fp_profiles);
-      }
-      SID_log("Done.",SID_LOG_CLOSE);
-    }
+    // Clean-up
     free_plist(&plist);
+    SID_free(SID_FARG PHK_group);
+    SID_free(SID_FARG PHK_group_index);
+
     SID_log("Done.",SID_LOG_CLOSE);
   }
 

@@ -153,9 +153,9 @@ int main(int argc, char *argv[]){
 
     if(n_groups_AHF>0){
     n_particles_AHF  =(size_t)((size_t *)ADaPS_fetch(plist.data,"n_particles_%s",filename_number))[0];
-    group_size_AHF   =ADaPS_fetch(plist.data,"n_particles_group_%s",     filename_number);
-    group_offsets_AHF=ADaPS_fetch(plist.data,"particle_offset_group_%s", filename_number);
-    particle_ids_AHF =ADaPS_fetch(plist.data,"particle_ids_%s",          filename_number);
+    group_size_AHF   =(int    *)ADaPS_fetch(plist.data,"n_particles_group_%s",     filename_number);
+    group_offsets_AHF=(int    *)ADaPS_fetch(plist.data,"particle_offset_group_%s", filename_number);
+    particle_ids_AHF =(size_t *)ADaPS_fetch(plist.data,"particle_ids_%s",          filename_number);
 
     // Find largest id so we know what size to write the ids with
     for(i_particle=0,id_largest=0;i_particle<n_particles_AHF;i_particle++)

@@ -36,12 +36,12 @@ int main(int argc, char *argv[]){
   int         i_process;
   int         n_particles;
   int         n_particles_max;
-  REAL       *x_array;
-  REAL       *y_array;
-  REAL       *z_array;
-  REAL       *vx_array;
-  REAL       *vy_array;
-  REAL       *vz_array;
+  GBPREAL       *x_array;
+  GBPREAL       *y_array;
+  GBPREAL       *z_array;
+  GBPREAL       *vx_array;
+  GBPREAL       *vy_array;
+  GBPREAL       *vz_array;
   int        *n_particles_groups_process;
   int        *n_particles_groups;
   int        *n_particles_subgroups;

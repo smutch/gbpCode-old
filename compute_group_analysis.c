@@ -8,12 +8,12 @@
 int compute_group_analysis(halo_properties_info  *properties,
                             halo_profile_info     *profile,
                             size_t                *id_array,
-                            REAL                  *x_array,
-                            REAL                  *y_array,
-                            REAL                  *z_array,
-                            REAL                  *vx_array,
-                            REAL                  *vy_array,
-                            REAL                  *vz_array,
+                            GBPREAL                  *x_array,
+                            GBPREAL                  *y_array,
+                            GBPREAL                  *z_array,
+                            GBPREAL                  *vx_array,
+                            GBPREAL                  *vy_array,
+                            GBPREAL                  *vz_array,
                             size_t                *ids_sort_index,
                             double                 box_size,
                             double                 h_Hubble,
@@ -45,7 +45,7 @@ int compute_group_analysis(halo_properties_info  *properties,
   int          i_bin;
   int          n_in_bin;
   double       n_per_bin;
-  double       n_cumulative;
+  int          n_cumulative;
   double       V1;
   double       V2;
   double       dV;
@@ -123,7 +123,7 @@ int compute_group_analysis(halo_properties_info  *properties,
   }
 
   // Set the number of profile bins and the number of particles per bin
-  profile->n_bins=MAX(MIN_PROFILE_BINS,MIN((6.2*log10((double)n_particles)-3.5)+((double)n_particles/1000.)+1,MAX_PROFILE_BINS));
+  profile->n_bins=MAX(MIN_PROFILE_BINS,MIN((int)((6.2*log10((double)n_particles)-3.5)+((double)n_particles/1000.)+1),MAX_PROFILE_BINS));
   n_per_bin      =(double)(n_particles)/(double)profile->n_bins;
 
   // There's nothing to do if there are no particles

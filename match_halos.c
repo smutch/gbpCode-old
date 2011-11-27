@@ -320,7 +320,8 @@ void match_halos(plist_info  *plist_1_in,
   
     // Perform matching
     for(i_rank=0,n_match=0;i_rank<SID.n_proc;i_rank++){
-
+       if(SID.n_proc>1)
+         SID_log("Processing rank %4d of %4d...",SID_LOG_OPEN|SID_LOG_TIMER,i_rank+1,SID.n_proc);
        // Point arrays at themselves when matching a rank against itself
        if(i_rank==0){
          n_particles_2=n_particles_2_local;
@@ -340,20 +341,25 @@ void match_halos(plist_info  *plist_1_in,
        // Create buffer arrays and perform exchanges if matching against another rank
        else{
          // Determine how many particles and groups need to be echanged
+         SID_log("Performing excahnge...",SID_LOG_OPEN|SID_LOG_TIMER);SID_Barrier(SID.COMM_WORLD);
+         SID_log("particle count...",SID_LOG_COMMENT);SID_Barrier(SID.COMM_WORLD);
+         size_t n_recv;
          exchange_ring_buffer(&n_particles_2_local,
                               sizeof(size_t),
                               1,
                               &n_particles_2,
-                              NULL,
+                              &n_recv,
                               i_rank);
+         SID_log("group count...",SID_LOG_COMMENT);SID_Barrier(SID.COMM_WORLD);
          exchange_ring_buffer(&n_groups_2_local,
-                              sizeof(size_t),
+                              sizeof(int),
                               1,
                               &n_groups_2,
-                              NULL,
+                              &n_recv,
                               i_rank);
 
          // Perform exchange
+         SID_log("group indices...",SID_LOG_COMMENT);SID_Barrier(SID.COMM_WORLD);
          exchange_ring_buffer(group_index_2_local,
                               sizeof(int),
                               n_particles_2_local,
@@ -361,24 +367,28 @@ void match_halos(plist_info  *plist_1_in,
                               &n_particles_2,
                               i_rank);
          n_groups_2_local_s=(size_t)n_groups_2_local;
+         SID_log("group offsets...",SID_LOG_COMMENT);SID_Barrier(SID.COMM_WORLD);
          exchange_ring_buffer(group_offset_2_local,
                               sizeof(int),
                               n_groups_2_local_s,
                               group_offset_2,
                               &n_groups_2_s,
                               i_rank);
+         SID_log("rank offset...",SID_LOG_COMMENT);SID_Barrier(SID.COMM_WORLD);
          exchange_ring_buffer(&rank_offset_2_local,
                               sizeof(int),
                               1,
                               &rank_offset_2,
-                              NULL,
+                              &n_recv,
                               i_rank);
+         SID_log("ids...",SID_LOG_COMMENT);SID_Barrier(SID.COMM_WORLD);
          exchange_ring_buffer(id_2_local,
                               sizeof(size_t),
                               n_particles_2_local,
                               id_2,
                               &n_particles_2,
                               i_rank);
+         SID_log("Done.",SID_LOG_CLOSE);
        }
 
        // Sort the target (ie second) list of ids
@@ -529,6 +539,10 @@ void match_halos(plist_info  *plist_1_in,
 
        // Clean-up
        SID_free(SID_FARG index_2);
+       if(SID.n_proc>1){
+          SID_log("Done.",SID_LOG_CLOSE);
+          SID_Barrier(SID.COMM_WORLD);
+       }
     } // Loop over ranks
     calc_sum_global(&n_match,&n_match_all,1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
     n_match=n_match_all;

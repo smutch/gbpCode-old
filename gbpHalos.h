@@ -10,13 +10,14 @@
 #define MAX_PROFILE_BINS     1000
 #define MAX_PROFILE_BINS_P1  1001 // This must be set to MAX_PROFILE_BINS+1
 
-#define READ_GROUPS_DEFAULT      1
-#define READ_GROUPS_ALL          2
-#define READ_GROUPS_SUBGROUPS    4
-#define READ_GROUPS_NOSUBGROUPS  8
-#define READ_GROUPS_PROPERTIES   16
-#define READ_GROUPS_NOPROPERTIES 32
-#define READ_GROUPS_NOIDS        64
+#define READ_GROUPS_DEFAULT         1
+#define READ_GROUPS_ALL             2
+#define READ_GROUPS_SUBGROUPS       4
+#define READ_GROUPS_NOSUBGROUPS     8
+#define READ_GROUPS_PROPERTIES     16
+#define READ_GROUPS_NOPROPERTIES   32
+#define READ_GROUPS_NOIDS          64
+#define READ_GROUPS_MBP_IDS_ONLY  128
 
 #define MATCH_SUBGROUPS       2 // Match subgroups (default)
 #define MATCH_GROUPS          4 // Match groups
@@ -102,8 +103,8 @@ struct halo_info{
 typedef struct halo_MBP_info halo_MBP_info;
 struct halo_MBP_info{
   // properties of halo
-  REAL      pos[3];
-  REAL      vel[3];
+  GBPREAL   pos[3];
+  GBPREAL   vel[3];
   long long most_bound_id;
   int       group_halo_first;
 
@@ -111,6 +112,11 @@ struct halo_MBP_info{
   int   snap_num;
   int   halo_index;
 };
+
+// Function definitions
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void read_groups(char        *filename_groups_root,
                  int          i_file,
@@ -126,12 +132,12 @@ void read_groups_AHF(char        *filename_groups_root,
 int  compute_group_analysis(halo_properties_info *properties,
                             halo_profile_info    *profile,
                             size_t               *id_array,
-                            REAL                 *x_array,
-                            REAL                 *y_array,
-                            REAL                 *z_array,
-                            REAL                 *vx_array,
-                            REAL                 *vy_array,
-                            REAL                 *vz_array,
+                            GBPREAL              *x_array,
+                            GBPREAL              *y_array,
+                            GBPREAL              *z_array,
+                            GBPREAL              *vx_array,
+                            GBPREAL              *vy_array,
+                            GBPREAL              *vz_array,
                             size_t               *ids_sort_index,
                             double                box_size,
                             double                h_Hubble,
@@ -157,5 +163,10 @@ void match_halos(plist_info  *plist_1_in,
                  int          n_mark_2,
                  char        *catalog_1to2,
                  int          mode);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 

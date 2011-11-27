@@ -3,6 +3,7 @@
 #include <string.h>
 #include <gbpLib.h>
 #include <gbpSPH.h>
+#include <gbpHalos.h>
 
 void read_groups_AHF(char        *filename_groups_root,
                      int          i_file,

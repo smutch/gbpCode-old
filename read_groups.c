@@ -78,6 +78,7 @@ void read_groups(char        *filename_groups_root,
   int     flag_read_groups;
   int     flag_read_ids;
   int     flag_read_subgroups;
+  int     flag_read_MBP_ids_only=FALSE;
 
   int test_max;
 
@@ -100,6 +101,9 @@ void read_groups(char        *filename_groups_root,
     flag_read_subgroups=TRUE;
   if((check_mode_for_flag(mode,READ_GROUPS_NOIDS)))
     flag_read_ids=FALSE;
+  if((check_mode_for_flag(mode,READ_GROUPS_MBP_IDS_ONLY)))
+    flag_read_MBP_ids_only=TRUE;
+
 
   // Read catalog file
   SID_log("Reading group data...",SID_LOG_OPEN|SID_LOG_TIMER);
@@ -207,8 +211,14 @@ void read_groups(char        *filename_groups_root,
       ADaPS_store(&(plist->data),(void *)(&(n_groups)),                     "n_groups_all_%s",      ADaPS_SCALAR_INT,   catalog_name);
       ADaPS_store(&(plist->data),(void *)(&(n_subgroups_rank[SID.My_rank])),"n_subgroups_%s",       ADaPS_SCALAR_INT,   catalog_name);
       ADaPS_store(&(plist->data),(void *)(&(n_subgroups)),                  "n_subgroups_all_%s",   ADaPS_SCALAR_INT,   catalog_name);
-      ADaPS_store(&(plist->data),(void *)(&(n_particles_rank[SID.My_rank])),"n_particles_%s",       ADaPS_SCALAR_SIZE_T,catalog_name);
-      ADaPS_store(&(plist->data),(void *)(&(n_particles)),                  "n_particles_all_%s",   ADaPS_SCALAR_SIZE_T,catalog_name);
+      if(flag_read_MBP_ids_only){
+        ADaPS_store(&(plist->data),(void *)(&(n_groups_rank[SID.My_rank])),"n_particles_%s",       ADaPS_SCALAR_SIZE_T,catalog_name);
+        ADaPS_store(&(plist->data),(void *)(&(n_groups)),                  "n_particles_all_%s",   ADaPS_SCALAR_SIZE_T,catalog_name);
+      }
+      else{
+        ADaPS_store(&(plist->data),(void *)(&(n_particles_rank[SID.My_rank])),"n_particles_%s",       ADaPS_SCALAR_SIZE_T,catalog_name);
+        ADaPS_store(&(plist->data),(void *)(&(n_particles)),                  "n_particles_all_%s",   ADaPS_SCALAR_SIZE_T,catalog_name);
+      }
       fclose(fp);
     }
     else
@@ -277,18 +287,38 @@ void read_groups(char        *filename_groups_root,
       }
       else
         fread(&n_ids,sizeof(size_t),1,fp);
-      input_id=(size_t *)SID_malloc(sizeof(size_t)*n_particles_rank[SID.My_rank]);
+      if(flag_read_MBP_ids_only)
+        input_id=(size_t *)SID_malloc(sizeof(size_t)*n_groups_rank[SID.My_rank]);
+      else
+        input_id=(size_t *)SID_malloc(sizeof(size_t)*n_particles_rank[SID.My_rank]);
       if(n_ids>0){
         // Read group particle lists
         for(i_rank=0;i_rank<SID.n_proc;i_rank++){
           if(i_rank==SID.My_rank){
-            if(id_byte_size==sizeof(size_t))
-              fread(input_id,id_byte_size,n_particles_rank[i_rank],fp);                        
+            if(id_byte_size==sizeof(size_t)){
+              if(flag_read_MBP_ids_only){
+                 for(i_group=0;i_group<n_groups_rank[i_rank];i_group++){
+                   fread(&(input_id[i_group]),id_byte_size,1,fp); 
+                   fseeko(fp,(group_length[i_group]-1)*id_byte_size,SEEK_CUR);
+                 }
+              }
+              else
+                 fread(input_id,id_byte_size,n_particles_rank[i_rank],fp);
+            }
             else{
-              for(i_particle=0;i_particle<n_particles_rank[i_rank];i_particle++){
-                fread(&id_in,id_byte_size,1,fp);
-                input_id[i_particle]=(size_t)id_in;
-              }              
+              if(flag_read_MBP_ids_only){
+                 for(i_group=0;i_group<n_groups_rank[i_rank];i_group++){
+                   fread(&id_in,id_byte_size,1,fp);
+                   input_id[i_group]=(size_t)id_in;
+                   fseeko(fp,(group_length[i_group]-1)*id_byte_size,SEEK_CUR);
+                 }
+              }
+              else{
+                for(i_particle=0;i_particle<n_particles_rank[i_rank];i_particle++){
+                  fread(&id_in,id_byte_size,1,fp);
+                  input_id[i_particle]=(size_t)id_in;
+                } 
+              }
             }
           }
           else
