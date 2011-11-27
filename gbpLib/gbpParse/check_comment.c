@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gbpCommon.h>
+#include <gbpParse.h>
 
 int check_comment(char *line){
   char temp_char[2];

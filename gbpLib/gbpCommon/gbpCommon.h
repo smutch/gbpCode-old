@@ -113,9 +113,9 @@
 /* Compile flags to control large variables */
 /********************************************/
 #ifdef USE_DOUBLE
-#define REAL double
+#define GBPREAL double
 #else
-#define REAL float
+#define GBPREAL float
 #endif
 
 #define big_int long long

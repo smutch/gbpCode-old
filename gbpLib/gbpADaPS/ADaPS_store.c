@@ -42,7 +42,7 @@ void ADaPS_store(ADaPS  **list,
   }
   else if(check_mode_for_flag(mode,ADaPS_COPY_SUBARRAY_REAL)){
     n_subarray    =(size_t)va_arg(vargs,size_t);
-    data_size     =sizeof(REAL)*n_subarray;
+    data_size     =sizeof(GBPREAL)*n_subarray;
     new_item->data=(void *)SID_malloc(data_size);
     memcpy(new_item->data,data,data_size);
   }
@@ -69,7 +69,7 @@ void ADaPS_store(ADaPS  **list,
     memcpy(new_item->data,data,data_size);
   }
   else if(check_mode_for_flag(mode,ADaPS_SCALAR_REAL)){
-    data_size     =sizeof(REAL);
+    data_size     =sizeof(GBPREAL);
     new_item->data=(void *)SID_malloc(data_size);
     memcpy(new_item->data,data,data_size);
   }

@@ -22,7 +22,7 @@ ifndef GBP_MPI
   GBP_MPI=/usr/
 endif
 export GBP_MPI
-CC_USE_MPI = $(GBP_MPI)/bin/mpicc
+CC_USE_MPI = $(GBP_MPI)/bin/mpic++
 MAKE       = make
 
 # This is needed to fix compilation errors re: undefined trunc() function

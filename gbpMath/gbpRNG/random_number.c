@@ -1,16 +1,16 @@
 #include <gbpLib.h>
 #include <gbpRNG.h>
 
-REAL random_number(RNG_info *RNG){
-  REAL random_local;
+GBPREAL random_number(RNG_info *RNG){
+  GBPREAL random_local;
   if(RNG->initialized){
     #if USE_MPI
       if(RNG->global){
         if(SID.I_am_Master){
           #if USE_SPRNG
-            random_local=(REAL)sprng(RNG->stream);
+            random_local=(GBPREAL)sprng(RNG->stream);
           #else
-            random_local=(REAL)ran1(&(RNG->stream));
+            random_local=(GBPREAL)ran1(&(RNG->stream));
           #endif
         }
         MPI_Bcast(&random_local,1,MPI_REAL,MASTER_RANK,SID.COMM_WORLD->comm);
@@ -18,16 +18,16 @@ REAL random_number(RNG_info *RNG){
       }
       else{
         #if USE_SPRNG
-          return((REAL)(sprng(RNG->stream)));
+          return((GBPREAL)(sprng(RNG->stream)));
         #else
-          return((REAL)ran1(&(RNG->stream)));
+          return((GBPREAL)ran1(&(RNG->stream)));
         #endif
       }
     #else
       #if USE_SPRNG
-        return((REAL)(sprng()));
+        return((GBPREAL)(sprng()));
       #else
-        return((REAL)ran1(&(RNG->stream)));
+        return((GBPREAL)ran1(&(RNG->stream)));
       #endif
     #endif
   }

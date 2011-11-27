@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <string.h>
+#include <gbpCommon.h>
+
 void seconds2ascii(int n_secs, char *string){
   int  n_mins;
   int  n_hrs;

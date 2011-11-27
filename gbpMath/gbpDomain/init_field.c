@@ -23,11 +23,11 @@ void init_field(int        n_d,
   int  total_local_size_int;
 
   // Make sure that fftw and gbpLib are compiled with the same precision
-  if(sizeof(fftw_real)!=sizeof(REAL))
+  if(sizeof(fftw_real)!=sizeof(GBPREAL))
     SID_trap_error("Size of an fftw_real (%lld) is not the same the size of a REAL (%lld).  Fix installation!",
                    ERROR_LOGIC,
                    sizeof(fftw_real),
-                   sizeof(REAL));
+                   sizeof(GBPREAL));
 
   SID_log("Initializing ",SID_LOG_OPEN);
   for(i_d=0;i_d<n_d;i_d++){

@@ -5,7 +5,7 @@
 #include <gbpCommon.h>
 #include <gbpRNG.h>
 
-REAL random_gaussian(RNG_info *RNG){
+GBPREAL random_gaussian(RNG_info *RNG){
   double rsq,fac,v1,v2,rval;
   double rand1,rand2;
   if((RNG->IGauss)<=0){
@@ -26,5 +26,5 @@ REAL random_gaussian(RNG_info *RNG){
     rval       =RNG->GaussBak;
     RNG->IGauss=0;
   }
-  return((REAL)rval);
+  return((GBPREAL)rval);
 }

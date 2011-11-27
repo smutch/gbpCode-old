@@ -3,6 +3,7 @@
 #include <string.h>
 #include <gbpCommon.h>
 #include <gbpSID.h>
+#include <gbpParse.h>
 
 // TODO: Need to deal with replace_length!=search_length properly.
 

@@ -15,7 +15,7 @@ double calc_pdf_local(double x,double mu,double sigma){
   return(term1*exp(-term2/term3));
 }
 
-REAL random_lognormal(RNG_info *RNG,double mu,double sigma){
+GBPREAL random_lognormal(RNG_info *RNG,double mu,double sigma){
   double range1,range2;
   double rand1,rand2;
   int    flag_continue=TRUE;
@@ -28,5 +28,5 @@ REAL random_lognormal(RNG_info *RNG,double mu,double sigma){
     rand2=range2*(double)random_number(RNG); // Generate random y-value
     if(rand2<calc_pdf_local(rand1,mu,sigma)) flag_continue=FALSE;
   }
-  return((REAL)rand1);
+  return((GBPREAL)rand1);
 }

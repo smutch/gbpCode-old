@@ -1,5 +1,5 @@
 #include <gbpLib.h>
-void force_periodic(REAL *coord,REAL min,REAL box_size){
+void force_periodic(GBPREAL *coord,GBPREAL min,GBPREAL box_size){
   if((*coord)<min)
     (*coord)+=box_size;
   else if((*coord)>=(min+box_size))

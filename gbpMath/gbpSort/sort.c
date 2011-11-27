@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <gbpCommon.h>
-#include <gbpSID.h>
+#include <gbpLib.h>
+#include <gbpDomain.h>
 #include <gbpSort.h>
 
 void sort(void          *sval,

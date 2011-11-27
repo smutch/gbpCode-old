@@ -14,25 +14,20 @@
 /*  Last updated: Feb 10/2005                           */
 /*                                                      */
 /********************************************************/
+#define  _MAIN
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-float ran1(long *seed);
-#define  CLEAN_EXIT          0
-#define  SYNTAX_ERROR       -1
-#ifndef  TRUE
-#define  TRUE 1
-#endif
-#ifndef  FALSE
-#define  FALSE 0
-#endif
+#include <gbpMath.h>
+#include <gbpLib.h>
+
 int main(int argc, char *argv[]){
-    char   filename[256];
-    int    flag;
-    int    irand;
-    float  frand;
-    long   seed;
-    FILE  *fp;
+    char      filename[256];
+    int       flag;
+    int       irand;
+    int       seed;
+    FILE     *fp;
+    RNG_info  RNG;
 
     /*********************************************/
     /* Check syntax and read-in input parameters */
@@ -40,24 +35,27 @@ int main(int argc, char *argv[]){
     if(argc!=1){
         printf("\n  Syntax: %s\n",
             argv[0]);
-        return(SYNTAX_ERROR);
+        return(ERROR_SYNTAX);
     }
 
+    // Initialize random number gerator
+    init_seed_from_clock(&seed);
+    init_RNG(&seed,&RNG,RNG_DEFAULT);
+   
     flag=TRUE;
-    seed=-1*(long)times(NULL);
     while(flag){
-      frand=ran1(&seed);
-      irand=(int)(32768.0*frand);
+      irand=(int)(32768.0*random_number(&RNG));
       sprintf(filename,".tmpfile%d",irand);
       if((fp=fopen(filename,"r"))==NULL)
 	flag=FALSE;
     }
-    fp=fopen(filename,"w");close(fp);
+    fp=fopen(filename,"w");fclose(fp);
+    free_RNG(&RNG);
 
     /******************/
     /* Report results */
     /******************/
     printf("%s\n",filename);
 
-    return CLEAN_EXIT;
+    return(ERROR_NONE);
 }

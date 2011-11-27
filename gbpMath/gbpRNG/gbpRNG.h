@@ -25,12 +25,12 @@ struct RNG_info{
 };
 
 // Function definitions
-void  init_RNG(int *seed,RNG_info *RNG,int mode);
-void  free_RNG(RNG_info *RNG);
-void  init_seed_from_clock(int *seed);
-REAL  random_number(RNG_info *RNG);
-REAL  random_gaussian(RNG_info *RNG);
-REAL  random_lognormal(RNG_info *RNG,double mu,double sigma);
-float ran1(long *idum);
+void    init_RNG(int *seed,RNG_info *RNG,int mode);
+void    free_RNG(RNG_info *RNG);
+void    init_seed_from_clock(int *seed);
+GBPREAL random_number(RNG_info *RNG);
+GBPREAL random_gaussian(RNG_info *RNG);
+GBPREAL random_lognormal(RNG_info *RNG,double mu,double sigma);
+float   ran1(long *idum);
 
 #endif

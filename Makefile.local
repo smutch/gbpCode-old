@@ -8,5 +8,5 @@ BINFILES  =
 SCRIPTS   =
 DATAFILES =
 LIBS      =
-SUBDIRS   = gbpLib gbpMath gbpPkgs
+SUBDIRS   = gbpLib gbpMath gbpUtils gbpPkgs
 #############################

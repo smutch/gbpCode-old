@@ -13,6 +13,7 @@ extern "C" {
 //int getline(char **string,size_t *n,FILE *fp);
 int count_lines(FILE *fp);
 int count_lines_data(FILE *fp);
+int count_words(char   *line);
 int check_comment(char *line);
 int grab_word(char *line,
 	      int   n, 
@@ -41,6 +42,7 @@ int grab_size_t(char   *line,
 int parse_line(char *line,
 	       int   n_return, ...);
 int search_and_replace(char *string,char *search,char *replace);
+
 #ifdef __cplusplus
 }
 #endif
