@@ -14,14 +14,15 @@ int main(int argc, char *argv[]){
   int     n_y_def  =1;
   int     n_z_def  =1;
   int     n_x,n_y,n_z,n_out;
+  int     snapshot;
   char    filename_in[256],filename_out[256];
 
   // Initialize
   SID_init(&argc,&argv,NULL);
 
   // Process user inputs
-  if(argc!=7){
-    fprintf(stderr,"Syntax: %s n_x n_y n_z n_files_out filename_in filename_out\n",argv[0]);
+  if(argc!=8){
+    fprintf(stderr,"Syntax: %s n_x n_y n_z n_files_out filename_in snapshot filename_out\n",argv[0]);
     fprintf(stderr,"-------\n");
     SID_exit(ERROR_SYNTAX);
   }
@@ -30,12 +31,13 @@ int main(int argc, char *argv[]){
   n_z      =(int)atoi(argv[3]);
   n_out    =(int)atoi(argv[4]);
   strcpy(filename_in, argv[5]);
-  strcpy(filename_out,argv[6]);
+  snapshot=atoi(argv[6]);
+  strcpy(filename_out,argv[7]);
   
   init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
 
   // Read GADGET file
-  read_gadget_binary(filename_in,&plist,READ_GADGET_DEFAULT);
+  read_gadget_binary(filename_in,snapshot,&plist,READ_GADGET_DEFAULT);
 
   // Store replication info in data structure; needed by write_gadget_binary
   ADaPS_store(&(plist.data),(void *)(&n_out),"n_files",      ADaPS_SCALAR_INT);

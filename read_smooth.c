@@ -33,7 +33,7 @@ void read_smooth(plist_info *plist,
   long long *mark;
   size_t  i_particle;
   size_t  j_particle;
-  float  *buffer;
+  void   *buffer;
   float  *local_array;
   int     n_mark;
   float  *r_smooth_array;  
@@ -275,7 +275,7 @@ void read_smooth(plist_info *plist,
       // Place in final array
       for(i_particle=0;i_particle<n_particles_file;i_particle++){
         if(mark[i_particle]>=0)
-          local_array[mark[i_particle]]=buffer[i_particle]*unit_factor;
+          local_array[mark[i_particle]]=((float *)buffer)[i_particle]*unit_factor;
       }
       SID_log("Done.",SID_LOG_CLOSE);
     }
@@ -286,40 +286,56 @@ void read_smooth(plist_info *plist,
     SID_log("Done.",SID_LOG_CLOSE);
   }
   SID_Barrier(SID.COMM_WORLD);
+/*
   SID_log("Summary...",SID_LOG_OPEN);
   for(i_quantity=0;i_quantity<n_quantities;i_quantity++){
     switch(i_quantity){
     case 0:
-      //SID_log("Lengths:   ",SID_LOG_OPEN);
+      SID_log("Lengths:   ",SID_LOG_OPEN);
       sprintf(unit_name,"Mpc",species_name);
       unit_factor=1./M_PER_MPC;
       local_array=r_smooth_array;
       break;
     case 1:
-      //SID_log("Densities: ",SID_LOG_OPEN);
+      SID_log("Densities: ",SID_LOG_OPEN);
       sprintf(unit_name,"Msol/Mpc^3",species_name);
       unit_factor=M_PER_MPC*M_PER_MPC*M_PER_MPC/M_SOL;
       local_array=rho_array;
       break;
     case 2:
-      //SID_log("sigmas_v's:",SID_LOG_OPEN);
+      SID_log("sigmas_v's:",SID_LOG_OPEN);
       sprintf(unit_name,"km/s",species_name);
       unit_factor=1e-3;
       local_array=sigma_v_array;
       break;
     }
-/*
-    calc_stat(local_array,NULL,n_particles_local,ADaPS_FLOAT,CALC_STAT_MIN|CALC_STAT_GLOBAL|CALC_STAT_RETURN_DOUBLE,&var_min);
-    calc_stat(local_array,NULL,n_particles_local,ADaPS_FLOAT,CALC_STAT_MAX|CALC_STAT_GLOBAL|CALC_STAT_RETURN_DOUBLE,&var_max);
-    calc_stat(local_array,NULL,n_particles_local,ADaPS_FLOAT,CALC_STAT_MEAN|CALC_STAT_GLOBAL|CALC_STAT_RETURN_DOUBLE,&var_mean);
+    calc_min_global(local_array,
+                    &var_min,
+                    n_particles_local,
+                    SID_FLOAT,
+                    CALC_MODE_DEFAULT,
+                    SID.COMM_WORLD);
+    calc_max_global(local_array,
+                    &var_max,
+                    n_particles_local,
+                    SID_FLOAT,
+                    CALC_MODE_DEFAULT,
+                    SID.COMM_WORLD);
+    calc_mean_global(local_array,
+                     &var_mean,
+                     n_particles_local,
+                     SID_FLOAT,
+                     CALC_MODE_DEFAULT,
+                     SID.COMM_WORLD);
+
+
     SID_log("min=%le max=%le mean=%le [%s]",
             SID_LOG_CLOSE,
             var_min*unit_factor,var_max*unit_factor,var_mean*unit_factor,
             unit_name);
-*/
   }
   SID_log("",SID_LOG_CLOSE|SID_LOG_NOPRINT);
-
+*/
   SID_log("Done.",SID_LOG_CLOSE);
   }
   else

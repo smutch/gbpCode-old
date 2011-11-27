@@ -5,6 +5,7 @@
 #include <gbpLib.h>
 #include <gbpSPH.h>
 int main(int argc, char *argv[]){
+  int         snapshot;
   char        filename_out[256];
   char        filename_smooth[256];
   char        filename_snapshot[256];
@@ -16,25 +17,26 @@ int main(int argc, char *argv[]){
   int         j_species;
   int         i_rank;
   size_t      n_particles;
-  REAL       *x_array;
-  REAL       *y_array;
-  REAL       *z_array;
-  REAL       *r_smooth_array;
-  REAL       *rho_array;
-  REAL       *sigma_v_array;
+  GBPREAL       *x_array;
+  GBPREAL       *y_array;
+  GBPREAL       *z_array;
+  GBPREAL       *r_smooth_array;
+  GBPREAL       *rho_array;
+  GBPREAL       *sigma_v_array;
   FILE       *fp_out;
 
   SID_init(&argc,&argv,NULL);
 
   strcpy(filename_snapshot,argv[1]);
-  strcpy(filename_smooth,  argv[2]);
-  strcpy(filename_out,     argv[3]);
+  snapshot=atoi(argv[2]);
+  strcpy(filename_smooth,  argv[3]);
+  strcpy(filename_out,     argv[4]);
 
   SID_log("Creating ascii file {%s} from smmoth files {%s} and snapshot {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_out,filename_smooth,filename_snapshot);
 
   // Read snapshot files
   init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-  read_gadget_binary(filename_snapshot,&plist,READ_GADGET_DEFAULT);
+  read_gadget_binary(filename_snapshot,snapshot,&plist,READ_GADGET_DEFAULT);
   read_smooth(&plist,filename_smooth,0,SMOOTH_DEFAULT);
   h_Hubble=((double *)ADaPS_fetch(plist.data,"h_Hubble",species_name))[0];
 
@@ -50,19 +52,19 @@ int main(int argc, char *argv[]){
     SID_log("Writting %s particles...",SID_LOG_OPEN,species_name);
     // ... then fetch arrays ...
     n_particles=((size_t *)ADaPS_fetch(plist.data,"n_%s",species_name))[0];
-    x_array    =(REAL *)ADaPS_fetch(plist.data,"x_%s",species_name);
-    y_array    =(REAL *)ADaPS_fetch(plist.data,"y_%s",species_name);
-    z_array    =(REAL *)ADaPS_fetch(plist.data,"z_%s",species_name);
+    x_array    =(GBPREAL *)ADaPS_fetch(plist.data,"x_%s",species_name);
+    y_array    =(GBPREAL *)ADaPS_fetch(plist.data,"y_%s",species_name);
+    z_array    =(GBPREAL *)ADaPS_fetch(plist.data,"z_%s",species_name);
     if(ADaPS_exist(plist.data,"r_smooth_%s",species_name))
-      r_smooth_array=(REAL *)ADaPS_fetch(plist.data,"r_smooth_%s",species_name);
+      r_smooth_array=(GBPREAL *)ADaPS_fetch(plist.data,"r_smooth_%s",species_name);
     else
       r_smooth_array=NULL;
     if(ADaPS_exist(plist.data,"rho_%s",species_name))
-      rho_array=(REAL *)ADaPS_fetch(plist.data,"rho_%s",species_name);
+      rho_array=(GBPREAL *)ADaPS_fetch(plist.data,"rho_%s",species_name);
     else
       rho_array=NULL;
     if(ADaPS_exist(plist.data,"sigma_v_%s",species_name))
-      sigma_v_array=(REAL *)ADaPS_fetch(plist.data,"sigma_v_%s",species_name);
+      sigma_v_array=(GBPREAL *)ADaPS_fetch(plist.data,"sigma_v_%s",species_name);
     else
       sigma_v_array=NULL;
     

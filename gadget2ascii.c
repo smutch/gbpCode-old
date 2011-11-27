@@ -76,20 +76,9 @@ int main(int argc, char *argv[]){
   }
   if(flag_filefound){
     for(i_file=0;i_file<n_files;i_file++){
-      // Construct file name
-      if(flag_file_type==0)
-        sprintf(filename,"%s/snapshot_%03d/snapshot_%03d",filename_root_in,snapshot_number,snapshot_number);
-      else if(flag_file_type==1)
-        sprintf(filename,"%s/snapshot_%03d",filename_root_in,snapshot_number);
-      else if(flag_file_type==2)
-        sprintf(filename,"%s",filename_root_in,snapshot_number);
-      else if(flag_file_type==3)
-        sprintf(filename,"%s_%03d",filename_root_in,snapshot_number);
-      if(flag_multifile)
-        sprintf(filename,"%s.%d",filename,i_file);
 
       // Read file
-      read_gadget_binary(filename,&plist,READ_GADGET_DEFAULT);
+      read_gadget_binary(filename_root_in,snapshot_number,&plist,READ_GADGET_DEFAULT);
 
       // Write ascii file
       write_ascii(filename_out,&plist,i_file);

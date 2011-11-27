@@ -11,12 +11,12 @@ void write_ascii(char       *filename_out,
                  int         i_file){
   FILE   *fp;
   double  h_Hubble;
-  REAL   *x;
-  REAL   *y;
-  REAL   *z;
-  REAL   *vx;
-  REAL   *vy;
-  REAL   *vz;
+  GBPREAL   *x;
+  GBPREAL   *y;
+  GBPREAL   *z;
+  GBPREAL   *vx;
+  GBPREAL   *vy;
+  GBPREAL   *vz;
   size_t  n_p;
   size_t  i_p;
   int     i_rank;
@@ -50,12 +50,12 @@ void write_ascii(char       *filename_out,
         if(ADaPS_exist(plist->data,"n_%s",plist->species[i_species])){
           n_p=((size_t *)ADaPS_fetch(plist->data,"n_%s",plist->species[i_species]))[0];
           if(n_p>0){
-             x =(REAL *)ADaPS_fetch(plist->data,"x_%s", plist->species[i_species]);
-             y =(REAL *)ADaPS_fetch(plist->data,"y_%s", plist->species[i_species]);
-             z =(REAL *)ADaPS_fetch(plist->data,"z_%s", plist->species[i_species]);
-             vx=(REAL *)ADaPS_fetch(plist->data,"vx_%s",plist->species[i_species]);
-             vy=(REAL *)ADaPS_fetch(plist->data,"vy_%s",plist->species[i_species]);
-             vz=(REAL *)ADaPS_fetch(plist->data,"vz_%s",plist->species[i_species]);
+             x =(GBPREAL *)ADaPS_fetch(plist->data,"x_%s", plist->species[i_species]);
+             y =(GBPREAL *)ADaPS_fetch(plist->data,"y_%s", plist->species[i_species]);
+             z =(GBPREAL *)ADaPS_fetch(plist->data,"z_%s", plist->species[i_species]);
+             vx=(GBPREAL *)ADaPS_fetch(plist->data,"vx_%s",plist->species[i_species]);
+             vy=(GBPREAL *)ADaPS_fetch(plist->data,"vy_%s",plist->species[i_species]);
+             vz=(GBPREAL *)ADaPS_fetch(plist->data,"vz_%s",plist->species[i_species]);
              for(i_p=0;i_p<n_p;i_p++){
                fprintf(fp,"%d %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e\n",
                        i_species,
@@ -71,9 +71,7 @@ void write_ascii(char       *filename_out,
       }
       fclose(fp);
     }
-    #ifdef USE_MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-    #endif
+    SID_Barrier(SID.COMM_WORLD);
   }
   SID_log("Done.",SID_LOG_CLOSE);
 }

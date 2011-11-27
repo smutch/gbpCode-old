@@ -8,6 +8,7 @@
 int main(int argc, char *argv[]){
   int         i;
   plist_info  plist;
+  int         snapshot;
   char        filename_in[256];
   char        filename_out[256];
   int         flag_mode;
@@ -23,15 +24,16 @@ int main(int argc, char *argv[]){
 
   // Parse command line
   if(argc<=1){
-    SID_log_error("\nsyntax: %s filename_in filename_out [box/sphere] [x_min,xmax,y_min,y_max,z_min,z_max/x_cen,y_cen,z_cen,radius]",ERROR_SYNTAX,argv[0]);
+    SID_log_error("\nsyntax: %s filename_in snapshot filename_out [box/sphere] [x_min,xmax,y_min,y_max,z_min,z_max/x_cen,y_cen,z_cen,radius]",ERROR_SYNTAX,argv[0]);
     SID_trap_error("------\n",ERROR_SYNTAX);
   }
   else{
     strcpy(filename_in, argv[1]);
-    strcpy(filename_out,argv[2]);
-    if(!strcmp(argv[3],"box"))
+    snapshot=atoi(argv[2]);
+    strcpy(filename_out,argv[3]);
+    if(!strcmp(argv[4],"box"))
       flag_mode=VOLUME_BOX;
-    else if(!strcmp(argv[3],"sphere"))
+    else if(!strcmp(argv[4],"sphere"))
       flag_mode=VOLUME_SPHERE;
     else
       SID_trap_error("Valid modes are \"box\" or \"sphere\".",ERROR_SYNTAX);
@@ -73,7 +75,7 @@ int main(int argc, char *argv[]){
   ADaPS_store(&(plist.data),(void *)(&y_max),"rank_y_max",ADaPS_SCALAR_DOUBLE);
   ADaPS_store(&(plist.data),(void *)(&z_min),"rank_z_min",ADaPS_SCALAR_DOUBLE);
   ADaPS_store(&(plist.data),(void *)(&z_max),"rank_z_max",ADaPS_SCALAR_DOUBLE);
-  read_gadget_binary(filename_in,&plist,READ_GADGET_NO_HUBBLE);
+  read_gadget_binary(filename_in,snapshot,&plist,READ_GADGET_NO_HUBBLE);
   SID_log("Done.",SID_LOG_CLOSE);
 
   // Mark particles

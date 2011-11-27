@@ -12,7 +12,6 @@ OBJFILES  = display_gadget_header.o         \
             mark_particles.o                \
             prep_types.o                    \
 	    set_sph_kernel.o                \
-            smooth_grid.o                   \
             read_mark_file.o                \
 	    read_smooth.o                   \
 	    read_gadget_binary.o            \
@@ -21,13 +20,13 @@ OBJFILES  = display_gadget_header.o         \
 	    mark_particles.o                \
 	    read_mark_file.o                \
 	    write_mark_file.o               \
-	    write_smooth.o                  \
             write_mark_file.o               \
             write_ascii.o                   \
             write_csv.o                     \
             write_gadget_binary.o           
 LIBFILE   = libgbpSPH.a
 BINFILES  = gadget2ascii               \
+            mark_gadget                \
             gadget2csv                 \
             gadget_header              \
             gadget_replicate           \

@@ -153,7 +153,23 @@ struct smoothfile_header_info {
   int  used[SMOOTH_N_QUANTITIES];
 };
 
-int init_gadget_filename(char *filename_root_in,int snapshot_number,int *flag_multifile,int *flag_file_type,gadget_header_info *header);
+typedef struct fp_gadget fp_gadget;
+struct fp_gadget{
+  FILE *fp;
+  int   flag_filefound;
+  int   flag_multifile;
+  int   flag_file_type;
+};
+
+// Function Definitions
+#ifdef __cplusplus
+extern "C" {
+#endif
+void open_gadget_file(char      *filename_root_in,
+                      int        snapshot_number,
+                      fp_gadget *fp);
+
+int  init_gadget_read(char *filename_root_in,int snapshot_number,int *flag_multifile,int *flag_file_type,gadget_header_info *header);
 void set_gadget_filename(char *filename_root_in,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename);
 
 void init_plist(plist_info *plist, slab_info *slab,double length_unit,double mass_unit, double velocity_unit); 
@@ -259,11 +275,13 @@ void write_smooth(plist_info *plist,
                   int         n_chunks,
                   int         mode);
 void prep_types(char ***pname, int n_type, ... );
-void read_gadget_binary_header(char        *filename,
+void read_gadget_binary_header(char        *filename_root_in,
+                               int          snapshot_number,
                                plist_info  *plist);
-void read_gadget_binary(char        *filename,
-                        plist_info  *plist,
-                        int          mode);
+void read_gadget_binary(char       *filename_root_in,
+                        int        snapshot_number,
+                        plist_info *plist,
+                        int         mode);
 void write_gadget_binary(char       *filename,
                          plist_info *plist);
 void display_gadget_header(plist_info  *plist);
@@ -280,15 +298,19 @@ void smooth_grid(plist_info *plist,
                  char       *species_name,
                  int         mode);
 double map_to_grid(size_t      n_particles_local,
-                   REAL       *x_particles_local,
-                   REAL       *y_particles_local,
-                   REAL       *z_particles_local,
-                   REAL       *vx_particles_local,
-                   REAL       *vy_particles_local,
-                   REAL       *vz_particles_local,
-                   REAL       *m_particles_local,
+                   GBPREAL    *x_particles_local,
+                   GBPREAL    *y_particles_local,
+                   GBPREAL    *z_particles_local,
+                   GBPREAL    *vx_particles_local,
+                   GBPREAL    *vy_particles_local,
+                   GBPREAL    *vz_particles_local,
+                   GBPREAL    *m_particles_local,
                    cosmo_info *cosmo,
                    double      redshift,
                    int         distribution_scheme,
                    field_info *field);
+#ifdef __cplusplus
+}
 #endif
+#endif
+

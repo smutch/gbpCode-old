@@ -61,6 +61,40 @@ void read_mark_file(plist_info *plist,
   if(header.n_type!=N_GADGET_TYPE)
     SID_trap_error("Inconsistant number of species in mark file (ie. %d!=%d)!",ERROR_LOGIC,header.n_type,N_GADGET_TYPE);
 
+  // List numbers of particles in the log output
+  size_t n_particles_all;
+  int    n_non_zero;
+  for(i_species=0,n_particles_all=0,n_non_zero=0;i_species<header.n_type;i_species++){
+    if(header.n_mark_species[i_species]>0){
+      n_particles_all+=header.n_mark_species[i_species];
+      n_non_zero++;
+    }
+  }
+  SID_log("%lld",SID_LOG_CONTINUE,n_particles_all);
+  if(n_non_zero>0)
+    SID_log(" (",SID_LOG_CONTINUE,n_particles_all);
+  for(i_species=0;i_species<N_GADGET_TYPE;i_species++){
+    if(header.n_mark_species[i_species]>0){
+      if(i_species==n_non_zero-1){
+        if(n_non_zero>1)
+          SID_log("and %lld %s",SID_LOG_CONTINUE,header.n_mark_species[i_species],plist->species[i_species]);
+        else
+          SID_log("%lld %s",SID_LOG_CONTINUE,header.n_mark_species[i_species],plist->species[i_species]);
+      }
+      else{
+        if(n_non_zero>1)
+          SID_log("%lld %s, ",SID_LOG_CONTINUE,header.n_mark_species[i_species],plist->species[i_species]);
+        else
+          SID_log("%lld %s",SID_LOG_CONTINUE,header.n_mark_species[i_species],plist->species[i_species]);
+      }
+    }
+  }
+  if(n_non_zero>0)
+    SID_log(") particles...",SID_LOG_CONTINUE);
+  else
+    SID_log(" particles...",SID_LOG_CONTINUE);
+
+
   // Set list sizes and prep offsets for reading
   for(i_species=0,n_mark_local=0,n_mark_total_check=0;i_species<header.n_type;i_species++){
     if(header.n_mark_species[i_species]>0){
@@ -84,11 +118,7 @@ void read_mark_file(plist_info *plist,
   }
 
   // Sanity check
-#ifdef USE_MPI
-  MPI_Allreduce(&n_mark_local,&n_mark_total,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
-#else
-  n_mark_total=n_mark_local;
-#endif
+  SID_Allreduce(&n_mark_local,&n_mark_total,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
   if(n_mark_total!=n_mark_total_check)
     SID_trap_error("Particle numbers don't add-up right in read_mark_file!",ERROR_LOGIC);
 
@@ -113,7 +143,6 @@ void read_mark_file(plist_info *plist,
         if(n_mark_type_local[i_species]>0){
           merge_sort(mark_list_local,n_mark_type_local[i_species],NULL,SID_SIZE_T,SORT_INPLACE_ONLY,SORT_COMPUTE_INPLACE);
           ADaPS_store(&(plist->data),(void *)(mark_list_local),"%s_%s",ADaPS_DEFAULT,mark_name,plist->species[i_species]);
-          SID_free((void **)&mark_list_local);
         }
       }
     }
@@ -160,8 +189,6 @@ void read_mark_file(plist_info *plist,
         }
         SID_free((void **)&ids_local_index);
         ADaPS_store(&(plist->data),(void *)mark_list,"%s_%s",ADaPS_DEFAULT,mark_name,plist->species[i_species]);
-        if(flag_allocate)
-          SID_free((void **)&mark_list);
       }
     }
     SID_free((void **)&mark_list_buffer);
@@ -169,5 +196,5 @@ void read_mark_file(plist_info *plist,
   }
   SID_fclose_chunked(&fp_mark_file);
 
-  SID_log("done.",SID_LOG_CLOSE);
+  SID_log("Done.",SID_LOG_CLOSE);
 }

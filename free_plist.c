@@ -3,7 +3,7 @@
 
 void free_plist(plist_info *plist){
   int status;
-  ADaPS_free(&(plist->data));
+  ADaPS_free(SID_FARG plist->data);
   free_types(&(plist->species),plist->n_species);
   plist->length_unit=0.0;
   plist->mass_unit  =0.0;

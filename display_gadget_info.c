@@ -250,8 +250,6 @@ void display_gadget_info(plist_info  *plist){
         fprintf(stderr,"NO PARTICLES TO ANALYZE!\n");
     }
     fflush(stderr);
-#ifdef USE_MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    SID_Barrier(SID.COMM_WORLD);
   }
 };

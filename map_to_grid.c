@@ -6,13 +6,13 @@
 #include <gbpCosmo.h>
 
 double map_to_grid(size_t      n_particles_local, 
-                   REAL       *x_particles_local,
-                   REAL       *y_particles_local,
-                   REAL       *z_particles_local,
-                   REAL       *vx_particles_local,
-                   REAL       *vy_particles_local,
-                   REAL       *vz_particles_local,
-                   REAL       *m_particles_local,
+                   GBPREAL    *x_particles_local,
+                   GBPREAL    *y_particles_local,
+                   GBPREAL    *z_particles_local,
+                   GBPREAL    *vx_particles_local,
+                   GBPREAL    *vy_particles_local,
+                   GBPREAL    *vz_particles_local,
+                   GBPREAL    *m_particles_local,
                    cosmo_info *cosmo,
                    double      redshift,
                    int         distribution_scheme,
@@ -46,9 +46,9 @@ double map_to_grid(size_t      n_particles_local,
   double      norm_local;
   double      normalization;
   double      x_i;
-  REAL        x_particle_i;
-  REAL        y_particle_i;
-  REAL        z_particle_i;
+  GBPREAL     x_particle_i;
+  GBPREAL     y_particle_i;
+  GBPREAL     z_particle_i;
   double      kernal_offset;
   int         W_search;
   size_t      n_send;
@@ -175,21 +175,21 @@ double map_to_grid(size_t      n_particles_local,
   for(i_p=0,norm_local=0.,i_report=0,i_p_next_report=n_particles_local/10;i_p<n_particles_local;i_p++){     
     if(flag_multimass)
       m_p=(double)(m_particles_local[i_p]);
-    x_particle_i=(REAL)x_particles_local[i_p];
-    y_particle_i=(REAL)y_particles_local[i_p];
-    z_particle_i=(REAL)z_particles_local[i_p];
+    x_particle_i=(GBPREAL)x_particles_local[i_p];
+    y_particle_i=(GBPREAL)y_particles_local[i_p];
+    z_particle_i=(GBPREAL)z_particles_local[i_p];
     if(vx_particles_local!=NULL)
-      x_particle_i+=(REAL)(1e3*h_Hubble*((double)vx_particles_local[i_p])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+      x_particle_i+=(GBPREAL)(1e3*h_Hubble*((double)vx_particles_local[i_p])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
     if(vy_particles_local!=NULL)
-      y_particle_i+=(REAL)(1e3*h_Hubble*((double)vy_particles_local[i_p])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+      y_particle_i+=(GBPREAL)(1e3*h_Hubble*((double)vy_particles_local[i_p])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
     if(vz_particles_local!=NULL)
-      z_particle_i+=(REAL)(1e3*h_Hubble*((double)vz_particles_local[i_p])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+      z_particle_i+=(GBPREAL)(1e3*h_Hubble*((double)vz_particles_local[i_p])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
     force_periodic(&x_particle_i,0.,field->L[0]);
     force_periodic(&y_particle_i,0.,field->L[1]);
     force_periodic(&z_particle_i,0.,field->L[2]);
-    x_particle_i/=(REAL)field->dR[0];
-    y_particle_i/=(REAL)field->dR[1];
-    z_particle_i/=(REAL)field->dR[2];
+    x_particle_i/=(GBPREAL)field->dR[0];
+    y_particle_i/=(GBPREAL)field->dR[1];
+    z_particle_i/=(GBPREAL)field->dR[2];
     i_i[0]=(int)x_particle_i; // position in grid-coordinates
     i_i[1]=(int)y_particle_i; // position in grid-coordinates
     i_i[2]=(int)z_particle_i; // position in grid-coordinates

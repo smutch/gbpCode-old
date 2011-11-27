@@ -28,9 +28,9 @@ void write_gadget_binary(char        *filename_in,
   double    h_Hubble;
   double    d_value;
   double   *d1_array;
-  REAL     *R1_array;
-  REAL     *R2_array;
-  REAL     *R3_array;
+  GBPREAL     *R1_array;
+  GBPREAL     *R2_array;
+  GBPREAL     *R3_array;
   float     f_temp;
   float     f1_temp;
   float     f2_temp;
@@ -62,9 +62,9 @@ void write_gadget_binary(char        *filename_in,
   size_t    n_replicate;
   double    box_size;
   double    box_size_offset;
-  REAL      x_offset;
-  REAL      y_offset;
-  REAL      z_offset;
+  GBPREAL      x_offset;
+  GBPREAL      y_offset;
+  GBPREAL      z_offset;
   FILE     *fp;
   void     *buffer;
   size_t    n_buffer;
@@ -198,16 +198,14 @@ void write_gadget_binary(char        *filename_in,
           }
         }
       }
-#ifdef USE_MPI
-      MPI_Bcast(&i_p,   1,MPI_SIZE_T, i_rank,MPI_COMM_WORLD);
-      MPI_Bcast(&i_file,1,MPI_INTEGER,i_rank,MPI_COMM_WORLD);
+      SID_Bcast(&i_p,   sizeof(size_t),i_rank,SID.COMM_WORLD);
+      SID_Bcast(&i_file,sizeof(int),   i_rank,SID.COMM_WORLD);
       for(j=0;j<n_files;j++){
-        MPI_Bcast(  n_of_type_file[j],             N_GADGET_TYPE,MPI_SIZE_T,i_rank,MPI_COMM_WORLD);
-        MPI_Bcast(&(n_particles_file[j]),          1,            MPI_SIZE_T,i_rank,MPI_COMM_WORLD);
-        MPI_Bcast(&(n_particles_multimass_file[j]),1,            MPI_SIZE_T,i_rank,MPI_COMM_WORLD);
-        MPI_Bcast(&(n_gas_file[j]),                1,            MPI_SIZE_T,i_rank,MPI_COMM_WORLD);
+        SID_Bcast(  n_of_type_file[j],             N_GADGET_TYPE*sizeof(size_t),i_rank,SID.COMM_WORLD);
+        SID_Bcast(&(n_particles_file[j]),                        sizeof(size_t),i_rank,SID.COMM_WORLD);
+        SID_Bcast(&(n_particles_multimass_file[j]),              sizeof(size_t),i_rank,SID.COMM_WORLD);
+        SID_Bcast(&(n_gas_file[j]),                              sizeof(size_t),i_rank,SID.COMM_WORLD);
       }
-#endif
     }
   }
  /* 
@@ -320,7 +318,7 @@ void write_gadget_binary(char        *filename_in,
           else
             box_size=0.;
           box_size_offset=box_size;
-          if((REAL)box_size<=0.)
+          if((GBPREAL)box_size<=0.)
             SID_trap_error("Box size is <=0 in write_gadget_binary.\n",ERROR_LOGIC);
           if(n_x_replicate!=n_y_replicate || n_x_replicate!=n_z_replicate)
             SID_log("WARNING: replication is not cubical ... using n_x_replicate to scale box size!",SID_LOG_OPEN);
@@ -393,11 +391,9 @@ void write_gadget_binary(char        *filename_in,
           SID_log("Error writing headers!",SID_LOG_COMMENT);
       }
     }
-#ifdef USE_MPI
-    MPI_Bcast(&flag_LONGIDS,   1,MPI_INTEGER,MASTER_RANK,MPI_COMM_WORLD);
-    MPI_Bcast(&box_size,       1,MPI_DOUBLE, MASTER_RANK,MPI_COMM_WORLD);
-    MPI_Bcast(&box_size_offset,1,MPI_DOUBLE, MASTER_RANK,MPI_COMM_WORLD);
-#endif
+    SID_Bcast(&flag_LONGIDS,   sizeof(int),   MASTER_RANK,SID.COMM_WORLD);
+    SID_Bcast(&box_size,       sizeof(double),MASTER_RANK,SID.COMM_WORLD);
+    SID_Bcast(&box_size_offset,sizeof(double),MASTER_RANK,SID.COMM_WORLD);
     if(flag_LONGIDS)
       SID_log("(using LONG IDS)...",SID_LOG_CONTINUE);      
     SID_log("Done.",SID_LOG_CLOSE);      
@@ -421,24 +417,24 @@ void write_gadget_binary(char        *filename_in,
               fwrite(&record_length,4,1,fp);
               flag_recordlength_written=TRUE;
             }
-            R1_array=(REAL *)ADaPS_fetch(plist->data,"x_%s",pname[i]);
-            R2_array=(REAL *)ADaPS_fetch(plist->data,"y_%s",pname[i]);
-            R3_array=(REAL *)ADaPS_fetch(plist->data,"z_%s",pname[i]);
+            R1_array=(GBPREAL *)ADaPS_fetch(plist->data,"x_%s",pname[i]);
+            R2_array=(GBPREAL *)ADaPS_fetch(plist->data,"y_%s",pname[i]);
+            R3_array=(GBPREAL *)ADaPS_fetch(plist->data,"z_%s",pname[i]);
             for(k=0,j_file=0;j_file<i_file;j_file++) k+=n_of_type_file_rank[j_file][i];
             for(j=0;j<n_of_type_file_rank[i_file][i];j+=n_buffer,k+=n_buffer){
               n_buffer=MIN(GADGET_BUFFER_SIZE,n_of_type_file_rank[i_file][i]-j);
               for(i_x_replicate=0;i_x_replicate<n_x_replicate;i_x_replicate++){
-                x_offset=((REAL)i_x_replicate)*(REAL)box_size_offset;
+                x_offset=((GBPREAL)i_x_replicate)*(GBPREAL)box_size_offset;
                 for(jj=0;jj<n_buffer;jj++)
-                  ((float *)buffer)[3*jj+0]=((float)(R1_array[k+jj]+x_offset))/((REAL)(plist->length_unit/h_Hubble));
+                  ((float *)buffer)[3*jj+0]=((float)(R1_array[k+jj]+x_offset))/((GBPREAL)(plist->length_unit/h_Hubble));
                 for(i_y_replicate=0;i_y_replicate<n_y_replicate;i_y_replicate++){
-                  y_offset=((REAL)i_y_replicate)*(REAL)box_size_offset;
+                  y_offset=((GBPREAL)i_y_replicate)*(GBPREAL)box_size_offset;
                   for(jj=0;jj<n_buffer;jj++)
-                    ((float *)buffer)[3*jj+1]=((float)(R2_array[k+jj]+y_offset))/((REAL)(plist->length_unit/h_Hubble));
+                    ((float *)buffer)[3*jj+1]=((float)(R2_array[k+jj]+y_offset))/((GBPREAL)(plist->length_unit/h_Hubble));
                   for(i_z_replicate=0;i_z_replicate<n_z_replicate;i_z_replicate++){
-                    z_offset=((REAL)i_z_replicate)*(REAL)box_size_offset;
+                    z_offset=((GBPREAL)i_z_replicate)*(GBPREAL)box_size_offset;
                     for(jj=0;jj<n_buffer;jj++)
-                      ((float *)buffer)[3*jj+2]=((float)(R3_array[k+jj]+z_offset))/((REAL)(plist->length_unit/h_Hubble));
+                      ((float *)buffer)[3*jj+2]=((float)(R3_array[k+jj]+z_offset))/((GBPREAL)(plist->length_unit/h_Hubble));
                     fwrite(buffer,sizeof(float),3*n_buffer,fp);
                     i_p+=n_buffer;
                   }
@@ -474,16 +470,16 @@ void write_gadget_binary(char        *filename_in,
               fwrite(&record_length,4,1,fp);
               flag_recordlength_written=TRUE;
             }
-            R1_array=(REAL *)ADaPS_fetch(plist->data,"vx_%s",pname[i]);
-            R2_array=(REAL *)ADaPS_fetch(plist->data,"vy_%s",pname[i]);
-            R3_array=(REAL *)ADaPS_fetch(plist->data,"vz_%s",pname[i]);
+            R1_array=(GBPREAL *)ADaPS_fetch(plist->data,"vx_%s",pname[i]);
+            R2_array=(GBPREAL *)ADaPS_fetch(plist->data,"vy_%s",pname[i]);
+            R3_array=(GBPREAL *)ADaPS_fetch(plist->data,"vz_%s",pname[i]);
             for(k=0,j_file=0;j_file<i_file;j_file++) k+=n_of_type_file_rank[j_file][i];
             for(j=0;j<n_of_type_file_rank[i_file][i];j+=n_buffer,k+=n_buffer){
               n_buffer=MIN(GADGET_BUFFER_SIZE,n_of_type_file_rank[i_file][i]-j);
               for(jj=0;jj<n_buffer;jj++){
-                ((float *)buffer)[3*jj+0]=((float)(R1_array[k+jj]))/((REAL)(plist->velocity_unit));
-                ((float *)buffer)[3*jj+1]=((float)(R2_array[k+jj]))/((REAL)(plist->velocity_unit));
-                ((float *)buffer)[3*jj+2]=((float)(R3_array[k+jj]))/((REAL)(plist->velocity_unit));
+                ((float *)buffer)[3*jj+0]=((float)(R1_array[k+jj]))/((GBPREAL)(plist->velocity_unit));
+                ((float *)buffer)[3*jj+1]=((float)(R2_array[k+jj]))/((GBPREAL)(plist->velocity_unit));
+                ((float *)buffer)[3*jj+2]=((float)(R3_array[k+jj]))/((GBPREAL)(plist->velocity_unit));
               }
               for(i_x_replicate=0;i_x_replicate<n_x_replicate;i_x_replicate++){
                 for(i_y_replicate=0;i_y_replicate<n_y_replicate;i_y_replicate++){
@@ -654,12 +650,12 @@ void write_gadget_binary(char        *filename_in,
             }
             // If internal energies are defined, then write them ...
             if(ADaPS_exist(plist->data,"u_%s",pname[i])){
-              R1_array=(REAL *)ADaPS_fetch(plist->data,"u_%s",pname[i]);
+              R1_array=(GBPREAL *)ADaPS_fetch(plist->data,"u_%s",pname[i]);
               for(k=0,j_file=0;j_file<i_file;j_file++) k+=n_of_type_file_rank[j_file][i];
               for(j=0;j<n_of_type_file_rank[i_file][i];j+=n_buffer,k+=n_buffer){
                 n_buffer=MIN(GADGET_BUFFER_SIZE,n_of_type_file_rank[i_file][i]-j);
                 for(jj=0;jj<n_buffer;jj++)
-                  ((float *)buffer)[jj]=(float)(R1_array[k+jj])/((REAL)(plist->velocity_unit*plist->velocity_unit));
+                  ((float *)buffer)[jj]=(float)(R1_array[k+jj])/((GBPREAL)(plist->velocity_unit*plist->velocity_unit));
                 for(i_x_replicate=0;i_x_replicate<n_x_replicate;i_x_replicate++){
                   for(i_y_replicate=0;i_y_replicate<n_y_replicate;i_y_replicate++){
                     for(i_z_replicate=0;i_z_replicate<n_z_replicate;i_z_replicate++){
@@ -674,7 +670,7 @@ void write_gadget_binary(char        *filename_in,
             else{
               if(ADaPS_exist(plist->data,"T_%s",pname[i])){
                 flag_noTemps=FALSE;
-                R1_array=(REAL *)ADaPS_fetch(plist->data,"T_%s",pname[i]);
+                R1_array=(GBPREAL *)ADaPS_fetch(plist->data,"T_%s",pname[i]);
               }
               else
                 flag_noTemps=TRUE;
@@ -727,7 +723,7 @@ void write_gadget_binary(char        *filename_in,
             }
             // If densities are defined, then write them ...
             if(ADaPS_exist(plist->data,"rho_%s",pname[i])){
-              R1_array=(REAL *)ADaPS_fetch(plist->data,"rho_%s",pname[i]);
+              R1_array=(GBPREAL *)ADaPS_fetch(plist->data,"rho_%s",pname[i]);
               for(k=0,j_file=0;j_file<i_file;j_file++) k+=n_of_type_file_rank[j_file][i];
               for(j=0;j<n_of_type_file_rank[i_file][i];j+=n_buffer,k+=n_buffer){
                 n_buffer=MIN(GADGET_BUFFER_SIZE,n_of_type_file_rank[i_file][i]-j);
@@ -788,7 +784,7 @@ void write_gadget_binary(char        *filename_in,
             }
             // If smoothing lengths are defined, then write them ...
             if(ADaPS_exist(plist->data,"r_smooth_%s",pname[i])){
-              R1_array=(REAL *)ADaPS_fetch(plist->data,"r_smooth_%s",pname[i]);
+              R1_array=(GBPREAL *)ADaPS_fetch(plist->data,"r_smooth_%s",pname[i]);
               for(k=0,j_file=0;j_file<i_file;j_file++) k+=n_of_type_file_rank[j_file][i];
               for(j=0;j<n_of_type_file_rank[i_file][i];j+=n_buffer,k+=n_buffer){
                 n_buffer=MIN(GADGET_BUFFER_SIZE,n_of_type_file_rank[i_file][i]-j);

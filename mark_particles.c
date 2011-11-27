@@ -13,10 +13,10 @@ size_t mark_particles(plist_info *plist,
   size_t  i_particle;
   int     i_species;
   size_t *id;
-  REAL   *x;
-  REAL   *y;
-  REAL   *z;
-  REAL    r;
+  GBPREAL*x;
+  GBPREAL*y;
+  GBPREAL*z;
+  GBPREAL r;
   int    *mark_array;
   int     flag_volume;
   int     flag_volume_sphere;
@@ -39,9 +39,9 @@ size_t mark_particles(plist_info *plist,
         mark_array=(int *)SID_malloc(sizeof(int)*n_particles_local);
         // Mark particles in a volume
         if(flag_volume){
-          x=(REAL *)ADaPS_fetch(plist->data,"x_%s",plist->species[i_species]);
-          y=(REAL *)ADaPS_fetch(plist->data,"y_%s",plist->species[i_species]);
-          z=(REAL *)ADaPS_fetch(plist->data,"z_%s",plist->species[i_species]);
+          x=(GBPREAL *)ADaPS_fetch(plist->data,"x_%s",plist->species[i_species]);
+          y=(GBPREAL *)ADaPS_fetch(plist->data,"y_%s",plist->species[i_species]);
+          z=(GBPREAL *)ADaPS_fetch(plist->data,"z_%s",plist->species[i_species]);
           // Loop over all particles
           for(i_particle=0;i_particle<n_particles_local;i_particle++){
             mark_array[i_particle]=FALSE;
@@ -54,9 +54,9 @@ size_t mark_particles(plist_info *plist,
                 mark_array[i_particle]=TRUE;
               break;
             case FALSE:
-              if(x[i_particle]>=(REAL)input_vals[0] && x[i_particle]<=(REAL)input_vals[1]){
-                if(y[i_particle]>=(REAL)input_vals[2] && y[i_particle]<=(REAL)input_vals[3]){
-                  if(z[i_particle]>=(REAL)input_vals[4] && z[i_particle]<=(REAL)input_vals[5]){
+              if(x[i_particle]>=(GBPREAL)input_vals[0] && x[i_particle]<=(GBPREAL)input_vals[1]){
+                if(y[i_particle]>=(GBPREAL)input_vals[2] && y[i_particle]<=(GBPREAL)input_vals[3]){
+                  if(z[i_particle]>=(GBPREAL)input_vals[4] && z[i_particle]<=(GBPREAL)input_vals[5]){
                     mark_array[i_particle]=TRUE;
                   }
                 }
@@ -70,14 +70,10 @@ size_t mark_particles(plist_info *plist,
         }
         for(i_particle=0;i_particle<n_particles_local;i_particle++)
           if(mark_array[i_particle]) n_marked_local++;
-        ADaPS_store(&(plist->data),(void *)mark_array,"%s_%s",ADaPS_DEFAULT,plist->species[i_species]);
+        ADaPS_store(&(plist->data),(void *)mark_array,"%s_%s",ADaPS_DEFAULT,mark_name,plist->species[i_species]);
       }
     }
   }
-#ifdef USE_MPI
-  MPI_Allreduce(&n_marked_local,&n_marked,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
-#else
-  n_marked=n_marked_local;
-#endif
+  calc_sum_global(&n_marked_local,&n_marked,1,SID_SIZE_T,CALC_MODE_DEFAULT,SID.COMM_WORLD);
   return(n_marked);
 }

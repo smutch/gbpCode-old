@@ -22,13 +22,13 @@ int main(int argc, char *argv[]){
   FILE      *fp_out;
   int        record_length_in;
   int        record_length_out;
-  REAL       position[3];
-  REAL       velocity[3];
+  GBPREAL       position[3];
+  GBPREAL       velocity[3];
   int        ID_int;
   RNG_info   RNG;
   int        seed_init=10463743;
   int        seed;
-  REAL       RNG_max;
+  GBPREAL       RNG_max;
   gadget_header_info header;
   long long n_all_keep[N_GADGET_TYPE];
   long long n_all_init[N_GADGET_TYPE];
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]){
   }
   sprintf(filename_out_root,"%s_subsample",filename_in_root);
 
-  RNG_max=1./(REAL)(subsample_factor);
+  RNG_max=1./(GBPREAL)(subsample_factor);
 
   SID_log("Subsampling GADGET file by a factor of %d...",SID_LOG_OPEN,subsample_factor);
 
@@ -96,9 +96,7 @@ int main(int argc, char *argv[]){
     }
     SID_log("Done.",SID_LOG_CLOSE);
   }
-#ifdef USE_MPI
-  MPI_Allreduce(MPI_IN_PLACE,n_all_keep,N_GADGET_TYPE,MPI_LONG_LONG_INT,MPI_SUM,MPI_COMM_WORLD);
-#endif
+  SID_Allreduce(SID_IN_PLACE,n_all_keep,N_GADGET_TYPE,SID_LONG_LONG,SID_SUM,SID.COMM_WORLD);
   SID_log("Done.",SID_LOG_CLOSE);
   SID_log("Header properties will be...",SID_LOG_OPEN);
   for(i_type=0;i_type<N_GADGET_TYPE;i_type++){
@@ -154,16 +152,16 @@ int main(int argc, char *argv[]){
       fwrite(&record_length,sizeof(int),1,fp_out);
 
       // Positions
-      record_length=3*sizeof(REAL)*n_keep_total;
+      record_length=3*sizeof(GBPREAL)*n_keep_total;
       seed=seed_init+1387*i_file;
       init_RNG(&seed,&RNG,RNG_DEFAULT);
       fread(&record_length_in,sizeof(int),1,fp);
       fwrite(&record_length,sizeof(int),1,fp_out);
       for(i_type=0;i_type<N_GADGET_TYPE;i_type++){
         for(j_particle=0;j_particle<n_local[i_type];j_particle++){
-          fread(position,sizeof(REAL),3,fp);
+          fread(position,sizeof(GBPREAL),3,fp);
           if(random_number(&RNG)<=RNG_max)
-            fwrite(position,sizeof(REAL),3,fp_out);
+            fwrite(position,sizeof(GBPREAL),3,fp_out);
         }
       }
       fread(&record_length_out,sizeof(int),1,fp);
@@ -171,16 +169,16 @@ int main(int argc, char *argv[]){
       free_RNG(&RNG);
 
       // Velocities
-      record_length=3*sizeof(REAL)*n_keep_total;
+      record_length=3*sizeof(GBPREAL)*n_keep_total;
       seed=seed_init+1387*i_file;
       init_RNG(&seed,&RNG,RNG_DEFAULT);
       fread(&record_length_in,sizeof(int),1,fp);
       fwrite(&record_length,sizeof(int),1,fp_out);
       for(i_type=0;i_type<N_GADGET_TYPE;i_type++){
         for(j_particle=0;j_particle<n_local[i_type];j_particle++){
-          fread(velocity,sizeof(REAL),3,fp);
+          fread(velocity,sizeof(GBPREAL),3,fp);
           if(random_number(&RNG)<=RNG_max)
-            fwrite(velocity,sizeof(REAL),3,fp_out);
+            fwrite(velocity,sizeof(GBPREAL),3,fp_out);
         }
       }
       fread(&record_length_out,sizeof(int),1,fp);

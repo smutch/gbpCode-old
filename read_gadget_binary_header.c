@@ -5,7 +5,8 @@
 #include <gbpMath.h>
 #include <gbpSPH.h>
 
-void read_gadget_binary_header(char        *filename_in,
+void read_gadget_binary_header(char        *filename_root_in,
+                               int          snapshot_number,
                                plist_info  *plist){
   FILE   *fp;
   char  **pname;
@@ -44,21 +45,35 @@ void read_gadget_binary_header(char        *filename_in,
   int     s_load;
   int     flag_alloc_d1_array;
   int     i_file;
-  int     flag_filefound,flag_multifile;
+  int     flag_filefound=FALSE;
+  int     flag_multifile=FALSE;
+  int     flag_file_type=0;;
 
-  // First assume that this is not a multifile snapshot ...
-  i_file =0;
-  strcpy(filename,filename_in);
-  if((fp=fopen(filename,"r"))!=NULL){
-    flag_filefound=TRUE;
-    flag_multifile=FALSE;
-  }
-  // ... if that doesn't work, check for multi-file
-  else{
-    sprintf(filename,"%s.%d",filename_in,i_file);
-    if((fp=fopen(filename,"r"))!=NULL){
+  // Determing snapshot format and open file ...
+  for(i_file=0;i_file<3 && !flag_filefound;i_file++){
+    if(i_file==0)
+      sprintf(filename,"%s/snapshot_%03d/snapshot_%03d",filename_root_in,snapshot_number,snapshot_number);
+    else if(i_file==1)
+      sprintf(filename,"%s/snapshot_%03d",filename_root_in,snapshot_number);
+    else if(i_file==2)
+      sprintf(filename,"%s_%03d",filename_root_in,snapshot_number);
+    else if(i_file==3)
+      sprintf(filename,"%s",filename_root_in);
+    fp=fopen(filename,"r");
+    if(fp!=NULL){
       flag_filefound=TRUE;
-      flag_multifile=TRUE;
+      flag_multifile=FALSE;
+      flag_file_type=i_file;
+    }
+    // ... if that doesn't work, check for multi-file
+    else{
+      strcat(filename,".0");
+      fp=fopen(filename,"r");
+      if(fp!=NULL){
+        flag_filefound=TRUE;
+        flag_multifile=TRUE;
+        flag_file_type=i_file;
+      }
     }
   }
 
@@ -184,6 +199,6 @@ void read_gadget_binary_header(char        *filename_in,
     fclose(fp);
   }
   else
-    fprintf(stderr,"Error opening file {%s}.\n",filename);
+    fprintf(stderr,"Error opening file {%s}.\n",filename_root_in);
 
 };

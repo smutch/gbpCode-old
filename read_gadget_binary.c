@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gbpLib.h>
+#include <gbpCommon.h>
 #include <gbpMath.h>
 #include <gbpSPH.h>
 
@@ -53,9 +54,9 @@ int assign_particle_to_rank(plist_info *plist,
       if(id_list[id_list_index[find_index(id_list,id_p,n_id_list,id_list_index)]]!=id_p)
         keep*=FALSE;    
     }
-#ifdef USE_MPI
+#if USE_MPI
     else if(check_mode_for_flag(mode,READ_GADGET_RANDOM)){
-      scatter_rank=MIN(SID.n_proc-1,(int)(random_number(RNG)*(REAL)SID.n_proc));
+      scatter_rank=MIN(SID.n_proc-1,(int)(random_number(RNG)*(GBPREAL)SID.n_proc));
       if(scatter_rank!=SID.My_rank)
         keep*=FALSE;
     }
@@ -94,7 +95,8 @@ int assign_particle_to_rank(plist_info *plist,
   return(keep);  
 }
 
-void read_gadget_binary(char       *filename_in,
+void read_gadget_binary(char       *filename_root_in,
+                        int        snapshot_number,
                         plist_info *plist,
                         int         mode){
   char    **pname;
@@ -144,18 +146,18 @@ void read_gadget_binary(char       *filename_in,
   int       i1_value;
   int       i2_value;
   int       i3_value;
-  REAL     *x_array;
-  REAL     *y_array;
-  REAL     *z_array;
-  REAL     *vx_array;
-  REAL     *vy_array;
-  REAL     *vz_array;
+  GBPREAL     *x_array;
+  GBPREAL     *y_array;
+  GBPREAL     *z_array;
+  GBPREAL     *vx_array;
+  GBPREAL     *vy_array;
+  GBPREAL     *vz_array;
   size_t   *id_array;
   double   *M_array;
-  REAL     *u_array;
-  REAL     *rho_array;
-  REAL     *T_array;
-  REAL     *smooth_array;
+  GBPREAL     *u_array;
+  GBPREAL     *rho_array;
+  GBPREAL     *T_array;
+  GBPREAL     *smooth_array;
   size_t   *id_list;
   size_t   *id_list_index;
   size_t    n_id_list;
@@ -164,9 +166,7 @@ void read_gadget_binary(char       *filename_in,
   int       n_return;
   size_t    s_load;
   int       flag_keep_IDs      =TRUE;
-  int       flag_multifile     =FALSE;
   int       flag_multimass     =FALSE;
-  int       flag_filefound     =FALSE;
   int       flag_gas           =FALSE;
   int       flag_initpositions =FALSE;
   int       flag_no_velocities =FALSE;
@@ -220,29 +220,47 @@ void read_gadget_binary(char       *filename_in,
   double    y_max_bcast;
   double    z_min_bcast;
   double    z_max_bcast;
- 
-  // First assume that this is not a multifile snapshot ...
-  i_file =0;
-  n_files=1;
-  strcpy(filename,filename_in);
-  if(SID_fopen(filename,"r",&fp)){
-    flag_filefound=TRUE;
-    flag_multifile=FALSE;
-  }
-  // ... if that doesn't work, check for multi-file
-  else{
-    sprintf(filename,"%s.%d",filename_in,i_file);
-    if(SID_fopen(filename,"r",&fp)){
+  int       flag_multifile     =FALSE;
+  int       flag_file_type     =0;
+  int       flag_filefound     =FALSE;
+
+  char filename_in[MAX_FILENAME_LENGTH];
+
+  // Try to determine the file naming format and open the first file
+  
+  for(i_file=0;i_file<4 && !flag_filefound;i_file++){
+    if(i_file==0)
+      sprintf(filename,"%s/snapshot_%03d/snapshot_%03d",filename_root_in,snapshot_number,snapshot_number);
+    else if(i_file==1)
+      sprintf(filename,"%s/snapshot_%03d",filename_root_in,snapshot_number);
+    else if(i_file==2)
+      sprintf(filename,"%s_%03d",filename_root_in,snapshot_number);
+    else if(i_file==3)
+      sprintf(filename,"%s",filename_root_in);
+    SID_fopen(filename,"r",&fp);
+    if(fp.fp!=NULL){
       flag_filefound=TRUE;
-      flag_multifile=TRUE;
+      flag_multifile=FALSE;
+      flag_file_type=i_file;
     }
-    else
-      fprintf(stderr,"ERROR: Can not open {%s}!\n",filename);
+    // ... if that doesn't work, check for multi-file
+    else{
+      strcat(filename,".0");
+      SID_fopen(filename,"r",&fp);
+      if(fp.fp!=NULL){
+        flag_filefound=TRUE;
+        flag_multifile=TRUE;
+        flag_file_type=i_file;
+      }
+    }
   }
 
   // A file was found ... 
   if(flag_filefound){
-    SID_log("Reading GADGET binary file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_in);
+    if(i_file<3)
+      SID_log("Reading GADGET binary file {%s} snapshot #%d...",SID_LOG_OPEN|SID_LOG_TIMER,filename_root_in,snapshot_number);
+    else
+      SID_log("Reading GADGET binary file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_root_in);
     // This flag is set when we are only reading in
     //   initial particle positions (eg. to set a glass)
     // If TRUE then only positions will be stored and they
@@ -389,6 +407,8 @@ void read_gadget_binary(char       *filename_in,
     ADaPS_store(&(plist->data),(void *)(&n_files),"n_files",ADaPS_SCALAR_INT);
     if(flag_multifile)
       n_files=n_files_in;
+    else
+      n_files=1;
 
     // Box size -- n.b.: we need h_Hubble before we can store box_size ... do so later 
     n_return=SID_fread_all(&box_size,sizeof(double),1,&fp);
@@ -576,19 +596,6 @@ void read_gadget_binary(char       *filename_in,
     else
       z_max_read=-1e8*M_PER_MPC;
 
-/*
-    for(i_rank=0;i_rank<SID.n_proc;i_rank++){
-      x_min_bcast=x_min_read*h_Hubble/M_PER_MPC;MPI_Bcast(&x_min_bcast,1,MPI_DOUBLE,i_rank,MPI_COMM_WORLD);
-      x_max_bcast=x_max_read*h_Hubble/M_PER_MPC;MPI_Bcast(&x_max_bcast,1,MPI_DOUBLE,i_rank,MPI_COMM_WORLD);
-      y_min_bcast=y_min_read*h_Hubble/M_PER_MPC;MPI_Bcast(&y_min_bcast,1,MPI_DOUBLE,i_rank,MPI_COMM_WORLD);
-      y_max_bcast=y_max_read*h_Hubble/M_PER_MPC;MPI_Bcast(&y_max_bcast,1,MPI_DOUBLE,i_rank,MPI_COMM_WORLD);
-      z_min_bcast=z_min_read*h_Hubble/M_PER_MPC;MPI_Bcast(&z_min_bcast,1,MPI_DOUBLE,i_rank,MPI_COMM_WORLD);
-      z_max_bcast=z_max_read*h_Hubble/M_PER_MPC;MPI_Bcast(&z_max_bcast,1,MPI_DOUBLE,i_rank,MPI_COMM_WORLD);
-      if(SID.I_am_Master)
-        fprintf(stderr,"Rank %3d: %le-%le,%le-%le,%le-%le\n",i_rank,x_min_bcast,x_max_bcast,y_min_bcast,y_max_bcast,z_min_bcast,z_max_bcast);
-    }
-*/
-
     // PERFORM DOMAIN DECOMPOSITION
     if(SID.n_proc>1)
       SID_log("Performing domain decomposition...",SID_LOG_OPEN|SID_LOG_TIMER);
@@ -603,7 +610,7 @@ void read_gadget_binary(char       *filename_in,
     }
     n_rank=(size_t *)SID_malloc(sizeof(size_t)*n_files);
     n_particles_mass_rank=0;
-    
+
     // Are we reading pre-marked particles?
     flag_read_marked=FALSE;
     for(i=0;i<N_GADGET_TYPE;i++){
@@ -627,12 +634,19 @@ void read_gadget_binary(char       *filename_in,
     n_particles_rank=0;
     for(i_file=0,i_p_temp=0;i_file<n_files;i_file++){
       // Open file
+      if(flag_file_type==0)
+        sprintf(filename,"%s/snapshot_%03d/snapshot_%03d",filename_root_in,snapshot_number,snapshot_number);
+      else if(flag_file_type==1)
+        sprintf(filename,"%s/snapshot_%03d",filename_root_in,snapshot_number);
+      else if(flag_file_type==2)
+        sprintf(filename,"%s_%03d",filename_root_in,snapshot_number);
+      else if(flag_file_type==3)
+        sprintf(filename,"%s",filename_root_in);
+      if(flag_multifile)
+        sprintf(filename,"%s.%d",filename,i_file);
       if(flag_multifile){
-        sprintf(filename,"%s.%d",filename_in,i_file);
         SID_log("Processing file #%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file);
       }
-      else
-        sprintf(filename,"%s",filename_in);
       SID_fopen(filename,"r",&fp);
 
       // Read n_of_type array for this file
@@ -784,15 +798,15 @@ void read_gadget_binary(char       *filename_in,
         n_rank[i_file]+=k;
       } // i
 
+      if(flag_multifile)
+        SID_log("membership counted...",SID_LOG_CONTINUE);
+
       // Rewind and skip the header -- we need the positions again
       SID_frewind(&fp);
       SID_fread_all(&record_length_close,4,1,&fp);
       SID_fread_all(unused,sizeof(int),GADGET_HEADER_SIZE/(sizeof(int)),&fp);
       SID_fread_all(&record_length_open,4,1,&fp);
       SID_fread_all(&record_length_close,4,1,&fp);
-
-      if(flag_multifile)
-        SID_log("membership counted...",SID_LOG_CONTINUE);
 
       // Skip to the ids for the second fp (if needed)
       if(flag_read_marked || flag_read_catalog)
@@ -921,10 +935,10 @@ void read_gadget_binary(char       *filename_in,
     if(n_of_type_rank[GADGET_TYPE_GAS]==0)
       flag_gas=FALSE;
     n_particles_all=0;
-#ifdef USE_MPI
+#if USE_MPI
     for(i_rank=0;i_rank<SID.n_proc;i_rank++){
       n_particles_bcast=n_particles_rank;
-      MPI_Bcast(&n_particles_bcast,1,MPI_SIZE_T,i_rank,MPI_COMM_WORLD);
+      SID_Bcast(&n_particles_bcast,sizeof(size_t),i_rank,SID.COMM_WORLD);
       SID_log("Number of particles on rank #%d:\t%lld",SID_LOG_COMMENT,i_rank,n_particles_bcast);
       n_particles_all+=n_particles_bcast;
     }
@@ -935,24 +949,24 @@ void read_gadget_binary(char       *filename_in,
 #endif
 
     // Allocate data arrays
-    x_array=(REAL *)SID_malloc(sizeof(REAL)*(size_t)(MAX(1,n_particles_rank)));
-    y_array=(REAL *)SID_malloc(sizeof(REAL)*(size_t)(MAX(1,n_particles_rank)));
-    z_array=(REAL *)SID_malloc(sizeof(REAL)*(size_t)(MAX(1,n_particles_rank)));
+    x_array=(GBPREAL *)SID_malloc(sizeof(GBPREAL)*(size_t)(MAX(1,n_particles_rank)));
+    y_array=(GBPREAL *)SID_malloc(sizeof(GBPREAL)*(size_t)(MAX(1,n_particles_rank)));
+    z_array=(GBPREAL *)SID_malloc(sizeof(GBPREAL)*(size_t)(MAX(1,n_particles_rank)));
     if(!flag_initpositions){
       if(!flag_no_velocities){
-        vx_array=(REAL   *)SID_malloc(sizeof(REAL  )*(size_t)(MAX(1,n_particles_rank)));
-        vy_array=(REAL   *)SID_malloc(sizeof(REAL  )*(size_t)(MAX(1,n_particles_rank)));
-        vz_array=(REAL   *)SID_malloc(sizeof(REAL  )*(size_t)(MAX(1,n_particles_rank)));
+        vx_array=(GBPREAL   *)SID_malloc(sizeof(GBPREAL  )*(size_t)(MAX(1,n_particles_rank)));
+        vy_array=(GBPREAL   *)SID_malloc(sizeof(GBPREAL  )*(size_t)(MAX(1,n_particles_rank)));
+        vz_array=(GBPREAL   *)SID_malloc(sizeof(GBPREAL  )*(size_t)(MAX(1,n_particles_rank)));
       }
       if(flag_keep_IDs)
         id_array=(size_t *)SID_malloc(sizeof(size_t)*(size_t)(MAX(1,n_particles_rank)));
       if(flag_multimass)
         M_array  =(double *)SID_malloc(sizeof(double)*(size_t)(MAX(1,n_particles_mass_rank)));
       if(flag_gas){
-        u_array     =(REAL *)SID_malloc(sizeof(REAL)*(size_t)(MAX(1,n_of_type_rank[GADGET_TYPE_GAS])));
-        rho_array   =(REAL *)SID_malloc(sizeof(REAL)*(size_t)(MAX(1,n_of_type_rank[GADGET_TYPE_GAS])));
-        T_array     =(REAL *)SID_malloc(sizeof(REAL)*(size_t)(MAX(1,n_of_type_rank[GADGET_TYPE_GAS])));
-        smooth_array=(REAL *)SID_malloc(sizeof(REAL)*(size_t)(MAX(1,n_of_type_rank[GADGET_TYPE_GAS])));
+        u_array     =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*(size_t)(MAX(1,n_of_type_rank[GADGET_TYPE_GAS])));
+        rho_array   =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*(size_t)(MAX(1,n_of_type_rank[GADGET_TYPE_GAS])));
+        T_array     =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*(size_t)(MAX(1,n_of_type_rank[GADGET_TYPE_GAS])));
+        smooth_array=(GBPREAL *)SID_malloc(sizeof(GBPREAL)*(size_t)(MAX(1,n_of_type_rank[GADGET_TYPE_GAS])));
       }
     }
 
@@ -966,13 +980,20 @@ void read_gadget_binary(char       *filename_in,
     }
     // Read data
     for(i_file=0;i_file<n_files;i_file++){
-      if(n_files>1)
-        SID_log("Reading file %d of %d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file+1,n_files);
 
+      // Open file
+      if(flag_file_type==0)
+        sprintf(filename,"%s/snapshot_%03d/snapshot_%03d",filename_root_in,snapshot_number,snapshot_number);
+      else if(flag_file_type==1)
+        sprintf(filename,"%s/snapshot_%03d",filename_root_in,snapshot_number);
+      else if(flag_file_type==2)
+        sprintf(filename,"%s_%03d",filename_root_in,snapshot_number);
+      else if(flag_file_type==3)
+        sprintf(filename,"%s",filename_root_in);
       if(flag_multifile)
-        sprintf(filename,"%s.%d",filename_in,i_file);
-      else
-        sprintf(filename,"%s",filename_in);
+        sprintf(filename,"%s.%d",filename,i_file);
+      if(flag_multifile)
+        SID_log("Reading file %d of %d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file+1,n_files);
       SID_fopen(filename,"r",&fp);
 
       // Read n_of_type array for this file
@@ -998,27 +1019,27 @@ void read_gadget_binary(char       *filename_in,
             f3_value=((float *)buffer)[3*jj+2];
             if(n_of_type_file_rank[i][i_file]>0 && k<n_of_type_file_rank[i][i_file]){
               if(j==list_file_rank[i][i_file][k]){
-                x_array[k+k_offset[i]]=((REAL)(f1_value))*(REAL)(plist->length_unit/h_Hubble);
-                y_array[k+k_offset[i]]=((REAL)(f2_value))*(REAL)(plist->length_unit/h_Hubble);
-                z_array[k+k_offset[i]]=((REAL)(f3_value))*(REAL)(plist->length_unit/h_Hubble);
-                if(flag_xscale)  x_array[k+k_offset[i]]*=(REAL)x_scale;
-                if(flag_yscale)  y_array[k+k_offset[i]]*=(REAL)y_scale;
-                if(flag_zscale)  z_array[k+k_offset[i]]*=(REAL)z_scale;
-                if(flag_xoffset) x_array[k+k_offset[i]]+=(REAL)x_offset;
-                if(flag_yoffset) y_array[k+k_offset[i]]+=(REAL)y_offset;
-                if(flag_zoffset) z_array[k+k_offset[i]]+=(REAL)z_offset;
+                x_array[k+k_offset[i]]=((GBPREAL)(f1_value))*(GBPREAL)(plist->length_unit/h_Hubble);
+                y_array[k+k_offset[i]]=((GBPREAL)(f2_value))*(GBPREAL)(plist->length_unit/h_Hubble);
+                z_array[k+k_offset[i]]=((GBPREAL)(f3_value))*(GBPREAL)(plist->length_unit/h_Hubble);
+                if(flag_xscale)  x_array[k+k_offset[i]]*=(GBPREAL)x_scale;
+                if(flag_yscale)  y_array[k+k_offset[i]]*=(GBPREAL)y_scale;
+                if(flag_zscale)  z_array[k+k_offset[i]]*=(GBPREAL)z_scale;
+                if(flag_xoffset) x_array[k+k_offset[i]]+=(GBPREAL)x_offset;
+                if(flag_yoffset) y_array[k+k_offset[i]]+=(GBPREAL)y_offset;
+                if(flag_zoffset) z_array[k+k_offset[i]]+=(GBPREAL)z_offset;
                 if(flag_xperiod && x_array[k+k_offset[i]]<0.)
-                  x_array[k+k_offset[i]]+=(REAL)x_period;
-                if(flag_xperiod && x_array[k+k_offset[i]]>=(REAL)x_period)
-                  x_array[k+k_offset[i]]-=(REAL)x_period;
+                  x_array[k+k_offset[i]]+=(GBPREAL)x_period;
+                if(flag_xperiod && x_array[k+k_offset[i]]>=(GBPREAL)x_period)
+                  x_array[k+k_offset[i]]-=(GBPREAL)x_period;
                 if(flag_yperiod && y_array[k+k_offset[i]]<0.)
-                  y_array[k+k_offset[i]]+=(REAL)y_period;
-                if(flag_yperiod && y_array[k+k_offset[i]]>=(REAL)y_period) 
-                  y_array[k+k_offset[i]]-=(REAL)y_period;
+                  y_array[k+k_offset[i]]+=(GBPREAL)y_period;
+                if(flag_yperiod && y_array[k+k_offset[i]]>=(GBPREAL)y_period) 
+                  y_array[k+k_offset[i]]-=(GBPREAL)y_period;
                 if(flag_zperiod && z_array[k+k_offset[i]]<0.)
-                  z_array[k+k_offset[i]]+=(REAL)z_period;
-                if(flag_zperiod && z_array[k+k_offset[i]]>=(REAL)z_period)
-                  z_array[k+k_offset[i]]-=(REAL)z_period;
+                  z_array[k+k_offset[i]]+=(GBPREAL)z_period;
+                if(flag_zperiod && z_array[k+k_offset[i]]>=(GBPREAL)z_period)
+                  z_array[k+k_offset[i]]-=(GBPREAL)z_period;
                 k++;
               }
             }
@@ -1046,9 +1067,9 @@ void read_gadget_binary(char       *filename_in,
                 f3_value=((float *)buffer)[3*jj+2];
                 if(n_of_type_file_rank[i][i_file]>0 && k<n_of_type_file_rank[i][i_file]){
                   if(j==list_file_rank[i][i_file][k]){
-                    vx_array[k+k_offset[i]]=((REAL)(f1_value))*(REAL)(plist->velocity_unit*sqrt(expansion_factor));
-                    vy_array[k+k_offset[i]]=((REAL)(f2_value))*(REAL)(plist->velocity_unit*sqrt(expansion_factor));
-                    vz_array[k+k_offset[i]]=((REAL)(f3_value))*(REAL)(plist->velocity_unit*sqrt(expansion_factor));
+                    vx_array[k+k_offset[i]]=((GBPREAL)(f1_value))*(GBPREAL)(plist->velocity_unit*sqrt(expansion_factor));
+                    vy_array[k+k_offset[i]]=((GBPREAL)(f2_value))*(GBPREAL)(plist->velocity_unit*sqrt(expansion_factor));
+                    vz_array[k+k_offset[i]]=((GBPREAL)(f3_value))*(GBPREAL)(plist->velocity_unit*sqrt(expansion_factor));
                     k++;
                   }
                 }
@@ -1107,11 +1128,7 @@ void read_gadget_binary(char       *filename_in,
 
         // Read masses (if needed)
         if(flag_multimass){
-#ifdef USE_MPI
-          MPI_Allreduce(&n_particles_mass_rank,&n_particles_mass,1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
-#else
-          n_particles_mass=n_particles_mass_rank;
-#endif
+          SID_Allreduce(&n_particles_mass_rank,&n_particles_mass,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
           SID_log("Reading mass array (%d multimass particles)...",SID_LOG_OPEN|SID_LOG_TIMER,n_particles_mass);
           SID_fread_all(&record_length_open,4,1,&fp);
           for(i=0;i<N_GADGET_TYPE;i++){
@@ -1150,7 +1167,7 @@ void read_gadget_binary(char       *filename_in,
               f1_value=((float *)buffer)[jj];
               if(k<n_of_type_file_rank[i][i_file]){
                 if(j==list_file_rank[i][i_file][k]){
-                  u_array[k+k_offset[i]]=(REAL)(f1_value)*(REAL)(plist->velocity_unit*plist->velocity_unit);
+                  u_array[k+k_offset[i]]=(GBPREAL)(f1_value)*(GBPREAL)(plist->velocity_unit*plist->velocity_unit);
                   k++;
                 }
               }
@@ -1170,7 +1187,7 @@ void read_gadget_binary(char       *filename_in,
               if(k<n_of_type_file_rank[i][i_file]){
                 if(j==list_file_rank[i][i_file][k]){
                   rho_array[k+k_offset[i]]=
-                    (REAL)(f1_value)*(REAL)(h_Hubble*h_Hubble*plist->mass_unit/pow(plist->length_unit,3.));
+                    (GBPREAL)(f1_value)*(GBPREAL)(h_Hubble*h_Hubble*plist->mass_unit/pow(plist->length_unit,3.));
                   k++;
                 }
               }
@@ -1190,7 +1207,7 @@ void read_gadget_binary(char       *filename_in,
               if(k<n_of_type_file_rank[i][i_file]){
                 if(j==list_file_rank[i][i_file][k]){
                   smooth_array[k+k_offset[i]]=
-                    ((REAL)(f1_value))*(REAL)(plist->length_unit/h_Hubble);
+                    ((GBPREAL)(f1_value))*(GBPREAL)(plist->length_unit/h_Hubble);
                   k++;
                 }
               }
@@ -1228,6 +1245,10 @@ void read_gadget_binary(char       *filename_in,
 
     // Store everything in the data structure...
 
+    //   ... ID type flag ....
+    if(flag_LONGIDS)
+      ADaPS_store(&(plist->data),(void *)(&flag_LONGIDS),"flag_LONGIDs",ADaPS_SCALAR_INT);
+
     //   ... particle counts ...
     for(i=0,k=0,j=0;i<N_GADGET_TYPE;i++){
       k_offset[i]     =k;
@@ -1235,11 +1256,7 @@ void read_gadget_binary(char       *filename_in,
       k+=n_of_type_rank[i];
       if(mass_array[i]==0.)
         j+=n_of_type_rank[i];
-#ifdef USE_MPI
-      MPI_Allreduce(&(n_of_type_rank[i]),&(n_of_type[i]),1,MPI_SIZE_T,MPI_SUM,MPI_COMM_WORLD);
-#else
-      n_of_type[i]=n_of_type_rank[i];
-#endif
+      SID_Allreduce(&(n_of_type_rank[i]),&(n_of_type[i]),1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
     }
     for(i=0;i<N_GADGET_TYPE;i++){
       if(n_of_type[i]>0){

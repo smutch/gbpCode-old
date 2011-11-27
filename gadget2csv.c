@@ -7,6 +7,7 @@
 
 int main(int argc, char *argv[]){
   plist_info plist;
+  int        snapshot;
   char       filename_in[256];
   char       filename_out[256];
 
@@ -22,7 +23,8 @@ int main(int argc, char *argv[]){
   }
   else{
     strcpy(filename_in, argv[1]);
-    strcpy(filename_out,argv[1]);
+    snapshot=atoi(argv[2]);
+    strcpy(filename_out,argv[3]);
     strcat(filename_out,".csv");
   }
 
@@ -33,7 +35,7 @@ int main(int argc, char *argv[]){
   /****************************************/
   init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
   SID_log("Reading GADGET file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_in);
-  read_gadget_binary(filename_in,&plist,READ_GADGET_DEFAULT);
+  read_gadget_binary(filename_in,snapshot,&plist,READ_GADGET_DEFAULT);
   SID_log("Done.",SID_LOG_CLOSE);
 
   /********************/
