@@ -2,12 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpHalos.h>
 #include <gbpTrees.h>
 
-void init_tree(int n_snaps,tree_info **tree);
 void init_tree(int n_snaps,tree_info **tree){
   int i_search;
   (*tree)                     =(tree_info       *)SID_malloc(sizeof(tree_info));
@@ -23,7 +24,6 @@ void init_tree(int n_snaps,tree_info **tree){
   (*tree)->last_leaf=NULL;
 }
 
-void free_tree(tree_info **tree);
 void free_tree(tree_info **tree){
   tree_node_info *next_node;
   tree_node_info *last_node;
@@ -41,13 +41,6 @@ void free_tree(tree_info **tree){
   SID_free(SID_FARG (*tree));
 }
 
-void add_node_to_tree(tree_info  *tree,
-                      int         halo_id,
-                      int         group_id,
-                      int         descendant_id,
-                      int         halo_snap,
-                      int         descendant_snap,                      
-                      halo_info  *properties);
 void add_node_to_tree(tree_info  *tree,
                       int         halo_id,
                       int         group_id,
@@ -164,7 +157,6 @@ void add_node_to_tree(tree_info  *tree,
   tree->last_leaf=new_node;
 }
 
-int construct_unique_id(tree_node_info *tree_node,int tree_number);
 int construct_unique_id(tree_node_info *tree_node,int tree_number){
   if(tree_node!=NULL){
     //return(tree_number*1000000+tree_node->depth_first_index);
@@ -174,7 +166,6 @@ int construct_unique_id(tree_node_info *tree_node,int tree_number){
     return(-1);    
 }
 
-void compute_halo_score_recursive(tree_node_info *tree,int *M_i,int mode);
 void compute_halo_score_recursive(tree_node_info *tree,int *M_i,int mode){
   tree_node_info  *current;
   int              i_progenitor;
@@ -201,7 +192,6 @@ void compute_halo_score_recursive(tree_node_info *tree,int *M_i,int mode){
   (*M_i)=N_i+max_M_iN;
 }
 
-void assign_progenitor_order_recursive(tree_node_info *tree,int *M_i,int mode);
 void assign_progenitor_order_recursive(tree_node_info *tree,int *M_i,int mode){
   tree_node_info  *first_new;
   tree_node_info  *last_new;
@@ -269,7 +259,6 @@ void assign_progenitor_order_recursive(tree_node_info *tree,int *M_i,int mode){
   (*M_i)=N_i+max_M_iN;
 }
 
-void assign_group_halo_order(tree_info *tree,int i_snap,int mode);
 void assign_group_halo_order(tree_info *tree,int i_snap,int mode){
   int              n_neighbours;
   int              i_halo,j_halo,k_halo;
@@ -365,7 +354,6 @@ void assign_group_halo_order(tree_info *tree,int i_snap,int mode){
   }
 }
 
-void assign_depth_first_index_recursive(tree_node_info *tree,int *depth_first_index);
 void assign_depth_first_index_recursive(tree_node_info *tree,int *depth_first_index){
   tree_node_info *current;
 
@@ -380,7 +368,6 @@ void assign_depth_first_index_recursive(tree_node_info *tree,int *depth_first_in
   }
 }
 
-void assign_unique_ids_recursive(tree_node_info *tree_node,int i_tree);
 void assign_unique_ids_recursive(tree_node_info *tree_node,int i_tree){
   tree_node_info *current;
   
@@ -401,7 +388,6 @@ void assign_unique_ids_recursive(tree_node_info *tree_node,int i_tree){
   }
 }
 
-int write_tree_vertical_halos_recursive(tree_node_info *tree_node,SID_fp *fp_out,SID_fp *fp_out_MBP);
 int write_tree_vertical_halos_recursive(tree_node_info *tree_node,SID_fp *fp_out,SID_fp *fp_out_MBP){
   tree_node_info *current;
   halo_info      *halo;

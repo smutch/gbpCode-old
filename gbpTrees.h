@@ -103,11 +103,20 @@ struct tree_info{
   tree_node_info **neighbour_halo_last;
 };
 
+// Function definitions
+#ifdef __cplusplus
+extern "C" {
+#endif
 void read_trees(char             *filename_trees_root,
                 int               i_file_start,
                 int               i_file_stop,
                 int               mode,
                 tree_node_info  **trees);
+void read_AHF_for_trees(char       *filename_root,
+                        int         i_file,
+                        plist_info *plist,
+                        char       *catalog_name,
+                        int         mode);
 void read_matches(char    *filename_root_matches,
                   int      i_read,
                   int      j_read,
@@ -173,5 +182,27 @@ void compute_trees_auxiliary(char *filename_root,
                              int   n_files_groups,
                              int   n_files_subgroups,
                              int  *flag_clean);
+
+void init_tree(int n_snaps,tree_info **tree);
+void free_tree(tree_info **tree);
+void add_node_to_tree(tree_info  *tree,
+                      int         halo_id,
+                      int         group_id,
+                      int         descendant_id,
+                      int         halo_snap,
+                      int         descendant_snap,
+                      halo_info  *properties);
+int construct_unique_id(tree_node_info *tree_node,int tree_number);
+void compute_halo_score_recursive(tree_node_info *tree,int *M_i,int mode);
+void assign_progenitor_order_recursive(tree_node_info *tree,int *M_i,int mode);
+void assign_group_halo_order(tree_info *tree,int i_snap,int mode);
+void assign_depth_first_index_recursive(tree_node_info *tree,int *depth_first_index);
+void assign_unique_ids_recursive(tree_node_info *tree_node,int i_tree);
+int write_tree_vertical_halos_recursive(tree_node_info *tree_node,SID_fp *fp_out,SID_fp *fp_out_MBP);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 

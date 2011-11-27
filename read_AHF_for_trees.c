@@ -8,9 +8,10 @@
 #include <gbpTrees.h>
 
 void read_AHF_for_trees(char       *filename_root,
-												plist_info *plist,
-												char       *catalog_name,
-												int         flag_binary){
+                        int         i_file,
+			plist_info *plist,
+			char       *catalog_name,
+			int         mode){
 	int     n_halos;
 	size_t  n_halos_dim;
 	float  *x_cen;
@@ -34,10 +35,12 @@ void read_AHF_for_trees(char       *filename_root,
 	char    parm_txt[256];
 	char    filename_cat[256];
 	
-	read_AHF_groups(filename_root,
-		plist,
-		catalog_name,
-		flag_binary);
+        read_groups_AHF(filename_root,
+                        i_file,
+                        mode,
+                        plist,
+                        catalog_name);
+
 	/*
 	sprintf(filename_cat,"%s.AHF_halos",filename_root);
 	fprintf(stderr,"Reading halo statistics for {%s}...",filename_root);
@@ -189,3 +192,4 @@ void read_AHF_for_trees(char       *filename_root,
 	fprintf(stderr,"Done.\n");
 	*/
 }
+
