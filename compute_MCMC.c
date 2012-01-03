@@ -725,7 +725,7 @@ void compute_MCMC(MCMC_info *MCMC){
         // Report progress
         if(i_iteration==i_iteration_next_report){
           i_report++;
-          SID_log("%3d%% complete.",SID_LOG_COMMENT|SID_LOG_TIMER,5*(i_report));
+          SID_log("%3d%% complete.",SID_LOG_COMMENT|SID_LOG_TIMER,20*(i_report));
           time_diff /= (double)(n_avg);
           SID_log("\tMean time for single model call: %.1f", SID_LOG_COMMENT, time_diff);
           i_iteration_next_report=MIN(n_iterations_phase,i_iteration_start+(n_iterations_phase-i_iteration_start)*(i_report+1)/5);
