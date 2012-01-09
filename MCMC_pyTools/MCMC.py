@@ -232,6 +232,76 @@ class MCMCrun(object):
         return coverage_dict
 
 
+    def read_dataset_fit(self, i_DS=0):
+
+        """Read the fit for a given dataset. 
+        
+        Input:
+            i_DS - Index of the requested dataset 
+
+        Returns a dict with the following entries:
+           x, M_DS, dM_DS, M_best, M_lo_68, M_hi_68, M_lo_95, M_hi_95,
+           dM_hi_DS, dM_lo_DS
+        """
+
+
+        if(self.n_DS_arrays[i_DS]>0):
+            lx       = []
+            lM_DS    = []
+            ldM_DS   = []
+            lM_best  = []
+            lM_lo_68 = []
+            lM_hi_68 = []
+            lM_lo_95 = []
+            lM_hi_95 = []
+            if(self.n_DS>1):
+                filename_read=self.filename_root+'/results/fit_for_dataset_'+str(i_DS).zfill(5)+'.dat'
+            else:
+                filename_read=self.filename_root+'/results/fit_for_dataset.dat'
+
+            for line in file(filename_read):
+                line = line.split()
+                if(line[0][0]!='#'):
+                    lx.append(line[0])
+                    lM_DS.append(line[1])
+                    ldM_DS.append(line[2])
+                    lM_best.append(line[5])
+                    lM_lo_68.append(line[6])
+                    lM_hi_68.append(line[7])
+                    lM_lo_95.append(line[8])
+                    lM_hi_95.append(line[9])
+
+            x      =np.array(lx,dtype=np.float64)
+            M_DS   =np.array(lM_DS,dtype=np.float64)
+            dM_DS  =np.array(ldM_DS,dtype=np.float64)
+            M_best =np.array(lM_best,dtype=np.float64)
+            M_lo_68=np.array(lM_lo_68,dtype=np.float64)
+            M_hi_68=np.array(lM_hi_68,dtype=np.float64)
+            M_lo_95=np.array(lM_lo_95,dtype=np.float64)
+            M_hi_95=np.array(lM_hi_95,dtype=np.float64)
+            dM_hi_DS=dM_DS
+            dM_lo_DS=dM_DS
+            for i_M in xrange(0,self.n_M[i_DS]):
+                if((M_DS[i_M]-dM_lo_DS[i_M])<0):
+                    dM_lo_DS[i_M]=0.99999*M_DS[i_M]
+
+            return {'x'         : x,
+                    'M_DS'      : M_DS,
+                    'dM_DS'     : dM_DS,
+                    'M_best'    : M_best,
+                    'M_lo_68'   : M_lo_68,
+                    'M_hi_68'   : M_hi_68,
+                    'M_lo_95'   : M_lo_95,
+                    'M_hi_95'   : M_hi_95,
+                    'dM_hi_DS'  : dM_hi_DS,
+                    'dM_lo_DS'  : dM_lo_DS}
+
+        else:
+            raise ValueError("There are no arrays associated with this\
+                             dataset.")
+
+
+
     def read_best_fit_params(self):
 
         """ Read in and return the best fit parameters. """
