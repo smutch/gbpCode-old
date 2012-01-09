@@ -168,7 +168,8 @@ class MCMCrun(object):
             swap - Swap the axis round (true/false)
 
         Returns a dict with the following entries:
-            conf_68pc, conf_95pc, coverage_1, coverage_0, coverage_P
+            conf_68pc, conf_95pc, coverage_1, coverage_0, coverage_P, 
+            max_L, mean_L
         """
 
         fd=open(self.filename_root+'/results/coverage.dat','rb')
@@ -186,6 +187,8 @@ class MCMCrun(object):
                 coverage_1=np.fromfile(file=fd,dtype='int64',count=coverage_size*coverage_size)
                 coverage_0=np.fromfile(file=fd,dtype='int64',count=coverage_size*coverage_size)
                 coverage_P=np.fromfile(file=fd,dtype='int64',count=coverage_size*coverage_size)
+                max_L     =np.fromfile(file=fd,dtype='d',count=coverage_size*coverage_size)
+                mean_L    =np.fromfile(file=fd,dtype='d',count=coverage_size*coverage_size)
 
         if (p_x>0): jj+=1
         for kk in xrange(jj+1,p_y+1):
@@ -194,15 +197,25 @@ class MCMCrun(object):
             coverage_1=np.fromfile(file=fd,dtype='int64',count=coverage_size*coverage_size)
             coverage_0=np.fromfile(file=fd,dtype='int64',count=coverage_size*coverage_size)
             coverage_P=np.fromfile(file=fd,dtype='int64',count=coverage_size*coverage_size)
+            max_L     =np.fromfile(file=fd,dtype='d',count=coverage_size*coverage_size)
+            mean_L    =np.fromfile(file=fd,dtype='d',count=coverage_size*coverage_size)
+
+        max_L_norm =np.double(max_L.max())
+        mean_L_norm=np.double(mean_L.max())
 
         if swap==False:
             coverage_1=np.transpose(np.reshape(coverage_1,[coverage_size,coverage_size]))
             coverage_0=np.transpose(np.reshape(coverage_0,[coverage_size,coverage_size]))
             coverage_P=np.transpose(np.reshape(coverage_P,[coverage_size,coverage_size]))
+            max_L      =10**(np.transpose(np.reshape(max_L,[coverage_size,coverage_size]))-max_L_norm)
+            mean_L     =10**(np.transpose(np.reshape(mean_L,[coverage_size,coverage_size]))-mean_L_norm)
+
         else:
             coverage_1=np.reshape(coverage_1,[coverage_size,coverage_size])
             coverage_0=np.reshape(coverage_0,[coverage_size,coverage_size])
             coverage_P=np.reshape(coverage_P,[coverage_size,coverage_size])
+            max_L      =10**(np.reshape(max_L,[coverage_size,coverage_size])-max_L_norm)
+            mean_L     =10**(np.reshape(mean_L,[coverage_size,coverage_size])-mean_L_norm)
 
         fd.close()
 
@@ -211,7 +224,9 @@ class MCMCrun(object):
                 'conf_95pc':conf_95pc,
                 'coverage_1':coverage_1,
                 'coverage_0':coverage_0,
-                'coverage_P':coverage_P
+                'coverage_P':coverage_P,
+                'max_L':max_L,
+                'mean_L':mean_L
                 }
 
         return coverage_dict
@@ -235,37 +250,47 @@ class MCMCrun(object):
         """ Read in the histogram for a single parameter. 
         
         Args:
-            i_DS   :   The index of the parameter.
+            i_DS   :    The index of the parameter.
         
         Returns:
-            x :        Parameters values
-            hist_P :   Histogram values
+            x :         Parameters values
+            hist_P :    Histogram values
+            hist_mean : ??
+            hist_max :  ??
+            mask_68 :   ??
+            mask_95 :   ??
+            best_val :  ??
         """
 
         fd=open(self.filename_root+'/results/histograms.dat','rb')
-        ii=0
         for jj in xrange(0,i_DS+1):
-            best_val  =np.fromfile(file=fd,dtype='d',count=1)[0]
-            lo_68pc   =np.fromfile(file=fd,dtype='d',count=1)[0]
-            hi_68pc   =np.fromfile(file=fd,dtype='d',count=1)[0]
-            lo_95pc   =np.fromfile(file=fd,dtype='d',count=1)[0]
-            hi_95pc   =np.fromfile(file=fd,dtype='d',count=1)[0]
-            hist_P    =np.fromfile(file=fd,dtype='int64',count=self.coverage_size)
+            best_val  = np.fromfile(file=fd,dtype='d',count=1)[0]
+            lo_68pc   = np.fromfile(file=fd,dtype='d',count=1)[0]
+            hi_68pc   = np.fromfile(file=fd,dtype='d',count=1)[0]
+            lo_95pc   = np.fromfile(file=fd,dtype='d',count=1)[0]
+            hi_95pc   = np.fromfile(file=fd,dtype='d',count=1)[0]
+            peak_val  = np.fromfile(file=fd,dtype='d',count=1)[0]
+            hist_P    = np.fromfile(file=fd,dtype='uint64',count=self.coverage_size)
+            hist_mean = np.fromfile(file=fd,dtype='d',count=self.coverage_size)
+            hist_max  = np.fromfile(file=fd,dtype='d',count=self.coverage_size)
 
         x         =np.linspace(self.coverage_min[jj],self.coverage_max[jj],self.coverage_size)
         mask_68   =np.zeros(self.coverage_size)
         mask_95   =np.zeros(self.coverage_size)
         for kk in xrange(0,self.coverage_size):
-            if(x[kk]>=lo_68pc and x[kk]<=hi_68pc):
-                mask_68[kk]=1
-            if(x[kk]>=lo_95pc and x[kk]<=hi_95pc):
-                mask_95[kk]=1
-        zero_line =np.linspace(0.,0.,self.coverage_size)
-        hist_P=np.double(hist_P)/np.double(hist_P.max())
+           if(x[kk]>=lo_68pc and x[kk]<=hi_68pc):
+              mask_68[kk]=1
+           if(x[kk]>=lo_95pc and x[kk]<=hi_95pc):
+              mask_95[kk]=1
+        hist_P        =np.double(hist_P)/np.double(hist_P.max())
+        hist_max_norm =np.double(hist_max.max())
+        hist_mean_norm=np.double(hist_mean.max())
+        hist_max      =10**(np.double(hist_max)-hist_max_norm)
+        hist_mean     =10**(np.double(hist_mean)-hist_mean_norm)
 
         fd.close()
 
-        return x, hist_P
+        return x, hist_P, hist_mean, hist_max, mask_68, mask_95, best_val
 
 
 
