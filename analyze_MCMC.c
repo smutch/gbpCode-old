@@ -506,9 +506,9 @@ void analyze_MCMC(MCMC_info *MCMC){
             // Build coverage maps
             if(flag_success){
                for(i_P=0,i_coverage=0;i_P<n_P;i_P++){
-                  bin_x=(double)(coverage_size)*(P_last[i_P]-P_min[i_P])/(P_max[i_P]-P_min[i_P]);
+                  bin_x=(int)((double)(coverage_size)*(P_last[i_P]-P_min[i_P])/(P_max[i_P]-P_min[i_P]));
                   for(j_P=i_P+1;j_P<n_P;j_P++,i_coverage++){
-                     bin_y=(double)(coverage_size)*(P_last[j_P]-P_min[j_P])/(P_max[j_P]-P_min[j_P]);
+                     bin_y=(int)((double)(coverage_size)*(P_last[j_P]-P_min[j_P])/(P_max[j_P]-P_min[j_P]));
                      if(bin_x>=0 && bin_x<coverage_size && bin_y>=0 && bin_y<coverage_size)
                         coverage_true[i_coverage][bin_x*coverage_size+bin_y]++;
                   }
@@ -516,18 +516,18 @@ void analyze_MCMC(MCMC_info *MCMC){
             }
             else{
                for(i_P=0,i_coverage=0;i_P<n_P;i_P++){
-                  bin_x=(double)(coverage_size)*(P_new[i_P]-P_min[i_P])/(P_max[i_P]-P_min[i_P]);
+                  bin_x=(int)((double)(coverage_size)*(P_new[i_P]-P_min[i_P])/(P_max[i_P]-P_min[i_P]));
                   for(j_P=i_P+1;j_P<n_P;j_P++,i_coverage++){
-                     bin_y=(double)(coverage_size)*(P_new[j_P]-P_min[j_P])/(P_max[j_P]-P_min[j_P]);
+                     bin_y=(int)((double)(coverage_size)*(P_new[j_P]-P_min[j_P])/(P_max[j_P]-P_min[j_P]));
                      if(bin_x>=0 && bin_x<coverage_size && bin_y>=0 && bin_y<coverage_size)
                         coverage_false[i_coverage][bin_x*coverage_size+bin_y]++;
                   }
                }
             }
             for(i_P=0,i_coverage=0;i_P<n_P;i_P++){
-              bin_x=(double)(coverage_size)*(P_last[i_P]-P_min[i_P])/(P_max[i_P]-P_min[i_P]);
+              bin_x=(int)((double)(coverage_size)*(P_last[i_P]-P_min[i_P])/(P_max[i_P]-P_min[i_P]));
               for(j_P=i_P+1;j_P<n_P;j_P++,i_coverage++){
-                bin_y=(double)(coverage_size)*(P_last[j_P]-P_min[j_P])/(P_max[j_P]-P_min[j_P]);
+                bin_y=(int)((double)(coverage_size)*(P_last[j_P]-P_min[j_P])/(P_max[j_P]-P_min[j_P]));
                 if(bin_x>=0 && bin_x<coverage_size && bin_y>=0 && bin_y<coverage_size){
                   coverage_keep[i_coverage][bin_x*coverage_size+bin_y]++;
                   max_L_surface[i_coverage][bin_x*coverage_size+bin_y]  =MAX(max_L_surface[i_coverage][bin_x*coverage_size+bin_y],ln_likelihood_last);
@@ -538,7 +538,7 @@ void analyze_MCMC(MCMC_info *MCMC){
 
             // Build histograms
             for(i_P=0,i_coverage=0;i_P<n_P;i_P++){
-              bin_x=(double)(coverage_size)*(P_last[i_P]-P_min[i_P])/(P_max[i_P]-P_min[i_P]);
+              bin_x=(int)((double)(coverage_size)*(P_last[i_P]-P_min[i_P])/(P_max[i_P]-P_min[i_P]));
               if(bin_x>=0 && bin_x<coverage_size){
                 P_histogram[i_P][bin_x]++;
                 mean_L_histogram[i_P][bin_x]+=ln_likelihood_last;
@@ -547,7 +547,7 @@ void analyze_MCMC(MCMC_info *MCMC){
             }
             for(i_DS=0;i_DS<n_DS;i_DS++){
               for(i_M=0;i_M<n_M[i_DS];i_M++){
-                bin_x=(double)(coverage_size)*(M_last[i_DS][i_M]-M_min[i_DS][i_M])/(M_max[i_DS][i_M]-M_min[i_DS][i_M]);
+                bin_x=(int)((double)(coverage_size)*(M_last[i_DS][i_M]-M_min[i_DS][i_M])/(M_max[i_DS][i_M]-M_min[i_DS][i_M]));
                 if(bin_x>=0 && bin_x<coverage_size)
                   M_histogram[i_DS][i_M][bin_x]++;
               }

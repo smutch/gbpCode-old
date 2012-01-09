@@ -103,7 +103,8 @@ void autotune_MCMC_covariance(MCMC_info *MCMC){
     success=100.*(double)(MCMC->n_success)/(double)MCMC->n_propositions;
     SID_log("Iteration #%04d: Success=%5.1lf%% Max change=%5.1f%%",SID_LOG_COMMENT,i_autotune,success,difference);
     time_diff /= (double)n_autotune;
-    SID_log("\tMean time for single model call: %.1f", SID_LOG_COMMENT, time_diff);
+    if(time_diff>0.1)
+      SID_log("\tMean time for single model call: %.1f", SID_LOG_COMMENT, time_diff);
   }
 
   // Commit the covariance matrix now that we've computed it

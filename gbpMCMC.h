@@ -1,3 +1,6 @@
+#ifndef MCMC_AWAKE
+#define MCMC_AWAKE
+
 #include <gbpRNG.h>
 #include <gsl/gsl_linalg.h>
 
@@ -138,6 +141,9 @@ struct MCMC_info {
   double *M_new_buffer;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void init_MCMC(MCMC_info  *MCMC,
                const char *problem_name,
                void       *params,
@@ -197,4 +203,9 @@ void rm_MCMC_directory(MCMC_info *MCMC);
 int  generate_MCMC_chain(MCMC_info *MCMC);
 void generate_MCMC_proposition(MCMC_info *MCMC,int flag_chain_init);
 void generate_MCMC_parameters(MCMC_info *MCMC);
+#ifdef __cplusplus
+}
+#endif
+
+#endif
 

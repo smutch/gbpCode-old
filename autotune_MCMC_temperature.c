@@ -72,7 +72,8 @@ void autotune_MCMC_temperature(MCMC_info *MCMC){
     success=100.*(double)(MCMC->n_success)/(double)MCMC->n_propositions;
     SID_log("Iteration #%04d: Temperature=%le Success=%5.1lf%%",SID_LOG_COMMENT,i_autotune,temperature,success);
     time_diff /= (double)n_autotune;
-    SID_log("\tMean time for single model call: %.1f", SID_LOG_COMMENT, time_diff);
+    if(time_diff>0.1)
+       SID_log("\tMean time for single model call: %.1f", SID_LOG_COMMENT, time_diff);
   }
 
   SID_log("Done.",SID_LOG_CLOSE);
