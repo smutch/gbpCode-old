@@ -138,7 +138,7 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
 
   // Set autotune defaults (if needed)
   if(check_mode_for_flag(MCMC->mode,MCMC_MODE_AUTOTUNE))
-    set_MCMC_autotune(MCMC,-1.,-1.,-1.,-1,-1,-1); // Negatives mean use defaults (set in gbpMCMC.h)
+    set_MCMC_autotune(MCMC,-1.,-1.,-1.,-1,-1,-1,-1); // Negatives mean use defaults (set in gbpMCMC.h)
 
   // Initialize Communicator
   SID_Comm_init(&(MCMC->comm));

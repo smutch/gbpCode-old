@@ -11,6 +11,7 @@ void set_MCMC_autotune(MCMC_info *MCMC,
                        double     success_threshold,
                        double     covariance_threshold,
                        int        n_autotune,
+                       int        n_autotune_randomize,
                        int        n_autotune_temperature,
                        int        n_autotune_covariance){
 
@@ -38,6 +39,12 @@ void set_MCMC_autotune(MCMC_info *MCMC,
     MCMC->n_autotune=n_autotune;
   else
     MCMC->n_autotune=MCMC_DEFAULT_N_AUTOTUNE;
+
+  // Set the number of iterations used to randomize the initial starting point
+  if(n_autotune_randomize>0)
+    MCMC->n_autotune_randomize=n_autotune_randomize;
+  else
+    MCMC->n_autotune_randomize=MCMC_DEFAULT_N_AUTOTUNE_RANDOMIZE;
 
   // Set the number of iterations used to compute success rates
   //  for temperature autotuning

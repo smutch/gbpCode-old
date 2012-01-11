@@ -216,6 +216,7 @@ int main(int argc, char *argv[]){
   double success_threshold;
   double covariance_threshold;
   int    n_autotune;
+  int    n_autotune_randomize;
   int    n_autotune_temperature;
   int    n_autotune_covariance;
   n_avg           =        1000; // Chains are calculated in "averaging intervals" (ie. chunks) of this size.
@@ -237,6 +238,8 @@ int main(int argc, char *argv[]){
                                  //  between parameters, it may need to be made very large (eg. 1e7)
   n_autotune          =       2; // The number of passes to be performed for the autotuning.
                                  //  Should be at least 2.  Rarely needs to be more than 3.
+  n_autotune_randomize=       0; // The number of model calls that will be used to randomize the starting position.
+                                 //  Really only needs to be >0 if you are running multiple chains.
   n_autotune_temperature= 10000; // The number of model calls that will be used to tune the chain temperature.
                                  //  Should be AT LEAST 100 ... ideally 1000.
   n_autotune_covariance=1000000; // The number of model calls that will be used to tune the covariance matrix.
@@ -254,6 +257,7 @@ int main(int argc, char *argv[]){
                     success_threshold,
                     covariance_threshold,
                     n_autotune,
+                    n_autotune_randomize,
                     n_autotune_temperature,
                     n_autotune_covariance);
 

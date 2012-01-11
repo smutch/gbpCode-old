@@ -24,6 +24,7 @@
 #define MCMC_DEFAULT_SUCCESS_THRESH           5.
 #define MCMC_DEFAULT_COVARIANCE_THRESH       10.
 #define MCMC_DEFAULT_N_AUTOTUNE               1
+#define MCMC_DEFAULT_N_AUTOTUNE_RANDOMIZE     0
 #define MCMC_DEFAULT_N_AUTOTUNE_TEMPERATURE 100
 #define MCMC_DEFAULT_N_AUTOTUNE_COVMTX      (10*MCMC->n_P*MCMC->n_P*(1+(int)(100./MCMC->success_target)))
 #define MCMC_AUTOTUNE_CONVERGENCE_THRESH     1e-6
@@ -108,6 +109,7 @@ struct MCMC_info {
   double   success_threshold;
   double   covariance_threshold;
   int      n_autotune;   
+  int      n_autotune_randomize;   
   int      n_autotune_temperature;   
   int      n_autotune_covariance;
   int      first_parameter_call;
@@ -164,6 +166,7 @@ void free_MCMC_covariance(MCMC_info *MCMC);
 void free_MCMC(MCMC_info *MCMC);
 void add_MCMC_DS(MCMC_info *MCMC,const char *name,int n_D,int *D,double *DS,double *dDS,void *params,int n_arrays,...);
 void autotune_MCMC(MCMC_info *MCMC);
+void autotune_MCMC_randomize(MCMC_info *MCMC);
 void autotune_MCMC_temperature(MCMC_info *MCMC);
 void autotune_MCMC_covariance(MCMC_info *MCMC);
 void compute_MCMC_ln_likelihood_default(MCMC_info *MCMC,double **M,double *P,double *ln_likeliood_DS,int *n_DoF_DS,double *ln_likeliood_all,int *n_DoF_all);
@@ -195,6 +198,7 @@ void set_MCMC_autotune(MCMC_info *MCMC,
                        double     success_threshold,
                        double     covariance_threshold,
                        int        n_autotune,
+                       int        n_autotune_randomize,
                        int        n_autotune_temperature,
                        int        n_autotune_covariance);
 void read_MCMC_covariance(MCMC_info *MCMC,char *filename);

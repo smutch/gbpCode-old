@@ -8,6 +8,7 @@ OBJFILES = add_MCMC_DS.o                        \
            end_loop_MCMC.o                      \
            restart_MCMC.o                       \
 	   autotune_MCMC.o                      \
+	   autotune_MCMC_randomize.o            \
 	   autotune_MCMC_temperature.o          \
 	   autotune_MCMC_covariance.o           \
 	   compute_MCMC.o                       \
