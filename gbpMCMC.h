@@ -203,6 +203,7 @@ void set_MCMC_autotune(MCMC_info *MCMC,
                        int        n_autotune_covariance);
 void read_MCMC_covariance(MCMC_info *MCMC,char *filename);
 void read_MCMC_state(MCMC_info *MCMC);
+void read_MCMC_configuration(MCMC_info *MCMC,char *filename_output_dir,int chain);
 void rm_MCMC_directory(MCMC_info *MCMC);
 int  generate_MCMC_chain(MCMC_info *MCMC);
 void generate_MCMC_proposition(MCMC_info *MCMC,int flag_chain_init);

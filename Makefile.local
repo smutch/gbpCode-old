@@ -34,6 +34,7 @@ OBJFILES = add_MCMC_DS.o                        \
 	   set_MCMC_likelihood_function.o       \
 	   set_MCMC_iterations.o                \
 	   set_MCMC_temperature.o               \
+	   read_MCMC_configuration.o            \
 	   read_MCMC_covariance.o
 SCRIPTS  = allresults_MCMC.py
 BINFILES = example_line_fit covariance2ascii reanalyze_MCMC 
