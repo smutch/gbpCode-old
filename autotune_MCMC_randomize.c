@@ -13,7 +13,7 @@ void autotune_MCMC_randomize(MCMC_info *MCMC){
   time_t time_start, time_stop;
   double time_diff;
 
-  SID_log("Randomizeing the starting point (%d iterations)...",SID_LOG_OPEN|SID_LOG_TIMER,MCMC->n_autotune_randomize);
+  SID_log("Creating faux chain (%d iterations)...",SID_LOG_OPEN|SID_LOG_TIMER,MCMC->n_autotune_randomize);
 
   // Start from the initial conditions
   MCMC->flag_init_chain=TRUE;
