@@ -30,7 +30,7 @@
 #define ADaPS_SIZE_T       6
 #define ADaPS_STRING       7
 #define ADaPS_CUSTOM       8
-#ifdef USE_DOUBLE
+#if USE_DOUBLE
   #define ADaPS_REAL ADaPS_DOUBLE
 #else
   #define ADaPS_REAL ADaPS_FLOAT

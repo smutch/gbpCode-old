@@ -10,7 +10,6 @@ OBJFILES  = set_exchange_ring_ranks.o     \
 	    clear_field.o                 \
 	    free_field.o                  \
 	    init_field.o
-
 BINFILES  = 
 LIBS      = 
 SUBDIRS   = gbpPHKs

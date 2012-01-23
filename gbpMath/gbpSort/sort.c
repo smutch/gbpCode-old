@@ -37,12 +37,21 @@ void sort(void          *sval,
     SID_trap_error("Global in-place sorts are not possible.",ERROR_LOGIC);
   //   ... use a heap_sort for most situations (it uses less RAM!)
   else if(flag_local==SORT_LOCAL || SID.n_proc==1){
+/*
     heap_sort(sval,
 	      nval,
 	      index,
 	      data_type,
 	      flag_compute_index,
 	      flag_in_place);
+*/
+    merge_sort(sval,
+              nval,
+              index,
+              data_type,
+              flag_compute_index,
+              flag_in_place);
+
   }
   //   ... perform a global search returning ranks
   else{

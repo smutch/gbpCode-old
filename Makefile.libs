@@ -22,6 +22,8 @@ ifneq ($(USE_CFITSIO),0)
   LDFLAGS := $(LDFLAGS) -L$(GBP_CFITSIO_DIR)/lib/
   LIBS    := $(LIBS) -lcfitsio
 endif
+#CCFLAGS := $(CCFLAGS) -DUSE_CFITSIO='$(USE_CFITSIO)'
+export USE_CFITSIO
 
 # Add hdf5
 ifndef USE_HDF5
@@ -32,6 +34,8 @@ ifneq ($(USE_HDF5),0)
   LDFLAGS := $(LDFLAGS) -L$(GBP_HDF5_DIR)/lib/
   LIBS    := $(LIBS) -lhdf5
 endif
+#CCFLAGS := $(CCFLAGS) -DUSE_HDF5='$(USE_HDF5)'
+export USE_HDF5
 
 # Add gdlib
 ifndef USE_GDLIB
@@ -43,11 +47,14 @@ ifneq ($(USE_GDLIB),0)
   LDFLAGS := $(LDFLAGS) -L$(GBP_GSL_DIR)/lib/
   LIBS    := $(LIBS) -lgd
 endif
+#CCFLAGS := $(CCFLAGS) -DUSE_GDLIB='$(USE_GDLIB)'
+export USE_GDLIB
 
 # Add Cuda
 ifndef USE_CUDA
   USE_CUDA    =0
 endif
+#CCFLAGS := $(CCFLAGS) -DUSE_CUDA='$(USE_CUDA)'
 export USE_CUDA
 
 # Add valgrind
@@ -60,6 +67,8 @@ ifneq ($(USE_VALGRIND),0)
   LDFLAGS := $(LDFLAGS) -L$(GBP_VALGRIND_DIR)/lib/
   LIBS    := $(LIBS) 
 endif
+#CCFLAGS := $(CCFLAGS) -DUSE_VALGRIND='$(USE_VALGRIND)'
+export USE_VALGRIND
 
 # Add GSL stuff (default off)
 ifndef USE_GSL
@@ -70,6 +79,8 @@ ifneq ($(USE_GSL),0)
   LDFLAGS := $(LDFLAGS) -L$(GBP_GSL_DIR)/lib/ 
   LIBS    := $(LIBS) -lm -lgsl -lgslcblas
 endif
+#CCFLAGS := $(CCFLAGS) -DUSE_GSL='$(USE_GSL)'
+export USE_GSL
 
 # Add FFTW (fast Fourier transform) stuff (default off)
 ifndef USE_FFTW
@@ -93,8 +104,9 @@ ifneq ($(USE_FFTW),0)
       LIBS  := $(LIBS) -ldrfftw -ldfftw
     endif
   endif
-  CCFLAGS := $(CCFLAGS) -DUSE_FFTW
 endif
+#CCFLAGS := $(CCFLAGS) -DUSE_FFTW='$(USE_FFTW)'
+export USE_FFTW
 
 # SPRNG (parallel random number generator) stuff (default off)
 ifndef USE_SPRNG
@@ -104,20 +116,22 @@ ifneq ($(USE_SPRNG),0)
   CCFLAGS := $(CCFLAGS) -I$(GBP_SPRNG_DIR)/include
   LDFLAGS := $(LDFLAGS) -L$(GBP_SPRNG_DIR)/lib
   LIBS    := $(LIBS) -llcg
-  CCFLAGS := $(CCFLAGS) -DUSE_SPRNG
+  CCFLAGS := $(CCFLAGS) 
 endif
+#CCFLAGS := $(CCFLAGS) -DUSE_SPRNG='$(USE_SPRNG)'
 export USE_SPRNG
 
 # Set default MPI support
 ifndef USE_MPI
   USE_MPI=0
 endif
+#CCFLAGS  := $(CCFLAGS) -DUSE_MPI='$(USE_MPI)'
 export USE_MPI
+
+# Set default MPI-IO support
 ifndef USE_MPI_IO
   USE_MPI_IO=0
 endif
+#CCFLAGS  := $(CCFLAGS) -DUSE_MPI_IO='$(USE_MPI_IO)'
 export USE_MPI_IO
-ifneq ($(USE_MPI_IO),0)
-  CCFLAGS  := $(CCFLAGS) -DUSE_MPI_IO
-endif
 

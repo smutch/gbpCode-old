@@ -112,7 +112,7 @@
 /********************************************/
 /* Compile flags to control large variables */
 /********************************************/
-#ifdef USE_DOUBLE
+#if USE_DOUBLE
 #define GBPREAL double
 #else
 #define GBPREAL float
@@ -126,18 +126,18 @@
 /*****************************/
 
 // MPI
-#ifdef USE_MPI
-#ifndef MPI_DEFINED
-#include <mpi.h>
-#else
-#define MPI_DEFINED 1
-#endif
-#ifdef USE_DOUBLE
-#define MPI_MY_REAL MPI_DOUBLE
-#else
-#define MPI_MY_REAL MPI_FLOAT
-#endif
-#define MPI_SIZE_T MPI_LONG_LONG
+#if USE_MPI
+  #ifndef MPI_DEFINED
+    #include <mpi.h>
+  #else
+    #define MPI_DEFINED 1
+  #endif
+  #if USE_DOUBLE
+    #define MPI_MY_REAL MPI_DOUBLE
+  #else
+    #define MPI_MY_REAL MPI_FLOAT
+  #endif
+  #define MPI_SIZE_T MPI_LONG_LONG
 #endif
 
 // Error messages

@@ -7,7 +7,13 @@ void ADaPS_free(void **list){
   current=(ADaPS *)(*list);
   while(current!=NULL){
     next=current->next;
+    //#if USE_DEBUGGER == 1
+    //   SID_log("Freeing {%s}...",SID_LOG_OPEN,current->name);
+    //#endif
     ADaPS_deallocate(&current);
+    //#if USE_DEBUGGER == 1
+    //   SID_log("Done.",SID_LOG_CLOSE);
+    //#endif
     current=next;
   }
   (*list)=NULL;

@@ -2,6 +2,7 @@
 #include <string.h>
 #include <gbpCommon.h>
 #include <gbpSID.h>
+#include <gbpFITS.h>
 
 void array_size_local(int n_d,int *d_i,size_t *n_data);
 void array_size_local(int n_d,int *d_i,size_t *n_data){

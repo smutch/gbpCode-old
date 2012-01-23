@@ -1,0 +1,17 @@
+#############################
+# Library-specific settings #
+#############################
+INCFILES = gbpADaPS.h
+LIBFILE  = 
+OBJFILES = ADaPS_init.o          \
+	   ADaPS_deallocate.o    \
+	   ADaPS_exist.o         \
+	   ADaPS_fetch.o         \
+	   ADaPS_free.o          \
+	   ADaPS_remove.o        \
+	   ADaPS_status.o        \
+	   ADaPS_store.o 
+BINFILES =  
+LIBS     = 
+SUBDIRS  = 
+

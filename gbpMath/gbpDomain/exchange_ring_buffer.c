@@ -22,31 +22,29 @@ void exchange_ring_buffer(void     *send_buffer,
     send_buffer_size=0;
   set_exchange_ring_ranks(&rank_to,&rank_from,i_rank);
   if(i_rank!=0){
-    MPI_Sendrecv(&send_count,
+    SID_Sendrecv(&send_count,
                  1,
-                 MPI_SIZE_T,
+                 SID_SIZE_T,
                  rank_to,
                  1036267,
                  &receive_count,
                  1,
-                 MPI_SIZE_T,
+                 SID_SIZE_T,
                  rank_from,
                  1036267,
-                 SID.COMM_WORLD->comm,
-                 MPI_STATUS_IGNORE);
+                 SID.COMM_WORLD);
     receive_buffer_size=(int)(receive_count*buffer_type_size);
-    MPI_Sendrecv(send_buffer,
+    SID_Sendrecv(send_buffer,
                  send_buffer_size,
-                 MPI_BYTE,
+                 SID_BYTE,
                  rank_to,
                  1256269,
                  receive_buffer, 
                  receive_buffer_size,
-                 MPI_BYTE,
+                 SID_BYTE,
                  rank_from,
                  1256269,
-                 SID.COMM_WORLD->comm,
-                 MPI_STATUS_IGNORE);
+                 SID.COMM_WORLD);
   }
   else{
     receive_buffer_size=send_buffer_size;

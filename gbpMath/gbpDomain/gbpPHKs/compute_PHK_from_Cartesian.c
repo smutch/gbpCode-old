@@ -11,7 +11,7 @@ PHK_t compute_PHK_from_Cartesian(int PHK_bit_size,int n_D,...){
   va_start(vargs,n_D);
 
   if(n_D>3 || n_D<0)
-    SID_trap_error("Invalid number of dimensions (%d) in compute_PHK_from_Cartesian",ERROR_LOGIC);
+    SID_trap_error("Invalid number of dimensions (%d) in compute_PHK_from_Cartesian",ERROR_LOGIC,n_D);
   for(i_d=0;i_d<n_D;i_d++){
     switch(i_d){
       case 0:

@@ -2,14 +2,14 @@
 #define GBPDOMAIN_AWAKE
 #ifndef GBPFFTW_AWAKE
   #define GBPFFTW_AWAKE
-  #ifdef USE_MPI
-    #ifdef USE_DOUBLE
+  #if USE_MPI
+    #if USE_DOUBLE
       #include <drfftw_mpi.h>
     #else
       #include <srfftw_mpi.h>
     #endif
   #else
-    #ifdef USE_DOUBLE
+    #if USE_DOUBLE
       #include <drfftw.h>
     #else
       #include <srfftw.h>
@@ -61,7 +61,7 @@ struct field_info{
   // flags
   int               flag_padded;
   // FFTW plans
-#ifdef USE_MPI
+#if USE_MPI
   rfftwnd_mpi_plan  plan;
   rfftwnd_mpi_plan  iplan;
 #else
@@ -72,6 +72,10 @@ struct field_info{
   slab_info         slab;
 };
 
+// Function declarations
+#ifdef __cplusplus
+extern "C" {
+#endif
 void init_field(int       n_d,
                 int      *n,
                 double   *L,
@@ -97,6 +101,9 @@ void exchange_slab_buffer_right(void      *send_buffer,
                                 void      *receive_buffer,
                                 size_t    *receive_buffer_size,
                                 slab_info *slab);
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
