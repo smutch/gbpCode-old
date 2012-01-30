@@ -31,6 +31,7 @@ void   compute_triaxiality(double     *x_in,
                            double      return_vectors[3][3]);
 size_t find_index(size_t *y,size_t y_find,size_t  n,size_t *index);
 int    find_index_int(int *y,int y_find,int  n,size_t *index);
+int    is_a_member(void *candidate,void *list,int n_list,SID_Datatype type);
 double bisect_array(interp_info *interp,
                     double       value,
                     double       threshold);

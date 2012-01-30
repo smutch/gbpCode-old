@@ -57,6 +57,13 @@ endif
 #CCFLAGS := $(CCFLAGS) -DUSE_CUDA='$(USE_CUDA)'
 export USE_CUDA
 
+# Add debugger support
+ifndef USE_DEBUGGER
+  USE_DEBUGGER    =0
+endif
+#CCFLAGS := $(CCFLAGS) -DUSE_DEBUGGER='$(USE_DEBUGGER)'
+export USE_DEBUGGER
+
 # Add valgrind
 ifndef USE_VALGRIND
   USE_VALGRIND    =0

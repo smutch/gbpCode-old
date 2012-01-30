@@ -8,6 +8,7 @@ OBJFILES = take_log10.o                        \
 	   take_aln.o                          \
 	   add_quad.o                          \
 	   force_periodic.o                    \
+	   is_a_member.o                       \
 	   find_index.o                        \
 	   find_index_int.o                    \
 	   d_periodic.o                        \
