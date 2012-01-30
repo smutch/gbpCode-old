@@ -10,14 +10,15 @@
 #define MAX_PROFILE_BINS     1000
 #define MAX_PROFILE_BINS_P1  1001 // This must be set to MAX_PROFILE_BINS+1
 
-#define READ_GROUPS_DEFAULT         1
-#define READ_GROUPS_ALL             2
-#define READ_GROUPS_SUBGROUPS       4
-#define READ_GROUPS_NOSUBGROUPS     8
-#define READ_GROUPS_PROPERTIES     16
-#define READ_GROUPS_NOPROPERTIES   32
-#define READ_GROUPS_NOIDS          64
-#define READ_GROUPS_MBP_IDS_ONLY  128
+#define READ_GROUPS_DEFAULT          1
+#define READ_GROUPS_ALL              2
+#define READ_GROUPS_SUBGROUPS        4
+#define READ_GROUPS_NOSUBGROUPS      8
+#define READ_GROUPS_PROPERTIES      16
+#define READ_GROUPS_NOPROPERTIES    32
+#define READ_GROUPS_NOIDS           64
+#define READ_GROUPS_MBP_IDS_ONLY   128
+#define READ_GROUPS_PEANOHILBERT   256
 
 #define MATCH_SUBGROUPS       2 // Match subgroups (default)
 #define MATCH_GROUPS          4 // Match groups
@@ -31,12 +32,12 @@
 typedef struct halo_properties_info halo_properties_info;
 struct halo_properties_info{
   long long id_MBP;                    // ID of most bound particle in structure
+  double    M_vir;                     // Bryan & Norman (ApJ 495, 80, 1998) virial mass [M_sol/h]
   int       n_particles;               // Number of particles in the structure
   float     position_COM[3];           // Centre-of-mass position      [Mpc/h]
   float     position_MBP[3];           // Most bound particle position [Mpc/h]
   float     velocity_COM[3];           // Centre-of-mass velocity      [km/s]
   float     velocity_MBP[3];           // Most bound particle velocity [km/s]
-  double    M_vir;                     // Bryan & Norman (ApJ 495, 80, 1998) virial mass [M_sol/h]
   float     R_vir;                     // Virial radius [Mpc/h]
   float     R_halo;                    // Distance of last halo particle from MBP [Mpc/h]
   float     R_max;                     // Radius of maximum circular velocity     [Mpc/h]
@@ -53,8 +54,8 @@ struct halo_profile_bin_info{
   float   r_med;                     // The median  radius of particles in this bin [Mpc/h]
   float   r_max;                     // The maximum radius of particles in this bin [Mpc/h] 
   int     n_particles;               // Number of particles in this bin
-  double  M_r;                       // Mass of particles within r_max [M_sol/h]
   float   rho;                       // Density                        [M_sol*h^2/Mpc^3]
+  double  M_r;                       // Mass of particles within r_max [M_sol/h]
   float   overdensity;               // Bryan & Norman overdensity within r_max
   float   position_COM[3];           // Position of the centre-of-mass of particles within r_max [Mpc/h]
   float   velocity_COM[3];           // Velocity of the centre-of-mass of particles within r_max [km/s]
@@ -73,6 +74,7 @@ struct halo_profile_info{
   halo_profile_bin_info bins[MAX_PROFILE_BINS];
 };
 
+// This is the format used as the SAGE structure
 typedef struct halo_info halo_info;
 struct halo_info{
   // merger tree pointers
@@ -122,7 +124,7 @@ void read_groups(char        *filename_groups_root,
                  int          i_file,
                  int          mode,
                  plist_info  *plist,
-                 char        *catalog_name);
+                 char        *catalog_name,...);
 void read_groups_AHF(char        *filename_groups_root,
                      int          i_file,
                      int          mode,

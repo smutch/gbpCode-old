@@ -81,6 +81,7 @@ int main(int argc, char *argv[]){
   halo_profile_info     profile;
   int                   n_files,n_files_i;
   int                   n_files_temp=1;
+  int                   flag_process_profiles=FALSE;
 
   SID_init(&argc,&argv,NULL);
 
@@ -107,9 +108,11 @@ int main(int argc, char *argv[]){
       }
       SID_log("Processing %sgroup files...",SID_LOG_OPEN|SID_LOG_TIMER,group_text_prefix);
       sprintf(filename_output_properties,     "%s_%s.catalog_%sgroups_properties",   filename_groups_root,filename_number,group_text_prefix);
-      sprintf(filename_output_profiles,       "%s_%s.catalog_%sgroups_profiles",     filename_groups_root,filename_number,group_text_prefix);
       sprintf(filename_output_properties_dir, "%s.x",filename_output_properties);
-      sprintf(filename_output_profiles_dir,   "%s.x",filename_output_profiles);
+      if(flag_process_profiles){
+        sprintf(filename_output_profiles,       "%s_%s.catalog_%sgroups_profiles",     filename_groups_root,filename_number,group_text_prefix);
+        sprintf(filename_output_profiles_dir,   "%s.x",filename_output_profiles);
+      }
 
       // Get the number of files involved
       j_file=0;
@@ -121,13 +124,15 @@ int main(int argc, char *argv[]){
 
       // Concatinate the temporary files together
       fp_properties=fopen(filename_output_properties,"w");
-      fp_profiles  =fopen(filename_output_profiles,  "w");
+      if(flag_process_profiles)
+        fp_profiles  =fopen(filename_output_profiles,  "w");
       for(j_file=0;j_file<n_files;j_file++){
 
         SID_log("Processing file %3d of %3d...",SID_LOG_OPEN,j_file,n_files);
         // Set filenames
         sprintf(filename_output_properties_temp,"%s/catalog_%sgroups_properties_%09d_%09d",filename_output_properties_dir,group_text_prefix,i_file,j_file);
-        sprintf(filename_output_profiles_temp,  "%s/catalog_%sgroups_profiles_%09d_%09d",  filename_output_profiles_dir,  group_text_prefix,i_file,j_file);
+        if(flag_process_profiles)
+          sprintf(filename_output_profiles_temp,  "%s/catalog_%sgroups_profiles_%09d_%09d",  filename_output_profiles_dir,  group_text_prefix,i_file,j_file);
         // Cat properties
         fp_properties_temp=fopen(filename_output_properties_temp,"r");
         fread(&j_file_in,   sizeof(int),1,fp_properties_temp);
@@ -149,34 +154,35 @@ int main(int argc, char *argv[]){
         SID_log("Done.",SID_LOG_CLOSE);
 
         // Cat profiles
-/**/
-        fp_profiles_temp=fopen(filename_output_profiles_temp,"r");
-        fread(&j_file_in,   sizeof(int),1,fp_profiles_temp);
-        fread(&n_files_i,   sizeof(int),1,fp_profiles_temp);
-        fread(&n_groups,    sizeof(int),1,fp_profiles_temp);
-        fread(&n_groups_all,sizeof(int),1,fp_profiles_temp);
-        SID_log("Processing profiles   for file %3d of %3d (%d groups of %d)...",SID_LOG_OPEN,j_file_in,n_files_i,n_groups,n_groups_all);
-        if(j_file==0){
-          fwrite(&j_file,      sizeof(int),1,fp_profiles);
-          fwrite(&n_files_temp,sizeof(int),1,fp_profiles);
-          fwrite(&n_groups_all,sizeof(int),1,fp_profiles);
-          fwrite(&n_groups_all,sizeof(int),1,fp_profiles);
-        }
-        for(i_group=0;i_group<n_groups;i_group++){
-          fread( &(profile.n_bins),sizeof(int),1,fp_profiles_temp);
-          fwrite(&(profile.n_bins),sizeof(int),1,fp_profiles);
-          if(profile.n_bins>0){
-            fread( profile.bins,sizeof(halo_profile_bin_info),profile.n_bins,fp_profiles_temp);
-            fwrite(profile.bins,sizeof(halo_profile_bin_info),profile.n_bins,fp_profiles);
+        if(flag_process_profiles){
+          fp_profiles_temp=fopen(filename_output_profiles_temp,"r");
+          fread(&j_file_in,   sizeof(int),1,fp_profiles_temp);
+          fread(&n_files_i,   sizeof(int),1,fp_profiles_temp);
+          fread(&n_groups,    sizeof(int),1,fp_profiles_temp);
+          fread(&n_groups_all,sizeof(int),1,fp_profiles_temp);
+          SID_log("Processing profiles   for file %3d of %3d (%d groups of %d)...",SID_LOG_OPEN,j_file_in,n_files_i,n_groups,n_groups_all);
+          if(j_file==0){
+            fwrite(&j_file,      sizeof(int),1,fp_profiles);
+            fwrite(&n_files_temp,sizeof(int),1,fp_profiles);
+            fwrite(&n_groups_all,sizeof(int),1,fp_profiles);
+            fwrite(&n_groups_all,sizeof(int),1,fp_profiles);
           }
+          for(i_group=0;i_group<n_groups;i_group++){
+            fread( &(profile.n_bins),sizeof(int),1,fp_profiles_temp);
+            fwrite(&(profile.n_bins),sizeof(int),1,fp_profiles);
+            if(profile.n_bins>0){
+              fread( profile.bins,sizeof(halo_profile_bin_info),profile.n_bins,fp_profiles_temp);
+              fwrite(profile.bins,sizeof(halo_profile_bin_info),profile.n_bins,fp_profiles);
+            }
+          }
+          fclose(fp_profiles_temp);
+          SID_log("Done.",SID_LOG_CLOSE);
         }
-        fclose(fp_profiles_temp);
-        SID_log("Done.",SID_LOG_CLOSE);
-/**/
         SID_log("Done. (file %3d of %3d)",SID_LOG_CLOSE,j_file,n_files);
       }
       fclose(fp_properties);
-      fclose(fp_profiles);
+      if(flag_process_profiles)
+        fclose(fp_profiles);
       SID_log("Done.",SID_LOG_CLOSE);
     }
     SID_log("Done.",SID_LOG_CLOSE);

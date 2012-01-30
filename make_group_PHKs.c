@@ -9,6 +9,8 @@
 #include <gbpSPH.h>
 #include <gbpHalos.h>
 
+#define N_BITS_MIN 1
+
 #define GADGET_BUFFER_SIZE_LOCAL  128*SIZE_OF_MEGABYTE
 
 void read_gadget_binary_local(char       *filename_root_in,
@@ -133,6 +135,8 @@ void read_gadget_binary_local(char       *filename_root_in,
   gadget_header_info header;
   int                read_rank;
   
+  SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+
   // Determine file format
   n_files=1;
   for(i_file=0;i_file<3 && !flag_filefound;i_file++){  
@@ -315,10 +319,10 @@ void read_gadget_binary_local(char       *filename_root_in,
     // Allocate data arrays
     for(i=0;i<N_GADGET_TYPE;i++){
       if(n_of_type_rank[i]>0){
-        x_array[i] =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
-        y_array[i] =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
-        z_array[i] =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
-        id_array[i]=(size_t *)SID_malloc(sizeof(size_t)*(size_t)n_of_type_rank[i]);
+        x_array[i] =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*(size_t)n_of_type_rank[i]);
+        y_array[i] =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*(size_t)n_of_type_rank[i]);
+        z_array[i] =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*(size_t)n_of_type_rank[i]);
+        id_array[i]=(size_t  *)SID_malloc(sizeof(size_t) *(size_t)n_of_type_rank[i]);
       }
     }
     
@@ -370,6 +374,9 @@ void read_gadget_binary_local(char       *filename_root_in,
         if(record_length_open!=record_length_close)
           SID_log_warning("Problem with GADGET record size (close of velocities)",ERROR_LOGIC);
       }
+
+      // The largest block will always be the positions/velocities.  Use
+      //   it's size here to allocate the buffer.
       SID_Bcast(&record_length_open,sizeof(int),read_rank,SID.COMM_WORLD);
 
       // Allocate buffers
@@ -387,11 +394,9 @@ void read_gadget_binary_local(char       *filename_root_in,
         if(record_length_open!=record_length_close)
           SID_log_warning("Problem with GADGET record size (close of ids)",ERROR_LOGIC);
       }
-      SID_Bcast(&record_length_open,sizeof(int),       read_rank,SID.COMM_WORLD);
-      SID_Barrier(SID.COMM_WORLD);
-      SID_Bcast(buffer,             record_length_open,read_rank,SID.COMM_WORLD);
 
       // Decide what kind of IDs we have
+      SID_Bcast(buffer,record_length_open,read_rank,SID.COMM_WORLD);
       if(record_length_open/n_particles_file==sizeof(long long)){
         SID_log("(long long)...",SID_LOG_CONTINUE);
         flag_LONGIDS=TRUE;
@@ -416,13 +421,13 @@ void read_gadget_binary_local(char       *filename_root_in,
           for(j=0,k=0,l=jj;j<header.n_file[i] && k<n_particles_rank;j++,jj++){
             switch(flag_LONGIDS){
             case TRUE:
-              id_test=(size_t)((long long *)buffer_i)[buffer_index[j]];
+              id_test=(size_t)(((long long *)buffer_i)[buffer_index[j]]);
               break;
             case FALSE:
-              id_test=(size_t)((int *)buffer_i)[buffer_index[j]];
+              id_test=(size_t)(((int       *)buffer_i)[buffer_index[j]]);
               break;
             }
-            while(id_list[id_list_index[k]]<id_test && k<n_particles_rank-1)
+            while(id_list[id_list_index[k]]<id_test && k<(n_particles_rank-1))
               k++;
             if(id_list[id_list_index[k]]==id_test){
               keep[l+buffer_index[j]]=TRUE;
@@ -467,7 +472,7 @@ void read_gadget_binary_local(char       *filename_root_in,
         rewind(fp);
         // Skip header
         fread(&record_length_open,4,1,fp);
-        fread(buffer,record_length_open,1,fp);
+        fseeko(fp,record_length_open,SEEK_CUR);
         fread(&record_length_close,4,1,fp);
         if(record_length_open!=record_length_close)
           SID_log_warning("Problem with GADGET record size (skip of header)",ERROR_LOGIC);
@@ -480,10 +485,9 @@ void read_gadget_binary_local(char       *filename_root_in,
         fread(buffer,record_length_open,1,fp);
         fread(&record_length_close,4,1,fp);
         if(record_length_open!=record_length_close)
-          SID_log_warning("Problem with GADGET record size (close of positions)",ERROR_LOGIC);
+          SID_log_warning("Problem with GADGET record size (close of positions) (ie. %d!=%d)",ERROR_LOGIC,record_length_open,record_length_close);
       }
       SID_Bcast(&record_length_open,sizeof(int),read_rank,SID.COMM_WORLD);
-      SID_Barrier(SID.COMM_WORLD);
       SID_Bcast(buffer,record_length_open,      read_rank,SID.COMM_WORLD);
       for(i=0,jj=0;i<N_GADGET_TYPE;i++){
         for(j=0,k=0;j<header.n_file[i];j++,jj++){
@@ -514,6 +518,7 @@ void read_gadget_binary_local(char       *filename_root_in,
       if(n_files>1)
         SID_log("Done.",SID_LOG_CLOSE);
     }
+    SID_free(SID_FARG id_list_index);
     
     // Check that the right number of particles have been read
     if(n_particles_kept!=n_particles_rank)
@@ -558,7 +563,6 @@ int main(int argc, char *argv[]){
   char        filename_PHKs_root[256];
   char        filename_snapshot_root[256];
   char        filename_snapshot[256];
-  char       *filename_number;
   char        filename_output_properties_dir[256];
   char        filename_output_properties[256];
   char        filename_output_profiles_dir[256];
@@ -580,16 +584,19 @@ int main(int argc, char *argv[]){
   int         i_process;
   int         n_particles;
   int         n_particles_max;
-  GBPREAL       *x_array;
-  GBPREAL       *y_array;
-  GBPREAL       *z_array;
+  size_t      n_particles_cumulative;
+  GBPREAL    *x_array;
+  GBPREAL    *y_array;
+  GBPREAL    *z_array;
+  size_t     *ids_particles;
+  size_t     *ids_particles_index;
+  size_t     *ids_groups;
   int        *n_particles_groups_process;
   int        *n_particles_groups;
   int        *n_particles_subgroups;
   int        *group_offset;
   size_t      n_particles_in_groups;
   size_t     *ids_snapshot;
-  size_t     *ids_groups;
   size_t     *ids_sort_index;
   size_t     *ids_snapshot_sort_index;
   size_t     *ids_groups_sort_index;
@@ -624,65 +631,114 @@ int main(int argc, char *argv[]){
   int                   n_truncated;
   int                   largest_truncated;
   int                   largest_truncated_local;
+  int                   n_bits=N_BITS_MIN;
 
   SID_init(&argc,&argv,NULL);
+  SID_profile_start("make_group_PHKs",SID_PROFILE_NOTMPIENABLED);
 
   // Fetch user inputs
   strcpy(filename_snapshot_root,argv[1]);
-  strcpy(filename_PHKs_root,  argv[2]);
+  strcpy(filename_PHKs_root,    argv[2]);
   i_file_lo  =atoi(argv[3]);
   i_file_hi  =atoi(argv[4]);
   i_file_skip=atoi(argv[5]);
 
   SID_log("Generating group PH keys for files #%d->#%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file_lo,i_file_hi);
 
+  char *filename_number;
   for(i_file=i_file_lo;i_file<=i_file_hi;i_file+=i_file_skip){
-    filename_number=(char *)SID_malloc(sizeof(char)*10);
-    sprintf(filename_number,"%03d", i_file);
-    SID_log("Processing file #%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file);
+    SID_log("Processing file #%03d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file);
+    //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
 
     // Read group and particle info
-    int    *PHK_group;
-    size_t *PHK_group_index;
+    int    *PHK_group      =NULL;
+    size_t *PHK_group_index=NULL;
     init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
+    filename_number=(char *)SID_malloc(sizeof(char)*10);
+    sprintf(filename_number,"%03d", i_file);
     ADaPS_store(&(plist.data),(void *)filename_number,"read_catalog",ADaPS_DEFAULT);
     read_groups(filename_PHKs_root,i_file,READ_GROUPS_ALL|READ_GROUPS_MBP_IDS_ONLY,&plist,filename_number);
-    n_groups_all       = ((int  *)ADaPS_fetch(plist.data,"n_groups_all_%s",     filename_number))[0];
-    n_groups           = ((int  *)ADaPS_fetch(plist.data,"n_groups_%s",         filename_number))[0];
-    box_size           = ((int  *)ADaPS_fetch(plist.data,"box_size",            filename_number))[0];
-    n_particles_groups =  (int  *)ADaPS_fetch(plist.data,"n_particles_group_%s",filename_number);
-    x_array            =  (GBPREAL *)ADaPS_fetch(plist.data,"x_dark");
-    y_array            =  (GBPREAL *)ADaPS_fetch(plist.data,"y_dark");
-    z_array            =  (GBPREAL *)ADaPS_fetch(plist.data,"z_dark");
-    PHK_group          =  (int  *)SID_malloc(sizeof(int)*n_groups);
+    read_gadget_binary_local(filename_snapshot_root,i_file,&plist);
 
-    // Compute PHKs
-    for(i_group=0;i_group<n_groups;i_group++)
-      PHK_group[i_group]=compute_PHK_from_Cartesian(10,3,x_array[i_group]/box_size,y_array[i_group]/box_size,z_array[i_group]/box_size);
+    // Fetch some header information
+    n_particles_cumulative = ((size_t  *)ADaPS_fetch(plist.data,"n_particles_all_%s",filename_number))[0];
+    n_groups_all           = ((int     *)ADaPS_fetch(plist.data,"n_groups_all_%s",   filename_number))[0];
+    n_groups               = ((int     *)ADaPS_fetch(plist.data,"n_groups_%s",       filename_number))[0];
+    box_size               = ((double  *)ADaPS_fetch(plist.data,"box_size",          filename_number))[0];
 
-    // Sort PHKs
-    merge_sort((void *)PHK_group,n_particles_snapshot,&PHK_group_index,SID_SIZE_T,SORT_COMPUTE_INDEX,FALSE);
+    // Determine the number of bits to use for the PHKs
+    double dx;
+    dx=10.*M_PER_MPC;
+    for(n_bits=N_BITS_MIN;(box_size/pow(2.,(double)(n_bits+1)))>dx && n_bits<=20;) n_bits++;
+ 
+    // If there's any groups to analyze ...
+    if(n_groups>0){
+       // Fetch some needed data
+       n_particles_groups =  (int     *)ADaPS_fetch(plist.data,"n_particles_group_%s",filename_number);
+       x_array            =  (GBPREAL *)ADaPS_fetch(plist.data,"x_dark");
+       y_array            =  (GBPREAL *)ADaPS_fetch(plist.data,"y_dark");
+       z_array            =  (GBPREAL *)ADaPS_fetch(plist.data,"z_dark");
+       ids_particles      =  (size_t  *)ADaPS_fetch(plist.data,"id_dark");
+       ids_groups         =  (size_t  *)ADaPS_fetch(plist.data,"particle_ids_%s",filename_number);
+       PHK_group          =  (int     *)SID_malloc(sizeof(int)*n_groups);
 
-    // Create a PHK-ranked cumulative particle count
-    size_t *n_particles_PHK;
-    n_particles_PHK=(size_t *)SID_malloc(sizeof(size_t)*n_groups);
-    n_particles_PHK[0]=n_particles_groups[PHK_group_index[0]];
-    for(i_group=1;i_group<n_groups;i_group++)
-      n_particles_PHK[i_group]=n_particles_PHK[i_group-1]+n_particles_groups[PHK_group_index[i_group]];
+       // Sort the GADGET arrays by their particle IDs
+       merge_sort(ids_particles,n_groups,&ids_particles_index,SID_SIZE_T,SORT_COMPUTE_INDEX,FALSE);
+
+       // Compute PHKs
+       SID_log("Computing PHKs (using %d bits per dimension)...",SID_LOG_OPEN,n_bits);
+       for(i_group=0;i_group<n_groups;i_group++){
+
+         // The particles are not stored in the same order as the groups.  We need
+         //    to find the index for the MBP of each particle as a result.
+         size_t particle_index;
+         particle_index=ids_particles_index[find_index(ids_particles,ids_groups[i_group],(size_t)n_groups,ids_particles_index)];
+
+         // Compute the key for this particle
+         PHK_group[i_group]=compute_PHK_from_Cartesian(n_bits,3,(double)x_array[particle_index]/box_size,
+                                                                (double)y_array[particle_index]/box_size,
+                                                                (double)z_array[particle_index]/box_size);
+       }
+       SID_free(SID_FARG ids_particles_index);
+       SID_log("Done.",SID_LOG_CLOSE);
+
+       // Sort PHKs
+       SID_log("Sorting PHKs...",SID_LOG_OPEN);
+       merge_sort((void *)PHK_group,n_groups,&PHK_group_index,SID_INT,SORT_COMPUTE_INDEX,FALSE);
+       SID_log("Done.",SID_LOG_CLOSE);
+
+    }
+
+    // Count the number of particles
+    for(i_group=0,n_particles_cumulative=0;i_group<n_groups;i_group++)
+       n_particles_cumulative+=n_particles_groups[PHK_group_index[i_group]];
 
     // Write results
-    sprintf(filename_output_properties,"%s_%s.catalog_%sgroups_properties",filename_PHKs_root,filename_number,group_text_prefix);
+    int index_temp;
+    SID_log("Writing results...",SID_LOG_OPEN);
+    sprintf(filename_output_properties,"%s_%s.catalog_PHKs",filename_PHKs_root,filename_number);
     fp_PHKs=fopen(filename_output_properties,"w");
-    fwrite(&n_groups,      sizeof(int),   1,       fp_PHKs);
-    fwrite(PHK_group,      sizeof(int),   n_groups,fp_PHKs);
-    fwrite(n_particles_PHK,sizeof(size_t),n_groups,fp_PHKs);
+    fwrite(&n_groups,              sizeof(int),   1,fp_PHKs);
+    fwrite(&n_bits,                sizeof(int),   1,fp_PHKs);
+    fwrite(&n_particles_cumulative,sizeof(size_t),1,fp_PHKs);
+    for(i_group=0,n_particles_cumulative=0;i_group<n_groups;i_group++){
+       index_temp             =(int)PHK_group_index[i_group];
+       n_particles_cumulative+=n_particles_groups[index_temp];
+       fwrite(&(PHK_group[index_temp]),sizeof(int),   1,fp_PHKs);
+       fwrite(&index_temp,             sizeof(int),   1,fp_PHKs);
+       fwrite(&n_particles_cumulative, sizeof(size_t),1,fp_PHKs);
+    }
     fclose(fp_PHKs);
+    SID_log("Done.",SID_LOG_CLOSE);
 
     // Clean-up
     free_plist(&plist);
-    SID_free(SID_FARG PHK_group);
-    SID_free(SID_FARG PHK_group_index);
+    if(n_groups>0){
+       SID_free(SID_FARG PHK_group);
+       SID_free(SID_FARG PHK_group_index);
+    }
 
+    SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
     SID_log("Done.",SID_LOG_CLOSE);
   }
 

@@ -660,8 +660,6 @@ int main(int argc, char *argv[]){
   
   FILE       *fp_properties;
   FILE       *fp_profiles;
-  FILE       *fp_properties_temp;
-  FILE       *fp_profiles_temp;
   cosmo_info *cosmo;
   halo_properties_info  properties;
   halo_profile_info     profile;
@@ -669,6 +667,8 @@ int main(int argc, char *argv[]){
   int                   n_truncated;
   int                   largest_truncated;
   int                   largest_truncated_local;
+  int flag_write_properties=TRUE;
+  int flag_write_profiles  =FALSE;
 
   SID_init(&argc,&argv,NULL);
 
@@ -680,6 +680,8 @@ int main(int argc, char *argv[]){
   i_file_skip=atoi(argv[5]);
 
   SID_log("Processing group/subgroup statistics for files #%d->#%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file_lo,i_file_hi);
+  SID_log("Properties structure size=%d bytes",SID_LOG_COMMENT,sizeof(halo_properties_info));
+  SID_log("Profiles   structure size=%d bytes",SID_LOG_COMMENT,sizeof(halo_profile_bin_info));
 
   for(i_file=i_file_lo;i_file<=i_file_hi;i_file+=i_file_skip){
     filename_number=(char *)SID_malloc(sizeof(char)*10);
@@ -760,48 +762,66 @@ int main(int argc, char *argv[]){
         }
         n_groups_all=((int *)ADaPS_fetch(plist.data,"n_%sgroups_all_%s",group_text_prefix,filename_number))[0];
         n_groups    =((int *)ADaPS_fetch(plist.data,"n_%sgroups_%s",    group_text_prefix,filename_number))[0];
-        if(n_groups_all>0){
-          n_particles_groups = (int    *)ADaPS_fetch(plist.data,"n_particles_%sgroup_%s"    ,group_text_prefix,filename_number);
-          group_offset       = (int    *)ADaPS_fetch(plist.data,"particle_offset_%sgroup_%s",group_text_prefix,filename_number);
 
-          // Generate and write statistics
-          sprintf(filename_output_properties,     "%s_%s.catalog_%sgroups_properties",   filename_groups_root,filename_number,group_text_prefix);
-          sprintf(filename_output_profiles,       "%s_%s.catalog_%sgroups_profiles",     filename_groups_root,filename_number,group_text_prefix);
+        // If there are groups in the catalog ...
+        if(n_groups_all>0){
+          // Fetch some stuff
+          n_particles_groups = (int *)ADaPS_fetch(plist.data,"n_particles_%sgroup_%s"    ,group_text_prefix,filename_number);
+          group_offset       = (int *)ADaPS_fetch(plist.data,"particle_offset_%sgroup_%s",group_text_prefix,filename_number);
+
+          // Create filenames, directories, etc
+          sprintf(filename_output_properties_temp,"%s_%s.catalog_%sgroups_properties",filename_groups_root,filename_number,group_text_prefix);
+          sprintf(filename_output_profiles_temp,  "%s_%s.catalog_%sgroups_profiles",  filename_groups_root,filename_number,group_text_prefix);
           if(SID.n_proc>1){
-            // Properties filenames
-            sprintf(filename_output_properties_dir,"%s.x",filename_output_properties);
-            if(SID.I_am_Master)
-              mkdir(filename_output_properties_dir,02755);
-            sprintf(filename_output_properties_temp,"%s/catalog_%sgroups_properties_%09d_%09d",filename_output_properties_dir,group_text_prefix,i_file,SID.My_rank);
-            // Profiles filenames
-            sprintf(filename_output_profiles_dir,"%s.x",filename_output_profiles);
-            if(SID.I_am_Master)
-              mkdir(filename_output_profiles_dir,02755);
-            sprintf(filename_output_profiles_temp,"%s/catalog_%sgroups_profiles_%09d_%09d",filename_output_profiles_dir,group_text_prefix,i_file,SID.My_rank);
+             // Create property filenames
+             char properties_root[MAX_FILENAME_LENGTH];
+             strcpy(properties_root,filename_output_properties);
+             strip_path(properties_root);
+             strcpy(filename_output_properties_dir,filename_output_properties_temp);
+             if(SID.I_am_Master)
+               mkdir(filename_output_properties_dir,02755);
+             sprintf(filename_output_properties,"%s/%s.%d",filename_output_properties_dir,properties_root,SID.My_rank);
+             // Create profile filenames
+             char profiles_root[MAX_FILENAME_LENGTH];
+             strcpy(profiles_root,filename_output_properties);
+             strip_path(profiles_root);
+             strcpy(filename_output_profiles_dir,filename_output_profiles_temp);
+             if(SID.I_am_Master)
+               mkdir(filename_output_profiles_dir,02755);
+             sprintf(filename_output_profiles,"%s/%s.%d",filename_output_profiles_dir,profiles_root,SID.My_rank);
           }
           else{
-            sprintf(filename_output_properties_temp,"%s_%s.catalog_%sgroups_properties",filename_groups_root,filename_number,group_text_prefix);
-            sprintf(filename_output_profiles_temp,  "%s_%s.catalog_%sgroups_profiles",  filename_groups_root,filename_number,group_text_prefix);            
+             strcpy(filename_output_properties,filename_output_properties_temp);
+             strcpy(filename_output_profiles,  filename_output_profiles_temp);
           }
-          SID_Barrier(SID.COMM_WORLD);
+          SID_Barrier(SID.COMM_WORLD); // This makes sure that any created directories are there before proceeding
 
           // Open files
           SID_log("Processing %sgroups...",SID_LOG_OPEN|SID_LOG_TIMER,group_text_prefix);
-          fp_properties_temp=fopen(filename_output_properties_temp,"w");
-          //fp_profiles_temp  =fopen(filename_output_profiles_temp,  "w");
+          if(flag_write_properties)
+             fp_properties=fopen(filename_output_properties,"w");
+          else
+             fp_properties=NULL;
+          if(flag_write_profiles)
+             fp_profiles=fopen(filename_output_profiles,"w");
+          else
+             fp_profiles=NULL;
 
           // Write header
-          fwrite(&(SID.My_rank), sizeof(int),1,fp_properties_temp);
-          fwrite(&(SID.n_proc),  sizeof(int),1,fp_properties_temp);
-          fwrite(&n_groups,      sizeof(int),1,fp_properties_temp);
-          fwrite(&n_groups_all,  sizeof(int),1,fp_properties_temp);
-          //fwrite(&(SID.My_rank), sizeof(int),1,fp_profiles_temp);
-          //fwrite(&(SID.n_proc),  sizeof(int),1,fp_profiles_temp);
-          //fwrite(&n_groups,      sizeof(int),1,fp_profiles_temp);
-          //fwrite(&n_groups_all,  sizeof(int),1,fp_profiles_temp);
-          
-          // Create and write the properties and profiles of each group/subgroup in turn;
-          //   write to a separate temporary file for each rank
+          if(fp_properties!=NULL){
+             fwrite(&(SID.My_rank), sizeof(int),1,fp_properties);
+             fwrite(&(SID.n_proc),  sizeof(int),1,fp_properties);
+             fwrite(&n_groups,      sizeof(int),1,fp_properties);
+             fwrite(&n_groups_all,  sizeof(int),1,fp_properties);
+          }
+          if(fp_profiles!=NULL){
+             fwrite(&(SID.My_rank), sizeof(int),1,fp_profiles);
+             fwrite(&(SID.n_proc),  sizeof(int),1,fp_profiles);
+             fwrite(&n_groups,      sizeof(int),1,fp_profiles);
+             fwrite(&n_groups_all,  sizeof(int),1,fp_profiles);
+          }          
+
+          // Create and write the properties and profiles of each group/subgroup in turn
           for(i_group=0,n_truncated=0,largest_truncated_local=0;i_group<n_groups;i_group++){
             if(compute_group_analysis(&properties,
                                       &profile,
@@ -823,13 +843,15 @@ int main(int argc, char *argv[]){
                n_truncated++;
                largest_truncated_local=MAX(largest_truncated_local,n_particles_groups[i_group]);
             }
-            write_group_analysis(fp_properties_temp,
-                                 fp_profiles_temp,
+            write_group_analysis(fp_properties,
+                                 fp_profiles,
                                  &properties,
                                  &profile);
           }
-          fclose(fp_properties_temp);
-          //fclose(fp_profiles_temp);
+          if(fp_properties!=NULL)
+            fclose(fp_properties);
+          if(fp_profiles!=NULL)
+            fclose(fp_profiles);
           calc_max_global(&largest_truncated_local,&largest_truncated,1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
 
           SID_log("Done. (f_truncated=%6.2lf%% largest=%d)",SID_LOG_CLOSE,100.*(double)n_truncated/(double)n_groups,largest_truncated);
@@ -838,9 +860,9 @@ int main(int argc, char *argv[]){
 
       // Clean-up
       free_cosmo(&cosmo);
-      SID_free((void **)&ids_snapshot_sort_index);
-      SID_free((void **)&ids_groups_sort_index);
-      SID_free((void **)&ids_sort_index);
+      SID_free(SID_FARG ids_snapshot_sort_index);
+      SID_free(SID_FARG ids_groups_sort_index);
+      SID_free(SID_FARG ids_sort_index);
     }
     // If the group catalog or snapshot is empty, create an empty file
     else{
@@ -855,21 +877,25 @@ int main(int argc, char *argv[]){
           break;
         }
         n_groups_all=0;
-        sprintf(filename_output_properties,"%s_%s.catalog_%sgroups_properties",filename_groups_root,filename_number,group_text_prefix);
-        fp_properties=fopen(filename_output_properties,"w");
-        n_temp=1;
-        fwrite(&n_temp,        sizeof(int),1,fp_properties);
-        fwrite(&n_temp,        sizeof(int),1,fp_properties);
-        fwrite(&n_groups_all,  sizeof(int),1,fp_properties);
-        fwrite(&n_groups_all,  sizeof(int),1,fp_properties);
-        fclose(fp_properties);
-        sprintf(filename_output_profiles,  "%s_%s.catalog_%sgroups_profiles",filename_groups_root,filename_number,group_text_prefix);
-        //fp_profiles  =fopen(filename_output_profiles,  "w");
-        //fwrite(&n_temp,        sizeof(int),1,fp_profiles);
-        //fwrite(&n_temp,        sizeof(int),1,fp_profiles);
-        //fwrite(&n_groups_all,  sizeof(int),1,fp_profiles);
-        //fwrite(&n_groups_all,  sizeof(int),1,fp_profiles);
-        //fclose(fp_profiles);
+        n_temp      =1;
+        if(flag_write_properties){
+           sprintf(filename_output_properties,"%s_%s.catalog_%sgroups_properties",filename_groups_root,filename_number,group_text_prefix);
+           fp_properties=fopen(filename_output_properties,"w");
+           fwrite(&n_temp,        sizeof(int),1,fp_properties);
+           fwrite(&n_temp,        sizeof(int),1,fp_properties);
+           fwrite(&n_groups_all,  sizeof(int),1,fp_properties);
+           fwrite(&n_groups_all,  sizeof(int),1,fp_properties);
+           fclose(fp_properties);
+        }
+        if(flag_write_profiles){
+           sprintf(filename_output_profiles,  "%s_%s.catalog_%sgroups_profiles",filename_groups_root,filename_number,group_text_prefix);
+           fp_profiles  =fopen(filename_output_profiles,  "w");
+           fwrite(&n_temp,        sizeof(int),1,fp_profiles);
+           fwrite(&n_temp,        sizeof(int),1,fp_profiles);
+           fwrite(&n_groups_all,  sizeof(int),1,fp_profiles);
+           fwrite(&n_groups_all,  sizeof(int),1,fp_profiles);
+           fclose(fp_profiles);
+        }
       }
       SID_log("Done.",SID_LOG_CLOSE);
     }
