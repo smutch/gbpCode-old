@@ -88,7 +88,6 @@ void read_groups(char        *filename_groups_root,
    va_start(vargs,catalog_name);
  
    SID_profile_start("read_groups",SID_PROFILE_DEFAULT);
-   SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
  
    // Set filenames
    sprintf(filename_cat,      "%03d",                   i_file);
@@ -179,10 +178,10 @@ void read_groups(char        *filename_groups_root,
    if(flag_read_MBP_ids_only){
       size_t n_particiles_temp;
       n_particiles_temp=(size_t)n_groups;
-      ADaPS_store(&(plist->data),&n_particiles_temp,"n_particles_all_%s",ADaPS_SCALAR_SIZE_T,catalog_name);
+      ADaPS_store(&(plist->data),&n_ids,"n_particles_all_%s",ADaPS_SCALAR_SIZE_T,catalog_name);
    }
    else
-      ADaPS_store(&(plist->data),&n_particles,"n_particles_all_%s",ADaPS_SCALAR_SIZE_T,catalog_name);
+      ADaPS_store(&(plist->data),&n_ids,"n_particles_all_%s",ADaPS_SCALAR_SIZE_T,catalog_name);
 
    // Initialize domain decomposition ...
    char    filename_in_PHKs[MAX_FILENAME_LENGTH];
@@ -254,7 +253,8 @@ void read_groups(char        *filename_groups_root,
 
         // Determine local key ranges if they were not passed to us ...
         if(PHK_min_local_in<0 || PHK_max_local_in<0){
-           for(i_rank=0,i_group=0,i_buffer=n_buffer_max,n_groups_left=n_groups,n_particles_left=n_particles,n_particles_base=0,PHK_last=-1;i_rank<SID.n_proc && i_group<n_groups;i_rank++){
+           for(i_rank=0,i_group=0,i_buffer=n_buffer_max,n_groups_left=n_groups,n_particles_left=n_particles,n_particles_base=0,PHK_last=-1;
+               i_rank<SID.n_proc && i_group<n_groups;i_rank++){
 
               // Each rank gets at least one halo (unless there are none left)
               int n_seek;
@@ -320,10 +320,19 @@ void read_groups(char        *filename_groups_root,
               SID_Bcast(&PHK_last,        sizeof(int),   i_rank,SID.COMM_WORLD);
            }
 
+           // Make sure the last rank covers up to the last possible
+           //   key, even if there is nothing in it.  Important when
+           //   passing this key range to another catalog, where keys
+           //   at the end which are empty here, may not be empty there.
+           PHK_last=PHK_N_KEYS_3D(n_bits_PHK)-1;
+           if(SID.My_rank==(i_rank-1))
+              PHK_max_local=PHK_last;
+
            // If there are left-over ranks, they receieve nothing
-           for(;i_rank<SID.n_proc;i_rank++){
+           int j_rank;
+           for(j_rank=1;i_rank<SID.n_proc;i_rank++,j_rank++){
               if(i_rank==SID.My_rank){
-                 PHK_min_local    =PHK_DIM_SIZE(n_bits_PHK)*PHK_DIM_SIZE(n_bits_PHK)*PHK_DIM_SIZE(n_bits_PHK)+i_rank;
+                 PHK_min_local    =PHK_last+j_rank; // Range must be continuous to satisfy future sanity checks
                  PHK_max_local    =PHK_min_local;
                  n_particles_local=0;
                  n_groups_local   =0;
@@ -530,6 +539,8 @@ void read_groups(char        *filename_groups_root,
         int    n_seek;
         int    group_length_i;
         size_t n_particles_left;
+        int    last_used_rank;
+
         if(SID.I_am_Master){
           fread(&n_groups,sizeof(int),1,fp_groups);
           for(i_group=0,n_particles=0;i_group<n_groups;i_group++){
@@ -542,27 +553,43 @@ void read_groups(char        *filename_groups_root,
         n_groups_local   =0;
         n_particles_local=0;
         n_seek           =0;
+        last_used_rank   =0; // default
         fseeko(fp_groups,(off_t)(sizeof(int)),SEEK_SET);
         for(i_rank=0,i_group=0,n_particles_left=n_particles;i_rank<SID.n_proc && n_particles_left>0;i_rank++){
            if(n_seek>0)
               fseeko(fp_groups,(off_t)(n_seek*sizeof(int)),SEEK_CUR);
            if(i_rank==SID.My_rank){
               n_seek=0;
-              while(i_group<n_groups && n_particles_local<(size_t)((float)(n_particles_left)/(float)(SID.n_proc-i_rank))){
+              // The check for group_length_i==0 is needed in case the last group of the catalog has zero size.  If
+              //   this check isn't there, the last group will be skipped, causing subsequent sanity checks on n_groups to fail
+              while((i_group<n_groups && n_particles_local<(size_t)((double)(n_particles_left)/(double)(SID.n_proc-i_rank)))||(group_length_i==0)){
                  fread(&group_length_i,sizeof(int),1,fp_groups);
                  n_groups_local++;
                  n_particles_local+=(size_t)group_length_i;
                  n_seek++;
                  i_group++;
+                 last_used_rank=SID.My_rank;
               }
               n_particles_left-=n_particles_local;
            }
            SID_Bcast(&n_particles_left,sizeof(size_t),i_rank,SID.COMM_WORLD);
            SID_Bcast(&n_seek,          sizeof(int),   i_rank,SID.COMM_WORLD);
            SID_Bcast(&i_group,         sizeof(int),   i_rank,SID.COMM_WORLD);
+           SID_Bcast(&last_used_rank,  sizeof(int),   i_rank,SID.COMM_WORLD);
            if(i_rank==SID.My_rank)
               n_seek=0;
         }
+
+        // If there are groups left over, give them to the last used rank
+        if(last_used_rank==SID.My_rank){
+           while(i_group<n_groups){
+              fread(&group_length_i,sizeof(int),1,fp_groups);
+              n_groups_local++;
+              n_particles_local+=(size_t)group_length_i;
+              i_group++;
+           }
+        }
+
         // If there are left-over ranks, they receieve nothing
         for(;i_rank<SID.n_proc;i_rank++){
            if(i_rank==SID.My_rank){
@@ -766,19 +793,21 @@ void read_groups(char        *filename_groups_root,
             storage_index_subgroup =(int *)SID_malloc(sizeof(int)*n_groups_local);
             storage_index_particles=(int *)SID_malloc(sizeof(int)*n_groups_local);
 
-            // ... subgroups ...
-            temp_array[0]=0;
-            for(i_group=1;i_group<n_groups_local;i_group++)
-               temp_array[i_group]=temp_array[i_group-1]+n_subgroups_group[i_group-1];
-            for(i_group=0;i_group<n_groups_local;i_group++)
-               storage_index_subgroup[i_group]=temp_array[storage_index_group[i_group]];
+            if(n_groups_local>0){
+               // ... subgroups ...
+               temp_array[0]=0;
+               for(i_group=1;i_group<n_groups_local;i_group++)
+                  temp_array[i_group]=temp_array[i_group-1]+n_subgroups_group[i_group-1];
+               for(i_group=0;i_group<n_groups_local;i_group++)
+                  storage_index_subgroup[i_group]=temp_array[storage_index_group[i_group]];
 
-            // ... particles ...
-            for(i_group=1;i_group<n_groups_local;i_group++)
-               temp_array[i_group]=temp_array[i_group-1]+group_length[i_group-1];
-            for(i_group=0;i_group<n_groups_local;i_group++)
-               storage_index_particles[i_group]=temp_array[storage_index_group[i_group]];
-            SID_free(SID_FARG temp_array);
+               // ... particles ...
+               for(i_group=1;i_group<n_groups_local;i_group++)
+                  temp_array[i_group]=temp_array[i_group-1]+group_length[i_group-1];
+               for(i_group=0;i_group<n_groups_local;i_group++)
+                  storage_index_particles[i_group]=temp_array[storage_index_group[i_group]];
+               SID_free(SID_FARG temp_array);
+            }
 
             // Count the number of subgroups in the boundary region if we are using PHK decomposition
             if(flag_PHK_distribute){
@@ -908,8 +937,12 @@ void read_groups(char        *filename_groups_root,
                      test[i_test]++;
                   // Sanity Check
                   for(i_subgroup=0;i_subgroup<n_subgroups_group[index_group];i_subgroup++){
-                     if((subgroup_offset[index_subgroup+i_subgroup]+subgroup_length[index_subgroup+i_subgroup])>(group_offset[index_group]+group_length[index_group])){
-                        SID_trap_error("Subgroup {%d}'s ID list over-runs group {%d}'s ID list.",ERROR_LOGIC,index_subgroup+i_subgroup,index_group);
+                     int over_run;
+                     over_run=(subgroup_offset[index_subgroup+i_subgroup]+subgroup_length[index_subgroup+i_subgroup])-(group_offset[index_group]+group_length[index_group]);
+                     if(over_run>0){
+                        SID_trap_error("Subgroup {%d;offset=%d & size=%d}'s ID list over-runs group {%d;offset=%d & size=%d}'s ID list by %d particles.",ERROR_LOGIC,
+                                       index_subgroup+i_subgroup,subgroup_offset[index_subgroup+i_subgroup],subgroup_length[index_subgroup+i_subgroup],
+                                       index_group,              group_offset[index_group],                 group_length[index_group],over_run);
                      }
                   }
                   j_group++;
@@ -954,7 +987,7 @@ void read_groups(char        *filename_groups_root,
          if((fp_ids=fopen(filename_ids,"r"))!=NULL)
             fseeko(fp_ids,(off_t)header_size_ids,SEEK_SET);
          else
-           SID_trap_error("Could not open {%s}!\n",ERROR_LOGIC,filename_ids);
+            SID_trap_error("Could not open {%s}!\n",ERROR_LOGIC,filename_ids);
          if(n_ids>0){
 
             // Create the array that will hold the IDs
@@ -962,7 +995,7 @@ void read_groups(char        *filename_groups_root,
             if(flag_read_MBP_ids_only)
                input_id=(size_t *)SID_malloc(sizeof(size_t)*n_groups_local);
             else
-               input_id=(size_t *)SID_malloc(sizeof(size_t)*n_particles_local); //**
+               input_id=(size_t *)SID_malloc(sizeof(size_t)*n_particles_local);
 
             // These variables are used to check for indexing inconsistancies
             int  i_test,j_test;
@@ -979,7 +1012,6 @@ void read_groups(char        *filename_groups_root,
                buffer=(size_t *)SID_malloc(sizeof(size_t)*max_group_length);
             else
                buffer=(size_t *)buffer_in;
-
             // Read the IDs
             int   index_group;
             int   index_particles;
@@ -1041,14 +1073,16 @@ void read_groups(char        *filename_groups_root,
             }
 
             // ... groups ...
-            group_offset[0]=0;
-            for(i_group=1;i_group<n_groups_local;i_group++)
-               group_offset[i_group]=group_offset[i_group-1]+group_length[i_group-1];
+            if(n_groups_local>0){
+               group_offset[0]=0;
+               for(i_group=1;i_group<n_groups_local;i_group++)
+                  group_offset[i_group]=group_offset[i_group-1]+group_length[i_group-1];
 
-            // ... finalize subgroup offsets ...
-            for(i_group=0,i_subgroup=0;i_group<n_groups_local && i_subgroup<n_subgroups_local;i_group++){
-               for(j_subgroup=0;j_subgroup<n_subgroups_group[i_group];j_subgroup++,i_subgroup++){
-                  subgroup_offset[i_subgroup]+=group_offset[i_group];
+               // ... finalize subgroup offsets ...
+               for(i_group=0,i_subgroup=0;i_group<n_groups_local && i_subgroup<n_subgroups_local;i_group++){
+                  for(j_subgroup=0;j_subgroup<n_subgroups_group[i_group];j_subgroup++,i_subgroup++){
+                     subgroup_offset[i_subgroup]+=group_offset[i_group];
+                  }
                }
             }
 
@@ -1081,6 +1115,5 @@ void read_groups(char        *filename_groups_root,
    va_end(vargs);
    
    SID_log("Done.",SID_LOG_CLOSE);
-   SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1); 
    SID_profile_stop(SID_PROFILE_DEFAULT);
 }

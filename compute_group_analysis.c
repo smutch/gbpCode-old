@@ -6,22 +6,22 @@
 #include <gbpHalos.h>
 
 int compute_group_analysis(halo_properties_info  *properties,
-                            halo_profile_info     *profile,
-                            size_t                *id_array,
-                            GBPREAL                  *x_array,
-                            GBPREAL                  *y_array,
-                            GBPREAL                  *z_array,
-                            GBPREAL                  *vx_array,
-                            GBPREAL                  *vy_array,
-                            GBPREAL                  *vz_array,
-                            size_t                *ids_sort_index,
-                            double                 box_size,
-                            double                 h_Hubble,
-                            double                 Omega_M,
-                            double                 particle_mass,
-                            int                    n_particles,
-                            double                 redshift,
-                            cosmo_info            *cosmo){
+                           halo_profile_info     *profile,
+                           size_t                *id_array,
+                           GBPREAL               *x_array,
+                           GBPREAL               *y_array,
+                           GBPREAL               *z_array,
+                           GBPREAL               *vx_array,
+                           GBPREAL               *vy_array,
+                           GBPREAL               *vz_array,
+                           size_t                *ids_sort_index,
+                           double                 box_size,
+                           double                 h_Hubble,
+                           double                 Omega_M,
+                           double                 particle_mass,
+                           int                    n_particles,
+                           double                 redshift,
+                           cosmo_info            *cosmo){
   double      *R;
   size_t      *R_index;
   size_t       index_MBP;

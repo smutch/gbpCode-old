@@ -47,6 +47,7 @@ struct halo_properties_info{
   float     q_triaxial;                // Triaxial shape parameter q=b/a
   float     s_triaxial;                // Triaxial shape parameter s=c/a
   float     shape_eigen_vectors[3][3]; // Normalized triaxial shape eigenvectors
+  char      padding[8];                // Alignment padding
 };
 
 typedef struct halo_profile_bin_info halo_profile_bin_info;

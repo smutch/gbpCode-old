@@ -93,9 +93,6 @@ void match_halos(plist_info  *plist_1_in,
   size_t  n_particles_exchange_2;
   int     n_groups_exchange_2;
 
-  //SID_profile_start("match_groups",SID_PROFILE_NOTMPIENABLED);
-  //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
-
   // Check if we are back-matching.  If we are, then switch the inputs.
   if(check_mode_for_flag(mode,MATCH_BACK)){
     plist_1 =plist_2_in;
@@ -135,45 +132,31 @@ void match_halos(plist_info  *plist_1_in,
     flag_match_substructure=FALSE;
 
   // Check if we are using Peano-Hilbert Key (PHK) decomposition
-  int n_bits_PHK_1;
-  int PHK_min_1;
-  int PHK_max_1;
-  int *PHK_groups_1;
   int n_groups_boundary_1;
   int n_particles_boundary_1;
-  int n_bits_PHK_2;
-  int PHK_min_2;
-  int PHK_max_2;
-  int *PHK_groups_2_local;
   int n_groups_boundary_2_local;
   int n_particles_boundary_2_local;
+  int n_bits_PHK_1;
+  int n_bits_PHK_2;
   if(ADaPS_exist(plist_1->data,"n_bits_PHK_%s",catalog_1)){
      flag_PHK_decomp=TRUE;
      if(!ADaPS_exist(plist_2->data,"n_bits_PHK_%s",catalog_2))
         SID_trap_error("Both catalogs must be loaded with PHK decompositions.",ERROR_LOGIC);
-     n_bits_PHK_1          =((int *)ADaPS_fetch(plist_1->data,"n_bits_PHK_%s",          catalog_1))[0];
-     PHK_min_1             =((int *)ADaPS_fetch(plist_1->data,"PHK_min_local_%s",       catalog_1))[0];
-     PHK_max_1             =((int *)ADaPS_fetch(plist_1->data,"PHK_max_local_%s",       catalog_1))[0];
-     n_particles_boundary_1=((int *)ADaPS_fetch(plist_1->data,"n_particles_boundary_%s",catalog_1))[0];
-     n_bits_PHK_2          =((int *)ADaPS_fetch(plist_2->data,"n_bits_PHK_%s",          catalog_2))[0];
-     PHK_min_2             =((int *)ADaPS_fetch(plist_2->data,"PHK_min_local_%s",       catalog_2))[0];
-     PHK_max_2             =((int *)ADaPS_fetch(plist_2->data,"PHK_max_local_%s",       catalog_2))[0];
-     if(PHK_min_1!=PHK_min_2 || PHK_max_1!=PHK_max_2)
-        SID_trap_error("PHK ranges do not match between the two catalogs.",ERROR_LOGIC);
+     n_bits_PHK_1=((int *)ADaPS_fetch(plist_1->data,"n_bits_PHK_%s",catalog_1))[0];
+     n_bits_PHK_2=((int *)ADaPS_fetch(plist_2->data,"n_bits_PHK_%s",catalog_2))[0];
+     if(n_bits_PHK_1!=n_bits_PHK_2)
+        SID_trap_error("PHK decomposition of the two catalogs is incompatible (ie. %d!=%d).",ERROR_LOGIC,n_bits_PHK_1,n_bits_PHK_2);
+     n_particles_boundary_1      =((int *)ADaPS_fetch(plist_1->data,"n_particles_boundary_%s",catalog_1))[0];
      n_particles_boundary_2_local=((int *)ADaPS_fetch(plist_2->data,"n_particles_boundary_%s",catalog_2))[0];
      if(flag_match_subgroups){
-        PHK_groups_1             = (int *)ADaPS_fetch(plist_1->data,"PHK_subgroups_%s",       catalog_1);
-        PHK_groups_2_local       = (int *)ADaPS_fetch(plist_2->data,"PHK_subgroups_%s",       catalog_2);
         n_groups_boundary_1      =((int *)ADaPS_fetch(plist_1->data,"n_subgroups_boundary_%s",catalog_1))[0];
         n_groups_boundary_2_local=((int *)ADaPS_fetch(plist_2->data,"n_subgroups_boundary_%s",catalog_2))[0];
      }
      else{
-        PHK_groups_1             = (int *)ADaPS_fetch(plist_1->data,"PHK_groups_%s",          catalog_1);
-        PHK_groups_2_local       = (int *)ADaPS_fetch(plist_2->data,"PHK_groups_%s",          catalog_2);
         n_groups_boundary_1      =((int *)ADaPS_fetch(plist_1->data,"n_groups_boundary_%s",   catalog_1))[0];
         n_groups_boundary_2_local=((int *)ADaPS_fetch(plist_2->data,"n_groups_boundary_%s",   catalog_2))[0];
      }
-     SID_log("Groups are PH decomposed using %d-bit keys.",SID_LOG_COMMENT,n_bits_PHK_1);
+     SID_log("Groups are PH decomposed using %d-bit per dimension keys.",SID_LOG_COMMENT,n_bits_PHK_1);
   }
   else{
      flag_PHK_decomp     =FALSE;
@@ -279,6 +262,7 @@ void match_halos(plist_info  *plist_1_in,
       file_index_2_local       = (int *)ADaPS_fetch(plist_2->data,"file_index_groups_%s",    catalog_2);
     }
 
+
     // Set the number of particles that need to be checked by exchanges
     if(flag_PHK_decomp){
        n_groups_exchange_1   =n_groups_boundary_1;
@@ -342,28 +326,6 @@ void match_halos(plist_info  *plist_1_in,
         }
       }
     }
-/*
-if((i_file_1==930 && i_file_2==927)){
-  int i_g;
-  fprintf(stderr,"\n");
-  if(flag_match_subgroups){
-    for(i_g=0;i_g<n_groups_1;i_g++){
-      if(file_index_1[i_g]==246) fprintf(stderr,"FOUND1 %4d %4d %4d\n",SID.My_rank,i_g,n_groups_boundary_1);
-    }
-    for(i_g=0;i_g<n_groups_2_local;i_g++){
-      if(file_index_2_local[i_g]==130) fprintf(stderr,"FOUND2 %4d %4d %4d\n",SID.My_rank,i_g,n_groups_boundary_2_local);
-    }
-  }
-  else{
-    for(i_g=0;i_g<n_groups_1;i_g++){
-      if(file_index_1[i_g]==79) fprintf(stderr,"FOUND1 %4d %4d %4d -- %4d %4d %4d\n",SID.My_rank,i_g,n_groups_boundary_1,PHK_groups_1[i_g],PHK_min_1,PHK_max_1);
-    }
-    for(i_g=0;i_g<n_groups_2_local;i_g++){      
-      if(file_index_2_local[i_g]==28) fprintf(stderr,"FOUND2 %4d %4d %4d -- %4d %4d %4d\n",SID.My_rank,i_g,n_groups_boundary_2_local,PHK_groups_2_local[i_g],PHK_min_2,PHK_max_2);
-    }
-  }
-}
-*/
 
     // Create the arrays that will hold the results
     match     =(int   *)SID_malloc(sizeof(int)*n_match_1);
@@ -395,6 +357,8 @@ if((i_file_1==930 && i_file_2==927)){
     SID_Allreduce(&n_particles_2_local,&n_particles_2_max,1,SID_SIZE_T,SID_MAX,SID.COMM_WORLD);
     SID_Allreduce(&n_groups_2_local,   &n_groups_2_max,   1,SID_INT,   SID_MAX,SID.COMM_WORLD);
     if(SID.n_proc>1){
+       SID_log("Group    buffer size=%d groups",   SID_LOG_COMMENT,n_groups_2_max);
+       SID_log("Particle buffer size=%d particles",SID_LOG_COMMENT,n_particles_2_max);
        n_particles_group_2=(int    *)SID_calloc(n_groups_2_max   *sizeof(int));
        group_index_2      =(int    *)SID_calloc(n_particles_2_max*sizeof(int));
        group_offset_2     =(int    *)SID_calloc(n_groups_2_max   *sizeof(int));
@@ -443,43 +407,43 @@ if((i_file_1==930 && i_file_2==927)){
                               NULL,
                               i_rank);
          SID_log("group count...",SID_LOG_COMMENT);SID_Barrier(SID.COMM_WORLD);
-         exchange_ring_buffer(&n_groups_2_local,
-                              sizeof(int),
-                              1,
-                              &n_groups_2,
-                              NULL,
-                              i_rank);
+         exchange_ring_buffer(&n_groups_2_local, // send
+                              sizeof(int),       // send/recv
+                              1,                 // send
+                              &n_groups_2,       // recv
+                              NULL,              // recv
+                              i_rank); 
 
          // Perform exchange
-         SID_log("group sizes...",SID_LOG_COMMENT);SID_Barrier(SID.COMM_WORLD);
+         SID_log("group sizes...",SID_LOG_COMMENT);
          exchange_ring_buffer(n_particles_group_2_local,
                               sizeof(int),
-                              (size_t)n_particles_2_local,
+                              (size_t)n_groups_2_local,
                               n_particles_group_2,
                               NULL,
                               i_rank);
-         SID_log("group indices...",SID_LOG_COMMENT);SID_Barrier(SID.COMM_WORLD);
+         SID_log("group indices...",SID_LOG_COMMENT);
          exchange_ring_buffer(group_index_2_local,
                               sizeof(int),
                               (size_t)n_particles_2_local,
                               group_index_2,
                               NULL,
                               i_rank);
-         SID_log("group offsets...",SID_LOG_COMMENT);SID_Barrier(SID.COMM_WORLD);
+         SID_log("group offsets...",SID_LOG_COMMENT);
          exchange_ring_buffer(group_offset_2_local,
                               sizeof(int),
                               (size_t)n_groups_2_local,
                               group_offset_2,
                               NULL,
                               i_rank);
-         SID_log("file indices...",SID_LOG_COMMENT);SID_Barrier(SID.COMM_WORLD);
+         SID_log("file indices...",SID_LOG_COMMENT);
          exchange_ring_buffer(file_index_2_local,
                               sizeof(int),
                               (size_t)n_groups_2_local,
                               file_index_2,
                               NULL,
                               i_rank);
-         SID_log("ids...",SID_LOG_COMMENT);SID_Barrier(SID.COMM_WORLD);
+         SID_log("ids...",SID_LOG_COMMENT);
          exchange_ring_buffer(id_2_local,
                               sizeof(size_t),
                               (size_t)n_particles_2_local,
@@ -493,11 +457,10 @@ if((i_file_1==930 && i_file_2==927)){
        // Create id sort indices for the 2nd catalog.
        merge_sort(id_2,n_particles_2,&index_2,SID_SIZE_T,SORT_COMPUTE_INDEX,FALSE);
 
-       // Perform search
+       // Perform search (i_mark is incremented at the end of this loop)
        for(i_group=0,i_particle=0,i_mark=0;
            i_group<n_groups_1 && i_mark<n_match_1;
            i_group++){
-
 
          // Decide if we are trying to match this halo or not
          if(flag_read_marked){
@@ -533,17 +496,26 @@ if((i_file_1==930 && i_file_2==927)){
 
            // Loop over the particles in the i_group'th group of catalog_1, generating match scores to 
            //   overlaping halos in catalog_2.  We accumulate the results from each rank and keep the best match.
-           int flag_start_scan;
-           for(k_particle=0,n_hist=0,flag_start_scan=TRUE;
+           int    max_id_gap     =25; // If two consecuative IDs are more than this appart, use bisection to find next index
+           int    flag_use_bisect=TRUE;
+           size_t id_1_last      =0;
+           for(k_particle=0,n_hist=0;
                k_particle<n_particles_group_1[i_group];
-               k_particle++,flag_start_scan=FALSE){
+               k_particle++,flag_use_bisect=FALSE){
+
+             // Set the ID we are looking for and decide how we're going to find it
              id_1_i=id_1[group_offset_1[i_group]+index_1[k_particle]];
+             if((id_1_i-id_1_last)>max_id_gap)
+                flag_use_bisect=TRUE;
+             id_1_last=id_1_i;
 
              // Check to see if the current particle is in the second catalog.  If so, get the id of the halo it's in.
-             if(flag_start_scan)
+             if(flag_use_bisect)
                 j_particle=find_index(id_2,id_1_i,n_particles_2,index_2);
-             while(id_1_i>id_2[index_2[j_particle]] && j_particle<(n_particles_2-2)) j_particle++;
-             if(id_1_i>id_2[index_2[j_particle]])                                    j_particle++;
+             if(j_particle<(n_particles_2-1)){
+                while(id_1_i>id_2[index_2[j_particle]] && j_particle<(n_particles_2-2)) j_particle++;
+                if(id_1_i>id_2[index_2[j_particle]])                                    j_particle++;
+             }
              if(id_1_i==id_2[index_2[j_particle]])
                flag_match_continue=TRUE;
              else
@@ -613,7 +585,7 @@ if((i_file_1==930 && i_file_2==927)){
            if(n_hist>0){
              switch(flag_match_substructure){
                // Keep the smallest system if we are matching substructure
-             case TRUE:
+               case TRUE:
                for(i_hist=1,j_hist=0;i_hist<n_hist;i_hist++){
                  if(n_particles_group_2[hist_list[i_hist]]<
                     n_particles_group_2[hist_list[j_hist]])
@@ -621,7 +593,7 @@ if((i_file_1==930 && i_file_2==927)){
                }
                break;
                // Keep the system with the highest score otherwise
-             default:
+               default:
                for(i_hist=1,j_hist=0;i_hist<n_hist;i_hist++){
                  if(hist_score[i_hist]>hist_score[j_hist])
                    j_hist=i_hist;
@@ -643,10 +615,8 @@ if((i_file_1==930 && i_file_2==927)){
 
        // Clean-up
        SID_free(SID_FARG index_2);
-       if(SID.n_proc>1){
+       if(SID.n_proc>1)
           SID_log("Done.",SID_LOG_CLOSE);
-          SID_Barrier(SID.COMM_WORLD);
-       }
     } // Loop over ranks
     calc_sum_global(&n_match,&n_match_all,1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
     n_match=n_match_all;
@@ -719,7 +689,6 @@ if((i_file_1==930 && i_file_2==927)){
     }
     SID_log("NO GROUPS TO MATCH!",SID_LOG_CLOSE);
   }
-  //SID_profile_stop(SID_PROFILE_DEFAULT);
 
 }
 
