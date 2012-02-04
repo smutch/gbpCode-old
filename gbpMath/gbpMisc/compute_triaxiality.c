@@ -118,12 +118,12 @@ void compute_triaxiality(double     *x_in,
     gsl_eigen_symmv(&m.matrix,eigen_vector,eigen_matrix,w); 
     gsl_eigen_symmv_sort(eigen_vector,eigen_matrix,GSL_EIGEN_SORT_ABS_DESC);
 
-    // Convert goofy gsl vectors and such into something simpler to use
+    // Convert gsl vectors and such into something simpler to use
     for(i=0;i<3;i++){
       return_values[i]    =sqrt(gsl_vector_get(eigen_vector,i));
-      return_vectors[i][0]=gsl_matrix_get(eigen_matrix,i,0);
-      return_vectors[i][1]=gsl_matrix_get(eigen_matrix,i,1);
-      return_vectors[i][2]=gsl_matrix_get(eigen_matrix,i,2);
+      return_vectors[i][0]=gsl_matrix_get(eigen_matrix,0,i);
+      return_vectors[i][1]=gsl_matrix_get(eigen_matrix,1,i);
+      return_vectors[i][2]=gsl_matrix_get(eigen_matrix,2,i);
     }
     q_new=return_values[1]/return_values[0];
     s_new=return_values[2]/return_values[0];

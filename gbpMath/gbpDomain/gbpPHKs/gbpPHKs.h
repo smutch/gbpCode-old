@@ -7,7 +7,9 @@
 #include <SK_hilbert_util.h>
 typedef sfc_key_t PHK_t;
 
-#define PHK_DIM_SIZE(N) (1L << N)
+#define PHK_DIM_SIZE(N)   (1L << N)
+#define PHK_N_KEYS_2D(N) ((1L << N)*(1L << N))
+#define PHK_N_KEYS_3D(N) ((1L << N)*(1L << N)*(1L << N))
 
 #define SID_PHK_T SID_SIZE_T
 

@@ -55,8 +55,8 @@ setenv GBP_VALGRIND_PLAT x86-darwin
 #----------------------------------------------------------------------
 if ( $HOSTTYPE == 'x86_64-linux' ) then
   setenv USE_SPRNG         1
-  setenv GBP_MPI           /usr/local/gnu/x86_64/openmpi-1.2.5-nonib/
-  # setenv GBP_MPI           /usr/local/gnu/x86_64/openmpi-1.4/
+  # setenv GBP_MPI           /usr/local/gnu/x86_64/openmpi-1.2.5-nonib/
+  setenv GBP_MPI           /usr/local/gnu/x86_64/openmpi-1.4/
   setenv GBP_VALGRIND_PLAT amd64-linux
   # We have to check for the HOSTNAME variable, because scp, sshfs etc does
   #   not define it and things crash if we try to reference it
