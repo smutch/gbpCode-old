@@ -324,5 +324,5 @@ void init_cosmo(cosmo_info **cosmo,
 }
 
 void free_cosmo(cosmo_info **cosmo){
-  ADaPS_free(SID_FARG cosmo);
+  ADaPS_free((void **)cosmo);
 }
