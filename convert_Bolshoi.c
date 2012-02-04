@@ -192,6 +192,10 @@ int main(int argc, char *argv[]){
   float           *v_x_array;
   float           *v_y_array;
   float           *v_z_array;
+  float           *spin_x_array;
+  float           *spin_y_array;
+  float           *spin_z_array;
+  float            spin_amplitude;
   size_t          *halo_id_index=NULL;
   size_t           halo_index;
   int              tree_lo_file[1];
@@ -205,12 +209,15 @@ int main(int argc, char *argv[]){
   // Fetch user inputs
   m_p              =1.35e8;
   n_write          =5*5*5;
-  n_header_lines   =8;
-  i_write_start  =atoi(argv[1]);
-  i_write_stop   =atoi(argv[2]);
+  n_header_lines   =25;
+  //i_write_start  =atoi(argv[1]);
+  //i_write_stop   =atoi(argv[2]);
+
+  i_write_start=25*atoi(argv[1])+5*atoi(argv[2])+atoi(argv[3]);
+  i_write_stop =i_write_start;
 
   sprintf(filename_dir_out,"/nfs/dset/shrek071/millenium/bolshoi/wip3/treedata/");
-  sprintf(filename_dir_out,"/nfs/dset/shrek071/millenium/bolshoi/rockstar_trees/");
+  sprintf(filename_dir_out,"/nfs/dset/shrek071/millenium/bolshoi/rockstar_final/");
   progenitor_mode=TREE_PROGENITOR_ORDER_DELUCIA;
   //progenitor_mode=TREE_PROGENITOR_ORDER_DEFAULT;
   tree_mode      =0; // join-on
@@ -228,7 +235,7 @@ int main(int argc, char *argv[]){
           SID_log("Processing file %d out of %d...",SID_LOG_OPEN|SID_LOG_TIMER,i_write+1,n_write);
 
           // Open file
-          sprintf(filename_in,"/nfs/dset/shrek071/millenium/bolshoi/rockstar_trees/tree_%d_%d_%d.dat",i_x,i_y,i_z);
+          sprintf(filename_in,"/nfs/dset/shrek071/millenium/bolshoi/rockstar_final/tree_%d_%d_%d.dat",i_x,i_y,i_z);
           SID_log("Open file {%s}...",SID_LOG_OPEN,filename_in);
           fp_in=fopen(filename_in,"r");
           SID_log("Done.",SID_LOG_CLOSE);
@@ -247,7 +254,8 @@ int main(int argc, char *argv[]){
 
           // Read list of expansion factors
           SID_log("Reading scale list...",SID_LOG_OPEN);
-          sprintf(filename_snaps,"/nfs/dset/shrek071/millenium/bolshoi/treedata/Bolshoi.a_list",i_write);
+          sprintf(filename_snaps,"/nfs/dset/shrek071/millenium/bolshoi/treedata/Bolshoi.a_list");
+          sprintf(filename_snaps,"/nfs/dset/shrek071/millenium/bolshoi/rockstar_final/tree.a_list");
           fp_snaps=fopen(filename_snaps,"r");
           n_scales=count_lines_data(fp_snaps);
           for(i_scale=0;i_scale<n_scales;i_scale++){
@@ -308,6 +316,9 @@ int main(int argc, char *argv[]){
           v_x_array             =(float *)SID_malloc(sizeof(float)*n_halos);
           v_y_array             =(float *)SID_malloc(sizeof(float)*n_halos);
           v_z_array             =(float *)SID_malloc(sizeof(float)*n_halos);
+          spin_x_array          =(float *)SID_malloc(sizeof(float)*n_halos);
+          spin_y_array          =(float *)SID_malloc(sizeof(float)*n_halos);
+          spin_z_array          =(float *)SID_malloc(sizeof(float)*n_halos);
           SID_log("Done.",SID_LOG_CLOSE);
 
           // Over-allocated; this wastes RAM!
@@ -322,13 +333,18 @@ int main(int argc, char *argv[]){
           i_tree_next_report=n_trees_in/10;
           i_report          =0;
           // Read each tree in turn
-          while(!feof(fp_in)){
+          //while(!feof(fp_in)){
+          for(i_halo=0;i_halo<n_halos;){
             // Process iso-tree halos
             j_halo=0;
             n_halos_isotree[i_tree]=0;
             do{
               grab_next_line(fp_in,&line,&line_length);
               // Increment counters (if this isn't a new iso-tree header line)
+              // scale(0) id(1) desc_scale(2) desc_id(3) num_prog(4) pid(5) upid(6) 
+              // desc_pid(7) phantom(8)  mvir(9) orig_mvir(10) rvir(11) rs(12) 
+              // vrms(13) mmp?(14) scale_of_last_MM(15) vmax(16) x(17) y(18) z(19) 
+              // vx(20) vy(21) vz(22) Jx(23) Jy(24) Jz(25) Spin(26)
               if(strlen(line)!=0 && !check_comment(line)){ // Ignore blank lines
                 grab_float(line,1, &(halo_scale_array[i_halo]));
                 grab_int(  line,2, &(halo_id_array[i_halo]));
@@ -346,6 +362,16 @@ int main(int argc, char *argv[]){
                 grab_float(line,21,&(v_x_array[i_halo]));
                 grab_float(line,22,&(v_y_array[i_halo]));
                 grab_float(line,23,&(v_z_array[i_halo]));
+                grab_float(line,24,&(spin_x_array[i_halo]));
+                grab_float(line,25,&(spin_y_array[i_halo]));
+                grab_float(line,26,&(spin_z_array[i_halo]));
+                grab_float(line,27,&(spin_amplitude));
+                spin_amplitude      /=(float)sqrt((double)(spin_x_array[i_halo]*spin_x_array[i_halo])+
+                                                  (double)(spin_y_array[i_halo]*spin_y_array[i_halo])+
+                                                  (double)(spin_z_array[i_halo]*spin_z_array[i_halo]));
+                spin_x_array[i_halo]*=spin_amplitude;
+                spin_y_array[i_halo]*=spin_amplitude;
+                spin_z_array[i_halo]*=spin_amplitude;
                 if(j_halo==0){
                   if(uberparent_id_array[i_halo]>=0)
                     group_id=uberparent_id_array[i_halo];
@@ -365,7 +391,7 @@ int main(int argc, char *argv[]){
                 j_halo++;
                 n_halos_isotree[i_tree]++;
               }
-            } while(!check_comment(line));
+            } while(!check_comment(line) && i_halo<n_halos);
             // Write a status message
             if(i_tree==i_tree_next_report){
               i_report++;
@@ -477,11 +503,18 @@ int main(int argc, char *argv[]){
                 else
                   group_id=halo_id;
 
-                // Generate lambdas
+                // Generate V_vir
                 V_vir  =1e-3*sqrt(G_NEWTON*M_vir*M_SOL/(R_vir*M_PER_KPC));
-                spin_x =(float)random_lognormal(&RNG,0.045,0.5);              // Constants taken from Bullock et al '01 (also see Vitvitska '02)
-                spin_y =0.;
-                spin_z =0.;
+
+                // Generate lambdas (will be converted to proper units below during propagation)
+                //spin_x =(float)random_lognormal(&RNG,0.045,0.5);  // Constants taken from Bullock et al '01 (also see Vitvitska '02)
+                //spin_y =0.;
+                //spin_z =0.;
+
+                // Use the lambdas given in the file
+                spin_x =spin_x_array[i_halo]*sqrt(2.)*R_vir*V_vir;
+                spin_y =spin_y_array[i_halo]*sqrt(2.)*R_vir*V_vir;
+                spin_z =spin_z_array[i_halo]*sqrt(2.)*R_vir*V_vir;
 
                 // Convert scales to snapshot indices
                 if(descendant_scale==0.)
@@ -526,8 +559,11 @@ int main(int argc, char *argv[]){
             if(i_tree==i_tree_next_report){
               i_report++;
               SID_log("%3d%% complete.",SID_LOG_COMMENT|SID_LOG_TIMER,10*i_report);
-              i_tree_next_report=MIN(n_trees_in,n_trees_in*(i_report+1)/10);
-            } 
+              if(i_report==9)
+                 i_tree_next_report=n_trees_in;
+              else
+                 i_tree_next_report=MIN(n_trees_in,n_trees_in*(i_report+1)/10);
+            }
           }
           fclose(fp_in);
           SID_log("Done.",SID_LOG_CLOSE);
@@ -551,12 +587,16 @@ int main(int argc, char *argv[]){
           SID_free(SID_FARG v_x_array);
           SID_free(SID_FARG v_y_array);
           SID_free(SID_FARG v_z_array);
+          SID_free(SID_FARG spin_x_array);
+          SID_free(SID_FARG spin_y_array);
+          SID_free(SID_FARG spin_z_array);
           SID_log("Done.",SID_LOG_CLOSE);
 
           // Finalize trees
           finalize_trees_vertical(trees,n_halos_tree,n_trees_out,n_scales,progenitor_mode);
 
-          // ... propagate spins (needs to be done after IDs are assigned)...
+          // ... propagate spins (needs to be done after IDs are assigned)..
+          /*.
           SID_log("Propagating spins...",SID_LOG_OPEN|SID_LOG_TIMER);
           for(i_tree=0;i_tree<n_trees_out;i_tree++){
             current=trees[i_tree]->root;
@@ -567,6 +607,7 @@ int main(int argc, char *argv[]){
             }
           }
           SID_log("Done.",SID_LOG_CLOSE);
+          */
 
           // Write trees
           tree_lo_file[0]=0;
