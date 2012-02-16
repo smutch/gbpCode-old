@@ -425,6 +425,55 @@ class Chain(object):
             line_break()
 
 
+    def read_trace(self, phase):
+        """Read in the chain trace parameter values.
+        
+        Args:
+            phase   :   'integration' OR 'burnin'
+        
+        Returns:
+            flag_success   : char value (!=0 if proposal was successful)
+            ln_likelihood  : natural log of likelihood value of propositions
+            param_vals     : parameter values for each proposition
+
+        TODO - Read in the dataset results as well if
+               run.flag_autocor_on_file==0
+        """
+        
+        run = self.run
+        fin = open(run.filename_root+'/chains/chain_trace_{:06d}'.format(self.i_chain)+'.dat', 'rb')
+
+        if(phase)=='integration':
+            # Seek past the burn
+            byte_seek = 1+8+(8*run.n_P)
+            if run.flag_no_map_write==0:
+                for i_DS in xrange(run.n_DS):
+                    byte_seek += 8*run.n_M[i_DS]
+            fin.seek(byte_seek*self.n_burn,1)
+            n_links = self.n_integrate
+        elif(phase)=='burnin':
+            n_links = self.n_burn
+        
+        # Allocate the storage arrays
+        n_P = run.n_P
+        flag_success = np.zeros(n_links, dtype='c')
+        ln_likelihood = np.zeros(n_links, np.double)
+        p_vals_dtype = np.dtype((np.float64, n_P))
+        param_vals = np.zeros(n_links, dtype=p_vals_dtype)
+        
+        # Read the values
+        for l in xrange(n_links):
+            flag_success[l] = np.fromfile(fin, dtype='c', count=1)[0]
+            ln_likelihood[l] = np.fromfile(fin, dtype=np.float64, count=1)[0]
+            param_vals[l] = np.fromfile(fin, dtype=p_vals_dtype, count=1)[0]
+            if run.flag_no_map_write==0:
+                for i_DS in xrange(run.n_DS):
+                    fin.seek(8*run.n_M[i_DS], 1)
+
+        fin.close()
+        return flag_success, ln_likelihood, param_vals 
+
+
 def check_param_compatibility(run_list, param):
     
     param1 = run_list[0].__getattribute__(param)
