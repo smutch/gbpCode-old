@@ -111,7 +111,7 @@ else
 endif
 
 # Set CCFLAGS and LDFLAGS variables
-CCFLAGS := $(CCFLAGS) -I$(GBP_INC) -O2
+CCFLAGS := $(CCFLAGS) -I$(GBP_INC) 
 LDFLAGS := $(LDFLAGS) -L$(GBP_LIB_LOCAL)  
 
 # Filter-out Cuda files if USE_CUDA!=1
@@ -146,6 +146,8 @@ ifeq ($(USE_DEBUGGER),1)
   ifeq ($(USE_CUDA),1)
     CCFLAGS_CUDA := $(CCFLAGS_CUDA) -G
   endif
+else
+  CCFLAGS := $(CCFLAGS) -O2
 endif
 export USE_DEBUGGER
 

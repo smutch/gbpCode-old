@@ -18,7 +18,10 @@ endif
 
 if ( ${GBP_QUEUE_TYPE} == 'PBS' ) then
   # Set the mpiexec command
-  set CMD_STRING = ( $GBP_VALGRIND_DIR'/bin/valgrind '$GBP_MPI'/bin/mpiexec -mca btl tcp,self '$GBP_BIN'/mpi/'$ARG_CMD )
+  #set CMD_STRING = ( $GBP_VALGRIND_DIR'/bin/valgrind '$GBP_MPI'/bin/mpiexec -mca btl tcp,self '$GBP_BIN'/mpi/'$ARG_CMD )
+  #set CMD_STRING = ( $GBP_MPI'/bin/mpiexec --mca btl_openib_cpc_include rdmacm --mca btl self,openib '$GBP_BIN'/mpi/'$ARG_CMD )
+  #set CMD_STRING = ( $GBP_MPI'/bin/mpiexec --mca btl self,openib -mca btl_openib_flags 1 '$GBP_VALGRIND_DIR'/bin/valgrind '$GBP_BIN'/mpi/'$ARG_CMD )
+  set CMD_STRING = ( $GBP_MPI'/bin/mpiexec --mca btl self,tcp '$GBP_VALGRIND_DIR'/bin/valgrind '$GBP_BIN'/mpi/'$ARG_CMD )
 
   # Add the command arguments
   @ i=$FIRST_ARG
