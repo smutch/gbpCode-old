@@ -68,8 +68,8 @@ void read_gadget_binary_local(char       *filename_root_in,
   size_t   *id_list_in;
   size_t   *id_list_index;
   size_t    n_id_list;
-  int       record_length_open;
-  int       record_length_close;
+  unsigned int       record_length_open;
+  unsigned int       record_length_close;
   int       n_return;
   size_t    s_load;
   char     *keep;
@@ -173,11 +173,12 @@ void read_gadget_binary_local(char       *filename_root_in,
     if(record_length_open!=GADGET_HEADER_SIZE)
       SID_log_warning("Problem with GADGET record size (opening size of header is wrong)",ERROR_LOGIC);
 
-    // Number of particles for each species in this file
+    // Read header
     fread(&header,sizeof(gadget_header_info),1,fp); 
-    for(i=0;i<N_GADGET_TYPE;i++){
+
+    // Number of particles for each species in this file
+    for(i=0;i<N_GADGET_TYPE;i++)
       n_of_type[i]=(size_t)header.n_file[i];
-    }
 
     // Expansion factor (or time) 
     expansion_factor=header.time;
@@ -217,7 +218,7 @@ void read_gadget_binary_local(char       *filename_root_in,
     for(i=0;i<N_GADGET_TYPE;i++){
       mass_array[i]=header.mass_array[i];
       if(header.n_all_high_word[i]>0)
-        n_all[i]+=(((size_t)header.n_all_high_word[i]) << 32);
+        n_all[i]+=(((size_t)(header.n_all_high_word[i])) << 32);
     }
 
     // Count the total number of particles
@@ -315,13 +316,13 @@ void read_gadget_binary_local(char       *filename_root_in,
     // Allocate data arrays
     for(i=0;i<N_GADGET_TYPE;i++){
       if(n_of_type_rank[i]>0){
-        x_array[i] =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
-        y_array[i] =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
-        z_array[i] =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
-        vx_array[i]=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
-        vy_array[i]=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
-        vz_array[i]=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
-        id_array[i]=(size_t *)SID_malloc(sizeof(size_t)*(size_t)n_of_type_rank[i]);
+        x_array[i] =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*(size_t)n_of_type_rank[i]);
+        y_array[i] =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*(size_t)n_of_type_rank[i]);
+        z_array[i] =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*(size_t)n_of_type_rank[i]);
+        vx_array[i]=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*(size_t)n_of_type_rank[i]);
+        vy_array[i]=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*(size_t)n_of_type_rank[i]);
+        vz_array[i]=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*(size_t)n_of_type_rank[i]);
+        id_array[i]=(size_t    *)SID_malloc(sizeof(size_t) *(size_t)n_of_type_rank[i]);
       }
     }
     
@@ -362,13 +363,13 @@ void read_gadget_binary_local(char       *filename_root_in,
       if(SID.My_rank==read_rank){
         // Skip positions
         fread(&record_length_open,4,1,fp);
-        fseeko(fp,record_length_open,SEEK_CUR);
+        fseeko64(fp,(off64_t)record_length_open,SEEK_CUR);
         fread(&record_length_close,4,1,fp);
         if(record_length_open!=record_length_close)
           SID_log_warning("Problem with GADGET record size (close of positions)",ERROR_LOGIC);
         // Skip velocities
         fread(&record_length_open,4,1,fp);
-        fseeko(fp,record_length_open,SEEK_CUR);
+        fseeko64(fp,(off64_t)record_length_open,SEEK_CUR);
         fread(&record_length_close,4,1,fp);
         if(record_length_open!=record_length_close)
           SID_log_warning("Problem with GADGET record size (close of velocities)",ERROR_LOGIC);
@@ -385,14 +386,14 @@ void read_gadget_binary_local(char       *filename_root_in,
       SID_log("Reading IDs...",SID_LOG_OPEN|SID_LOG_TIMER);
       if(SID.My_rank==read_rank){
         fread(&record_length_open,4,1,fp);
-        fread(buffer,record_length_open,1,fp);
+        fread(buffer,(size_t)record_length_open,1,fp);
         fread(&record_length_close,4,1,fp);
         if(record_length_open!=record_length_close)
           SID_log_warning("Problem with GADGET record size (close of ids)",ERROR_LOGIC);
       }
-      SID_Bcast(&record_length_open,sizeof(int),       read_rank,SID.COMM_WORLD);
+      SID_Bcast(&record_length_open,sizeof(unsigned int),read_rank,SID.COMM_WORLD);
       SID_Barrier(SID.COMM_WORLD);
-      SID_Bcast(buffer,             record_length_open,read_rank,SID.COMM_WORLD);
+      SID_Bcast(buffer,             record_length_open,  read_rank,SID.COMM_WORLD);
 
       // Decide what kind of IDs we have
       if(record_length_open/n_particles_file==sizeof(long long)){
@@ -425,7 +426,7 @@ void read_gadget_binary_local(char       *filename_root_in,
               id_test=(size_t)((int *)buffer_i)[buffer_index[j]];
               break;
             }
-            while(id_list[id_list_index[k]]<id_test && k<n_particles_rank-1)
+            while(id_list[id_list_index[k]]<id_test && k<(n_particles_rank-1))
               k++;
             if(id_list[id_list_index[k]]==id_test){
               keep[l+buffer_index[j]]=TRUE;
@@ -470,7 +471,7 @@ void read_gadget_binary_local(char       *filename_root_in,
         rewind(fp);
         // Skip header
         fread(&record_length_open,4,1,fp);
-        fread(buffer,record_length_open,1,fp);
+        fread(buffer,(size_t)record_length_open,1,fp);
         fread(&record_length_close,4,1,fp);
         if(record_length_open!=record_length_close)
           SID_log_warning("Problem with GADGET record size (skip of header)",ERROR_LOGIC);
@@ -480,7 +481,7 @@ void read_gadget_binary_local(char       *filename_root_in,
       SID_log("Reading positions...",SID_LOG_OPEN|SID_LOG_TIMER);
       if(SID.My_rank==read_rank){
         fread(&record_length_open,4,1,fp);
-        fread(buffer,record_length_open,1,fp);
+        fread(buffer,(size_t)record_length_open,1,fp);
         fread(&record_length_close,4,1,fp);
         if(record_length_open!=record_length_close)
           SID_log_warning("Problem with GADGET record size (close of positions)",ERROR_LOGIC);
@@ -509,7 +510,7 @@ void read_gadget_binary_local(char       *filename_root_in,
       SID_log("Reading velocities...",SID_LOG_OPEN|SID_LOG_TIMER);
       if(SID.My_rank==read_rank){
         fread(&record_length_open,4,1,fp);
-        fread(buffer,record_length_open,1,fp);
+        fread(buffer,(size_t)record_length_open,1,fp);
         fread(&record_length_close,4,1,fp);
         if(record_length_open!=record_length_close)
           SID_log_warning("Problem with GADGET record size (close of velocities)",ERROR_LOGIC);
@@ -630,7 +631,7 @@ int main(int argc, char *argv[]){
   int        *n_particles_groups_process;
   int        *n_particles_groups;
   int        *n_particles_subgroups;
-  int        *group_offset;
+  unsigned int *group_offset;
   size_t      n_particles_in_groups;
   size_t     *ids_snapshot;
   size_t     *ids_groups;
@@ -667,7 +668,7 @@ int main(int argc, char *argv[]){
   int                   largest_truncated;
   int                   largest_truncated_local;
   int flag_write_properties=TRUE;
-  int flag_write_profiles  =FALSE;
+  int flag_write_profiles  =TRUE;
 
   SID_init(&argc,&argv,NULL);
 
@@ -696,6 +697,7 @@ int main(int argc, char *argv[]){
     n_groups_all         =((int    *)ADaPS_fetch(plist.data,"n_groups_all_%s",filename_number))[0];
     if(n_groups_all>0){
       read_gadget_binary_local(filename_snapshot_root,i_file,&plist);
+      //read_gadget_binary(filename_snapshot_root,i_file,&plist,READ_GADGET_DEFAULT);
       if(ADaPS_exist(plist.data,"id_dark")){
          n_particles_snapshot=((size_t *)ADaPS_fetch(plist.data,"n_dark"))[0];
          ids_snapshot        = (size_t *)ADaPS_fetch(plist.data,"id_dark");
@@ -775,8 +777,8 @@ int main(int argc, char *argv[]){
         n_groups_all=((int *)ADaPS_fetch(plist.data,"n_%sgroups_all_%s",group_text_prefix,filename_number))[0];
 
         // Fetch some stuff
-        n_particles_groups = (int *)ADaPS_fetch(plist.data,"n_particles_%sgroup_%s"    ,group_text_prefix,filename_number);
-        group_offset       = (int *)ADaPS_fetch(plist.data,"particle_offset_%sgroup_%s",group_text_prefix,filename_number);
+        n_particles_groups = (int          *)ADaPS_fetch(plist.data,"n_particles_%sgroup_%s"    ,group_text_prefix,filename_number);
+        group_offset       = (unsigned int *)ADaPS_fetch(plist.data,"particle_offset_%sgroup_%s",group_text_prefix,filename_number);
 
         // Create filenames, directories, etc
         sprintf(filename_output_properties_temp,"%s_%s.catalog_%sgroups_properties",filename_groups_root,filename_number,group_text_prefix);
@@ -790,16 +792,18 @@ int main(int argc, char *argv[]){
               strcpy(filename_output_properties_dir,filename_output_properties_temp);
               if(SID.I_am_Master)
                 mkdir(filename_output_properties_dir,02755);
+              SID_Barrier(SID.COMM_WORLD);
               sprintf(filename_output_properties,"%s/%s.%d",filename_output_properties_dir,properties_root,SID.My_rank);
            }
            // Create profile filenames
            if(flag_write_profiles){
               char profiles_root[MAX_FILENAME_LENGTH];
-              strcpy(profiles_root,filename_output_properties_temp);
+              strcpy(profiles_root,filename_output_profiles_temp);
               strip_path(profiles_root);
               strcpy(filename_output_profiles_dir,filename_output_profiles_temp);
               if(SID.I_am_Master)
                 mkdir(filename_output_profiles_dir,02755);
+              SID_Barrier(SID.COMM_WORLD);
               sprintf(filename_output_profiles,"%s/%s.%d",filename_output_profiles_dir,profiles_root,SID.My_rank);
            }
         }
