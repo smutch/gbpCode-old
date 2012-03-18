@@ -314,6 +314,8 @@ class MCMCrun(object):
                 lP_best.append(line[4])
             self.P_best =np.array(lP_best,dtype='d')
 
+        return self.P_best
+
 
     def read_histogram(self, i_DS):
 
