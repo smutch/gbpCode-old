@@ -38,7 +38,7 @@ int main(int argc, char *argv[]){
   SID_init(&argc,&argv,NULL);
 
   // Initialize cosmology
- init_cosmo_std(&cosmo); 
+  init_cosmo_std(&cosmo); 
 
   // Fetch user inputs
   strcpy(filename_halo_root_in,argv[1]);

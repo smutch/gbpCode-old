@@ -57,6 +57,8 @@ int main(int argc, char *argv[]){
                         &n_subgroups,
                         &n_groups,
                         n_search);
+  SID_free(SID_FARG n_subgroups);
+  SID_free(SID_FARG n_groups);
 
   SID_log("Done.",SID_LOG_CLOSE);
   SID_exit(ERROR_NONE);

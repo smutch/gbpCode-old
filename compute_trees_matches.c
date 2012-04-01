@@ -2,12 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpHalos.h>
 #include <gbpTrees.h>
 
-void compute_trees_matches(char   *filename_halo_root_in,
+void compute_trees_matches(char   *filename_root_in,
                            char   *filename_root_out,
                            int     i_read_start,
                            int     i_read_stop,
@@ -17,6 +19,8 @@ void compute_trees_matches(char   *filename_halo_root_in,
                            int   **n_groups_return,
                            int     n_search){
   char        filename_out[256];
+  char        filename_out_dir[256];
+  char        filename_out_name[256];
   FILE       *fp_test;
   SID_fp      fp_out;
   SID_fp      fp_in;
@@ -36,6 +40,8 @@ void compute_trees_matches(char   *filename_halo_root_in,
   int         j_read;
   char        filename_cat1[256];
   char        filename_cat2[256];
+  char        filename_cat1_order[256];
+  char        filename_cat2_order[256];
   int         n_groups_1;
   int         n_groups_1_local;
   int         n_groups_2;
@@ -66,6 +72,9 @@ void compute_trees_matches(char   *filename_halo_root_in,
   int         n_buffer;
   int         i_buffer;
   int         j_buffer;
+  int         flag_compute_header_subgroups;
+  int         flag_compute_header_groups;
+  int         flag_compute_header;
 
   SID_log("Constructing merger tree matches...",SID_LOG_OPEN|SID_LOG_TIMER);
 
@@ -78,386 +87,279 @@ void compute_trees_matches(char   *filename_halo_root_in,
   (*n_subgroups_return)=(int *)SID_malloc(sizeof(int)*(*n_files_return));
   (*n_groups_return)   =(int *)SID_malloc(sizeof(int)*(*n_files_return));
 
-  for(k_match=0;k_match<2;k_match++){
+  // Set results directory and root
+  strcpy(filename_out_dir, filename_root_out);
+  strcpy(filename_out_name,filename_root_out);
+  strip_path(filename_out_name);
 
-     // Set working array pointers to point to group or subgroup information (alternately, depending on k_match)
-     switch(k_match){
-        case 0:
-        flag_match_subgroups=MATCH_SUBGROUPS;
-        sprintf(group_text_prefix,"sub");
-        n_return=(*n_subgroups_return);
-        break;
-        case 1:
-        flag_match_subgroups=MATCH_GROUPS;
-        sprintf(group_text_prefix,"");
-        n_return=(*n_groups_return);
-        break;
-     }
-     sprintf(filename_out,"%s.%sgroup_matches",filename_root_out,group_text_prefix);
+  // Generate headers if needed
+  int flag_create_headers=FALSE;
+  if(flag_create_headers){
+     SID_log("Checking if header files exist and are adequate...",SID_LOG_OPEN);
+     for(k_match=0;k_match<2;k_match++){
 
-     flag_go=TRUE;
-     if((fp_test=fopen(filename_out,"r"))!=NULL){
-        fclose(fp_test);
-        SID_log("Checking if existing %sgroup matching file is adequate...",SID_LOG_OPEN,group_text_prefix);
-        SID_fopen(filename_out,"r",&fp_in);
-        SID_fread_all(&i_read_start_file,sizeof(int),1,&fp_in);
-        SID_fread_all(&i_read_stop_file, sizeof(int),1,&fp_in);
-        SID_fread_all(&n_search_file,    sizeof(int),1,&fp_in);
-        SID_fread_all(&n_files,          sizeof(int),1,&fp_in);
-        SID_fclose(&fp_in);
-        if(i_read_stop_file>=i_read_stop && i_read_start_file<=i_read_start && n_search_file>=n_search_total)
-           flag_go=FALSE;
+        // Set working array pointers to point to group or subgroup information (alternately, depending on k_match)
+        switch(k_match){
+           case 0:
+           flag_match_subgroups=MATCH_SUBGROUPS;
+           sprintf(group_text_prefix,"sub");
+           n_return=(*n_subgroups_return);
+           break;
+           case 1:
+           flag_match_subgroups=MATCH_GROUPS;
+           sprintf(group_text_prefix,"");
+           n_return=(*n_groups_return);
+           break;
+        }
+
+        // Set filenames
+        sprintf(filename_out,"%s/%s.%sgroup_matches_header",filename_out_dir,filename_out_name,group_text_prefix);
+
+        flag_go=TRUE;
+        if((fp_test=fopen(filename_out,"r"))!=NULL){
+           fclose(fp_test);
+           SID_fopen(filename_out,"r",&fp_in);
+           SID_fread_all(&i_read_start_file,sizeof(int),1,&fp_in);
+           SID_fread_all(&i_read_stop_file, sizeof(int),1,&fp_in);
+           SID_fread_all(&n_search_file,    sizeof(int),1,&fp_in);
+           SID_fread_all(&n_files,          sizeof(int),1,&fp_in);
+           SID_fclose(&fp_in);
+           if(i_read_stop_file>=i_read_stop && i_read_start_file<=i_read_start && n_search_file>=n_search_total){
+              if(k_match==0)
+                 flag_compute_header_subgroups=TRUE;
+              else
+                 flag_compute_header_groups=TRUE;
+              SID_log("Header file for %sgroups needs to be computed.",SID_LOG_COMMENT,group_text_prefix);
+           }
+           else{
+              if(k_match==0)
+                 flag_compute_header_subgroups=FALSE;
+              else
+                 flag_compute_header_groups=FALSE;
+              SID_log("Header file for %sgroups is fine.",SID_LOG_COMMENT,group_text_prefix);
+           }
+        }
         else{
-           flag_go=TRUE;
-           SID_log("Matches will need to be recomputed.",SID_LOG_COMMENT);
+           if(k_match==0)
+              flag_compute_header_subgroups=TRUE;
+           else
+              flag_compute_header_groups   =TRUE;
         }
-        SID_log("Done.",SID_LOG_CLOSE);
      }
-     if(flag_go){
-        SID_log("Constructing %sgroup merger tree matches...",SID_LOG_OPEN,group_text_prefix);
-        // Write the header
-        SID_log("Writing header...",SID_LOG_OPEN|SID_LOG_TIMER);
-        SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
-        // ... write snapshot ranges and search range ...
-        offset=0;
-        if(SID.I_am_Master){
-           SID_fopen(filename_out,"w",&fp_out);
-           SID_fwrite(&i_read_start,  sizeof(int),1,&fp_out);offset+=sizeof(int);
-           SID_fwrite(&i_read_stop,   sizeof(int),1,&fp_out);offset+=sizeof(int);
-           SID_fwrite(&n_search_total,sizeof(int),1,&fp_out);offset+=sizeof(int);
-        }
+     SID_log("Done.",SID_LOG_CLOSE);
 
-        // Count the number of matches and files that we will store
-        for(i_read=i_read_stop,n_matches=0,n_files=0;i_read>=i_read_start;i_read--){
-           for(j_read=i_read+n_search_total;j_read>=i_read-n_search_total;j_read--){
-              if(j_read<=i_read_stop && j_read>=i_read_start && j_read!=i_read){
-                 n_matches++;
-              }
-           }
-           n_files++;
-        }
-        // ... write the number of files involved ...
-        if(SID.I_am_Master){
-           SID_fwrite(&n_files,sizeof(int),1,&fp_out);offset+=sizeof(int);
-        }
+     // Write the header ...
+     if(flag_compute_header_subgroups || flag_compute_header_groups)
+        SID_log("Constructing header files...",SID_LOG_OPEN|SID_LOG_TIMER);
+     //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
+     SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
-        // Write halo counts for each file in the given range
-        for(i_read=i_read_stop;i_read>=i_read_start;i_read--){
-           sprintf(filename_cat1,"%03d",i_read);
-           init_plist(&plist1,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-           read_groups(filename_halo_root_in,i_read,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES|READ_GROUPS_NOIDS,&plist1,filename_cat1);
-           n_groups_1      =((int    *)ADaPS_fetch(plist1.data,"n_%sgroups_all_%s",group_text_prefix,filename_cat1))[0];
-           n_groups_1_local=((int    *)ADaPS_fetch(plist1.data,"n_%sgroups_%s",    group_text_prefix,filename_cat1))[0];
-           if(SID.I_am_Master){
-              SID_fwrite(&i_read,    sizeof(int),1,&fp_out);offset+=sizeof(int);
-              SID_fwrite(&n_groups_1,sizeof(int),1,&fp_out);offset+=sizeof(int);
+     // ... count the number of matches and files that we will store ...
+     for(i_read=i_read_stop,n_matches=0,n_files=0;i_read>=i_read_start;i_read--){
+        for(j_read=i_read+n_search_total;j_read>=i_read-n_search_total;j_read--){
+           if(j_read<=i_read_stop && j_read>=i_read_start && j_read!=i_read){
+              n_matches++;
            }
-           if(n_groups_1>0){
-              n_particles=(int *)ADaPS_fetch(plist1.data,"n_particles_%sgroup_%s",group_text_prefix,filename_cat1);
-              SID_fwrite_ordered(n_particles,sizeof(int),(size_t)n_groups_1_local,&fp_out);offset+=n_groups_1*sizeof(int);
-              if(flag_match_subgroups==MATCH_GROUPS){
-                 n_sub_group=(int *)ADaPS_fetch(plist1.data,"n_subgroups_group_%s",filename_cat1);
-                 SID_fwrite_ordered(n_sub_group,sizeof(int),(size_t)n_groups_1_local,&fp_out);offset+=n_groups_1*sizeof(int);
-              }
-           }
-           free_plist(&plist1);
         }
-        if(SID.I_am_Master){
-           SID_fwrite(&n_matches,sizeof(int),1,&fp_out);offset+=sizeof(int);
-        }
+        n_files++;
+     }
 
-        // Finish computing the offset to the start of the matching data.  These are due to
-        //   the writes in the nested loop following this one.
-        for(i_read=i_read_stop;i_read>=i_read_start;i_read--){
-           for(j_read=i_read+n_search_total;j_read>=i_read-n_search_total;j_read--){
-              if(j_read<=i_read_stop && j_read>=i_read_start && j_read!=i_read){
-                 offset+=2*sizeof(int)+sizeof(size_t);
-              }
+     // ... loop over each snapshot ...
+     for(i_read=i_read_stop;i_read>=i_read_start;i_read--){
+        sprintf(filename_cat1,"%03d",i_read);
+        init_plist(&plist1,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
+        read_groups(filename_root_in,i_read,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES|READ_GROUPS_NOIDS,&plist1,filename_cat1);
+        for(k_match=0;k_match<2;k_match++){
+           switch(k_match){
+              case 0:
+              flag_match_subgroups=MATCH_SUBGROUPS;
+              sprintf(group_text_prefix,"sub");
+              n_return=(*n_subgroups_return);
+              flag_compute_header=flag_compute_header_subgroups;
+              break;
+              case 1:
+              flag_match_subgroups=MATCH_GROUPS;
+              sprintf(group_text_prefix,"");
+              n_return=(*n_groups_return);
+              flag_compute_header=flag_compute_header_groups;
+              break;
            }
-        }
-        // Write matching combinations and the offsets to each's matching data
-        for(i_read=i_read_stop;i_read>=i_read_start;i_read--){
-           sprintf(filename_cat1,  "%03d",i_read);
-           init_plist(&plist1,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-           read_groups(filename_halo_root_in,i_read,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES|READ_GROUPS_NOIDS,&plist1,filename_cat1);
-           n_groups_1      =((int *)ADaPS_fetch(plist1.data,"n_%sgroups_all_%s",group_text_prefix,filename_cat1))[0];
-           n_groups_1_local=((int *)ADaPS_fetch(plist1.data,"n_%sgroups_%s",    group_text_prefix,filename_cat1))[0];
-           for(j_read=i_read+n_search_total;j_read>=i_read-n_search_total;j_read--){
-              if(j_read<=i_read_stop && j_read>=i_read_start && j_read!=i_read){
-                 if(SID.I_am_Master){
-                    SID_fwrite(&i_read,sizeof(int),   1,&fp_out);
-                    SID_fwrite(&j_read,sizeof(int),   1,&fp_out);
-                    SID_fwrite(&offset,sizeof(size_t),1,&fp_out);
+           if(flag_compute_header){
+              sprintf(filename_out,"%s/%s.%sgroup_matches_header",filename_out_dir,filename_out_name,group_text_prefix);
+      
+              if(i_read==i_read_stop && SID.I_am_Master){
+                 mkdir(filename_out_dir,02755);
+                 SID_fopen(filename_out,"w",&fp_out);
+                 SID_fwrite(&i_read_start,  sizeof(int),1,&fp_out);
+                 SID_fwrite(&i_read_stop,   sizeof(int),1,&fp_out);
+                 SID_fwrite(&n_search_total,sizeof(int),1,&fp_out);
+                 SID_fwrite(&n_files,       sizeof(int),1,&fp_out);
+                 SID_fclose(&fp_out);
+              }
+
+              n_groups_1      =((int    *)ADaPS_fetch(plist1.data,"n_%sgroups_all_%s",group_text_prefix,filename_cat1))[0];
+              n_groups_1_local=((int    *)ADaPS_fetch(plist1.data,"n_%sgroups_%s",    group_text_prefix,filename_cat1))[0];
+              if(SID.I_am_Master){
+                 SID_fopen(filename_out,"a",&fp_out);
+                 SID_fwrite(&i_read,    sizeof(int),1,&fp_out);
+                 SID_fwrite(&n_groups_1,sizeof(int),1,&fp_out);
+                 SID_fclose(&fp_out);
+              }
+              SID_Barrier(SID.COMM_WORLD);
+              SID_fopen(filename_out,"a",&fp_out);
+              if(n_groups_1>0){
+                 n_particles=(int *)ADaPS_fetch(plist1.data,"n_particles_%sgroup_%s",group_text_prefix,filename_cat1);
+                 SID_fwrite_ordered(n_particles,sizeof(int),(size_t)n_groups_1_local,&fp_out);
+                 if(flag_match_subgroups==MATCH_GROUPS){
+                    n_sub_group=(int *)ADaPS_fetch(plist1.data,"n_subgroups_group_%s",filename_cat1);
+                    SID_fwrite_ordered(n_sub_group,sizeof(int),(size_t)n_groups_1_local,&fp_out);
                  }
-                 offset+=(4*sizeof(int)+n_groups_1*(sizeof(int)+sizeof(size_t)+sizeof(float)));
+              }
+              SID_fclose(&fp_out);
+           } // If flag_compute_header
+        } // Loop over k_match
+        free_plist(&plist1);
+     }
+     SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+     if(flag_compute_header_subgroups || flag_compute_header_groups)
+        SID_log("Done.",SID_LOG_CLOSE);
+  }
+
+  // Generate matches.  Loop over base groups first...
+  SID_log("Generating matches...",SID_LOG_OPEN);
+  SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+  for(i_read=i_read_stop;i_read>i_read_start;i_read--){
+     SID_log("Processing matches for snapshot #%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_read);                 
+
+     // Read base group
+     sprintf(filename_cat1,"%03d",i_read);
+     init_plist(&plist1,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
+     SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
+     read_groups(filename_root_in,i_read,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES|READ_GROUPS_PEANOHILBERT,&plist1,filename_cat1,-1,-1);
+     SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+
+     // Compute each matching combaination and write the results to the file
+     int         i_read_order;
+     int         j_read_order;
+     plist_info *plist1_order;
+     plist_info *plist2_order;
+     for(j_read=i_read-1;j_read>=i_read-n_search_total;j_read--){
+        if(j_read<=i_read_stop && j_read>=i_read_start && j_read!=i_read){
+           int k_order;
+           int flag_read;
+           // Loop over forward/back matching
+           SID_log("Processing matches between snaps %03d and %03d...",SID_LOG_OPEN,i_read,j_read);                 
+           sprintf(filename_cat2,"%03d",j_read);
+
+           // Check for valid files.  If they exist and are ok, then
+           //   we don't need to read or process this snapshot
+           if(SID.I_am_Master){
+              flag_go=FALSE;
+              for(k_order=0,flag_read=TRUE;k_order<2;k_order++){
+                 if(k_order==0){
+                    i_read_order=i_read;
+                    j_read_order=j_read;
+                    plist1_order=&plist1;
+                    plist2_order=&plist2;
+                 }
+                 else{
+                    i_read_order=j_read;
+                    j_read_order=i_read;
+                    plist1_order=&plist2;
+                    plist2_order=&plist1;
+                 }
+                 sprintf(filename_cat1_order,"%03d",i_read_order);
+                 sprintf(filename_cat2_order,"%03d",j_read_order);
+                 for(k_match=0;k_match<2;k_match++){
+                    switch(k_match){
+                       case 0:
+                       sprintf(group_text_prefix,"sub");
+                       break;
+                       case 1:
+                       sprintf(group_text_prefix,"");
+                       break;
+                    }
+                    sprintf(filename_out,"%s/%s_%s_%s.%sgroup_matches",
+                                         filename_out_dir,
+                                         filename_out_name,
+                                         filename_cat1_order,
+                                         filename_cat2_order,
+                                         group_text_prefix);
+                    if((fp_test=fopen(filename_out,"r"))!=NULL)
+                       fclose(fp_test);
+                    else
+                       flag_go=TRUE;
+                 }
               }
            }
-           free_plist(&plist1);
-        }
+           SID_Bcast(&flag_go,sizeof(int),MASTER_RANK,SID.COMM_WORLD);
 
-        SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
-        SID_log("Done.",SID_LOG_CLOSE);
-
-        // Compute each matching combaination and write the results to the file
-        for(i_read=i_read_stop;i_read>=i_read_start;i_read--){
-           SID_log("Processing %sgroup matches for snapshot #%d...",SID_LOG_OPEN|SID_LOG_TIMER,group_text_prefix,i_read);                 
-           SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
-
-           // Read base group
-           int *file_index_1;
-           int  PHK_min_local;
-           int  PHK_max_local;
-           sprintf(filename_cat1,  "%03d",i_read);
-           init_plist(&plist1,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-           read_groups(filename_halo_root_in,i_read,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES|READ_GROUPS_PEANOHILBERT,&plist1,filename_cat1,-1,-1);
-           PHK_min_local   =((int *)ADaPS_fetch(plist1.data,"PHK_min_local_%s",      filename_cat1))[0];
-           PHK_max_local   =((int *)ADaPS_fetch(plist1.data,"PHK_max_local_%s",      filename_cat1))[0];
-           n_groups_1      =((int *)ADaPS_fetch(plist1.data,"n_%sgroups_all_%s",     group_text_prefix,filename_cat1))[0];
-           n_groups_1_local=((int *)ADaPS_fetch(plist1.data,"n_%sgroups_%s",         group_text_prefix,filename_cat1))[0];
-           file_index_1    = (int *)ADaPS_fetch(plist1.data,"file_index_%sgroups_%s",group_text_prefix,filename_cat1);
-// Test read_groups
-/*
-FILE   *fp_test;
-char    filename_test[256];
-int    *group_size;
-int    *group_offset;
-size_t *ids;
-int     buffer_0[10000];
-sprintf(filename_test,"test_%sgroup_size_%s.dat",group_text_prefix,filename_cat1);
-group_size  =(int    *)ADaPS_fetch(plist1.data,"n_particles_%sgroup_%s",group_text_prefix,filename_cat1);
-group_offset=(int    *)ADaPS_fetch(plist1.data,"particle_offset_%sgroup_%s",group_text_prefix,filename_cat1);
-ids         =(size_t *)ADaPS_fetch(plist1.data,"particle_ids_%s",filename_cat1);
-fp_test=fopen(filename_test,"w");
-for(i_group=0,buffered_count_local=0;i_group<n_groups_1;i_group+=n_buffer){
-   // Decide this buffer iteration's size
-   n_buffer=MIN(n_buffer_max,n_groups_1-i_group);
-   // Set the buffer to a default value smaller than the smallest possible data size
-   for(i_buffer=0;i_buffer<n_buffer;i_buffer++)
-      buffer_0[i_buffer]=-2; // Min value of match_id is -1
-   // Determine if any of the local data is being used for this buffer
-   for(j_group=0;j_group<n_groups_1_local;j_group++){
-      index_test=file_index_1[j_group]-i_group;
-      // ... if so, set the appropriate buffer value
-      if(index_test>=0 && index_test<n_buffer){
-        buffer_0[index_test]=group_size[j_group];
-        buffered_count_local++;
-      }
-   }
-   // Doing a global max on the buffer yields the needed buffer on all ranks
-   SID_Allreduce(SID_IN_PLACE,buffer_0,n_buffer,SID_INT,SID_MAX,SID.COMM_WORLD);
-   // Write the buffer
-   if(SID.I_am_Master){
-     for(i_buffer=0;i_buffer<n_buffer;i_buffer++) fprintf(fp_test,"%6d %6d\n",i_group+i_buffer,buffer_0[i_buffer]);
-   }
-}
-fclose(fp_test);
-sprintf(filename_test,"test_%sgroup_IDs_%s.dat",group_text_prefix,filename_cat1);
-fp_test=fopen(filename_test,"w");
-size_t buffer_1[10000];
-size_t buffer_2[10000];
-for(i_group=0,buffered_count_local=0;i_group<n_groups_1;i_group+=n_buffer){
-   // Decide this buffer iteration's size
-   n_buffer=MIN(n_buffer_max,n_groups_1-i_group);
-   // Set the buffer to a default value smaller than the smallest possible data size
-   for(i_buffer=0;i_buffer<n_buffer;i_buffer++){
-      buffer_1[i_buffer]=0;
-      buffer_2[i_buffer]=0;
-   }
-   // Determine if any of the local data is being used for this buffer
-   for(j_group=0;j_group<n_groups_1_local;j_group++){
-      index_test=file_index_1[j_group]-i_group;
-      // ... if so, set the appropriate buffer value
-      if(index_test>=0 && index_test<n_buffer){
-        if(group_size[j_group]>0){
-          buffer_1[index_test]=ids[group_offset[j_group]];
-          buffer_2[index_test]=ids[group_offset[j_group]+group_size[j_group]-1];
-        }
-        buffered_count_local++;
-      }
-   }
-   // Doing a global max on the buffer yields the needed buffer on all ranks
-   SID_Allreduce(SID_IN_PLACE,buffer_1,n_buffer,SID_SIZE_T,SID_MAX,SID.COMM_WORLD);
-   SID_Allreduce(SID_IN_PLACE,buffer_2,n_buffer,SID_SIZE_T,SID_MAX,SID.COMM_WORLD);
-   // Write the buffer
-   if(SID.I_am_Master){
-     for(i_buffer=0;i_buffer<n_buffer;i_buffer++) fprintf(fp_test,"%6d %6lld %6lld\n",i_group+i_buffer,buffer_1[i_buffer],buffer_2[i_buffer]);
-   }
-}
-fclose(fp_test);
-SID_exit(ERROR_NONE);
-*/
-
-           for(j_read=i_read+n_search_total;j_read>=i_read-n_search_total;j_read--){
-              if(j_read<=i_read_stop && j_read>=i_read_start && j_read!=i_read){
-                 SID_log("Processing %sgroup matches to snap %03d...",SID_LOG_OPEN,group_text_prefix,j_read);                 
+           // If this snapshot combination is missing at least one file, proceed.
+           if(flag_go){
+              for(k_order=0,flag_read=TRUE;k_order<2;k_order++){
+                 if(k_order==0){
+                    i_read_order=i_read;
+                    j_read_order=j_read;
+                    plist1_order=&plist1;
+                    plist2_order=&plist2;
+                 }
+                 else{
+                    i_read_order=j_read;
+                    j_read_order=i_read;
+                    plist1_order=&plist2;
+                    plist2_order=&plist1;
+                 }
+                 sprintf(filename_cat1_order,"%03d",i_read_order);
+                 sprintf(filename_cat2_order,"%03d",j_read_order);
 
                  // Read catalog to match to
-                 sprintf(filename_cat2,  "%03d",j_read);
-                 init_plist(&plist2,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-                 read_groups(filename_halo_root_in,j_read,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES|READ_GROUPS_PEANOHILBERT,&plist2,filename_cat2,PHK_min_local,PHK_max_local);
-                 //read_groups(filename_halo_root_in,j_read,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES,&plist2,filename_cat2);
+                 if(flag_read){
+                    int PHK_min_local;
+                    int PHK_max_local;
+                    PHK_min_local=((int *)ADaPS_fetch(plist1.data,"PHK_min_local_%s",filename_cat1))[0];
+                    PHK_max_local=((int *)ADaPS_fetch(plist1.data,"PHK_max_local_%s",filename_cat1))[0];
+                    init_plist(&plist2,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
+                    SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
+                    read_groups(filename_root_in,j_read,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES|READ_GROUPS_PEANOHILBERT,
+                                &plist2,filename_cat2,PHK_min_local,PHK_max_local);
+                    SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+                    flag_read=FALSE;
+                 }
 
                  // Perform matching
-                 match_halos(&plist1,i_read,NULL,0,&plist2,j_read,NULL,0,"match",flag_match_subgroups|MATCH_STORE_SCORE);
+                 for(k_match=0;k_match<2;k_match++){
 
-                 // Write results to output ...
-                 match_id        = (int   *)ADaPS_fetch(plist1.data,"match_match");
-                 match_score     = (float *)ADaPS_fetch(plist1.data,"match_score_match");
-                 n_groups_2      =((int   *)ADaPS_fetch(plist2.data,"n_%sgroups_all_%s",group_text_prefix,filename_cat2))[0];
-                 n_groups_2_local=((int   *)ADaPS_fetch(plist2.data,"n_%sgroups_%s",    group_text_prefix,filename_cat2))[0];
-                 sort(match_id,   (size_t)n_groups_1_local,&match_index,SID_INT,   SORT_GLOBAL,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
-                 sort(match_index,(size_t)n_groups_1_local,&match_rank, SID_SIZE_T,SORT_GLOBAL,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
+                    switch(k_match){
+                       case 0:
+                       flag_match_subgroups=MATCH_SUBGROUPS;
+                       sprintf(group_text_prefix,"sub");
+                       break;
+                       case 1:
+                       flag_match_subgroups=MATCH_GROUPS;
+                       sprintf(group_text_prefix,"");
+                       break;
+                    }
+                    match_halos(plist1_order,i_read_order,NULL,0,plist2_order,j_read_order,NULL,0,"match",flag_match_subgroups|MATCH_STORE_SCORE);
 
-                 // ... write a few simple stats at start ...
-                 if(SID.I_am_Master){
-                    SID_fwrite(&i_read,    sizeof(int),1,&fp_out);
-                    SID_fwrite(&j_read,    sizeof(int),1,&fp_out);
-                    SID_fwrite(&n_groups_1,sizeof(int),1,&fp_out);
-                    SID_fwrite(&n_groups_2,sizeof(int),1,&fp_out);
+                    // Writing results
+                    write_match_results(filename_out_dir,filename_out_name,i_read_order,j_read_order,plist1_order,plist2_order,k_match);
                  }
-                 SID_Barrier(SID.COMM_WORLD);
-
-                 // Write matching results.  We need to write back to the file in the
-                 //   order that it was read from the halo catalogs, not in the PH order
-                 //   that it is stored in RAM.  This requires some buffering.
-                 buffer       =SID_malloc(n_buffer_max*sizeof(size_t));
-                 buffer_int   =(int    *)buffer;
-                 buffer_size_t=(size_t *)buffer;
-                 buffer_float =(float  *)buffer;
-
-                 // Write match_ids ...
-                 //    ... loop over all the groups in buffer-sized batches
-FILE *fp_test;
-char  filename_test[256];
-size_t buffer_test[1000];
-sprintf(filename_test,"test_%sgroup_match_IDs_%s_%s.dat",group_text_prefix,filename_cat1,filename_cat2);
-if(SID.I_am_Master) fp_test=fopen(filename_test,"w");
-                 for(i_group=0,buffered_count_local=0;i_group<n_groups_1;i_group+=n_buffer){
-                    // Decide this buffer iteration's size
-                    n_buffer=MIN(n_buffer_max,n_groups_1-i_group);
-                    // Set the buffer to a default value smaller than the smallest possible data size
-                    for(i_buffer=0;i_buffer<n_buffer;i_buffer++)
-                       buffer_int[i_buffer]=-2; // Min value of match_id is -1
-for(i_buffer=0;i_buffer<n_buffer;i_buffer++)
-   buffer_test[i_buffer]=0;
-                    // Determine if any of the local data is being used for this buffer
-                    for(j_group=0;j_group<n_groups_1_local;j_group++){
-                       index_test=file_index_1[j_group]-i_group;
-                       // ... if so, set the appropriate buffer value
-                       if(index_test>=0 && index_test<n_buffer){
-                         buffer_int[index_test]=match_id[j_group];
-buffer_test[index_test]=match_rank[j_group];
-                         buffered_count_local++;
-                       }
-                    }
-                    // Doing a global max on the buffer yields the needed buffer on all ranks
-                    SID_Allreduce(SID_IN_PLACE,buffer_int,n_buffer,SID_INT,SID_MAX,SID.COMM_WORLD);
-SID_Allreduce(SID_IN_PLACE,buffer_test,n_buffer,SID_SIZE_T,SID_MAX,SID.COMM_WORLD);
-                    // Sanity check
-                    for(i_buffer=0;i_buffer<n_buffer;i_buffer++){
-                      if(buffer_int[i_buffer]<-1)
-                        SID_trap_error("Illegal match_id result (%d) for group No. %d.",ERROR_LOGIC,buffer_int[i_buffer],i_group+i_buffer);
-                    }
-                    // Write the buffer
-                    if(SID.I_am_Master){
-                      SID_fwrite(buffer_int,sizeof(int),(size_t)n_buffer,&fp_out);
-for(i_buffer=0;i_buffer<n_buffer;i_buffer++) fprintf(fp_test,"%7d %7d %7lld\n",i_group+i_buffer,buffer_int[i_buffer],buffer_test[i_buffer]);
-                    }
-                 }
-if(SID.I_am_Master) fclose(fp_test);
-                 // Sanity check
-                 calc_sum_global(&buffered_count_local,&buffered_count,1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-                 if(buffered_count!=n_groups_1)
-                   SID_trap_error("Buffer counts don't make sense (ie %d!=%d) after writing match IDs.",ERROR_LOGIC,buffered_count,n_groups_1);
-
-                 // Write match sort indices ...
-                 //    ... loop over all the groups in buffer-sized batches
-sprintf(filename_test,"test_%sgroup_match_index_%s_%s.dat",group_text_prefix,filename_cat1,filename_cat2);
-if(SID.I_am_Master) fp_test=fopen(filename_test,"w");
-                 for(i_group=0,buffered_count_local=0;i_group<n_groups_1;i_group+=n_buffer){
-                    // Decide this buffer iteration's size
-                    n_buffer=MIN(n_buffer_max,n_groups_1-i_group);
-                    // Set the buffer to a default value smaller than the smallest possible data size
-                    for(i_buffer=0;i_buffer<n_buffer;i_buffer++)
-                       buffer_size_t[i_buffer]=-1; // Min value of match_rank is 0
-                    // Determine if any of the local data is being used for this buffer
-                    for(j_group=0;j_group<n_groups_1_local;j_group++){
-                       index_test=match_rank[j_group]-i_group;
-                       // ... if so, set the appropriate buffer value
-                       if(index_test>=0 && index_test<n_buffer){
-                         buffer_size_t[index_test]=file_index_1[j_group];
-                         buffered_count_local++;
-                       }
-                    }
-                    // Doing a global max on the buffer yields the needed buffer on all ranks
-                    SID_Allreduce(SID_IN_PLACE,buffer_size_t,n_buffer,SID_SIZE_T,SID_MAX,SID.COMM_WORLD);
-                    // Sanity check
-                    for(i_buffer=0;i_buffer<n_buffer;i_buffer++){
-                      if(buffer_size_t[i_buffer]<0)
-                        SID_trap_error("Illegal match_rank result (%lld) for group No. %d.",ERROR_LOGIC,buffer_size_t[i_buffer],i_group+i_buffer);
-                    }
-                    // Write the buffer
-                    if(SID.I_am_Master){
-                      SID_fwrite(buffer,sizeof(size_t),(size_t)n_buffer,&fp_out);
-for(i_buffer=0;i_buffer<n_buffer;i_buffer++) fprintf(fp_test,"%7d %7lld\n",i_group+i_buffer,buffer_size_t[i_buffer]);
-                    }
-                 }
-if(SID.I_am_Master) fclose(fp_test);
-                 // Sanity check
-                 calc_sum_global(&buffered_count_local,&buffered_count,1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-                 if(buffered_count!=n_groups_1)
-                   SID_trap_error("Buffer counts don't make sense (ie %d!=%d) after writing match indices.",ERROR_LOGIC,buffered_count,n_groups_1);
-
-                 // Write match_score ...
-                 //    ... loop over all the groups in buffer-sized batches
-                 for(i_group=0,buffered_count_local=0;i_group<n_groups_1;i_group+=n_buffer){
-                    // Decide this buffer iteration's size
-                    n_buffer=MIN(n_buffer_max,n_groups_1-i_group);
-                    // Set the buffer to a default value smaller than the smallest possible data size
-                    for(i_buffer=0;i_buffer<n_buffer;i_buffer++)
-                       buffer_float[i_buffer]=-1.; // Min value of match_score is 0.
-                    // Determine if any of the local data is being used for this buffer
-                    for(j_group=0;j_group<n_groups_1_local;j_group++){
-                       index_test=file_index_1[j_group]-i_group;
-                       // ... if so, set the appropriate buffer value
-                       if(index_test>=0 && index_test<n_buffer){
-                         buffer_float[index_test]=match_score[j_group];
-                         buffered_count_local++;
-                       }
-                    }
-                    // Doing a global max on the buffer yields the needed buffer on all ranks
-                    SID_Allreduce(SID_IN_PLACE,buffer_float,n_buffer,SID_FLOAT,SID_MAX,SID.COMM_WORLD);
-                    // Sanity check
-                    for(i_buffer=0;i_buffer<n_buffer;i_buffer++){
-                      if(buffer_float[i_buffer]<-0.)
-                        SID_trap_error("Illegal match_score result (%f) for group No. %d.",ERROR_LOGIC,buffer_float[i_buffer],i_group+i_buffer);
-                    }
-                    // Write the buffer
-                    if(SID.I_am_Master)
-                      SID_fwrite(buffer,sizeof(float),(size_t)n_buffer,&fp_out);
-                 }
-                 // Sanity check
-                 calc_sum_global(&buffered_count_local,&buffered_count,1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-                 if(buffered_count!=n_groups_1)
-                    SID_trap_error("Buffer counts don't make sense (ie %d!=%d) after writing match scores.",ERROR_LOGIC,buffered_count,n_groups_1);
-
-                 // Clean-up
-                 SID_free(SID_FARG buffer);
-                 SID_free(SID_FARG match_rank);
-                 free_plist(&plist2);
-                 SID_log("Done.",SID_LOG_CLOSE);
-              }
-           }
-           free_plist(&plist1);
-           SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+              } // Loop over matching order
+           } // If this match result didn't already exist
+           else
+              SID_log("Skipping %03d->%03d matching.",SID_LOG_COMMENT,i_read_order,j_read_order);                 
+           if(!flag_read)
+              free_plist(&plist2);
            SID_log("Done.",SID_LOG_CLOSE);
-        } // loop over snapshots
-        if(SID.I_am_Master)
-           SID_fclose(&fp_out);
-        SID_log("Done.",SID_LOG_CLOSE);
-     } // if(flag_go)
+        } // If this is a valid pair
+     } // Second loop over snapshots
+     free_plist(&plist1);
+     SID_log("Done.",SID_LOG_CLOSE);
+  } // Loop over base snapshots
+  SID_log("Done.",SID_LOG_CLOSE);
 
      // Construct the n_halos arrays that are to be returned
+     /*
      SID_fopen(filename_out,"r",&fp_in);
      SID_fread_all(&i_read_start_file,sizeof(int),1,&fp_in);
      SID_fread_all(&i_read_stop_file, sizeof(int),1,&fp_in);
@@ -476,8 +378,7 @@ if(SID.I_am_Master) fclose(fp_test);
         }
      }
      SID_fclose(&fp_in);
-//     if(k_read!=(*n_files_return)) SID_trap_error("%sgroup size arrays not properly populated (i.e. %d!=%d).",ERROR_LOGIC,group_text_prefix,k_read,(*n_files_return));
-  } // loop over k_match
+    */
   SID_log("Done.",SID_LOG_CLOSE);
 }
 

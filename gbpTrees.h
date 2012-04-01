@@ -139,6 +139,13 @@ void compute_trees_matches(char   *filename_halo_root_in,
                            int   **n_subgroups,
                            int   **n_groups,
                            int     n_search);
+void write_match_results(char       *filename_out_dir,
+                         char       *filename_out_root,
+                         int         i_read,
+                         int         j_read,
+                         plist_info *plist1,
+                         plist_info *plist2,
+                         int         k_match);
 void compute_trees_horizontal(char   *filename_halos_root_in,
                               char   *filename_cat_root_in,
                               char   *filename_root_matches,
@@ -192,13 +199,13 @@ void add_node_to_tree(tree_info  *tree,
                       int         halo_snap,
                       int         descendant_snap,
                       halo_info  *properties);
-int construct_unique_id(tree_node_info *tree_node,int tree_number);
+int  construct_unique_id(tree_node_info *tree_node,int tree_number);
 void compute_halo_score_recursive(tree_node_info *tree,int *M_i,int mode);
 void assign_progenitor_order_recursive(tree_node_info *tree,int *M_i,int mode);
 void assign_group_halo_order(tree_info *tree,int i_snap,int mode);
 void assign_depth_first_index_recursive(tree_node_info *tree,int *depth_first_index);
 void assign_unique_ids_recursive(tree_node_info *tree_node,int i_tree);
-int write_tree_vertical_halos_recursive(tree_node_info *tree_node,SID_fp *fp_out,SID_fp *fp_out_MBP);
+int  write_tree_vertical_halos_recursive(tree_node_info *tree_node,SID_fp *fp_out,SID_fp *fp_out_MBP);
 
 #ifdef __cplusplus
 }
