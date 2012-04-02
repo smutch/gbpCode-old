@@ -503,6 +503,11 @@ class Chain(object):
         # Calculate the eigenvectors and eigenvalues
         eigenval,eigenvec = np.linalg.eig(np.cov(M))
 
+        # Sort the eigenvectors and values according to the eigenvalues
+        w = np.argsort(eigenval)[::-1]
+        eigenval = eigenval[w]
+        eigenvec = eigenvec[w]
+
         # Calculate the cumulative energy fraction
         eigenval_sum = eigenval.sum() 
         cumenergy = eigenval.cumsum()/eigenval_sum
@@ -519,6 +524,7 @@ class Chain(object):
                     print "{:s} : {:-.3f}".format(
                         self.run.P_name[p].ljust(strlen),
                         eigenvec[pc][p])
+            print
 
 
         return eigenval, cumenergy, eigenvec
