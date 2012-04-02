@@ -476,13 +476,18 @@ class Chain(object):
         return flag_success, ln_likelihood, param_vals 
 
 
-    def PCA(self):
+    def PCA(self, verbose=True):
         """Carry out a Principle Component Analysis (PCA) of the successful
         integration phase propositions.
 
+        Args:
+            verbose   :  If True then print the energy fraction and eigenvector
+                         summary for the principal components containing >=90%
+                         of the total energy.
+
         Returns:
             eigenval  :  The eigenvalues of the PCA
-            cumenergy    :  The cumulative energy fraction of the components
+            cumenergy :  The cumulative energy fraction of the components
             eigenvec  :  The eigenvectors (principle components)
         """
 
@@ -499,7 +504,22 @@ class Chain(object):
         eigenval,eigenvec = np.linalg.eig(np.cov(M))
 
         # Calculate the cumulative energy fraction
-        cumenergy = eigenval.cumsum()/eigenval.sum()
+        eigenval_sum = eigenval.sum() 
+        cumenergy = eigenval.cumsum()/eigenval_sum
+
+        if verbose:
+            pcs = range(np.where(cumenergy>=0.9)[0][0]+1)
+            strlen = np.array([ len(self.run.P_name[i]) for i in xrange(self.run.n_P) ]
+                              , int).max() + 3
+            for pc in pcs:
+                print
+                print "Principle component #{:d}:".format(pc)
+                print "Energy fraction = {:.3f}".format(eigenval[pc]/eigenval_sum)
+                for p in np.argsort(np.abs(eigenvec[pc]))[::-1]:
+                    print "{:s} : {:-.3f}".format(
+                        self.run.P_name[p].ljust(strlen),
+                        eigenvec[pc][p])
+
 
         return eigenval, cumenergy, eigenvec
 
