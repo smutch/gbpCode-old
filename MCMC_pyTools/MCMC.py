@@ -61,7 +61,7 @@ class MCMCrun(object):
             for i_array in xrange(0,self.n_P_arrays):
                 self.P_array_name.append(np.fromfile(file=fd, dtype=(np.str_, self.__MCMC_NAME_SIZE__)
                     , count=1)[0].split('\x00')[0])
-                junk=np.fromfile(file=fd,dtype='d',count=self.n_P)
+                np.fromfile(file=fd,dtype='d',count=self.n_P)
                 print '    ',self.P_array_name[i_array]
             print
 
@@ -87,7 +87,7 @@ class MCMCrun(object):
                 for i_array in xrange(0,self.n_DS_arrays[i_DS]):
                     self.DS_array_name.append(np.fromfile(file=fd, dtype=(np.str_, self.__MCMC_NAME_SIZE__), 
                         count=1)[0].split('\x00')[0])
-                    junk=np.fromfile(file=fd,dtype='d',count=self.n_M[i_DS])
+                    np.fromfile(file=fd,dtype='d',count=self.n_M[i_DS])
                     print '        array #'+str(i_array+1).zfill(2)+': '+self.DS_array_name[self.n_DS_arrays_total+i_array]
                 self.DS_arrays_offset.append(self.n_DS_arrays_total)
             else:
@@ -414,7 +414,7 @@ class Chain(object):
         self.n_integrate           = run.n_avg*self.n_iterations_integrate
         self.n_total               = self.n_burn+self.n_integrate
         self.covariance_matrix     = np.fromfile(file=fd,dtype=np.float64, count=run.n_P*run.n_P)
-        self.covariance_matrix.reshape((run.n_P, run.n_P))
+        self.covariance_matrix     = self.covariance_matrix.reshape((run.n_P, run.n_P))
         fd.close()  # close the file
         if quiet == False:
             print 'n_iterations           =',self.n_iterations
@@ -474,6 +474,34 @@ class Chain(object):
 
         fin.close()
         return flag_success, ln_likelihood, param_vals 
+
+
+    def PCA(self):
+        """Carry out a Principle Component Analysis (PCA) of the successful
+        integration phase propositions.
+
+        Returns:
+            eigenval  :  The eigenvalues of the PCA
+            cumenergy    :  The cumulative energy fraction of the components
+            eigenvec  :  The eigenvectors (principle components)
+        """
+
+        # Read in the trace
+        success, ln_likelihood, props = self.read_trace('integration')
+        
+        # Select only successful propositions
+        props = props[success!='']
+        
+        # subtract the mean (along columns)
+        M = (props-np.mean(props.T,axis=1)).T 
+        
+        # Calculate the eigenvectors and eigenvalues
+        eigenval,eigenvec = np.linalg.eig(np.cov(M))
+
+        # Calculate the cumulative energy fraction
+        cumenergy = eigenval.cumsum()/eigenval.sum()
+
+        return eigenval, cumenergy, eigenvec
 
 
 def check_param_compatibility(run_list, param):
