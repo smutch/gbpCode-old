@@ -7,7 +7,7 @@ class MCMCrun(object):
 
     """ MCMC run class."""
 
-    def __init__(self, filename_root):
+    def __init__(self, filename_root, quiet=False):
 
         """ Initialise the MCMC run.
 
@@ -20,8 +20,6 @@ class MCMCrun(object):
         self.__MCMC_NAME_SIZE__    =256
         self.__filename_plot_root__=filename_root+'/plots/'
 
-        line_break()
-
         self.filename_root = filename_root
 
         # Read (and print) header info.
@@ -32,14 +30,17 @@ class MCMCrun(object):
         self.flag_autocor_on_file=np.fromfile(file=fd,dtype='i',count=1)[0]
         self.flag_no_map_write   =np.fromfile(file=fd,dtype='i',count=1)[0]
 
-        print 'Problem name       =',self.problem_name
-        print 'n_chains           =',self.n_chains
-        print 'n_avg              =',self.n_avg
-        print 'flag_autocor       =',self.flag_autocor_on_file
-        print 'flag_no_map_write  =',self.flag_no_map_write
+        if not quiet:
+            line_break()
+            print 'Problem name       =',self.problem_name
+            print 'n_chains           =',self.n_chains
+            print 'n_avg              =',self.n_avg
+            print 'flag_autocor       =',self.flag_autocor_on_file
+            print 'flag_no_map_write  =',self.flag_no_map_write
 
         # Read (and print) parameter names.
-        print '\nMCMC Parameters:'
+        if not quiet:
+            print '\nMCMC Parameters:'
         self.n_P=np.fromfile(file=fd,dtype='i',count=1)[0]
         self.P_name= []
         self.P_init= []
@@ -50,23 +51,30 @@ class MCMCrun(object):
             self.P_init.append(np.fromfile(file=fd,dtype='d',count=1)[0])
             self.P_limit_min.append(np.fromfile(file=fd,dtype='d',count=1)[0])
             self.P_limit_max.append(np.fromfile(file=fd,dtype='d',count=1)[0])
-            print '  ',self.P_name[i_P]
-        print
+            if not quiet:
+                print '  ',self.P_name[i_P]
+        
+        if not quiet:
+            print
 
         # Read (and print) parameter array names
         self.n_P_arrays=np.fromfile(file=fd,dtype='i',count=1)[0]
         if(self.n_P_arrays>0):
-            print 'MCMC Parameter array(s):'
+            if not quiet:
+                print 'MCMC Parameter array(s):'
             self.P_array_name= []
             for i_array in xrange(0,self.n_P_arrays):
                 self.P_array_name.append(np.fromfile(file=fd, dtype=(np.str_, self.__MCMC_NAME_SIZE__)
                     , count=1)[0].split('\x00')[0])
                 np.fromfile(file=fd,dtype='d',count=self.n_P)
-                print '    ',self.P_array_name[i_array]
-            print
+                if not quiet:
+                    print '    ',self.P_array_name[i_array]
+            if not quiet:
+                print
 
         # Read (and print) the dataset names
-        print 'MCMC Datasets:'
+        if not quiet:
+            print 'MCMC Datasets:'
         self.n_DS  =np.fromfile(file=fd,dtype='i',count=1)[0]
         self.n_M      =[]
         self.DS_name  =[]
@@ -82,24 +90,29 @@ class MCMCrun(object):
             self.M_target.append(np.fromfile(file=fd,dtype='d',count=self.n_M[i_DS]))
             self.dM_target.append(np.fromfile(file=fd,dtype='d',count=self.n_M[i_DS]))
             self.n_DS_arrays.append(np.fromfile(file=fd,dtype='i',count=1)[0])
-            print '    ',self.DS_name[i_DS]
+            if not quiet:
+                print '    ',self.DS_name[i_DS]
             if(self.n_DS_arrays[i_DS]>0):
                 for i_array in xrange(0,self.n_DS_arrays[i_DS]):
                     self.DS_array_name.append(np.fromfile(file=fd, dtype=(np.str_, self.__MCMC_NAME_SIZE__), 
                         count=1)[0].split('\x00')[0])
                     np.fromfile(file=fd,dtype='d',count=self.n_M[i_DS])
-                    print '        array #'+str(i_array+1).zfill(2)+': '+self.DS_array_name[self.n_DS_arrays_total+i_array]
+                    if not quiet:
+                        print '        array #'+str(i_array+1).zfill(2)+': '+self.DS_array_name[self.n_DS_arrays_total+i_array]
                 self.DS_arrays_offset.append(self.n_DS_arrays_total)
             else:
-                print "        No associated arrays."
+                if not quiet:
+                    print "        No associated arrays."
             self.n_DS_arrays_total=self.n_DS_arrays_total+self.n_DS_arrays[i_DS]
         self.n_M_total=sum(self.n_M)
-        print
+        if not quiet:
+            print
 
         # Close the file
         fd.close()
 
-        line_break()
+        if not quiet:
+            line_break()
 
 
     def read_param_results(self, quiet=False):
@@ -476,7 +489,7 @@ class Chain(object):
         return flag_success, ln_likelihood, param_vals 
 
 
-    def PCA(self, verbose=True):
+    def PCA(self, quiet=False):
         """Carry out a Principle Component Analysis (PCA) of the successful
         integration phase propositions.
 
@@ -512,18 +525,24 @@ class Chain(object):
         eigenval_sum = eigenval.sum() 
         cumenergy = eigenval.cumsum()/eigenval_sum
 
-        if verbose:
-            pcs = range(np.where(cumenergy>=0.9)[0][0]+1)
+        if not quiet:
+            line_break()
+            print "PCA\n----------"
+            pc_90 = np.where(cumenergy>=0.9)[0][0]
             strlen = np.array([ len(self.run.P_name[i]) for i in xrange(self.run.n_P) ]
                               , int).max() + 3
-            for pc in pcs:
+            for pc in xrange(eigenval.size):
                 print
                 print "Principle component #{:d}:".format(pc)
                 print "Energy fraction = {:.3f}".format(eigenval[pc]/eigenval_sum)
                 for p in np.argsort(np.abs(eigenvec[pc]))[::-1]:
-                    print "{:s} : {:-.3f}".format(
+                    print "{:s} : {:-.3f}  (^2 = {:-.3f})".format(
                         self.run.P_name[p].ljust(strlen),
-                        eigenvec[pc][p])
+                        eigenvec[pc][p],
+                        eigenvec[pc][p]**2.)
+                if pc == pc_90:
+                    print
+                    print "^^^^^ 90% ^^^^^"
             print
 
 
