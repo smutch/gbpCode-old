@@ -575,7 +575,9 @@ int main(int argc, char *argv[]){
   int         n_groups_all;
   int         i_rank;
   int         i_group;
+  int         i_file_lo_in;
   int         i_file_lo;
+  int         i_file_hi_in;
   int         i_file_hi;
   int         i_file;
   int         i_file_skip;
@@ -632,6 +634,7 @@ int main(int argc, char *argv[]){
   int                   largest_truncated;
   int                   largest_truncated_local;
   int                   n_bits=N_BITS_MIN;
+  char                 *filename_number;
 
   SID_init(&argc,&argv,NULL);
   SID_profile_start("make_group_PHKs",SID_PROFILE_NOTMPIENABLED);
@@ -639,18 +642,25 @@ int main(int argc, char *argv[]){
   // Fetch user inputs
   strcpy(filename_snapshot_root,argv[1]);
   strcpy(filename_PHKs_root,    argv[2]);
-  i_file_lo  =atoi(argv[3]);
-  i_file_hi  =atoi(argv[4]);
-  i_file_skip=atoi(argv[5]);
+  i_file_lo_in=atoi(argv[3]);
+  i_file_hi_in=atoi(argv[4]);
+  i_file_skip =atoi(argv[5]);
+
+  if(i_file_lo_in<i_file_hi_in){
+     i_file_lo=i_file_lo_in;
+     i_file_hi=i_file_hi_in;
+  }
+  else{
+     i_file_lo=i_file_hi_in;
+     i_file_hi=i_file_lo_in;
+  }
 
   SID_log("Generating group PH keys for files #%d->#%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file_lo,i_file_hi);
-
-  char *filename_number;
-  for(i_file=i_file_lo;i_file<=i_file_hi;i_file+=i_file_skip){
+  for(i_file=i_file_hi;i_file>=i_file_lo;i_file-=i_file_skip){
     SID_log("Processing file #%03d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file);
-    //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
+    SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
 
-    // Read group and particle info
+    // Read group info from the halo catalogs
     int    *PHK_group      =NULL;
     size_t *PHK_group_index=NULL;
     init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
@@ -658,21 +668,24 @@ int main(int argc, char *argv[]){
     sprintf(filename_number,"%03d", i_file);
     ADaPS_store(&(plist.data),(void *)filename_number,"read_catalog",ADaPS_DEFAULT);
     read_groups(filename_PHKs_root,i_file,READ_GROUPS_ALL|READ_GROUPS_MBP_IDS_ONLY,&plist,filename_number);
-    read_gadget_binary_local(filename_snapshot_root,i_file,&plist);
+    n_groups_all = ((int *)ADaPS_fetch(plist.data,"n_groups_all_%s",filename_number))[0];
+    n_groups     = ((int *)ADaPS_fetch(plist.data,"n_groups_%s",    filename_number))[0];
 
-    // Fetch some header information
-    n_particles_cumulative = ((size_t  *)ADaPS_fetch(plist.data,"n_particles_all_%s",filename_number))[0];
-    n_groups_all           = ((int     *)ADaPS_fetch(plist.data,"n_groups_all_%s",   filename_number))[0];
-    n_groups               = ((int     *)ADaPS_fetch(plist.data,"n_groups_%s",       filename_number))[0];
-    box_size               = ((double  *)ADaPS_fetch(plist.data,"box_size",          filename_number))[0];
-
-    // Determine the number of bits to use for the PHKs
-    double dx;
-    dx=10.*M_PER_MPC;
-    for(n_bits=N_BITS_MIN;(box_size/pow(2.,(double)(n_bits+1)))>dx && n_bits<=20;) n_bits++;
- 
     // If there's any groups to analyze ...
+    n_bits=0; // Default value if there are no groups
     if(n_groups>0){
+       // Read particle info from the snapshot
+       read_gadget_binary_local(filename_snapshot_root,i_file,&plist);
+
+       // Fetch some header information
+       n_particles_cumulative = ((size_t  *)ADaPS_fetch(plist.data,"n_particles_all_%s",filename_number))[0];
+       box_size               = ((double  *)ADaPS_fetch(plist.data,"box_size",          filename_number))[0];
+
+       // Determine the number of bits to use for the PHKs
+       double dx;
+       dx=10.*M_PER_MPC;
+       for(n_bits=N_BITS_MIN;(box_size/pow(2.,(double)(n_bits+1)))>dx && n_bits<=20;) n_bits++;
+ 
        // Fetch some needed data
        n_particles_groups =  (int     *)ADaPS_fetch(plist.data,"n_particles_group_%s",filename_number);
        x_array            =  (GBPREAL *)ADaPS_fetch(plist.data,"x_dark");
@@ -715,7 +728,7 @@ int main(int argc, char *argv[]){
 
     // Write results
     int index_temp;
-    SID_log("Writing results...",SID_LOG_OPEN);
+    SID_log("Writing results for %d groups...",SID_LOG_OPEN,n_groups);
     sprintf(filename_output_properties,"%s_%s.catalog_PHKs",filename_PHKs_root,filename_number);
     fp_PHKs=fopen(filename_output_properties,"w");
     fwrite(&n_groups,              sizeof(int),   1,fp_PHKs);

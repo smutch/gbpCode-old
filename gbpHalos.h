@@ -20,6 +20,12 @@
 #define READ_GROUPS_MBP_IDS_ONLY   128
 #define READ_GROUPS_PEANOHILBERT   256
 
+#define READ_CATALOG_GROUPS      1
+#define READ_CATALOG_SUBGROUPS   2
+#define READ_CATALOG_PROPERTIES  4
+#define READ_CATALOG_PROFILES    8
+#define READ_CATALOG_DEFAULT     READ_CATALOG_GROUPS|READ_CATALOG_PROPERTIES
+
 #define MATCH_SUBGROUPS       2 // Match subgroups (default)
 #define MATCH_GROUPS          4 // Match groups
 #define MATCH_BACK            8 // Switch the sence of matching between plists
@@ -73,6 +79,28 @@ typedef struct halo_profile_info halo_profile_info;
 struct halo_profile_info{
   int                   n_bins;
   halo_profile_bin_info bins[MAX_PROFILE_BINS];
+};
+
+// This datastructure describes the halo catalog file-pointer
+typedef struct fp_catalog_info fp_catalog_info;
+struct fp_catalog_info{
+   char  filename_properties_root[MAX_FILENAME_LENGTH];
+   char  filename_properties_base[MAX_FILENAME_LENGTH];
+   char  filename_profiles_root[MAX_FILENAME_LENGTH];
+   char  filename_profiles_base[MAX_FILENAME_LENGTH];
+   FILE *fp_properties;
+   FILE *fp_profiles;
+   int   snap_num;
+   int   i_file;
+   int   n_files;
+   int   n_halos_total;
+   int   i_halo;
+   int   i_halo_start;
+   int   i_halo_stop;
+   int   n_halos_file;
+   int   flag_read_properties;
+   int   flag_read_profiles;
+   int   flag_multifile;
 };
 
 // This is the format used as the SAGE structure
@@ -131,6 +159,14 @@ void read_groups_AHF(char        *filename_groups_root,
                      int          mode,
                      plist_info  *plist,
                      char        *catalog_name);
+
+int fopen_catalog(char            *filename_catalog_root,
+                  int              snapshot_number,
+                  int              mode,
+                  fp_catalog_info *fp_out);
+int  fopen_nth_catalog_file(fp_catalog_info *fp_in,int n);
+int  fread_catalog_file(fp_catalog_info *fp_in,halo_info *properties_out,halo_profile_info *profiles_out,int halo_index);
+void fclose_catalog(fp_catalog_info *fp_in);
                  
 int  compute_group_analysis(halo_properties_info *properties,
                             halo_profile_info    *profile,

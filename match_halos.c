@@ -386,12 +386,12 @@ void match_halos(plist_info  *plist_1_in,
     }
 
     // Create array of histograms for the matching
-    char       *n_hist_array;
+    short int  *n_hist_array;
     short int  *hist_size_array;
     int       **hist_list_array;
     float     **hist_score_array;
     SID_log("Allocate histogram arrays...",SID_LOG_OPEN|SID_LOG_TIMER);
-    n_hist_array    =(char       *)SID_calloc(sizeof(char)     *n_groups_1);
+    n_hist_array    =(short int  *)SID_calloc(sizeof(short int)*n_groups_1);
     hist_size_array =(short int  *)SID_calloc(sizeof(short int)*n_groups_1);
     hist_list_array =(int       **)SID_malloc(sizeof(int *)    *n_groups_1);
     hist_score_array=(float     **)SID_malloc(sizeof(float *)  *n_groups_1);
@@ -481,7 +481,6 @@ void match_halos(plist_info  *plist_1_in,
 
          // Determine how many particles and groups need to be exchanged
          SID_log("Performing exchange...",SID_LOG_OPEN|SID_LOG_TIMER);
-         SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
          SID_log("particle count...",SID_LOG_COMMENT);
          exchange_ring_buffer(&n_particles_2_local,
                               sizeof(size_t),
@@ -533,7 +532,6 @@ void match_halos(plist_info  *plist_1_in,
                               index_2,
                               NULL,
                               i_rank);
-         SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
          SID_log("Done.",SID_LOG_CLOSE);
        }
 
@@ -611,15 +609,23 @@ void match_halos(plist_info  *plist_1_in,
                 if(flag){
                    // Reallocate the arrays if we have too many matches ...
                    if(n_hist_array[i_group]>=hist_size_array[i_group]){
+                      short int n_old;
+                      n_old=hist_size_array[i_group];
                       hist_size_array[i_group]*=2;
-                      hist_list_array[i_group] =(int   *)SID_realloc(hist_list, hist_size_array[i_group]*sizeof(int));
-                      hist_score_array[i_group]=(float *)SID_realloc(hist_score,hist_size_array[i_group]*sizeof(float));
+                      /*
+                      hist_list_array[i_group] =(int   *)SID_realloc(hist_list_array[i_group], (size_t)(hist_size_array[i_group])*sizeof(int));
+                      hist_score_array[i_group]=(float *)SID_realloc(hist_score_array[i_group],(size_t)(hist_size_array[i_group])*sizeof(float));
                       hist_list                =hist_list_array[i_group];
                       hist_score               =hist_score_array[i_group];
-                      for(i_hist=n_hist_array[i_group];i_hist<hist_size_array[i_group];i_hist++){
-                         hist_score[i_hist]=0.;
-                         hist_list[i_hist] =0;
-                      }
+                      */
+                      hist_list_array[i_group] =(int   *)SID_calloc((size_t)(hist_size_array[i_group])*sizeof(int));
+                      hist_score_array[i_group]=(float *)SID_calloc((size_t)(hist_size_array[i_group])*sizeof(float));
+                      memcpy(hist_list_array[i_group], hist_list, (size_t)n_old*sizeof(int));
+                      memcpy(hist_score_array[i_group],hist_score,(size_t)n_old*sizeof(float));
+                      SID_free(SID_FARG hist_list);
+                      SID_free(SID_FARG hist_score);
+                      hist_list =hist_list_array[i_group];
+                      hist_score=hist_score_array[i_group];
                    }
                    switch(flag_match_substructure){
                       case TRUE:
@@ -701,8 +707,10 @@ void match_halos(plist_info  *plist_1_in,
     if(!flag_match_substructure)
        SID_free(SID_FARG particle_rank_1);
     for(i_group=0;i_group<n_groups_1_local;i_group++){
-       SID_free(SID_FARG hist_list_array[i_group]);
-       SID_free(SID_FARG hist_score_array[i_group]);
+       if(hist_size_array[i_group]>0){
+          SID_free(SID_FARG hist_list_array[i_group]);
+          SID_free(SID_FARG hist_score_array[i_group]);
+       }
     }
     SID_free(SID_FARG n_hist_array);
     SID_free(SID_FARG hist_size_array);
@@ -741,16 +749,10 @@ void match_halos(plist_info  *plist_1_in,
         ADaPS_store(&(plist_store->data),(void *)(match_score),"match_score_%s",ADaPS_DEFAULT,catalog_1to2);
     }
 
-    if(flag_match_subgroups)
-      SID_log("Done. (%d of %d subgroups matched to %d subgroups)",SID_LOG_CLOSE,
-              n_match,
-              n_match_1_all,
-              n_groups_2_all);
-    else
-      SID_log("Done. (%d of %d groups matched to %d groups)",SID_LOG_CLOSE,
-              n_match,
-              n_match_1_all,
-              n_groups_2_all);
+    SID_log("%d of %d matched to %d. Done.",SID_LOG_CLOSE,
+            n_match,
+            n_match_1_all,
+            n_groups_2_all);
   }
   else{
     if(check_mode_for_flag(mode,MATCH_STORE_2))

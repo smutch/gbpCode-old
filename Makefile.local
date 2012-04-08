@@ -2,7 +2,10 @@
 # Library-specific settings #
 #############################
 INCFILES  = gbpHalos.h
-OBJFILES  = read_groups.o              \
+OBJFILES  = fopen_catalog.o            \
+	    fread_catalog.o            \
+	    fclose_catalog.o           \
+	    read_groups.o              \
 	    read_groups_AHF.o          \
 	    match_halos.o              \
 	    compute_group_analysis.o   \

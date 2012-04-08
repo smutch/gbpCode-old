@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gbpLib.h>
+#include <gbpMath.h>
 #include <gbpHalos.h>
 
 void read_groups(char        *filename_groups_root,
@@ -88,6 +89,8 @@ void read_groups(char        *filename_groups_root,
    va_start(vargs,catalog_name);
  
    SID_profile_start("read_groups",SID_PROFILE_DEFAULT);
+
+   //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
  
    // Set filenames
    sprintf(filename_cat,      "%03d",                   i_file);
@@ -322,7 +325,7 @@ void read_groups(char        *filename_groups_root,
               SID_Bcast(&i_group,         sizeof(int),   i_rank,SID.COMM_WORLD);
               SID_Bcast(&i_buffer,        sizeof(int),   i_rank,SID.COMM_WORLD);
               SID_Bcast(&PHK_last,        sizeof(int),   i_rank,SID.COMM_WORLD);
-           }
+           } // Loop over rank
 
            // Make sure the last rank covers up to the last possible
            //   key, even if there is nothing in it.  Important when
@@ -681,8 +684,8 @@ void read_groups(char        *filename_groups_root,
                if(j_group<n_groups_local){
                   if(read_index_group[j_group]==i_group){
                      group_length[storage_index_group[j_group]]=buffer[i_buffer];
-                     if(flag_read_MBP_ids_only)
-                        group_length[storage_index_group[j_group]]=1;
+                     //if(flag_read_MBP_ids_only)
+                     //   group_length[storage_index_group[j_group]]=1;
                      test[storage_index_group[j_group]]++;
                      j_group++;
                   }
@@ -700,8 +703,12 @@ void read_groups(char        *filename_groups_root,
             // Count the number of particles in the boundary keys
             if(flag_PHK_distribute){
                size_t n_particles_boundary;
-               for(i_group=0,n_particles_boundary=0;i_group<n_groups_boundary;i_group++)
-                  n_particles_boundary+=group_length[i_group];
+               if(flag_read_MBP_ids_only)
+                  n_particles_boundary=n_groups_boundary;
+               else{
+                  for(i_group=0,n_particles_boundary=0;i_group<n_groups_boundary;i_group++)
+                     n_particles_boundary+=group_length[i_group];
+               }
                ADaPS_store(&(plist->data),(void *)(&n_particles_boundary),"n_particles_boundary_%s",ADaPS_SCALAR_SIZE_T,catalog_name);
             }
 
@@ -810,8 +817,14 @@ void read_groups(char        *filename_groups_root,
                   storage_index_subgroup[i_group]=temp_array[storage_index_group[i_group]];
 
                // ... particles ...
-               for(i_group=1;i_group<n_groups_local;i_group++)
-                  temp_array[i_group]=temp_array[i_group-1]+group_length[i_group-1];
+               if(flag_read_MBP_ids_only){
+                  for(i_group=1;i_group<n_groups_local;i_group++)
+                     temp_array[i_group]=temp_array[i_group-1]+1;
+               }
+               else{
+                  for(i_group=1;i_group<n_groups_local;i_group++)
+                     temp_array[i_group]=temp_array[i_group-1]+group_length[i_group-1];
+               }
                for(i_group=0;i_group<n_groups_local;i_group++)
                   storage_index_particles[i_group]=temp_array[storage_index_group[i_group]];
                SID_free(SID_FARG temp_array);
@@ -878,7 +891,7 @@ void read_groups(char        *filename_groups_root,
          ADaPS_store(&(plist->data),&n_particiles_temp,"n_particles_%s",ADaPS_SCALAR_SIZE_T,catalog_name);
       }
       else
-         ADaPS_store(&(plist->data),(void *)(&(n_particles_local)),"n_particles_%s",    ADaPS_SCALAR_SIZE_T,catalog_name);
+         ADaPS_store(&(plist->data),(void *)(&n_particles_local),"n_particles_%s",    ADaPS_SCALAR_SIZE_T,catalog_name);
  
       // Read the subgroups file...
       if(flag_read_subgroups){
@@ -951,7 +964,8 @@ void read_groups(char        *filename_groups_root,
                      if(subgroup_index_max>group_index_max && !flag_read_MBP_ids_only){
                         unsigned int over_run;
                         over_run=subgroup_index_max-group_index_max;
-                        SID_trap_error("Subgroup {%d;offset=%u & size=%d}'s ID list over-runs group {%d;offset=%u & size=%d}'s ID list by %u particles.",ERROR_LOGIC,
+                        SID_trap_error("Subgroup {%d;offset=%u & size=%d}'s ID list over-runs group {%d;offset=%u & size=%d}'s ID list by %u particles.",
+                                       ERROR_LOGIC,
                                        index_subgroup+i_subgroup,subgroup_offset[index_subgroup+i_subgroup],subgroup_length[index_subgroup+i_subgroup],
                                        index_group,              group_offset[index_group],                 group_length[index_group],over_run);
                      }
@@ -1019,6 +1033,8 @@ void read_groups(char        *filename_groups_root,
             size_t *buffer;
             int    *buffer_int;
             calc_max_global(group_length,&max_group_length,n_groups_local,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+            if(flag_read_MBP_ids_only)
+               max_group_length=1;
             buffer=(size_t *)SID_calloc(sizeof(size_t)*max_group_length);
             if(!flag_long_ids)
                buffer_int=(int *)SID_calloc(id_byte_size*max_group_length);
@@ -1292,14 +1308,6 @@ void read_groups(char        *filename_groups_root,
             }
             SID_free(SID_FARG storage_index_particles_index);
 */
-/*
-for(i_group=0;i_group<n_groups_local;i_group++){
-  if(read_index_group[i_group]<10){
-    fprintf(stderr,"test %d %d %d\n",read_index_group[i_group],SID.My_rank,input_id[storage_index_particles[i_group]]);
-  }
-}
-SID_exit(ERROR_NONE);
-*/
 
             // Check for indexing inconsistancies
             if(flag_read_MBP_ids_only){
@@ -1332,8 +1340,14 @@ SID_exit(ERROR_NONE);
             // ... groups ...
             if(n_groups_local>0){
                group_offset[0]=0;
-               for(i_group=1;i_group<n_groups_local;i_group++)
-                  group_offset[i_group]=group_offset[i_group-1]+group_length[i_group-1];
+               if(flag_read_MBP_ids_only){
+                  for(i_group=1;i_group<n_groups_local;i_group++)
+                     group_offset[i_group]=group_offset[i_group-1]+1;
+               }
+               else{
+                  for(i_group=1;i_group<n_groups_local;i_group++)
+                     group_offset[i_group]=group_offset[i_group-1]+group_length[i_group-1];
+               }
 
                // ... finalize subgroup offsets ...
                for(i_group=0,i_subgroup=0;i_group<n_groups_local && i_subgroup<n_subgroups_local;i_group++){
@@ -1355,7 +1369,6 @@ SID_exit(ERROR_NONE);
          fclose(fp_ids);
       }
    }
-
 
    // Test read_groups
    /*
@@ -1447,3 +1460,4 @@ SID_exit(ERROR_NONE);
    SID_log("Done.",SID_LOG_CLOSE);
    SID_profile_stop(SID_PROFILE_DEFAULT);
 }
+
