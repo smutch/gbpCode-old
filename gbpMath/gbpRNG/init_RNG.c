@@ -2,7 +2,7 @@
 #include <gbpRNG.h>
 
 void init_RNG(int *seed,RNG_info *RNG,int mode){
-  if((*seed)==0)
+  if((*seed)<=0)
     init_seed_from_clock(seed);
   RNG->seed=(*seed);
   #if USE_SPRNG

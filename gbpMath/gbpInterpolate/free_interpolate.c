@@ -7,11 +7,11 @@
 
 void free_interpolate(void **interp){
   if((*interp)!=NULL){
-    free(((interp_info *)(*interp))->x);
-    free(((interp_info *)(*interp))->y);
+    SID_free(SID_FARG ((interp_info *)(*interp))->x);
+    SID_free(SID_FARG ((interp_info *)(*interp))->y);
     gsl_interp_free(((interp_info *)(*interp))->interp);
     gsl_interp_accel_free(((interp_info *)(*interp))->accel);
-    free(*interp);
+    SID_free(SID_FARG *interp);
   }
 }
 

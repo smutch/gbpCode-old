@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <common.h>
+#include <gbpLib.h>
+#include <gbpMisc.h>
 int getline(char **string,int *n,FILE *fp){
 	size_t  size;
 	size_t  size_old;

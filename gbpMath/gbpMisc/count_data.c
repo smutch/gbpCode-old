@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
-#include <common.h>
+#include <gbpLib.h>
+#include <gbpMisc.h>
 int count_data(FILE *fp){
   int   n_data=0;
   char *line  =NULL;

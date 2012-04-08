@@ -1,5 +1,6 @@
-#include <gbpLib.h>
 #include <math.h>
+#include <gbpLib.h>
+#include <gbpMisc.h>
 
 double d_periodic(double d,double box_size){
   double d_min;

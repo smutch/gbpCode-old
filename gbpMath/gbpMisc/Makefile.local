@@ -2,10 +2,13 @@
 # Library-specific settings #
 #############################
 INCFILES = gbpMisc.h 
-OBJFILES = take_log10.o                        \
+OBJFILES = init_array_linear.o                 \
+	   init_array_log.o                    \
+	   take_log10.o                        \
            take_alog10.o                       \
 	   take_ln.o                           \
 	   take_aln.o                          \
+	   invert_matrix.o                     \
 	   add_quad.o                          \
 	   force_periodic.o                    \
 	   is_a_member.o                       \
@@ -14,6 +17,7 @@ OBJFILES = take_log10.o                        \
 	   d_periodic.o                        \
 	   compute_triaxiality.o               \
            bisect_array.o                      \
+	   add_gaussian_noise.o                \
 	   compute_Daubechies_scaling_fctns.o                  
 LIBFILE  = 
 BINFILES = 

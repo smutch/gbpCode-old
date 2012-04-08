@@ -1,5 +1,5 @@
-#include <gbpCommon.h>
-#include <gbpSID.h>
+#include <gbpLib.h>
+#include <gbpMisc.h>
 
 int is_a_member(void *candidate,void *list,int n_list,SID_Datatype type){
   int i_list;
