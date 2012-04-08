@@ -268,8 +268,6 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
   }
 
   // Create interpolation information for P(k) arrays
-  ADaPS_remove(cosmo,"lP_k_TF_all_interp");
-  ADaPS_remove(cosmo,"lP_k_NL_Smith_all_interp");
   init_interpolate(lk_P,lP_k,     (size_t)n_k,gsl_interp_cspline,&interp);
   init_interpolate(lk_P,lP_k_nl,  (size_t)n_k,gsl_interp_cspline,&interp_nl);
   init_interpolate(lk_P,lP_k_gas, (size_t)n_k,gsl_interp_cspline,&interp_gas);
@@ -288,9 +286,6 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
   ADaPS_store_interp(cosmo,
                      (void *)(interp_dark),
                      "lP_k_TF_dark_interp");
-  ADaPS_store_interp(cosmo,
-                    (void *)(interp_nl),
-                    "lP_k_NL_Smith_all_interp");
 
   SID_free(SID_FARG line);
   SID_log("Done.",SID_LOG_CLOSE);
