@@ -295,8 +295,9 @@ void compute_trees_matches(char   *filename_root_in,
            SID_Bcast(&flag_go,sizeof(int),MASTER_RANK,SID.COMM_WORLD);
 
            // If this snapshot combination is missing at least one file, proceed.
+           flag_read=TRUE;
            if(flag_go){
-              for(k_order=0,flag_read=TRUE;k_order<2;k_order++){
+              for(k_order=0;k_order<2;k_order++){
                  if(k_order==0){
                     i_read_order=i_read;
                     j_read_order=j_read;
@@ -339,10 +340,14 @@ void compute_trees_matches(char   *filename_root_in,
                        sprintf(group_text_prefix,"");
                        break;
                     }
+                    SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
                     match_halos(plist1_order,i_read_order,NULL,0,plist2_order,j_read_order,NULL,0,"match",flag_match_subgroups|MATCH_STORE_SCORE);
+                    SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
                     // Writing results
+                    SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
                     write_match_results(filename_out_dir,filename_out_name,i_read_order,j_read_order,plist1_order,plist2_order,k_match);
+                    SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
                  }
               } // Loop over matching order
            } // If this match result didn't already exist
@@ -358,27 +363,6 @@ void compute_trees_matches(char   *filename_root_in,
   } // Loop over base snapshots
   SID_log("Done.",SID_LOG_CLOSE);
 
-     // Construct the n_halos arrays that are to be returned
-     /*
-     SID_fopen(filename_out,"r",&fp_in);
-     SID_fread_all(&i_read_start_file,sizeof(int),1,&fp_in);
-     SID_fread_all(&i_read_stop_file, sizeof(int),1,&fp_in);
-     SID_fread_all(&n_search,         sizeof(int),1,&fp_in);
-     SID_fread_all(&n_files,          sizeof(int),1,&fp_in);
-     for(i_read=i_read_stop_file,j_read=i_read,k_read=0;i_read>=i_read_start_file;i_read--){
-        SID_fread_all(&l_read,    sizeof(int),1,&fp_in);
-        SID_fread_all(&n_groups_1,sizeof(int),1,&fp_in);
-        if(flag_match_subgroups==MATCH_GROUPS)
-           SID_fseek(&fp_in,2*sizeof(int),n_groups_1,SID_SEEK_CUR);
-        else
-           SID_fseek(&fp_in,sizeof(int),n_groups_1,SID_SEEK_CUR);
-        if(j_read==l_read){
-           n_return[k_read++]=n_groups_1;
-           j_read-=i_read_step;
-        }
-     }
-     SID_fclose(&fp_in);
-    */
   SID_log("Done.",SID_LOG_CLOSE);
 }
 

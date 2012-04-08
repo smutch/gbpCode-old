@@ -219,8 +219,6 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
    char        filename_matching_out[MAX_FILENAME_LENGTH];
    char        filename_groups[MAX_FILENAME_LENGTH];
    char        filename_subgroups[MAX_FILENAME_LENGTH];
-   char        filename_subgroup_properties_in[MAX_FILENAME_LENGTH];
-   char        filename_group_properties_in[MAX_FILENAME_LENGTH];
    char        filename_subgroup_properties_out[MAX_FILENAME_LENGTH];
    char        filename_group_properties_out[MAX_FILENAME_LENGTH];
    char        filename_log[MAX_FILENAME_LENGTH];
@@ -245,8 +243,6 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
    SID_fp      fp_matches_out;
    SID_fp      fp_group_properties_out;
    SID_fp      fp_subgroup_properties_out;
-   FILE       *fp_group_properties_in;
-   FILE       *fp_subgroup_properties_in;
    FILE       *fp;
    tree_horizontal_info  *halos;
    tree_horizontal_info **halos_all;
@@ -304,57 +300,98 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
                                                                                              filename_output_file_root,j_write);
    sprintf(filename_subgroup_properties_out,"%s/%s.trees_horizontal_subgroups_properties_%d",filename_output_dir_horizontal_subgroups_properties,
                                                                                              filename_output_file_root,j_write);
-   sprintf(filename_group_properties_in,    "%s_%03d.catalog_groups_properties",             filename_cat_root_in,j_write);
-   sprintf(filename_subgroup_properties_in, "%s_%03d.catalog_subgroups_properties",          filename_cat_root_in,j_write);
-   sprintf(filename_matches_out,            "%s/%s.trees_horizontal_%d",                     filename_output_dir_horizontal_trees,filename_output_file_root,j_write);
+   sprintf(filename_matches_out,            "%s/%s.trees_horizontal_%d",                     filename_output_dir_horizontal_trees,
+                                                                                             filename_output_file_root,j_write);
 
+   // Open files needed for writing
    SID_fopen(filename_matches_out,            "w",&fp_matches_out);
    SID_fopen(filename_group_properties_out,   "w",&fp_group_properties_out);
    SID_fopen(filename_subgroup_properties_out,"w",&fp_subgroup_properties_out);
+
+   // Write the header information for the horizontal trees files
    SID_fwrite(&(n_groups),            sizeof(int),1,&fp_matches_out);
    SID_fwrite(&(n_subgroups),         sizeof(int),1,&fp_matches_out);
    SID_fwrite(&(n_halos_max),         sizeof(int),1,&fp_matches_out);
    SID_fwrite(&(max_tree_id_subgroup),sizeof(int),1,&fp_matches_out);
    SID_fwrite(&(max_tree_id_group),   sizeof(int),1,&fp_matches_out);
+
+   // Read the needed properties and write them in the needed order
    properties=(halo_info *)SID_calloc(sizeof(halo_info)); // valgrind throws an error if we don't init the unused bits with calloc
    if(n_groups>0){
-     fp_group_properties_in   =fopen(filename_group_properties_in,   "r");
-     fp_subgroup_properties_in=fopen(filename_subgroup_properties_in,"r");
-     fseeko(fp_group_properties_in,   4*sizeof(int),SEEK_CUR);
-     fseeko(fp_subgroup_properties_in,4*sizeof(int),SEEK_CUR);
+      // Open files needed for reading
+      fp_catalog_info fp_group_properties_in;
+      fp_catalog_info fp_subgroup_properties_in;
+      fopen_catalog(filename_cat_root_in,
+                    j_write,
+                    READ_CATALOG_GROUPS|READ_CATALOG_PROPERTIES,
+                    &fp_group_properties_in);
+      fopen_catalog(filename_cat_root_in,
+                    j_write,
+                    READ_CATALOG_SUBGROUPS|READ_CATALOG_PROPERTIES,
+                    &fp_subgroup_properties_in);
+
+     // Check that the number of groups in the catalog makes sense
+     if(n_groups!=fp_group_properties_in.n_halos_total)
+        SID_trap_error("The number of groups in the halo catalog does not make sense (ie. %d!=%d)",ERROR_LOGIC,n_groups,fp_group_properties_in.n_halos_total);
+     if(n_subgroups!=fp_subgroup_properties_in.n_halos_total)
+        SID_trap_error("The number of subgroups in the halo catalog does not make sense (ie. %d!=%d)",ERROR_LOGIC,n_groups,fp_group_properties_in.n_halos_total);
+
+     // Loop over the groups
      for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
-       // compute_trees_verticle wants the file offsets to be -ve for the roots, +ve everywhere else
-       if(i_write<i_file_start)
-         file_offset=match_file_local(&(groups[i_write%n_wrap][i_group].descendant))-i_write;
-       else
-         file_offset=-1;
-       desc_id    =match_id_local(&(groups[i_write%n_wrap][i_group].descendant));
-       SID_fwrite(&(groups[i_write%n_wrap][i_group].id),        sizeof(int),1,&fp_matches_out);
-       SID_fwrite(&(desc_id),                                   sizeof(int),1,&fp_matches_out);
-       SID_fwrite(&(groups[i_write%n_wrap][i_group].tree_id),   sizeof(int),1,&fp_matches_out);
-       SID_fwrite(&(file_offset),                               sizeof(int),1,&fp_matches_out);
-       SID_fwrite(&(n_subgroups_group[i_write%n_wrap][i_group]),sizeof(int),1,&fp_matches_out);
-       read_group_properties(fp_group_properties_in,properties,i_group,i_write);
-       if(groups[i_write%n_wrap][i_group].id>=0)
-         SID_fwrite(properties,sizeof(halo_info),1,&fp_group_properties_out);
-       for(j_subgroup=0;j_subgroup<n_subgroups_group[i_write%n_wrap][i_group];j_subgroup++,i_subgroup++){
-         // compute_trees_verticle wants the file offsets to be -ve for the roots, +ve everywhere else
-         if(i_write<i_file_start)
-           file_offset=match_file_local(&(subgroups[i_write%n_wrap][i_subgroup].descendant))-i_write;
-         else
+
+        // compute_trees_verticle wants the file offsets to be -ve for the roots, +ve everywhere else
+        if(i_write<i_file_start)
+           file_offset=match_file_local(&(groups[i_write%n_wrap][i_group].descendant))-i_write;
+        else
            file_offset=-1;
-         desc_id    =match_id_local(&(subgroups[i_write%n_wrap][i_subgroup].descendant));
-         SID_fwrite(&(subgroups[i_write%n_wrap][i_subgroup].id),     sizeof(int),1,&fp_matches_out);
-         SID_fwrite(&(desc_id),                                      sizeof(int),1,&fp_matches_out);
-         SID_fwrite(&(subgroups[i_write%n_wrap][i_subgroup].tree_id),sizeof(int),1,&fp_matches_out);
-         SID_fwrite(&(file_offset),                                  sizeof(int),1,&fp_matches_out);
-         read_group_properties(fp_subgroup_properties_in,properties,i_subgroup,i_write);
-         if(subgroups[i_write%n_wrap][i_subgroup].id>=0)
-           SID_fwrite(properties,sizeof(halo_info),1,&fp_subgroup_properties_out);
-       }
+        desc_id    =match_id_local(&(groups[i_write%n_wrap][i_group].descendant));
+
+        // Write group information to the horizontal trees files
+        SID_fwrite(&(groups[i_write%n_wrap][i_group].id),        sizeof(int),1,&fp_matches_out);
+        SID_fwrite(&(desc_id),                                   sizeof(int),1,&fp_matches_out);
+        SID_fwrite(&(groups[i_write%n_wrap][i_group].tree_id),   sizeof(int),1,&fp_matches_out);
+        SID_fwrite(&(file_offset),                               sizeof(int),1,&fp_matches_out);
+        SID_fwrite(&(n_subgroups_group[i_write%n_wrap][i_group]),sizeof(int),1,&fp_matches_out);
+
+        // Read the group information
+        fread_catalog_file(&fp_group_properties_in,properties,NULL,i_group);
+
+        // Force the snapshot number to be counted by i_write, not j_write (to make things work with skipped snaps)
+        properties->snap_num=i_write;
+
+        // If this group is involved in the trees, write it's properties
+        if(groups[i_write%n_wrap][i_group].id>=0)
+           SID_fwrite(properties,sizeof(halo_info),1,&fp_group_properties_out);
+
+        // Write the subgroup information to the horizontal trees files
+        for(j_subgroup=0;j_subgroup<n_subgroups_group[i_write%n_wrap][i_group];j_subgroup++,i_subgroup++){
+
+           // compute_trees_verticle wants the file offsets to be -ve for the roots, +ve everywhere else
+           if(i_write<i_file_start)
+             file_offset=match_file_local(&(subgroups[i_write%n_wrap][i_subgroup].descendant))-i_write;
+           else
+             file_offset=-1;
+           desc_id    =match_id_local(&(subgroups[i_write%n_wrap][i_subgroup].descendant));
+
+           // Write subgroup information to the horizontal trees files
+           SID_fwrite(&(subgroups[i_write%n_wrap][i_subgroup].id),     sizeof(int),1,&fp_matches_out);
+           SID_fwrite(&(desc_id),                                      sizeof(int),1,&fp_matches_out);
+           SID_fwrite(&(subgroups[i_write%n_wrap][i_subgroup].tree_id),sizeof(int),1,&fp_matches_out);
+           SID_fwrite(&(file_offset),                                  sizeof(int),1,&fp_matches_out);
+
+           // Read the subgroup information
+           fread_catalog_file(&fp_subgroup_properties_in,properties,NULL,i_subgroup);
+
+           // Force the snapshot number to be counted by i_write, not j_write (to make things work with skipped snaps)
+           properties->snap_num=i_write;
+
+           // If this subgroup is involved in the trees, write it's properties
+           if(subgroups[i_write%n_wrap][i_subgroup].id>=0)
+             SID_fwrite(properties,sizeof(halo_info),1,&fp_subgroup_properties_out);
+        }
      }
-     fclose(fp_group_properties_in);
-     fclose(fp_subgroup_properties_in);
+     fclose_catalog(&fp_group_properties_in);
+     fclose_catalog(&fp_subgroup_properties_in);
    }
    SID_free(SID_FARG properties);
    SID_fclose(&fp_matches_out);
