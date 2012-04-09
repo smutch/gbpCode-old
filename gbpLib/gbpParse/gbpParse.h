@@ -10,7 +10,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-//int getline(char **string,size_t *n,FILE *fp);
+
+#ifdef USE_GETLINE
+int getline(char **string,size_t *n,FILE *fp);
+#endif
+
 int count_lines(FILE *fp);
 int count_lines_data(FILE *fp);
 int count_words(char   *line);

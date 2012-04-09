@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <gbpCommon.h>
 #include <gbpSID.h>
+#include <gbpParse.h>
 int count_lines(FILE *fp){
   int     n_lines=0;
   char   *line   =NULL;

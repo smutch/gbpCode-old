@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gbpCommon.h>
+#include <gbpParse.h>
 int getline(char **string,size_t *n,FILE *fp){
 	size_t  size;
 	size_t  size_old;

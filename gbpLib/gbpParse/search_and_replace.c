@@ -18,7 +18,8 @@ int search_and_replace(char *string,char *search,char *replace){
   search_length =strlen(search);
   replace_length=strlen(replace);
 
-  if(search_length!=replace_length) SID_log_warning("search_length!=replace_length in search_and_replace()",SID_WARNING_DEFAULT);
+  if(search_length!=replace_length) 
+     SID_log_warning("search_length!=replace_length in search_and_replace()",SID_WARNING_DEFAULT);
 
   for(i_string=0,n_replace=0;i_string<string_length-search_length; i_string++){
     if(!strncmp(&(string[i_string]),search,search_length)){

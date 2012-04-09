@@ -28,6 +28,11 @@ MAKE       = make
 # This is needed to fix compilation errors re: undefined trunc() function
 #CCFLAGS := $(CCFLAGS) -lm
 
+# Compile getline() on Macs
+ifneq ($(USE_GETLINE),0)
+  CCFLAGS := $(CCFLAGS) -DUSE_GETLINE
+endif
+
 # Set default so that real=float
 ifndef USE_DOUBLE
   USE_DOUBLE=0

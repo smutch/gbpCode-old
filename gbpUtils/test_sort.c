@@ -125,7 +125,7 @@ merge_sort(data_all,(size_t)n_data,&data_all_index,SID_DOUBLE,SORT_COMPUTE_INDEX
        SID_Bcast(buffer_2, sizeof(size_t)*n_rank,i_rank,SID.COMM_WORLD);
        if(SID.I_am_Master){
          for(i=0;i<n_rank;i++,j++){
-           printf("%3d %6d %le %le %6lld %6lld\n",i_rank,j,buffer[i],data_all[j],buffer_2[i],data_all_index[j]);
+           printf("%3d %6d %le %le %6zd %6zd\n",i_rank,j,buffer[i],data_all[j],buffer_2[i],data_all_index[j]);
          }
        }
     }

@@ -29,8 +29,8 @@ int main(int argc,char *argv[]){
    fprintf(fp,"# Peano-Hilbert domain key information\n");
    fprintf(fp,"#   No. of bits/dim =%d\n",    n_bits);
    fprintf(fp,"#   Range           =%d->%d\n",key_start,key_stop);
-   fprintf(fp,"#   Dimensional size=%d\n",    PHK_DIM_SIZE(n_bits));
-   fprintf(fp,"#   Max. key value  =%d\n",    PHK_DIM_SIZE(n_bits)*PHK_DIM_SIZE(n_bits)*PHK_DIM_SIZE(n_bits));
+   fprintf(fp,"#   Dimensional size=%ld\n",   PHK_DIM_SIZE(n_bits));
+   fprintf(fp,"#   Max. key value  =%ld\n",   PHK_DIM_SIZE(n_bits)*PHK_DIM_SIZE(n_bits)*PHK_DIM_SIZE(n_bits));
    fprintf(fp,"#\n");
    fprintf(fp,"#   Columns: (1) key\n");
    fprintf(fp,"#            (2) x-position\n");
@@ -38,7 +38,7 @@ int main(int argc,char *argv[]){
    fprintf(fp,"#            (4) z-position\n");
    for(key=key_start;key<=key_stop;key++){
       compute_PHK_to_Cartesian(n_bits,key,&i_x,&i_y,&i_z);
-      fprintf(fp,"%7zd %7d %7d %7d\n",key,i_x,i_y,i_z);
+      fprintf(fp,"%7zd %7d %7d %7d\n",(size_t)key,i_x,i_y,i_z);
    }
    fclose(fp);
    SID_log("Done.",SID_LOG_CLOSE);
@@ -53,8 +53,8 @@ int main(int argc,char *argv[]){
    fprintf(fp,"# Peano-Hilbert boundary key information\n");
    fprintf(fp,"#   No. of bits/dim =%d\n",    n_bits);
    fprintf(fp,"#   Range           =%d->%d\n",key_start,key_stop);
-   fprintf(fp,"#   Dimensional size=%d\n",    PHK_DIM_SIZE(n_bits));
-   fprintf(fp,"#   Max. key value  =%d\n",    PHK_DIM_SIZE(n_bits)*PHK_DIM_SIZE(n_bits)*PHK_DIM_SIZE(n_bits));
+   fprintf(fp,"#   Dimensional size=%ld\n",   PHK_DIM_SIZE(n_bits));
+   fprintf(fp,"#   Max. key value  =%ld\n",   PHK_DIM_SIZE(n_bits)*PHK_DIM_SIZE(n_bits)*PHK_DIM_SIZE(n_bits));
    fprintf(fp,"#\n");
    fprintf(fp,"#   Columns: (1) key\n");
    fprintf(fp,"#            (2) x-position\n");
@@ -62,7 +62,7 @@ int main(int argc,char *argv[]){
    fprintf(fp,"#            (4) z-position\n");
    for(i_key=0;i_key<n_keys_boundary;i_key++){
       compute_PHK_to_Cartesian(n_bits,keys_boundary[i_key],&i_x,&i_y,&i_z);
-      fprintf(fp,"%7zd %7d %7d %7d\n",keys_boundary[i_key],i_x,i_y,i_z);
+      fprintf(fp,"%7zd %7d %7d %7d\n",(size_t)(keys_boundary[i_key]),i_x,i_y,i_z);
    }
    fclose(fp);
    SID_free(SID_FARG keys_boundary);
