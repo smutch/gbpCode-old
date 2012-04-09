@@ -11,16 +11,16 @@ void rotate_particle(double  x_hat,
                      double  y_hat,
                      double  z_hat,
                      double  theta,
-                     GBPREAL   *x_i,
-                     GBPREAL   *y_i,
-                     GBPREAL   *z_i);
+                     float   *x_i,
+                     float   *y_i,
+                     float   *z_i);
 void rotate_particle(double  x_hat,
                      double  y_hat,
                      double  z_hat,
                      double  theta,
-                     GBPREAL   *x_i,
-                     GBPREAL   *y_i,
-                     GBPREAL   *z_i){
+                     float   *x_i,
+                     float   *y_i,
+                     float   *z_i){
   double X;
   double Y;
   double Z;
@@ -38,6 +38,86 @@ void rotate_particle(double  x_hat,
   (*x_i)=(1.-2.*Y*Y-2.*Z*Z)*x_p+(   2.*X*Y-2.*Z*W)*y_p+(   2.*X*Z+2.*Y*W)*z_p;
   (*y_i)=(   2.*X*Y+2.*Z*W)*x_p+(1.-2.*X*X-2.*Z*Z)*y_p+(   2.*Y*Z-2.*X*W)*z_p;
   (*z_i)=(   2.*X*Z-2.*Y*W)*x_p+(   2.*Y*Z+2.*X*W)*y_p+(1.-2.*X*X-2.*Y*Y)*z_p;
+}
+
+void transform_particle(float *x_i,
+                        float *y_i,
+                        float *z_i,
+                        float  x_o,
+                        float  y_o,
+                        float  z_o,
+                        float  x_hat,
+                        float  y_hat,
+                        float  z_hat,
+                        float  d_o,
+                        float  stereo_offset,
+                        float  theta,
+                        float  theta_roll,
+                        float  box_size,
+                        float  expansion_factor,
+                        int    flag_comoving,
+                        int    flag_force_periodic);
+void transform_particle(float *x_i,
+                        float *y_i,
+                        float *z_i,
+                        float  x_o,
+                        float  y_o,
+                        float  z_o,
+                        float  x_hat,
+                        float  y_hat,
+                        float  z_hat,
+                        float  d_o,
+                        float  stereo_offset,
+                        float  theta,
+                        float  theta_roll,
+                        float  box_size,
+                        float  expansion_factor,
+                        int    flag_comoving,
+                        int    flag_force_periodic){
+
+   // Shift to object-centred coordinates
+   (*x_i)-=x_o;
+   (*y_i)-=y_o;
+   (*z_i)-=z_o;
+
+   // Centre the periodic box   
+   if(!flag_comoving || flag_force_periodic){
+     force_periodic(x_i,-0.5*(float)box_size,(float)box_size);
+     force_periodic(y_i,-0.5*(float)box_size,(float)box_size);
+     force_periodic(z_i,-0.5*(float)box_size,(float)box_size);
+   }
+   
+   // Rotate about the origen to place camera position on z-axis
+   rotate_particle((double)x_hat,
+                   (double)y_hat,
+                   (double)z_hat,
+                   (double)theta,
+                   x_i,
+                   y_i,
+                   z_i);
+
+   // Apply roll angle
+   rotate_particle((double)0.,
+                   (double)0.,
+                   (double)1.,
+                   (double)(-theta_roll),
+                   x_i,
+                   y_i,
+                   z_i);
+   
+   // Convert to proper coordinates?
+   if(!flag_comoving){
+     (*x_i)*=expansion_factor;
+     (*y_i)*=expansion_factor;
+     (*z_i)*=expansion_factor;
+   }
+   
+   // Shift image plane
+   (*z_i)+=d_o;
+
+   // Apply stereo offset
+   (*x_i)+=2.*stereo_offset;
+   
 }
 
 void init_make_map(plist_info  *plist,
@@ -60,13 +140,13 @@ void init_make_map(plist_info  *plist,
                    int          camera_mode,
                    int         *flag_weigh,
                    int         *flag_line_integral,
-                   GBPREAL       **x,
-                   GBPREAL       **y,
-                   GBPREAL       **z,
-                   GBPREAL       **h_smooth,
-                   GBPREAL       **f_stretch,
-                   GBPREAL       **value,
-                   GBPREAL       **weight,
+                   float       **x,
+                   float       **y,
+                   float       **z,
+                   float       **h_smooth,
+                   float       **f_stretch,
+                   float       **value,
+                   float       **weight,
                    size_t      *n_particles);
 void init_make_map(plist_info  *plist,
                    char        *parameter,
@@ -88,13 +168,13 @@ void init_make_map(plist_info  *plist,
                    int      camera_mode,
                    int     *flag_weigh,
                    int     *flag_line_integral,
-                   GBPREAL   **x,
-                   GBPREAL   **y,
-                   GBPREAL   **z,
-                   GBPREAL   **h_smooth,
-                   GBPREAL   **f_stretch,
-                   GBPREAL   **value,
-                   GBPREAL   **weight,
+                   float   **x,
+                   float   **y,
+                   float   **z,
+                   float   **h_smooth,
+                   float   **f_stretch,
+                   float   **value,
+                   float   **weight,
                    size_t  *n_particles){
   int      ptype_used[N_GADGET_TYPE];
   int      i_type;
@@ -106,9 +186,9 @@ void init_make_map(plist_info  *plist,
   size_t   k_particle;
   double   mass_array;
   size_t   n_particles_species;
-  GBPREAL    *x_temp;
-  GBPREAL    *y_temp;
-  GBPREAL    *z_temp;
+  float    *x_temp;
+  float    *y_temp;
+  float    *z_temp;
   float   *h_smooth_temp;
   double   x_hat;
   double   y_hat;
@@ -144,12 +224,12 @@ void init_make_map(plist_info  *plist,
     (*flag_weigh)               =FALSE;
     (*flag_line_integral)       =FALSE;
     (*n_particles)=((size_t *)ADaPS_fetch(plist->data,"n_dark"))[0];
-    (*value)      = (GBPREAL *)SID_malloc(sizeof(GBPREAL)*(*n_particles));
+    (*value)      = (float *)SID_malloc(sizeof(float)*(*n_particles));
     (*weight)     = NULL;
     if(ADaPS_exist(plist->data,"rho_dark")){
       rho=(float *)ADaPS_fetch(plist->data,"rho_dark");
       for(i_particle=0;i_particle<(*n_particles);i_particle++)
-        (*value)[i_particle]=(GBPREAL)rho[i_particle];
+        (*value)[i_particle]=(float)rho[i_particle];
     }
     else
       SID_trap_error("no denisities available to compute Sigma_M_dark in make_map",ERROR_LOGIC);
@@ -159,7 +239,7 @@ void init_make_map(plist_info  *plist,
     (*flag_weigh)               =FALSE;
     (*flag_line_integral)       =TRUE;
     (*n_particles)=((size_t *)ADaPS_fetch(plist->data,"n_dark"))[0];
-    (*value)      = (GBPREAL *)SID_malloc(sizeof(GBPREAL)*(*n_particles));
+    (*value)      = (float *)SID_malloc(sizeof(float)*(*n_particles));
     (*weight)     = NULL;
     if(ADaPS_exist(plist->data,"rho_dark")){
       rho=(float *)ADaPS_fetch(plist->data,"rho_dark");
@@ -172,12 +252,12 @@ void init_make_map(plist_info  *plist,
             transfer_val=MAX(0.,MIN(1.,interpolate(transfer,take_log10(rho[i_particle]))));
           else
             transfer_val=MAX(0.,MIN(1.,interpolate(transfer,rho[i_particle])));
-          (*value)[i_particle]=(GBPREAL)(rho[i_particle]*transfer_val);
+          (*value)[i_particle]=(float)(rho[i_particle]*transfer_val);
         }
       }
       else{ 
         for(i_particle=0;i_particle<(*n_particles);i_particle++)
-          (*value)[i_particle]=(GBPREAL)rho[i_particle];
+          (*value)[i_particle]=(float)rho[i_particle];
       }
       if(!flag_comoving){
         for(i_particle=0;i_particle<(*n_particles);i_particle++)
@@ -187,7 +267,7 @@ void init_make_map(plist_info  *plist,
     else if(ADaPS_exist(plist->data,"mass_array_dark")){
       mass_array=((double *)ADaPS_fetch(plist->data,"mass_array_dark"))[0];
       for(i_particle=0;i_particle<(*n_particles);i_particle++)
-        (*value)[i_particle]=(GBPREAL)mass_array;
+        (*value)[i_particle]=(float)mass_array;
     }
     else
       SID_trap_error("no masses available to compute tau_dark in make_map",ERROR_LOGIC);
@@ -197,8 +277,8 @@ void init_make_map(plist_info  *plist,
     (*flag_weigh)               =TRUE;
     (*flag_line_integral)       =TRUE;
     (*n_particles)=((size_t *)ADaPS_fetch(plist->data,"n_dark"))[0];
-    (*value)      = (GBPREAL *)SID_malloc(sizeof(GBPREAL)*(*n_particles));
-    (*weight)     = (GBPREAL *)SID_malloc(sizeof(GBPREAL)*(*n_particles));
+    (*value)      = (float *)SID_malloc(sizeof(float)*(*n_particles));
+    (*weight)     = (float *)SID_malloc(sizeof(float)*(*n_particles));
     // Compute a column-weighted average (using densities)
     if(ADaPS_exist(plist->data,"rho_dark")){
       rho=(float *)ADaPS_fetch(plist->data,"rho_dark");
@@ -211,12 +291,12 @@ void init_make_map(plist_info  *plist,
             transfer_val=MAX(0.,MIN(1.,interpolate(transfer,take_log10(rho[i_particle]))));
           else
             transfer_val=MAX(0.,MIN(1.,interpolate(transfer,rho[i_particle])));
-          (*weight)[i_particle]=(GBPREAL)(rho[i_particle]*transfer_val);
+          (*weight)[i_particle]=(float)(rho[i_particle]*transfer_val);
         }
       }
       else{
         for(i_particle=0;i_particle<(*n_particles);i_particle++)
-          (*weight)[i_particle]=(GBPREAL)rho[i_particle];
+          (*weight)[i_particle]=(float)rho[i_particle];
       }
       if(!flag_comoving){
         for(i_particle=0;i_particle<(*n_particles);i_particle++)
@@ -226,7 +306,7 @@ void init_make_map(plist_info  *plist,
     else if(ADaPS_exist(plist->data,"mass_array_dark")){
       mass_array=((double *)ADaPS_fetch(plist->data,"mass_array_dark"))[0];
       for(i_particle=0;i_particle<(*n_particles);i_particle++)
-        (*weight)[i_particle]=(GBPREAL)mass_array;
+        (*weight)[i_particle]=(float)mass_array;
     }
     else
       SID_trap_error("no masses available to compute sigma_v_dark in make_map",ERROR_LOGIC);
@@ -243,12 +323,12 @@ void init_make_map(plist_info  *plist,
             transfer_val=MAX(0.,MIN(1.,interpolate(transfer,take_log10(sigma_v[i_particle]))));
           else
             transfer_val=MAX(0.,MIN(1.,interpolate(transfer,sigma_v[i_particle])));
-          (*value)[i_particle]=(GBPREAL)(sigma_v[i_particle]*transfer_val);
+          (*value)[i_particle]=(float)(sigma_v[i_particle]*transfer_val);
         }
       } 
       else{
         for(i_particle=0;i_particle<(*n_particles);i_particle++)
-          (*value)[i_particle]=(GBPREAL)sigma_v[i_particle];
+          (*value)[i_particle]=(float)sigma_v[i_particle];
       }
     }
     else
@@ -257,29 +337,153 @@ void init_make_map(plist_info  *plist,
   else
     SID_trap_error("Unknown quantity in sph_project {%s}",ERROR_LOGIC,parameter);
 
-  // Set-up particle coordinates and smoothing lengths
-  (*x)        =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*(*n_particles));
-  (*y)        =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*(*n_particles));
-  (*z)        =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*(*n_particles));
-  (*h_smooth) =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*(*n_particles));
-  (*f_stretch)=(GBPREAL *)SID_malloc(sizeof(GBPREAL)*(*n_particles));
+  // Apply stereo perspective offsets
+  x_o-=stereo_offset;
+  y_o-=stereo_offset;
+  z_o-=stereo_offset;
+  x_c-=stereo_offset;
+  y_c-=stereo_offset;
+  z_c-=stereo_offset;
+
+  // Compute the angle and the axis of the rotation
+  //   needed to place the camera at (0,0,-d_o)
+  d_x_o=x_o-x_c;
+  d_y_o=y_o-y_c;
+  d_z_o=z_o-z_c;
+  d_o  =sqrt(pow(d_x_o,2.)+
+             pow(d_y_o,2.));
+  x_hat     = d_y_o/d_o;
+  y_hat     =-d_x_o/d_o;
+  z_hat     = 0.;
+  d_o  =sqrt(pow(d_x_o,2.)+
+             pow(d_y_o,2.)+
+             pow(d_z_o,2.));
+  theta     =acos(d_z_o/d_o);
+  if(sqrt(d_x_o*d_x_o+d_y_o*d_y_o)>0.){
+    theta_roll=acos(-d_y_o/sqrt(d_x_o*d_x_o+d_y_o*d_y_o));
+    if(d_x_o<0.)
+      theta_roll=TWO_PI-theta_roll;
+  }
+  else
+    theta_roll=0.;
+  
+  // ************************************ TOP
+
+  // First, just compute the positions along the line of sight
+  //    so we can perform the domain decomposition
+  float  x_i;
+  float  y_i;
+  float  z_i;
+  float *z_decomp;
+  int   *keep;
+  z_decomp=(float *)SID_malloc(sizeof(float)*(*n_particles));
+  keep    =(int   *)SID_malloc(sizeof(int)*  (*n_particles));
   for(i_type=0,j_particle=0;i_type<N_GADGET_TYPE;i_type++){
     if(ptype_used[i_type] && ADaPS_exist(plist->data,"n_%s",plist->species[i_type])){
       n_particles_species=((size_t *)ADaPS_fetch(plist->data,"n_%s",plist->species[i_type]))[0];
       // Fetch coordinates
-      x_temp=(GBPREAL *)ADaPS_fetch(plist->data,"x_%s",plist->species[i_type]);
-      y_temp=(GBPREAL *)ADaPS_fetch(plist->data,"y_%s",plist->species[i_type]);
-      z_temp=(GBPREAL *)ADaPS_fetch(plist->data,"z_%s",plist->species[i_type]);
+      x_temp=(float *)ADaPS_fetch(plist->data,"x_%s",plist->species[i_type]);
+      y_temp=(float *)ADaPS_fetch(plist->data,"y_%s",plist->species[i_type]);
+      z_temp=(float *)ADaPS_fetch(plist->data,"z_%s",plist->species[i_type]);
       for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++){
-        (*x)[k_particle]=(GBPREAL)(x_temp[i_particle]);
-        (*y)[k_particle]=(GBPREAL)(y_temp[i_particle]);
-        (*z)[k_particle]=(GBPREAL)(z_temp[i_particle]);
+
+         x_i=(float)(x_temp[i_particle]);
+         y_i=(float)(y_temp[i_particle]);
+         z_i=(float)(z_temp[i_particle]);
+
+         // Transform particle to render-coordinates
+         transform_particle(&x_i,
+                            &y_i,
+                            &z_i,
+                            x_o,
+                            y_o,
+                            z_o,
+                            x_hat,
+                            y_hat,
+                            z_hat,
+                            d_o,
+                            stereo_offset,
+                            theta,
+                            theta_roll,
+                            box_size,
+                            expansion_factor,
+                            flag_comoving,
+                            flag_force_periodic);
+
+        // Populate z-array
+        if(z_i>0){
+           keep[n_visible_local]    =i_particle;
+           z_decomp[n_visible_local]=z_i;
+           n_visible_local++;
+        }
+        
+      }
+      j_particle+=n_particles_species;
+    }
+  }
+
+  // Compute sort indices  
+  size_t *z_decomp_index;
+  SID_Allreduce(&n_visible,&n_visible_local,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
+  sort(z_decomp,n_visible_local,z_decomp_index,SID_FLOAT,FALSE,SORT_COMPUTE_RANK,FALSE);
+  
+  // Set domain decomposition
+  int i_particle_start;
+  int i_particle_stop;
+  int n_particles_local;
+  i_particle=0;
+  for(i_rank=0;i_rank<SID.n_proc;i_rank++){
+     if(SID.My_rank==i_rank){
+        i_particle_start=i_particle;
+        if(i_rank==SID.last_rank)
+           i_particle_stop=n_visible;
+        else
+           i_particle_stop=(int)((float)(n_visible-i_particle_start)/(float)(SID.n_proc-i_rank));
+        i_particle=i_particle_stop;
+     }
+     SID_Bcast(&i_particle,sizeof(int),i_rank,SID.COMM_WORLD);
+  }
+  n_particles_local=i_particle_stop-i_particle_start+1;
+
+  // Perform domain decomposition
+  (*x)        =(float *)SID_malloc(sizeof(float)*(n_particles_local));
+  (*y)        =(float *)SID_malloc(sizeof(float)*(n_particles_local));
+  (*z)        =(float *)SID_malloc(sizeof(float)*(n_particles_local));
+  (*h_smooth) =(float *)SID_malloc(sizeof(float)*(n_particles_local));
+  (*f_stretch)=(float *)SID_malloc(sizeof(float)*(n_particles_local));
+  for(i_rank=0,k_particle=0;i_rank<SID.n_proc;i_rank++){
+     i_particle=i_particle_start;
+     j_particle=i_particle_stop;
+     SID_Bcast(&i_particle,sizeof(int),i_rank,SID.COMM_WORLD);
+     SID_Bcast(&j_particle,sizeof(int),i_rank,SID.COMM_WORLD);
+
+     while(i_particle<=j_particle){
+
+     }
+  }
+  SID_free(SID_FARG z_decomp_index);
+
+
+  // ************************************ BOTTOM
+
+  // Set-up particle coordinates and smoothing lengths
+  for(i_type=0,j_particle=0;i_type<N_GADGET_TYPE;i_type++){
+    if(ptype_used[i_type] && ADaPS_exist(plist->data,"n_%s",plist->species[i_type])){
+      n_particles_species=((size_t *)ADaPS_fetch(plist->data,"n_%s",plist->species[i_type]))[0];
+      // Fetch coordinates
+      x_temp=(float *)ADaPS_fetch(plist->data,"x_%s",plist->species[i_type]);
+      y_temp=(float *)ADaPS_fetch(plist->data,"y_%s",plist->species[i_type]);
+      z_temp=(float *)ADaPS_fetch(plist->data,"z_%s",plist->species[i_type]);
+      for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++){
+        (*x)[k_particle]=(float)(x_temp[i_particle]);
+        (*y)[k_particle]=(float)(y_temp[i_particle]);
+        (*z)[k_particle]=(float)(z_temp[i_particle]);
       }
       // Fetch smoothing lengths ...
       if(ADaPS_exist(plist->data,"r_smooth_%s",plist->species[i_type])){
         h_smooth_temp=(float   *)ADaPS_fetch(plist->data,"r_smooth_%s",plist->species[i_type]);
         for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++)
-          (*h_smooth)[k_particle]=(GBPREAL)(h_smooth_temp[i_particle]);
+          (*h_smooth)[k_particle]=(float)(h_smooth_temp[i_particle]);
       }
       // ... if not present, create from densities ...
       else if(ADaPS_exist(plist->data,"rho_%s",plist->species[i_type])){
@@ -287,7 +491,7 @@ void init_make_map(plist_info  *plist,
         if(ADaPS_exist(plist->data,"M_dark")){
           mass=(double *)ADaPS_fetch(plist->data,"M_dark");
           for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++)
-            (*h_smooth)[k_particle]=(GBPREAL)pow(mass[i_particle]/(double)(rho[i_particle]),ONE_THIRD);        
+            (*h_smooth)[k_particle]=(float)pow(mass[i_particle]/(double)(rho[i_particle]),ONE_THIRD);        
         }
         else{
           if(ADaPS_exist(plist->data,"mass_array_dark"))
@@ -295,7 +499,7 @@ void init_make_map(plist_info  *plist,
           else
             mass_array=1.;
           for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++)
-            (*h_smooth)[k_particle]=(GBPREAL)pow(mass_array/(double)(rho[i_particle]),ONE_THIRD);        
+            (*h_smooth)[k_particle]=(float)pow(mass_array/(double)(rho[i_particle]),ONE_THIRD);        
         }
       }
       // ... if no densities are present, set to zero.
@@ -348,9 +552,9 @@ void init_make_map(plist_info  *plist,
     (*z)[i_particle]-=z_o;
 
     if(!flag_comoving || flag_force_periodic){
-      force_periodic(&((*x)[i_particle]),-0.5*(GBPREAL)box_size,(GBPREAL)box_size);
-      force_periodic(&((*y)[i_particle]),-0.5*(GBPREAL)box_size,(GBPREAL)box_size);
-      force_periodic(&((*z)[i_particle]),-0.5*(GBPREAL)box_size,(GBPREAL)box_size);
+      force_periodic(&((*x)[i_particle]),-0.5*(float)box_size,(float)box_size);
+      force_periodic(&((*y)[i_particle]),-0.5*(float)box_size,(float)box_size);
+      force_periodic(&((*z)[i_particle]),-0.5*(float)box_size,(float)box_size);
     }
 
     // Rotate about origen to place camera position on z-axis
@@ -434,8 +638,8 @@ void render_frame(render_info  *render){
   double     pixel_size_x;
   double     pixel_size_y;
   double     pixel_area;
-  GBPREAL      *weight;
-  GBPREAL      *value;
+  float      *weight;
+  float      *value;
   int        kx_min;
   int        kx_max;
   int        ky_min;
@@ -460,11 +664,11 @@ void render_frame(render_info  *render){
   int        ky;
   int        pos;
   size_t     n_particles;
-  GBPREAL      *x;
-  GBPREAL      *y;
-  GBPREAL      *z;
-  GBPREAL      *h_smooth;
-  GBPREAL      *f_stretch;
+  float      *x;
+  float      *y;
+  float      *z;
+  float      *h_smooth;
+  float      *f_stretch;
   size_t     n_x;
   size_t     n_y;
   size_t     n_z;
