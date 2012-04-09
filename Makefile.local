@@ -17,5 +17,6 @@ OBJFILES  = close_movie.o             \
             write_image_to_movie.o
 LIBFILE   = libgbpRender.a
 BINFILES  = make_colour_bar render
+SCRIPTS   = make_movie
 LIBS      = -lgbpRender -lgbpSPH -lgbpCosmo -lgbpMath -lgbpLib
 #############################
