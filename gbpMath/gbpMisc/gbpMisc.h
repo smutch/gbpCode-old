@@ -10,6 +10,14 @@ struct bisect_af_params{
 };
 
 
+// Function definitions
+#ifdef __cplusplus
+extern "C" {
+#endif
+void add_gaussian_noise(double *data,int n_data,int *seed,double sigma,double *covariance);
+void invert_square_matrix(double *matrix_in,
+                          int     size,
+                          double *inverse_out);
 double take_aln(double val);
 double take_alog10(double val);
 double take_ln(double val);
@@ -35,6 +43,17 @@ int    is_a_member(void *candidate,void *list,int n_list,SID_Datatype type);
 double bisect_array(interp_info *interp,
                     double       value,
                     double       threshold);
-
+void init_array_linear(double   val_min,
+                       double   val_max,
+                       int      n_val,
+                       double **val,
+                       double  *step);
+void init_array_log(double   val_min,
+                    double   val_max,
+                    int      n_val,
+                    double **val);
+#ifdef __cplusplus
+}
+#endif
 #endif
 

@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <common.h>
+#include <gbpLib.h>
+#include <gbpMisc.h>
 
 int count_words(char   *line){
   int  error=ERROR_NONE;

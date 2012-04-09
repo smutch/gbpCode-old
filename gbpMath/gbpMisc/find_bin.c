@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <common.h>
+#include <gbpLib.h>
+#include <gbpMisc.h>
 size_t find_bin(double *y,double y_find,size_t  n,size_t *index){
   size_t x_lo;
   size_t x_hi;

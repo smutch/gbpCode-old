@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <gbpLib.h>
+#include <gbpMisc.h>
 size_t find_index(size_t *y,size_t y_find,size_t  n,size_t *index){
   size_t x_lo;
   size_t x_hi;

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <gbpLib.h>
+#include <gbpMisc.h>
 int find_index_int(int *y,int y_find,int  n,size_t *index){
   int x_lo;
   int x_hi;

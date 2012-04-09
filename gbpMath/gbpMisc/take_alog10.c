@@ -1,4 +1,4 @@
-#include <gbpCommon.h>
+#include <gbpMisc.h>
 #include <math.h>
 
 double take_alog10(double val){

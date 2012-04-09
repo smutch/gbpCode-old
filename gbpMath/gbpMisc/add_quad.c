@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <gbpLib.h>
+#include <gbpMisc.h>
 double add_quad(int n_d, ...){
   int      i;
   double   t_val;

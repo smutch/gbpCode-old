@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <common.h>
+#include <gbpLib.h>
+#include <gbpMisc.h>
 
 void init_array_linear(double   val_min,
                        double   val_max,
@@ -10,8 +11,9 @@ void init_array_linear(double   val_min,
                        double  *step){
   int    i;
   if(n_val>1){
-    (*step)  =(val_max-val_min)/((double)(n_val-1));
-    (*val)   =(double *)malloc(sizeof(double)*n_val);
+    (*step)=(val_max-val_min)/((double)(n_val-1));
+    if((*val)==NULL)
+       (*val)=(double *)SID_malloc(sizeof(double)*n_val);
     (*val)[0]=val_min;
     for(i=1;i<n_val-1;i++)
       (*val)[i]=(*val)[i-1]+(*step);
