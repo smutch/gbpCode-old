@@ -27,22 +27,28 @@ export USE_GSL=1
 export USE_FFTW=1
 export USE_CFITSIO=1
 export USE_SPRNG=0
+export USE_VALGRIND=1
 export USE_HDF5=0
 export USE_MPI=0
 
 # Directories for each of the USE_ flags set to '1' above
+export GBP_MPI="${GBP_SRC}/3rd_Party/openmpi"
 export GBP_GSL_DIR="${GBP_SRC}/3rd_Party/gsl"
 export GBP_FFTW_DIR="${GBP_SRC}/3rd_Party/fftw"
+export GBP_SPRNG_DIR="${GBP_SRC}/3rd_Party/sprng"
+export GBP_VALGRIND_DIR="${GBP_SRC}/3rd_Party/valgrind"
 export GBP_CFITSIO_DIR="${GBP_SRC}/3rd_Party/cfitsio"
 export GBP_HDF5_DIR="${GBP_SRC}/3rd_Party/"
-export GBP_MPI="${GBP_SRC}/3rd_Party/openmpi"
-export GBP_SPRNG_DIR="${GBP_SRC}/3rd_Party/sprng"
 
 # This is where the compiled gbpCode libraries, etc will be stored
 export GBP_LIB="${GBP_SRC}/myLib/"
 export GBP_INC="${GBP_SRC}/myInclude/"
 export GBP_BIN="${GBP_SRC}/myBin/"
 export GBP_DAT="${GBP_SRC}/myData/"
+
+# Stup Mac OSX deoen't have getline() so we need to 
+#   compile our own version on that platform
+export USE_GETLINE=0
 
 # If you're gonna use valgrind with this code, you have to supply your
 #  system's platform here.
@@ -53,10 +59,8 @@ export GBP_VALGRIND_PLAT="x86-darwin"
 #----------------------------------------------------------------------
 if [ $HOSTTYPE=='x86_64-linux' ]; then
   export USE_SPRNG=1
-  export GBP_MPI=/usr/local/gnu/x86_64/openmpi-1.2.5-nonib/
-  export GBP_GSL_DIR=/usr/local/gnu/x86_64/gsl/
-  export GBP_FFTW_DIR=/nfs/cluster/evo/gpoole/src/3rd_Party/libs/fftw/
-  export GBP_SPRNG_DIR=/nfs/cluster/evo/gpoole/src/3rd_Party/libs/sprng/
+  export GBP_MPI=/usr/local/gnu/x86_64/openmpi-1.4/
+  export GBP_VALGRIND_PLAT=amd64-linux
   # We have to check for the HOSTNAME variable, because scp, sshfs etc does
   #   not define it and things crash if we try to reference it
   if [ -z "$HOSTNAME" ]; then
@@ -64,8 +68,13 @@ if [ $HOSTTYPE=='x86_64-linux' ]; then
       export GBP_QUEUE_TYPE=PBS
     fi
   fi
+
+#----------------------------------------------------------------------
+# Intel Macintosh
+#----------------------------------------------------------------------
 elif [ $HOSTTYPE=='intel-mac' ]; then
   export USE_SPRNG=0
+  export USE_GETLINE=1
 else
   echo 'Unsupported HOSTTYPE in .cshrc.gbpCode'
 fi
@@ -75,15 +84,13 @@ fi
 #----------------------------------------------------------------------
 
 # Add to the library path
-#
 if [ $?LD_LIBRARY_PATH ]; then
-  export LD_LIBRARY_PATH=${GBP_LIB}:${LD_LIBRARY_PATH}
+  export LD_LIBRARY_PATH=${GBP_LIB}/cuda/:${LD_LIBRARY_PATH}
 else
   export LD_LIBRARY_PATH=${GBP_LIB}
 fi
 
 # Add to the path
-#
 if [ $?PATH ]; then
   export PATH=${PATH}:${GBP_BIN}
 else
