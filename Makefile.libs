@@ -3,15 +3,11 @@
 # This file sets the library information needed in CCFLAGS and LDFLAGS
 # for the gbpCode Makefile
 #
-# YOU REALLY SHOULDN'T NEED TO EDIT THIS FILE!
+# YOU REALLY SHOULDN'T NEED TO EDIT THIS FILE!  ANY PROBLEMS
+# ARE BEING CAUSED ELSEWHERE ... MOST LIKELY IN YOUR 
+# .bashrc.myCode OR .cshrc.myCode FILES.
 #
 #----------------------------------------------------------------------
-
-# Set default debugger support
-ifndef USE_DEBUGGER
-  USE_DEBUGGER=0
-endif
-export USE_DEBUGGER
 
 # Add cfitsio
 ifndef USE_CFITSIO
@@ -24,6 +20,7 @@ ifneq ($(USE_CFITSIO),0)
   endif
   LIBS    := $(LIBS) -lcfitsio
 endif
+CCFLAGS := $(CCFLAGS) -DUSE_CFITSIO=$(USE_CFITSIO)
 export USE_CFITSIO
 
 # Add hdf5
@@ -37,6 +34,7 @@ ifneq ($(USE_HDF5),0)
   endif
   LIBS    := $(LIBS) -lhdf5
 endif
+CCFLAGS := $(CCFLAGS) -DUSE_HDF5=$(USE_HDF5)
 export USE_HDF5
 
 # Add gdlib
@@ -50,18 +48,21 @@ ifneq ($(USE_GDLIB),0)
   endif
   LIBS    := $(LIBS) -lgd
 endif
+CCFLAGS := $(CCFLAGS) -DUSE_GDLIB=$(USE_GDLIB)
 export USE_GDLIB
 
 # Add Cuda
 ifndef USE_CUDA
   USE_CUDA    =0
 endif
+CCFLAGS := $(CCFLAGS) -DUSE_CUDA=$(USE_CUDA)
 export USE_CUDA
 
 # Add debugger support
 ifndef USE_DEBUGGER
   USE_DEBUGGER    =0
 endif
+CCFLAGS := $(CCFLAGS) -DUSE_DEBUGGER=$(USE_DEBUGGER)
 export USE_DEBUGGER
 
 # Add valgrind
@@ -75,6 +76,7 @@ ifneq ($(USE_VALGRIND),0)
   endif
   LIBS    := $(LIBS) 
 endif
+CCFLAGS := $(CCFLAGS) -DUSE_VALGRIND=$(USE_VALGRIND)
 export USE_VALGRIND
 
 # Add GSL stuff (default off)
@@ -88,6 +90,7 @@ ifneq ($(USE_GSL),0)
   endif
   LIBS    := $(LIBS) -lm -lgsl -lgslcblas
 endif
+CCFLAGS := $(CCFLAGS) -DUSE_GSL=$(USE_GSL)
 export USE_GSL
 
 # Add FFTW (fast Fourier transform) stuff (default off)
@@ -117,6 +120,7 @@ ifneq ($(USE_FFTW),0)
     endif
   endif
 endif
+CCFLAGS := $(CCFLAGS) -DUSE_FFTW=$(USE_FFTW)
 export USE_FFTW
 
 # SPRNG (parallel random number generator) stuff (default off)
@@ -131,17 +135,20 @@ ifneq ($(USE_SPRNG),0)
   LIBS    := $(LIBS) -llcg
   CCFLAGS := $(CCFLAGS) 
 endif
+CCFLAGS := $(CCFLAGS) -DUSE_SPRNG=$(USE_SPRNG)
 export USE_SPRNG
 
 # Set default MPI support
 ifndef USE_MPI
   USE_MPI=0
 endif
+CCFLAGS := $(CCFLAGS) -DUSE_MPI=$(USE_MPI)
 export USE_MPI
 
 # Set default MPI-IO support
 ifndef USE_MPI_IO
   USE_MPI_IO=0
 endif
+CCFLAGS := $(CCFLAGS) -DUSE_MPI_IO=$(USE_MPI_IO)
 export USE_MPI_IO
 

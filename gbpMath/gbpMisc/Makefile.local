@@ -17,7 +17,6 @@ OBJFILES = init_array_linear.o                 \
 	   d_periodic.o                        \
 	   compute_triaxiality.o               \
            bisect_array.o                      \
-	   add_gaussian_noise.o                \
 	   compute_Daubechies_scaling_fctns.o                  
 LIBFILE  = 
 BINFILES = 

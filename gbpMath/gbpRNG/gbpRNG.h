@@ -32,5 +32,6 @@ GBPREAL random_number(RNG_info *RNG);
 GBPREAL random_gaussian(RNG_info *RNG);
 GBPREAL random_lognormal(RNG_info *RNG,double mu,double sigma);
 float   ran1(long *idum);
+void add_gaussian_noise(double *data,int n_data,int *seed,double sigma,double *covariance);
 
 #endif

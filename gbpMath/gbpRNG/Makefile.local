@@ -8,6 +8,7 @@ OBJFILES = init_RNG.o                     \
 	   random_lognormal.o             \
 	   init_seed_from_clock.o         \
 	   ran1.o                         \
+	   add_gaussian_noise.o           \
            random_gaussian.o
 LIBFILE  = 
 BINFILES = 

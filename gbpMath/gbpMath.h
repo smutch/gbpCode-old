@@ -5,6 +5,8 @@
 #include <gbpStats.h>
 #include <gbpDomain.h>
 #include <gbpRNG.h>
-#include <gbpFFT.h>
+#if USE_FFTW
+  #include <gbpFFT.h>
+#endif
 #include <gbpInterpolate.h>
 #endif

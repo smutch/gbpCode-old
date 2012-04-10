@@ -14,7 +14,6 @@ struct bisect_af_params{
 #ifdef __cplusplus
 extern "C" {
 #endif
-void add_gaussian_noise(double *data,int n_data,int *seed,double sigma,double *covariance);
 void invert_square_matrix(double *matrix_in,
                           int     size,
                           double *inverse_out);
