@@ -24,19 +24,21 @@ export GBP_QUEUE_TYPE=NONE
 # If any of the following 'USE' flags are set to 1, you must
 #   then set the corresponding GBP_XXX_DIR variable below
 export USE_GSL=1
+export USE_MPI=0
+export USE_VALGRIND=0
 export USE_FFTW=0
 export USE_CFITSIO=0
 export USE_SPRNG=0
-export USE_VALGRIND=1
 export USE_HDF5=0
-export USE_MPI=0
 
-# Directories for each of the USE_ flags set to '1' above
-export GBP_MPI="${GBP_SRC}/3rd_Party/openmpi"
+# Directories for each of the USE_ flags set to '1' above.  You don't need to do
+#   this if the library is loaded as a module, since the appropriate paths are
+#   already set automatically in the environment variables.
 export GBP_GSL_DIR="${GBP_SRC}/3rd_Party/gsl"
+export GBP_MPI="${GBP_SRC}/3rd_Party/openmpi"
+export GBP_VALGRIND_DIR="${GBP_SRC}/3rd_Party/valgrind"
 export GBP_FFTW_DIR="${GBP_SRC}/3rd_Party/fftw"
 export GBP_SPRNG_DIR="${GBP_SRC}/3rd_Party/sprng"
-export GBP_VALGRIND_DIR="${GBP_SRC}/3rd_Party/valgrind"
 export GBP_CFITSIO_DIR="${GBP_SRC}/3rd_Party/cfitsio"
 export GBP_HDF5_DIR="${GBP_SRC}/3rd_Party/"
 
