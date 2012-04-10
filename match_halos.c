@@ -3,7 +3,6 @@
 #include <string.h>
 #include <gbpLib.h>
 #include <gbpHalos.h>
-#include <gbpTrees.h>
 
 void match_halos(plist_info  *plist_1_in,
                  int          i_file_1_in,
