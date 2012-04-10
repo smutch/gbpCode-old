@@ -24,9 +24,9 @@ setenv GBP_QUEUE_TYPE    NONE
 # If any of the following 'USE' flags are set to 1, you must
 #   then set the corresponding GBP_XXX_DIR variable below
 setenv USE_GSL           1
-setenv USE_FFTW          1
-setenv USE_CFITSIO       1
-setenv USE_SPRNG         1
+setenv USE_FFTW          0
+setenv USE_CFITSIO       0
+setenv USE_SPRNG         0
 setenv USE_VALGRIND      1
 setenv USE_HDF5          0
 setenv USE_MPI           0
@@ -46,9 +46,11 @@ setenv GBP_INC           ${GBP_SRC}'myInclude/'
 setenv GBP_BIN           ${GBP_SRC}'myBin/'
 setenv GBP_DAT           ${GBP_SRC}'myData/'
 
-# Stup Mac OSX deoen't have getline() so we need to 
-#   compile our own version on that platform
-setenv USE_GETLINE       0
+# Mac OSX deoen't have getline() so we need to 
+#   compile our own version on that platform.
+#   By default, set this off and we will 
+#   switch it on below if needed.
+setenv USE_GETLINE 0
 
 # If you're gonna use valgrind with this code, you have to supply your
 #  system's platform here.
@@ -58,8 +60,6 @@ setenv GBP_VALGRIND_PLAT x86-darwin
 # Swinburne cluster
 #----------------------------------------------------------------------
 if ( $HOSTTYPE == 'x86_64-linux' ) then
-  setenv USE_SPRNG         1
-  setenv GBP_MPI           /usr/local/gnu/x86_64/openmpi-1.4/
   setenv GBP_VALGRIND_PLAT amd64-linux
   # We have to check for the HOSTNAME variable, because scp, sshfs etc does
   #   not define it and things crash if we try to reference it
@@ -73,7 +73,6 @@ if ( $HOSTTYPE == 'x86_64-linux' ) then
 # Intel Macintosh
 #----------------------------------------------------------------------
 else if ( $HOSTTYPE == 'intel-mac' ) then
-  setenv USE_SPRNG   0  
   setenv USE_GETLINE 1
 else
   echo 'Unsupported HOSTTYPE in .cshrc.gbpCode'
@@ -96,5 +95,4 @@ if ( $?PATH ) then
 else
   setenv LD_LIBRARY_PATH ${GBP_BIN}
 endif
-
 
