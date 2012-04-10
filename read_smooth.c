@@ -246,21 +246,21 @@ void read_smooth(plist_info *plist,
       case 0:
         SID_log("Reading lengths...",SID_LOG_OPEN);
         sprintf(var_name,"r_smooth_%s",species_name);
-        sprintf(unit_name,"Mpc",species_name);
+        sprintf(unit_name,"Mpc");
         unit_factor=plist->length_unit/h_Hubble;
         local_array=r_smooth_array;
         break;
       case 1:
         SID_log("Reading densities...",SID_LOG_OPEN);
         sprintf(var_name,"rho_%s",species_name);
-        sprintf(unit_name,"Msol/Mpc^3",species_name);
+        sprintf(unit_name,"Msol/Mpc^3");
         unit_factor=h_Hubble*h_Hubble*plist->mass_unit/pow(plist->length_unit,3.);
         local_array=rho_array;
         break;
       case 2:
         SID_log("Reading sigmas_v's...",SID_LOG_OPEN);
         sprintf(var_name,"sigma_v_%s",species_name);
-        sprintf(unit_name,"km/s",species_name);
+        sprintf(unit_name,"km/s");
         unit_factor=plist->velocity_unit*sqrt(expansion_factor);
         local_array=sigma_v_array;
         break;

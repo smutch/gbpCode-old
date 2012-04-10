@@ -9,7 +9,7 @@ void set_gadget_filename(char *filename_root_in,int snapshot_number,int multifil
   else if(flag_file_type==1)
     sprintf(filename,"%s/snapshot_%03d",filename_root_in,snapshot_number);
   else if(flag_file_type==2)
-    sprintf(filename,"%s",filename_root_in,snapshot_number);
+    sprintf(filename,"%s",filename_root_in);
   else if(flag_file_type==3)
     sprintf(filename,"%s_%03d",filename_root_in,snapshot_number);
   else if(flag_file_type==4)

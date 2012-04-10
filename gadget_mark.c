@@ -39,7 +39,7 @@ int main(int argc, char *argv[]){
       SID_trap_error("Valid modes are \"box\" or \"sphere\".",ERROR_SYNTAX);
     if(flag_mode==VOLUME_BOX)
       n_input_vals=6;
-    else if(flag_mode=VOLUME_SPHERE)
+    else if(flag_mode==VOLUME_SPHERE)
       n_input_vals=4;
   }
 
