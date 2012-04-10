@@ -247,7 +247,7 @@ int main(int argc, char *argv[]){
 
           // Read list of expansion factors
           SID_log("Reading scale list...",SID_LOG_OPEN);
-          sprintf(filename_snaps,"/nfs/dset/shrek071/millenium/bolshoi/treedata/Bolshoi.a_list",i_write);
+          sprintf(filename_snaps,"/nfs/dset/shrek071/millenium/bolshoi/treedata/Bolshoi.a_list");
           fp_snaps=fopen(filename_snaps,"r");
           n_scales=count_lines_data(fp_snaps);
           for(i_scale=0;i_scale<n_scales;i_scale++){

@@ -133,7 +133,7 @@ void compute_trees_matches(char   *filename_halo_root_in,
         // Write halo counts for each file in the given range
         for(i_read=i_read_stop;i_read>=i_read_start;i_read--){
            sprintf(filename_cat1,  "%03d",i_read);
-           sprintf(filename_groups,"%s_%03d",filename_halo_root_in,i_read,group_text_prefix);
+           sprintf(filename_groups,"%s_%03d",filename_halo_root_in,i_read);
            read_groups(filename_halo_root_in,i_read,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES,&plist1,filename_cat1);
            n_groups_1     =((int    *)ADaPS_fetch(plist1.data,"n_%sgroups_%s",     group_text_prefix,filename_cat1))[0];
            n_groups_1_all =((int    *)ADaPS_fetch(plist1.data,"n_%sgroups_all_%s", group_text_prefix,filename_cat1))[0];
@@ -169,7 +169,7 @@ void compute_trees_matches(char   *filename_halo_root_in,
            for(j_read=i_read+n_search_total;j_read>=i_read-n_search_total;j_read--){
               if(j_read<=i_read_stop && j_read>=i_read_start && j_read!=i_read){
                  sprintf(filename_cat1,  "%03d",i_read);
-                 sprintf(filename_groups,"%s_%03d",filename_halo_root_in,i_read,group_text_prefix);
+                 sprintf(filename_groups,"%s_%03d",filename_halo_root_in,i_read);
                  read_groups(filename_halo_root_in,i_read,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES|READ_GROUPS_NOIDS,&plist1,filename_cat1);
                  n_groups_1    =((int *)ADaPS_fetch(plist1.data,"n_%sgroups_%s",    group_text_prefix,filename_cat1))[0];
                  n_groups_1_all=((int *)ADaPS_fetch(plist1.data,"n_%sgroups_all_%s",group_text_prefix,filename_cat1))[0];
@@ -193,7 +193,7 @@ void compute_trees_matches(char   *filename_halo_root_in,
 
            // Read base group
            sprintf(filename_cat1,  "%03d",i_read);
-           sprintf(filename_groups,"%s_%03d",filename_halo_root_in,i_read,group_text_prefix);
+           sprintf(filename_groups,"%s_%03d",filename_halo_root_in,i_read);
            read_groups(filename_halo_root_in,i_read,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES,&plist1,filename_cat1);
            n_groups_1=((int *)ADaPS_fetch(plist1.data,"n_%sgroups_%s",group_text_prefix,filename_cat1))[0];
                       
@@ -203,7 +203,7 @@ void compute_trees_matches(char   *filename_halo_root_in,
 
                  // Read catalog to match to
                  sprintf(filename_cat2,  "%03d",j_read);
-                 sprintf(filename_groups,"%s_%03d",filename_halo_root_in,j_read,group_text_prefix);
+                 sprintf(filename_groups,"%s_%03d",filename_halo_root_in,j_read);
                  read_groups(filename_halo_root_in,j_read,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES,&plist2,filename_cat2);
 
                  // Perform matching
