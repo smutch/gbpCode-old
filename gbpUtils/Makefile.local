@@ -8,4 +8,3 @@ BINFILES  = test_sort test_PHK_boundry hist create_tmpfile gpause random_numbers
 LIBS      = -lgbpUtils -lgbpMath -lgbpLib
 SCRIPTS   = run_mpi run_mpi_valgrind run_valgrind
 #############################
-USE_FFTW=1

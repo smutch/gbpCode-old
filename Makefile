@@ -167,7 +167,6 @@ ifeq ($(USE_MPI),1)
   BINTOUCH1    = .install_bin_mpi
   LIBTOUCH2    = .install_lib_nompi
   BINTOUCH2    = .install_bin_nompi
-  CCFLAGS     := $(CCFLAGS) -DUSE_MPI
 else
   CC           = $(CC_NO_MPI)
   INCTOUCH     = .install_inc

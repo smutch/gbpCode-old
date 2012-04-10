@@ -12,6 +12,8 @@
 # Add Intel math library
 ifndef USE_INTEL_MATH
   USE_INTEL_MATH=0
+endif
+ifneq ($(USE_INTEL_MATH),0)
   LDFLAGS := $(LDFLAGS) -limf
 endif
 export USE_INTEL_MATH
