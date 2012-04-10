@@ -1,4 +1,4 @@
-#include <gbpLib.h>
+#include <gbpSID.h>
 #include <gbpHDF5.h>
 
 //######################################
