@@ -178,8 +178,7 @@ void sort(void          *sval,
         // ... scan the sort ranks we've just received and see if any of them
         //     are supposed to be pointed to by the indices stored locally ...
         for(i_val=0;i_val<nval_tmp;i_val++){
-          rank_rank[i_val]-=first_index;
-          if(rank_rank[i_val]>=0 && rank_rank[i_val]<nval)
+          if(rank_rank[i_val]>=first_index && rank_rank[i_val]<(nval+first_index))
             (*index)[rank_rank[i_val]]=offset+i_val;
         }
         offset+=nval_tmp;

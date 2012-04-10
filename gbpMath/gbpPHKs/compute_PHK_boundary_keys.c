@@ -18,8 +18,6 @@ void compute_PHK_boundary_keys(int PHK_bit_size,PHK_t domain_key_min,PHK_t domai
    num1dim = PHK_DIM_SIZE(bits);
 
    // Sanity checks
-   if(domain_key_min<0)
-     SID_trap_error("domain_key_min<0 (ie %zd<0) in compute_PHK_boundry_keys",ERROR_LOGIC,domain_key_min);
    if(domain_key_max>(num1dim*num1dim*num1dim))
      SID_trap_error("domain_key_max>num1dim^3 (ie %zd>%zd) in compute_PHK_boundry_keys",ERROR_LOGIC,domain_key_max,num1dim*num1dim*num1dim);
    if(domain_key_max<domain_key_min)

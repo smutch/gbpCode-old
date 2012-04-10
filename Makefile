@@ -18,6 +18,7 @@
 # Executables (use C99 standard so we have the trunc() function)
 CC_NO_MPI  = gcc -std=c99
 CC_NO_MPI  = g++ -std=c++98
+CC_NO_MPI  = icc 
 ifdef GBP_MPI
   CC_USE_MPI = $(GBP_MPI)/bin/mpic++
 else
@@ -414,7 +415,7 @@ $(addprefix $(GBP_BIN_LOCAL)/,$(SCRIPTS)):
 		echo -n "  " ; \
 		((i = i + 1)) ; \
 	done
-	echo -n "Linking '"$(notdir $@)"' to bin directory..."
+	@echo -n "Linking '"$(notdir $@)"' to bin directory..."
 	@rm -rf $@
 	@ln -s $(CURDIR)/$(notdir $@) $@
 	echo "Done."

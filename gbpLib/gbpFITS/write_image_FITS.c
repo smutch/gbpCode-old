@@ -101,6 +101,6 @@ int write_image_FITS(void *image,SID_Datatype dtype,int n_D,int *D_in,char *file
   transpose_array(image,dtype,n_D,D_in);
 
   SID_free(SID_FARG D);
-
+  return(status);
 }
 

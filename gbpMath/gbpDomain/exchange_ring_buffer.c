@@ -52,6 +52,7 @@ void exchange_ring_buffer(void     *send_buffer,
     memcpy(receive_buffer,send_buffer,(size_t)receive_buffer_size);
   }
 #else
+  send_buffer_size=(int)(send_count*buffer_type_size);
   if(send_buffer!=NULL && send_buffer_size>0){
     receive_buffer_size=send_buffer_size;
     receive_count      =send_count;
