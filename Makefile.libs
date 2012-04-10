@@ -9,6 +9,13 @@
 #
 #----------------------------------------------------------------------
 
+# Add Intel math library
+ifndef USE_INTEL_MATH
+  USE_INTEL_MATH=0
+  LDFLAGS := $(LDFLAGS) -limf
+endif
+export USE_INTEL_MATH
+
 # Add cfitsio
 ifndef USE_CFITSIO
   USE_CFITSIO    =0

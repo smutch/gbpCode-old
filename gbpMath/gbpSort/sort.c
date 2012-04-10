@@ -4,6 +4,7 @@
 #include <math.h>
 #include <gbpLib.h>
 #include <gbpSort.h>
+#include <gbpDomain.h>
 
 void sort(void          *sval,
 	  size_t         nval,

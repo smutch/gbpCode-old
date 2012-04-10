@@ -1,5 +1,6 @@
 // Free memory allocated by initialize_field()
 #include <gbpLib.h>
+#include <gbpSort.h>
 #include <gbpPHKs.h>
 
 void compute_PHK_boundary_keys(int PHK_bit_size,PHK_t domain_key_min,PHK_t domain_key_max,int *n_keys_return,PHK_t **keys_return){

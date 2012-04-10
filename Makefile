@@ -18,11 +18,11 @@
 # Executables (use C99 standard so we have the trunc() function)
 CC_NO_MPI  = gcc -std=c99
 CC_NO_MPI  = g++ -std=c++98
-ifndef GBP_MPI
-  GBP_MPI=/usr/
+ifdef GBP_MPI
+  CC_USE_MPI = $(GBP_MPI)/bin/mpic++
+else
+  CC_USE_MPI = mpic++
 endif
-export GBP_MPI
-CC_USE_MPI = $(GBP_MPI)/bin/mpic++
 MAKE       = make
 
 # This is needed to fix compilation errors re: undefined trunc() function
@@ -416,8 +416,8 @@ $(addprefix $(GBP_BIN_LOCAL)/,$(SCRIPTS)):
 		((i = i + 1)) ; \
 	done
 	echo -n "Linking '"$(notdir $@)"' to bin directory..."
-	rm -rf $@
-	ln -s $(CURDIR)/$(notdir $@) $@
+	@rm -rf $@
+	@ln -s $(CURDIR)/$(notdir $@) $@
 	echo "Done."
 
 # Generate links to data files

@@ -31,6 +31,11 @@ setenv USE_CFITSIO       0
 setenv USE_SPRNG         0
 setenv USE_HDF5          0
 
+# Set this to 1 if you need to link-in the Intel math library.  If you are
+#   getting errors like 'feupdateenv is not implemented and will always fail'
+#   then you need to do this.
+setenv USE_INTEL_MATH 0
+
 # Directories for each of the USE_ flags set to '1' above.  You don't need to do
 #   this if the library is loaded as a module, since the appropriate paths are
 #   already set automatically in the environment variables.
