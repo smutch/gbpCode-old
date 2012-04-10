@@ -3,7 +3,6 @@
 #include <string.h>
 #include <math.h>
 #include <gbpLib.h>
-#include <gbpDomain.h>
 #include <gbpSort.h>
 
 void sort(void          *sval,

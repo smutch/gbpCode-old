@@ -6,5 +6,8 @@ LIBFILE   = libgbpMath.a
 OBJFILES  =
 BINFILES  = 
 LIBS      = 
-SUBDIRS   = gbpMisc gbpStats gbpDomain gbpSort gbpRNG gbpFFT gbpInterpolate
+SUBDIRS   = gbpSort gbpDomain gbpStats gbpInterpolate gbpMisc gbpRNG 
+ifeq ($(USE_CFITSIO),1)
+  SUBDIRS := $(SUBDIRS) gbpFFT
+endif
 #############################

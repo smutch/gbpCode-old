@@ -23,11 +23,13 @@ void init_field(int        n_d,
   int  total_local_size_int;
 
   // Make sure that fftw and gbpLib are compiled with the same precision
-  if(sizeof(fftw_real)!=sizeof(GBPREAL))
-    SID_trap_error("Size of an fftw_real (%lld) is not the same the size of a REAL (%lld).  Fix installation!",
-                   ERROR_LOGIC,
-                   sizeof(fftw_real),
-                   sizeof(GBPREAL));
+  #if USE_FFTW
+    if(sizeof(fftw_real)!=sizeof(GBPREAL))
+      SID_trap_error("Size of an fftw_real (%lld) is not the same the size of a REAL (%lld).  Fix installation!",
+                     ERROR_LOGIC,
+                     sizeof(fftw_real),
+                     sizeof(GBPREAL));
+  #endif
 
   SID_log("Initializing ",SID_LOG_OPEN);
   for(i_d=0;i_d<n_d;i_d++){
@@ -36,7 +38,11 @@ void init_field(int        n_d,
     else
       SID_log("%d element %d-d FFT ",SID_LOG_CONTINUE,n[i_d],n_d);
   }
-  SID_log("(%d byte precision)...",SID_LOG_CONTINUE,(int)sizeof(fftw_real));
+  #if USE_FFTW
+    SID_log("(%d byte precision)...",SID_LOG_CONTINUE,(int)sizeof(fftw_real));
+  #else
+    SID_log("(%d byte precision)...",SID_LOG_CONTINUE,(int)sizeof(GBPREAL));
+  #endif
 
   // Initialize FFT sizes
   FFT->n_d            =n_d;
@@ -60,20 +66,24 @@ void init_field(int        n_d,
 
   // Initialize FFTW
   #if USE_MPI
-    FFT->plan =rfftwnd_mpi_create_plan(SID.COMM_WORLD->comm,
-                                       FFT->n_d,FFT->n,
-                                       FFTW_REAL_TO_COMPLEX,
-                                       FFTW_ESTIMATE);
-    FFT->iplan=rfftwnd_mpi_create_plan(SID.COMM_WORLD->comm,
-                                       FFT->n_d,FFT->n,
-                                       FFTW_COMPLEX_TO_REAL,
-                                       FFTW_ESTIMATE);
-    rfftwnd_mpi_local_sizes(FFT->plan,
-			    &(n_x_local), 
-			    &(i_x_start_local),
-			    &(n_y_transpose_local),
-			    &(i_y_start_transpose_local),
-			    &total_local_size_int);
+    #if USE_FFTW
+      FFT->plan =rfftwnd_mpi_create_plan(SID.COMM_WORLD->comm,
+                                         FFT->n_d,FFT->n,
+                                         FFTW_REAL_TO_COMPLEX,
+                                         FFTW_ESTIMATE);
+      FFT->iplan=rfftwnd_mpi_create_plan(SID.COMM_WORLD->comm,
+                                         FFT->n_d,FFT->n,
+                                         FFTW_COMPLEX_TO_REAL,
+                                         FFTW_ESTIMATE);
+      rfftwnd_mpi_local_sizes(FFT->plan,
+          		      &(n_x_local), 
+          		      &(i_x_start_local),
+          		      &(n_y_transpose_local),
+          		      &(i_y_start_transpose_local),
+          		      &total_local_size_int);
+    #else
+      SID_trap_error("Parallel FFTs are not supported without FFTW support.",ERROR+LOGIC);
+    #endif
     FFT->total_local_size=(size_t)total_local_size_int;
     if(n_x_local==0)
       i_x_start_local=0;
@@ -92,10 +102,16 @@ void init_field(int        n_d,
       else
         FFT->total_local_size*=2*(FFT->n[i_d]/2+1);
     }
-    FFT->plan =rfftwnd_create_plan(FFT->n_d,FFT->n,FFTW_REAL_TO_COMPLEX,FFTW_ESTIMATE|FFTW_IN_PLACE);
-    FFT->iplan=rfftwnd_create_plan(FFT->n_d,FFT->n,FFTW_COMPLEX_TO_REAL,FFTW_ESTIMATE|FFTW_IN_PLACE);
+    #if USE_FFTW
+      FFT->plan =rfftwnd_create_plan(FFT->n_d,FFT->n,FFTW_REAL_TO_COMPLEX,FFTW_ESTIMATE|FFTW_IN_PLACE);
+      FFT->iplan=rfftwnd_create_plan(FFT->n_d,FFT->n,FFTW_COMPLEX_TO_REAL,FFTW_ESTIMATE|FFTW_IN_PLACE);
+    #endif
   #endif
-  FFT->field_local =(fftw_real *)SID_malloc(sizeof(fftw_complex)*FFT->total_local_size); // real?
+  #if USE_FFTW
+    FFT->field_local =(fftw_real *)SID_malloc(sizeof(fftw_complex)*FFT->total_local_size); 
+  #else
+    FFT->field_local =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*FFT->total_local_size); 
+  #endif
 
   // Upper limits of slab decomposition
   for(i_d=0;i_d<FFT->n_d;i_d++){
@@ -121,7 +137,11 @@ void init_field(int        n_d,
   }
 
   // A pointer for referencing the field as a complex array
-  FFT->cfield_local=(fftw_complex *)FFT->field_local;
+  #if USE_FFTW
+     FFT->cfield_local=(fftw_complex *)FFT->field_local;
+  #else
+     FFT->cfield_local=(GBPREAL      *)FFT->field_local;
+  #endif
   clear_field(FFT);
 
   // Initialize the FFT's real-space grid

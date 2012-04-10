@@ -2,17 +2,19 @@
 #define GBPDOMAIN_AWAKE
 #ifndef GBPFFTW_AWAKE
   #define GBPFFTW_AWAKE
-  #if USE_MPI
-    #if USE_DOUBLE
-      #include <drfftw_mpi.h>
+  #if USE_FFTW
+    #if USE_MPI
+      #if USE_DOUBLE
+        #include <drfftw_mpi.h>
+      #else
+        #include <srfftw_mpi.h>
+      #endif
     #else
-      #include <srfftw_mpi.h>
-    #endif
-  #else
-    #if USE_DOUBLE
-      #include <drfftw.h>
-    #else
-      #include <srfftw.h>
+      #if USE_DOUBLE
+        #include <drfftw.h>
+      #else
+        #include <srfftw.h>
+      #endif
     #endif
   #endif
 #endif
@@ -34,8 +36,13 @@ struct slab_info{
 typedef struct field_info field_info;
 struct field_info{
   // Array storing the field
-  fftw_real        *field_local;
-  fftw_complex     *cfield_local;
+  #if USE_FFTW
+    fftw_real    *field_local;
+    fftw_complex *cfield_local;
+  #else
+    GBPREAL      *field_local;
+    GBPREAL      *cfield_local;
+  #endif
   // Field domain
   double           *L;
   double           *dR;
@@ -61,13 +68,15 @@ struct field_info{
   // flags
   int               flag_padded;
   // FFTW plans
-#if USE_MPI
-  rfftwnd_mpi_plan  plan;
-  rfftwnd_mpi_plan  iplan;
-#else
-  rfftwnd_plan      plan;
-  rfftwnd_plan      iplan;
-#endif
+  #if USE_FFTW
+    #if USE_MPI
+      rfftwnd_mpi_plan  plan;
+      rfftwnd_mpi_plan  iplan;
+    #else
+      rfftwnd_plan      plan;
+      rfftwnd_plan      iplan;
+    #endif
+  #endif
   // Slab info
   slab_info         slab;
 };
