@@ -26,5 +26,3 @@ BINFILES  = tree_stats                 \
 SCRIPTS   = view_tree.py
 LIBS      = -lgbpTrees -lgbpHalos -lgbpSPH -lgbpCosmo -lgbpMath -lgbpLib
 #############################
-USE_FFTW=1
-USE_GSL=1
