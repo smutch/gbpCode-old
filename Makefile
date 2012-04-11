@@ -418,7 +418,7 @@ $(addprefix $(GBP_BIN_LOCAL)/,$(SCRIPTS)):
 	@echo -n "Linking '"$(notdir $@)"' to bin directory..."
 	@rm -rf $@
 	@ln -s $(CURDIR)/$(notdir $@) $@
-	echo "Done."
+	@echo "Done."
 
 # Generate links to data files
 data_dir: $(addprefix $(GBP_DAT)/,$(DATAFILES))

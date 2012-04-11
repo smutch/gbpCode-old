@@ -39,13 +39,13 @@ setenv USE_INTEL_MATH 0
 # Directories for each of the USE_ flags set to '1' above.  You don't need to do
 #   this if the library is loaded as a module, since the appropriate paths are
 #   already set automatically in the environment variables.
-setenv GBP_GSL_DIR       ${HOME}/3rd_Party/
-setenv GBP_MPI           ${HOME}/3rd_Party/openmpi
-setenv GBP_VALGRIND_DIR  ${HOME}/3rd_Party/valgrind/
-setenv GBP_FFTW_DIR      ${HOME}/3rd_Party/
-setenv GBP_SPRNG_DIR     ${HOME}/3rd_Party/
-setenv GBP_CFITSIO_DIR   ${HOME}/3rd_Party/
-setenv GBP_HDF5_DIR      ${HOME}/3rd_Party/
+#setenv GBP_GSL_DIR       ${HOME}/3rd_Party/
+#setenv GBP_MPI           ${HOME}/3rd_Party/openmpi
+#setenv GBP_VALGRIND_DIR  ${HOME}/3rd_Party/valgrind/
+#setenv GBP_FFTW_DIR      ${HOME}/3rd_Party/
+#setenv GBP_SPRNG_DIR     ${HOME}/3rd_Party/
+#setenv GBP_CFITSIO_DIR   ${HOME}/3rd_Party/
+#setenv GBP_HDF5_DIR      ${HOME}/3rd_Party/
 
 # This is where the compiled gbpCode libraries, etc will be stored
 setenv GBP_LIB           ${GBP_SRC}'myLib/'

@@ -18,6 +18,7 @@
     #endif
   #endif
 #endif
+#include <gbpLib.h> // Needed for GBPREAL definition
 
 typedef struct slab_info slab_info;
 struct slab_info{
