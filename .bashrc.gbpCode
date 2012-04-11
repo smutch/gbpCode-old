@@ -53,25 +53,26 @@ export GBP_INC="${GBP_SRC}/myInclude/"
 export GBP_BIN="${GBP_SRC}/myBin/"
 export GBP_DAT="${GBP_SRC}/myData/"
 
-# Stup Mac OSX deoen't have getline() so we need to 
+# Mac OSX doesn't have getline() so we need to 
 #   compile our own version on that platform
 export USE_GETLINE=0
 
-# If you're gonna use valgrind with this code, you have to supply your
-#  system's platform here.
-export GBP_VALGRIND_PLAT="x86-darwin"
-
+#======================================================================
+# SET SOME SYSTEM-SPECIFIC THINGS HERE
+# eg. If you're gonna use valgrind with this code, you have to supply 
+#     your system's platform here.
+#======================================================================
 #----------------------------------------------------------------------
 # Swinburne cluster
 #----------------------------------------------------------------------
 if [ $HOSTTYPE=='x86_64-linux' ]; then
-  export GBP_MPI=/usr/local/gnu/x86_64/openmpi-1.4/
   export GBP_VALGRIND_PLAT=amd64-linux
 
 #----------------------------------------------------------------------
 # Intel Macintosh
 #----------------------------------------------------------------------
 elif [ $HOSTTYPE=='intel-mac' ]; then
+  export GBP_VALGRIND_PLAT="x86-darwin"
   export USE_GETLINE=1
 else
   echo 'Unsupported HOSTTYPE in .cshrc.gbpCode'
