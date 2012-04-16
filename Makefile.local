@@ -24,6 +24,7 @@ OBJFILES = add_MCMC_DS.o                        \
 	   generate_MCMC_parameters.o           \
 	   generate_MCMC_proposition.o          \
 	   init_MCMC.o                          \
+	   init_MCMC_DS.o                       \
 	   init_MCMC_arrays.o                   \
 	   set_MCMC_autotune.o                  \
 	   set_MCMC_covariance.o                \

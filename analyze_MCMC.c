@@ -317,19 +317,44 @@ void analyze_MCMC(MCMC_info *MCMC){
   M_avg            =(double  **)SID_malloc(sizeof(double  *)*n_DS);
   dM_avg           =(double  **)SID_malloc(sizeof(double  *)*n_DS);
   M_histogram      =(size_t ***)SID_malloc(sizeof(size_t **)*n_DS);
+
+  current_DS=MCMC->DS;
   for(i_DS=0,n_residual=0;i_DS<n_DS;i_DS++){
-    M_best[i_DS]           =(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
-    M_best_parameters[i_DS]=(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
-    M_peak_parameters[i_DS]=(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
-    M_min[i_DS]            =(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
-    M_max[i_DS]            =(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
-    M_lo_68[i_DS]          =(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
-    M_hi_68[i_DS]          =(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
-    M_lo_95[i_DS]          =(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
-    M_hi_95[i_DS]          =(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
-    M_avg[i_DS]            =(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
-    dM_avg[i_DS]           =(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
-    M_histogram[i_DS]      =(size_t **)SID_malloc(sizeof(size_t *)*n_M[i_DS]);
+    next_DS=current_DS->next;
+    if(current_DS->M_best==NULL)
+       current_DS->M_best=(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
+    if(current_DS->M_best_parameters==NULL)
+       current_DS->M_best_parameters=(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
+    if(current_DS->M_peak_parameters==NULL)
+       current_DS->M_peak_parameters=(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
+    if(current_DS->M_min==NULL)
+       current_DS->M_min  =(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
+    if(current_DS->M_max==NULL)
+       current_DS->M_max  =(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
+    if(current_DS->M_lo_68==NULL)
+       current_DS->M_lo_68=(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
+    if(current_DS->M_hi_68==NULL)
+       current_DS->M_hi_68=(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
+    if(current_DS->M_lo_95==NULL)
+       current_DS->M_lo_95=(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
+    if(current_DS->M_hi_95==NULL)
+       current_DS->M_hi_95=(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
+    if(current_DS->M_avg==NULL)
+       current_DS->M_avg  =(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
+    if(current_DS->dM_avg==NULL)
+       current_DS->dM_avg =(double *)SID_malloc(sizeof(double)*n_M[i_DS]);
+    M_best[i_DS]                 =current_DS->M_best;
+    M_best_parameters[i_DS]      =current_DS->M_best_parameters;
+    M_peak_parameters[i_DS]      =current_DS->M_peak_parameters;
+    M_min[i_DS]                  =current_DS->M_min;
+    M_max[i_DS]                  =current_DS->M_max;
+    M_lo_68[i_DS]                =current_DS->M_lo_68;
+    M_hi_68[i_DS]                =current_DS->M_hi_68;
+    M_lo_95[i_DS]                =current_DS->M_lo_95;
+    M_hi_95[i_DS]                =current_DS->M_hi_95;
+    M_avg[i_DS]                  =current_DS->M_avg;
+    dM_avg[i_DS]                 =current_DS->dM_avg;
+    M_histogram[i_DS]            =(size_t **)SID_malloc(sizeof(size_t *)*n_M[i_DS]);
     for(i_M=0;i_M<n_M[i_DS];i_M++){
       M_histogram[i_DS][i_M]=(size_t *)SID_malloc(sizeof(size_t)*coverage_size);
       M_avg[i_DS][i_M]  =0.;
@@ -340,7 +365,10 @@ void analyze_MCMC(MCMC_info *MCMC){
         M_histogram[i_DS][i_M][j_M]=0;
     }
     n_residual=MAX(n_residual,n_M[i_DS]);
+    current_DS=next_DS;
   }
+  if(next_DS!=NULL)
+    SID_trap_error("Invalid dataset count in analyze_MCMC().",ERROR_LOGIC);
   residual         =(double   *)SID_malloc(sizeof(double)*n_residual);
   coverage_true    =(size_t  **)SID_malloc(sizeof(size_t  *)*n_coverage);
   coverage_false   =(size_t  **)SID_malloc(sizeof(size_t  *)*n_coverage);
@@ -649,7 +677,6 @@ void analyze_MCMC(MCMC_info *MCMC){
         P_hi_68_index     =histogram_index[coverage_size-1];
         for(j_P=1,k_P=0;j_P<coverage_size;j_P++)
            if(max_L_histogram[i_P][j_P]>max_L_histogram[i_P][k_P]) k_P=j_P;
-        //P_peak[i_P]=P_min[i_P]+(P_max[i_P]-P_min[i_P])*((double)(k_P)+0.5)/(double)coverage_size;
         for(j_P=coverage_size-2;j_P>=0 && ((double)accumulator/(double)n_used)<0.68;j_P--){
           if(histogram_index[j_P]<P_lo_68_index) P_lo_68_index=histogram_index[j_P];
           if(histogram_index[j_P]>P_hi_68_index) P_hi_68_index=histogram_index[j_P];
@@ -911,17 +938,6 @@ void analyze_MCMC(MCMC_info *MCMC){
   SID_free(SID_FARG P_ij_bar);
   SID_free(SID_FARG V_compute);
   for(i_DS=0;i_DS<n_DS;i_DS++){
-    SID_free(SID_FARG M_avg[i_DS]);
-    SID_free(SID_FARG dM_avg[i_DS]);
-    SID_free(SID_FARG M_best[i_DS]);
-    SID_free(SID_FARG M_best_parameters[i_DS]);
-    SID_free(SID_FARG M_peak_parameters[i_DS]);
-    SID_free(SID_FARG M_min[i_DS]);
-    SID_free(SID_FARG M_max[i_DS]);
-    SID_free(SID_FARG M_lo_68[i_DS]);
-    SID_free(SID_FARG M_hi_68[i_DS]);
-    SID_free(SID_FARG M_lo_95[i_DS]);
-    SID_free(SID_FARG M_hi_95[i_DS]);
     for(j_M=0;j_M<n_M[i_DS];j_M++)
       SID_free(SID_FARG M_histogram[i_DS][j_M]);
     SID_free(SID_FARG M_histogram[i_DS]);
