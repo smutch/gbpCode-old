@@ -1228,7 +1228,6 @@ void compute_trees_horizontal(char   *filename_halo_root_in,
   FILE *fp_matching_out;
   int   i_column;
 
- 
   SID_log("Constructing horizontal merger trees for snapshots #%d->#%d (step=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read_stop,i_read_start,i_read_step);
 
   if(!flag_fix_bridges)
@@ -1247,9 +1246,6 @@ void compute_trees_horizontal(char   *filename_halo_root_in,
                         &n_subgroups,
                         &n_groups,
                         n_search);
-
-// The n_subgroups and n_groups arrays need to be redone
-SID_exit(ERROR_NONE);
 
   // We need these for allocating arrays
   calc_max(n_subgroups,&n_subgroups_max,n_files,SID_INT,CALC_MODE_DEFAULT);

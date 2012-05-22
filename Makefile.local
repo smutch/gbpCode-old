@@ -14,6 +14,7 @@ OBJFILES  = write_match_results.o      \
 	    read_trees.o               
 LIBFILE   = libgbpTrees.a
 BINFILES  = tree_stats                 \
+	    matchfile2ascii            \
 	    query_match_file           \
 	    make_trees                 \
 	    make_trees_matches         \

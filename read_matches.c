@@ -7,9 +7,9 @@
 #include <gbpHalos.h>
 #include <gbpTrees.h>
 
-void read_matches(char    *filename_root_matches,
-                  int      i_read,
-                  int      j_read,
+void read_matches(char    *filename_in_dir,
+                  int      i_read_in,
+                  int      j_read_in,
                   int      mode,
                   int     *n_groups_i,
                   int     *n_groups_j,
@@ -38,7 +38,7 @@ void read_matches(char    *filename_root_matches,
    int    n_groups_i_file;
    int    n_groups_j_file;
    
-   if(i_read==j_read)
+   if(i_read_in==j_read_in)
      SID_trap_error("i_read=j_read in read_matches",ERROR_LOGIC);
 
    switch(mode){
@@ -51,36 +51,53 @@ void read_matches(char    *filename_root_matches,
    }
 
    // Read the needed info from the header file
-   int i_read_start;
-   int i_read_stop;
-   int n_search_total;
-   int n_files;
-   int i_read_in;
-   int n_groups_in;
-   int counter=0;
-   sprintf(filename_in,"%s.%sgroup_matches_header",filename_root_matches,group_text_prefix);
+   int  i_read;
+   int  i_read_start;
+   int  i_read_stop;
+   int  n_search_total;
+   int  n_files;
+   int  n_groups_in;
+   int  counter=0;
+   char filename_in_name[256];
+   strcpy(filename_in_name,filename_in_dir);
+   strip_path(filename_in_name);
+   sprintf(filename_in,"%s/%s.%sgroup_matches_header",filename_in_dir,filename_in_name,group_text_prefix);
    SID_fopen(filename_in,"r",&fp_in);
    SID_fread(&i_read_start,  sizeof(int),1,&fp_in);
    SID_fread(&i_read_stop,   sizeof(int),1,&fp_in);
    SID_fread(&n_search_total,sizeof(int),1,&fp_in);
    SID_fread(&n_files,       sizeof(int),1,&fp_in);
-   for(i_read=i_read_start;i_read<=i_read_stop && counter<2;i_read++){
-      SID_fread(&i_read_in, sizeof(int),1,&fp_in);
-      if(i_read==i_read_in){
+   for(i_read=i_read_stop;i_read>=i_read_start && counter<2;i_read--){
+      SID_fread(&i_read_file, sizeof(int),1,&fp_in);
+      if(i_read_file==i_read_in){
          SID_fread(n_groups_i,sizeof(int),1,&fp_in);
          if((*n_groups_i)>0){
-            SID_fread_ordered(n_particles_i,sizeof(int),(size_t)(*n_groups_i),&fp_in);
-            if(mode==MATCH_GROUPS)
-               SID_fread_ordered(n_sub_group_i,sizeof(int),(size_t)(*n_groups_i),&fp_in);
+            if(n_particles_i!=NULL)
+               SID_fread_ordered(n_particles_i,sizeof(int),(size_t)(*n_groups_i),&fp_in);
+            else
+               SID_fskip(sizeof(int),(*n_groups_i),&fp_in);
+            if(mode==MATCH_GROUPS){
+               if(n_sub_group_i!=NULL)
+                  SID_fread_ordered(n_sub_group_i,sizeof(int),(size_t)(*n_groups_i),&fp_in);
+               else
+                  SID_fskip(sizeof(int),(*n_groups_i),&fp_in);
+            }
          }
          counter++;
       }
-      else if(j_read==i_read_in){
+      else if(i_read_file==j_read_in){
          SID_fread(n_groups_j,sizeof(int),1,&fp_in);
          if((*n_groups_j)>0){
-            SID_fread_ordered(n_particles_j,sizeof(int),(size_t)(*n_groups_j),&fp_in);
-            if(mode==MATCH_GROUPS)
-               SID_fread_ordered(n_sub_group_j,sizeof(int),(size_t)(*n_groups_j),&fp_in);
+            if(n_particles_j!=NULL)
+               SID_fread_ordered(n_particles_j,sizeof(int),(size_t)(*n_groups_j),&fp_in);
+            else
+               SID_fskip(sizeof(int),(*n_groups_j),&fp_in);
+            if(mode==MATCH_GROUPS){
+               if(n_sub_group_j!=NULL)
+                  SID_fread_ordered(n_sub_group_j,sizeof(int),(size_t)(*n_groups_j),&fp_in);
+               else
+                  SID_fskip(sizeof(int),(*n_groups_j),&fp_in);
+            }
          }
          counter++;
       }
@@ -96,7 +113,16 @@ void read_matches(char    *filename_root_matches,
    SID_fclose(&fp_in);
 
    // Read the matching file
-   sprintf(filename_in,"%s_%03d_%03d.%sgroup_matches",filename_root_matches,i_read,j_read,group_text_prefix);
+   char filename_cat1[256];
+   char filename_cat2[256];
+   char filename_in_dir_snap[256];
+   sprintf(filename_cat1,"%03d",i_read_in);
+   sprintf(filename_cat2,"%03d",j_read_in);
+   sprintf(filename_in_dir_snap,"%s/%s",filename_in_dir,filename_cat1);
+   if(filename_in_dir!=NULL)
+      sprintf(filename_in,"%s/%s_%s_%s.%sgroup_matches",filename_in_dir_snap,filename_in_name,filename_cat1,filename_cat2,group_text_prefix);
+   else
+      sprintf(filename_in,"%s_%s_%s.%sgroup_matches",filename_in_name,filename_cat1,filename_cat2,group_text_prefix);
    SID_fopen(filename_in,"r",&fp_in);
    SID_fread(&i_read_file,sizeof(int),1,&fp_in);
    SID_fread(&j_read_file,sizeof(int),1,&fp_in);
