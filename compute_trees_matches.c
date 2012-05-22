@@ -275,7 +275,6 @@ void compute_trees_matches(char   *filename_root_in,
   }
 
   // Check to see if there are any matches needing to be completed
-/*
   SID_log("Checking for matching files...",SID_LOG_OPEN);
   //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
   SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
