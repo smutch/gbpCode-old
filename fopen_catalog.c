@@ -26,6 +26,16 @@ int fopen_nth_catalog_file(fp_catalog_info *fp_in,int n){
       char filename_properties[MAX_FILENAME_LENGTH];
       char filename_profiles[MAX_FILENAME_LENGTH];
 
+      // Close the file pointers if they are already open
+      if(fp_in->fp_properties!=NULL){
+         fclose(fp_in->fp_properties);
+         fp_in->fp_properties=NULL;
+      }
+      if(fp_in->fp_profiles!=NULL){
+         fclose(fp_in->fp_profiles);
+         fp_in->fp_profiles=NULL;
+      }
+
       // Create the filename
       if(fp_in->flag_multifile){
          sprintf(filename_properties,"%s/%s.%d",fp_in->filename_properties_root,fp_in->filename_properties_base,i_file);
@@ -42,8 +52,6 @@ int fopen_nth_catalog_file(fp_catalog_info *fp_in,int n){
       }
 
       // Try to open properties file
-      int i_file_start;
-      i_file_start=i_file;
       if(fp_in->flag_read_properties){
          if(((fp_in->fp_properties)=fopen(filename_properties,"r"))==NULL)
            r_val=TRUE;
@@ -61,7 +69,6 @@ int fopen_nth_catalog_file(fp_catalog_info *fp_in,int n){
       }
 
       // Try to open profiles file
-      i_file=i_file_start;
       if(fp_in->flag_read_profiles){
          if(((fp_in->fp_profiles)=fopen(filename_profiles,"r"))==NULL)
            r_val=TRUE;
@@ -87,6 +94,8 @@ int fopen_nth_catalog_file(fp_catalog_info *fp_in,int n){
          fp_in->i_halo_start=fp_in->i_halo_start+fp_in->n_halos_file;
          fp_in->i_halo_stop =fp_in->i_halo_stop +fp_in->n_halos_file;
       }
+
+      i_file++;
    }
 
    return(r_val);
@@ -139,6 +148,8 @@ int fopen_catalog(char            *filename_catalog_root,
    fp_out->snap_num=snapshot_number;
 
    // Sort out what file format we're working with
+   fp_out->fp_properties=NULL;
+   fp_out->fp_profiles  =NULL;
    if(SID.I_am_Master){
       int   i_file;
       char  filename_properties[MAX_FILENAME_LENGTH];
@@ -154,12 +165,14 @@ int fopen_catalog(char            *filename_catalog_root,
 
       // Try reading a multifile first ...
       sprintf(filename_properties,"%s/%s.%d",fp_out->filename_properties_root,fp_out->filename_properties_base,0);
-      if((fp_out->fp_properties=fopen(filename_properties,"r"))==NULL){
+      fp_out->fp_properties=fopen(filename_properties,"r");
+      if(fp_out->fp_properties==NULL){
          sprintf(filename_properties,"%s",fp_out->filename_properties_root);
          // ... if we didn't find a multi-file, try reading a single file ...
-         if((fp_out->fp_properties=fopen(filename_properties,"r"))==NULL){
+         fp_out->fp_properties=fopen(filename_properties,"r");
+         if(fp_out->fp_properties==NULL){
            r_val=TRUE;
-           SID_trap_error("Could not open catalog {%s} snapshot #%03d.",ERROR_IO_OPEN,filename_catalog_root,snapshot_number);
+           SID_trap_error("Could not open catalog {%s} snapshot #%03d {%s}.",ERROR_IO_OPEN,filename_catalog_root,snapshot_number,filename_properties);
          }
          // ... we found a single file.  Set flags.
          else
@@ -170,12 +183,13 @@ int fopen_catalog(char            *filename_catalog_root,
          fp_out->flag_multifile=TRUE;
 
       // Load/set header information
-      if(!r_val){
+      if(fp_out->fp_properties!=NULL){
          fread(&(fp_out->i_file),       sizeof(int),1,fp_out->fp_properties);
          fread(&(fp_out->n_files),      sizeof(int),1,fp_out->fp_properties);
          fread(&(fp_out->n_halos_file), sizeof(int),1,fp_out->fp_properties);
          fread(&(fp_out->n_halos_total),sizeof(int),1,fp_out->fp_properties);
          fclose(fp_out->fp_properties);
+         fp_out->fp_properties=NULL;
       }
    }
    SID_Bcast(fp_out,sizeof(fp_catalog_info),MASTER_RANK,SID.COMM_WORLD);

@@ -151,8 +151,6 @@ void match_halos(plist_info  *plist_1_in,
         SID_trap_error("Both catalogs must be loaded with PHK decompositions.",ERROR_LOGIC);
      n_bits_PHK_1=((int *)ADaPS_fetch(plist_1->data,"n_bits_PHK_%s",catalog_1))[0];
      n_bits_PHK_2=((int *)ADaPS_fetch(plist_2->data,"n_bits_PHK_%s",catalog_2))[0];
-     if(n_bits_PHK_1!=n_bits_PHK_2)
-        SID_trap_error("PHK decomposition of the two catalogs is incompatible (ie. %d!=%d).",ERROR_LOGIC,n_bits_PHK_1,n_bits_PHK_2);
      n_particles_boundary_1      =((int *)ADaPS_fetch(plist_1->data,"n_particles_boundary_%s",catalog_1))[0];
      n_particles_boundary_2_local=((int *)ADaPS_fetch(plist_2->data,"n_particles_boundary_%s",catalog_2))[0];
      if(flag_match_subgroups){
@@ -163,6 +161,8 @@ void match_halos(plist_info  *plist_1_in,
         n_groups_boundary_1      =((int *)ADaPS_fetch(plist_1->data,"n_groups_boundary_%s",   catalog_1))[0];
         n_groups_boundary_2_local=((int *)ADaPS_fetch(plist_2->data,"n_groups_boundary_%s",   catalog_2))[0];
      }
+     if(n_bits_PHK_1!=n_bits_PHK_2 && (n_bits_PHK_1!=0 && n_bits_PHK_2!=0)) // n_bits=0 if there are no groups
+        SID_trap_error("PHK decomposition of the two catalogs is incompatible (ie. %d!=%d).",ERROR_LOGIC,n_bits_PHK_1,n_bits_PHK_2);
   }
   else
      flag_PHK_decomp     =FALSE;
@@ -749,10 +749,11 @@ void match_halos(plist_info  *plist_1_in,
         ADaPS_store(&(plist_store->data),(void *)(match_score),"match_score_%s",ADaPS_DEFAULT,catalog_1to2);
     }
 
-    SID_log("%d of %d matched to %d. Done.",SID_LOG_CLOSE,
+    SID_log("%d of %d matched to %d.",SID_LOG_COMMENT,
             n_match,
             n_match_1_all,
             n_groups_2_all);
+    SID_log("Done.",SID_LOG_CLOSE);
   }
   else{
     if(check_mode_for_flag(mode,MATCH_STORE_2))
@@ -766,7 +767,8 @@ void match_halos(plist_info  *plist_1_in,
     else{
       ADaPS_store(&(plist_store->data),(void *)(&n_match),"n_match_%s",ADaPS_SCALAR_INT,catalog_1to2);
     }
-    SID_log("NO GROUPS TO MATCH!",SID_LOG_CLOSE);
+    SID_log("NO GROUPS TO MATCH!",SID_LOG_COMMENT);
+    SID_log("Done.",SID_LOG_CLOSE);
   }
 }
 

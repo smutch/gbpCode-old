@@ -233,6 +233,9 @@ void read_groups(char        *filename_groups_root,
            fread(&n_groups,   sizeof(int),   1,fp_PHKs);
            fread(&n_bits_PHK, sizeof(int),   1,fp_PHKs);
            fread(&n_particles,sizeof(size_t),1,fp_PHKs);
+           // Set n_bits to a default of 0 if there are no groups
+           if(n_groups<=0)
+              n_bits_PHK=0;
         }
         else
           fseeko(fp_PHKs,(off_t)(2*sizeof(int)+sizeof(size_t)),SEEK_SET);
@@ -349,19 +352,22 @@ void read_groups(char        *filename_groups_root,
         // ... else, count the local number of particles and groups for the given range ...
         else{
            int PHK_last_rank;
-           PHK_min_local =PHK_min_local_in;
-           PHK_max_local =PHK_max_local_in;
+           PHK_min_local    =PHK_min_local_in;
+           PHK_max_local    =PHK_max_local_in;
            n_groups_local   =0;
            n_particles_local=0;
 
            // Check the given PHK ranges
-           for(i_rank=0,PHK_last_rank=-1;i_rank<SID.n_proc;i_rank++){
-              if(i_rank==SID.My_rank){
-                 if(PHK_min_local!=(PHK_last_rank+1))
-                    SID_trap_error("Keys not continuous at start of rank %d.",ERROR_LOGIC,SID.My_rank);
-                 PHK_last_rank=PHK_max_local;
+           if(n_bits_PHK>0){
+              for(i_rank=0,PHK_last_rank=-1;i_rank<SID.n_proc;i_rank++){
+                 if(i_rank==SID.My_rank){
+                    if(PHK_min_local!=(PHK_last_rank+1))
+                       SID_trap_error("Keys not continuous at start of rank %d. (n_bits=%d,PHK_min=%d,PHK_max=%d)",
+                                      ERROR_LOGIC,SID.My_rank,n_bits_PHK,PHK_min_local,PHK_max_local);
+                    PHK_last_rank=PHK_max_local;
+                 }
+                 SID_Bcast(&PHK_last_rank,sizeof(int),i_rank,SID.COMM_WORLD);
               }
-              SID_Bcast(&PHK_last_rank,sizeof(int),i_rank,SID.COMM_WORLD);
            }
 
            for(i_group=0,i_buffer=n_buffer_max,n_particles_base=0;i_group<n_groups;i_group++,i_buffer++){
@@ -461,7 +467,12 @@ void read_groups(char        *filename_groups_root,
         SID_free(SID_FARG read_index_group_temp_index);
 
         // Determine which keys lie on the outside boundary of the local domain
-        compute_PHK_boundary_keys(n_bits_PHK,PHK_min_local,PHK_max_local,&n_keys_boundary,&keys_boundary);
+        if(n_bits_PHK>0) // default value if there are no groups
+           compute_PHK_boundary_keys(n_bits_PHK,PHK_min_local,PHK_max_local,&n_keys_boundary,&keys_boundary);
+        else{
+           n_keys_boundary=0;
+           keys_boundary  =NULL;
+        }
 
         // Determine how many groups have boundary keys and how many are in the interior
         for(i_group=0,n_groups_boundary=0,n_groups_interior=0;i_group<n_groups_local;i_group++){
@@ -877,8 +888,15 @@ void read_groups(char        *filename_groups_root,
     
             SID_log("Done. (%d groups)",SID_LOG_CLOSE,n_groups);
          }
-         else
+         else{
+            size_t n_particles_boundary;
+            size_t n_subgroups_boundary;
             SID_log("NO GROUPS TO READ!",SID_LOG_CLOSE);
+            n_particles_boundary=0;
+            n_subgroups_boundary=0;
+            ADaPS_store(&(plist->data),(void *)(&n_particles_boundary),"n_particles_boundary_%s",ADaPS_SCALAR_SIZE_T,catalog_name);
+            ADaPS_store(&(plist->data),(void *)(&n_subgroups_boundary),"n_subgroups_boundary_%s",ADaPS_SCALAR_SIZE_T,catalog_name);
+         }
          fclose(fp_groups);
       }
  
@@ -999,11 +1017,11 @@ void read_groups(char        *filename_groups_root,
             // Store results
             ADaPS_store(&(plist->data),subgroup_length,"n_particles_subgroup_%s",    ADaPS_DEFAULT,   catalog_name);
             ADaPS_store(&(plist->data),subgroup_offset,"particle_offset_subgroup_%s",ADaPS_DEFAULT,   catalog_name);
-            fclose(fp_subgroups);
             SID_log("Done. (%ld subgroups)",SID_LOG_CLOSE,n_subgroups);
          }
          else
             SID_log("NO SUBGROUPS TO READ!",SID_LOG_CLOSE);
+         fclose(fp_subgroups);
       }
 
       // Read the particle IDs file ...
@@ -1187,128 +1205,6 @@ void read_groups(char        *filename_groups_root,
             if(!flag_long_ids)
                SID_free(SID_FARG buffer_int);
                
-// Original down from here
-/*
-            // Read the IDs
-            int   index_group;
-            int   index_particles;
-            int   index_last;
-            int   flag_seek;
-            for(i_test=0;i_test<n_particles_local;i_test++) 
-               test[i_test]=0;
-            fseeko(fp_ids,(off_t)header_size_ids,SEEK_SET);
-            j_group        =0;
-            index_group    =storage_index_group[j_group];
-            index_particles=storage_index_particles[j_group];
-            for(i_group=0,index_last=0,flag_seek=TRUE;i_group<n_groups && j_group<n_groups_local;i_group++){
-               if(read_index_group[j_group]==i_group){
-                  index_group    =storage_index_group[j_group];
-                  index_particles=storage_index_particles[j_group];
-                  if(flag_seek)
-                     fseeko(fp_ids,(off_t)((group_offset[index_group]-index_last)*id_byte_size),SEEK_CUR);
-                  fread(buffer_in,id_byte_size,group_length[index_group],fp_ids);
-                  index_last=group_offset[index_group]+group_length[index_group];
-                  if(buffer!=buffer_in){
-                     for(i_buffer=0;i_buffer<group_length[index_group];i_buffer++)
-                       buffer[i_buffer]=(size_t)(((int *)buffer_in)[i_buffer]);
-                  }
-                  if(flag_read_MBP_ids_only){
-                     input_id[index_group]=buffer[0];
-                     test[index_group]++;
-                  }
-                  else{
-                     memcpy(&(input_id[index_particles]),buffer,sizeof(size_t)*group_length[index_group]);
-                     for(i_test=index_particles,j_test=0;j_test<group_length[index_group];i_test++,j_test++)
-                        test[i_test]++;
-                  }
-                  j_group++;
-                  flag_seek=TRUE;
-               }
-               else if(flag_seek){
-                  fseeko(fp_ids,(off_t)((group_offset[index_group]-index_last)*id_byte_size),SEEK_CUR);
-                  flag_seek=FALSE;
-               }
-               SID_Barrier(SID.COMM_WORLD);
-            }
-            if(buffer!=buffer_in)
-               SID_free(SID_FARG buffer);
-            SID_free(SID_FARG buffer_in);
-            if(j_group!=n_groups_local)
-              SID_trap_error("Group counts don't make sense (ie. %d!=%d) after reading group IDs.",ERROR_LOGIC,j_group,n_groups_local);
-*/
-/*
-            // Create buffer
-            char *buffer;
-            int   index_group;
-            int   index_particles;
-            n_buffer_max=4096; // Which gives a buffer of 32K ... supposedly the optimal NFS block size.
-            buffer=(char *)SID_malloc(n_buffer_max*sizeof(size_t));
-
-            // Sort the particle storage indices
-            size_t *group_offset_index;
-            merge_sort(group_offset,(size_t)n_groups_local,&group_offset_index,SID_INT,SORT_COMPUTE_INDEX,FALSE);
-
-            // Read the IDs
-            int    n_current_group;
-            size_t id_i;
-            j_group        =0;
-            index_group    =storage_index_group[group_offset_index[j_group]];
-            index_particles=storage_index_particles[group_offset_index[j_group]];
-            n_current_group=0;
-            for(i_particle=0,i_buffer=n_buffer_max;i_particle<n_ids;i_particle++,i_buffer++){
-
-               // Buffer the read
-               if(i_buffer>=n_buffer_max){
-                  n_buffer=MIN(n_buffer_max,n_ids-i_particle);
-                  i_buffer=0;
-                  if(SID.I_am_Master)
-                     fread(buffer,sizeof(size_t),n_buffer,fp_ids);
-                  SID_Bcast(buffer,n_buffer*sizeof(size_t),MASTER_RANK,SID.COMM_WORLD);
-               }
-
-               // Process ID.  Ignore this bit if the current rank has all its IDs.
-               if(j_group<n_groups_local){
-                  if(i_particle>=group_offset[index_group]){
-                     // Convert the ID to internal ID type if need-be
-                     size_t id_i;
-                     switch(flag_long_ids){
-                        case TRUE:
-                          id_i=((size_t *)buffer)[i_buffer];
-                          break;
-                        default:
-                          id_i=(size_t)(((int *)buffer)[i_buffer]);
-                          break;
-                     }
-                     switch(flag_read_MBP_ids_only){
-                        case TRUE:
-                           if(i_particle==group_offset[index_group]){
-                              input_id[index_particles]=id_i;
-                              test[index_particles]++;
-                           }
-                           break;
-                        default:
-                           input_id[index_particles]=id_i;
-                           test[index_particles]++;
-                           index_particles++;
-                           break;
-                     }
-                     n_current_group++;
-                  }
-
-                  // Reset some things if we have finished a group
-                  if(n_current_group>=group_length[index_group]){
-                     j_group++;
-                     if(j_group<n_groups_local){
-                        index_group    =storage_index_group[group_offset_index[j_group]];
-                        index_particles=storage_index_particles[group_offset_index[j_group]];
-                     }
-                     n_current_group=0;
-                  }
-               }
-            }
-            SID_free(SID_FARG storage_index_particles_index);
-*/
-
             // Check for indexing inconsistancies
             if(flag_read_MBP_ids_only){
                for(i_group=0,i_particle=0;i_group<n_groups_local;i_group++,i_particle++){
