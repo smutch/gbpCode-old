@@ -15,5 +15,3 @@ LIBFILE   = libgbpHalos.a
 BINFILES  = make_group_PHKs make_catalog_ascii make_group_ascii make_group_analysis cat_group_analysis convert_AHF
 LIBS      = -lgbpHalos -lgbpSPH -lgbpCosmo -lgbpMath -lgbpLib
 #############################
-USE_FFTW=1
-USE_GSL=1

@@ -2,8 +2,11 @@
 #include <gbpLib.h>
 #include <gbpHalos.h>
 
+#define _FILE_OFFSET_BITS 64
+
 int fread_catalog_file(fp_catalog_info *fp_in,halo_info *properties_out,halo_profile_info *profiles_out,int halo_index){
   int n_skip;
+  int r_val=0;
   // Skip to the right place
   if(halo_index!=(fp_in->i_halo+1) || halo_index>fp_in->i_halo_stop){
      // We always have to scan forward, so if we're going backwards, we have to start from scratch
@@ -12,7 +15,8 @@ int fread_catalog_file(fp_catalog_info *fp_in,halo_info *properties_out,halo_pro
      n_skip=halo_index-fp_in->i_halo_start;
      if(n_skip>0){
         if(fp_in->flag_read_properties)
-           fseeko64(fp_in->fp_properties,(off64_t)(sizeof(halo_properties_info)*n_skip),SEEK_CUR);
+           //fseeko64(fp_in->fp_properties,(off64_t)(sizeof(halo_properties_info)*n_skip),SEEK_CUR);
+           fseeko(fp_in->fp_properties,(off_t)(sizeof(halo_properties_info)*n_skip),SEEK_CUR);
         if(fp_in->flag_read_profiles){
            int    i_profile;
            int    n_bins;
@@ -20,13 +24,15 @@ int fread_catalog_file(fp_catalog_info *fp_in,halo_info *properties_out,halo_pro
            if(SID.I_am_Master){
               for(i_profile=0,n_bytes_skip=0;i_profile<n_skip;i_profile++){
                  fread(&n_bins,sizeof(int),1,fp_in->fp_profiles);
-                 fseeko64(fp_in->fp_profiles,(off64_t)(n_bins*sizeof(halo_profile_bin_info)),SEEK_CUR);
+                 //fseeko64(fp_in->fp_profiles,(off64_t)(n_bins*sizeof(halo_profile_bin_info)),SEEK_CUR);
+                 fseeko(fp_in->fp_profiles,(off_t)(n_bins*sizeof(halo_profile_bin_info)),SEEK_CUR);
                  n_bytes_skip+=sizeof(int)+(size_t)n_bins*sizeof(halo_profile_bin_info);
               }
            }
            SID_Bcast(&n_bytes_skip,sizeof(size_t),MASTER_RANK,SID.COMM_WORLD);
            if(!SID.I_am_Master)
-              fseeko64(fp_in->fp_profiles,(off64_t)(n_bytes_skip),SEEK_CUR);
+              //fseeko64(fp_in->fp_profiles,(off64_t)(n_bytes_skip),SEEK_CUR);
+              fseeko(fp_in->fp_profiles,(off_t)(n_bytes_skip),SEEK_CUR);
         }
      }
   }
@@ -72,5 +78,7 @@ int fread_catalog_file(fp_catalog_info *fp_in,halo_info *properties_out,halo_pro
 
   // Set counter
   fp_in->i_halo=halo_index;
+
+  return(r_val);
 }
 

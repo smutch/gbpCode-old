@@ -9,6 +9,8 @@
 
 #define GADGET_BUFFER_SIZE_LOCAL  128*SIZE_OF_MEGABYTE
 
+#define _FILE_OFFSET_BITS 64
+
 void read_gadget_binary_local(char       *filename_root_in,
                               int         snapshot_number,
                               plist_info *plist);
@@ -363,13 +365,15 @@ void read_gadget_binary_local(char       *filename_root_in,
       if(SID.My_rank==read_rank){
         // Skip positions
         fread(&record_length_open,4,1,fp);
-        fseeko64(fp,(off64_t)record_length_open,SEEK_CUR);
+        //fseeko64(fp,(off64_t)record_length_open,SEEK_CUR);
+        fseeko(fp,(off_t)record_length_open,SEEK_CUR);
         fread(&record_length_close,4,1,fp);
         if(record_length_open!=record_length_close)
           SID_log_warning("Problem with GADGET record size (close of positions)",ERROR_LOGIC);
         // Skip velocities
         fread(&record_length_open,4,1,fp);
-        fseeko64(fp,(off64_t)record_length_open,SEEK_CUR);
+        //fseeko64(fp,(off64_t)record_length_open,SEEK_CUR);
+        fseeko(fp,(off_t)record_length_open,SEEK_CUR);
         fread(&record_length_close,4,1,fp);
         if(record_length_open!=record_length_close)
           SID_log_warning("Problem with GADGET record size (close of velocities)",ERROR_LOGIC);

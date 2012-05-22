@@ -168,7 +168,7 @@ int main(int argc, char *argv[]){
       v_c       =sqrt(G_NEWTON*profile.bins[i_profile].M_r*M_SOL/(r_max*M_PER_MPC))*1e-3;
       lambda    =sqrt(profile.bins[i_profile].spin[0]*profile.bins[i_profile].spin[0]+profile.bins[i_profile].spin[1]*profile.bins[i_profile].spin[1]+profile.bins[i_profile].spin[2]*profile.bins[i_profile].spin[2])/(sqrt(2.)*v_c*profile.bins[i_profile].r_max);
       offset_COM=sqrt(pow(profile.bins[i_profile].position_COM[0],2.)+pow(profile.bins[i_profile].position_COM[1],2.)+pow(profile.bins[i_profile].position_COM[2],2.));
-      fprintf(fp_out,"%e %e %e %9d %e %e %e %e %le %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e\n",
+      fprintf(fp_out,"%e %e %e %9d %e %e %e %e %e %e %le %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e\n",
               r_min,
               profile.bins[i_profile].r_med,
               r_max,
