@@ -393,7 +393,7 @@ void compute_trees_matches(char   *filename_root_in,
      } // Loop over base snapshots
      SID_log("Done.",SID_LOG_CLOSE);
   }
-*/
+
   // Read the stuff that needs to be returned back to the calling function
   SID_log("Reading header information...",SID_LOG_OPEN);
 
