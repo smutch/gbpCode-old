@@ -109,7 +109,7 @@ void compute_trees_horizontal_stats(tree_horizontal_info *halos,int n_halos,int 
          }
       }
 
-      // Count n_unprocessed and n_invalid so we can perform a couple sanity checks
+      // Sanity checks
       if(check_mode_for_flag(halos[i_halo].type,TREE_CASE_INVALID)){
          n_invalid++;
          if((halos[i_halo].type-TREE_CASE_INVALID)!=0)
@@ -318,23 +318,6 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
    // Read the needed properties and write them in the needed order
    properties=(halo_info *)SID_calloc(sizeof(halo_info)); // valgrind throws an error if we don't init the unused bits with calloc
    if(n_groups>0){
-      // Open files needed for reading
-      fp_catalog_info fp_group_properties_in;
-      fp_catalog_info fp_subgroup_properties_in;
-      fopen_catalog(filename_cat_root_in,
-                    j_write,
-                    READ_CATALOG_GROUPS|READ_CATALOG_PROPERTIES,
-                    &fp_group_properties_in);
-      fopen_catalog(filename_cat_root_in,
-                    j_write,
-                    READ_CATALOG_SUBGROUPS|READ_CATALOG_PROPERTIES,
-                    &fp_subgroup_properties_in);
-
-     // Check that the number of groups in the catalog makes sense
-     if(n_groups!=fp_group_properties_in.n_halos_total)
-        SID_trap_error("The number of groups in the halo catalog does not make sense (ie. %d!=%d)",ERROR_LOGIC,n_groups,fp_group_properties_in.n_halos_total);
-     if(n_subgroups!=fp_subgroup_properties_in.n_halos_total)
-        SID_trap_error("The number of subgroups in the halo catalog does not make sense (ie. %d!=%d)",ERROR_LOGIC,n_groups,fp_group_properties_in.n_halos_total);
 
      // Loop over the groups
      for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
@@ -353,16 +336,6 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
         SID_fwrite(&(file_offset),                               sizeof(int),1,&fp_matches_out);
         SID_fwrite(&(n_subgroups_group[i_write%n_wrap][i_group]),sizeof(int),1,&fp_matches_out);
 
-        // Read the group information
-        fread_catalog_file(&fp_group_properties_in,properties,NULL,i_group);
-
-        // Force the snapshot number to be counted by i_write, not j_write (to make things work with skipped snaps)
-        properties->snap_num=i_write;
-
-        // If this group is involved in the trees, write it's properties
-        if(groups[i_write%n_wrap][i_group].id>=0)
-           SID_fwrite(properties,sizeof(halo_info),1,&fp_group_properties_out);
-
         // Write the subgroup information to the horizontal trees files
         for(j_subgroup=0;j_subgroup<n_subgroups_group[i_write%n_wrap][i_group];j_subgroup++,i_subgroup++){
 
@@ -379,19 +352,10 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
            SID_fwrite(&(subgroups[i_write%n_wrap][i_subgroup].tree_id),sizeof(int),1,&fp_matches_out);
            SID_fwrite(&(file_offset),                                  sizeof(int),1,&fp_matches_out);
 
-           // Read the subgroup information
-           fread_catalog_file(&fp_subgroup_properties_in,properties,NULL,i_subgroup);
-
            // Force the snapshot number to be counted by i_write, not j_write (to make things work with skipped snaps)
            properties->snap_num=i_write;
-
-           // If this subgroup is involved in the trees, write it's properties
-           if(subgroups[i_write%n_wrap][i_subgroup].id>=0)
-             SID_fwrite(properties,sizeof(halo_info),1,&fp_subgroup_properties_out);
         }
      }
-     fclose_catalog(&fp_group_properties_in);
-     fclose_catalog(&fp_subgroup_properties_in);
    }
    SID_free(SID_FARG properties);
    SID_fclose(&fp_matches_out);
@@ -503,9 +467,9 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
       sprintf(filename_strayed_out,           "%s/%s.%sgroups_strays",             filename_output_dir_stats,filename_output_file_root,group_text_prefix);
       sprintf(filename_sputtered_out,         "%s/%s.%sgroups_sputters",           filename_output_dir_stats,filename_output_file_root,group_text_prefix);
       sprintf(filename_dropped_out,           "%s/%s.%sgroups_drops",              filename_output_dir_stats,filename_output_file_root,group_text_prefix);
-      sprintf(filename_bridged_out,           "%s/%s.%sgroups_bridges",            filename_output_dir_stats,filename_output_file_root,group_text_prefix);      
-      sprintf(filename_emerged_out,           "%s/%s.%sgroups_emerged",            filename_output_dir_stats,filename_output_file_root,group_text_prefix);      
-      sprintf(filename_fragmented_out,        "%s/%s.%sgroups_fragmented",         filename_output_dir_stats,filename_output_file_root,group_text_prefix);      
+      sprintf(filename_bridged_out,           "%s/%s.%sgroups_bridges",            filename_output_dir_stats,filename_output_file_root,group_text_prefix);
+      sprintf(filename_emerged_out,           "%s/%s.%sgroups_emerged",            filename_output_dir_stats,filename_output_file_root,group_text_prefix);
+      sprintf(filename_fragmented_out,        "%s/%s.%sgroups_fragmented",         filename_output_dir_stats,filename_output_file_root,group_text_prefix);
       fp_matching_out=fopen(filename_matching_out,"w");
       fp             =fp_matching_out;
       i_column=1;
@@ -523,27 +487,26 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
       fprintf(fp,"# (%02d): Number of particles in halo\n",      i_column++);
       fprintf(fp,"# (%02d): Number of particles in progenitor\n",i_column++);
       if(l_write==0){
-         fp_mergers_out           =fopen(filename_mergers_out,           "w");
-         fp_strayed_out           =fopen(filename_strayed_out,           "w");
-         fp_sputtered_out         =fopen(filename_sputtered_out,         "w");
-         fp_dropped_out           =fopen(filename_dropped_out,           "w");
-         fp_bridged_out           =fopen(filename_bridged_out,           "w");
-         fp_emerged_out     =fopen(filename_emerged_out,     "w");
-         fp_fragmented_out   =fopen(filename_fragmented_out,   "w");
+         fp_mergers_out   =fopen(filename_mergers_out,   "w");
+         fp_strayed_out   =fopen(filename_strayed_out,   "w");
+         fp_sputtered_out =fopen(filename_sputtered_out, "w");
+         fp_dropped_out   =fopen(filename_dropped_out,   "w");
+         fp_bridged_out   =fopen(filename_bridged_out,   "w");
+         fp_emerged_out   =fopen(filename_emerged_out,   "w");
+         fp_fragmented_out=fopen(filename_fragmented_out,"w");
       }
       else{
-         fp_mergers_out           =fopen(filename_mergers_out,           "a");
-         fp_strayed_out           =fopen(filename_strayed_out,           "a");
-         fp_sputtered_out         =fopen(filename_sputtered_out,         "a");
-         fp_dropped_out           =fopen(filename_dropped_out,           "a");
-         fp_bridged_out           =fopen(filename_bridged_out,           "a");
-         fp_emerged_out     =fopen(filename_emerged_out,     "a");
-         fp_fragmented_out   =fopen(filename_fragmented_out,   "a");
+         fp_mergers_out   =fopen(filename_mergers_out,   "a");
+         fp_strayed_out   =fopen(filename_strayed_out,   "a");
+         fp_sputtered_out =fopen(filename_sputtered_out, "a");
+         fp_dropped_out   =fopen(filename_dropped_out,   "a");
+         fp_bridged_out   =fopen(filename_bridged_out,   "a");
+         fp_emerged_out   =fopen(filename_emerged_out,   "a");
+         fp_fragmented_out=fopen(filename_fragmented_out,"a");
       }
 
       // Loop over each halo
       for(i_halo=0;i_halo<n_halos;i_halo++){
-
          // Compute the time between the halo and it's descendant
          if(halos[i_halo].descendant.halo!=NULL){
             if(halos[i_halo].descendant.halo->file>i_write){ // This isn't true for first snapshot for instance

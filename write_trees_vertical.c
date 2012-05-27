@@ -5,6 +5,41 @@
 #include <gbpMath.h>
 #include <gbpTrees.h>
 
+int write_tree_vertical_halos_recursive_local(tree_node_info *tree_node,SID_fp *fp_out,SID_fp *fp_out_MBP){
+  tree_node_info *current;
+  halo_info      *halo;
+  halo_MBP_info   halo_MBP;
+  int             i_progenitor;
+  int             n_halos_written=0;
+
+  // Write tree halos
+  halo=&(tree_node->halo);
+  SID_fwrite(halo,sizeof(halo_info),1,fp_out);
+
+  // Write MBPs
+  if(fp_out_MBP!=NULL){
+    halo_MBP.most_bound_id   =halo->most_bound_id;
+    halo_MBP.snap_num        =halo->snap_num;
+    halo_MBP.halo_index      =halo->halo_index;
+    halo_MBP.group_halo_first=halo->group_halo_first;
+    halo_MBP.pos[0]          =halo->pos[0];
+    halo_MBP.pos[1]          =halo->pos[1];
+    halo_MBP.pos[2]          =halo->pos[2];
+    halo_MBP.vel[0]          =halo->vel[0];
+    halo_MBP.vel[1]          =halo->vel[1];
+    halo_MBP.vel[2]          =halo->vel[2];
+    SID_fwrite(&halo_MBP,sizeof(halo_MBP_info),1,fp_out_MBP);
+  }
+
+  n_halos_written++;
+  current=tree_node->progenitor_first;
+  while(current!=NULL){
+    n_halos_written+=write_tree_vertical_halos_recursive_local(current,fp_out,fp_out_MBP);
+    current=current->progenitor_next;
+  }
+  return(n_halos_written);
+}
+
 void write_trees_vertical(tree_info **trees,
                           int        *n_halos_tree_local,
                           int         n_trees_local,
@@ -85,7 +120,7 @@ void write_trees_vertical(tree_info **trees,
         current=trees[i_tree]->root;
         while(current!=NULL){
           if(current->descendant==NULL)
-            n_halos_tree_written+=write_tree_vertical_halos_recursive(current,&fp_out,NULL);
+            n_halos_tree_written+=write_tree_vertical_halos_recursive_local(current,&fp_out,NULL);
           current=current->next;
         }
         if(n_halos_tree_written!=n_halos_tree_local[i_tree])

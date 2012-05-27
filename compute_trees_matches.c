@@ -418,29 +418,33 @@ void compute_trees_matches(char   *filename_root_in,
            flag_compute_header=flag_compute_header_groups;
            break;
         }
-        for(i_read=i_read_stop,j_read=0;i_read>=i_read_start;i_read-=i_read_step,j_read++){
-           sprintf(filename_cat1,"%03d",i_read);
-           sprintf(filename_out,"%s/%s.%sgroup_matches_header",filename_out_dir,filename_out_name,group_text_prefix);
-
+        for(i_read=i_read_stop,j_read=0;i_read>=i_read_start;j_read++){
            // Open file and skip header           
            if(i_read==i_read_stop){
+              sprintf(filename_out,"%s/%s.%sgroup_matches_header",filename_out_dir,filename_out_name,group_text_prefix);
               if((fp_read_header=fopen(filename_out,"r"))==NULL)
                  SID_trap_error("Could not open file {%s} when reading header information.",ERROR_IO_OPEN,filename_out);
               fseek(fp_read_header,4*sizeof(int),SEEK_SET);
            }
 
-           fseek(fp_read_header,1*sizeof(int),SEEK_CUR);
-           fread(&n_groups_1,sizeof(int),1,fp_read_header);
-           fseek(fp_read_header,n_groups_1*sizeof(int),SEEK_CUR);
-           if(k_match==1)
+           // Read-forward for the appropriate number of snapshots
+           int k_read;
+           for(k_read=0;i_read>=i_read_start && k_read<i_read_step;i_read--,k_read++){
+              fseek(fp_read_header,1*sizeof(int),SEEK_CUR);
+              fread(&n_groups_1,sizeof(int),1,fp_read_header);
               fseek(fp_read_header,n_groups_1*sizeof(int),SEEK_CUR);
-           switch(k_match){
-              case 0:
-              (*n_subgroups_return)[j_read]=n_groups_1;
-              break;
-              case 1:
-              (*n_groups_return)[j_read]   =n_groups_1;
-              break;
+              if(k_match==1)
+                 fseek(fp_read_header,n_groups_1*sizeof(int),SEEK_CUR);
+              if(k_read==0){
+                 switch(k_match){
+                    case 0:
+                    (*n_subgroups_return)[j_read]=n_groups_1;
+                    break;
+                    case 1:
+                    (*n_groups_return)[j_read]   =n_groups_1;
+                    break;
+                 }
+              }
            }
         }
         fclose(fp_read_header);

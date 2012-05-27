@@ -23,7 +23,6 @@
 #define TREE_CASE_INVALID                       16384
 
 // Data structures for horizontal tree construction
-
 typedef struct tree_horizontal_stats_info tree_horizontal_stats_info;
 struct tree_horizontal_stats_info {
    int n_halos;
@@ -76,7 +75,6 @@ struct tree_horizontal_info{
 };
 
 // Data structures for vertical tree construction
-
 typedef struct tree_node_info tree_node_info;
 struct tree_node_info{
   halo_info       halo;
@@ -159,6 +157,7 @@ void compute_trees_horizontal(char   *filename_halos_root_in,
                               int     flag_fix_bridges,
                               int    *flag_clean);
 void compute_trees_vertical(char *filename_root_out,
+                            char *filename_cat_root_in,
                             int   i_read_start,
                             int   i_read_stop,
                             int   i_read_step,
@@ -205,7 +204,6 @@ void assign_progenitor_order_recursive(tree_node_info *tree,int *M_i,int mode);
 void assign_group_halo_order(tree_info *tree,int i_snap,int mode);
 void assign_depth_first_index_recursive(tree_node_info *tree,int *depth_first_index);
 void assign_unique_ids_recursive(tree_node_info *tree_node,int i_tree);
-int  write_tree_vertical_halos_recursive(tree_node_info *tree_node,SID_fp *fp_out,SID_fp *fp_out_MBP);
 
 #ifdef __cplusplus
 }

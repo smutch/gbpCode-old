@@ -67,7 +67,7 @@ int main(int argc, char *argv[]){
     strip_path(filename_output_file_root);
     mkdir(filename_root_out,02755);
     sprintf(filename_snap_list_out,"%s/%s.a_list",filename_root_out,filename_output_file_root);
-    SID_log("Reading snapshot list {%s}...",SID_LOG_OPEN,filename_snap_list_out);
+    SID_log("Reading snapshot list {%s}...",SID_LOG_OPEN,filename_snap_list_in);
 
     // Read the original list
     fp_in     =fopen(filename_snap_list_in, "r");
@@ -112,6 +112,7 @@ int main(int argc, char *argv[]){
                            &flag_clean);
   flag_clean=FALSE;
   compute_trees_vertical(filename_root_out,
+                         filename_cat_root_in,
                          i_read_start,
                          i_read_stop,
                          i_read_step,

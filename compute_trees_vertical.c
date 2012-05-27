@@ -388,54 +388,8 @@ void assign_unique_ids_recursive(tree_node_info *tree_node,int i_tree){
   }
 }
 
-int write_tree_vertical_halos_recursive(tree_node_info *tree_node,SID_fp *fp_out,SID_fp *fp_out_MBP){
-  tree_node_info *current;
-  halo_info      *halo;
-  halo_MBP_info   halo_MBP;
-  int             i_progenitor;
-  int             n_halos_written=0;
-
-  // Write tree halos
-  halo=&(tree_node->halo);
-  SID_fwrite(halo,sizeof(halo_info),1,fp_out);
-
-  // Write MBPs
-  if(fp_out_MBP!=NULL){
-    halo_MBP.most_bound_id   =halo->most_bound_id;
-    halo_MBP.snap_num        =halo->snap_num;
-    halo_MBP.halo_index      =halo->halo_index;
-    halo_MBP.group_halo_first=halo->group_halo_first;
-    halo_MBP.pos[0]          =halo->pos[0];
-    halo_MBP.pos[1]          =halo->pos[1];
-    halo_MBP.pos[2]          =halo->pos[2];
-    halo_MBP.vel[0]          =halo->vel[0];
-    halo_MBP.vel[1]          =halo->vel[1];
-    halo_MBP.vel[2]          =halo->vel[2];
-    SID_fwrite(&halo_MBP,sizeof(halo_MBP_info),1,fp_out_MBP);
-  }
- 
-  /*
-  if(tree_node->n_progenitors>1){
-    i_progenitor=0;
-    current     =tree_node->progenitor_first;
-    fprintf(stderr,"\n");
-    while(current!=NULL){
-      fprintf(stderr,"i=%4d n_p=%7d M_vir=%13.6le\n",i_progenitor++,current->halo.n_particles,current->halo.M_vir);
-      current=current->progenitor_next;
-    }
-  }
-  */
- 
-  n_halos_written++;
-  current=tree_node->progenitor_first;
-  while(current!=NULL){
-    n_halos_written+=write_tree_vertical_halos_recursive(current,fp_out,fp_out_MBP);
-    current=current->progenitor_next;
-  }
-  return(n_halos_written);
-}
-
 void compute_trees_vertical(char *filename_root_out,
+                            char *filename_cat_root_in,
                             int   i_read_start,
                             int   i_read_stop,
                             int   i_read_step,
@@ -445,7 +399,6 @@ void compute_trees_vertical(char *filename_root_out,
   SID_fp      fp_in;
   SID_fp      fp_out;
   SID_fp      fp_out_MBP;
-  SID_fp      fp_properties;
   char        filename_in[256];
   char        filename_out[256];
   char        filename_out_MBP[256];
@@ -547,8 +500,6 @@ void compute_trees_vertical(char *filename_root_out,
   char group_text_prefix[4];
   int  n_conjoined;
   int  n_conjoined_total;
-  halo_info         properties;
-  halo_info        *halo;
   halo_MBP_info     halo_MBP;
   tree_info       **trees;
   tree_node_info   *current=NULL;
@@ -713,7 +664,8 @@ void compute_trees_vertical(char *filename_root_out,
     }
     SID_fclose(&fp_in);
   }
-  SID_log("(n_groups=%d n_subgroups=%d)...",SID_LOG_CONTINUE,n_halos_groups,n_halos_subgroups);
+  SID_log("# of    groups     =%d",SID_LOG_COMMENT,n_halos_groups);
+  SID_log("# of subgroups     =%d",SID_LOG_COMMENT,n_halos_subgroups);
 
   // Determine the number of trees we are left with now
   for(i_tree=0;i_tree<n_trees_subgroup;i_tree++)
@@ -839,12 +791,17 @@ void compute_trees_vertical(char *filename_root_out,
       SID_log("Rank     #%4d will process %5d group    trees (%8d halos in total)",
               SID_LOG_COMMENT,i_bin+1,tree_hi_group_rank[i_bin]-tree_lo_group_rank[i_bin]+1,tree_count_group_rank[i_bin]);
   }
-
-  SID_log("(%d group and %d subgroup trees)...Done.",SID_LOG_CLOSE,n_trees_group,n_trees_subgroup);
+  SID_log("# of    group trees=%d",SID_LOG_COMMENT,n_trees_group);
+  SID_log("# of subgroup trees=%d",SID_LOG_COMMENT,n_trees_subgroup);
+  SID_log("Done.",SID_LOG_CLOSE);
 
   // VERTICAL TREE CONSTRUCTION STARTS HERE
 
   // Process subgroup trees (k_match==0) and then group trees (k_match==1)
+  fp_catalog_info  fp_properties;
+  int              mode_cat_read;
+  halo_info       *properties;
+  properties=(halo_info *)SID_calloc(sizeof(halo_info));
   for(k_match=0;k_match<2;k_match++){
     switch(k_match){
       // Process subgroups
@@ -858,6 +815,7 @@ void compute_trees_vertical(char *filename_root_out,
       tree_lo_file   =tree_lo_subgroup_file;
       tree_hi_file   =tree_hi_subgroup_file;
       n_write        =n_files_subgroups;
+      mode_cat_read  =READ_CATALOG_SUBGROUPS|READ_CATALOG_PROPERTIES;
       sprintf(group_text_prefix,"sub");
       break;
       // Process groups
@@ -871,6 +829,7 @@ void compute_trees_vertical(char *filename_root_out,
       tree_lo_file   =tree_lo_group_file;
       tree_hi_file   =tree_hi_group_file;
       n_write        =n_files_groups;
+      mode_cat_read  =READ_CATALOG_GROUPS|READ_CATALOG_PROPERTIES;
       sprintf(group_text_prefix,"");
       break;      
     }
@@ -885,25 +844,30 @@ void compute_trees_vertical(char *filename_root_out,
     for(i_tree=0;i_tree<n_trees_local;i_tree++)
       init_tree(n_snap,&trees[i_tree]);
     
-    // Read matching files
+    // Print a status message
     SID_log("Rendering %sgroup trees vertical...",SID_LOG_OPEN|SID_LOG_TIMER,group_text_prefix);
     if((*flag_clean))
       SID_log("(horizontal tree files will be removed)...",SID_LOG_CONTINUE);
 
-    // Loop over all the horizontal tree files in order of decreasing snapshot number
+    // Loop over all the horizontal tree files in order of decreasing snapshot number, hanging halos on the trees as we go
     for(i_read=i_read_stop,i_file=n_snap-1,flag_init=TRUE;i_read>=i_read_start;i_read-=i_read_step,i_file--,flag_init=FALSE){
-      halo_snap=(i_file);
+      // This counter makes sure that the halo snap index in the trees
+      //   is continuous, even if we are skipping snapshots
+      halo_snap=i_file;
+
       // Initialize this snapshot's halo list here
       for(i_tree=0;i_tree<n_trees_local;i_tree++){
         trees[i_tree]->neighbour_halos[i_file]=NULL;
         trees[i_tree]->n_neighbours[i_file]   =0;
       }
-      sprintf(filename_in,        "%s/%s.trees_horizontal_%d",                    filename_output_dir_horizontal_trees,     filename_output_file_root,                  i_read);
-      sprintf(filename_properties,"%s/%s.trees_horizontal_%sgroups_properties_%d",filename_output_dir_horizontal_properties,filename_output_file_root,group_text_prefix,i_read);
+      sprintf(filename_in,"%s/%s.trees_horizontal_%d",filename_output_dir_horizontal_trees,filename_output_file_root,i_read);
 
       // Open horizontal tree file
-      SID_fopen(filename_in,        "r",&fp_in);
-      SID_fopen(filename_properties,"r",&fp_properties);
+      SID_fopen(filename_in,"r",&fp_in);
+      fopen_catalog(filename_cat_root_in,
+                    i_read,
+                    mode_cat_read,
+                    &fp_properties);
 
       // Read header
       SID_fread_all(&n_groups,         sizeof(int),1,&fp_in);
@@ -926,13 +890,11 @@ void compute_trees_vertical(char *filename_root_out,
         // If we are processing subgroup trees ...
         if(k_match==0){
           // Read each subgroup in turn
-          for(i_subgroup=0;i_subgroup<n_subgroups_group;i_subgroup++){
+          for(i_subgroup=0;i_subgroup<n_subgroups_group;i_subgroup++,k_subgroup++){
             SID_fread_all(&(subgroup_id),           sizeof(int),1,&fp_in);
             SID_fread_all(&(subgroup_descendant_id),sizeof(int),1,&fp_in);
             SID_fread_all(&(subgroup_tree_id),      sizeof(int),1,&fp_in);
             SID_fread_all(&(subgroup_file_offset),  sizeof(int),1,&fp_in);
-            if(subgroup_id>=0)
-              SID_fread_all(&properties,sizeof(halo_info),1,&fp_properties); // This is written only if subgroup_id>=0 ***
             // Ignore negative ids
             if(subgroup_tree_id>=0)
               subgroup_tree_id=i_tree_subgroup[subgroup_tree_id];
@@ -947,13 +909,18 @@ void compute_trees_vertical(char *filename_root_out,
                   descendant_snap=-1; // Needed for halos in the root snapshot
                 else
                   descendant_snap=(i_file+subgroup_file_offset);
+                // ... read halo information from catalog files ...
+                fread_catalog_file(&fp_properties,properties,NULL,k_subgroup);
+                // ... adjust snap counter to make things work with skipped snaps ...
+                properties->snap_num=halo_snap;
+                // ... add this halo to the trees ...
                 add_node_to_tree(trees[i_tree],
                                  subgroup_id,
                                  group_id,
                                  subgroup_descendant_id,
                                  halo_snap,
                                  descendant_snap,
-                                 &properties);
+                                 properties);
               }
             }
           }
@@ -963,7 +930,6 @@ void compute_trees_vertical(char *filename_root_out,
           SID_fseek(&fp_in,sizeof(int),n_subgroups_group*4,SID_SEEK_CUR);
           // Ignore negative IDs
           if(group_id>=0){
-            SID_fread_all(&properties,sizeof(halo_info),1,&fp_properties); // This is written only if subgroup_id>=0
             if(group_tree_id>=0){
               i_tree=group_tree_id-tree_lo_rank;
               // If this group belongs to a local tree ...
@@ -973,20 +939,25 @@ void compute_trees_vertical(char *filename_root_out,
                   descendant_snap=-1; // Needed for halos in the root snapshot
                 else
                   descendant_snap=(i_file+group_file_offset);
+                // ... read halo information from catalog files ...
+                fread_catalog_file(&fp_properties,properties,NULL,i_group);
+                // ... adjust snap counter to make things work with skipped snaps ...
+                properties->snap_num=halo_snap;
+                // ... add this halo to the trees ...
                 add_node_to_tree(trees[i_tree],
                                  group_id,
                                  group_id,
                                  group_descendant_id,
                                  halo_snap,
                                  descendant_snap,                      
-                                 &properties);
+                                 properties);
               }
             }
           }
         }
       } // i_group
       SID_fclose(&fp_in);
-      SID_fclose(&fp_properties);
+      fclose_catalog(&fp_properties);
 
       // If flag_clean=TRUE, then delete the input files used here.
       if((*flag_clean)==TRUE){
@@ -1012,6 +983,7 @@ void compute_trees_vertical(char *filename_root_out,
     SID_free((void **)&trees);
 
   } // k_match
+  SID_free(SID_FARG properties);
   
   // Clean-up
   SID_free((void **)&line);
