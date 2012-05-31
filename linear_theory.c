@@ -812,6 +812,7 @@ double M_sc(double      z,
 		       delta_sc*delta_sc/(b_z*b_z),
 		       1e-4);
     */
+    r_val=-1;
     SID_trap_error("Need to implement bisect_array here.",ERROR_LOGIC);
     M_sc_last=M_of_k(take_alog10(r_val),z,cosmo);
     z_last   =z;
