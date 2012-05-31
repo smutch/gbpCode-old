@@ -209,18 +209,14 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
    char        filename_output_dir_horizontal_groups[MAX_FILENAME_LENGTH];
    char        filename_output_dir_horizontal_groups_stats[MAX_FILENAME_LENGTH];
    char        filename_output_dir_horizontal_groups_matching[MAX_FILENAME_LENGTH];
-   char        filename_output_dir_horizontal_groups_properties[MAX_FILENAME_LENGTH];
    char        filename_output_dir_horizontal_subgroups[MAX_FILENAME_LENGTH];
    char        filename_output_dir_horizontal_subgroups_stats[MAX_FILENAME_LENGTH];
    char        filename_output_dir_horizontal_subgroups_matching[MAX_FILENAME_LENGTH];
-   char        filename_output_dir_horizontal_subgroups_properties[MAX_FILENAME_LENGTH];
    char        filename_output_file_root[MAX_FILENAME_LENGTH];
    char        filename_matches_out[MAX_FILENAME_LENGTH];
    char        filename_matching_out[MAX_FILENAME_LENGTH];
    char        filename_groups[MAX_FILENAME_LENGTH];
    char        filename_subgroups[MAX_FILENAME_LENGTH];
-   char        filename_subgroup_properties_out[MAX_FILENAME_LENGTH];
-   char        filename_group_properties_out[MAX_FILENAME_LENGTH];
    char        filename_log[MAX_FILENAME_LENGTH];
    char        filename_mergers_out[MAX_FILENAME_LENGTH];
    char        filename_strayed_out[MAX_FILENAME_LENGTH];
@@ -241,8 +237,6 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
    int         i_halo;
    char        group_text_prefix[5];
    SID_fp      fp_matches_out;
-   SID_fp      fp_group_properties_out;
-   SID_fp      fp_subgroup_properties_out;
    FILE       *fp;
    tree_horizontal_info  *halos;
    tree_horizontal_info **halos_all;
@@ -268,45 +262,33 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
    double      dt_progenitor;
    char       *line=NULL;
    int         line_length=0;
-   halo_info                  *properties;
    tree_horizontal_stats_info  stats;
    int                         desc_id;
 
    SID_log("Writing results for snapshot #%d...",SID_LOG_OPEN|SID_LOG_TIMER,j_write);
-   sprintf(filename_output_dir_horizontal,                     "%s/horizontal",filename_output_dir);
-   sprintf(filename_output_dir_horizontal_trees,               "%s/trees",     filename_output_dir_horizontal);
-   sprintf(filename_output_dir_horizontal_groups,              "%s/groups",    filename_output_dir_horizontal);
-   sprintf(filename_output_dir_horizontal_groups_stats,        "%s/stats",     filename_output_dir_horizontal_groups);
-   sprintf(filename_output_dir_horizontal_groups_properties,   "%s/properties",filename_output_dir_horizontal_groups);
-   sprintf(filename_output_dir_horizontal_groups_matching,     "%s/matching",  filename_output_dir_horizontal_groups);
-   sprintf(filename_output_dir_horizontal_subgroups,           "%s/subgroups", filename_output_dir_horizontal);
-   sprintf(filename_output_dir_horizontal_subgroups_stats,     "%s/stats",     filename_output_dir_horizontal_subgroups);
-   sprintf(filename_output_dir_horizontal_subgroups_properties,"%s/properties",filename_output_dir_horizontal_subgroups);
-   sprintf(filename_output_dir_horizontal_subgroups_matching,  "%s/matching",  filename_output_dir_horizontal_subgroups);
+   sprintf(filename_output_dir_horizontal,                   "%s/horizontal",filename_output_dir);
+   sprintf(filename_output_dir_horizontal_trees,             "%s/trees",     filename_output_dir_horizontal);
+   sprintf(filename_output_dir_horizontal_groups,            "%s/groups",    filename_output_dir_horizontal);
+   sprintf(filename_output_dir_horizontal_groups_stats,      "%s/stats",     filename_output_dir_horizontal_groups);
+   sprintf(filename_output_dir_horizontal_groups_matching,   "%s/matching",  filename_output_dir_horizontal_groups);
+   sprintf(filename_output_dir_horizontal_subgroups,         "%s/subgroups", filename_output_dir_horizontal);
+   sprintf(filename_output_dir_horizontal_subgroups_stats,   "%s/stats",     filename_output_dir_horizontal_subgroups);
+   sprintf(filename_output_dir_horizontal_subgroups_matching,"%s/matching",  filename_output_dir_horizontal_subgroups);
    mkdir(filename_output_dir,                                02755);
    mkdir(filename_output_dir_horizontal,                     02755);
    mkdir(filename_output_dir_horizontal_trees,               02755);
    mkdir(filename_output_dir_horizontal_groups,              02755);
    mkdir(filename_output_dir_horizontal_groups_stats,        02755);
    mkdir(filename_output_dir_horizontal_groups_matching,     02755);
-   mkdir(filename_output_dir_horizontal_groups_properties,   02755);
    mkdir(filename_output_dir_horizontal_subgroups,           02755);
    mkdir(filename_output_dir_horizontal_subgroups_stats,     02755);
    mkdir(filename_output_dir_horizontal_subgroups_matching,  02755);
-   mkdir(filename_output_dir_horizontal_subgroups_properties,02755);
    strcpy(filename_output_file_root,filename_output_dir);
    strip_path(filename_output_file_root);
-   sprintf(filename_group_properties_out,   "%s/%s.trees_horizontal_groups_properties_%d",   filename_output_dir_horizontal_groups_properties,   
-                                                                                             filename_output_file_root,j_write);
-   sprintf(filename_subgroup_properties_out,"%s/%s.trees_horizontal_subgroups_properties_%d",filename_output_dir_horizontal_subgroups_properties,
-                                                                                             filename_output_file_root,j_write);
-   sprintf(filename_matches_out,            "%s/%s.trees_horizontal_%d",                     filename_output_dir_horizontal_trees,
-                                                                                             filename_output_file_root,j_write);
+   sprintf(filename_matches_out,"%s/%s.trees_horizontal_%d",filename_output_dir_horizontal_trees,filename_output_file_root,j_write);
 
    // Open files needed for writing
-   SID_fopen(filename_matches_out,            "w",&fp_matches_out);
-   SID_fopen(filename_group_properties_out,   "w",&fp_group_properties_out);
-   SID_fopen(filename_subgroup_properties_out,"w",&fp_subgroup_properties_out);
+   SID_fopen(filename_matches_out,"w",&fp_matches_out);
 
    // Write the header information for the horizontal trees files
    SID_fwrite(&(n_groups),            sizeof(int),1,&fp_matches_out);
@@ -315,10 +297,9 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
    SID_fwrite(&(max_tree_id_subgroup),sizeof(int),1,&fp_matches_out);
    SID_fwrite(&(max_tree_id_group),   sizeof(int),1,&fp_matches_out);
 
-   // Read the needed properties and write them in the needed order
-   properties=(halo_info *)SID_calloc(sizeof(halo_info)); // valgrind throws an error if we don't init the unused bits with calloc
+   // Write the horizontal tree files
+   SID_log("Writing horizontal tree file...",SID_LOG_OPEN|SID_LOG_TIMER,j_write);
    if(n_groups>0){
-
      // Loop over the groups
      for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
 
@@ -327,24 +308,24 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
            file_offset=match_file_local(&(groups[i_write%n_wrap][i_group].descendant))-i_write;
         else
            file_offset=-1;
-        desc_id    =match_id_local(&(groups[i_write%n_wrap][i_group].descendant));
+        desc_id=match_id_local(&(groups[i_write%n_wrap][i_group].descendant));
 
-        // Write group information to the horizontal trees files
+        // Write group information to the horizontal tree files
         SID_fwrite(&(groups[i_write%n_wrap][i_group].id),        sizeof(int),1,&fp_matches_out);
         SID_fwrite(&(desc_id),                                   sizeof(int),1,&fp_matches_out);
         SID_fwrite(&(groups[i_write%n_wrap][i_group].tree_id),   sizeof(int),1,&fp_matches_out);
         SID_fwrite(&(file_offset),                               sizeof(int),1,&fp_matches_out);
         SID_fwrite(&(n_subgroups_group[i_write%n_wrap][i_group]),sizeof(int),1,&fp_matches_out);
 
-        // Write the subgroup information to the horizontal trees files
+        // Write the subgroup information to the horizontal tree files
         for(j_subgroup=0;j_subgroup<n_subgroups_group[i_write%n_wrap][i_group];j_subgroup++,i_subgroup++){
 
            // compute_trees_verticle wants the file offsets to be -ve for the roots, +ve everywhere else
-           if(i_write<i_file_start)
+           if(i_write<i_file_start) // i_file_start corresponds to the highest-number snapshot
              file_offset=match_file_local(&(subgroups[i_write%n_wrap][i_subgroup].descendant))-i_write;
            else
              file_offset=-1;
-           desc_id    =match_id_local(&(subgroups[i_write%n_wrap][i_subgroup].descendant));
+           desc_id=match_id_local(&(subgroups[i_write%n_wrap][i_subgroup].descendant));
 
            // Write subgroup information to the horizontal trees files
            SID_fwrite(&(subgroups[i_write%n_wrap][i_subgroup].id),     sizeof(int),1,&fp_matches_out);
@@ -352,18 +333,15 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
            SID_fwrite(&(subgroups[i_write%n_wrap][i_subgroup].tree_id),sizeof(int),1,&fp_matches_out);
            SID_fwrite(&(file_offset),                                  sizeof(int),1,&fp_matches_out);
 
-           // Force the snapshot number to be counted by i_write, not j_write (to make things work with skipped snaps)
-           properties->snap_num=i_write;
         }
      }
    }
-   SID_free(SID_FARG properties);
    SID_fclose(&fp_matches_out);
-   SID_fclose(&fp_group_properties_out);
-   SID_fclose(&fp_subgroup_properties_out);   
+   SID_log("Done.",SID_LOG_CLOSE);
    
    // Write statistics to ascii files
    sprintf(filename_log,"%s/%s.log",filename_output_dir_horizontal,filename_output_file_root);
+   SID_log("Writing to the log files...",SID_LOG_OPEN|SID_LOG_TIMER);
    for(i_k_match=0;i_k_match<n_k_match;i_k_match++){
       // Initialize a bunch of stuff depending on whether
       //   we are processing groups or subgroups
@@ -421,6 +399,17 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
          }
          fclose(fp);
       }
+
+      switch(i_k_match){
+         case 0:
+         sprintf(group_text_prefix,"sub");
+         break;
+         case 1:
+         sprintf(group_text_prefix,"");
+         break;
+      }
+
+      SID_log("Writing %sgroup statistics to {%s}...",SID_LOG_OPEN,group_text_prefix,filename_log);
       fp=fopen(filename_log,"a");
       if(i_k_match==0){
          if(l_write>0)
@@ -450,17 +439,10 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
       if(i_k_match==n_k_match-1)
          fprintf(fp,"\n");
       fclose(fp);
-
-      switch(i_k_match){
-         case 0:
-         sprintf(group_text_prefix,"sub");
-         break;
-         case 1:
-         sprintf(group_text_prefix,"");
-         break;
-      }
+      SID_log("Done.",SID_LOG_CLOSE);
 
       // Write matching and special case information
+      SID_log("Writing %sgroup special case information...",SID_LOG_OPEN,group_text_prefix);
       sprintf(filename_matching_out,          "%s/%s.progenitors_%sgroups_%d",     filename_output_dir_horizontal_subgroups_matching,
                                                                                    filename_output_file_root,group_text_prefix,j_write);
       sprintf(filename_mergers_out,           "%s/%s.%sgroups_mergers",            filename_output_dir_stats,filename_output_file_root,group_text_prefix);
@@ -828,7 +810,9 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
       fclose(fp_bridged_out);
       fclose(fp_emerged_out);
       fclose(fp_fragmented_out);
+      SID_log("Done.",SID_LOG_CLOSE);
    }
+   SID_log("Done.",SID_LOG_CLOSE);
 
    SID_log("Done.",SID_LOG_CLOSE);
 
@@ -1719,30 +1703,34 @@ void compute_trees_horizontal(char   *filename_halo_root_in,
           // Store halo sizes
           if(!flag_fix_bridges){
              if(i_search==0){
-                for(i_halo=0;i_halo<n_halos_2_matches;i_halo++)
+                for(i_halo=0;i_halo<n_halos_1_matches;i_halo++)
                    halos[i_file%n_wrap][i_halo].n_particles=n_particles[i_halo];
              }
           }
-
-          
+ 
           // Perform matching for all the halos in i_file_1.  This loop should deal completely with
           //   all simple matches and dropped halos.  It also identifies matches to bridges, which
           //   require special treatment in the loop that follows (to look for matches to emergent halos)
-          //   and at the end of the loop over j_read/i_search to finalize those not associated with emerged halos.
+          //   and at the end of the loop over j_read/i_search to finalize those not matched to emerged halos.
           for(i_halo=0;i_halo<n_halos_1_matches;i_halo++){
              // If this halo hasn't been processed during earlier searches ...
              if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_UNPROCESSED)){
                 my_descendant_index=match_id[i_halo];
                 // If this halo has been matched to something in i_file_2 ...
-                if(my_descendant_index>=0)
-                   set_halo_and_descendant(halos,
-                                           i_file,
-                                           i_halo,
-                                           j_file_2,
-                                           my_descendant_index,
-                                           match_score[i_halo],
-                                           &max_id,
-                                           n_wrap);
+                if(my_descendant_index>=0){
+                   if(my_descendant_index<n_halos_2_matches)
+                      set_halo_and_descendant(halos,
+                                              i_file,
+                                              i_halo,
+                                              j_file_2,
+                                              my_descendant_index,
+                                              match_score[i_halo],
+                                              &max_id,
+                                              n_wrap);
+                   else
+                      SID_log_warning("descendant ID out of bounds (ie. %d>%d) in snapshot %03d -> snapshot %03d %sgroup matching.",SID_WARNING_DEFAULT,
+                                      my_descendant_index,n_halos_2_matches-1,j_read_1,j_read_2,group_text_prefix);
+                }
              }
           }
 
@@ -1888,8 +1876,8 @@ void compute_trees_horizontal(char   *filename_halo_root_in,
                 bridge=&(halos_i[i_halo].bridges[j_halo]);
                 fprintf(fp_matching_out,"%3d %7d   %4d %7d %7d   %4d %7d %7d   %4d %7d %7d   %8d %8d   %10.4f %10.4f   %7d %7d %7d\n",
                         j_halo,
-                        halos_i[i_halo].tree_id,
                         i_read,
+                        halos_i[i_halo].tree_id,
                         i_halo,
                         halos_i[i_halo].id,
                         match_file_local(&(halos_i[i_halo].descendant)),
@@ -1907,11 +1895,12 @@ void compute_trees_horizontal(char   *filename_halo_root_in,
                         match_n_particles_local(bridge));
              }
           }
+          /*
           else{
                 fprintf(fp_matching_out,"%3d %7d   %4d %7d %7d   %4d %7d %7d   %4d %7d %7d   %8d %8d   %10.4f %10.4f   %7d %7d %7d\n",
                         -1,
-                        halos_i[i_halo].tree_id,
                         i_read,
+                        halos_i[i_halo].tree_id,
                         i_halo,
                         halos_i[i_halo].id,
                         match_file_local(&(halos_i[i_halo].descendant)),
@@ -1928,6 +1917,7 @@ void compute_trees_horizontal(char   *filename_halo_root_in,
                         match_n_particles_local(&(halos_i[i_halo].descendant)),
                         -1);
           }
+          */
        }
        fclose(fp_matching_out);
        SID_log("Done.",SID_LOG_CLOSE);

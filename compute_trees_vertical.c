@@ -627,6 +627,7 @@ void compute_trees_vertical(char *filename_root_out,
   // Determine halo counts
   for(i_read=i_read_stop,n_halos_groups=0,n_halos_subgroups=0;i_read>=i_read_start;i_read-=i_read_step){
     sprintf(filename_in,"%s/%s.trees_horizontal_%d",filename_output_dir_horizontal_trees,filename_output_file_root,i_read);
+fprintf(stderr,"{%s}\n",filename_in);
     SID_fopen(filename_in,"r",&fp_in);
     SID_fread_all(&n_groups,         sizeof(int),1,&fp_in);
     SID_fread_all(&n_subgroups,      sizeof(int),1,&fp_in);
@@ -851,6 +852,7 @@ void compute_trees_vertical(char *filename_root_out,
 
     // Loop over all the horizontal tree files in order of decreasing snapshot number, hanging halos on the trees as we go
     for(i_read=i_read_stop,i_file=n_snap-1,flag_init=TRUE;i_read>=i_read_start;i_read-=i_read_step,i_file--,flag_init=FALSE){
+      SID_log("Processing snapshot %03d (%03d of %03d)...",SID_LOG_OPEN,i_read,i_file,n_snap);
       // This counter makes sure that the halo snap index in the trees
       //   is continuous, even if we are skipping snapshots
       halo_snap=i_file;
@@ -968,6 +970,7 @@ void compute_trees_vertical(char *filename_root_out,
         sprintf(filename_properties,"%s/%s.trees_horizontal_%sgroups_properties_%d",filename_output_dir_horizontal_properties,filename_output_file_root,group_text_prefix,i_read);
         remove(filename_properties);
       }      
+      SID_log("Done.",SID_LOG_CLOSE);
     } // i_read
     SID_log("Done.",SID_LOG_CLOSE);
 
