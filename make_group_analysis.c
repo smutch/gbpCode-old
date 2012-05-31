@@ -887,35 +887,37 @@ int main(int argc, char *argv[]){
     // If the group catalog or snapshot is empty, create an empty file
     else{
       SID_log("Creating empty analysis files...",SID_LOG_OPEN);
-      for(i_process=0;i_process<2;i_process++){
-        switch(i_process){
-        case 0:
-          sprintf(group_text_prefix,"");
-          break;
-        case 1:
-          sprintf(group_text_prefix,"sub");
-          break;
-        }
-        n_groups_all=0;
-        n_temp      =1;
-        if(flag_write_properties){
-           sprintf(filename_output_properties,"%s_%s.catalog_%sgroups_properties",filename_groups_root,filename_number,group_text_prefix);
-           fp_properties=fopen(filename_output_properties,"w");
-           fwrite(&n_temp,        sizeof(int),1,fp_properties);
-           fwrite(&n_temp,        sizeof(int),1,fp_properties);
-           fwrite(&n_groups_all,  sizeof(int),1,fp_properties);
-           fwrite(&n_groups_all,  sizeof(int),1,fp_properties);
-           fclose(fp_properties);
-        }
-        if(flag_write_profiles){
-           sprintf(filename_output_profiles,  "%s_%s.catalog_%sgroups_profiles",filename_groups_root,filename_number,group_text_prefix);
-           fp_profiles  =fopen(filename_output_profiles,  "w");
-           fwrite(&n_temp,        sizeof(int),1,fp_profiles);
-           fwrite(&n_temp,        sizeof(int),1,fp_profiles);
-           fwrite(&n_groups_all,  sizeof(int),1,fp_profiles);
-           fwrite(&n_groups_all,  sizeof(int),1,fp_profiles);
-           fclose(fp_profiles);
-        }
+      if(SID.I_am_Master){
+         for(i_process=0;i_process<2;i_process++){
+            switch(i_process){
+            case 0:
+              sprintf(group_text_prefix,"");
+              break;
+            case 1:
+              sprintf(group_text_prefix,"sub");
+              break;
+            }
+            n_groups_all=0;
+            n_temp      =1;
+            if(flag_write_properties){
+               sprintf(filename_output_properties,"%s_%s.catalog_%sgroups_properties",filename_groups_root,filename_number,group_text_prefix);
+               fp_properties=fopen(filename_output_properties,"w");
+               fwrite(&(SID.My_rank), sizeof(int),1,fp_properties);
+               fwrite(&n_temp,        sizeof(int),1,fp_properties);
+               fwrite(&n_groups_all,  sizeof(int),1,fp_properties);
+               fwrite(&n_groups_all,  sizeof(int),1,fp_properties);
+               fclose(fp_properties);
+            }
+            if(flag_write_profiles){
+               sprintf(filename_output_profiles,  "%s_%s.catalog_%sgroups_profiles",filename_groups_root,filename_number,group_text_prefix);
+               fp_profiles  =fopen(filename_output_profiles,  "w");
+               fwrite(&(SID.My_rank), sizeof(int),1,fp_profiles);
+               fwrite(&n_temp,        sizeof(int),1,fp_profiles);
+               fwrite(&n_groups_all,  sizeof(int),1,fp_profiles);
+               fwrite(&n_groups_all,  sizeof(int),1,fp_profiles);
+               fclose(fp_profiles);
+            }
+         }
       }
       SID_log("Done.",SID_LOG_CLOSE);
     }

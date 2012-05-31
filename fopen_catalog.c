@@ -9,14 +9,13 @@ int fopen_nth_catalog_file(fp_catalog_info *fp_in,int n){
       SID_trap_error("Invalid file number (%d) requested for catalog {%s;n_files=%d}.",n,fp_in->filename_properties_base,fp_in->n_files);
 
    // We can't just jump to the file we want.  We need to keep scaning through them so we know what absolute halo range the n'th file represents
-   int i_file;
+   int i_file=0;
    int r_val=FALSE;
    i_file=fp_in->i_file;
 
    // Start from the beginning if we are going backwards in the file count
    if(n<i_file){
       fp_in->i_file      =0;
-      i_file             =0;
       fp_in->i_halo_start=0;
       fp_in->i_halo_stop =0;
    }
@@ -63,7 +62,7 @@ int fopen_nth_catalog_file(fp_catalog_info *fp_in,int n){
             fread(&(fp_in->n_halos_total),sizeof(int),1,fp_in->fp_properties);
             // Check that the file number in the file is correct
             if(i_file!=fp_in->i_file)
-               SID_trap_error("Invalid file number (ie. %d!=%d) in catalog {%s}.",ERROR_LOGIC,i_file,fp_in->i_file);
+               SID_trap_error("Invalid file number (ie. %d!=%d) in catalog {%s}.",ERROR_LOGIC,i_file,fp_in->i_file,fp_in->filename_properties_root);
             i_file++;
          }
       }
@@ -80,7 +79,7 @@ int fopen_nth_catalog_file(fp_catalog_info *fp_in,int n){
             fread(&(fp_in->n_halos_total),sizeof(int),1,fp_in->fp_profiles);
             // Check that the file number in the file is correct
             if(i_file!=fp_in->i_file)
-               SID_trap_error("Invalid file number (ie. %d!=%d) in catalog {%s}.",ERROR_LOGIC,i_file,fp_in->i_file);
+               SID_trap_error("Invalid file number (ie. %d!=%d) in catalog {%s}.",ERROR_LOGIC,i_file,fp_in->i_file,fp_in->filename_profiles_root);
             i_file++;
          }
       }
@@ -94,6 +93,7 @@ int fopen_nth_catalog_file(fp_catalog_info *fp_in,int n){
          fp_in->i_halo_start=fp_in->i_halo_start+fp_in->n_halos_file;
          fp_in->i_halo_stop =fp_in->i_halo_stop +fp_in->n_halos_file;
       }
+      fp_in->i_halo=fp_in->i_halo_start; // This should always be the halo index pointed to by the present state of the file pointers
 
       i_file++;
    }
@@ -197,11 +197,15 @@ int fopen_catalog(char            *filename_catalog_root,
    // Initialize things by opening the first file.  Even if we want a halo
    //   that's deep in the list, we have to scan all the headers (starting
    //   with the first) to find where it is.
+   int r_val2;
    fp_out->fp_properties=NULL;
    fp_out->fp_profiles  =NULL;
    fp_out->i_file       =0;
    fp_out->i_halo       =0;
-   fopen_nth_catalog_file(fp_out,0);
+   if((r_val2=fopen_nth_catalog_file(fp_out,0)))
+      SID_trap_error("Error opening catalog file.",ERROR_IO_OPEN);
+   if(r_val2>r_val)
+      r_val=r_val2;
 
    return(r_val);
 }
