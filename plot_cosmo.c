@@ -55,8 +55,10 @@ int main(int argc, char *argv[]){
                ADaPS_SCALAR_DOUBLE);
   }
   h_Hubble=((double *)ADaPS_fetch(cosmo,"h_Hubble"))[0];
-  printf("rho_crit  = %13.6le Msol/(Mpc^3)\n",rho_crit_z(z,cosmo)*(M_PER_MPC/M_SOL)*M_PER_MPC*M_PER_MPC);
-  printf("D_angular = %10.3lf Mpc\n",D_angular(z,cosmo)/M_PER_MPC);
+  printf("rho_crit     = %13.6le Msol/(Mpc^3)\n",rho_crit_z(z,cosmo)*(M_PER_MPC/M_SOL)*M_PER_MPC*M_PER_MPC);
+  printf("D_angular    = %10.3lf Mpc\n",D_angular(z,cosmo)/M_PER_MPC);
+  printf("D_luminosity = %10.3lf Mpc\n",D_luminosity(z,cosmo)/M_PER_MPC);
+  printf("D_comoving   = %10.3lf Mpc\n",D_comove(z,cosmo)/M_PER_MPC);
   free_cosmo(&cosmo);
   return(0);
 }
