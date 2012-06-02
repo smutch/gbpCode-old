@@ -63,7 +63,6 @@ int fopen_nth_catalog_file(fp_catalog_info *fp_in,int n){
             // Check that the file number in the file is correct
             if(i_file!=fp_in->i_file)
                SID_trap_error("Invalid file number (ie. %d!=%d) in catalog {%s}.",ERROR_LOGIC,i_file,fp_in->i_file,fp_in->filename_properties_root);
-            i_file++;
          }
       }
 
@@ -80,7 +79,6 @@ int fopen_nth_catalog_file(fp_catalog_info *fp_in,int n){
             // Check that the file number in the file is correct
             if(i_file!=fp_in->i_file)
                SID_trap_error("Invalid file number (ie. %d!=%d) in catalog {%s}.",ERROR_LOGIC,i_file,fp_in->i_file,fp_in->filename_profiles_root);
-            i_file++;
          }
       }
 
