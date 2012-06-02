@@ -992,18 +992,18 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
    }
 }
 
-void compute_trees_horizontal(char   *filename_halo_root_in,
-                              char   *filename_cat_root_in,
-                              char   *filename_root_matches,
-                              char   *filename_output_dir,
-                              double *a_list,
+void compute_trees_horizontal(char        *filename_halo_root_in,
+                              char        *filename_cat_root_in,
+                              char        *filename_root_matches,
+                              char        *filename_output_dir,
+                              double      *a_list,
                               cosmo_info **cosmo,
-                              int     i_read_start,
-                              int     i_read_stop,
-                              int     i_read_step,
-                              int     n_search,
-                              int     flag_fix_bridges,
-                              int    *flag_clean){
+                              int          i_read_start,
+                              int          i_read_stop,
+                              int          i_read_step,
+                              int          n_search,
+                              int          flag_fix_bridges,
+                              int         *flag_clean){
   char        group_text_prefix[5];
   FILE       *fp;
   char       *line=NULL;
@@ -2035,6 +2035,8 @@ void compute_trees_horizontal(char   *filename_halo_root_in,
   SID_free(SID_FARG n_particles_subgroups);
   SID_free(SID_FARG subgroups);
   SID_free(SID_FARG groups);
+  SID_free(SID_FARG n_groups);
+  SID_free(SID_FARG n_subgroups);
   SID_free(SID_FARG n_subgroups_group);
   SID_log("Done.",SID_LOG_CLOSE);
 
