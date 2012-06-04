@@ -9,16 +9,18 @@ int fopen_nth_catalog_file(fp_catalog_info *fp_in,int n){
       SID_trap_error("Invalid file number (%d) requested for catalog {%s;n_files=%d}.",n,fp_in->filename_properties_base,fp_in->n_files);
 
    // We can't just jump to the file we want.  We need to keep scaning through them so we know what absolute halo range the n'th file represents
-   int i_file=0;
+   int i_file;
    int r_val=FALSE;
-   i_file=fp_in->i_file;
 
    // Start from the beginning if we are going backwards in the file count
-   if(n<i_file){
-      fp_in->i_file      =0;
+   if(n<fp_in->i_file){
+      i_file             =0;
       fp_in->i_halo_start=0;
-      fp_in->i_halo_stop =0;
    }
+   else if(n>fp_in->i_file)
+      i_file=fp_in->i_file+1;
+   else
+      i_file=fp_in->i_file;
 
    // Loop until we get to the file we want (or there's an error)
    while(i_file<=n && !r_val){
@@ -83,15 +85,12 @@ int fopen_nth_catalog_file(fp_catalog_info *fp_in,int n){
       }
 
       // Set the absolute start and stop ranges of the halo numbers
-      if(fp_in->i_file==0){
+      if((fp_in->i_file)==0)
          fp_in->i_halo_start=0;
-         fp_in->i_halo_stop =fp_in->n_halos_file-1;
-      }
-      else{
-         fp_in->i_halo_start=fp_in->i_halo_start+fp_in->n_halos_file;
-         fp_in->i_halo_stop =fp_in->i_halo_stop +fp_in->n_halos_file;
-      }
-      fp_in->i_halo=fp_in->i_halo_start; // This should always be the halo index pointed to by the present state of the file pointers
+      else
+         fp_in->i_halo_start=fp_in->i_halo_stop +1;
+      fp_in->i_halo_stop=fp_in->i_halo_start+fp_in->n_halos_file-1;
+      fp_in->i_halo     =fp_in->i_halo_start; // This should always be the halo index pointed to by the present state of the file pointers
 
       i_file++;
    }
