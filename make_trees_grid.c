@@ -131,7 +131,6 @@ int main(int argc, char *argv[]){
         fclose(fp_in);
         SID_free(SID_FARG n_halos_tree);
      }
-     SID_free(SID_FARG halo);
      SID_log("Done.",SID_LOG_CLOSE);
 
      // Repeat to build-up a list of tree sizes needed for the header of each output file
@@ -200,7 +199,7 @@ int main(int argc, char *argv[]){
         fp_out=fopen(filename_out,"w");
         fwrite(&(n_trees_file_out[i_file]),sizeof(int),1,                       fp_out);
         fwrite(&(n_halos_file_out[i_file]),sizeof(int),1,                       fp_out);
-        fwrite(&(tree_size[i_file]),       sizeof(int),n_trees_file_out[i_file],fp_out);
+        fwrite(tree_size[i_file],          sizeof(int),n_trees_file_out[i_file],fp_out);
         fclose(fp_out);
         n_trees_file_out[i_file]=0; // re-set to zero so we can use it as a counter
      }
@@ -268,10 +267,12 @@ int main(int argc, char *argv[]){
      SID_free(SID_FARG tree);
      SID_log("Done.",SID_LOG_CLOSE);
 
-     // Free tree size arrays
+     // Clean-up
      for(i_file=0;i_file<n_files_out;i_file++)
         SID_free(SID_FARG tree_size[i_file]);
      SID_free(SID_FARG tree_size);
+     SID_free(SID_FARG n_halos_file_out);
+     SID_free(SID_FARG n_trees_file_out);
 
      SID_log("Done.",SID_LOG_CLOSE);
   

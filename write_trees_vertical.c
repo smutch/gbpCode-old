@@ -81,6 +81,7 @@ void write_trees_vertical(tree_info **trees,
       else
         SID_fopen(filename_out,"a",&fp_out);
       for(j_tree=0;j_tree<n_trees_local;i_tree++,j_tree++){
+        // Write the number of halos per tree
         SID_fwrite(&(n_halos_tree_local[i_tree]),sizeof(int),1,&fp_out);
         n_halos_written+=n_halos_tree_local[i_tree];
         n_trees_written++;
