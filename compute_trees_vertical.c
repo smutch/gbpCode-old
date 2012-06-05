@@ -802,9 +802,9 @@ void compute_trees_vertical(char *filename_root_out,
   int              mode_cat_read;
   halo_info       *properties;
   properties=(halo_info *)SID_calloc(sizeof(halo_info));
+  // Process subgroups and then groups
   for(k_match=0;k_match<2;k_match++){
     switch(k_match){
-      // Process subgroups
     case 0:
       filename_output_dir_horizontal_properties=filename_output_dir_horizontal_subgroups_properties;
       sprintf(filename_output_vertical_root,"%s/%s",filename_output_dir_vertical_subgroups,filename_output_file_root);
@@ -818,7 +818,6 @@ void compute_trees_vertical(char *filename_root_out,
       mode_cat_read  =READ_CATALOG_SUBGROUPS|READ_CATALOG_PROPERTIES;
       sprintf(group_text_prefix,"sub");
       break;
-      // Process groups
     case 1:
       filename_output_dir_horizontal_properties=filename_output_dir_horizontal_groups_properties;
       sprintf(filename_output_vertical_root,"%s/%s",filename_output_dir_vertical_groups,filename_output_file_root);

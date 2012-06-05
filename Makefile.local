@@ -20,6 +20,7 @@ BINFILES  = tree_stats                 \
 	    make_trees_matches         \
 	    make_trees_vertical        \
 	    make_trees_horizontal      \
+	    make_trees_grid            \
 	    convert_Bolshoi            \
             find_halo_tree             \
             tree_groups                \
