@@ -47,7 +47,7 @@ int main(int argc, char *argv[]){
     else if(i_file==1)
       sprintf(filename,"%s/snapshot_%03d",filename_root_in,snapshot_number);
     else if(i_file==2)
-      sprintf(filename,"%s",filename_root_in,snapshot_number);
+      sprintf(filename,"%s",filename_root_in);
     else if(i_file==3)
       sprintf(filename,"%s_%03d",filename_root_in,snapshot_number);
     fp=fopen(filename,"r");

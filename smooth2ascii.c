@@ -38,7 +38,7 @@ int main(int argc, char *argv[]){
   init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
   read_gadget_binary(filename_snapshot,snapshot,&plist,READ_GADGET_DEFAULT);
   read_smooth(&plist,filename_smooth,0,SMOOTH_DEFAULT);
-  h_Hubble=((double *)ADaPS_fetch(plist.data,"h_Hubble",species_name))[0];
+  h_Hubble=((double *)ADaPS_fetch(plist.data,"h_Hubble"))[0];
 
   // Loop over each species
   for(i_species=0,j_species=0;i_species<N_GADGET_TYPE;i_species++){

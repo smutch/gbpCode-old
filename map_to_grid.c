@@ -59,10 +59,10 @@ double map_to_grid(size_t      n_particles_local,
   field_info  buffer_left;
   field_info  buffer_right;
   int         n_buffer[3];
-  fftw_real  *send_left;
-  fftw_real  *send_right;
-  fftw_real  *receive_left=NULL;
-  fftw_real  *receive_right=NULL;
+  GBPREAL  *send_left;
+  GBPREAL  *send_right;
+  GBPREAL  *receive_left=NULL;
+  GBPREAL  *receive_right=NULL;
   double       r_i,r_min,r_i_max=0;
   double       W_i;
   int          index_i;
@@ -157,11 +157,11 @@ double map_to_grid(size_t      n_particles_local,
 
   // Initializing slab buffers
   n_send       =(size_t)(field->n[0]*field->n[1]*W_search);
-  send_size    =n_send*sizeof(fftw_real);
-  send_left    =(fftw_real *)SID_malloc(send_size);
-  send_right   =(fftw_real *)SID_malloc(send_size);
-  receive_left =(fftw_real *)SID_malloc(send_size);
-  receive_right=(fftw_real *)SID_malloc(send_size);
+  send_size    =n_send*sizeof(GBPREAL);
+  send_left    =(GBPREAL *)SID_malloc(send_size);
+  send_right   =(GBPREAL *)SID_malloc(send_size);
+  receive_left =(GBPREAL *)SID_malloc(send_size);
+  receive_right=(GBPREAL *)SID_malloc(send_size);
   for(i_b=0;i_b<n_send;i_b++){
     send_left[i_b] =0.;
     send_right[i_b]=0.;
