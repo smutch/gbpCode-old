@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gbpLib.h>
+#include <gbpMath.h>
 #include <gbpSPH.h>
 
 int main(int argc, char *argv[]){
@@ -74,15 +75,12 @@ int main(int argc, char *argv[]){
       }
     }
   }
-  if(flag_filefound){
-    for(i_file=0;i_file<n_files;i_file++){
+  if(init_gadget_read(filename_root_in,snapshot_number,&flag_multifile,&flag_file_type,&header)){
+     // Read file
+     read_gadget_binary(filename_root_in,snapshot_number,&plist,READ_GADGET_DEFAULT);
 
-      // Read file
-      read_gadget_binary(filename_root_in,snapshot_number,&plist,READ_GADGET_DEFAULT);
-
-      // Write ascii file
-      write_ascii(filename_out,&plist,i_file);
-    }
+     // Write ascii file
+     write_ascii(filename_out,&plist);
   }
   // Clean-up
   free_plist(&plist);

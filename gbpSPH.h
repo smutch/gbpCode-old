@@ -171,6 +171,7 @@ void open_gadget_file(char      *filename_root_in,
 
 int  init_gadget_read(char *filename_root_in,int snapshot_number,int *flag_multifile,int *flag_file_type,gadget_header_info *header);
 void set_gadget_filename(char *filename_root_in,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename);
+void change_gadget_filename(char *filename_root_in,char *filename_root,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename);
 
 void init_plist(plist_info *plist, slab_info *slab,double length_unit,double mass_unit, double velocity_unit); 
 void free_plist(plist_info *plist);
@@ -210,8 +211,7 @@ void read_tipsy_ascii(char       *filename,
 void write_tipsy_binary(char       *filename,
                         plist_info *plist);
 void write_ascii(char       *filename,
-                 plist_info *plist,
-                 int         i_file);
+                 plist_info *plist);
 void write_csv(char       *filename_out,
                plist_info *plist);
 void write_mark_file(plist_info *plist,

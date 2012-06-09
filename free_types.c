@@ -7,6 +7,6 @@
 void free_types(char ***pname,int n_species){
   int     i;
   for(i=0;i<n_species;i++)
-    SID_free((void **)&((*pname)[i]));
-  SID_free((void **)(*pname));
+    SID_free(SID_FARG (*pname)[i]);
+  SID_free(SID_FARG (*pname));
 }

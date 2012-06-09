@@ -3,15 +3,10 @@
 #include <gbpSPH.h>
 #include <string.h>
 
-void set_gadget_filename(char *filename_root_in,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename){
-  char filename_root[MAX_FILENAME_LENGTH];
-  char filename_path[MAX_FILENAME_LENGTH];
+void change_gadget_filename(char *filename_root_in,char *filename_root,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename){
 
   // Determine/set the filename root and path
-  strcpy(filename_root,filename_root_in);
-  strip_path(filename_root);
-  if(strlen(filename_root)==0)
-     sprintf(filename_root,"snapshot");
+  char filename_path[MAX_FILENAME_LENGTH];
   strcpy(filename_path,filename_root_in);
   strip_file_root(filename_path);
 

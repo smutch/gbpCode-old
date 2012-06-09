@@ -24,8 +24,8 @@ int assign_particle_to_rank(plist_info *plist,
                             double      y_max,
                             double      z_min,
                             double      z_max,
-                            size_t      id_min,
-                            size_t      id_max);
+                            size_t      i_p_min,
+                            size_t      i_p_max);
 int assign_particle_to_rank(plist_info *plist,
                             double      x_p,
                             double      y_p,
@@ -44,8 +44,8 @@ int assign_particle_to_rank(plist_info *plist,
                             double      y_max,
                             double      z_min,
                             double      z_max,
-                            size_t      id_min,
-                            size_t      id_max){
+                            size_t      i_p_min,
+                            size_t      i_p_max){
   int      keep=TRUE;
   int      scatter_rank;
 
@@ -62,7 +62,7 @@ int assign_particle_to_rank(plist_info *plist,
     }
 #endif
     else if(check_mode_for_flag(mode,READ_GADGET_DEFAULT)){
-      if(i_p<id_min || i_p>id_max)
+      if(i_p<i_p_min || i_p>i_p_max)
         keep*=FALSE;
     }
     if(check_mode_for_flag(mode,READ_GADGET_X_MIN)){
@@ -121,7 +121,7 @@ void read_gadget_binary(char       *filename_root_in,
   size_t    n_particles_mass;
   size_t    n_particles_all;
   size_t    i_p,i_p_temp;
-  size_t    id_min,id_max;
+  size_t    i_p_min,i_p_max;
   double    mass_array[N_GADGET_TYPE];
   int       unused[GADGET_HEADER_SIZE];
   size_t    n_all[N_GADGET_TYPE];
@@ -223,41 +223,17 @@ void read_gadget_binary(char       *filename_root_in,
   int       flag_multifile     =FALSE;
   int       flag_file_type     =0;
   int       flag_filefound     =FALSE;
+  gadget_header_info header;
 
   char filename_in[MAX_FILENAME_LENGTH];
 
-  // Try to determine the file naming format and open the first file
-  
-  for(i_file=0;i_file<4 && !flag_filefound;i_file++){
-    if(i_file==0)
-      sprintf(filename,"%s/snapshot_%03d/snapshot_%03d",filename_root_in,snapshot_number,snapshot_number);
-    else if(i_file==1)
-      sprintf(filename,"%s/snapshot_%03d",filename_root_in,snapshot_number);
-    else if(i_file==2)
-      sprintf(filename,"%s_%03d",filename_root_in,snapshot_number);
-    else if(i_file==3)
-      sprintf(filename,"%s",filename_root_in);
-    SID_fopen(filename,"r",&fp);
-    if(fp.fp!=NULL){
-      flag_filefound=TRUE;
-      flag_multifile=FALSE;
-      flag_file_type=i_file;
-    }
-    // ... if that doesn't work, check for multi-file
-    else{
-      strcat(filename,".0");
-      SID_fopen(filename,"r",&fp);
-      if(fp.fp!=NULL){
-        flag_filefound=TRUE;
-        flag_multifile=TRUE;
-        flag_file_type=i_file;
-      }
-    }
-  }
+  flag_filefound=init_gadget_read(filename_root_in,snapshot_number,&flag_multifile,&flag_file_type,&header);
+  set_gadget_filename(filename_root_in,snapshot_number,0,flag_multifile,flag_file_type,filename);
+  SID_fopen(filename,"r",&fp);
 
   // A file was found ... 
   if(flag_filefound){
-    if(i_file<3)
+    if(flag_file_type<4)
       SID_log("Reading GADGET binary file {%s} snapshot #%d...",SID_LOG_OPEN|SID_LOG_TIMER,filename_root_in,snapshot_number);
     else
       SID_log("Reading GADGET binary file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_root_in);
@@ -445,11 +421,9 @@ void read_gadget_binary(char       *filename_root_in,
     s_load  +=n_return*sizeof(int);
     n_return =SID_fread_all(&flag_entropyICs,sizeof(int),1,&fp);
     s_load  +=n_return*sizeof(int);
-    flag_LONGIDS=FALSE;
     for(i=0;i<N_GADGET_TYPE;i++){
       if(n_all_tmp[i]>0){
         n_all[i]+=(((size_t)n_all_tmp[i]) << 32);
-        flag_LONGIDS=TRUE;
       }
     }
 
@@ -544,31 +518,31 @@ void read_gadget_binary(char       *filename_root_in,
     //  are not present?
     if(SID.n_proc>1){
       if(flag_all_read_all){
-        id_min=0;
-        id_max=n_particles_all-1;
+        i_p_min=0;
+        i_p_max=n_particles_all-1;
       }
       else{
         if(SID.My_rank==0){
-          id_min=0;
-          id_max=(n_particles_all/(size_t)SID.n_proc)*(size_t)(SID.My_rank+1)-1;
+          i_p_min=0;
+          i_p_max=(n_particles_all/(size_t)SID.n_proc)*(size_t)(SID.My_rank+1)-1;
         }
         else if(SID.My_rank==SID.n_proc-1){
-          id_min=(n_particles_all/(size_t)SID.n_proc)*(size_t)(SID.My_rank);
-          id_max=n_particles_all-1;
+          i_p_min=(n_particles_all/(size_t)SID.n_proc)*(size_t)(SID.My_rank);
+          i_p_max=n_particles_all-1;
         }
         else{
-          id_min=(n_particles_all/(size_t)SID.n_proc)*(size_t)(SID.My_rank);
-          id_max=(n_particles_all/(size_t)SID.n_proc)*(size_t)(SID.My_rank+1)-1;
+          i_p_min=(n_particles_all/(size_t)SID.n_proc)*(size_t)(SID.My_rank);
+          i_p_max=(n_particles_all/(size_t)SID.n_proc)*(size_t)(SID.My_rank+1)-1;
         }
       }
     }
     else{
-      id_min=0;
-      id_max=n_particles_all-1;
+      i_p_min=0;
+      i_p_max=n_particles_all-1;
       flag_all_read_all=TRUE;
     }
-    ADaPS_store(&(plist->data),(void *)(&id_min),"rank_id_min",ADaPS_SCALAR_SIZE_T);
-    ADaPS_store(&(plist->data),(void *)(&id_max),"rank_id_max",ADaPS_SCALAR_SIZE_T);
+    ADaPS_store(&(plist->data),(void *)(&i_p_min),"rank_i_p_min",ADaPS_SCALAR_SIZE_T);
+    ADaPS_store(&(plist->data),(void *)(&i_p_max),"rank_i_p_max",ADaPS_SCALAR_SIZE_T);
 
     // Other constraints
     if(ADaPS_exist(plist->data,"rank_x_min"))
@@ -634,20 +608,10 @@ void read_gadget_binary(char       *filename_root_in,
     n_particles_rank=0;
     for(i_file=0,i_p_temp=0;i_file<n_files;i_file++){
       // Open file
-      if(flag_file_type==0)
-        sprintf(filename,"%s/snapshot_%03d/snapshot_%03d",filename_root_in,snapshot_number,snapshot_number);
-      else if(flag_file_type==1)
-        sprintf(filename,"%s/snapshot_%03d",filename_root_in,snapshot_number);
-      else if(flag_file_type==2)
-        sprintf(filename,"%s_%03d",filename_root_in,snapshot_number);
-      else if(flag_file_type==3)
-        sprintf(filename,"%s",filename_root_in);
-      if(flag_multifile)
-        sprintf(filename,"%s.%d",filename,i_file);
-      if(flag_multifile){
-        SID_log("Processing file #%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file);
-      }
+      set_gadget_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
       SID_fopen(filename,"r",&fp);
+      if(flag_multifile)
+        SID_log("Processing file #%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file);
 
       // Read n_of_type array for this file
       //  and skip the rest of the header
@@ -664,17 +628,30 @@ void read_gadget_binary(char       *filename_root_in,
 
       // If we are reading marked particles only, then we need another fp to 
       //   read ids for domain decomposition and we need to skip to the ids
-      if(flag_read_marked || flag_read_catalog){
-        SID_fopen(filename,"r",&fp_ids);
-        s_load=4+GADGET_HEADER_SIZE+4;                   // skip header
-        s_load+=(4+4);                                   // skip position block size
-        for(i=0;i<N_GADGET_TYPE;i++){
-          if(n_of_type_file[i]>0)
-            s_load+=2*3*n_of_type_file[i]*sizeof(float); // skip positions & velocities
-        }
-        s_load+=(4+4);                                   // skip velocity block size
-        s_load+=4;                                       // skip ids block size
-        SID_fseek(&fp_ids,1,s_load,SID_SEEK_SET);
+      if(i_file==0 || (flag_read_marked || flag_read_catalog)){
+         SID_fopen(filename,"r",&fp_ids);
+         s_load=4+GADGET_HEADER_SIZE+4;                   // skip header
+         s_load+=(4+4);                                   // skip position block size
+         for(i=0;i<N_GADGET_TYPE;i++){
+           if(n_of_type_file[i]>0)
+             s_load+=2*3*n_of_type_file[i]*sizeof(float); // skip positions & velocities
+         }
+         s_load+=(4+4);                                   // skip velocity block size
+         SID_fseek(&fp_ids,1,s_load,SID_SEEK_SET);
+         SID_fread_all(&record_length_open,4,1,&fp_ids);  // read ids block size
+         // Find out if we are reading long IDs or not (check block size for this)
+         if(i_file==0){
+            if(record_length_open/sizeof(int)==n_particles_file){
+               flag_LONGIDS=FALSE;
+               SID_log("using (int) IDs...",SID_LOG_CONTINUE);
+            }
+            else{
+               flag_LONGIDS=TRUE;
+               SID_log("using (long long) IDs...",SID_LOG_CONTINUE);
+            }
+         }
+         if(!(flag_read_marked || flag_read_catalog))
+            SID_fclose(&fp_ids);
       }
 
       // Read positions and count the number needed by this rank from this file
@@ -783,7 +760,7 @@ void read_gadget_binary(char       *filename_root_in,
                                        x_min_read,x_max_read,
                                        y_min_read,y_max_read,
                                        z_min_read,z_max_read,
-                                       id_min,id_max))
+                                       i_p_min,i_p_max))
               k++;
             i_p++;
           }
@@ -910,7 +887,7 @@ void read_gadget_binary(char       *filename_root_in,
                                        x_min_read,x_max_read,
                                        y_min_read,y_max_read,
                                        z_min_read,z_max_read,
-                                       id_min,id_max)){
+                                       i_p_min,i_p_max)){
               list_file_rank[i][i_file][k]=j;
               k++;
             }
@@ -935,6 +912,7 @@ void read_gadget_binary(char       *filename_root_in,
     if(n_of_type_rank[GADGET_TYPE_GAS]==0)
       flag_gas=FALSE;
     n_particles_all=0;
+
 #if USE_MPI
     for(i_rank=0;i_rank<SID.n_proc;i_rank++){
       n_particles_bcast=n_particles_rank;
@@ -942,11 +920,11 @@ void read_gadget_binary(char       *filename_root_in,
       SID_log("Number of particles on rank #%d:\t%lld",SID_LOG_COMMENT,i_rank,n_particles_bcast);
       n_particles_all+=n_particles_bcast;
     }
-    SID_log("Done.",SID_LOG_CLOSE);
 #else
     n_particles_all=n_particles_rank;
-    SID_log("%lld particles will be read...Done.",SID_LOG_CLOSE,n_particles_rank);
+    SID_log("%lld particles will be read.",SID_LOG_COMMENT,n_particles_rank);
 #endif
+    SID_log("Done.",SID_LOG_CLOSE);
 
     // Allocate data arrays
     x_array=(GBPREAL *)SID_malloc(sizeof(GBPREAL)*(size_t)(MAX(1,n_particles_rank)));
@@ -982,19 +960,10 @@ void read_gadget_binary(char       *filename_root_in,
     for(i_file=0;i_file<n_files;i_file++){
 
       // Open file
-      if(flag_file_type==0)
-        sprintf(filename,"%s/snapshot_%03d/snapshot_%03d",filename_root_in,snapshot_number,snapshot_number);
-      else if(flag_file_type==1)
-        sprintf(filename,"%s/snapshot_%03d",filename_root_in,snapshot_number);
-      else if(flag_file_type==2)
-        sprintf(filename,"%s_%03d",filename_root_in,snapshot_number);
-      else if(flag_file_type==3)
-        sprintf(filename,"%s",filename_root_in);
-      if(flag_multifile)
-        sprintf(filename,"%s.%d",filename,i_file);
-      if(flag_multifile)
-        SID_log("Reading file %d of %d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file+1,n_files);
+      set_gadget_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
       SID_fopen(filename,"r",&fp);
+      if(flag_multifile)
+        SID_log("Processing file #%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file);
 
       // Read n_of_type array for this file
       //  and skip the rest of the header

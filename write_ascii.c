@@ -7,8 +7,7 @@
 // In the future ... receive a list of variables to make this adaptive
 
 void write_ascii(char       *filename_out,
-	         plist_info *plist,
-                 int         i_file){
+	         plist_info *plist){
   FILE   *fp;
   double  h_Hubble;
   GBPREAL   *x;
@@ -17,6 +16,7 @@ void write_ascii(char       *filename_out,
   GBPREAL   *vx;
   GBPREAL   *vy;
   GBPREAL   *vz;
+  size_t    *id;
   size_t  n_p;
   size_t  i_p;
   int     i_rank;
@@ -31,7 +31,7 @@ void write_ascii(char       *filename_out,
       h_Hubble=((double *)ADaPS_fetch(plist->data,"h_Hubble"))[0];
 
       // Open file
-      if(i_rank==MASTER_RANK && i_file==0){
+      if(i_rank==MASTER_RANK){
         fp=fopen(filename_out,"w");
         fprintf(fp,"#Columns:\n");
         fprintf(fp,"#  1) Gadget particle type\n");
@@ -41,6 +41,7 @@ void write_ascii(char       *filename_out,
         fprintf(fp,"#  5) v_x [km/s]\n");
         fprintf(fp,"#  6) v_y [km/s]\n");
         fprintf(fp,"#  7) v_z [km/s]\n");
+        fprintf(fp,"#  8) id\n");
       }
       else
         fp=fopen(filename_out,"a");
@@ -56,15 +57,17 @@ void write_ascii(char       *filename_out,
              vx=(GBPREAL *)ADaPS_fetch(plist->data,"vx_%s",plist->species[i_species]);
              vy=(GBPREAL *)ADaPS_fetch(plist->data,"vy_%s",plist->species[i_species]);
              vz=(GBPREAL *)ADaPS_fetch(plist->data,"vz_%s",plist->species[i_species]);
+             id=(size_t  *)ADaPS_fetch(plist->data,"id_%s",plist->species[i_species]);
              for(i_p=0;i_p<n_p;i_p++){
-               fprintf(fp,"%d %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e\n",
+               fprintf(fp,"%1d %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %7lld\n",
                        i_species,
                        (double)(x[i_p]/(M_PER_MPC/h_Hubble)),
                        (double)(y[i_p]/(M_PER_MPC/h_Hubble)),
                        (double)(z[i_p]/(M_PER_MPC/h_Hubble)),
                        (double)(vx[i_p]*1e-3),
                        (double)(vy[i_p]*1e-3),
-                       (double)(vz[i_p]*1e-3));
+                       (double)(vz[i_p]*1e-3),
+                       id[i_p]);
              }
           }
         }
