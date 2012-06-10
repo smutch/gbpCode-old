@@ -16,7 +16,6 @@ int main(int argc, char *argv[]){
   int     i_jack;
   int     n_jack_total;
   char    species_name[256];
-  double  h_Hubble;
   double  Omega_Lambda;
   double  Omega_M;
   double  Omega_b;
@@ -50,12 +49,12 @@ int main(int argc, char *argv[]){
   double          box_size;
   double          L[3];
   size_t          n_all;
-  cosmo_info     *cosmo;
   field_info      FFT;
   plist_info      plist;
   FILE           *fp;
   FILE           *fp_groups;
   FILE           *fp_subgroups;
+  FILE           *fp_stats;
   int     flag_write_header;
   int     i_temp;
   int     n_temp;
@@ -90,6 +89,8 @@ int main(int argc, char *argv[]){
   GBPREAL *vz_group;
   GBPREAL *V_halos;
   GBPREAL *V_FoF;
+  int  *group_index;
+  int  *subgroup_index;
   int  *i_FoF;
   int  *n_FoF;
   GBPREAL  x_min,x_max;
@@ -167,9 +168,6 @@ int main(int argc, char *argv[]){
 
   SID_log("Producing %d groupings of halos...",SID_LOG_OPEN,n_groupings);
 
-  init_cosmo_std(&cosmo);
-  init_RNG(&seed,&RNG,RNG_DEFAULT);
-
   // Read group catalogs
   init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
   read_groups(filename_groups_root,i_snap,READ_GROUPS_ALL|READ_GROUPS_NOIDS,&plist,"groups");
@@ -182,60 +180,70 @@ int main(int argc, char *argv[]){
   // Read catalog ...
   SID_log("Reading catalog...",SID_LOG_OPEN);
 
-  //   ... open files and skip headers ...
-  sprintf(filename_groups_in,   "%s_%03d.catalog_groups_properties",   filename_cat_root,i_snap);
-  sprintf(filename_subgroups_in,"%s_%03d.catalog_subgroups_properties",filename_cat_root,i_snap);
-  fp_groups=fopen(filename_groups_in,"r");
-  fread(&i_file,      sizeof(int),1,fp_groups);
-  fread(&n_files,     sizeof(int),1,fp_groups);
-  fread(&n_groups,    sizeof(int),1,fp_groups);
-  fread(&n_groups_all,sizeof(int),1,fp_groups);
-  fp_subgroups=fopen(filename_subgroups_in,"r");
-  fread(&i_file,         sizeof(int),1,fp_subgroups);
-  fread(&n_files,        sizeof(int),1,fp_subgroups);
-  fread(&n_subgroups,    sizeof(int),1,fp_subgroups);
-  fread(&n_subgroups_all,sizeof(int),1,fp_subgroups);
-  SID_log("%d groups and %d subgroups...",SID_LOG_CONTINUE,n_groups,n_subgroups);
+  //   ... open files ...
+  fp_catalog_info fp_properties_groups;
+  fp_catalog_info fp_properties_subgroups;
+  fopen_catalog(filename_cat_root,
+                i_snap,
+                READ_CATALOG_GROUPS|READ_CATALOG_PROPERTIES,
+                &fp_properties_groups);
+  fopen_catalog(filename_cat_root,
+                i_snap,
+                READ_CATALOG_SUBGROUPS|READ_CATALOG_PROPERTIES,
+                &fp_properties_subgroups);
+  
+  n_groups_all   =fp_properties_groups.n_halos_total;
+  n_subgroups_all=fp_properties_subgroups.n_halos_total;
+
+  if(n_groups_all   !=n_groups)    SID_trap_error("There's a mismatch in the number of groups (ie. %d!=%d)",   ERROR_LOGIC,n_groups_all,n_groups);
+  if(n_subgroups_all!=n_subgroups) SID_trap_error("There's a mismatch in the number of subgroups (ie. %d!=%d)",ERROR_LOGIC,n_subgroups_all,n_subgroups);
+
+  SID_log("%d groups and %d subgroups...",SID_LOG_CONTINUE,n_groups_all,n_subgroups_all);
 
   //   ... allocate arrays ...
-  n_group     =(size_t)n_halos;
-  x_halos     =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  y_halos     =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  z_halos     =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  r_halos     =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  vx_halos_FoF=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  vy_halos_FoF=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  vz_halos_FoF=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  vx_halos_sub=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  vy_halos_sub=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  vz_halos_sub=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  M_halos     =(double *)SID_malloc(sizeof(double)*n_subgroups_all);
-  M_FoF       =(double *)SID_malloc(sizeof(double)*n_subgroups_all);
-  V_halos     =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  V_FoF       =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  i_FoF       =(int    *)SID_malloc(sizeof(int)*n_subgroups_all);
-  n_FoF       =(int    *)SID_malloc(sizeof(int)*n_subgroups_all);
-  x_min       =1e10;
-  x_max       =0.;
-  y_min       =1e10;
-  y_max       =0.;
-  z_min       =1e10;
-  z_max       =0.;
+  n_group       =(size_t)n_halos;
+  x_halos       =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  y_halos       =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  z_halos       =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  r_halos       =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  vx_halos_FoF  =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  vy_halos_FoF  =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  vz_halos_FoF  =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  vx_halos_sub  =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  vy_halos_sub  =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  vz_halos_sub  =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  M_halos       =(double  *)SID_malloc(sizeof(double)*n_subgroups_all);
+  M_FoF         =(double  *)SID_malloc(sizeof(double)*n_subgroups_all);
+  V_halos       =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  V_FoF         =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
+  i_FoF         =(int     *)SID_malloc(sizeof(int)*n_subgroups_all);
+  group_index   =(int     *)SID_malloc(sizeof(int)*n_subgroups_all);
+  subgroup_index=(int     *)SID_malloc(sizeof(int)*n_subgroups_all);
+  n_FoF         =(int     *)SID_malloc(sizeof(int)*n_subgroups_all);
+  x_min         =1e10;
+  x_max         =0.;
+  y_min         =1e10;
+  y_max         =0.;
+  z_min         =1e10;
+  z_max         =0.;
 
   //   ... read global properties ...
+  int k_subgroup=0;
   for(i_halo=0,n_halos=0;i_halo<n_groups_all;i_halo++){
-    fread(&group_properties,sizeof(halo_properties_info),1,fp_groups);
-    for(i_subhalo=0;i_subhalo<n_subgroups_group[i_halo];i_subhalo++){
-      fread(&subgroup_properties,sizeof(halo_properties_info),1,fp_subgroups);
+    fread_catalog_raw(&fp_properties_groups,&group_properties,NULL,i_halo);
+    for(i_subhalo=0;i_subhalo<n_subgroups_group[i_halo];i_subhalo++,k_subgroup++){
+      fread_catalog_raw(&fp_properties_subgroups,&subgroup_properties,NULL,k_subgroup);
       if(subgroup_properties.n_particles>=n_particles_min && subgroup_properties.M_vir>0.){
-        i_FoF[n_halos]     =i_subhalo;
-        n_FoF[n_halos]     =n_subgroups_group[i_halo];
-        x_halos[n_halos]   =(GBPREAL)subgroup_properties.position_MBP[0];
-        y_halos[n_halos]   =(GBPREAL)subgroup_properties.position_MBP[1];
-        z_halos[n_halos]   =(GBPREAL)subgroup_properties.position_MBP[2];
-        r_halos[n_halos]   =(GBPREAL)sqrt(pow(group_properties.position_MBP[0]-subgroup_properties.position_MBP[0],2.0)+
-                                       pow(group_properties.position_MBP[1]-subgroup_properties.position_MBP[1],2.0)+
-                                       pow(group_properties.position_MBP[2]-subgroup_properties.position_MBP[2],2.0));
+        group_index[n_halos]   =i_halo;
+        subgroup_index[n_halos]=k_subgroup;
+        i_FoF[n_halos]         =i_subhalo;
+        n_FoF[n_halos]         =n_subgroups_group[i_halo];
+        x_halos[n_halos]       =(GBPREAL)subgroup_properties.position_MBP[0];
+        y_halos[n_halos]       =(GBPREAL)subgroup_properties.position_MBP[1];
+        z_halos[n_halos]       =(GBPREAL)subgroup_properties.position_MBP[2];
+        r_halos[n_halos]       =(GBPREAL)sqrt(pow(group_properties.position_MBP[0]-subgroup_properties.position_MBP[0],2.0)+
+                                              pow(group_properties.position_MBP[1]-subgroup_properties.position_MBP[1],2.0)+
+                                              pow(group_properties.position_MBP[2]-subgroup_properties.position_MBP[2],2.0));
         vx_halos_FoF[n_halos]=(GBPREAL)group_properties.velocity_COM[0];
         vy_halos_FoF[n_halos]=(GBPREAL)group_properties.velocity_COM[1];
         vz_halos_FoF[n_halos]=(GBPREAL)group_properties.velocity_COM[2];
@@ -262,28 +270,49 @@ int main(int argc, char *argv[]){
 
   //   ... sort halos by V_max and close files.
   merge_sort(V_halos,(size_t)n_halos,&V_halos_index,SID_REAL,SORT_COMPUTE_INDEX,FALSE);
-  fclose(fp_groups);
-  fclose(fp_subgroups);
+  fclose_catalog(&fp_properties_groups);
+  fclose_catalog(&fp_properties_subgroups);
   SID_log("Done.",SID_LOG_CLOSE);
 
   // Write each halo grouping in turn ...
-  SID_log("Writing %d groupings of halos...",SID_LOG_OPEN|SID_LOG_TIMER,n_groups);
-  for(i_grouping=0,V_grouping=V_max_lo;i_grouping<n_groupings;i_grouping++,V_grouping+=delta_V_max){
-    SID_log("Generating grouping %d of %d...",SID_LOG_OPEN|SID_LOG_TIMER,i_grouping+1,n_groupings);
-    sprintf(filename_out,"%s_grouping_%03d.dat",filename_out_root,i_grouping);
-    fp=fopen(filename_out,"w");
+  int i_column;
+  SID_log("Writing %d groupings of halos...",SID_LOG_OPEN|SID_LOG_TIMER,n_groupings);
+  sprintf(filename_out,"%s_stats.dat",filename_out_root);
+  fp_stats=fopen(filename_out,"w");
+  for(i_grouping=0,V_grouping=V_max_lo;i_grouping<=n_groupings;i_grouping++,V_grouping+=delta_V_max){
 
-    //   ... set grouping ...
-    i_halo=0;
-    while(V_halos[V_halos_index[i_halo]]<V_grouping && i_halo<(n_halos-1)) i_halo++;
-    i_halo=MAX(0,i_halo-n_halos_per_grouping/2);
+    //   ... set grouping.  If this is the last iteration, do all halos ...
+    int n_halos_this_grouping;
+    if(i_grouping==n_groupings){
+       SID_log("Generating catalog of all halos...",SID_LOG_OPEN|SID_LOG_TIMER,i_grouping+1,n_groupings);
+       sprintf(filename_out,"%s_all.dat",filename_out_root);
+       fp=fopen(filename_out,"w");
+       i_halo=0;
+       n_halos_this_grouping=n_halos;
+    }
+    else{
+       SID_log("Generating grouping %d of %d...",SID_LOG_OPEN|SID_LOG_TIMER,i_grouping+1,n_groupings);
+       sprintf(filename_out,"%s_grouping_%03d.dat",filename_out_root,i_grouping);
+       fp=fopen(filename_out,"w");
+       i_halo=0;
+       while(V_halos[V_halos_index[i_halo]]<V_grouping && i_halo<(n_halos-1)) i_halo++;
+       if(i_halo>0){
+          if((V_halos[V_halos_index[i_halo-1]]-V_grouping)<(V_halos[V_halos_index[i_halo]]-V_grouping)) i_halo--;
+       }
+       i_halo=MAX(0,i_halo-n_halos_per_grouping/2);
+       n_halos_this_grouping=n_halos_per_grouping;
+    }
 
     //   ... write grouping to file.
-    SID_log("Halo index range=%d -> %d (out of %d)",SID_LOG_COMMENT,i_halo,i_halo+n_halos_per_grouping-1,n_halos);
+    SID_log("Halo index range=%d -> %d (out of %d)",SID_LOG_COMMENT,i_halo,i_halo+n_halos_this_grouping-1,n_halos);
     V_min=V_halos[V_halos_index[i_halo]];
-    V_med=V_halos[V_halos_index[i_halo+n_halos_per_grouping/2-1]];
-    V_max=V_halos[V_halos_index[i_halo+n_halos_per_grouping-1]];
-    SID_log("n_halos=%d", SID_LOG_COMMENT,n_halos_per_grouping);
+    V_med=V_halos[V_halos_index[i_halo+n_halos_this_grouping/2]];
+    V_max=V_halos[V_halos_index[i_halo+n_halos_this_grouping-1]];
+    M_min=M_halos[V_halos_index[i_halo]];
+    M_med=M_halos[V_halos_index[i_halo+n_halos_this_grouping/2]];
+    M_max=M_halos[V_halos_index[i_halo+n_halos_this_grouping-1]];
+
+    SID_log("n_halos=%d", SID_LOG_COMMENT,n_halos_this_grouping);
     SID_log("offset =%d", SID_LOG_COMMENT,i_halo);
     SID_log("V_min  =%le",SID_LOG_COMMENT,V_min);
     SID_log("V_med  =%le",SID_LOG_COMMENT,V_med);
@@ -292,33 +321,40 @@ int main(int argc, char *argv[]){
     fprintf(fp,"# V_min  =%le km/s\n",V_min);
     fprintf(fp,"# V_med  =%le km/s\n",V_med);
     fprintf(fp,"# V_max  =%le km/s\n",V_max);
-    fprintf(fp,"# Columns:  1) Mass sub  [M_sol]\n");
-    fprintf(fp,"#           2) V_max sub [km/s]\n");
-    fprintf(fp,"#           3) Mass FoF  [M_sol]\n");
-    fprintf(fp,"#           4) V_max FoF [km/s]\n");
-    fprintf(fp,"#           5) Rank order in FoF group\n");
-    fprintf(fp,"#           6) Number of halos in FoF group\n");
-    fprintf(fp,"#           7) x         [Mpc/h]\n");
-    fprintf(fp,"#           8) y         [Mpc/h]\n");
-    fprintf(fp,"#           9) z         [Mpc/h]\n");
-    fprintf(fp,"#          10) r_sub     [Mpc/h]\n");
-    fprintf(fp,"#          11) v_x_sub   [km/s]\n");
-    fprintf(fp,"#          12) v_y_sub   [km/s]\n");
-    fprintf(fp,"#          13) v_z_sub   [km/s]\n");
-    fprintf(fp,"#          14) v_x_FoF   [km/s]\n");
-    fprintf(fp,"#          15) v_y_FoF   [km/s]\n");
-    fprintf(fp,"#          16) v_z_FoF   [km/s]\n");
-    fprintf(fp,"#          17) v_x_vir   [km/s]\n");
-    fprintf(fp,"#          18) v_y_vir   [km/s]\n");
-    fprintf(fp,"#          19) v_z_vir   [km/s]\n");
-    for(j_halo=0;j_halo<n_halos_per_grouping && i_halo<n_halos;i_halo++,j_halo++)
-      fprintf(fp,"%le %le %le %le %d %d %le %le %le %le %le %le %le %le %le %le %le %le %le\n",
+    i_column=1;
+    fprintf(fp,"# Columns: (%02d) Snapshot Number\n",             i_column++);
+    fprintf(fp,"#          (%02d) Group Index\n",                 i_column++);
+    fprintf(fp,"#          (%02d) Subgroup Index\n",              i_column++);
+    fprintf(fp,"#          (%02d) Rank order in FoF group\n",     i_column++);
+    fprintf(fp,"#          (%02d) Number of halos in FoF group\n",i_column++);
+    fprintf(fp,"#          (%02d) Mass sub  [M_sol/h]\n",         i_column++);
+    fprintf(fp,"#          (%02d) V_max sub [km/s]\n",            i_column++);
+    fprintf(fp,"#          (%02d) Mass FoF  [M_sol/h]\n",         i_column++);
+    fprintf(fp,"#          (%02d) V_max FoF [km/s]\n",            i_column++);
+    fprintf(fp,"#          (%02d) x         [Mpc/h]\n",i_column++);
+    fprintf(fp,"#          (%02d) y         [Mpc/h]\n",i_column++);
+    fprintf(fp,"#          (%02d) z         [Mpc/h]\n",i_column++);
+    fprintf(fp,"#          (%02d) r_sub     [Mpc/h]\n",i_column++);
+    fprintf(fp,"#          (%02d) v_x_sub   [km/s]\n", i_column++);
+    fprintf(fp,"#          (%02d) v_y_sub   [km/s]\n", i_column++);
+    fprintf(fp,"#          (%02d) v_z_sub   [km/s]\n", i_column++);
+    fprintf(fp,"#          (%02d) v_x_FoF   [km/s]\n", i_column++);
+    fprintf(fp,"#          (%02d) v_y_FoF   [km/s]\n", i_column++);
+    fprintf(fp,"#          (%02d) v_z_FoF   [km/s]\n", i_column++);
+    fprintf(fp,"#          (%02d) v_x_vir   [km/s]\n", i_column++);
+    fprintf(fp,"#          (%02d) v_y_vir   [km/s]\n", i_column++);
+    fprintf(fp,"#          (%02d) v_z_vir   [km/s]\n", i_column++);
+    for(j_halo=0;j_halo<n_halos_this_grouping && i_halo<n_halos;i_halo++,j_halo++)
+      fprintf(fp,"%d %d %d %d %d %le %le %le %le %le %le %le %le %le %le %le %le %le %le %le %le %le\n",
+                 i_snap,
+                 group_index[V_halos_index[i_halo]],
+                 subgroup_index[V_halos_index[i_halo]],
+                 i_FoF[V_halos_index[i_halo]],
+                 n_FoF[V_halos_index[i_halo]],
                  M_halos[V_halos_index[i_halo]],
                  V_halos[V_halos_index[i_halo]],
                  M_FoF[V_halos_index[i_halo]],
                  V_FoF[V_halos_index[i_halo]],
-                 i_FoF[V_halos_index[i_halo]],
-                 n_FoF[V_halos_index[i_halo]],
                  x_halos[V_halos_index[i_halo]],
                  y_halos[V_halos_index[i_halo]],
                  z_halos[V_halos_index[i_halo]],
@@ -334,8 +370,28 @@ int main(int argc, char *argv[]){
                  vz_halos_sub[V_halos_index[i_halo]]-vz_halos_FoF[V_halos_index[i_halo]]);
 
     fclose(fp);
+
+    // ... write statistics to file ...
+    if(i_grouping==0){
+       i_column=0;
+       fprintf(fp_stats,"# Stats for %d halo groupings {%s*}\n",n_groupings,filename_out_root);
+       fprintf(fp_stats,"# Column: (%d) grouping ID\n",   i_column++);
+       fprintf(fp_stats,"#         (%d) n_halos\n",       i_column++);
+       fprintf(fp_stats,"#         (%d) M_sub h^-1 [M_sol] (min)\n",   i_column++);
+       fprintf(fp_stats,"#         (%d) M_sub h^-1 [M_sol] (median)\n",i_column++);
+       fprintf(fp_stats,"#         (%d) M_sub h^-1 [M_sol] (max)\n",   i_column++);
+       fprintf(fp_stats,"#         (%d) V_sub [km/s]       (min)\n",   i_column++);
+       fprintf(fp_stats,"#         (%d) V_sub [km/s]       (median)\n",i_column++);
+       fprintf(fp_stats,"#         (%d) V_sub [km/s]       (max)\n",   i_column++);
+    }
+    if(i_grouping<n_groupings)
+       fprintf(fp_stats,"%03d %8d %le %le %le %le %le %le\n",i_grouping,n_halos_this_grouping,M_min,M_med,M_max,V_min,V_med,V_max);
+    else
+       fprintf(fp_stats,"all %8d %le %le %le %le %le %le\n",n_halos_this_grouping,M_min,M_med,M_max,V_min,V_med,V_max);
+
     SID_log("Done.",SID_LOG_CLOSE);
   }
+  fclose(fp_stats);
   SID_log("Done.",SID_LOG_CLOSE);
   
   // Clean-up
@@ -355,6 +411,8 @@ int main(int argc, char *argv[]){
   SID_free(SID_FARG V_halos);
   SID_free(SID_FARG V_FoF);
   SID_free(SID_FARG i_FoF);
+  SID_free(SID_FARG group_index);
+  SID_free(SID_FARG subgroup_index);
   SID_free(SID_FARG n_FoF);
   SID_free(SID_FARG V_halos_index);
   SID_log("Done.",SID_LOG_CLOSE);

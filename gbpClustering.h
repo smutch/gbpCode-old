@@ -1,7 +1,10 @@
+#ifndef GBPCLUSTERING_AWAKE
+#define GBPCLUSTERING_AWAKE
+#include <stdarg.h>
 #include <gbpLib.h>
 #include <gbpMath.h>
-#include <gbpSPH.h>
 #include <gbpCosmo.h>
+#include <gbpSPH.h>
 
 #define PSPEC_ADD_VX     256   // Must start at 256 to allow for MAP2GRID flags
 #define PSPEC_ADD_VY     512
@@ -12,6 +15,29 @@
 #define CFUNC_ADD_VY     64
 #define CFUNC_ADD_VZ     128
 #define CFUNC_DEFAULT    256
+
+#define READ_GROUPING_SLAB    1
+#define READ_GROUPING_ADD_VX  2
+#define READ_GROUPING_ADD_VY  4
+#define READ_GROUPING_ADD_VZ  8
+#define READ_GROUPING_DEFAULT READ_GROUPING_SLAB
+
+// Function Definitions
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void read_groupings(char *filename_root,int grouping_number,plist_info *plist,int mode,slab_info *slab,...);
+void map_to_grid(size_t      n_particles_local,
+                 GBPREAL    *x_particles_local,
+                 GBPREAL    *y_particles_local,
+                 GBPREAL    *z_particles_local,
+                 GBPREAL    *m_particles_local,
+                 cosmo_info *cosmo,
+                 double      redshift,
+                 int         distribution_scheme,
+                 double      normalization_target,
+                 field_info *field);
 
 void compute_cor_func(plist_info  *plist,
                       int          mode,
@@ -66,3 +92,8 @@ void compute_power_spectrum(plist_info  *plist,
                             double      *P_k_2D,
                             double      *dP_k_2D,
                             int         *n_modes_2D);
+#ifdef __cplusplus
+}
+#endif
+#endif
+

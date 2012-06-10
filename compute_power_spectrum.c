@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <gbpLib.h>
 #include <gbpCosmo.h>
-#include <gbpClustering.h>
 #include <gbpSPH.h>
+#include <gbpClustering.h>
 
 void compute_power_spectrum(plist_info  *plist,
                             field_info  *FFT,
@@ -108,41 +108,27 @@ void compute_power_spectrum(plist_info  *plist,
   dk_2D=(k_max_2D-k_min_2D)/(double)(n_k_2D);
 
   // Fetch the needed information
-  n_particles        =((size_t *)ADaPS_fetch(plist->data,"n_all_%s",species_name))[0]; 
-  n_particles_local  =((size_t *)ADaPS_fetch(plist->data,"n_%s",    species_name))[0]; 
+  n_particles        =((size_t    *)ADaPS_fetch(plist->data,"n_all_%s",species_name))[0]; 
+  n_particles_local  =((size_t    *)ADaPS_fetch(plist->data,"n_%s",    species_name))[0]; 
   x_particles_local  = (GBPREAL   *)ADaPS_fetch(plist->data,"x_%s",    species_name);
   y_particles_local  = (GBPREAL   *)ADaPS_fetch(plist->data,"y_%s",    species_name);
   z_particles_local  = (GBPREAL   *)ADaPS_fetch(plist->data,"z_%s",    species_name);
-  if(check_mode_for_flag(mode,PSPEC_ADD_VX))
-    vx_particles_local=(GBPREAL *)ADaPS_fetch(plist->data,"vx_%s",species_name);
-  else
-    vx_particles_local=NULL;
-  if(check_mode_for_flag(mode,PSPEC_ADD_VY))
-    vy_particles_local=(GBPREAL *)ADaPS_fetch(plist->data,"vy_%s",species_name);
-  else
-    vy_particles_local=NULL;
-  if(check_mode_for_flag(mode,PSPEC_ADD_VZ))
-    vz_particles_local=(GBPREAL *)ADaPS_fetch(plist->data,"vz_%s",species_name);
-  else
-    vz_particles_local=NULL;
   if(ADaPS_exist(plist->data,"M_%s",species_name))
     m_particles_local=(GBPREAL *)ADaPS_fetch(plist->data,"M_%s",species_name);
   else
     m_particles_local=NULL;
 
   // Generate mass-field
-  normalization=map_to_grid(n_particles_local, 
-                            x_particles_local,
-                            y_particles_local,
-                            z_particles_local,
-                            vx_particles_local,
-                            vy_particles_local,
-                            vz_particles_local,
-                            m_particles_local,
-                            cosmo,
-                            redshift,
-                            distribution_scheme,
-                            FFT);
+  map_to_grid(n_particles_local, 
+              x_particles_local,
+              y_particles_local,
+              z_particles_local,
+              m_particles_local,
+              cosmo,
+              redshift,
+              distribution_scheme,
+              (double)n_particles,
+              FFT);
 
   // Compute the FFT of the mass-field
   SID_log("Computing FFT...",SID_LOG_OPEN|SID_LOG_TIMER);
@@ -150,26 +136,21 @@ void compute_power_spectrum(plist_info  *plist,
   SID_log("Done.",SID_LOG_CLOSE);
 
   // Allocate local arrays; Initialize them and global arrays where results are stores
-  k_1D_local      =(double *)SID_malloc(sizeof(double)*(n_k_1D)); 
-  P_k_1D_local    =(double *)SID_malloc(sizeof(double)*(n_k_1D)); 
-  n_modes_1D_local=(int *)SID_malloc(sizeof(int)*(n_k_1D)); 
-  for(i_k=0;i_k<(n_k_1D);i_k++){
-    (P_k_1D)[i_k]        =0.;
-    (dP_k_1D)[i_k]       =0.;
-    (n_modes_1D)[i_k]    =0;
-    k_1D_local[i_k]      =0.;
-    P_k_1D_local[i_k]    =0.;
-    n_modes_1D_local[i_k]=0;
+  k_1D_local      =(double *)SID_calloc(sizeof(double)*(n_k_1D)); 
+  P_k_1D_local    =(double *)SID_calloc(sizeof(double)*(n_k_1D)); 
+  n_modes_1D_local=(int    *)SID_calloc(sizeof(int)*(n_k_1D)); 
+  for(i_k=0;i_k<n_k_1D;i_k++){
+    P_k_1D[i_k]    =0.;
+    dP_k_1D[i_k]   =0.;
+    n_modes_1D[i_k]=0;
   }
 
-  P_k_2D_local    =(double *)SID_malloc(sizeof(double)*(n_k_2D)*(n_k_2D));
-  n_modes_2D_local=(int *)SID_malloc(sizeof(int)*(n_k_2D)*(n_k_2D));
-  for(i_k=0;i_k<(n_k_2D)*(n_k_2D);i_k++){
-    (P_k_2D)[i_k]        =0.;
-    P_k_2D_local[i_k]    =0.;
-    (dP_k_2D)[i_k]       =0.;
-    (n_modes_2D)[i_k]    =0;
-    n_modes_2D_local[i_k]=0;
+  P_k_2D_local    =(double *)SID_calloc(sizeof(double)*(n_k_2D)*(n_k_2D));
+  n_modes_2D_local=(int    *)SID_calloc(sizeof(int)*(n_k_2D)*(n_k_2D));
+  for(i_k=0;i_k<n_k_2D*n_k_2D;i_k++){
+    P_k_2D[i_k]    =0.;
+    dP_k_2D[i_k]   =0.;
+    n_modes_2D[i_k]=0;
   }
 
   // Perform binning for 1D power spectrum
@@ -188,17 +169,21 @@ void compute_power_spectrum(plist_info  *plist,
       }
     }
   }
-  for(i_k=0;i_k<(n_k_1D);i_k++){
+
+  // Normalize the quantities we are averaging
+  for(i_k=0;i_k<n_k_1D;i_k++){
     calc_sum_global(&(n_modes_1D_local[i_k]),&(n_modes_1D[i_k]),1,SID_INT,   CALC_MODE_DEFAULT,SID.COMM_WORLD);
     calc_sum_global(&(k_1D_local[i_k]),      &(k_1D[i_k]),      1,SID_DOUBLE,CALC_MODE_DEFAULT,SID.COMM_WORLD);
     calc_sum_global(&(P_k_1D_local[i_k]),    &(P_k_1D[i_k]),    1,SID_DOUBLE,CALC_MODE_DEFAULT,SID.COMM_WORLD);
     k_1D[i_k]  /=(double)((n_modes_1D)[i_k]);
     P_k_1D[i_k]/=(double)((n_modes_1D)[i_k]);
   }
+
+  // Deal with shot noise.  This differs, depending on the
+  //   mass-assignment scheme we used (see Cui et al 2008).
   for(i_k=0;i_k<(n_k_1D);i_k++){
-    //(P_k_1D)[i_k] *=FFT->L[0]*FFT->L[1]*FFT->L[2]/pow(n_particles,2.);
-    (P_k_1D)[i_k] *=FFT->L[0]*FFT->L[1]*FFT->L[2]/pow(normalization,2.);
-    (dP_k_1D)[i_k] =(P_k_1D)[i_k]/sqrt((n_modes_1D)[i_k]);
+    P_k_1D[i_k] *=FFT->L[0]*FFT->L[1]*FFT->L[2]/pow((double)n_particles,2.);
+    dP_k_1D[i_k] =(P_k_1D)[i_k]/sqrt(n_modes_1D[i_k]);
     switch(distribution_scheme){
     case MAP2GRID_DIST_CIC:
       shot_noise_arg=sin(M_PI*(k_1D)[i_k]/(2.*FFT->k_Nyquist[0]));
@@ -214,8 +199,8 @@ void compute_power_spectrum(plist_info  *plist,
     default:
       shot_noise=1./(double)n_particles;
     }
-    shot_noise    *=FFT->L[0]*FFT->L[1]*FFT->L[2];
-    (P_k_1D)[i_k]-=shot_noise;
+    shot_noise  *=FFT->L[0]*FFT->L[1]*FFT->L[2];
+    P_k_1D[i_k] -=shot_noise;
   }
   SID_log("Done.",SID_LOG_CLOSE);
 
@@ -262,9 +247,8 @@ void compute_power_spectrum(plist_info  *plist,
     P_k_2D[i_k]/=(double)((n_modes_2D)[i_k]);
   }
   for(i_k=0;i_k<(n_k_2D)*(n_k_2D);i_k++){
-    //(P_k_2D)[i_k] *=FFT->L[0]*FFT->L[1]*FFT->L[2]/pow(n_particles,2.);
-    (P_k_2D)[i_k] *=FFT->L[0]*FFT->L[1]*FFT->L[2]/pow(normalization,2.);
-    (dP_k_2D)[i_k] =(P_k_2D)[i_k]/sqrt((n_modes_2D)[i_k]);
+    P_k_2D[i_k] *=FFT->L[0]*FFT->L[1]*FFT->L[2]/pow(n_particles,2.);
+    dP_k_2D[i_k] =(P_k_2D)[i_k]/sqrt(n_modes_2D[i_k]);
     switch(distribution_scheme){
     case MAP2GRID_DIST_CIC:
       shot_noise_arg=sin(M_PI*k_2D[i_k]/(2.*FFT->k_Nyquist[0]));
@@ -280,8 +264,8 @@ void compute_power_spectrum(plist_info  *plist,
     default:
       shot_noise=1./(double)n_particles;
     }
-    shot_noise   *=FFT->L[0]*FFT->L[1]*FFT->L[2];
-    (P_k_2D)[i_k]-=shot_noise;
+    shot_noise *=FFT->L[0]*FFT->L[1]*FFT->L[2];
+    P_k_2D[i_k] -=shot_noise;
   }
   SID_log("Done.",SID_LOG_CLOSE);
   
