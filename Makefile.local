@@ -3,7 +3,6 @@
 #############################
 INCFILES  = gbpSPH.h
 OBJFILES  = display_gadget_header.o         \
-	    map_to_grid.o                   \
 	    init_gadget_read.o              \
 	    set_gadget_filename.o           \
 	    change_gadget_filename.o        \
