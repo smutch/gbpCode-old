@@ -14,6 +14,7 @@ ifneq ($(USE_GETLINE),0)
 	   grab_tail.o             \
 	   grab_double.o           \
 	   grab_float.o            \
+	   grab_real.o             \
 	   grab_int.o              \
 	   grab_long.o             \
 	   grab_next_line.o        \
@@ -21,6 +22,8 @@ ifneq ($(USE_GETLINE),0)
 	   grab_nth_line.o         \
 	   grab_size_t.o           \
 	   grab_word.o             \
+	   strip_path.o            \
+	   strip_file_root.o       \
 	   search_and_replace.o    \
 	   getline.o
 
@@ -33,6 +36,7 @@ else
 	   grab_tail.o             \
 	   grab_double.o           \
 	   grab_float.o            \
+	   grab_real.o             \
 	   grab_int.o              \
 	   grab_long.o             \
 	   grab_next_line.o        \
@@ -40,6 +44,8 @@ else
 	   grab_nth_line.o         \
 	   grab_size_t.o           \
 	   grab_word.o             \
+	   strip_path.o            \
+	   strip_file_root.o       \
 	   search_and_replace.o
 endif
 

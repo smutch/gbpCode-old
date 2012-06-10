@@ -11,7 +11,7 @@ else
 endif 
 
 # Build command string
-set CMD_STRING="valgrind --leak-check=yes "$ARG_CMD
+set CMD_STRING="valgrind --leak-check=yes -v "$ARG_CMD
 @ i=2
 while ($i <= $#argv)
   set set CMD_STRING=(${CMD_STRING} $argv[$i])

@@ -31,6 +31,9 @@ int grab_double(char   *line,
 int grab_float(char   *line,
 		int     n, 
 		float *return_value);
+int grab_real(char    *line,
+  	      int      n, 
+	      GBPREAL *return_value);
 int grab_int(char   *line,
 		int     n, 
 		int *return_value);
@@ -46,6 +49,9 @@ int grab_size_t(char   *line,
 int parse_line(char *line,
 	       int   n_return, ...);
 int search_and_replace(char *string,char *search,char *replace);
+
+void strip_path(char *string);
+void strip_file_root(char *string);
 
 #ifdef __cplusplus
 }

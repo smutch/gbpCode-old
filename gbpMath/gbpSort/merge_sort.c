@@ -85,12 +85,12 @@ void merge_sort(void    *data_in,
 
   // Invert sort indices to produce ranks (if needed)
   if(flag_compute_index==SORT_COMPUTE_RANK && n_data>0){
-    heap_sort(idx_sort,
-              n_data,
-              index,
-	      SID_SIZE_T,
-              SORT_COMPUTE_INDEX,
-              SORT_COMPUTE_INPLACE);
+    merge_sort(idx_sort,
+               n_data,
+               index,
+	       SID_SIZE_T,
+               SORT_COMPUTE_INDEX,
+               SORT_COMPUTE_INPLACE);
     SID_free((void **)&idx_sort);
   }
   else if(flag_compute_index==SORT_COMPUTE_INDEX)
