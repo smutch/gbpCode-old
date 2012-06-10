@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-#ifdef USE_GETLINE
+#if USE_GETLINE
 int getline(char **string,size_t *n,FILE *fp);
 #endif
 

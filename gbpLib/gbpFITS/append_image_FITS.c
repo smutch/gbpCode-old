@@ -95,5 +95,6 @@ int append_image_FITS(void *image,SID_Datatype dtype,int n_D,int *D_in,char *fil
 
   SID_free(SID_FARG D);
 
+  return(status);
 }
 

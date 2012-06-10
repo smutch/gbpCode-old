@@ -110,6 +110,6 @@ int read_image_FITS(void **image,SID_Datatype *dtype,int *n_D,int **D,char *file
   transpose_array((*image),(*dtype),(*n_D),(*D));
 
   SID_log("Done.",SID_LOG_CLOSE);
-
+  return(status);
 }
 

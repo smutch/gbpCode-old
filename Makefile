@@ -18,11 +18,12 @@
 # Executables (use C99 standard so we have the trunc() function)
 CC_NO_MPI  = gcc -std=c99
 CC_NO_MPI  = g++ -std=c++98
-ifndef GBP_MPI
-  GBP_MPI=/usr/
+CC_NO_MPI  = icc 
+ifdef GBP_MPI
+  CC_USE_MPI = $(GBP_MPI)/bin/mpic++
+else
+  CC_USE_MPI = mpic++
 endif
-export GBP_MPI
-CC_USE_MPI = $(GBP_MPI)/bin/mpic++
 MAKE       = make
 
 # This is needed to fix compilation errors re: undefined trunc() function
@@ -167,7 +168,6 @@ ifeq ($(USE_MPI),1)
   BINTOUCH1    = .install_bin_mpi
   LIBTOUCH2    = .install_lib_nompi
   BINTOUCH2    = .install_bin_nompi
-  CCFLAGS     := $(CCFLAGS) -DUSE_MPI
 else
   CC           = $(CC_NO_MPI)
   INCTOUCH     = .install_inc
@@ -214,34 +214,44 @@ ifeq ($(MAKELEVEL),0)
 	@echo "Makefile flags:"
 	@echo "---------------"
 ifneq ($(USE_DOUBLE),0)
-	@echo "USE_DOUBLE is ON"
+	@echo "USE_DOUBLE  is ON"
 else
-	@echo "USE_DOUBLE is OFF"
+	@echo "USE_DOUBLE  is OFF"
 endif
 ifneq ($(USE_MPI),0)
-	@echo "USE_MPI    is ON"
+	@echo "USE_MPI     is ON"
 else
-	@echo "USE_MPI    is OFF"
+	@echo "USE_MPI     is OFF"
 endif
 ifneq ($(USE_MPI_IO),0)
-	@echo "USE_MPI_IO is ON"
+	@echo "USE_MPI_IO  is ON"
 else
-	@echo "USE_MPI_IO is OFF"
+	@echo "USE_MPI_IO  is OFF"
 endif
 ifneq ($(USE_FFTW),0)
-	@echo "USE_FFTW   is ON"
+	@echo "USE_FFTW    is ON"
 else
-	@echo "USE_FFTW   is OFF"
+	@echo "USE_FFTW    is OFF"
 endif
 ifneq ($(USE_SPRNG),0)
-	@echo "USE_SPRNG  is ON"
+	@echo "USE_SPRNG   is ON"
 else
-	@echo "USE_SPRNG  is OFF"
+	@echo "USE_SPRNG   is OFF"
+endif
+ifneq ($(USE_HDF5),0)
+	@echo "USE_HDF5    is ON"
+else
+	@echo "USE_HDF5    is OFF"
+endif
+ifneq ($(USE_CFITSIO),0)
+	@echo "USE_CFITSIO is ON"
+else
+	@echo "USE_CFITSIO is OFF"
 endif
 ifneq ($(USE_CUDA),0)
-	@echo "USE_CUDA   is ON"
+	@echo "USE_CUDA    is ON"
 else
-	@echo "USE_CUDA   is OFF"
+	@echo "USE_CUDA    is OFF"
 endif
 
 
@@ -405,10 +415,10 @@ $(addprefix $(GBP_BIN_LOCAL)/,$(SCRIPTS)):
 		echo -n "  " ; \
 		((i = i + 1)) ; \
 	done
-	echo -n "Linking '"$(notdir $@)"' to bin directory..."
-	rm -rf $@
-	ln -s $(CURDIR)/$(notdir $@) $@
-	echo "Done."
+	@echo -n "Linking '"$(notdir $@)"' to bin directory..."
+	@rm -rf $@
+	@ln -s $(CURDIR)/$(notdir $@) $@
+	@echo "Done."
 
 # Generate links to data files
 data_dir: $(addprefix $(GBP_DAT)/,$(DATAFILES))
