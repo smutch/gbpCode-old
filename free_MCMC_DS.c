@@ -21,6 +21,17 @@ void free_MCMC_DS(MCMC_info *MCMC){
     next_DS=current_DS->next;
     SID_free(SID_FARG current_DS->M_target);
     SID_free(SID_FARG current_DS->dM_target);
+    SID_free(SID_FARG current_DS->M_best);
+    SID_free(SID_FARG current_DS->M_best_parameters);
+    SID_free(SID_FARG current_DS->M_peak_parameters);
+    SID_free(SID_FARG current_DS->M_min);
+    SID_free(SID_FARG current_DS->M_max);
+    SID_free(SID_FARG current_DS->M_lo_68);
+    SID_free(SID_FARG current_DS->M_hi_68);
+    SID_free(SID_FARG current_DS->M_lo_95);
+    SID_free(SID_FARG current_DS->M_hi_95);
+    SID_free(SID_FARG current_DS->M_avg);
+    SID_free(SID_FARG current_DS->dM_avg);
     if(MCMC->n_arrays>0){
       for(i_array=0;i_array<current_DS->n_arrays;i_array++){
         SID_free(SID_FARG current_DS->array[i_array]);

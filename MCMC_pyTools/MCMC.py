@@ -7,7 +7,7 @@ class MCMCrun(object):
 
     """ MCMC run class."""
 
-    def __init__(self, filename_root):
+    def __init__(self, filename_root, quiet=False):
 
         """ Initialise the MCMC run.
 
@@ -20,8 +20,6 @@ class MCMCrun(object):
         self.__MCMC_NAME_SIZE__    =256
         self.__filename_plot_root__=filename_root+'/plots/'
 
-        line_break()
-
         self.filename_root = filename_root
 
         # Read (and print) header info.
@@ -32,14 +30,17 @@ class MCMCrun(object):
         self.flag_autocor_on_file=np.fromfile(file=fd,dtype='i',count=1)[0]
         self.flag_no_map_write   =np.fromfile(file=fd,dtype='i',count=1)[0]
 
-        print 'Problem name       =',self.problem_name
-        print 'n_chains           =',self.n_chains
-        print 'n_avg              =',self.n_avg
-        print 'flag_autocor       =',self.flag_autocor_on_file
-        print 'flag_no_map_write  =',self.flag_no_map_write
+        if not quiet:
+            line_break()
+            print 'Problem name       =',self.problem_name
+            print 'n_chains           =',self.n_chains
+            print 'n_avg              =',self.n_avg
+            print 'flag_autocor       =',self.flag_autocor_on_file
+            print 'flag_no_map_write  =',self.flag_no_map_write
 
         # Read (and print) parameter names.
-        print '\nMCMC Parameters:'
+        if not quiet:
+            print '\nMCMC Parameters:'
         self.n_P=np.fromfile(file=fd,dtype='i',count=1)[0]
         self.P_name= []
         self.P_init= []
@@ -50,23 +51,30 @@ class MCMCrun(object):
             self.P_init.append(np.fromfile(file=fd,dtype='d',count=1)[0])
             self.P_limit_min.append(np.fromfile(file=fd,dtype='d',count=1)[0])
             self.P_limit_max.append(np.fromfile(file=fd,dtype='d',count=1)[0])
-            print '  ',self.P_name[i_P]
-        print
+            if not quiet:
+                print '  ',self.P_name[i_P]
+        
+        if not quiet:
+            print
 
         # Read (and print) parameter array names
         self.n_P_arrays=np.fromfile(file=fd,dtype='i',count=1)[0]
         if(self.n_P_arrays>0):
-            print 'MCMC Parameter array(s):'
+            if not quiet:
+                print 'MCMC Parameter array(s):'
             self.P_array_name= []
             for i_array in xrange(0,self.n_P_arrays):
                 self.P_array_name.append(np.fromfile(file=fd, dtype=(np.str_, self.__MCMC_NAME_SIZE__)
                     , count=1)[0].split('\x00')[0])
-                junk=np.fromfile(file=fd,dtype='d',count=self.n_P)
-                print '    ',self.P_array_name[i_array]
-            print
+                np.fromfile(file=fd,dtype='d',count=self.n_P)
+                if not quiet:
+                    print '    ',self.P_array_name[i_array]
+            if not quiet:
+                print
 
         # Read (and print) the dataset names
-        print 'MCMC Datasets:'
+        if not quiet:
+            print 'MCMC Datasets:'
         self.n_DS  =np.fromfile(file=fd,dtype='i',count=1)[0]
         self.n_M      =[]
         self.DS_name  =[]
@@ -82,24 +90,29 @@ class MCMCrun(object):
             self.M_target.append(np.fromfile(file=fd,dtype='d',count=self.n_M[i_DS]))
             self.dM_target.append(np.fromfile(file=fd,dtype='d',count=self.n_M[i_DS]))
             self.n_DS_arrays.append(np.fromfile(file=fd,dtype='i',count=1)[0])
-            print '    ',self.DS_name[i_DS]
+            if not quiet:
+                print '    ',self.DS_name[i_DS]
             if(self.n_DS_arrays[i_DS]>0):
                 for i_array in xrange(0,self.n_DS_arrays[i_DS]):
                     self.DS_array_name.append(np.fromfile(file=fd, dtype=(np.str_, self.__MCMC_NAME_SIZE__), 
                         count=1)[0].split('\x00')[0])
-                    junk=np.fromfile(file=fd,dtype='d',count=self.n_M[i_DS])
-                    print '        array #'+str(i_array+1).zfill(2)+': '+self.DS_array_name[self.n_DS_arrays_total+i_array]
+                    np.fromfile(file=fd,dtype='d',count=self.n_M[i_DS])
+                    if not quiet:
+                        print '        array #'+str(i_array+1).zfill(2)+': '+self.DS_array_name[self.n_DS_arrays_total+i_array]
                 self.DS_arrays_offset.append(self.n_DS_arrays_total)
             else:
-                print "        No associated arrays."
+                if not quiet:
+                    print "        No associated arrays."
             self.n_DS_arrays_total=self.n_DS_arrays_total+self.n_DS_arrays[i_DS]
         self.n_M_total=sum(self.n_M)
-        print
+        if not quiet:
+            print
 
         # Close the file
         fd.close()
 
-        line_break()
+        if not quiet:
+            line_break()
 
 
     def read_param_results(self, quiet=False):
@@ -314,6 +327,8 @@ class MCMCrun(object):
                 lP_best.append(line[4])
             self.P_best =np.array(lP_best,dtype='d')
 
+        return self.P_best
+
 
     def read_histogram(self, i_DS):
 
@@ -412,7 +427,7 @@ class Chain(object):
         self.n_integrate           = run.n_avg*self.n_iterations_integrate
         self.n_total               = self.n_burn+self.n_integrate
         self.covariance_matrix     = np.fromfile(file=fd,dtype=np.float64, count=run.n_P*run.n_P)
-        self.covariance_matrix.reshape((run.n_P, run.n_P))
+        self.covariance_matrix     = self.covariance_matrix.reshape((run.n_P, run.n_P))
         fd.close()  # close the file
         if quiet == False:
             print 'n_iterations           =',self.n_iterations
@@ -423,6 +438,115 @@ class Chain(object):
             print 'n_total                =',self.n_total
             print 'temperature            =',self.temp
             line_break()
+
+
+    def read_trace(self, phase):
+        """Read in the chain trace parameter values.
+        
+        Args:
+            phase   :   'integration' OR 'burnin'
+        
+        Returns:
+            flag_success   : char value (!=0 if proposal was successful)
+            ln_likelihood  : natural log of likelihood value of propositions
+            param_vals     : parameter values for each proposition
+
+        TODO - Read in the dataset results as well if
+               run.flag_autocor_on_file==0
+        """
+        
+        run = self.run
+        fin = open(run.filename_root+'/chains/chain_trace_{:06d}'.format(self.i_chain)+'.dat', 'rb')
+
+        if(phase)=='integration':
+            # Seek past the burn
+            byte_seek = 1+8+(8*run.n_P)
+            if run.flag_no_map_write==0:
+                for i_DS in xrange(run.n_DS):
+                    byte_seek += 8*run.n_M[i_DS]
+            fin.seek(byte_seek*self.n_burn,1)
+            n_links = self.n_integrate
+        elif(phase)=='burnin':
+            n_links = self.n_burn
+        
+        # Allocate the storage arrays
+        n_P = run.n_P
+        flag_success = np.zeros(n_links, dtype='c')
+        ln_likelihood = np.zeros(n_links, np.double)
+        p_vals_dtype = np.dtype((np.float64, n_P))
+        param_vals = np.zeros(n_links, dtype=p_vals_dtype)
+        
+        # Read the values
+        for l in xrange(n_links):
+            flag_success[l] = np.fromfile(fin, dtype='c', count=1)[0]
+            ln_likelihood[l] = np.fromfile(fin, dtype=np.float64, count=1)[0]
+            param_vals[l] = np.fromfile(fin, dtype=p_vals_dtype, count=1)[0]
+            if run.flag_no_map_write==0:
+                for i_DS in xrange(run.n_DS):
+                    fin.seek(8*run.n_M[i_DS], 1)
+
+        fin.close()
+        return flag_success, ln_likelihood, param_vals 
+
+
+    def PCA(self, quiet=False):
+        """Carry out a Principle Component Analysis (PCA) of the successful
+        integration phase propositions.
+
+        Args:
+            verbose   :  If True then print the energy fraction and eigenvector
+                         summary for the principal components containing >=90%
+                         of the total energy.
+
+        Returns:
+            eigenval  :  The eigenvalues of the PCA
+            cumenergy :  The cumulative energy fraction of the components
+            eigenvec  :  The eigenvectors (principle components)
+        """
+
+        # Read in the trace
+        success, ln_likelihood, props = self.read_trace('integration')
+        
+        # Select only successful propositions
+        props = props[success!='']
+        
+        # subtract the mean (along columns)
+        M = (props-np.mean(props.T,axis=1)).T 
+        
+        # Calculate the eigenvectors and eigenvalues
+        eigenval,eigenvec = np.linalg.eig(np.cov(M))
+
+        # Sort the eigenvectors and values according to the eigenvalues
+        w = np.argsort(eigenval)[::-1]
+        eigenval = eigenval[w]
+        eigenvec = eigenvec[w]
+
+        # Calculate the cumulative energy fraction
+        eigenval_sum = eigenval.sum() 
+        cumenergy = eigenval.cumsum()/eigenval_sum
+
+        if not quiet:
+            line_break()
+            print "PCA\n----------"
+            pc_90 = np.where(cumenergy>=0.9)[0][0]
+            strlen = np.array([ len(self.run.P_name[i]) for i in xrange(self.run.n_P) ]
+                              , int).max() + 3
+            for pc in xrange(eigenval.size):
+                print
+                print "Principle component #{:d}:".format(pc)
+                print "Energy fraction = {:.3f}".format(eigenval[pc]/eigenval_sum)
+                for p in np.argsort(np.abs(eigenvec[pc]))[::-1]:
+                    print "{:s} : {:-.3f}  (^2 = {:-.3f})".format(
+                        self.run.P_name[p].ljust(strlen),
+                        eigenvec[pc][p],
+                        eigenvec[pc][p]**2.)
+                if pc == pc_90:
+                    print
+                    print "^^^^^ 90% ^^^^^"
+            print
+
+
+        return eigenval, cumenergy, eigenvec
 
 
 def check_param_compatibility(run_list, param):

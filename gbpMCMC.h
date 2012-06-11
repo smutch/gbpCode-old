@@ -1,6 +1,7 @@
 #ifndef MCMC_AWAKE
 #define MCMC_AWAKE
 
+#include <stdarg.h>
 #include <gbpRNG.h>
 #include <gsl/gsl_linalg.h>
 
@@ -41,6 +42,17 @@ struct MCMC_DS_info {
   char        **array_name;
   void         *params;
   int           n_arrays;
+  double       *M_best;
+  double       *M_best_parameters;
+  double       *M_peak_parameters;
+  double       *M_min;
+  double       *M_max;
+  double       *M_lo_68;
+  double       *M_hi_68;
+  double       *M_lo_95;
+  double       *M_hi_95;
+  double       *M_avg;
+  double       *dM_avg;
   MCMC_DS_info *next;
 };
 
@@ -156,6 +168,15 @@ void init_MCMC(MCMC_info  *MCMC,
                double     *P_limit_min,
                double     *P_limit_max,
                int         n_arrays,...);
+void init_MCMC_DS(MCMC_DS_info **new_DS,
+                  const char    *name,
+                  int            n_D,
+                  int           *D,
+                  double        *DS,
+                  double        *dDS,
+                  void          *params,
+                  int            n_arrays,
+                  va_list        vargs);
 void start_loop_MCMC(MCMC_info *MCMC);
 void end_loop_MCMC(MCMC_info *MCMC);
 void restart_MCMC(MCMC_info *MCMC);
@@ -191,7 +212,7 @@ void set_MCMC_temperature(MCMC_info *MCMC,double temperature);
 void set_MCMC_iterations(MCMC_info *MCMC,int n_avg,int n_thin,int n_burn,int n_integrate);
 void set_MCMC_coverage_size(MCMC_info *MCMC,int coverage_size);
 void set_MCMC_likelihood_function(MCMC_info *MCMC,void (*likelihood_function)(MCMC_info *,double **,double *,double *,int *,double *,int *));
-void set_MCMC_directory(MCMC_info *MCMC,char *directory);
+void set_MCMC_directory(MCMC_info *MCMC,const char *directory);
 void set_MCMC_mode(MCMC_info *MCMC,int mode);
 void set_MCMC_autotune(MCMC_info *MCMC,
                        double     success_target,

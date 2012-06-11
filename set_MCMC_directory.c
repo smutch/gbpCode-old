@@ -6,7 +6,7 @@
 #include <gbpRNG.h>
 #include <gbpMCMC.h>
 
-void set_MCMC_directory(MCMC_info *MCMC,char *directory){
+void set_MCMC_directory(MCMC_info *MCMC,const char *directory){
   strcpy(MCMC->filename_output_dir,directory);
 }
 
