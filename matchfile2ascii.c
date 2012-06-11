@@ -69,7 +69,7 @@ int main(int argc, char *argv[]){
   
   // Print results
   for(k_read=0;k_read<n_groups_i;k_read++)
-     printf("%7d %7d %7d %10.3le\n",k_read,match[k_read],indices[k_read],score[k_read]);
+     printf("%7d %7d %7lld %10.3le\n",k_read,match[k_read],indices[k_read],score[k_read]);
 
   // Clean-up
   SID_free(SID_FARG match);

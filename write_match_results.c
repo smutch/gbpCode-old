@@ -185,15 +185,9 @@ void write_match_results(char       *filename_out_dir,
         // Doing a global max on the buffer yields the needed buffer on all ranks
         SID_Allreduce(SID_IN_PLACE,buffer_size_t,n_buffer,SID_SIZE_T,SID_MAX,SID.COMM_WORLD);
 
-        if(SID.I_am_Master){
-           // Sanity check
-           for(i_buffer=0;i_buffer<n_buffer;i_buffer++){
-              if(buffer_size_t[i_buffer]<0)
-                 SID_trap_error("Illegal match_rank result (%lld) for group No. %d.",ERROR_LOGIC,buffer_size_t[i_buffer],i_group+i_buffer);
-           }
-           // Write the buffer
+        // Write the buffer
+        if(SID.I_am_Master)
            fwrite(buffer,sizeof(size_t),(size_t)n_buffer,fp_out);
-        }
      }
 
      // Sanity check
