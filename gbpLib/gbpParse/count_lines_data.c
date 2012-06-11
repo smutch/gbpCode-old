@@ -1,3 +1,8 @@
+#if USE_GETLINE==0
+  #if USE_MPI==0
+    #define  _GNU_SOURCE
+  #endif
+#endif
 #include <stdio.h>
 #include <gbpCommon.h>
 #include <gbpSID.h>

@@ -1,3 +1,8 @@
+#if USE_GETLINE==0
+  #if USE_MPI==0
+    #define  _GNU_SOURCE
+  #endif
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

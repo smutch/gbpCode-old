@@ -18,8 +18,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <gbpMath.h>
 #include <gbpLib.h>
+#include <gbpMath.h>
 
 int main(int argc, char *argv[]){
     char      filename[256];
@@ -48,6 +48,8 @@ int main(int argc, char *argv[]){
       sprintf(filename,".tmpfile%d",irand);
       if((fp=fopen(filename,"r"))==NULL)
 	flag=FALSE;
+      else
+        fclose(fp);
     }
     fp=fopen(filename,"w");fclose(fp);
     free_RNG(&RNG);
@@ -59,3 +61,4 @@ int main(int argc, char *argv[]){
 
     return(ERROR_NONE);
 }
+
