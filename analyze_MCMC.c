@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <gbpLib.h>
+#include <gbpMath.h>
 #include <gbpMCMC.h>
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_fit.h>
