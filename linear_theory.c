@@ -807,6 +807,7 @@ double M_sc(double      z,
     
     b_z=linear_growth_factor(z,cosmo);
 
+    r_val=0.;
     /*
     r_val=bisect_array(interp,
 		       delta_sc*delta_sc/(b_z*b_z),
