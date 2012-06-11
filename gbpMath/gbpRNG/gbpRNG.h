@@ -1,7 +1,7 @@
 #ifndef GBPRNG_AWAKE
 #define GBPRNG_AWAKE
 #if USE_SPRNG
-  #ifndef USE_MPI
+  #if USE_MPI == 0
     #define  SIMPLE_SPRNG
   #endif
   #include <sprng.h>
