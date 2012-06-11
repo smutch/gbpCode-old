@@ -166,6 +166,7 @@ int fopen_catalog(char            *filename_catalog_root,
                   fp_catalog_info *fp_out);
 int  fopen_nth_catalog_file(fp_catalog_info *fp_in,int n);
 int  fread_catalog_file(fp_catalog_info *fp_in,halo_info *properties_out,halo_profile_info *profiles_out,int halo_index);
+int  fread_catalog_raw(fp_catalog_info *fp_in,halo_properties_info *properties_out,halo_profile_info *profiles_out,int halo_index);
 void fclose_catalog(fp_catalog_info *fp_in);
                  
 int  compute_group_analysis(halo_properties_info *properties,
