@@ -173,7 +173,7 @@ void sort(void          *sval,
       sort_ranks=(*index);
       (*index)  =(size_t *)SID_malloc(sizeof(size_t)*nval);
       rank_rank =(size_t *)SID_malloc(sizeof(size_t)*nval_max);
-      // ... perform exchanges and set indices ...
+      // ... loop over ranks, performing exchanges and setting indices ...
       for(i_rank=0,offset=0;i_rank<SID.n_proc;i_rank++){
         nval_tmp=nval;
         SID_Bcast(&nval_tmp,sizeof(size_t),i_rank,SID.COMM_WORLD);
@@ -184,7 +184,7 @@ void sort(void          *sval,
         //     are supposed to be pointed to by the indices stored locally ...
         for(i_val=0;i_val<nval_tmp;i_val++){
           if(rank_rank[i_val]>=first_index && rank_rank[i_val]<(nval+first_index))
-            (*index)[rank_rank[i_val]]=offset+i_val;
+            (*index)[rank_rank[i_val]-first_index]=offset+i_val;
         }
         offset+=nval_tmp;
       }

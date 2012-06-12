@@ -6,6 +6,7 @@
 todo
 wip
 *.my*
+*.old
 3rd_Party
 gbpProj
 myBin
