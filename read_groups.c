@@ -468,7 +468,7 @@ void read_groups(char        *filename_groups_root,
 
         // Determine which keys lie on the outside boundary of the local domain
         if(n_bits_PHK>0) // default value if there are no groups
-           compute_PHK_boundary_keys(n_bits_PHK,PHK_min_local,PHK_max_local,&n_keys_boundary,&keys_boundary);
+           compute_PHK_boundary_keys(n_bits_PHK,PHK_min_local,PHK_max_local,1,&n_keys_boundary,&keys_boundary);
         else{
            n_keys_boundary=0;
            keys_boundary  =NULL;
