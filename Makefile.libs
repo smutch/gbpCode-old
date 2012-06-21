@@ -48,7 +48,7 @@ export USE_HDF5
 
 # Add gdlib
 ifndef USE_GDLIB
-  USE_GDLIB=1
+  USE_GDLIB=0
 endif
 ifneq ($(USE_GDLIB),0)
   ifdef GBP_GDLIB_DIR

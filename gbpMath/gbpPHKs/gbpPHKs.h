@@ -15,7 +15,7 @@ typedef sfc_key_t PHK_t;
 
 PHK_t compute_PHK_from_Cartesian(int PHK_bit_size,int n_D,...);
 void compute_PHK_volume_keys(int PHK_bit_size,PHK_t key_in,int shell_min,int shell_max,int *n_keys_return,PHK_t **keys_return_in);
-void compute_PHK_boundary_keys(int PHK_bit_size,PHK_t domain_key_min,PHK_t domain_key_max,int *n_keys_return,PHK_t **keys_return_in);
+void compute_PHK_boundary_keys(int PHK_bit_size,PHK_t domain_key_min,PHK_t domain_key_max,int boundary_width,int *n_keys_return,PHK_t **keys_return);
 void compute_PHK_to_Cartesian(int PHK_bit_size,PHK_t key,int *i_x,int *i_y,int *i_z);
 
 #endif

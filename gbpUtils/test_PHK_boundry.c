@@ -6,6 +6,7 @@ int main(int argc,char *argv[]){
    int n_bits;
    int key_start;
    int key_stop;
+   int width;
 
    SID_init(&argc,&argv,NULL);
  
@@ -13,6 +14,7 @@ int main(int argc,char *argv[]){
    n_bits   =(int)atoi(argv[1]);
    key_start=(int)atoi(argv[2]);
    key_stop =(int)atoi(argv[3]);
+   width    =(int)atoi(argv[4]);
    SID_log("Writing %d-bit Peano-Hilbert key information for range %d->%d...",SID_LOG_OPEN,n_bits,key_start,key_stop);
    SID_log("Maximum dimensional size: %d",SID_LOG_COMMENT,PHK_DIM_SIZE(n_bits));
    SID_log("Maximum key value:        %d",SID_LOG_COMMENT,PHK_DIM_SIZE(n_bits)*PHK_DIM_SIZE(n_bits)*PHK_DIM_SIZE(n_bits));
@@ -48,7 +50,7 @@ int main(int argc,char *argv[]){
    int    n_keys_boundary;
    int    i_key;
    SID_log("Writing boundary keys to file {keys_boundary.dat}...",SID_LOG_OPEN);
-   compute_PHK_boundary_keys(n_bits,key_start,key_stop,&n_keys_boundary,&keys_boundary);
+   compute_PHK_boundary_keys(n_bits,key_start,key_stop,width,&n_keys_boundary,&keys_boundary);
    fp=fopen("keys_boundary.dat","w");
    fprintf(fp,"# Peano-Hilbert boundary key information\n");
    fprintf(fp,"#   No. of bits/dim =%d\n",    n_bits);
