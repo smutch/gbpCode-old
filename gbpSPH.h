@@ -297,18 +297,6 @@ void smooth_grid(plist_info *plist,
                  int         grid_size,
                  char       *species_name,
                  int         mode);
-double map_to_grid(size_t      n_particles_local,
-                   GBPREAL    *x_particles_local,
-                   GBPREAL    *y_particles_local,
-                   GBPREAL    *z_particles_local,
-                   GBPREAL    *vx_particles_local,
-                   GBPREAL    *vy_particles_local,
-                   GBPREAL    *vz_particles_local,
-                   GBPREAL    *m_particles_local,
-                   cosmo_info *cosmo,
-                   double      redshift,
-                   int         distribution_scheme,
-                   field_info *field);
 #ifdef __cplusplus
 }
 #endif
