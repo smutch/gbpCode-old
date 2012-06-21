@@ -905,6 +905,7 @@ void analyze_MCMC(MCMC_info *MCMC){
             sprintf(filename_results,"%s/fit_for_dataset_%05d.fits",filename_results_dir,i_DS);
           else
             sprintf(filename_results,"%s/fit_for_dataset.fits",filename_results_dir);
+          #if USE_CFITSIO
           write_image_FITS(  M_target,SID_DOUBLE,current_DS->n_D,current_DS->D,filename_results,"DATASET");
           append_image_FITS(dM_target,SID_DOUBLE,current_DS->n_D,current_DS->D,filename_results,"UNCERTAINTY");
           if(!flag_no_map_write){
@@ -924,6 +925,9 @@ void analyze_MCMC(MCMC_info *MCMC){
             for(i_P=0;i_P<n_M[i_DS];i_P++) residual[i_P]=M_target[i_P]-M_peak_parameters[i_DS][i_P];
             append_image_FITS(residual,SID_DOUBLE,current_DS->n_D,current_DS->D,filename_results,"RESIDUAL_BEST");
           }
+          #else
+            SID_trap_error("2D analysis can only be written if you compile with USE_CFITSIO=1",ERROR_LOGIC);
+          #endif
         }
         current_DS=next_DS;
         i_DS++;

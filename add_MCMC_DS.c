@@ -18,6 +18,11 @@ void add_MCMC_DS(MCMC_info *MCMC,const char *name,int n_D,int *D,double *DS,doub
 
   SID_log("Adding data set {%s} to MCMC structure...",SID_LOG_OPEN,name);
 
+  #if USE_CFITSIO==0
+  if(n_D>1)
+     SID_trap_error("You can only use 2D datasets if you compile with USE_CFITSIO=1 at the moment.",ERROR_LOGIC);
+  #endif
+
   // Initialize new dataset
   init_MCMC_DS(&new_DS,name,n_D,D,DS,dDS,params,n_arrays,vargs);
 
