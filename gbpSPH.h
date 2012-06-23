@@ -89,6 +89,14 @@ struct gadget_header_info{
   char         unused[60];
 };
 
+typedef struct smooth_header_info smooth_header_info;
+struct smooth_header_info{
+   int       n_particles_file;
+   int       offset;
+   long long n_particles_total;
+   int       n_files;
+};
+
 /**************************************************/
 /* Structure to store Abstract Item Lists (AbILs) */
 /**************************************************/
@@ -170,7 +178,9 @@ void open_gadget_file(char      *filename_root_in,
                       fp_gadget *fp);
 
 int  init_gadget_read(char *filename_root_in,int snapshot_number,int *flag_multifile,int *flag_file_type,gadget_header_info *header);
+int  init_smooth_read(char *filename_root_in,int snapshot_number,int *flag_multifile,int *flag_file_type,smooth_header_info *header);
 void set_gadget_filename(char *filename_root_in,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename);
+void set_smooth_filename(char *filename_root_in,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename);
 void change_gadget_filename(char *filename_root_in,char *filename_root,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename);
 
 void init_plist(plist_info *plist, slab_info *slab,double length_unit,double mass_unit, double velocity_unit); 
