@@ -592,7 +592,7 @@ int main(int argc, char *argv[]){
   int          i_frame_start;
   int          i_frame_stop;
   render_info *render=NULL;
-  char         filename_script[256];
+  char         filename_script[MAX_FILENAME_LENGTH];
   int          mode;
   double       RGB_min;
   double       RGB_max;
