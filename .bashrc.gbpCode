@@ -30,6 +30,7 @@ export USE_FFTW=0
 export USE_CFITSIO=0
 export USE_SPRNG=0
 export USE_HDF5=0
+export USE_GADGET=0
 
 # Set this to 1 if you need to link-in the Intel math library.  If you are
 #   getting errors like 'feupdateenv is not implemented and will always fail'
