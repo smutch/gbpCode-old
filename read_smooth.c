@@ -27,7 +27,7 @@ void read_smooth(plist_info *plist,
   int     offset;
   int     n_files;
   void      *id_buf;
-  size_t    *id_buf_index;
+  size_t    *id_buf_index=NULL;
   int       *id_buf_i;
   long long *id_buf_L;
   long long *mark;
@@ -126,27 +126,27 @@ void read_smooth(plist_info *plist,
        SID_log("Read IDs (%d particles)...",SID_LOG_OPEN,n_particles_file);
        if(flag_LONGIDs){
          SID_log("(long long)...",SID_LOG_CONTINUE);
-         id_buf=SID_malloc(sizeof(long long)*n_particles_file);
+         id_buf  =SID_malloc(sizeof(long long)*n_particles_file);
+         id_buf_L=(long long *)id_buf;
          if(SID.My_rank==read_rank){
            fseeko(fp,(size_t)(3*n_particles_file*sizeof(float)),SEEK_CUR);
            fread(id_buf,sizeof(long long),n_particles_file,fp);
          }
          SID_Barrier(SID.COMM_WORLD);
-         SID_Bcast(id_buf,(int)(n_particles_file*sizeof(long long)),read_rank,SID.COMM_WORLD);
-         merge_sort(id_buf,(size_t)n_particles_file,&id_buf_index,SID_SIZE_T,SORT_COMPUTE_INDEX,FALSE);
-         id_buf_L=(long long *)id_buf;
+         SID_Bcast(id_buf_L,(int)(n_particles_file*sizeof(long long)),read_rank,SID.COMM_WORLD);
+         merge_sort(id_buf_L,(size_t)n_particles_file,&id_buf_index,SID_SIZE_T,SORT_COMPUTE_INDEX,FALSE);
        }
        else{
          SID_log("(int)...",SID_LOG_CONTINUE);
-         id_buf=SID_malloc(sizeof(int)*n_particles_file);
+         id_buf  =SID_malloc(sizeof(int)*n_particles_file);
+         id_buf_i=(int *)id_buf;
          if(SID.My_rank==read_rank){
            fseeko(fp,(size_t)(3*n_particles_file*sizeof(float)),SEEK_CUR);
            fread(id_buf,sizeof(int),n_particles_file,fp);
          }
          SID_Barrier(SID.COMM_WORLD);
-         SID_Bcast(id_buf,(int)(n_particles_file*sizeof(int)),read_rank,SID.COMM_WORLD);
-         merge_sort(id_buf,(size_t)n_particles_file,&id_buf_index,SID_INT,SORT_COMPUTE_INDEX,FALSE);
-         id_buf_i=(int *)id_buf;
+         SID_Bcast(id_buf_i,(int)(n_particles_file*sizeof(int)),read_rank,SID.COMM_WORLD);
+         merge_sort(id_buf_i,(size_t)n_particles_file,&id_buf_index,SID_INT,SORT_COMPUTE_INDEX,FALSE);
        }
        SID_log("Done.",SID_LOG_CLOSE);
 
@@ -173,8 +173,8 @@ void read_smooth(plist_info *plist,
            }
          }
        }
-       SID_free((void **)&id_buf);
-       SID_free((void **)&id_buf_index);
+       SID_free(SID_FARG id_buf);
+       SID_free(SID_FARG id_buf_index);
        SID_log("Done.",SID_LOG_CLOSE);
 
        // Move to the start of the particle quantities
@@ -228,8 +228,8 @@ void read_smooth(plist_info *plist,
          }
          SID_log("Done.",SID_LOG_CLOSE);
        }
-       SID_free((void **)&mark);
-       SID_free((void **)&buffer);
+       SID_free(SID_FARG mark);
+       SID_free(SID_FARG buffer);
        if(SID.My_rank==read_rank)
          fclose(fp);
        SID_log("Done.",SID_LOG_CLOSE);

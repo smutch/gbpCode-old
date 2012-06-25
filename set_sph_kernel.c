@@ -26,7 +26,7 @@ void set_sph_kernel(plist_info *plist,int mode){
     flag_skip=TRUE;
 
   if(!flag_skip){
-    SID_log("Computing SPH kernel...",SID_LOG_OPEN);
+    SID_log("Computing SPH kernel...",SID_LOG_OPEN|SID_LOG_TIMER);
 
     // Initialize kernel arrays
     kernel_radius  =(double *)SID_malloc(sizeof(double)*(N_KERNEL_TABLE+1));
