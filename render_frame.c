@@ -115,9 +115,6 @@ void transform_particle(GBPREAL *x_i,
    // Shift image plane
    (*z_i)+=d_o;
 
-   // Apply stereo offset
-   (*x_i)+=2.*stereo_offset;
-   
 }
 
 #define MAKE_MAP_NO_WEIGHTING 0
@@ -134,11 +131,11 @@ struct map_quantities_info{
    GBPREAL      *y;
    GBPREAL      *z;
    float        *h_smooth;
-   double        mass_array;
    float        *rho;
+   float        *sigma;
+   double        mass_array;
    interp_info  *transfer_rho;
    int           flag_transfer_rho_log;
-   float        *sigma;
    interp_info  *transfer_sigma;
    int           flag_transfer_sigma_log;
    int           flag_comoving;
@@ -484,6 +481,14 @@ void init_make_map(plist_info  *plist,
   else
      flag_plane_parallel=FALSE;
 
+  // Report the state of some flags
+  if(flag_plane_parallel) SID_log("Plane-parallel  projection: ON", SID_LOG_COMMENT);
+  else                    SID_log("Plane-parallel  projection: OFF",SID_LOG_COMMENT);
+  if(flag_comoving)       SID_log("Comoving        projection: ON", SID_LOG_COMMENT);
+  else                    SID_log("Comoving        projection: OFF",SID_LOG_COMMENT);
+  if(flag_force_periodic) SID_log("Centre periodic projection: ON", SID_LOG_COMMENT);
+  else                    SID_log("Centre periodic projection: OFF",SID_LOG_COMMENT);
+
   // Initialize the mapping quantities
   map_quantities_info mq;
   init_particle_map_quantities(&mq,plist,transfer_list,parameter,flag_comoving,expansion_factor);
@@ -495,12 +500,6 @@ void init_make_map(plist_info  *plist,
   // Compute the angle and the axis of rotation
   //   needed to place the camera at (0,0,-d_o)
   //   with the object at (0,0,0)
-  x_o-=stereo_offset;
-  y_o-=stereo_offset;
-  z_o-=stereo_offset;
-  x_c-=stereo_offset;
-  y_c-=stereo_offset;
-  z_c-=stereo_offset;
   d_x_o= x_o-x_c;
   d_y_o= y_o-y_c;
   d_z_o= z_o-z_c;
@@ -517,6 +516,13 @@ void init_make_map(plist_info  *plist,
   }
   else
     theta_roll=0.;
+
+  x_o+=stereo_offset*sin(theta_roll);
+  y_o+=stereo_offset*cos(theta_roll);
+  z_o+=stereo_offset*cos(theta_roll);
+  x_c+=stereo_offset;
+  y_c+=stereo_offset;
+  z_c+=stereo_offset;
   
   // Initialize the local minima of each array we will exchange later
   float x_min=FLT_MAX;
@@ -783,7 +789,7 @@ void render_frame(render_info  *render){
   int        pixel_pos;
   double     part_pos_x;
   double     part_pos_y;
-  double     part_pos_z;
+  double     z_i;
   double     part_h_z;
   double     part_h_xy;
   double     pixel_pos_x;
@@ -847,7 +853,7 @@ void render_frame(render_info  *render){
   char        *parameter;
   plist_info  *plist;
   int          flag_comoving;
-  int          flag_force_periodic;;
+  int          flag_force_periodic;
   double       expansion_factor;
   ADaPS       *transfer;
   double       h_Hubble;
@@ -858,6 +864,38 @@ void render_frame(render_info  *render){
 
   int          i_image;
   int          camera_mode;
+
+  int          flag_add_absorption=TRUE;
+  double       absorption_coefficient=1e-22;
+  double       inv_absorption_coefficient=1./absorption_coefficient;
+  double      *column_depth;
+
+  // Create an absorption look-up table to speed things up
+  double      *x_abs;
+  double      *y_abs;
+  size_t       n_abs=400;
+  int          i_abs;
+  double       tau_max=10.;
+  //flag_add_absorption=FALSE;
+  interp_info *abs_interp;
+  if(flag_add_absorption){
+     x_abs   =(double *)SID_malloc(sizeof(double)*n_abs);
+     y_abs   =(double *)SID_malloc(sizeof(double)*n_abs);
+     x_abs[0]=0.;
+     for(i_abs=1;i_abs<(n_abs-1);i_abs++)
+        x_abs[i_abs]=(float)i_abs*((float)tau_max/(float)(n_abs-1));
+     x_abs[n_abs-1]=tau_max;
+     for(i_abs=0;i_abs<n_abs;i_abs++)
+        y_abs[i_abs]=exp(-x_abs[i_abs]);
+     init_interpolate(x_abs,y_abs,n_abs,gsl_interp_linear,&abs_interp);
+     SID_free(SID_FARG x_abs);
+     SID_free(SID_FARG y_abs);
+  }
+  /*
+  double t_test;
+  for(t_test=0.;t_test<10.;t_test+=0.1) 
+     fprintf(stderr,"%le %le %le\n",exp(-t_test),interpolate(abs_interp,t_test),(exp(-t_test)-interpolate(abs_interp,t_test))/exp(-t_test));
+  */
 
   plist   =&(render->plist);
   x_o     =render->camera->perspective->p_o[0];
@@ -928,7 +966,7 @@ void render_frame(render_info  *render){
         z_image       =NULL;
         mask          =render->camera->mask_RGB_left;
         stereo_offset =-d_o/render->camera->stereo_ratio;
-        FOV_x        +=2.*d_o/render->camera->stereo_ratio;
+        //FOV_x        +=2.*d_o/render->camera->stereo_ratio;
         break;
       case 3:
         parameter=render->camera->Y_param;
@@ -999,14 +1037,20 @@ void render_frame(render_info  *render){
                   &n_particles);
 
     // Allocate and initialize image arrays
-    if(flag_weigh)
-      denominator=(double *)SID_malloc(sizeof(double)*n_pixels);
+    if(flag_add_absorption)
+       column_depth=(double *)SID_malloc(sizeof(double)*n_pixels);
     else
-      denominator=NULL;
+       column_depth=NULL;
+    if(flag_weigh)
+       denominator=(double *)SID_malloc(sizeof(double)*n_pixels);
+    else
+       denominator=NULL;
     numerator=image;
     for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
       image[i_pixel]    =0.;
       numerator[i_pixel]=0.;
+      if(column_depth!=NULL)
+        column_depth[i_pixel]=0.;
       if(denominator!=NULL)
         denominator[i_pixel]=0.;
       if(z_image!=NULL)
@@ -1031,34 +1075,41 @@ void render_frame(render_info  *render){
 
     // Perform projection
     size_t i_report_next;
-    int    i_report;
+    int    i_report=1;
     int    n_report=10; // This is the number of progress reports that will be creates. eg. 10 -> every 10%
     if(n_particles>20)
-      i_report_next=n_particles/n_report;
+       i_report_next=MIN(n_particles,(size_t)((float)n_particles*(float)i_report/(float)n_report));
     else
-      i_report_next=20;
+       i_report_next=20;
     SID_log("Performing projection...",SID_LOG_OPEN|SID_LOG_TIMER);
-    for(i_particle=0,j_particle=0,k_particle++;i_particle<n_particles;i_particle++){
-      part_h_z  =(double)h_smooth[i_particle];
-      part_pos_z=(double)z[i_particle];
-      if(part_pos_z>near_field){
+    for(i_particle=0;i_particle<n_particles;i_particle++){
+      part_h_z=(double)h_smooth[i_particle];
+      z_i     =(double)z[i_particle];
+      if(z_i>near_field){
         part_h_xy    =part_h_z*f_stretch[i_particle];
+        radius2_norm =1./(part_h_xy*part_h_xy);
         part_pos_x   =(double)(x[i_particle]*f_stretch[i_particle]);
         part_pos_y   =(double)(y[i_particle]*f_stretch[i_particle]);
-        px           =(int)((part_pos_x-xmin)/pixel_size_x+ONE_HALF);
-        py           =(int)((part_pos_y-ymin)/pixel_size_y+ONE_HALF);
+        px           =(int)((part_pos_x-xmin+stereo_offset)/pixel_size_x+ONE_HALF);
+        py           =(int)((part_pos_y-ymin+stereo_offset)/pixel_size_y+ONE_HALF);
         pixel_pos    =py+px*ny;
         radius_kernel=radius_kernel_norm*part_h_xy;
         kx_min=(int)((part_pos_x-radius_kernel-xmin)/pixel_size_x);
         kx_max=(int)((part_pos_x+radius_kernel-xmin)/pixel_size_x+ONE_HALF);
         ky_min=(int)((part_pos_y-radius_kernel-ymin)/pixel_size_y);
         ky_max=(int)((part_pos_y+radius_kernel-ymin)/pixel_size_y+ONE_HALF);
+        double w_i;
+        double v_i;
+        double vw_i;
+        v_i=(double)value[i_particle];
+        if(denominator!=NULL){
+           w_i =(double)weight[i_particle];
+           vw_i=v_i*w_i;
+        }
         for(kx=kx_min,pixel_pos_x=xmin+(kx_min+0.5)*pixel_size_x;kx<=kx_max;kx++,pixel_pos_x+=pixel_size_x){
           if(kx>=0 && kx<nx){
             for(ky=ky_min,pixel_pos_y=ymin+(ky_min+0.5)*pixel_size_y;ky<=ky_max;ky++,pixel_pos_y+=pixel_size_y){
               if(ky>=0 && ky<ny){
-                radius2_norm=
-                  1./(part_h_xy*part_h_xy);
                 radius2=
                   (pixel_pos_x-part_pos_x)*(pixel_pos_x-part_pos_x)+
                   (pixel_pos_y-part_pos_y)*(pixel_pos_y-part_pos_y);
@@ -1072,15 +1123,54 @@ void render_frame(render_info  *render){
                     (kernel_table[i_table+1]-kernel_table[i_table])*
                     (f_table-kernel_radius[i_table])*(double)N_KERNEL_TABLE;
                   if(denominator!=NULL){
-                    numerator[pos]  +=(double)value[i_particle]*(double)weight[i_particle]*kernel;
-                    denominator[pos]+=(double)weight[i_particle]*kernel;
-                    if(z_image!=NULL)
-                      z_image[pos]+=(double)z[i_particle]*(double)weight[i_particle]*kernel;
+                    switch(flag_add_absorption){
+                       case TRUE:
+                          double absorption;
+                          double tau;
+                          tau=(double)column_depth[pos]*(double)inv_absorption_coefficient;
+                          if(tau>tau_max)
+                             absorption=0.;
+                          else if(tau<=0.)
+                             absorption=1.;
+                          else 
+                             absorption=interpolate(abs_interp,tau);
+                          column_depth[pos]+= w_i*kernel;
+                          numerator[pos]   +=vw_i*kernel*absorption;
+                          denominator[pos] += w_i*kernel*absorption;
+                          if(z_image!=NULL)
+                             z_image[pos]+=z_i*w_i*kernel*absorption;
+                          break;
+                       case FALSE:
+                          numerator[pos]  +=vw_i*kernel;
+                          denominator[pos]+=w_i*kernel;
+                          if(z_image!=NULL)
+                             z_image[pos]+=z_i*w_i*kernel;
+                          break;
+                    }
                   }
                   else{
-                    numerator[pos]+=(double)value[i_particle]*kernel;
-                    if(z_image!=NULL)
-                      z_image[pos]+=(double)z[i_particle]*(double)value[i_particle]*kernel;
+                    switch(flag_add_absorption){
+                       case TRUE:
+                          double absorption;
+                          double tau;
+                          tau=(double)column_depth[pos]*(double)inv_absorption_coefficient;
+                          if(tau>tau_max)
+                             absorption=0.;
+                          else if(tau<=0.)
+                             absorption=1.;
+                          else 
+                             absorption=interpolate(abs_interp,tau);
+                          column_depth[pos]+=v_i*kernel;
+                          numerator[pos]   +=v_i*kernel*absorption;
+                          if(z_image!=NULL)
+                             z_image[pos]+=z_i*v_i*kernel*absorption;
+                          break;
+                       case FALSE:
+                          numerator[pos]+=v_i*kernel;
+                          if(z_image!=NULL)
+                             z_image[pos]+=z_i*v_i*kernel;
+                          break;
+                    }
                   }
                   mask[pos] =TRUE;
                 }
@@ -1090,9 +1180,9 @@ void render_frame(render_info  *render){
         }
       }
       if(i_particle==i_report_next){
+         SID_log("%3d%% complete.",SID_LOG_COMMENT|SID_LOG_TIMER,(int)((100./(float)n_report)*(float)(i_report)));
          i_report++;
-         SID_log("%3d%% complete.",SID_LOG_COMMENT|SID_LOG_TIMER,(100/n_report)*(i_report));
-         i_report_next=MIN(n_particles,n_particles*(i_report+1)/n_report);
+         i_report_next=MIN(n_particles,(size_t)((float)n_particles*(float)i_report/(float)n_report));
       }
     }
     SID_Barrier(SID.COMM_WORLD);
@@ -1101,9 +1191,41 @@ void render_frame(render_info  *render){
     SID_log("Image normalization, etc...",SID_LOG_OPEN|SID_LOG_TIMER);
 
     // Add results from all ranks if this is being run in parallel
+    //   First, apply slab absorptions if we are running in parallel ...
+#if USE_MPI
+    if(flag_add_absorption){
+       double *absorption;
+       int     i_rank;
+       absorption=(double *)SID_calloc(sizeof(double)*n_pixels);
+       for(i_rank=1;i_rank<SID.n_proc;i_rank++){
+          SID_Bcast(absorption,sizeof(double)*n_pixels,i_rank-1,SID.COMM_WORLD);
+          if(i_rank==SID.My_rank){
+             if(denominator!=NULL){
+                for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
+                   double tau;
+                   tau                  =absorption[i_pixel]*inv_absorption_coefficient;
+                   absorption[i_pixel] +=column_depth[i_pixel];
+                   numerator[i_pixel]  *=interpolate(abs_interp,tau);
+                   denominator[i_pixel]*=interpolate(abs_interp,tau);
+                   z_image[i_pixel]    *=interpolate(abs_interp,tau);
+                }
+             }
+             else{
+                for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
+                   double tau;
+                   tau                 =absorption[i_pixel]*inv_absorption_coefficient;
+                   absorption[i_pixel]+=column_depth[i_pixel];
+                   numerator[i_pixel] *=interpolate(abs_interp,tau);
+                   z_image[i_pixel]   *=interpolate(abs_interp,tau);
+                }
+             }
+          }
+       }
+       SID_free(SID_FARG absorption);
+    }
+
     // Join mask results.  The MPI 1.1 standard does not specify MPI_SUM 
     //   on MPI_CHAR types so we need to do this awkward thing for the mask array ...
-#if USE_MPI
     mask_buffer=(int *)SID_malloc(sizeof(int)*nx);
     for(i_y=0;i_y<ny;i_y++){
       for(i_x=0,i_pixel=i_y*nx;i_x<nx;i_x++,i_pixel++)
@@ -1195,5 +1317,8 @@ void render_frame(render_info  *render){
   
     SID_log("Done.",SID_LOG_CLOSE);
   }
+
+  if(flag_add_absorption)
+     free_interpolate(SID_FARG abs_interp);
 
 }
