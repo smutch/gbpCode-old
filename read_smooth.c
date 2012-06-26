@@ -50,6 +50,8 @@ void read_smooth(plist_info *plist,
 
   SID_log("Reading smooth file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_root_in);
 
+fprintf(stderr,"size=%zd",sizeof(smooth_header_info));
+
   // Read header info
   SID_log("Reading header information...",SID_LOG_OPEN);
   smooth_header_info header;
@@ -111,11 +113,10 @@ void read_smooth(plist_info *plist,
        set_smooth_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
        SID_log("Processing file #%d of %d {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,i_file+1,n_files,filename);
        fp=fopen(filename,"r");
-       fread(&header,sizeof(smooth_header_info),1,fp);
-       n_particles_file =header.n_particles_file;
-       offset           =header.offset;
-       n_particles_total=header.n_particles_total;
-       n_files          =header.n_files;
+       fread(&n_particles_file ,sizeof(int),      1,fp);
+       fread(&offset           ,sizeof(int),      1,fp);
+       fread(&n_particles_total,sizeof(long long),1,fp);
+       fread(&n_files          ,sizeof(int),      1,fp);
        SID_Bcast(&n_particles_file, (int)sizeof(int),      read_rank,SID.COMM_WORLD);
        SID_Bcast(&offset,           (int)sizeof(int),      read_rank,SID.COMM_WORLD);
        SID_Bcast(&n_particles_total,(int)sizeof(long long),read_rank,SID.COMM_WORLD);
