@@ -176,6 +176,7 @@ struct render_info{
   int          flag_read_marked;
   plist_info   plist;
   double       h_Hubble;
+  double       kappa_absorption;
   double       near_field;
   int          mode;
   int          sealed; // TRUE if the render is fully initialized
@@ -240,6 +241,10 @@ void set_image_RGBY(image_info *image_RGBY_in,
 
 void write_image(image_info *image,char *filename,int mode);
 void read_image(image_info *image,char *filename_root);
+
+void read_gadget_binary_render(char       *filename_root_in,
+                               int         snapshot_number,
+                               plist_info *plist);
 
 #ifdef __cplusplus
 }

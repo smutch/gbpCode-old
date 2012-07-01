@@ -10,8 +10,9 @@
 /*                     3 -> black,blue,red,orange,yellow */
 /*                     4 -> cyan->green->yellow->white   */
 /*                     5 -> blue->green->yellow->white   */
-/*                     6 -> blue,pink,white              */
-/*                     7 -> pink,red,yellow              */
+/*                     6 -> black->green->yellow->white  */
+/*                     7 -> blue,pink,white              */
+/*                     8 -> pink,red,yellow              */
 /* If colourmapselect<0 then invert                      */
 /*********************************************************/
 void create_colour_table(int     colourmapselect,
@@ -83,6 +84,21 @@ void create_colour_table(int     colourmapselect,
                          (int)(200.*exp(-pow((float)(i-(int)rgb_max)/(float)(rgb_max/7),2.))));
     }
     break;
+  case 6:
+    for(i=0;i<n_colours;i++){
+      (*rgb)[0][i]=(int)(255.*exp(-pow((float)(i-(int)rgb_max)/(float)(rgb_max/2.25),2.)));
+      if(i<n_colours/4)
+        (*rgb)[1][i]=(int)(255.*exp(-pow((float)(i-(int)rgb_max/4)/(float)(rgb_max/4),2.)));
+      else
+        (*rgb)[1][i]=255;
+      if(i<n_colours/4)
+        (*rgb)[2][i]=MAX((int)(200.*exp(-pow((float)(i-(int)rgb_max/4)/(float)(rgb_max/4),2.))),
+                         (int)(200.*exp(-pow((float)(i-(int)rgb_max)/(float)(rgb_max/7),2.))));
+      else
+        (*rgb)[2][i]=MAX((int)(200.*exp(-pow((float)(i-(int)rgb_max/4)/(float)(rgb_max/4),2.))),
+                         (int)(200.*exp(-pow((float)(i-(int)rgb_max)/(float)(rgb_max/7),2.))));
+    }
+    break;
   case 5:
     for(i=0;i<n_colours;i++){
       if(i<3*n_colours/4)
@@ -100,7 +116,7 @@ void create_colour_table(int     colourmapselect,
                          (int)((double)rgb_max*exp(-pow((float)(i-(int)rgb_max)  /(float)(rgb_max/8),2.))));
     }
     break;
-  case 6:
+  case 7:
     i=1;
     for(j=0;j<n_colours;j++)
       (*rgb)[2][i++]=rgb_max;
@@ -113,7 +129,7 @@ void create_colour_table(int     colourmapselect,
     while(i<n_colours) 
       (*rgb)[1][i++]=(int)((float)(i-j)*1.7);
     break;
-  case 7:
+  case 8:
     i=1;
     for(j=0;j<n_colours;j++)
       (*rgb)[2][i++]=rgb_max-(int)(1.5*(float)j);

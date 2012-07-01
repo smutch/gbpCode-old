@@ -452,6 +452,7 @@ void init_render(render_info **render){
   (*render)->snap_a_list        = NULL;
   (*render)->h_Hubble           = 1.;
   (*render)->near_field         = 0.;
+  (*render)->kappa_absorption   =-1.; // -ve value means absorption is ignored by default
   (*render)->flag_read_marked   = FALSE;
   (*render)->flag_comoving      = TRUE;
   (*render)->flag_force_periodic= FALSE;
@@ -598,7 +599,7 @@ int set_render_state(render_info *render,int frame,int mode){
          read_mark_file(&(render->plist),"mark",render->mark_filename_root,MARK_LIST_ONLY);
          render->flag_read_marked=FALSE;
       }
-      read_gadget_binary(render->snap_filename_root,render->snap_number,&(render->plist),READ_GADGET_DEFAULT);
+      read_gadget_binary_render(render->snap_filename_root,render->snap_number,&(render->plist));
       render->h_Hubble=((double *)ADaPS_fetch(render->plist.data,"h_Hubble"))[0];
       read_smooth(&(render->plist),render->smooth_filename_root,render->snap_number,SMOOTH_DEFAULT);
       render->snap_number_read=render->snap_number;
@@ -729,6 +730,8 @@ void parse_render_file(render_info **render, char *filename){
           grab_double(line,i_word++,&((*render)->h_Hubble));
         else if(!strcmp(parameter,"near_field"))
           grab_double(line,i_word++,&((*render)->near_field));
+        else if(!strcmp(parameter,"kappa_absorption"))
+          grab_double(line,i_word++,&((*render)->kappa_absorption));
         else if(!strcmp(parameter,"snap_number"))
           grab_int(line,i_word++,&((*render)->snap_number));
         else if(!strcmp(parameter,"flag_comoving"))
