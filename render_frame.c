@@ -40,6 +40,60 @@ void rotate_particle(double   x_hat,
   (*z_i)=(   2.*X*Z-2.*Y*W)*x_p+(   2.*Y*Z+2.*X*W)*y_p+(1.-2.*X*X-2.*Y*Y)*z_p;
 }
 
+int set_pixel_space(float  h_i,
+                    float  x_i,
+                    float  y_i,
+                    float  f_i,
+                    float  xmin,
+                    float  ymin,
+                    float  FOV_x,
+                    float  FOV_y,
+                    float  frustrum_offset,
+                    float  pixel_size_x,
+                    float  pixel_size_y,
+                    float *radius2_norm,
+                    float *radius_kernel,
+                    float *part_pos_x,
+                    float *part_pos_y,
+                    int   *kx_min,
+                    int   *kx_max,
+                    int   *ky_min,
+                    int   *ky_max);
+int set_pixel_space(float  h_i,
+                    float  x_i,
+                    float  y_i,
+                    float  f_i,
+                    float  xmin,
+                    float  ymin,
+                    float  FOV_x,
+                    float  FOV_y,
+                    float  frustrum_offset,
+                    float  pixel_size_x,
+                    float  pixel_size_y,
+                    float *radius2_norm,
+                    float *radius_kernel,
+                    float *part_pos_x,
+                    float *part_pos_y,
+                    int   *kx_min,
+                    int   *kx_max,
+                    int   *ky_min,
+                    int   *ky_max){
+   float part_h_xy;
+   part_h_xy       =h_i*f_i;
+   (*part_pos_x)   =x_i*f_i;
+   (*part_pos_y)   =y_i*f_i;
+   (*radius2_norm) =1./(part_h_xy*part_h_xy);
+   (*radius_kernel)=radius_kernel_norm*part_h_xy;
+   (*kx_min)       =(int)(((*part_pos_x)-(*radius_kernel)-xmin+frustrum_offset)/pixel_size_x);
+   (*kx_max)       =(int)(((*part_pos_x)+(*radius_kernel)-xmin+frustrum_offset)/pixel_size_x+ONE_HALF);
+   (*ky_min)       =(int)(((*part_pos_y)-(*radius_kernel)-ymin)/pixel_size_y);
+   (*ky_max)       =(int)(((*part_pos_y)+(*radius_kernel)-ymin)/pixel_size_y+ONE_HALF);
+   if((*kx_min)<FOV_x && (*ky_min)<FOV_y && (*kx_max)>0. && (*ky_min)>0.)
+      return(TRUE);
+   else
+      return(FALSE);
+}
+
 void transform_particle(GBPREAL *x_i,
                         GBPREAL *y_i,
                         GBPREAL *z_i,
@@ -562,13 +616,17 @@ void init_make_map(plist_info  *plist,
   float  f_i;
   float  v_i;
   float  w_i;
-  float *z_decomp;
   int   *keep;
   int    flag_init=TRUE;
   size_t n_visible_local=0;
   size_t n_visible=0;
   int    i_rank;
-  z_decomp=(float *)SID_malloc(sizeof(float)*(*n_particles));
+  int    n_bits_PHK=8;
+  int    PHK_min_local;
+  int    PHK_max_local;
+  int   *PHK_decomp;
+
+  PHK_decomp=(int *)SID_malloc(sizeof(int)*(*n_particles));
   SID_log("Counting visible particles...",SID_LOG_OPEN|SID_LOG_TIMER);
   for(i_type=0,j_particle=0;i_type<N_GADGET_TYPE;i_type++){
     if(ptype_used[i_type] && ADaPS_exist(plist->data,"n_%s",plist->species[i_type])){
@@ -604,9 +662,9 @@ void init_make_map(plist_info  *plist,
          if(v_i<v_min) v_min=v_i;
          if(w_i<w_min) w_min=w_i;
 
-         // Populate z-array
+         // Calculate keys
          if(z_i>0){
-            z_decomp[n_visible_local]=z_i;
+            PHK_decomp[n_visible_local]=compute_PHK_from_Cartesian(n_bits_PHK,2,(double)x_i/FOV_x,(double)y_i/FOV_y);
             n_visible_local++;
          }
         
@@ -616,10 +674,9 @@ void init_make_map(plist_info  *plist,
   }
 
   // Compute sort indices  
-  size_t *z_decomp_index;
+  size_t *PHK_decomp_index;
   SID_Allreduce(&n_visible_local,&n_visible,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
-  sort(z_decomp,n_visible_local,&z_decomp_index,SID_FLOAT,FALSE,SORT_COMPUTE_RANK,FALSE);
-  SID_free(SID_FARG z_decomp);
+  sort(PHK_decomp,n_visible_local,&PHK_decomp_index,SID_INT,FALSE,SORT_COMPUTE_RANK,FALSE);
 
   SID_log("No. of visible particles=%zd",SID_LOG_COMMENT,n_visible);
   
@@ -834,9 +891,6 @@ void render_frame(render_info  *render){
   double    *numerator;
   double    *denominator;
   double    *z_image;
-  int        py;
-  int        px;
-  int        pixel_pos;
   double     part_pos_x;
   double     part_pos_y;
   double     z_i;
@@ -1148,100 +1202,113 @@ void render_frame(render_info  *render){
        i_report_next=20;
     SID_log("Performing projection...",SID_LOG_OPEN|SID_LOG_TIMER);
     for(i_particle=0;i_particle<n_particles;i_particle++){
-      part_h_z=(double)h_smooth[i_particle];
       z_i     =(double)z[i_particle];
       if(z_i>near_field){
-        part_h_xy    =part_h_z*f_stretch[i_particle];
-        radius2_norm =1./(part_h_xy*part_h_xy);
-        part_pos_x   =(double)(x[i_particle]*f_stretch[i_particle]);
-        part_pos_y   =(double)(y[i_particle]*f_stretch[i_particle]);
-        px           =(int)((part_pos_x-xmin+frustrum_offset)/pixel_size_x+ONE_HALF);
-        py           =(int)((part_pos_y-ymin)/pixel_size_y+ONE_HALF);
-        pixel_pos    =py+px*ny;
-        radius_kernel=radius_kernel_norm*part_h_xy;
-        kx_min=(int)((part_pos_x-radius_kernel-xmin)/pixel_size_x);
-        kx_max=(int)((part_pos_x+radius_kernel-xmin)/pixel_size_x+ONE_HALF);
-        ky_min=(int)((part_pos_y-radius_kernel-ymin)/pixel_size_y);
-        ky_max=(int)((part_pos_y+radius_kernel-ymin)/pixel_size_y+ONE_HALF);
-        double w_i;
-        double v_i;
-        double vw_i;
-        v_i=(double)value[i_particle];
-        if(denominator!=NULL){
-           w_i =(double)weight[i_particle];
-           vw_i=v_i*w_i;
-        }
-        for(kx=kx_min,pixel_pos_x=xmin+(kx_min+0.5)*pixel_size_x;kx<=kx_max;kx++,pixel_pos_x+=pixel_size_x){
-          if(kx>=0 && kx<nx){
-            for(ky=ky_min,pixel_pos_y=ymin+(ky_min+0.5)*pixel_size_y;ky<=ky_max;ky++,pixel_pos_y+=pixel_size_y){
-              if(ky>=0 && ky<ny){
-                radius2=
-                  (pixel_pos_x-part_pos_x)*(pixel_pos_x-part_pos_x)+
-                  (pixel_pos_y-part_pos_y)*(pixel_pos_y-part_pos_y);
-                radius2*=radius2_norm;
-                // Construct image here
-                if(radius2<radius_kernel_norm2){
-                  pos    =ky+kx*ny;
-                  f_table=sqrt(radius2);
-                  i_table=(int)(f_table*(double)N_KERNEL_TABLE);
-                  kernel =kernel_table[i_table]+
-                    (kernel_table[i_table+1]-kernel_table[i_table])*
-                    (f_table-kernel_radius[i_table])*(double)N_KERNEL_TABLE;
-                  if(denominator!=NULL){
-                    switch(flag_add_absorption){
-                       case TRUE:
-                          double absorption;
-                          double tau;
-                          tau=(double)column_depth[pos]*(double)inv_absorption_coefficient;
-                          if(tau>tau_max)
-                             absorption=0.;
-                          else if(tau<=0.)
-                             absorption=1.;
-                          else 
-                             absorption=interpolate(abs_interp,tau);
-                          column_depth[pos]+= w_i*kernel;
-                          numerator[pos]   +=vw_i*kernel*absorption;
-                          denominator[pos] += w_i*kernel*absorption;
-                          if(z_image!=NULL)
-                             z_image[pos]+=z_i*w_i*kernel*absorption;
-                          break;
-                       case FALSE:
-                          numerator[pos]  +=vw_i*kernel;
-                          denominator[pos]+=w_i*kernel;
-                          if(z_image!=NULL)
-                             z_image[pos]+=z_i*w_i*kernel;
-                          break;
-                    }
-                  }
-                  else{
-                    switch(flag_add_absorption){
-                       case TRUE:
-                          double absorption;
-                          double tau;
-                          tau=(double)column_depth[pos]*(double)inv_absorption_coefficient;
-                          if(tau>tau_max)
-                             absorption=0.;
-                          else if(tau<=0.)
-                             absorption=1.;
-                          else 
-                             absorption=interpolate(abs_interp,tau);
-                          column_depth[pos]+=v_i*kernel;
-                          numerator[pos]   +=v_i*kernel*absorption;
-                          if(z_image!=NULL)
-                             z_image[pos]+=z_i*v_i*kernel*absorption;
-                          break;
-                       case FALSE:
-                          numerator[pos]+=v_i*kernel;
-                          if(z_image!=NULL)
-                             z_image[pos]+=z_i*v_i*kernel;
-                          break;
-                    }
-                  }
-                  mask[pos] =TRUE;
-                }
-              }
-            }
-          }
+
+        // Set pixel space ranges and positions
+        if(set_pixel_space(h_smooth[i_particle],
+                           x[i_particle],
+                           y[i_particle],
+                           f_stretch[i_particle],
+                           xmin,
+                           ymin,
+                           FOV_x,
+                           FOV_y,
+                           frustrum_offset,
+                           pixel_size_x,
+                           pixel_size_y,
+                           &radius2_norm,
+                           &radius_kernel,
+                           &part_pos_x,
+                           &part_pos_y,
+                           &kx_min,
+                           &kx_max,
+                           &ky_min,
+                           &ky_max)){
+
+           // Set the particle values and weights
+           double w_i;
+           double v_i;
+           double vw_i;
+           v_i=(double)value[i_particle];
+           if(denominator!=NULL){
+              w_i =(double)weight[i_particle];
+              vw_i=v_i*w_i;
+           }
+
+           // Loop over the kernal
+           for(kx=kx_min,pixel_pos_x=xmin+(kx_min+0.5)*pixel_size_x;kx<=kx_max;kx++,pixel_pos_x+=pixel_size_x){
+             if(kx>=0 && kx<nx){
+               for(ky=ky_min,pixel_pos_y=ymin+(ky_min+0.5)*pixel_size_y;ky<=ky_max;ky++,pixel_pos_y+=pixel_size_y){
+                 if(ky>=0 && ky<ny){
+                   radius2=
+                     (pixel_pos_x-part_pos_x)*(pixel_pos_x-part_pos_x)+
+                     (pixel_pos_y-part_pos_y)*(pixel_pos_y-part_pos_y);
+                   radius2*=radius2_norm;
+                   // Construct image here
+                   if(radius2<radius_kernel_norm2){
+                     pos    =ky+kx*ny;
+                     f_table=sqrt(radius2);
+                     i_table=(int)(f_table*(double)N_KERNEL_TABLE);
+                     kernel =kernel_table[i_table]+
+                       (kernel_table[i_table+1]-kernel_table[i_table])*
+                       (f_table-kernel_radius[i_table])*(double)N_KERNEL_TABLE;
+                     if(denominator!=NULL){
+                       switch(flag_add_absorption){
+                          case TRUE:
+                             double absorption;
+                             double tau;
+                             tau=(double)column_depth[pos]*(double)inv_absorption_coefficient;
+                             if(tau>tau_max)
+                                absorption=0.;
+                             else if(tau<=0.)
+                                absorption=1.;
+                             else 
+                                absorption=interpolate(abs_interp,tau);
+                             column_depth[pos]+= w_i*kernel;
+                             numerator[pos]   +=vw_i*kernel*absorption;
+                             denominator[pos] += w_i*kernel*absorption;
+                             if(z_image!=NULL)
+                                z_image[pos]+=z_i*w_i*kernel*absorption;
+                             break;
+                          case FALSE:
+                             numerator[pos]  +=vw_i*kernel;
+                             denominator[pos]+=w_i*kernel;
+                             if(z_image!=NULL)
+                                z_image[pos]+=z_i*w_i*kernel;
+                             break;
+                       }
+                     }
+                     else{
+                       switch(flag_add_absorption){
+                          case TRUE:
+                             double absorption;
+                             double tau;
+                             tau=(double)column_depth[pos]*(double)inv_absorption_coefficient;
+                             if(tau>tau_max)
+                                absorption=0.;
+                             else if(tau<=0.)
+                                absorption=1.;
+                             else 
+                                absorption=interpolate(abs_interp,tau);
+                             column_depth[pos]+=v_i*kernel;
+                             numerator[pos]   +=v_i*kernel*absorption;
+                             if(z_image!=NULL)
+                                z_image[pos]+=z_i*v_i*kernel*absorption;
+                             break;
+                          case FALSE:
+                             numerator[pos]+=v_i*kernel;
+                             if(z_image!=NULL)
+                                z_image[pos]+=z_i*v_i*kernel;
+                             break;
+                       }
+                     }
+                     mask[pos] =TRUE;
+                   }
+                 }
+               }
+             }
+           }
         }
       }
       if(i_particle==i_report_next){
