@@ -40,48 +40,50 @@ void rotate_particle(double   x_hat,
   (*z_i)=(   2.*X*Z-2.*Y*W)*x_p+(   2.*Y*Z+2.*X*W)*y_p+(1.-2.*X*X-2.*Y*Y)*z_p;
 }
 
-int set_pixel_space(float  h_i,
-                    float  x_i,
-                    float  y_i,
-                    float  f_i,
-                    float  xmin,
-                    float  ymin,
-                    float  FOV_x,
-                    float  FOV_y,
-                    float  frustrum_offset,
-                    float  pixel_size_x,
-                    float  pixel_size_y,
-                    float *radius2_norm,
-                    float *radius_kernel,
-                    float *part_pos_x,
-                    float *part_pos_y,
-                    int   *kx_min,
-                    int   *kx_max,
-                    int   *ky_min,
-                    int   *ky_max);
-int set_pixel_space(float  h_i,
-                    float  x_i,
-                    float  y_i,
-                    float  f_i,
-                    float  xmin,
-                    float  ymin,
-                    float  FOV_x,
-                    float  FOV_y,
-                    float  frustrum_offset,
-                    float  pixel_size_x,
-                    float  pixel_size_y,
-                    float *radius2_norm,
-                    float *radius_kernel,
-                    float *part_pos_x,
-                    float *part_pos_y,
-                    int   *kx_min,
-                    int   *kx_max,
-                    int   *ky_min,
-                    int   *ky_max){
-   float part_h_xy;
-   part_h_xy       =h_i*f_i;
-   (*part_pos_x)   =x_i*f_i;
-   (*part_pos_y)   =y_i*f_i;
+int set_pixel_space(float   h_i,
+                    float   x_i,
+                    float   y_i,
+                    float   f_i,
+                    double  xmin,
+                    double  ymin,
+                    double  FOV_x,
+                    double  FOV_y,
+                    double  frustrum_offset,
+                    double  pixel_size_x,
+                    double  pixel_size_y,
+                    double  radius_kernel_norm,
+                    double *radius2_norm,
+                    double *radius_kernel,
+                    double *part_pos_x,
+                    double *part_pos_y,
+                    int    *kx_min,
+                    int    *kx_max,
+                    int    *ky_min,
+                    int    *ky_max);
+int set_pixel_space(float   h_i,
+                    float   x_i,
+                    float   y_i,
+                    float   f_i,
+                    double  xmin,
+                    double  ymin,
+                    double  FOV_x,
+                    double  FOV_y,
+                    double  frustrum_offset,
+                    double  pixel_size_x,
+                    double  pixel_size_y,
+                    double  radius_kernel_norm,
+                    double *radius2_norm,
+                    double *radius_kernel,
+                    double *part_pos_x,
+                    double *part_pos_y,
+                    int    *kx_min,
+                    int    *kx_max,
+                    int    *ky_min,
+                    int    *ky_max){
+   double part_h_xy;
+   part_h_xy       =(double)h_i*(double)f_i;
+   (*part_pos_x)   =(double)x_i*(double)f_i;
+   (*part_pos_y)   =(double)y_i*(double)f_i;
    (*radius2_norm) =1./(part_h_xy*part_h_xy);
    (*radius_kernel)=radius_kernel_norm*part_h_xy;
    (*kx_min)       =(int)(((*part_pos_x)-(*radius_kernel)-xmin+frustrum_offset)/pixel_size_x);
@@ -443,6 +445,24 @@ void set_particle_map_quantities(map_quantities_info *mq,int mode,size_t i_parti
   }
 }
 
+double compute_f_stretch(double d_xyz,double z_i,int flag_plane_parallel);
+double compute_f_stretch(double d_xyz,double z_i,int flag_plane_parallel){
+   double f_i;
+   switch(flag_plane_parallel){
+      case FALSE:
+         if(z_i>0.)
+            f_i=d_xyz/z_i;
+         else
+            f_i=0.;
+         break;
+      case TRUE:
+         f_i=1.;
+         break;
+   }
+   return(f_i);
+}
+
+
 void init_make_map(plist_info  *plist,
                    char        *parameter,
                    ADaPS       *transfer_list,
@@ -453,7 +473,16 @@ void init_make_map(plist_info  *plist,
                    double       y_c,
                    double       z_c,
                    double       box_size,
-                   double       FOV,
+                   double       FOV_x,
+                   double       FOV_y,
+                   double       xmin,
+                   double       ymin,
+                   double       frustrum_offset,
+                   double       pixel_size_x,
+                   double       pixel_size_y,
+                   double       radius_kernel_norm,
+                   int          nx,
+                   int          ny,
                    int          mode,
                    double       expansion_factor,
                    double       near_field,
@@ -470,7 +499,8 @@ void init_make_map(plist_info  *plist,
                    float       **f_stretch,
                    float       **value,
                    float       **weight,
-                   size_t      *n_particles);
+                   size_t      **z_index,
+                   size_t       *n_particles);
 void init_make_map(plist_info  *plist,
                    char        *parameter,
                    ADaPS       *transfer_list,
@@ -481,7 +511,16 @@ void init_make_map(plist_info  *plist,
                    double       y_c,
                    double       z_c,
                    double       box_size,
-                   double       FOV,
+                   double       FOV_x,
+                   double       FOV_y,
+                   double       xmin,
+                   double       ymin,
+                   double       frustrum_offset,
+                   double       pixel_size_x,
+                   double       pixel_size_y,
+                   double       radius_kernel_norm,
+                   int          nx,
+                   int          ny,
                    int          mode,
                    double       expansion_factor,
                    double       near_field,
@@ -498,6 +537,7 @@ void init_make_map(plist_info  *plist,
                    float       **f_stretch,
                    float       **value,
                    float       **weight,
+                   size_t      **z_index,
                    size_t       *n_particles){
   int     *ptype_used;
   int      i_type;
@@ -509,9 +549,9 @@ void init_make_map(plist_info  *plist,
   size_t   k_particle;
   double   mass_array;
   size_t   n_particles_species;
-  float    *x_temp;
-  float    *y_temp;
-  float    *z_temp;
+  float   *x_temp;
+  float   *y_temp;
+  float   *z_temp;
   float   *h_smooth_temp;
   double   x_hat;
   double   y_hat;
@@ -607,34 +647,28 @@ void init_make_map(plist_info  *plist,
   float v_min=FLT_MAX;
   float w_min=FLT_MAX;
 
-  // First, compute the positions along the line of sight
-  //    so we can perform the domain decomposition
-  float  x_i;
-  float  y_i;
-  float  z_i;
-  float  h_i;
-  float  f_i;
-  float  v_i;
-  float  w_i;
-  int   *keep;
-  int    flag_init=TRUE;
-  size_t n_visible_local=0;
-  size_t n_visible=0;
-  int    i_rank;
-  int    n_bits_PHK=8;
-  int    PHK_min_local;
-  int    PHK_max_local;
-  int   *PHK_decomp;
-
-  PHK_decomp=(int *)SID_malloc(sizeof(int)*(*n_particles));
-  SID_log("Counting visible particles...",SID_LOG_OPEN|SID_LOG_TIMER);
+  // Determine how many particles are contributing to each 
+  //    column of the image
+  float   x_i;
+  float   y_i;
+  float   z_i;
+  float   h_i;
+  float   f_i;
+  float   v_i;
+  float   w_i;
+  size_t *n_column;
+  int     i_x;
+  size_t n_visible;
+  size_t n_visible_local;
+  n_column=(size_t *)SID_calloc(sizeof(size_t)*nx);
+  SID_log("Compute slab domain decomposition...",SID_LOG_OPEN|SID_LOG_TIMER);
   for(i_type=0,j_particle=0;i_type<N_GADGET_TYPE;i_type++){
     if(ptype_used[i_type] && ADaPS_exist(plist->data,"n_%s",plist->species[i_type])){
       n_particles_species=((size_t *)ADaPS_fetch(plist->data,"n_%s",plist->species[i_type]))[0];
       for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++){
 
          // Set the preoperties of the particle to be mapped
-         set_particle_map_quantities(&mq,TRUE,i_particle,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
+         set_particle_map_quantities(&mq,TRUE,k_particle,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
 
          // Transform particle to render-coordinates
          transform_particle(&x_i,
@@ -662,62 +696,181 @@ void init_make_map(plist_info  *plist,
          if(v_i<v_min) v_min=v_i;
          if(w_i<w_min) w_min=w_i;
 
-         // Calculate keys
          if(z_i>0){
-            PHK_decomp[n_visible_local]=compute_PHK_from_Cartesian(n_bits_PHK,2,(double)x_i/FOV_x,(double)y_i/FOV_y);
-            n_visible_local++;
+            double radius2_norm;
+            double radius_kernel;
+            double part_pos_x;
+            double part_pos_y;
+            int    kx_min;
+            int    kx_max;
+            int    ky_min;
+            int    ky_max;
+            f_i=compute_f_stretch(d_xyz,z_i,flag_plane_parallel);
+            set_pixel_space(h_i,
+                            x_i,
+                            y_i,
+                            f_i,
+                            xmin,
+                            ymin,
+                            FOV_x,
+                            FOV_y,
+                            frustrum_offset,
+                            pixel_size_x,
+                            pixel_size_y,
+                            radius_kernel_norm,
+                            &radius2_norm,
+                            &radius_kernel,
+                            &part_pos_x,
+                            &part_pos_y,
+                            &kx_min,
+                            &kx_max,
+                            &ky_min,
+                            &ky_max);
+            kx_min=MAX(kx_min,0);
+            kx_max=MIN(kx_max,nx-1);
+            for(i_x=kx_min;i_x<=kx_max;i_x++)
+               n_column[i_x]++;
+            if(kx_min<=kx_max)
+               n_visible_local++;
          }
-        
       }
       j_particle+=n_particles_species;
     }
   }
-
-  // Compute sort indices  
-  size_t *PHK_decomp_index;
+  SID_Allreduce(SID_IN_PLACE,n_column,nx,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
   SID_Allreduce(&n_visible_local,&n_visible,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
-  sort(PHK_decomp,n_visible_local,&PHK_decomp_index,SID_INT,FALSE,SORT_COMPUTE_RANK,FALSE);
-
   SID_log("No. of visible particles=%zd",SID_LOG_COMMENT,n_visible);
-  
-  SID_log("Done.",SID_LOG_CLOSE);
 
-  // Compute global minima
-  SID_log("Computing global minima...",SID_LOG_OPEN);
-  SID_Allreduce(SID_IN_PLACE,&x_min,1,SID_FLOAT,SID_MIN,SID.COMM_WORLD);
-  SID_Allreduce(SID_IN_PLACE,&y_min,1,SID_FLOAT,SID_MIN,SID.COMM_WORLD);
-  SID_Allreduce(SID_IN_PLACE,&z_min,1,SID_FLOAT,SID_MIN,SID.COMM_WORLD);
-  SID_Allreduce(SID_IN_PLACE,&v_min,1,SID_FLOAT,SID_MIN,SID.COMM_WORLD);
-  SID_Allreduce(SID_IN_PLACE,&w_min,1,SID_FLOAT,SID_MIN,SID.COMM_WORLD);
-  SID_log("Done.",SID_LOG_CLOSE);
+  // Create cumulative histogram
+  for(i_x=1;i_x<nx;i_x++)
+     n_column[i_x]+=n_column[i_x-1];
 
-  // Set domain decomposition
-  size_t i_particle_start;
-  size_t i_particle_stop;
-  size_t n_particles_local;
-  size_t n_particles_alloc;
-  i_particle=0;
-  SID_log("Setting domain decomposition...",SID_LOG_OPEN|SID_LOG_TIMER);
-  for(i_rank=0;i_rank<SID.n_proc;i_rank++){
-     if(SID.My_rank==i_rank){
-        i_particle_start=i_particle;
-        if(SID.I_am_last_rank)
-           i_particle_stop=n_visible-1;
-        else
-           i_particle_stop=i_particle_start+(int)((float)(n_visible-i_particle_start)/(float)(SID.n_proc-i_rank))-1;
-        i_particle=i_particle_stop+1;
+  // Decide on on a range of columns to assign to each rank
+  int    i_x_min_local;
+  int    i_x_max_local;
+  size_t norm     =n_column[nx-1];
+  size_t n_used   =0;
+  int    i_x_start=1;
+  int    i_x_min_send;
+  int    i_x_max_send;
+  int    i_rank;
+  size_t n_target;
+  for(i_rank=0,i_x=0;i_rank<SID.n_proc;i_rank++){
+     i_x_start=i_x;
+     n_target =(size_t)((float)(norm-n_used)/(float)(SID.n_proc-i_rank));
+     for(;i_x<nx-1 && n_column[i_x]<n_target;) i_x++;
+     if(i_rank==SID.My_rank){
+       i_x_min_local=i_x_start;
+       i_x_max_local=i_x;
      }
-     SID_Bcast(&i_particle,sizeof(size_t),i_rank,SID.COMM_WORLD);
+     n_used=n_column[i_x];
+     i_x++;
   }
-  n_particles_local=i_particle_stop-i_particle_start+1;
-  SID_Allreduce(&n_particles_local,&n_particles_alloc,1,SID_SIZE_T,SID_MAX,SID.COMM_WORLD);
   SID_log("Done.",SID_LOG_CLOSE);
 
-  // Perform domain decomposition
-  size_t  k_particle_start;
-  size_t  k_particle_stop;
-  size_t  n_particles_rank;
-  size_t  n_particles_init=0;
+  // Create a couple arrays storing the domain decomposition for all
+  int    *i_x_min_rank;
+  int    *i_x_max_rank;
+  i_x_min_rank=(int *)SID_malloc(sizeof(int)*SID.n_proc);
+  i_x_max_rank=(int *)SID_malloc(sizeof(int)*SID.n_proc);
+  for(i_rank=0;i_rank<SID.n_proc;i_rank++){
+     i_x_min_send=i_x_min_local;
+     i_x_max_send=i_x_max_local;
+     SID_Bcast(&i_x_min_send,sizeof(int),i_rank,SID.COMM_WORLD);
+     SID_Bcast(&i_x_max_send,sizeof(int),i_rank,SID.COMM_WORLD);
+     i_x_min_rank[i_rank]=i_x_min_send;
+     i_x_max_rank[i_rank]=i_x_max_send;
+  }
+
+  // Count the number of particles contributing to each rank
+  size_t *n_rank;
+  size_t *n_rank_local;
+  n_rank      =(size_t *)SID_calloc(sizeof(size_t)*SID.n_proc);
+  n_rank_local=(size_t *)SID_calloc(sizeof(size_t)*SID.n_proc);
+  for(i_type=0,j_particle=0;i_type<N_GADGET_TYPE;i_type++){
+    if(ptype_used[i_type] && ADaPS_exist(plist->data,"n_%s",plist->species[i_type])){
+      n_particles_species=((size_t *)ADaPS_fetch(plist->data,"n_%s",plist->species[i_type]))[0];
+      for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++){
+
+         // Set the preoperties of the particle to be mapped
+         set_particle_map_quantities(&mq,TRUE,k_particle,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
+
+         // Transform particle to render-coordinates
+         transform_particle(&x_i,
+                            &y_i,
+                            &z_i,
+                            x_o,
+                            y_o,
+                            z_o,
+                            x_hat,
+                            y_hat,
+                            z_hat,
+                            d_xyz,
+                            stereo_offset,
+                            theta,
+                            theta_roll,
+                            box_size,
+                            expansion_factor,
+                            flag_comoving,
+                            flag_force_periodic);
+
+         // Compute the local minima of each array we will exchange later
+         if(x_i<x_min) x_min=x_i;
+         if(y_i<y_min) y_min=y_i;
+         if(z_i<z_min) z_min=z_i;
+         if(v_i<v_min) v_min=v_i;
+         if(w_i<w_min) w_min=w_i;
+
+         if(z_i>0){
+            double radius2_norm;
+            double radius_kernel;
+            double part_pos_x;
+            double part_pos_y;
+            int    kx_min;
+            int    kx_max;
+            int    ky_min;
+            int    ky_max;
+            f_i=compute_f_stretch(d_xyz,z_i,flag_plane_parallel);
+            set_pixel_space(h_i,
+                            x_i,
+                            y_i,
+                            f_i,
+                            xmin,
+                            ymin,
+                            FOV_x,
+                            FOV_y,
+                            frustrum_offset,
+                            pixel_size_x,
+                            pixel_size_y,
+                            radius_kernel_norm,
+                            &radius2_norm,
+                            &radius_kernel,
+                            &part_pos_x,
+                            &part_pos_y,
+                            &kx_min,
+                            &kx_max,
+                            &ky_min,
+                            &ky_max);
+            kx_min=MAX(kx_min,0);
+            kx_max=MIN(kx_max,nx-1);
+            for(i_x=kx_min;i_x<=kx_max;i_x++)
+               n_column[i_x]++;
+            if(kx_min<=kx_max)
+               n_visible_local++;
+         }
+      }
+      j_particle+=n_particles_species;
+    }
+  }
+  SID_Allreduce(n_rank_local,n_rank,SID.n_proc,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
+  (*n_particles)=n_rank[SID.My_rank];
+  SID_free(SID_FARG n_column);
+
+  // Determine the needed size of the comm buffers
+  size_t n_buffer;
+  calc_max(n_rank_local,&n_buffer,SID.n_proc,SID_SIZE_T,CALC_MODE_DEFAULT);
+
+  // Broadcast particles
   float  *x_buffer;
   float  *y_buffer;
   float  *z_buffer;
@@ -725,128 +878,166 @@ void init_make_map(plist_info  *plist,
   float  *f_buffer;
   float  *v_buffer;
   float  *w_buffer;
-  SID_log("Allocating arrays...",SID_LOG_OPEN);
-  (*x)        =(float *)SID_malloc(sizeof(float)*(n_particles_alloc));
-  (*y)        =(float *)SID_malloc(sizeof(float)*(n_particles_alloc));
-  (*z)        =(float *)SID_malloc(sizeof(float)*(n_particles_alloc));
-  (*h_smooth) =(float *)SID_malloc(sizeof(float)*(n_particles_alloc));
-  (*f_stretch)=(float *)SID_malloc(sizeof(float)*(n_particles_alloc));
-  (*value)    =(float *)SID_malloc(sizeof(float)*(n_particles_alloc));
-  (*weight)   =(float *)SID_malloc(sizeof(float)*(n_particles_alloc));
-  x_buffer    =(float *)SID_malloc(sizeof(float)*(n_particles_alloc));
-  y_buffer    =(float *)SID_malloc(sizeof(float)*(n_particles_alloc));
-  z_buffer    =(float *)SID_malloc(sizeof(float)*(n_particles_alloc));
-  h_buffer    =(float *)SID_malloc(sizeof(float)*(n_particles_alloc));
-  f_buffer    =(float *)SID_malloc(sizeof(float)*(n_particles_alloc));
-  v_buffer    =(float *)SID_malloc(sizeof(float)*(n_particles_alloc));
-  w_buffer    =(float *)SID_malloc(sizeof(float)*(n_particles_alloc));
+  (*x)        =(float *)SID_malloc(sizeof(float)*(*n_particles));
+  (*y)        =(float *)SID_malloc(sizeof(float)*(*n_particles));
+  (*z)        =(float *)SID_malloc(sizeof(float)*(*n_particles));
+  (*h_smooth) =(float *)SID_malloc(sizeof(float)*(*n_particles));
+  (*f_stretch)=(float *)SID_malloc(sizeof(float)*(*n_particles));
+  (*value)    =(float *)SID_malloc(sizeof(float)*(*n_particles));
+  (*weight)   =(float *)SID_malloc(sizeof(float)*(*n_particles));
+  x_buffer    =(float *)SID_malloc(sizeof(float)*n_buffer);
+  y_buffer    =(float *)SID_malloc(sizeof(float)*n_buffer);
+  z_buffer    =(float *)SID_malloc(sizeof(float)*n_buffer);
+  h_buffer    =(float *)SID_malloc(sizeof(float)*n_buffer);
+  f_buffer    =(float *)SID_malloc(sizeof(float)*n_buffer);
+  v_buffer    =(float *)SID_malloc(sizeof(float)*n_buffer);
+  w_buffer    =(float *)SID_malloc(sizeof(float)*n_buffer);
+
+  size_t i_particle_rank;
+  size_t j_particle_rank=0;
+  for(i_rank=0;i_rank<SID.n_proc;i_rank++){
+     int rank_to;
+     int rank_from;
+     set_exchange_ring_ranks(&rank_to,&rank_from,i_rank);
+     i_particle_rank=0;
+     for(i_type=0,j_particle=0;i_type<N_GADGET_TYPE;i_type++){
+       if(ptype_used[i_type] && ADaPS_exist(plist->data,"n_%s",plist->species[i_type])){
+         n_particles_species=((size_t *)ADaPS_fetch(plist->data,"n_%s",plist->species[i_type]))[0];
+         for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++){
+
+            // Set the preoperties of the particle to be mapped
+            set_particle_map_quantities(&mq,TRUE,k_particle,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
+
+            // Transform particle to render-coordinates
+            transform_particle(&x_i,
+                               &y_i,
+                               &z_i,
+                               x_o,
+                               y_o,
+                               z_o,
+                               x_hat,
+                               y_hat,
+                               z_hat,
+                               d_xyz,
+                               stereo_offset,
+                               theta,
+                               theta_roll,
+                               box_size,
+                               expansion_factor,
+                               flag_comoving,
+                               flag_force_periodic);
+
+            // Compute the local minima of each array we will exchange later
+            if(x_i<x_min) x_min=x_i;
+            if(y_i<y_min) y_min=y_i;
+            if(z_i<z_min) z_min=z_i;
+            if(v_i<v_min) v_min=v_i;
+            if(w_i<w_min) w_min=w_i;
+
+            if(z_i>0){
+               double radius2_norm;
+               double radius_kernel;
+               double part_pos_x;
+               double part_pos_y;
+               int    kx_min;
+               int    kx_max;
+               int    ky_min;
+               int    ky_max;
+               f_i=compute_f_stretch(d_xyz,z_i,flag_plane_parallel);
+               set_pixel_space(h_i,
+                               x_i,
+                               y_i,
+                               f_i,
+                               xmin,
+                               ymin,
+                               FOV_x,
+                               FOV_y,
+                               frustrum_offset,
+                               pixel_size_x,
+                               pixel_size_y,
+                               radius_kernel_norm,
+                               &radius2_norm,
+                               &radius_kernel,
+                               &part_pos_x,
+                               &part_pos_y,
+                               &kx_min,
+                               &kx_max,
+                               &ky_min,
+                               &ky_max);
+               kx_min=MAX(kx_min,0);
+               kx_max=MIN(kx_max,nx-1);
+               if(kx_min<=i_x_max_rank[rank_to] && kx_max>=i_x_min_rank[rank_to]){
+                  x_buffer[i_particle_rank]=x_i;
+                  y_buffer[i_particle_rank]=y_i;
+                  z_buffer[i_particle_rank]=z_i;
+                  h_buffer[i_particle_rank]=h_i;
+                  f_buffer[i_particle_rank]=f_i;
+                  w_buffer[i_particle_rank]=w_i;
+                  v_buffer[i_particle_rank]=v_i;
+                  i_particle_rank++;
+               }
+            }
+         }
+         j_particle+=n_particles_species;
+       }
+     }
+
+     // Perform exchanges
+     size_t n_exchange;
+     exchange_ring_buffer(x_buffer,
+                          sizeof(float),
+                          n_rank_local[i_rank],
+                          &((*x)[j_particle_rank]),
+                          &n_exchange,
+                          i_rank);
+     exchange_ring_buffer(y_buffer,
+                          sizeof(float),
+                          n_rank_local[i_rank],
+                          &((*y)[j_particle_rank]),
+                          &n_exchange,
+                          i_rank);
+     exchange_ring_buffer(z_buffer,
+                          sizeof(float),
+                          n_rank_local[i_rank],
+                          &((*z)[j_particle_rank]),
+                          &n_exchange,
+                          i_rank);
+     exchange_ring_buffer(h_buffer,
+                          sizeof(float),
+                          n_rank_local[i_rank],
+                          &((*h_smooth)[j_particle_rank]),
+                          &n_exchange,
+                          i_rank);
+     exchange_ring_buffer(f_buffer,
+                          sizeof(float),
+                          n_rank_local[i_rank],
+                          &((*f_stretch)[j_particle_rank]),
+                          &n_exchange,
+                          i_rank);
+     exchange_ring_buffer(w_buffer,
+                          sizeof(float),
+                          n_rank_local[i_rank],
+                          &((*weight)[j_particle_rank]),
+                          &n_exchange,
+                          i_rank);
+     exchange_ring_buffer(v_buffer,
+                          sizeof(float),
+                          n_rank_local[i_rank],
+                          &((*value)[j_particle_rank]),
+                          &n_exchange,
+                          i_rank);
+     j_particle_rank+=n_exchange;
+  }
   SID_log("Done.",SID_LOG_CLOSE);
 
-  SID_log("Communicating arrays...",SID_LOG_OPEN);
-  for(i_rank=0,k_particle=0;i_rank<SID.n_proc;i_rank++){
-     SID_log("Rank %d of %d...",SID_LOG_OPEN,i_rank+1,SID.n_proc);
+  // Sort the local particles by position
+  merge_sort((*z),(size_t)(*n_particles),z_index,SID_FLOAT,SORT_COMPUTE_INDEX,FALSE);
 
-     // Communicate the particle ranges for the i_rank'th rank
-     SID_log("Broadcasting range...",SID_LOG_OPEN);
-     k_particle_start=i_particle_start;
-     k_particle_stop =i_particle_stop;
-     n_particles_rank=n_particles_local;
-     SID_Bcast(&k_particle_start,sizeof(size_t),i_rank,SID.COMM_WORLD);
-     SID_Bcast(&k_particle_stop, sizeof(size_t),i_rank,SID.COMM_WORLD);
-     SID_Bcast(&n_particles_rank,sizeof(size_t),i_rank,SID.COMM_WORLD);
-     SID_log("Done.",SID_LOG_CLOSE);
-
-     // Initialize the exchange buffers
-     SID_log("Initializing arrays...",SID_LOG_OPEN);
-     for(i_particle=0;i_particle<n_particles_rank;i_particle++){
-        x_buffer[i_particle]=x_min;
-        y_buffer[i_particle]=y_min;
-        z_buffer[i_particle]=z_min;
-        h_buffer[i_particle]=0.;
-        f_buffer[i_particle]=0.;
-     }
-     SID_log("Done.",SID_LOG_CLOSE);
-
-     // Search local particles for those which belong on the i_rank'th rank
-     SID_log("Scanning particles...",SID_LOG_OPEN);
-     for(i_type=0,j_particle=0;i_type<N_GADGET_TYPE;i_type++){
-        if(ptype_used[i_type] && ADaPS_exist(plist->data,"n_%s",plist->species[i_type])){
-           n_particles_species=((size_t *)ADaPS_fetch(plist->data,"n_%s",plist->species[i_type]))[0];
-           for(i_particle=0;i_particle<n_particles_species;i_particle++){
-   
-              // Set the properties of the particle to be mapped
-              set_particle_map_quantities(&mq,TRUE,i_particle,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
-
-              // Transform particle to render-coordinates
-              transform_particle(&x_i,
-                                 &y_i,
-                                 &z_i,
-                                 x_o,
-                                 y_o,
-                                 z_o,
-                                 x_hat,
-                                 y_hat,
-                                 z_hat,
-                                 d_xyz,
-                                 stereo_offset,
-                                 theta,
-                                 theta_roll,
-                                 box_size,
-                                 expansion_factor,
-                                 flag_comoving,
-                                 flag_force_periodic);
-
-              // We only use visible particles
-              if(z_i>0){
-
-                 // Determine the global index of this particle
-                 k_particle=z_decomp_index[j_particle]-k_particle_start;
-
-                 if(k_particle>=0 && k_particle<n_particles_rank){
-
-                    // Generate stretch factors
-                    switch(flag_plane_parallel){
-                       case FALSE:
-                          if(z_i>0.)
-                             f_i=d_xyz/z_i;
-                          else
-                             f_i=0.;
-                          break;
-                       case TRUE:
-                          f_i=1.;
-                          break;
-                    }
-
-                    // Populate buffers
-                    x_buffer[k_particle]=x_i;
-                    y_buffer[k_particle]=y_i;
-                    z_buffer[k_particle]=z_i;
-                    h_buffer[k_particle]=h_i;
-                    f_buffer[k_particle]=f_i;
-                    v_buffer[k_particle]=v_i;
-                    w_buffer[k_particle]=w_i;
-                    n_particles_init++;
-                 }
-                 j_particle++;
-              }
-           }
-        }
-     }
-     SID_log("Done.",SID_LOG_CLOSE);
-
-     // Perform buffer exchange
-     SID_log("Performing exchange...",SID_LOG_OPEN);
-     SID_Reduce(x_buffer,(*x),        n_particles_rank,SID_FLOAT,SID_MAX,i_rank,SID.COMM_WORLD);
-     SID_Reduce(y_buffer,(*y),        n_particles_rank,SID_FLOAT,SID_MAX,i_rank,SID.COMM_WORLD);
-     SID_Reduce(z_buffer,(*z),        n_particles_rank,SID_FLOAT,SID_MAX,i_rank,SID.COMM_WORLD);
-     SID_Reduce(h_buffer,(*h_smooth), n_particles_rank,SID_FLOAT,SID_MAX,i_rank,SID.COMM_WORLD);
-     SID_Reduce(f_buffer,(*f_stretch),n_particles_rank,SID_FLOAT,SID_MAX,i_rank,SID.COMM_WORLD);
-     SID_Reduce(v_buffer,(*value),    n_particles_rank,SID_FLOAT,SID_MAX,i_rank,SID.COMM_WORLD);
-     SID_Reduce(w_buffer,(*weight),   n_particles_rank,SID_FLOAT,SID_MAX,i_rank,SID.COMM_WORLD);
-     SID_log("Done.",SID_LOG_CLOSE);
-     SID_log("Done.",SID_LOG_CLOSE);
-  }
-  SID_free(SID_FARG z_decomp_index);
+  // Clean-up
+  SID_free(SID_FARG n_rank);
+  SID_free(SID_FARG n_rank_local);
+  SID_free(SID_FARG i_x_min_rank);
+  SID_free(SID_FARG i_x_max_rank);
   SID_free(SID_FARG x_buffer);
   SID_free(SID_FARG y_buffer);
   SID_free(SID_FARG z_buffer);
@@ -855,14 +1046,6 @@ void init_make_map(plist_info  *plist,
   SID_free(SID_FARG v_buffer);
   SID_free(SID_FARG w_buffer);
   free_particle_map_quantities(&mq);
-  (*n_particles)=n_particles_local;
-  SID_log("Done.",SID_LOG_CLOSE);
-
-  // Sanity check
-  SID_Allreduce(SID_IN_PLACE,&n_particles_init,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
-  if(n_particles_init!=n_visible)
-    SID_trap_error("The number of paritlces initialized does not equal the number visible (ie. %zd!=%zd).",ERROR_LOGIC,
-                   n_particles_init,n_visible);
 
   SID_log("Done.",SID_LOG_CLOSE);
 }
@@ -880,8 +1063,9 @@ void render_frame(render_info  *render){
   double     pixel_size_x;
   double     pixel_size_y;
   double     pixel_area;
-  float      *weight;
-  float      *value;
+  float     *weight;
+  float     *value;
+  size_t    *z_index;
   int        kx_min;
   int        kx_max;
   int        ky_min;
@@ -1132,13 +1316,25 @@ void render_frame(render_info  *render){
     if(fabs((pixel_size_x-pixel_size_y)/pixel_size_x)>1e-4)
       SID_log_warning("pixels are not square by %7.3f%%",0,fabs((pixel_size_x-pixel_size_y)/pixel_size_x)*1e2);
 
+    // Generate the smoothing kernal
+    set_sph_kernel(plist,SPH_KERNEL_GADGET|SPH_KERNEL_2D);
+    kernel_radius      =(double *)ADaPS_fetch(plist->data, "sph_kernel_radius");
+    kernel_table       =(double *)ADaPS_fetch(plist->data, "sph_kernel_2d");  
+    kernel_table_avg   =((double *)ADaPS_fetch(plist->data,"sph_kernel_2d_dA"))[0];  
+    radius_kernel_norm =kernel_radius[N_KERNEL_TABLE];
+    radius_kernel_norm2=radius_kernel_norm*radius_kernel_norm;
+
     // Initialize make_map
     init_make_map(plist,
                   parameter,
                   transfer,
                   x_o,y_o,z_o,
                   x_c,y_c,z_c,
-                  box_size,FOV_x,
+                  box_size,FOV_x,FOV_y,
+                  xmin,ymin,frustrum_offset,
+                  pixel_size_x,pixel_size_y,
+                  radius_kernel_norm,
+                  nx,ny,
                   mode,
                   expansion_factor,
                   near_field,
@@ -1153,6 +1349,7 @@ void render_frame(render_info  *render){
                   &f_stretch,
                   &value,
                   &weight,
+                  &z_index,
                   &n_particles);
 
     // Allocate and initialize image arrays
@@ -1184,14 +1381,6 @@ void render_frame(render_info  *render){
                pow(d_y_o,2.)+
                pow(d_z_o,2.));
 
-    // Generate the smoothing kernal
-    set_sph_kernel(plist,SPH_KERNEL_GADGET|SPH_KERNEL_2D);
-    kernel_radius      =(double *)ADaPS_fetch(plist->data, "sph_kernel_radius");
-    kernel_table       =(double *)ADaPS_fetch(plist->data, "sph_kernel_2d");  
-    kernel_table_avg   =((double *)ADaPS_fetch(plist->data,"sph_kernel_2d_dA"))[0];  
-    radius_kernel_norm =kernel_radius[N_KERNEL_TABLE];
-    radius_kernel_norm2=radius_kernel_norm*radius_kernel_norm;
-
     // Perform projection
     size_t i_report_next;
     int    i_report=1;
@@ -1217,6 +1406,7 @@ void render_frame(render_info  *render){
                            frustrum_offset,
                            pixel_size_x,
                            pixel_size_y,
+                           radius_kernel_norm,
                            &radius2_norm,
                            &radius_kernel,
                            &part_pos_x,
