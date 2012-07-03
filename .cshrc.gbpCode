@@ -64,6 +64,11 @@ setenv USE_GETLINE 0
 #  system's platform here.
 setenv GBP_VALGRIND_PLAT x86-darwin
 
+# Set a default for the GBP_MPI path
+if (!($?GBP_MPI)) then
+  setenv GBP_MPI '/usr/'
+endif
+
 #----------------------------------------------------------------------
 # Swinburne cluster
 #----------------------------------------------------------------------
@@ -81,6 +86,7 @@ if ( $HOSTTYPE == 'x86_64-linux' ) then
 # Intel Macintosh
 #----------------------------------------------------------------------
 else if ( $HOSTTYPE == 'intel-mac' ) then
+  setenv GBP_VALGRIND_PLAT x86-darwin
   setenv USE_GETLINE 1
 else
   echo 'Unsupported HOSTTYPE in .cshrc.gbpCode'

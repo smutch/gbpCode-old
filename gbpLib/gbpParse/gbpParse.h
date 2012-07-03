@@ -12,9 +12,9 @@ extern "C" {
 #endif
 
 #if USE_GETLINE
-  #if USE_MPI==0
+//  #if USE_MPI==0
      int getline(char **string,size_t *n,FILE *fp);
-  #endif
+//  #endif
 #endif
 
 int count_lines(FILE *fp);
