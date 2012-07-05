@@ -20,8 +20,8 @@ void set_exchange_ring_ranks(int *rank_to,
     else if((*rank_from)>=SID.n_proc) (*rank_from)-=SID.n_proc;
   }
   else{
-    (*rank_to)  =i_rank;
-    (*rank_from)=i_rank;
+    (*rank_to)  =SID.My_rank;
+    (*rank_from)=SID.My_rank;
   }
 
 }
