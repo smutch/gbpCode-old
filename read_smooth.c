@@ -285,7 +285,8 @@ fprintf(stderr,"size=%zd",sizeof(smooth_header_info));
                unit_name);
      }
      SID_log("",SID_LOG_CLOSE|SID_LOG_NOPRINT);
-/**/   
+/**/  
+     SID_free(SID_FARG ids_index); 
      SID_log("Done.",SID_LOG_CLOSE);
   }
   else
