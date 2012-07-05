@@ -174,9 +174,11 @@ struct render_info{
   int          flag_comoving;
   int          flag_force_periodic;
   int          flag_read_marked;
+  int          flag_add_absorption;
   plist_info   plist;
   double       h_Hubble;
   double       kappa_absorption;
+  interp_info *kappa_transfer;
   double       near_field;
   int          mode;
   int          sealed; // TRUE if the render is fully initialized
@@ -208,6 +210,7 @@ void write_frame(render_info *render,int frame,int mode);
 void read_frame(render_info *render,int frame);
 void set_frame(camera_info *camera);
 void set_render_scale(render_info *render,double RGB_min,double RGB_max,double Y_min,double Y_max,double Z_min,double Z_max);
+int  set_transfer_function(char *line,int i_word,interp_info **return_interp);
 
 void render_frame(render_info  *render);
 

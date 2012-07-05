@@ -84,7 +84,8 @@ void free_perspective_interp(perspective_interp_info **perspective_interp){
   free_interpolate(SID_FARG (*perspective_interp)->p_o[2]);
   free_interpolate(SID_FARG (*perspective_interp)->theta);
   free_interpolate(SID_FARG (*perspective_interp)->FOV);
-  free_interpolate(SID_FARG (*perspective_interp)->zeta);
+  free_interpolate(SID_FARG (*perspective_interp)->FOV);
+  free_interpolate(SID_FARG (*perspective_interp)->radius);
   free_interpolate(SID_FARG (*perspective_interp)->phi);
   free_interpolate(SID_FARG (*perspective_interp)->time);
   SID_free(SID_FARG (*perspective_interp));
@@ -274,6 +275,10 @@ void seal_scenes(scene_info *scenes){
       }
       init_interpolate(x,y,current_scene->n_perspectives,interp_type,&(current_scene->interp->time));
       current_scene->sealed=TRUE;
+
+      // Clean-up
+      SID_free(SID_FARG x);
+      SID_free(SID_FARG y);
     }
     current_scene=current_scene->next;
   } 
@@ -452,10 +457,12 @@ void init_render(render_info **render){
   (*render)->snap_a_list        = NULL;
   (*render)->h_Hubble           = 1.;
   (*render)->near_field         = 0.;
-  (*render)->kappa_absorption   =-1.; // -ve value means absorption is ignored by default
+  (*render)->kappa_absorption   =-1.;
+  (*render)->kappa_transfer     = NULL;
   (*render)->flag_read_marked   = FALSE;
   (*render)->flag_comoving      = TRUE;
   (*render)->flag_force_periodic= FALSE;
+  (*render)->flag_add_absorption= FALSE;
   (*render)->sealed             = FALSE;
   (*render)->mode               = MAKE_MAP_LOG;
 
@@ -599,7 +606,10 @@ int set_render_state(render_info *render,int frame,int mode){
          read_mark_file(&(render->plist),"mark",render->mark_filename_root,MARK_LIST_ONLY);
          render->flag_read_marked=FALSE;
       }
-      read_gadget_binary_render(render->snap_filename_root,render->snap_number,&(render->plist));
+      if(render->flag_add_absorption)
+         read_gadget_binary(render->snap_filename_root,render->snap_number,&(render->plist),READ_GADGET_DEFAULT);
+      else
+         read_gadget_binary_render(render->snap_filename_root,render->snap_number,&(render->plist));
       render->h_Hubble=((double *)ADaPS_fetch(render->plist.data,"h_Hubble"))[0];
       read_smooth(&(render->plist),render->smooth_filename_root,render->snap_number,SMOOTH_DEFAULT);
       render->snap_number_read=render->snap_number;
@@ -730,8 +740,18 @@ void parse_render_file(render_info **render, char *filename){
           grab_double(line,i_word++,&((*render)->h_Hubble));
         else if(!strcmp(parameter,"near_field"))
           grab_double(line,i_word++,&((*render)->near_field));
-        else if(!strcmp(parameter,"kappa_absorption"))
+        else if(!strcmp(parameter,"kappa_absorption")){
+          if((*render)->flag_add_absorption)
+             SID_trap_error("There are conflicting absorption criteria.",ERROR_LOGIC);
+          (*render)->flag_add_absorption=TRUE;
           grab_double(line,i_word++,&((*render)->kappa_absorption));
+        }
+        else if(!strcmp(parameter,"kappa_transfer")){
+          if((*render)->flag_add_absorption)
+             SID_trap_error("There are conflicting absorption criteria.",ERROR_LOGIC);
+          (*render)->flag_add_absorption=TRUE;
+          i_word=set_transfer_function(line,i_word,&((*render)->kappa_transfer));
+        }
         else if(!strcmp(parameter,"snap_number"))
           grab_int(line,i_word++,&((*render)->snap_number));
         else if(!strcmp(parameter,"flag_comoving"))
@@ -767,25 +787,8 @@ void parse_render_file(render_info **render, char *filename){
             grab_double(line,i_word++,&d_value);
             (*render)->camera->RGB_range[1]=d_value;
           }
-          else if(!strcmp(variable,"RGB_gamma")){
-            n_transfer=count_words(line)-i_word+1;
-            if(n_transfer>2){
-              transfer_array_x=(double *)SID_malloc(sizeof(double)*n_transfer);
-              transfer_array_y=(double *)SID_malloc(sizeof(double)*n_transfer);
-              if((*render)->camera->RGB_gamma!=NULL)
-                free_interpolate(SID_FARG (*render)->camera->RGB_gamma);
-              for(j_word=0;j_word<n_transfer;j_word++){
-                grab_double(line,i_word++,&d_value);
-                transfer_array_x[j_word]=255.*(double)j_word/(double)(n_transfer-1);
-                transfer_array_y[j_word]=d_value;
-              }
-              init_interpolate(transfer_array_x,transfer_array_y,n_transfer,gsl_interp_cspline,&((*render)->camera->RGB_gamma));
-              SID_free(SID_FARG transfer_array_x);
-              SID_free(SID_FARG transfer_array_y);
-            }
-            else
-              SID_log_warning("Gamma arrays bust be >2 elements long.",ERROR_LOGIC);
-          }
+          else if(!strcmp(variable,"RGB_gamma"))
+            i_word=set_transfer_function(line,i_word,&((*render)->camera->RGB_gamma));
           else if(!strcmp(variable,"RGB_transfer")){
             grab_word(line,i_word++,parameter);
             grab_word(line,i_word++,temp_word);
@@ -795,47 +798,12 @@ void parse_render_file(render_info **render, char *filename){
               flag=FALSE;
             else
               SID_trap_error("log/linear flag not set to 'log' or 'linear' {%s}",ERROR_LOGIC,temp_word);
-            n_transfer      =count_words(line)-i_word+1;
-            SID_log("parameter ={%s}",SID_LOG_COMMENT,parameter);
-            SID_log("log/lin   ={%s}",SID_LOG_COMMENT,temp_word);
-            SID_log("n_transfer=%d",SID_LOG_COMMENT,n_transfer);
-            if(n_transfer>2){
-              n_transfer+=2; // We need to add low/hi interpolation anchors
-              transfer_array_x=(double *)SID_malloc(sizeof(double)*n_transfer);
-              transfer_array_y=(double *)SID_malloc(sizeof(double)*n_transfer);
-              for(j_word=1;j_word<n_transfer-1;j_word++){
-                grab_word(line,i_word++,temp_word);
-                search_and_replace(temp_word,","," ");
-                if(count_words(temp_word)!=2)
-                  SID_trap_error("Error in formatting of transfer array {%s}{%s}",ERROR_LOGIC,line,temp_word);
-                grab_double(temp_word,1,&(transfer_array_x[j_word]));
-                grab_double(temp_word,2,&(transfer_array_y[j_word]));
-                SID_log("%le %le",SID_LOG_COMMENT,transfer_array_x[j_word],transfer_array_y[j_word]);
-              }
-              // Create low/hi interpolation anchors
-              transfer_array_y[0]           =transfer_array_y[1];
-              transfer_array_y[n_transfer-1]=transfer_array_y[n_transfer-2];
-              if(transfer_array_x[1]<0.)
-                transfer_array_x[0]=10.*transfer_array_x[1];
-              else
-                transfer_array_x[0]=0.1*transfer_array_x[1];
-              if(transfer_array_x[n_transfer-2]<0.)
-                transfer_array_x[n_transfer-1]= 0.1*transfer_array_x[n_transfer-2];
-              else
-                transfer_array_x[n_transfer-1]=10.0*transfer_array_x[n_transfer-2];
-              // Create interpolation array
-              init_interpolate(transfer_array_x,transfer_array_y,n_transfer,gsl_interp_cspline,&temp_interp);
-              // Add to the transfer function list
-              ADaPS_store(&((*render)->camera->RGB_transfer),(void *)temp_interp,parameter,ADaPS_DEFAULT);
-              // If this is a log-defined transfer function, store that fact
-              if(flag)
-                ADaPS_store(&((*render)->camera->RGB_transfer),(void *)&flag,"%s_log",ADaPS_SCALAR_INT,parameter);
-              // Free temporary arrays
-              SID_free(SID_FARG transfer_array_x);
-              SID_free(SID_FARG transfer_array_y);
-            }
-            else
-              SID_log_warning("Transfer arrays must be >2 elements long.",ERROR_LOGIC);
+            i_word=set_transfer_function(line,i_word,&temp_interp);
+            // Add to the transfer function list
+            ADaPS_store(&((*render)->camera->RGB_transfer),(void *)temp_interp,parameter,ADaPS_DEFAULT);
+            // If this is a log-defined transfer function, store that fact
+            if(flag)
+              ADaPS_store(&((*render)->camera->RGB_transfer),(void *)&flag,"%s_log",ADaPS_SCALAR_INT,parameter);
           }
           else if(!strcmp(variable,"Y_param")){
             grab_word(line,i_word++,c_value);
@@ -1053,6 +1021,8 @@ void parse_render_file(render_info **render, char *filename){
   fclose(fp);
   if(!(*render)->sealed)
     seal_render(*render);
+  if(line!=NULL)
+     SID_free(SID_FARG line);
   SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
   SID_log("Done.",SID_LOG_CLOSE);
 }

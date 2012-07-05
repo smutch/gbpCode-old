@@ -48,7 +48,6 @@ int set_pixel_space(float   h_i,
                     double  ymin,
                     double  FOV_x,
                     double  FOV_y,
-                    double  frustrum_offset,
                     double  pixel_size_x,
                     double  pixel_size_y,
                     double  radius_kernel_norm,
@@ -68,7 +67,6 @@ int set_pixel_space(float   h_i,
                     double  ymin,
                     double  FOV_x,
                     double  FOV_y,
-                    double  frustrum_offset,
                     double  pixel_size_x,
                     double  pixel_size_y,
                     double  radius_kernel_norm,
@@ -86,14 +84,10 @@ int set_pixel_space(float   h_i,
    (*part_pos_y)   =(double)y_i*(double)f_i;
    (*radius2_norm) =1./(part_h_xy*part_h_xy);
    (*radius_kernel)=radius_kernel_norm*part_h_xy;
-   (*kx_min)       =(int)(((*part_pos_x)-(*radius_kernel)-xmin+frustrum_offset)/pixel_size_x);
-   (*kx_max)       =(int)(((*part_pos_x)+(*radius_kernel)-xmin+frustrum_offset)/pixel_size_x+ONE_HALF);
+   (*kx_min)       =(int)(((*part_pos_x)-(*radius_kernel)-xmin)/pixel_size_x);
+   (*kx_max)       =(int)(((*part_pos_x)+(*radius_kernel)-xmin)/pixel_size_x+ONE_HALF);
    (*ky_min)       =(int)(((*part_pos_y)-(*radius_kernel)-ymin)/pixel_size_y);
    (*ky_max)       =(int)(((*part_pos_y)+(*radius_kernel)-ymin)/pixel_size_y+ONE_HALF);
-   if((*kx_min)<FOV_x && (*ky_min)<FOV_y && (*kx_max)>0. && (*ky_min)>0.)
-      return(TRUE);
-   else
-      return(FALSE);
 }
 
 void transform_particle(GBPREAL *x_i,
@@ -477,7 +471,6 @@ void init_make_map(plist_info  *plist,
                    double       FOV_y,
                    double       xmin,
                    double       ymin,
-                   double       frustrum_offset,
                    double       pixel_size_x,
                    double       pixel_size_y,
                    double       radius_kernel_norm,
@@ -500,6 +493,8 @@ void init_make_map(plist_info  *plist,
                    float       **value,
                    float       **weight,
                    size_t      **z_index,
+                   int          *i_x_min_local_return,
+                   int          *i_x_max_local_return,
                    size_t       *n_particles);
 void init_make_map(plist_info  *plist,
                    char        *parameter,
@@ -515,7 +510,6 @@ void init_make_map(plist_info  *plist,
                    double       FOV_y,
                    double       xmin,
                    double       ymin,
-                   double       frustrum_offset,
                    double       pixel_size_x,
                    double       pixel_size_y,
                    double       radius_kernel_norm,
@@ -538,6 +532,8 @@ void init_make_map(plist_info  *plist,
                    float       **value,
                    float       **weight,
                    size_t      **z_index,
+                   int          *i_x_min_local_return,
+                   int          *i_x_max_local_return,
                    size_t       *n_particles){
   int     *ptype_used;
   int      i_type;
@@ -624,8 +620,8 @@ void init_make_map(plist_info  *plist,
      double Dz_stereo;
      double theta_roll_stereo=0.;
      SID_log("Forcing theta=0 in stereo projection.",SID_LOG_COMMENT);
-     Dx_stereo=-stereo_offset*cos(theta_roll_stereo)*d_y_o/d_xy;
-     Dy_stereo=-stereo_offset*cos(theta_roll_stereo)*d_x_o/d_xy;
+     Dx_stereo=stereo_offset*cos(theta_roll_stereo)*d_y_o/d_xy;
+     Dy_stereo=stereo_offset*cos(theta_roll_stereo)*d_x_o/d_xy;
      if(theta_roll_stereo>0.)
         Dz_stereo=sqrt(stereo_offset*stereo_offset-Dx_stereo*Dx_stereo-Dy_stereo*Dy_stereo);
      else if(theta_roll_stereo==0.)
@@ -640,13 +636,6 @@ void init_make_map(plist_info  *plist,
      z_c+=Dz_stereo;
   }
   
-  // Initialize the local minima of each array we will exchange later
-  float x_min=FLT_MAX;
-  float y_min=FLT_MAX;
-  float z_min=FLT_MAX;
-  float v_min=FLT_MAX;
-  float w_min=FLT_MAX;
-
   // Determine how many particles are contributing to each 
   //    column of the image
   float   x_i;
@@ -656,10 +645,10 @@ void init_make_map(plist_info  *plist,
   float   f_i;
   float   v_i;
   float   w_i;
-  size_t *n_column;
   int     i_x;
-  size_t n_visible;
-  size_t n_visible_local;
+  size_t *n_column;
+  size_t  n_visible;
+  size_t  n_visible_local=0;
   n_column=(size_t *)SID_calloc(sizeof(size_t)*nx);
   SID_log("Compute slab domain decomposition...",SID_LOG_OPEN|SID_LOG_TIMER);
   for(i_type=0,j_particle=0;i_type<N_GADGET_TYPE;i_type++){
@@ -689,12 +678,6 @@ void init_make_map(plist_info  *plist,
                             flag_comoving,
                             flag_force_periodic);
 
-         // Compute the local minima of each array we will exchange later
-         if(x_i<x_min) x_min=x_i;
-         if(y_i<y_min) y_min=y_i;
-         if(z_i<z_min) z_min=z_i;
-         if(v_i<v_min) v_min=v_i;
-         if(w_i<w_min) w_min=w_i;
 
          if(z_i>0){
             double radius2_norm;
@@ -705,6 +688,7 @@ void init_make_map(plist_info  *plist,
             int    kx_max;
             int    ky_min;
             int    ky_max;
+            int    n_ky;
             f_i=compute_f_stretch(d_xyz,z_i,flag_plane_parallel);
             set_pixel_space(h_i,
                             x_i,
@@ -714,7 +698,6 @@ void init_make_map(plist_info  *plist,
                             ymin,
                             FOV_x,
                             FOV_y,
-                            frustrum_offset,
                             pixel_size_x,
                             pixel_size_y,
                             radius_kernel_norm,
@@ -728,8 +711,9 @@ void init_make_map(plist_info  *plist,
                             &ky_max);
             kx_min=MAX(kx_min,0);
             kx_max=MIN(kx_max,nx-1);
+            n_ky  =ky_max-ky_min+1;
             for(i_x=kx_min;i_x<=kx_max;i_x++)
-               n_column[i_x]++;
+               n_column[i_x]+=n_ky;
             if(kx_min<=kx_max)
                n_visible_local++;
          }
@@ -737,27 +721,24 @@ void init_make_map(plist_info  *plist,
       j_particle+=n_particles_species;
     }
   }
-  SID_Allreduce(SID_IN_PLACE,n_column,nx,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
-  SID_Allreduce(&n_visible_local,&n_visible,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
-  SID_log("No. of visible particles=%zd",SID_LOG_COMMENT,n_visible);
+  SID_Allreduce(SID_IN_PLACE,    n_column,  nx,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
+  SID_Allreduce(&n_visible_local,&n_visible,1, SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
 
   // Create cumulative histogram
   for(i_x=1;i_x<nx;i_x++)
      n_column[i_x]+=n_column[i_x-1];
 
-  // Decide on on a range of columns to assign to each rank
+  // Decide on a range of columns to assign to each rank
   int    i_x_min_local;
   int    i_x_max_local;
   size_t norm     =n_column[nx-1];
   size_t n_used   =0;
   int    i_x_start=1;
-  int    i_x_min_send;
-  int    i_x_max_send;
   int    i_rank;
   size_t n_target;
   for(i_rank=0,i_x=0;i_rank<SID.n_proc;i_rank++){
      i_x_start=i_x;
-     n_target =(size_t)((float)(norm-n_used)/(float)(SID.n_proc-i_rank));
+     n_target =n_used+(size_t)((float)(norm-n_used)/(float)(SID.n_proc-i_rank));
      for(;i_x<nx-1 && n_column[i_x]<n_target;) i_x++;
      if(i_rank==SID.My_rank){
        i_x_min_local=i_x_start;
@@ -766,11 +747,16 @@ void init_make_map(plist_info  *plist,
      n_used=n_column[i_x];
      i_x++;
   }
+  if(SID.I_am_last_rank)
+     if(i_x_max_local<nx)
+        i_x_max_local=nx-1;
   SID_log("Done.",SID_LOG_CLOSE);
 
   // Create a couple arrays storing the domain decomposition for all
-  int    *i_x_min_rank;
-  int    *i_x_max_rank;
+  int  i_x_min_send;
+  int  i_x_max_send;
+  int *i_x_min_rank;
+  int *i_x_max_rank;
   i_x_min_rank=(int *)SID_malloc(sizeof(int)*SID.n_proc);
   i_x_max_rank=(int *)SID_malloc(sizeof(int)*SID.n_proc);
   for(i_rank=0;i_rank<SID.n_proc;i_rank++){
@@ -785,8 +771,10 @@ void init_make_map(plist_info  *plist,
   // Count the number of particles contributing to each rank
   size_t *n_rank;
   size_t *n_rank_local;
+  size_t  n_particles_local;
   n_rank      =(size_t *)SID_calloc(sizeof(size_t)*SID.n_proc);
   n_rank_local=(size_t *)SID_calloc(sizeof(size_t)*SID.n_proc);
+  SID_log("Count particles...",SID_LOG_OPEN|SID_LOG_TIMER);
   for(i_type=0,j_particle=0;i_type<N_GADGET_TYPE;i_type++){
     if(ptype_used[i_type] && ADaPS_exist(plist->data,"n_%s",plist->species[i_type])){
       n_particles_species=((size_t *)ADaPS_fetch(plist->data,"n_%s",plist->species[i_type]))[0];
@@ -814,13 +802,6 @@ void init_make_map(plist_info  *plist,
                             flag_comoving,
                             flag_force_periodic);
 
-         // Compute the local minima of each array we will exchange later
-         if(x_i<x_min) x_min=x_i;
-         if(y_i<y_min) y_min=y_i;
-         if(z_i<z_min) z_min=z_i;
-         if(v_i<v_min) v_min=v_i;
-         if(w_i<w_min) w_min=w_i;
-
          if(z_i>0){
             double radius2_norm;
             double radius_kernel;
@@ -839,7 +820,6 @@ void init_make_map(plist_info  *plist,
                             ymin,
                             FOV_x,
                             FOV_y,
-                            frustrum_offset,
                             pixel_size_x,
                             pixel_size_y,
                             radius_kernel_norm,
@@ -853,24 +833,37 @@ void init_make_map(plist_info  *plist,
                             &ky_max);
             kx_min=MAX(kx_min,0);
             kx_max=MIN(kx_max,nx-1);
-            for(i_x=kx_min;i_x<=kx_max;i_x++)
-               n_column[i_x]++;
-            if(kx_min<=kx_max)
-               n_visible_local++;
+            for(i_rank=0;i_rank<SID.n_proc;i_rank++){
+               if(kx_min<=i_x_max_rank[i_rank] && kx_max>=i_x_min_rank[i_rank])
+                  n_rank_local[i_rank]++;
+            }
          }
       }
       j_particle+=n_particles_species;
     }
   }
   SID_Allreduce(n_rank_local,n_rank,SID.n_proc,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
-  (*n_particles)=n_rank[SID.My_rank];
+  n_particles_local=n_rank[SID.My_rank];
+  (*n_particles)   =n_particles_local;
   SID_free(SID_FARG n_column);
+  SID_log("Done.",SID_LOG_CLOSE);
+
+  // Report decomposition results
+  if(SID.n_proc>1){
+     SID_log("Results of domain decomposition:",SID_LOG_OPEN);
+     for(i_rank=0;i_rank<SID.n_proc;i_rank++)
+        SID_log("Rank %03d image range: %5d->%5d n_particles=%zd",SID_LOG_COMMENT,i_rank,i_x_min_rank[i_rank],i_x_max_rank[i_rank],n_rank[i_rank]);
+     SID_log("",SID_LOG_CLOSE|SID_LOG_NOPRINT);
+  }
 
   // Determine the needed size of the comm buffers
   size_t n_buffer;
+  size_t n_buffer_max;
   calc_max(n_rank_local,&n_buffer,SID.n_proc,SID_SIZE_T,CALC_MODE_DEFAULT);
+  SID_Allreduce(&n_buffer,&n_buffer_max,1,SID_SIZE_T,SID_MAX,SID.COMM_WORLD);
 
   // Broadcast particles
+  SID_log("Broadcast particles...(buffer=%zd particles)...",SID_LOG_OPEN|SID_LOG_TIMER,n_buffer_max);
   float  *x_buffer;
   float  *y_buffer;
   float  *z_buffer;
@@ -878,13 +871,13 @@ void init_make_map(plist_info  *plist,
   float  *f_buffer;
   float  *v_buffer;
   float  *w_buffer;
-  (*x)        =(float *)SID_malloc(sizeof(float)*(*n_particles));
-  (*y)        =(float *)SID_malloc(sizeof(float)*(*n_particles));
-  (*z)        =(float *)SID_malloc(sizeof(float)*(*n_particles));
-  (*h_smooth) =(float *)SID_malloc(sizeof(float)*(*n_particles));
-  (*f_stretch)=(float *)SID_malloc(sizeof(float)*(*n_particles));
-  (*value)    =(float *)SID_malloc(sizeof(float)*(*n_particles));
-  (*weight)   =(float *)SID_malloc(sizeof(float)*(*n_particles));
+  (*x)        =(float *)SID_malloc(sizeof(float)*n_particles_local);
+  (*y)        =(float *)SID_malloc(sizeof(float)*n_particles_local);
+  (*z)        =(float *)SID_malloc(sizeof(float)*n_particles_local);
+  (*h_smooth) =(float *)SID_malloc(sizeof(float)*n_particles_local);
+  (*f_stretch)=(float *)SID_malloc(sizeof(float)*n_particles_local);
+  (*value)    =(float *)SID_malloc(sizeof(float)*n_particles_local);
+  (*weight)   =(float *)SID_malloc(sizeof(float)*n_particles_local);
   x_buffer    =(float *)SID_malloc(sizeof(float)*n_buffer);
   y_buffer    =(float *)SID_malloc(sizeof(float)*n_buffer);
   z_buffer    =(float *)SID_malloc(sizeof(float)*n_buffer);
@@ -892,7 +885,6 @@ void init_make_map(plist_info  *plist,
   f_buffer    =(float *)SID_malloc(sizeof(float)*n_buffer);
   v_buffer    =(float *)SID_malloc(sizeof(float)*n_buffer);
   w_buffer    =(float *)SID_malloc(sizeof(float)*n_buffer);
-
   size_t i_particle_rank;
   size_t j_particle_rank=0;
   for(i_rank=0;i_rank<SID.n_proc;i_rank++){
@@ -901,7 +893,7 @@ void init_make_map(plist_info  *plist,
      set_exchange_ring_ranks(&rank_to,&rank_from,i_rank);
      i_particle_rank=0;
      for(i_type=0,j_particle=0;i_type<N_GADGET_TYPE;i_type++){
-       if(ptype_used[i_type] && ADaPS_exist(plist->data,"n_%s",plist->species[i_type])){
+       if(ptype_used[i_type]){
          n_particles_species=((size_t *)ADaPS_fetch(plist->data,"n_%s",plist->species[i_type]))[0];
          for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++){
 
@@ -927,13 +919,6 @@ void init_make_map(plist_info  *plist,
                                flag_comoving,
                                flag_force_periodic);
 
-            // Compute the local minima of each array we will exchange later
-            if(x_i<x_min) x_min=x_i;
-            if(y_i<y_min) y_min=y_i;
-            if(z_i<z_min) z_min=z_i;
-            if(v_i<v_min) v_min=v_i;
-            if(w_i<w_min) w_min=w_i;
-
             if(z_i>0){
                double radius2_norm;
                double radius_kernel;
@@ -952,7 +937,6 @@ void init_make_map(plist_info  *plist,
                                ymin,
                                FOV_x,
                                FOV_y,
-                               frustrum_offset,
                                pixel_size_x,
                                pixel_size_y,
                                radius_kernel_norm,
@@ -980,54 +964,60 @@ void init_make_map(plist_info  *plist,
          }
          j_particle+=n_particles_species;
        }
-     }
+     } // loop over particles
 
      // Perform exchanges
      size_t n_exchange;
      exchange_ring_buffer(x_buffer,
                           sizeof(float),
-                          n_rank_local[i_rank],
+                          n_rank_local[rank_to],
                           &((*x)[j_particle_rank]),
                           &n_exchange,
                           i_rank);
      exchange_ring_buffer(y_buffer,
                           sizeof(float),
-                          n_rank_local[i_rank],
+                          n_rank_local[rank_to],
                           &((*y)[j_particle_rank]),
                           &n_exchange,
                           i_rank);
      exchange_ring_buffer(z_buffer,
                           sizeof(float),
-                          n_rank_local[i_rank],
+                          n_rank_local[rank_to],
                           &((*z)[j_particle_rank]),
                           &n_exchange,
                           i_rank);
      exchange_ring_buffer(h_buffer,
                           sizeof(float),
-                          n_rank_local[i_rank],
+                          n_rank_local[rank_to],
                           &((*h_smooth)[j_particle_rank]),
                           &n_exchange,
                           i_rank);
      exchange_ring_buffer(f_buffer,
                           sizeof(float),
-                          n_rank_local[i_rank],
+                          n_rank_local[rank_to],
                           &((*f_stretch)[j_particle_rank]),
                           &n_exchange,
                           i_rank);
      exchange_ring_buffer(w_buffer,
                           sizeof(float),
-                          n_rank_local[i_rank],
+                          n_rank_local[rank_to],
                           &((*weight)[j_particle_rank]),
                           &n_exchange,
                           i_rank);
      exchange_ring_buffer(v_buffer,
                           sizeof(float),
-                          n_rank_local[i_rank],
+                          n_rank_local[rank_to],
                           &((*value)[j_particle_rank]),
                           &n_exchange,
                           i_rank);
      j_particle_rank+=n_exchange;
   }
+
+  // Sanity checks
+  if(j_particle_rank!=n_particles_local)
+     SID_trap_error("The wrong number of particles were received (ie. %zd!=%zd) on rank %d.",ERROR_LOGIC,
+                    j_particle_rank,n_particles_local,SID.My_rank);
+
   SID_log("Done.",SID_LOG_CLOSE);
 
   // Sort the local particles by position
@@ -1046,6 +1036,9 @@ void init_make_map(plist_info  *plist,
   SID_free(SID_FARG v_buffer);
   SID_free(SID_FARG w_buffer);
   free_particle_map_quantities(&mq);
+
+  (*i_x_min_local_return)=i_x_min_local;
+  (*i_x_max_local_return)=i_x_max_local;
 
   SID_log("Done.",SID_LOG_CLOSE);
 }
@@ -1147,7 +1140,6 @@ void render_frame(render_info  *render){
   double       h_Hubble;
   double       near_field;
   double       stereo_offset;
-  double       frustrum_offset;
   int          i_x,i_y;
   int         *mask_buffer;
 
@@ -1157,7 +1149,7 @@ void render_frame(render_info  *render){
   // Create an absorption look-up table to speed things up
   int          flag_add_absorption;
   double       absorption_coefficient;
-  double       inv_absorption_coefficient;
+  double       inv_kappa_absorption;
   double      *column_depth;
   double      *x_abs;
   double      *y_abs;
@@ -1165,17 +1157,47 @@ void render_frame(render_info  *render){
   int          i_abs;
   double       tau_max=10.;
   interp_info *abs_interp;
+  double       rho_abs_lo;
+  double       rho_abs_hi;
+  double       inv_kappa_abs_lo;
+  double       inv_kappa_abs_hi;
+  interp_info *inv_kappa_interp;
 
-  absorption_coefficient=render->kappa_absorption;
-  if(absorption_coefficient>0.){
-     flag_add_absorption=TRUE;
-     inv_absorption_coefficient=1./absorption_coefficient;
-  }
-  else{
-     flag_add_absorption=FALSE;
-     inv_absorption_coefficient=0.;
-  }
-  if(flag_add_absorption){
+  if(render->flag_add_absorption){
+     flag_add_absorption       =TRUE;
+     if(render->kappa_transfer){
+        int     n_temp;
+        int     i_temp;
+        double *inv_y_temp;
+        n_temp    =render->kappa_transfer->n;
+        inv_y_temp=(double *)SID_malloc(sizeof(double)*n_temp);
+        for(i_temp=0;i_temp<n_temp;i_temp++)
+           inv_y_temp[i_temp]=-render->kappa_transfer->y[i_temp];
+        for(i_temp=0;i_temp<n_temp;i_temp++)
+           inv_y_temp[i_temp]=1./render->kappa_transfer->y[i_temp];
+        rho_abs_lo      =take_alog10(render->kappa_transfer->x[0]);
+        rho_abs_hi      =take_alog10(render->kappa_transfer->x[n_temp-1]);
+        inv_kappa_abs_lo=take_alog10(inv_y_temp[0]);
+        inv_kappa_abs_hi=take_alog10(inv_y_temp[n_temp-1]);
+        rho_abs_lo      =render->kappa_transfer->x[0];
+        rho_abs_hi      =render->kappa_transfer->x[n_temp-1];
+        inv_kappa_abs_lo=inv_y_temp[0];
+        inv_kappa_abs_hi=inv_y_temp[n_temp-1];
+        init_interpolate(render->kappa_transfer->x,inv_y_temp,(size_t)n_temp,gsl_interp_linear,&inv_kappa_interp);
+        /*
+        if(SID.I_am_Master){
+          double x_test;
+          for(x_test=rho_abs_lo;x_test<rho_abs_hi;x_test+=(rho_abs_hi-rho_abs_lo)/100.)
+            fprintf(stderr,"%le %le %le\n",x_test,interpolate(render->kappa_transfer,x_test),interpolate(inv_kappa_interp,x_test));
+        }
+        */
+        SID_free(SID_FARG inv_y_temp);
+     }
+     else{
+        inv_kappa_interp      =NULL;
+        absorption_coefficient=render->kappa_absorption;
+        inv_kappa_absorption  =1./absorption_coefficient;
+     }
      x_abs   =(double *)SID_malloc(sizeof(double)*n_abs);
      y_abs   =(double *)SID_malloc(sizeof(double)*n_abs);
      x_abs[0]=0.;
@@ -1188,11 +1210,11 @@ void render_frame(render_info  *render){
      SID_free(SID_FARG x_abs);
      SID_free(SID_FARG y_abs);
   }
-  /*
-  double t_test;
-  for(t_test=0.;t_test<10.;t_test+=0.1) 
-     fprintf(stderr,"%le %le %le\n",exp(-t_test),interpolate(abs_interp,t_test),(exp(-t_test)-interpolate(abs_interp,t_test))/exp(-t_test));
-  */
+  else{
+     flag_add_absorption   =FALSE;
+     absorption_coefficient=0.;
+     inv_kappa_absorption  =0.;
+  }
 
   plist   =&(render->plist);
   x_o     =render->camera->perspective->p_o[0];
@@ -1222,14 +1244,19 @@ void render_frame(render_info  *render){
     FOV_y=FOV_x*(double)nx/(double)ny;        
   }
 
-  if(check_mode_for_flag(camera_mode,CAMERA_STEREO))
+  if(check_mode_for_flag(camera_mode,CAMERA_STEREO)){
     n_images=6;
-  else
+    i_image =2; // Skip mono images
+  }
+  else{
     n_images=2;
+    i_image =0;
+  }
 
-  for(i_image=0;i_image<n_images;i_image++){
+  for(;i_image<n_images;i_image++){
 
     switch(i_image){
+      // Mono RGB
       case 0:
         parameter=render->camera->RGB_param;
         transfer =render->camera->RGB_transfer;
@@ -1246,6 +1273,7 @@ void render_frame(render_info  *render){
         }
         stereo_offset=0.;
         break;
+      // Mono luminance
       case 1:
         parameter=render->camera->Y_param;
         transfer =render->camera->Y_transfer;
@@ -1256,6 +1284,7 @@ void render_frame(render_info  *render){
            z_image=NULL;
         mask=render->camera->mask_Y;
         break;
+      // Left RGB
       case 2:
         parameter     =render->camera->RGB_param;
         transfer      =render->camera->RGB_transfer;
@@ -1263,8 +1292,8 @@ void render_frame(render_info  *render){
         z_image       =NULL;
         mask          =render->camera->mask_RGB_left;
         stereo_offset =-d_o/render->camera->stereo_ratio;
-        //FOV_x        +=2.*d_o/render->camera->stereo_ratio;
         break;
+      // Left luminance
       case 3:
         parameter=render->camera->Y_param;
         transfer =render->camera->Y_transfer;
@@ -1275,6 +1304,7 @@ void render_frame(render_info  *render){
            z_image=NULL;
         mask=render->camera->mask_Y_left;
         break;
+      // Right RGB
       case 4:
         parameter     =render->camera->RGB_param;
         transfer      =render->camera->RGB_transfer;
@@ -1283,6 +1313,7 @@ void render_frame(render_info  *render){
         mask          =render->camera->mask_RGB_right;
         stereo_offset =d_o/render->camera->stereo_ratio;
         break;
+      // Right luminance
       case 5:
         parameter=render->camera->Y_param;
         transfer =render->camera->Y_transfer;
@@ -1295,17 +1326,15 @@ void render_frame(render_info  *render){
         break;
     }
 
-    // Create an offset that will trim the frustrum
-    if(stereo_offset<0.)
-       frustrum_offset=stereo_offset;
-    else
-       frustrum_offset=0.;
-
     SID_log("Projecting {%s} to a %dx%d pixel array...",SID_LOG_OPEN|SID_LOG_TIMER,parameter,nx,ny);
 
-    // Avoid overflows
+    // Set physical image-plane domain
     xmin  = -FOV_x/2.; // Things will be centred on (x_o,y_o,z_o) later
     ymin  = -FOV_y/2.; // Things will be centred on (x_o,y_o,z_o) later
+
+    // Apply frustrum correction
+    if(stereo_offset<0.)
+       xmin-=stereo_offset;
   
     // Compute image scales
     n_pixels    =nx*ny;
@@ -1325,13 +1354,15 @@ void render_frame(render_info  *render){
     radius_kernel_norm2=radius_kernel_norm*radius_kernel_norm;
 
     // Initialize make_map
+    int i_x_min_local;
+    int i_x_max_local;
     init_make_map(plist,
                   parameter,
                   transfer,
                   x_o,y_o,z_o,
                   x_c,y_c,z_c,
                   box_size,FOV_x,FOV_y,
-                  xmin,ymin,frustrum_offset,
+                  xmin,ymin,
                   pixel_size_x,pixel_size_y,
                   radius_kernel_norm,
                   nx,ny,
@@ -1350,6 +1381,8 @@ void render_frame(render_info  *render){
                   &value,
                   &weight,
                   &z_index,
+                  &i_x_min_local,
+                  &i_x_max_local,
                   &n_particles);
 
     // Allocate and initialize image arrays
@@ -1381,131 +1414,162 @@ void render_frame(render_info  *render){
                pow(d_y_o,2.)+
                pow(d_z_o,2.));
 
+    // Report absorption statistics
+    if(render->kappa_transfer!=NULL){
+       float rho_min,rho_mean,rho_max;
+       if(denominator!=NULL){
+          calc_min_global( weight,&rho_min, n_particles,SID_FLOAT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+          calc_max_global( weight,&rho_max, n_particles,SID_FLOAT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+          calc_mean_global(weight,&rho_mean,n_particles,SID_FLOAT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+       }
+       else{
+          calc_min_global( value,&rho_min, n_particles,SID_FLOAT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+          calc_max_global( value,&rho_max, n_particles,SID_FLOAT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+          calc_mean_global(value,&rho_mean,n_particles,SID_FLOAT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+       }
+       SID_log("Absorption statistics:",SID_LOG_OPEN);
+       SID_log("rho_min    =%le",     SID_LOG_COMMENT,rho_min);
+       SID_log("rho_max    =%le",     SID_LOG_COMMENT,rho_max);
+       SID_log("rho_mean   =%le",     SID_LOG_COMMENT,rho_mean);
+       SID_log("table range=%le->%le",SID_LOG_COMMENT,rho_abs_lo,rho_abs_hi);
+       SID_log("",SID_LOG_CLOSE|SID_LOG_NOPRINT);
+    }  
+
     // Perform projection
-    size_t i_report_next;
-    int    i_report=1;
-    int    n_report=10; // This is the number of progress reports that will be creates. eg. 10 -> every 10%
-    if(n_particles>20)
-       i_report_next=MIN(n_particles,(size_t)((float)n_particles*(float)i_report/(float)n_report));
-    else
-       i_report_next=20;
+    size_t        ii_particle;
+    pcounter_info pcounter;
+    SID_init_pcounter(&pcounter,n_particles,10);
     SID_log("Performing projection...",SID_LOG_OPEN|SID_LOG_TIMER);
-    for(i_particle=0;i_particle<n_particles;i_particle++){
-      z_i     =(double)z[i_particle];
+    for(ii_particle=0;ii_particle<n_particles;ii_particle++){
+      i_particle=z_index[ii_particle];
+      z_i       =(double)z[i_particle];
       if(z_i>near_field){
 
         // Set pixel space ranges and positions
-        if(set_pixel_space(h_smooth[i_particle],
-                           x[i_particle],
-                           y[i_particle],
-                           f_stretch[i_particle],
-                           xmin,
-                           ymin,
-                           FOV_x,
-                           FOV_y,
-                           frustrum_offset,
-                           pixel_size_x,
-                           pixel_size_y,
-                           radius_kernel_norm,
-                           &radius2_norm,
-                           &radius_kernel,
-                           &part_pos_x,
-                           &part_pos_y,
-                           &kx_min,
-                           &kx_max,
-                           &ky_min,
-                           &ky_max)){
+        set_pixel_space(h_smooth[i_particle],
+                        x[i_particle],
+                        y[i_particle],
+                        f_stretch[i_particle],
+                        xmin,
+                        ymin,
+                        FOV_x,
+                        FOV_y,
+                        pixel_size_x,
+                        pixel_size_y,
+                        radius_kernel_norm,
+                        &radius2_norm,
+                        &radius_kernel,
+                        &part_pos_x,
+                        &part_pos_y,
+                        &kx_min,
+                        &kx_max,
+                        &ky_min,
+                        &ky_max);
 
-           // Set the particle values and weights
-           double w_i;
-           double v_i;
-           double vw_i;
-           v_i=(double)value[i_particle];
-           if(denominator!=NULL){
-              w_i =(double)weight[i_particle];
-              vw_i=v_i*w_i;
-           }
+        // Set the particle values and weights
+        double w_i;
+        double v_i;
+        double vw_i;
+        v_i=(double)value[i_particle];
+        if(denominator!=NULL){
+           w_i =(double)weight[i_particle];
+           vw_i=v_i*w_i;
+        }
 
-           // Loop over the kernal
-           for(kx=kx_min,pixel_pos_x=xmin+(kx_min+0.5)*pixel_size_x;kx<=kx_max;kx++,pixel_pos_x+=pixel_size_x){
-             if(kx>=0 && kx<nx){
-               for(ky=ky_min,pixel_pos_y=ymin+(ky_min+0.5)*pixel_size_y;ky<=ky_max;ky++,pixel_pos_y+=pixel_size_y){
-                 if(ky>=0 && ky<ny){
-                   radius2=
-                     (pixel_pos_x-part_pos_x)*(pixel_pos_x-part_pos_x)+
-                     (pixel_pos_y-part_pos_y)*(pixel_pos_y-part_pos_y);
-                   radius2*=radius2_norm;
-                   // Construct image here
-                   if(radius2<radius_kernel_norm2){
-                     pos    =ky+kx*ny;
-                     f_table=sqrt(radius2);
-                     i_table=(int)(f_table*(double)N_KERNEL_TABLE);
-                     kernel =kernel_table[i_table]+
-                       (kernel_table[i_table+1]-kernel_table[i_table])*
-                       (f_table-kernel_radius[i_table])*(double)N_KERNEL_TABLE;
-                     if(denominator!=NULL){
-                       switch(flag_add_absorption){
-                          case TRUE:
-                             double absorption;
-                             double tau;
-                             tau=(double)column_depth[pos]*(double)inv_absorption_coefficient;
-                             if(tau>tau_max)
-                                absorption=0.;
-                             else if(tau<=0.)
-                                absorption=1.;
-                             else 
-                                absorption=interpolate(abs_interp,tau);
-                             column_depth[pos]+= w_i*kernel;
-                             numerator[pos]   +=vw_i*kernel*absorption;
-                             denominator[pos] += w_i*kernel*absorption;
-                             if(z_image!=NULL)
-                                z_image[pos]+=z_i*w_i*kernel*absorption;
-                             break;
-                          case FALSE:
-                             numerator[pos]  +=vw_i*kernel;
-                             denominator[pos]+=w_i*kernel;
-                             if(z_image!=NULL)
-                                z_image[pos]+=z_i*w_i*kernel;
-                             break;
-                       }
-                     }
-                     else{
-                       switch(flag_add_absorption){
-                          case TRUE:
-                             double absorption;
-                             double tau;
-                             tau=(double)column_depth[pos]*(double)inv_absorption_coefficient;
-                             if(tau>tau_max)
-                                absorption=0.;
-                             else if(tau<=0.)
-                                absorption=1.;
-                             else 
-                                absorption=interpolate(abs_interp,tau);
-                             column_depth[pos]+=v_i*kernel;
-                             numerator[pos]   +=v_i*kernel*absorption;
-                             if(z_image!=NULL)
-                                z_image[pos]+=z_i*v_i*kernel*absorption;
-                             break;
-                          case FALSE:
-                             numerator[pos]+=v_i*kernel;
-                             if(z_image!=NULL)
-                                z_image[pos]+=z_i*v_i*kernel;
-                             break;
-                       }
-                     }
-                     mask[pos] =TRUE;
-                   }
-                 }
-               }
-             }
-           }
+        // Loop over the kernal
+        for(kx=kx_min,pixel_pos_x=xmin+(kx_min+0.5)*pixel_size_x;kx<=kx_max;kx++,pixel_pos_x+=pixel_size_x){
+          if(kx>=0 && kx<nx){
+            for(ky=ky_min,pixel_pos_y=ymin+(ky_min+0.5)*pixel_size_y;ky<=ky_max;ky++,pixel_pos_y+=pixel_size_y){
+              if(ky>=0 && ky<ny){
+                radius2=
+                  (pixel_pos_x-part_pos_x)*(pixel_pos_x-part_pos_x)+
+                  (pixel_pos_y-part_pos_y)*(pixel_pos_y-part_pos_y);
+                radius2*=radius2_norm;
+                // Construct image here
+                if(radius2<radius_kernel_norm2){
+                  pos    =ky+kx*ny;
+                  f_table=sqrt(radius2);
+                  i_table=(int)(f_table*(double)N_KERNEL_TABLE);
+                  kernel =kernel_table[i_table]+
+                    (kernel_table[i_table+1]-kernel_table[i_table])*
+                    (f_table-kernel_radius[i_table])*(double)N_KERNEL_TABLE;
+                  if(denominator!=NULL){
+                    switch(flag_add_absorption){
+                       case TRUE:
+                          double absorption;
+                          double tau;
+                          double dtau;
+                          if(inv_kappa_interp==NULL)
+                             dtau=w_i*kernel*inv_kappa_absorption;
+                          else if(w_i<rho_abs_lo)
+                             dtau=w_i*kernel*inv_kappa_abs_lo;
+                          else if(w_i>rho_abs_hi)
+                             dtau=w_i*kernel*inv_kappa_abs_hi;
+                          else
+                             dtau=w_i*kernel*interpolate(inv_kappa_interp,w_i);
+                          tau=(double)column_depth[pos];
+                          if(tau>tau_max)
+                             absorption=0.;
+                          else if(tau<=0.)
+                             absorption=1.;
+                          else
+                             absorption=interpolate(abs_interp,tau);
+                          //fprintf(stderr,"%e %le %le %le\n",w_i,interpolate(inv_kappa_interp,w_i),dtau,absorption);
+                          column_depth[pos]+=dtau;
+                          numerator[pos]   +=vw_i*kernel*absorption;
+                          denominator[pos] += w_i*kernel*absorption;
+                          if(z_image!=NULL)
+                             z_image[pos]+=z_i*w_i*kernel*absorption;
+                          break;
+                       case FALSE:
+                          numerator[pos]  +=vw_i*kernel;
+                          denominator[pos]+=w_i*kernel;
+                          if(z_image!=NULL)
+                             z_image[pos]+=z_i*w_i*kernel;
+                          break;
+                    }
+                  }
+                  else{
+                    switch(flag_add_absorption){
+                       case TRUE:
+                          double absorption;
+                          double tau;
+                          double dtau;
+                          if(inv_kappa_interp==NULL)
+                             dtau=v_i*kernel*inv_kappa_absorption;
+                          else if(v_i<rho_abs_lo)
+                             dtau=v_i*kernel*inv_kappa_abs_lo;
+                          else if(v_i>rho_abs_hi)
+                             dtau=v_i*kernel*inv_kappa_abs_hi;
+                          else
+                             dtau=v_i*kernel*interpolate(inv_kappa_interp,v_i);
+                          tau=(double)column_depth[pos];
+                          if(tau>tau_max)
+                             absorption=0.;
+                          else if(tau<=0.)
+                             absorption=1.;
+                          else 
+                             absorption=interpolate(abs_interp,tau);
+                          column_depth[pos]+=dtau;
+                          numerator[pos]   +=v_i*kernel*absorption;
+                          if(z_image!=NULL)
+                             z_image[pos]+=z_i*v_i*kernel*absorption;
+                          break;
+                       case FALSE:
+                          numerator[pos]+=v_i*kernel;
+                          if(z_image!=NULL)
+                             z_image[pos]+=z_i*v_i*kernel;
+                          break;
+                    }
+                  }
+                  mask[pos] =TRUE;
+                }
+              }
+            }
+          }
         }
       }
-      if(i_particle==i_report_next){
-         SID_log("%3d%% complete.",SID_LOG_COMMENT|SID_LOG_TIMER,(int)((100./(float)n_report)*(float)(i_report)));
-         i_report++;
-         i_report_next=MIN(n_particles,(size_t)((float)n_particles*(float)i_report/(float)n_report));
-      }
+      SID_check_pcounter(&pcounter,ii_particle);
     }
     SID_Barrier(SID.COMM_WORLD);
     SID_log("Done.",SID_LOG_CLOSE);
@@ -1513,45 +1577,25 @@ void render_frame(render_info  *render){
     SID_log("Image normalization, etc...",SID_LOG_OPEN|SID_LOG_TIMER);
 
     // Add results from all ranks if this is being run in parallel
-    //   First, apply absorption from intervening slabs ...
-#if USE_MPI
-    if(flag_add_absorption){
-       double *absorption;
-       int     i_rank;
-       absorption=(double *)SID_calloc(sizeof(double)*n_pixels);
-       if(SID.My_rank==0)
-          memcpy(absorption,column_depth,sizeof(double)*n_pixels);
-       for(i_rank=1;i_rank<SID.n_proc;i_rank++){
-          SID_Bcast(absorption,sizeof(double)*n_pixels,i_rank-1,SID.COMM_WORLD);
-          if(i_rank==SID.My_rank){
-             if(denominator!=NULL){
-                for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
-                   double tau;
-                   tau                  =absorption[i_pixel]*inv_absorption_coefficient;
-                   absorption[i_pixel] +=column_depth[i_pixel];
-                   numerator[i_pixel]  *=interpolate(abs_interp,tau);
-                   denominator[i_pixel]*=interpolate(abs_interp,tau);
-                   if(z_image!=NULL)
-                      z_image[i_pixel] *=interpolate(abs_interp,tau);
-                }
-             }
-             else{
-                for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
-                   double tau;
-                   tau                 =absorption[i_pixel]*inv_absorption_coefficient;
-                   absorption[i_pixel]+=column_depth[i_pixel];
-                   numerator[i_pixel] *=interpolate(abs_interp,tau);
-                   if(z_image!=NULL)
-                      z_image[i_pixel]*=interpolate(abs_interp,tau);
-                }
-             }
+    //   First, clear the parts of the image not in this rank's domain ...
+    for(kx=0;kx<nx;kx++){
+       if(!(kx>=i_x_min_local && kx<=i_x_max_local)){
+          for(ky=0;ky<ny;ky++){
+             pos=ky+kx*ny;
+             numerator[pos]  =0.;
+             if(denominator!=NULL)
+                denominator[pos]=0.;
+             if(z_image!=NULL)
+                z_image[pos]=0.;
+             if(column_depth!=NULL)
+                column_depth[pos]=0.;
           }
        }
-       SID_free(SID_FARG absorption);
     }
 
     // Join mask results.  The MPI 1.1 standard does not specify MPI_SUM 
     //   on MPI_CHAR types so we need to do this awkward thing for the mask array ...
+#if USE_MPI
     mask_buffer=(int *)SID_malloc(sizeof(int)*nx);
     for(i_y=0;i_y<ny;i_y++){
       for(i_x=0,i_pixel=i_y*nx;i_x<nx;i_x++,i_pixel++)
@@ -1578,7 +1622,7 @@ void render_frame(render_info  *render){
       }
     }
 
-    // Normalize z-frame
+    // Normalize z-frame (if needed)
     if(z_image!=NULL){
       if(denominator!=NULL){
         for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
@@ -1598,7 +1642,7 @@ void render_frame(render_info  *render){
       }
     }
 
-    // Take log_10 if needed
+    // Take log_10 (if needed)
     if(check_mode_for_flag(mode,MAKE_MAP_LOG)){
       for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
         if(mask[i_pixel])
@@ -1636,8 +1680,8 @@ void render_frame(render_info  *render){
     SID_free(SID_FARG h_smooth);
     SID_free(SID_FARG f_stretch);
     SID_free(SID_FARG value);
-    if(flag_weigh)
-      SID_free(SID_FARG weight);
+    SID_free(SID_FARG z_index);
+    SID_free(SID_FARG weight);
     if(denominator!=NULL)
       SID_free(SID_FARG denominator);
     if(column_depth!=NULL)
@@ -1646,8 +1690,11 @@ void render_frame(render_info  *render){
     SID_log("Done.",SID_LOG_CLOSE);
   }
 
-  if(flag_add_absorption)
+  if(flag_add_absorption){
      free_interpolate(SID_FARG abs_interp);
+     if(inv_kappa_interp!=NULL)
+        free_interpolate(SID_FARG inv_kappa_interp);
+  }
 
 }
 
