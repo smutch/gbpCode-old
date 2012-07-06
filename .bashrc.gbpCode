@@ -63,6 +63,15 @@ if [ !($?GBP_MPI) ]; then
   export GBP_MPI='/usr/'
 endif
 
+# Set a default for the GBP_MPI path
+if [ !($?GBP_MPI) ]; then
+  if [ !($?MPI_DIR) ]; then
+     export GBP_MPI="${MPI_DIR}"
+  else
+     export GBP_MPI=""
+  endif
+endif
+
 # If you're gonna use valgrind with this code, you have to supply your
 #  system's platform here.
 export GBP_VALGRIND_PLAT="x86-darwin"
