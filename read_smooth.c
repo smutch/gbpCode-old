@@ -111,7 +111,10 @@ void read_smooth(plist_info *plist,
        set_smooth_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
        SID_log("Processing file #%d of %d {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,i_file+1,n_files,filename);
        fp=fopen(filename,"r");
-       fread(&header,sizeof(smooth_header_info),1,fp);
+       fread(&(header.n_particles_file), sizeof(int),      1,fp);
+       fread(&(header.offset),           sizeof(int),      1,fp);
+       fread(&(header.n_particles_total),sizeof(long long),1,fp);
+       fread(&(header.n_files),          sizeof(int),      1,fp);
        n_particles_file =header.n_particles_file;
        offset           =header.offset;
        n_particles_total=header.n_particles_total;
