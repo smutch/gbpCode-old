@@ -439,13 +439,13 @@ void set_particle_map_quantities(map_quantities_info *mq,int mode,size_t i_parti
   }
 }
 
-double compute_f_stretch(double d_xyz,double z_i,int flag_plane_parallel);
-double compute_f_stretch(double d_xyz,double z_i,int flag_plane_parallel){
-   double f_i;
+float compute_f_stretch(double d_xyz,float z_i,int flag_plane_parallel);
+float compute_f_stretch(double d_xyz,float z_i,int flag_plane_parallel){
+   float f_i;
    switch(flag_plane_parallel){
       case FALSE:
          if(z_i>0.)
-            f_i=d_xyz/z_i;
+            f_i=(float)d_xyz/(float)z_i;
          else
             f_i=0.;
          break;
@@ -456,6 +456,98 @@ double compute_f_stretch(double d_xyz,double z_i,int flag_plane_parallel){
    return(f_i);
 }
 
+// Compute the angle and the axis of rotation
+//   needed to place the camera at (0,0,-d_xyz)
+//   with the object at (0,0,0)
+void compute_perspective_transformation(double  x_o,
+                                        double  y_o,
+                                        double  z_o,
+                                        double  x_c,
+                                        double  y_c,
+                                        double  z_c,
+                                        double  stereo_offset,
+                                        double *d_xy,
+                                        double *d_xyz,
+                                        double *x_o_out,
+                                        double *y_o_out,
+                                        double *z_o_out,
+                                        double *x_c_out,
+                                        double *y_c_out,
+                                        double *z_c_out,
+                                        double *x_hat,
+                                        double *y_hat,
+                                        double *z_hat,
+                                        double *theta,
+                                        double *theta_roll);
+void compute_perspective_transformation(double  x_o,
+                                        double  y_o,
+                                        double  z_o,
+                                        double  x_c,
+                                        double  y_c,
+                                        double  z_c,
+                                        double  stereo_offset,
+                                        double *d_xy,
+                                        double *d_xyz,
+                                        double *x_o_out,
+                                        double *y_o_out,
+                                        double *z_o_out,
+                                        double *x_c_out,
+                                        double *y_c_out,
+                                        double *z_c_out,
+                                        double *x_hat,
+                                        double *y_hat,
+                                        double *z_hat,
+                                        double *theta,
+                                        double *theta_roll){
+  double d_x_o;
+  double d_y_o;
+  double d_z_o;
+  d_x_o   = x_o-x_c;
+  d_y_o   = y_o-y_c;
+  d_z_o   = z_o-z_c;
+  (*d_xy) = sqrt(pow(d_x_o,2.)+pow(d_y_o,2.));
+  (*d_xyz)= sqrt(pow(d_x_o,2.)+pow(d_y_o,2.)+pow(d_z_o,2.));
+  (*x_hat)= d_y_o/(*d_xy);
+  (*y_hat)=-d_x_o/(*d_xy);
+  (*z_hat)= 0.;
+  (*theta)= acos(d_z_o/(*d_xyz));
+  if(sqrt(d_x_o*d_x_o+d_y_o*d_y_o)>0.){
+    (*theta_roll)=acos(-d_y_o/sqrt(d_x_o*d_x_o+d_y_o*d_y_o));
+    if(d_x_o<0.)
+      (*theta_roll)=TWO_PI-(*theta_roll);
+  }
+  else
+    (*theta_roll)=0.;
+
+  // Apply stereo offsets
+  (*x_o_out)=x_o;
+  (*y_o_out)=y_o;
+  (*z_o_out)=z_o;
+  (*x_c_out)=x_c;
+  (*y_c_out)=y_c;
+  (*z_c_out)=z_c;
+  if(stereo_offset!=0.){
+     double Dx_stereo;
+     double Dy_stereo;
+     double Dz_stereo;
+     double theta_roll_stereo=0.;
+     SID_log("Forcing theta=0 in stereo projection.",SID_LOG_COMMENT);
+     Dx_stereo=stereo_offset*cos(theta_roll_stereo)*d_y_o/(*d_xy);
+     Dy_stereo=stereo_offset*cos(theta_roll_stereo)*d_x_o/(*d_xy);
+     if(theta_roll_stereo>0.)
+        Dz_stereo=sqrt(stereo_offset*stereo_offset-Dx_stereo*Dx_stereo-Dy_stereo*Dy_stereo);
+     else if(theta_roll_stereo==0.)
+        Dz_stereo=0.;
+     else
+        Dz_stereo=-sqrt(stereo_offset*stereo_offset-Dx_stereo*Dx_stereo-Dy_stereo*Dy_stereo);
+     (*x_o_out)+=Dx_stereo;
+     (*y_o_out)+=Dy_stereo;
+     (*z_o_out)+=Dz_stereo;
+     (*x_c_out)+=Dx_stereo;
+     (*y_c_out)+=Dy_stereo;
+     (*z_c_out)+=Dz_stereo;
+  }
+}
 
 void init_make_map(plist_info  *plist,
                    char        *parameter,
@@ -593,49 +685,33 @@ void init_make_map(plist_info  *plist,
   (*flag_line_integral)=mq.flag_line_integral;
   ptype_used           =mq.ptype_used;
 
-  // Compute the angle and the axis of rotation
-  //   needed to place the camera at (0,0,-d_xyz)
-  //   with the object at (0,0,0)
-  d_x_o= x_o-x_c;
-  d_y_o= y_o-y_c;
-  d_z_o= z_o-z_c;
-  d_xy = sqrt(pow(d_x_o,2.)+pow(d_y_o,2.));
-  d_xyz= sqrt(pow(d_x_o,2.)+pow(d_y_o,2.)+pow(d_z_o,2.));
-  x_hat= d_y_o/d_xy;
-  y_hat=-d_x_o/d_xy;
-  z_hat= 0.;
-  theta= acos(d_z_o/d_xyz);
-  if(sqrt(d_x_o*d_x_o+d_y_o*d_y_o)>0.){
-    theta_roll=acos(-d_y_o/sqrt(d_x_o*d_x_o+d_y_o*d_y_o));
-    if(d_x_o<0.)
-      theta_roll=TWO_PI-theta_roll;
-  }
-  else
-    theta_roll=0.;
+  double x_o_in=x_o;
+  double y_o_in=y_o;
+  double z_o_in=z_o;
+  double x_c_in=x_c;
+  double y_c_in=y_c;
+  double z_c_in=z_c;
+  compute_perspective_transformation(x_o_in,
+                                     y_o_in,
+                                     z_o_in,
+                                     x_c_in,
+                                     y_c_in,
+                                     z_c_in,
+                                     stereo_offset,
+                                     &d_xy,
+                                     &d_xyz,
+                                     &x_o,
+                                     &y_o,
+                                     &z_o,
+                                     &x_c,
+                                     &y_c,
+                                     &z_c,
+                                     &x_hat,
+                                     &y_hat,
+                                     &z_hat,
+                                     &theta,
+                                     &theta_roll);
 
-  // Apply stereo offsets
-  if(stereo_offset!=0.){
-     double Dx_stereo;
-     double Dy_stereo;
-     double Dz_stereo;
-     double theta_roll_stereo=0.;
-     SID_log("Forcing theta=0 in stereo projection.",SID_LOG_COMMENT);
-     Dx_stereo=stereo_offset*cos(theta_roll_stereo)*d_y_o/d_xy;
-     Dy_stereo=stereo_offset*cos(theta_roll_stereo)*d_x_o/d_xy;
-     if(theta_roll_stereo>0.)
-        Dz_stereo=sqrt(stereo_offset*stereo_offset-Dx_stereo*Dx_stereo-Dy_stereo*Dy_stereo);
-     else if(theta_roll_stereo==0.)
-        Dz_stereo=0.;
-     else
-        Dz_stereo=-sqrt(stereo_offset*stereo_offset-Dx_stereo*Dx_stereo-Dy_stereo*Dy_stereo);
-     x_o+=Dx_stereo;
-     y_o+=Dy_stereo;
-     z_o+=Dz_stereo;
-     x_c+=Dx_stereo;
-     y_c+=Dy_stereo;
-     z_c+=Dz_stereo;
-  }
-  
   // Determine how many particles are contributing to each 
   //    column of the image
   float   x_i;
@@ -689,7 +765,7 @@ void init_make_map(plist_info  *plist,
             int    ky_min;
             int    ky_max;
             int    n_ky;
-            f_i=compute_f_stretch(d_xyz,z_i,flag_plane_parallel);
+            f_i=(float)compute_f_stretch(d_xyz,z_i,flag_plane_parallel);
             set_pixel_space(h_i,
                             x_i,
                             y_i,
@@ -811,7 +887,7 @@ void init_make_map(plist_info  *plist,
             int    kx_max;
             int    ky_min;
             int    ky_max;
-            f_i=compute_f_stretch(d_xyz,z_i,flag_plane_parallel);
+            f_i=(float)compute_f_stretch(d_xyz,z_i,flag_plane_parallel);
             set_pixel_space(h_i,
                             x_i,
                             y_i,
@@ -928,7 +1004,7 @@ void init_make_map(plist_info  *plist,
                int    kx_max;
                int    ky_min;
                int    ky_max;
-               f_i=compute_f_stretch(d_xyz,z_i,flag_plane_parallel);
+               f_i=(float)compute_f_stretch(d_xyz,z_i,flag_plane_parallel);
                set_pixel_space(h_i,
                                x_i,
                                y_i,
@@ -1353,6 +1429,46 @@ void render_frame(render_info  *render){
     radius_kernel_norm =kernel_radius[N_KERNEL_TABLE];
     radius_kernel_norm2=radius_kernel_norm*radius_kernel_norm;
 
+    double x_o_in=x_o;
+    double y_o_in=y_o;
+    double z_o_in=z_o;
+    double x_c_in=x_c;
+    double y_c_in=y_c;
+    double z_c_in=z_c;
+    double x_o_out;
+    double y_o_out;
+    double z_o_out;
+    double x_c_out;
+    double y_c_out;
+    double z_c_out;
+    double x_hat;
+    double y_hat;
+    double z_hat;
+    double theta;
+    double theta_roll;
+    double d_xy;
+    double d_xyz;
+    compute_perspective_transformation(x_o_in,
+                                       y_o_in,
+                                       z_o_in,
+                                       x_c_in,
+                                       y_c_in,
+                                       z_c_in,
+                                       stereo_offset,
+                                       &d_xy,
+                                       &d_xyz,
+                                       &x_o_out,
+                                       &y_o_out,
+                                       &z_o_out,
+                                       &x_c_out,
+                                       &y_c_out,
+                                       &z_c_out,
+                                       &x_hat,
+                                       &y_hat,
+                                       &z_hat,
+                                       &theta,
+                                       &theta_roll);
+
     // Initialize make_map
     int i_x_min_local;
     int i_x_max_local;
@@ -1443,9 +1559,13 @@ void render_frame(render_info  *render){
     for(ii_particle=0;ii_particle<n_particles;ii_particle++){
       i_particle=z_index[ii_particle];
       z_i       =(double)z[i_particle];
+
+      part_h_z=(double)h_smooth[i_particle];
+
       if(z_i>near_field){
 
         // Set pixel space ranges and positions
+        /*
         set_pixel_space(h_smooth[i_particle],
                         x[i_particle],
                         y[i_particle],
@@ -1465,6 +1585,17 @@ void render_frame(render_info  *render){
                         &kx_max,
                         &ky_min,
                         &ky_max);
+        */
+
+        part_h_xy    =part_h_z*f_stretch[i_particle];
+        radius2_norm =1./(part_h_xy*part_h_xy);
+        part_pos_x   =(double)(x[i_particle]*f_stretch[i_particle]);
+        part_pos_y   =(double)(y[i_particle]*f_stretch[i_particle]);
+        radius_kernel=radius_kernel_norm*part_h_xy;
+        kx_min=(int)((part_pos_x-radius_kernel-xmin)/pixel_size_x);
+        kx_max=(int)((part_pos_x+radius_kernel-xmin)/pixel_size_x+ONE_HALF);
+        ky_min=(int)((part_pos_y-radius_kernel-ymin)/pixel_size_y);
+        ky_max=(int)((part_pos_y+radius_kernel-ymin)/pixel_size_y+ONE_HALF);
 
         // Set the particle values and weights
         double w_i;
