@@ -150,7 +150,7 @@ void read_gadget_binary_local(char       *filename_root_in,
     else if(i_file==1)
       sprintf(filename,"%s/snapshot_%03d",filename_root_in,snapshot_number);
     else if(i_file==2)
-      sprintf(filename,"%s",filename_root_in,snapshot_number);
+      sprintf(filename,"%s",filename_root_in);
     else if(i_file==3)
       sprintf(filename,"%s_%03d",filename_root_in,snapshot_number);
     fp=fopen(filename,"r");
@@ -191,8 +191,8 @@ void read_gadget_binary_local(char       *filename_root_in,
       n_of_type[i]=(size_t)header.n_file[i];
 
     // Expansion factor (or time) 
-    SID_log("a=%le...",SID_LOG_CONTINUE,expansion_factor);
     expansion_factor=header.time;
+    SID_log("a=%le...",SID_LOG_CONTINUE,expansion_factor);
     ADaPS_store(&(plist->data),(void *)(&(header.time)),"expansion_factor",ADaPS_SCALAR_DOUBLE);
     ADaPS_store(&(plist->data),(void *)(&(header.time)),"time",            ADaPS_SCALAR_DOUBLE);
 
@@ -337,7 +337,7 @@ void read_gadget_binary_local(char       *filename_root_in,
       else if(flag_file_type==1)
         sprintf(filename,"%s/snapshot_%03d",filename_root_in,snapshot_number);
       else if(flag_file_type==2)
-        sprintf(filename,"%s",filename_root_in,snapshot_number);
+        sprintf(filename,"%s",filename_root_in);
       else if(flag_file_type==3)
         sprintf(filename,"%s_%03d",filename_root_in,snapshot_number);
       if(flag_multifile)

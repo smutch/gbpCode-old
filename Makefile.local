@@ -2,11 +2,18 @@
 # Library-specific settings #
 #############################
 INCFILES  = gbpClustering.h
-OBJFILES  = read_groupings.o          \
-	    map_to_grid.o             \
-	    compute_power_spectrum.o  \
-            compute_cor_func.o              
+OBJFILES  = read_groupings.o   \
+	    generate_randoms.o \
+	    init_cfunc.o       \
+	    free_cfunc.o       \
+	    write_cfunc.o      \
+	    compute_cfunc.o    \
+	    init_pspec.o       \
+	    free_pspec.o       \
+	    write_pspec.o      \
+	    compute_pspec.o    \
+	    map_to_grid.o      
 LIBFILE   = libgbpClustering.a
-BINFILES  = file_pspec groupings_pspec file_cfunc gadget_power_spectrum generate_groupings groupings_cfunc 
+BINFILES  = make_groupings_cfunc make_groupings_pspec make_groupings
 LIBS      = -lgbpClustering -lgbpSPH -lgbpHalos -lgbpCosmo -lgbpMath -lgbpLib
 #############################

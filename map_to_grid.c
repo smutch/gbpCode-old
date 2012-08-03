@@ -28,7 +28,7 @@ void map_to_grid(size_t      n_particles_local,
   double      m_p;
   int         flag_multimass;
   int         flag_active;
-  int         flag_unused;
+  int         flag_viable;
   double      k_mag;
   double      dk;
   int         n_powspec;
@@ -157,21 +157,22 @@ void map_to_grid(size_t      n_particles_local,
     if(flag_multimass)
       m_p=(double)(m_particles_local[i_p]);
 
-    // Particle's position in real space
+    // Particle's position
     x_particle_i=(GBPREAL)x_particles_local[i_p];
     y_particle_i=(GBPREAL)y_particles_local[i_p];
     z_particle_i=(GBPREAL)z_particles_local[i_p];
 
-    // Quantize the positions onto the grid
+    // Quantize it onto the grid
     x_particle_i/=(GBPREAL)field->dR[0];
     y_particle_i/=(GBPREAL)field->dR[1];
     z_particle_i/=(GBPREAL)field->dR[2];
     i_i[0]=(int)x_particle_i; // position in grid-coordinates
     i_i[1]=(int)y_particle_i; // position in grid-coordinates
     i_i[2]=(int)z_particle_i; // position in grid-coordinates
-    flag_unused=TRUE;
 
     // Apply the kernel
+    flag_viable=TRUE;
+    double x_i_effective;
     for(j_i[0]=-W_search_lo;j_i[0]<=W_search_hi;j_i[0]++){
       for(j_i[1]=-W_search_lo;j_i[1]<=W_search_hi;j_i[1]++){
         for(j_i[2]=-W_search_lo;j_i[2]<=W_search_hi;j_i[2]++){
@@ -193,14 +194,11 @@ void map_to_grid(size_t      n_particles_local,
               // Distribute with a Daubechies wavelet transform of 12th or 20th order a la Cui et al '08
             case MAP2GRID_DIST_DWT12:
             case MAP2GRID_DIST_DWT20:
-              double x_i_effective;
               x_i_effective=x_i+kernal_offset;
               if(x_i_effective>0.)
                 W_i*=interpolate(W_r_Daub_interp,x_i_effective);
-              else{
-                W_i=0.;
+              else
                 flag_active=FALSE;
-              }
               break;
               // Distribute using the triangular shaped cloud (TSC) method
             case MAP2GRID_DIST_TSC:
@@ -208,29 +206,23 @@ void map_to_grid(size_t      n_particles_local,
                 W_i*=(0.75-x_i*x_i);
               else if(x_i<1.5)
                 W_i*=0.5*(1.5-fabs(x_i))*(1.5-fabs(x_i));
-              else{
-                W_i=0.;
+              else
                 flag_active=FALSE;
-              }
               break;
               // Distribute using the cloud-in-cell (CIC) method
             case MAP2GRID_DIST_CIC:
               if(fabs(x_i)<1.)
                 W_i*=(1.-fabs(x_i));
-              else{
-                W_i=0.;
+              else
                 flag_active=FALSE;
-              }
               break;
               // Distribute using "nearest grid point" (NGP; ie. the simplest and default) method
             case MAP2GRID_DIST_NGP:
             default:
-              if(fabs(x_i)<=0.5 && flag_unused)
+              if(fabs(x_i)<=0.5 && flag_viable)
                 W_i*=1.;
-              else{
-                W_i=0.;
+              else
                 flag_active=FALSE;
-              }
               break;
             }
           }
@@ -268,7 +260,7 @@ void map_to_grid(size_t      n_particles_local,
             else
               field->field_local[index_local_FFT_R(field,k_i)]+=W_i;
             norm_local+=W_i;
-            flag_unused=FALSE;
+            flag_viable=FALSE;
           }
         }
       }

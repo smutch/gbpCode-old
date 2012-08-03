@@ -74,7 +74,7 @@ int main(int argc, char *argv[]){
    if(n_groupings<1)
        SID_trap_error("No groupings have been selected (you chose start=%d, stop=%d).",ERROR_LOGIC,i_grouping_start,i_grouping_stop);
  
-   SID_log("Producing power spectra for halo grouping(s)...",SID_LOG_OPEN);
+   SID_log("Producing power spectra for halo grouping(s)...",SID_LOG_OPEN|SID_LOG_TIMER);
  
    // Set the k ranges
    double k_Nyq;
@@ -93,7 +93,7 @@ int main(int argc, char *argv[]){
    // Initialize the power spectrum
    pspec_info pspec;
    init_pspec(&pspec,
- 	     MAP2GRID_DIST_DWT20,
+ 	     MAP2GRID_DIST_NGP,
              redshift,box_size,grid_size,
              k_min_1D,k_max_1D,dk_1D,
              k_min_2D,k_max_2D,dk_2D);
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]){
       // Now that all 4 runs are done, let's write the results
       char filename_out_root_grouping[MAX_FILENAME_LENGTH];
       sprintf(filename_out_root_grouping,"%s_grouping_%03d",filename_out_root,i_grouping);
-      write_psepc(&pspec,filename_out_root_grouping,&plist,"halos");
+      write_pspec(&pspec,filename_out_root_grouping,&plist,"halos");
   
       SID_log("Done.",SID_LOG_CLOSE);
    } // Loop over groupings
