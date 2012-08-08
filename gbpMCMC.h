@@ -9,14 +9,16 @@
 #define MCMC_COVERAGE_LOG    1
 #define MCMC_NAME_SIZE       256
 
-#define MCMC_MODE_SERIAL           1
-#define MCMC_MODE_PARALLEL         2
-#define MCMC_MODE_AUTOTUNE         8
-#define MCMC_MODE_NO_MAP_WRITE    16
-#define MCMC_MODE_REPORT_PROPS    32
-#define MCMC_MODE_REFLECT_PRIORS  64
-#define MCMC_MODE_MINIMIZE_IO    128
-#define MCMC_MODE_DEFAULT        MCMC_MODE_AUTOTUNE|MCMC_MODE_SERIAL
+#define MCMC_MODE_SERIAL                 1
+#define MCMC_MODE_PARALLEL               2
+#define MCMC_MODE_AUTOTUNE               8
+#define MCMC_MODE_NO_MAP_WRITE          16
+#define MCMC_MODE_REPORT_PROPS          32
+#define MCMC_MODE_REFLECT_PRIORS        64
+#define MCMC_MODE_MINIMIZE_IO          128
+#define MCMC_MODE_AUTOTUNE_REINIT_TEMP 256
+#define MCMC_MODE_ANALYZE_ALL_RUNS     512
+#define MCMC_MODE_DEFAULT              MCMC_MODE_AUTOTUNE|MCMC_MODE_SERIAL
 
 #define MCMC_MAP_RETURN_GOOD 0
 #define MCMC_MAP_RETURN_BAD  1
@@ -59,6 +61,7 @@ struct MCMC_DS_info {
 typedef struct MCMC_info MCMC_info;
 struct MCMC_info {
   SID_Comm *comm;
+  char      filename_output_root[MAX_FILENAME_LENGTH];
   char      filename_output_dir[MAX_FILENAME_LENGTH];
   char      problem_name[MCMC_NAME_SIZE];
   int       (*map_P_to_M)(double *,MCMC_info *,double **);

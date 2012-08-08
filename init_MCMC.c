@@ -149,6 +149,18 @@ void init_MCMC(MCMC_info *MCMC,const char *problem_name,void *params,int (*f)(do
     // Generate directory and stop filenames
     sprintf(test_dir,"./%s_MCMC/",SID.My_binary);
     sprintf(test_restart,"./%s_MCMC/stop",SID.My_binary);
+
+    // analyze_MCMC() needs to know what the filename root is.  We also need to strip trailing '/'s.
+    strcpy(MCMC->filename_output_root,test_dir);
+    int i_char;
+    int flag_continue;
+    for(i_char=strlen(MCMC->filename_output_root)-1,flag_continue=TRUE;i_char>=0 && flag_continue;i_char--){
+       if(MCMC->filename_output_root[i_char]!='/')
+          flag_continue=FALSE;
+       else
+          MCMC->filename_output_root[i_char]='\0';
+    }
+
     i=0;
     // Try to open them ...
     ft=fopen(test_dir, "r");

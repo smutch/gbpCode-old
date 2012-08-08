@@ -60,16 +60,27 @@ void autotune_MCMC_temperature(MCMC_info *MCMC){
     // Start timer
     time(&time_start);
 
-    // Generate a success rate for the current trial temperature
-    for(i_iteration=0;i_iteration<n_autotune;i_iteration++)
-      generate_MCMC_chain(MCMC);
+    // Generate a success rate for the current trial temperature.
+    //   We iterate a few times if sucess is < 1% because we 
+    //   might just be starting in a bad spot.
+    int flag_continue=TRUE;
+    int i_trial      =0;
+    while(flag_continue){
+       MCMC->n_propositions=0;
+       MCMC->n_success     =0;
+       for(i_iteration=0;i_iteration<n_autotune;i_iteration++)
+          generate_MCMC_chain(MCMC);
+       success=100.*(double)(MCMC->n_success)/(double)MCMC->n_propositions;
+       if(success>1. || i_trial>=5)
+          flag_continue=FALSE;
+       i_trial++;
+    }
 
     // Stop timer
     time(&time_stop);
     time_diff = difftime(time_stop,time_start);
 
     i_autotune++;
-    success=100.*(double)(MCMC->n_success)/(double)MCMC->n_propositions;
     SID_log("Iteration #%04d: Temperature=%le Success=%5.1lf%%",SID_LOG_COMMENT,i_autotune,temperature,success);
     time_diff /= (double)n_autotune;
     if(time_diff>0.1)

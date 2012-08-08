@@ -17,7 +17,7 @@ void analyze_MCMC(MCMC_info *MCMC){
   char      filename_plots_dir[MAX_FILENAME_LENGTH];
   char      filename_run[MAX_FILENAME_LENGTH];
   char      filename_chain[MAX_FILENAME_LENGTH];
-  char      filename_chain_iterations[MAX_FILENAME_LENGTH];
+  char      filename_chain_config[MAX_FILENAME_LENGTH];
   char      filename_stats[MAX_FILENAME_LENGTH];
   char      filename_coverage[MAX_FILENAME_LENGTH];
   char      filename_chain_covariance[MAX_FILENAME_LENGTH];
@@ -111,7 +111,7 @@ void analyze_MCMC(MCMC_info *MCMC){
   double    ln_likelihood_peak;
   FILE     *fp_run;
   FILE     *fp_chain;
-  FILE     *fp_chain_iterations;
+  FILE     *fp_chain_config;
   FILE     *fp_stats;
   FILE     *fp_coverage;
   FILE     *fp_chain_covariance;
@@ -264,7 +264,7 @@ void analyze_MCMC(MCMC_info *MCMC){
   // Set filenames
   sprintf(filename_run,             "%s/run.dat",                  filename_output_dir);
   sprintf(filename_chain,           "%s/chain_trace_%06d.dat",     filename_chain_dir,my_chain);
-  sprintf(filename_chain_iterations,"%s/chain_iterations_%06d.dat",filename_chain_dir,my_chain);
+  sprintf(filename_chain_config,    "%s/chain_config_%06d.dat",    filename_chain_dir,my_chain);
   sprintf(filename_chain_covariance,"%s/chain_covariance_%06d.dat",filename_chain_dir,my_chain);
   sprintf(filename_stats,           "%s/chain_stats_%06d.dat",     filename_chain_dir,my_chain);
   sprintf(filename_coverage,        "%s/coverage.dat",             filename_results_dir);
@@ -400,89 +400,137 @@ void analyze_MCMC(MCMC_info *MCMC){
   else
     SID_log("Mapping results are available.",SID_LOG_COMMENT);
 
-  if(my_chain==SID.My_rank){
-      if(!flag_minimize_IO){
-        if((fp_chain=fopen(filename_chain,"rb"))==NULL)
-          SID_trap_error("Could not open chain file {%s}.",ERROR_IO_OPEN,filename_chain);
-      }
-      i_iteration_buffer=0;
-      i_P_buffer        =0;
-      i_M_buffer        =0;
-      ln_likelihood_peak=-1e20;
-      for(i_iteration=0,flag_init=TRUE,n_used=0;i_iteration<n_iterations;i_iteration++){
-        for(i_avg=0;i_avg<n_avg;i_avg++){
-          switch(flag_minimize_IO){
-            case TRUE:
-              flag_success     =MCMC->flag_success_buffer[i_iteration_buffer];
-              ln_likelihood_new=MCMC->ln_likelihood_new_buffer[i_iteration_buffer];
-              i_iteration_buffer++;
-              memcpy(P_new,&(MCMC->P_new_buffer[i_P_buffer]),(size_t)n_P*sizeof(double));
-              i_P_buffer+=n_P;
-              if(!flag_no_map_write){
-                for(i_DS=0;i_DS<n_DS;i_DS++){
-                  memcpy(M_new[i_DS],&(MCMC->M_new_buffer[i_M_buffer]),(size_t)n_M[i_DS]*sizeof(double));
-                  i_M_buffer+=n_M[i_DS];
-                }
-              } 
-              break;
-            default:
-              fread(&flag_success,     sizeof(char),  1,  fp_chain);
-              fread(&ln_likelihood_new,sizeof(double),1,  fp_chain);
-              fread(P_new,             sizeof(double),n_P,fp_chain);
-              if(!flag_no_map_write){
-                for(i_DS=0;i_DS<n_DS;i_DS++)
-                  fread(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
-              }
-              break;
-          }
-          if(i_iteration>=n_iterations_burn){
-            if(flag_init || flag_success){
-              memcpy(P_last,P_new,(size_t)n_P*sizeof(double));
-              ln_likelihood_last=ln_likelihood_new;
-              if(!flag_no_map_write){
-                for(i_DS=0;i_DS<n_DS;i_DS++)
-                  memcpy(M_last[i_DS],M_new[i_DS],(size_t)n_M[i_DS]*sizeof(double));
-              }
-              flag_init=FALSE;
-            }
-            n_used++;
-            // Compute covariance matrix
-            for(i_P=0,k_P=0;i_P<n_P;i_P++){
-              P_i_bar_accum[i_P]+=P_last[i_P];
-              for(j_P=0;j_P<n_P;j_P++,k_P++)
-                P_ij_bar_accum[k_P]+=P_last[i_P]*P_last[j_P];
-            }
-
-            // Compute parameter extrema and averages
-            for(i_P=0;i_P<n_P;i_P++){
-              if(P_last[i_P]<P_min[i_P]) P_min[i_P]=P_last[i_P];
-              if(P_last[i_P]>P_max[i_P]) P_max[i_P]=P_last[i_P];
-              P_avg[i_P]+=P_last[i_P];
-            }
-
-            // Store parameters with highest likelihood
-            if(ln_likelihood_last>ln_likelihood_peak){
-              memcpy(P_peak,P_last,(size_t)n_P*sizeof(double));
-              if(!flag_no_map_write){
-                for(i_DS=0;i_DS<n_DS;i_DS++)
-                  memcpy(M_peak_parameters[i_DS],M_last[i_DS],(size_t)n_M[i_DS]*sizeof(double));
-              }
-              ln_likelihood_peak=ln_likelihood_last;
-            }
-
-            // Compute mapping-space extrema and averages
-            if(!flag_no_map_write){
-              for(i_DS=0;i_DS<n_DS;i_DS++){
-                for(i_M=0;i_M<n_M[i_DS];i_M++){
-                  if(M_last[i_DS][i_M]<M_min[i_DS][i_M]) M_min[i_DS][i_M]=M_last[i_DS][i_M];
-                  if(M_last[i_DS][i_M]>M_max[i_DS][i_M]) M_max[i_DS][i_M]=M_last[i_DS][i_M];
-                  M_avg[i_DS][i_M]+=M_last[i_DS][i_M];
-                }
-              }
-            }
-          }
+  // Count the number of runs we will analyze
+  int n_runs;
+  int i_run;
+  if(flag_minimize_IO || !check_mode_for_flag(MCMC->mode,MCMC_MODE_ANALYZE_ALL_RUNS))
+     n_runs=1;
+  else{
+     int flag_continue=TRUE;
+     while(flag_continue){
+        // Set chain filename
+        if(n_runs==0)
+           sprintf(filename_output_dir,"%s/",   MCMC->filename_output_root);
+        else
+           sprintf(filename_output_dir,"%s.%d/",MCMC->filename_output_root,n_runs);
+        sprintf(filename_chain_dir,"%s/chains/",             filename_output_dir);
+        sprintf(filename_chain,    "%s/chain_trace_%06d.dat",filename_chain_dir,my_chain);
+        if((fp_chain=fopen(filename_chain,"r"))!=NULL){
+           n_runs++;
+           fclose(fp_chain);
         }
+        else
+           flag_continue=FALSE;
+     }
+     SID_log("Analyzing %d chain(s).",SID_LOG_COMMENT,n_runs);
+  }
+
+  if(my_chain==SID.My_rank){
+      // Loop over all the chains
+      for(i_run=0,n_used=0;i_run<n_runs;i_run++){
+         if(!flag_minimize_IO){
+           // Set chain filename
+           if(i_run==0)
+              sprintf(filename_output_dir,"%s/",   MCMC->filename_output_root);
+           else
+              sprintf(filename_output_dir,"%s.%d/",MCMC->filename_output_root,i_run);
+           sprintf(filename_chain_dir,    "%s/chains/",              filename_output_dir);
+           sprintf(filename_chain,        "%s/chain_trace_%06d.dat", filename_chain_dir,my_chain);
+           sprintf(filename_chain_config, "%s/chain_config_%06d.dat",filename_chain_dir,my_chain);
+
+           // Read number of iterations
+           if((fp_chain=fopen(filename_chain_config,"rb"))==NULL)
+             SID_trap_error("Could not open chain configuration file {%s}.",ERROR_IO_OPEN,filename_chain_config);
+           fread(&n_iterations,     sizeof(int),1,fp_chain);
+           fread(&n_iterations_burn,sizeof(int),1,fp_chain);
+           fclose(fp_chain);
+
+           // Open chain file
+           if((fp_chain=fopen(filename_chain,"rb"))==NULL)
+             SID_trap_error("Could not open chain file {%s}.",ERROR_IO_OPEN,filename_chain);
+         }
+         i_iteration_buffer=0;
+         i_P_buffer        =0;
+         i_M_buffer        =0;
+         ln_likelihood_peak=-1e20;
+         for(i_iteration=0,flag_init=TRUE;i_iteration<n_iterations;i_iteration++){
+           for(i_avg=0;i_avg<n_avg;i_avg++){
+             switch(flag_minimize_IO){
+               case TRUE:
+                 flag_success     =MCMC->flag_success_buffer[i_iteration_buffer];
+                 ln_likelihood_new=MCMC->ln_likelihood_new_buffer[i_iteration_buffer];
+                 i_iteration_buffer++;
+                 memcpy(P_new,&(MCMC->P_new_buffer[i_P_buffer]),(size_t)n_P*sizeof(double));
+                 i_P_buffer+=n_P;
+                 if(!flag_no_map_write){
+                   for(i_DS=0;i_DS<n_DS;i_DS++){
+                     memcpy(M_new[i_DS],&(MCMC->M_new_buffer[i_M_buffer]),(size_t)n_M[i_DS]*sizeof(double));
+                     i_M_buffer+=n_M[i_DS];
+                   }
+                 } 
+                 break;
+               default:
+                 fread(&flag_success,     sizeof(char),  1,  fp_chain);
+                 fread(&ln_likelihood_new,sizeof(double),1,  fp_chain);
+                 fread(P_new,             sizeof(double),n_P,fp_chain);
+                 if(!flag_no_map_write){
+                   for(i_DS=0;i_DS<n_DS;i_DS++)
+                     fread(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
+                 }
+                 break;
+             }
+             if(i_iteration>=n_iterations_burn){
+               if(flag_init || flag_success){
+                 memcpy(P_last,P_new,(size_t)n_P*sizeof(double));
+                 ln_likelihood_last=ln_likelihood_new;
+                 if(!flag_no_map_write){
+                   for(i_DS=0;i_DS<n_DS;i_DS++)
+                     memcpy(M_last[i_DS],M_new[i_DS],(size_t)n_M[i_DS]*sizeof(double));
+                 }
+                 flag_init=FALSE;
+               }
+               n_used++;
+               // Compute covariance matrix
+               for(i_P=0,k_P=0;i_P<n_P;i_P++){
+                 P_i_bar_accum[i_P]+=P_last[i_P];
+                 for(j_P=0;j_P<n_P;j_P++,k_P++)
+                   P_ij_bar_accum[k_P]+=P_last[i_P]*P_last[j_P];
+               }
+
+               // Compute parameter extrema and averages
+               for(i_P=0;i_P<n_P;i_P++){
+                 if(P_last[i_P]<P_min[i_P]) P_min[i_P]=P_last[i_P];
+                 if(P_last[i_P]>P_max[i_P]) P_max[i_P]=P_last[i_P];
+                 P_avg[i_P]+=P_last[i_P];
+               }
+
+               // Store parameters with highest likelihood
+               if(ln_likelihood_last>ln_likelihood_peak){
+                 memcpy(P_peak,P_last,(size_t)n_P*sizeof(double));
+                 if(!flag_no_map_write){
+                   for(i_DS=0;i_DS<n_DS;i_DS++)
+                     memcpy(M_peak_parameters[i_DS],M_last[i_DS],(size_t)n_M[i_DS]*sizeof(double));
+                 }
+                 ln_likelihood_peak=ln_likelihood_last;
+               }
+
+               // Compute mapping-space extrema and averages
+               if(!flag_no_map_write){
+                 for(i_DS=0;i_DS<n_DS;i_DS++){
+                   for(i_M=0;i_M<n_M[i_DS];i_M++){
+                     if(M_last[i_DS][i_M]<M_min[i_DS][i_M]) M_min[i_DS][i_M]=M_last[i_DS][i_M];
+                     if(M_last[i_DS][i_M]>M_max[i_DS][i_M]) M_max[i_DS][i_M]=M_last[i_DS][i_M];
+                     M_avg[i_DS][i_M]+=M_last[i_DS][i_M];
+                   }
+                 }
+               }
+             }
+           }
+         }
+         if(!flag_minimize_IO)
+           fclose(fp_chain);
       }
+
       // Finish averages
       for(i_P=0;i_P<n_P;i_P++){
         P_avg[i_P]/=(double)n_used;
@@ -493,110 +541,133 @@ void analyze_MCMC(MCMC_info *MCMC){
             M_avg[i_DS][i_M]/=(double)n_used;
         }
       }
-      if(!flag_minimize_IO)
-        rewind(fp_chain);
-      i_iteration_buffer=0;
-      i_P_buffer        =0;
-      i_M_buffer        =0;
-      for(i_iteration=0,flag_init=TRUE;i_iteration<n_iterations;i_iteration++){
-        for(i_avg=0;i_avg<n_avg;i_avg++){
-          switch(flag_minimize_IO){
-            case TRUE:
-              flag_success     =MCMC->flag_success_buffer[i_iteration_buffer];
-              ln_likelihood_new=MCMC->ln_likelihood_new_buffer[i_iteration_buffer];
-              i_iteration_buffer++;
-              memcpy(P_new,&(MCMC->P_new_buffer[i_P_buffer]),(size_t)n_P*sizeof(double));
-              i_P_buffer+=n_P;
-              if(!flag_no_map_write){
-                for(i_DS=0;i_DS<n_DS;i_DS++){
-                  memcpy(M_new[i_DS],&(MCMC->M_new_buffer[i_M_buffer]),(size_t)n_M[i_DS]*sizeof(double));
-                  i_M_buffer+=n_M[i_DS];
-                }
-              }
-              break;
-            default:
-              fread(&flag_success,     sizeof(char),  1,  fp_chain);
-              fread(&ln_likelihood_new,sizeof(double),1,  fp_chain);
-              fread(P_new,             sizeof(double),n_P,fp_chain);
-              if(!flag_no_map_write){
-                for(i_DS=0;i_DS<n_DS;i_DS++)
-                  fread(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
-              }
-              break;
-          }
-          if(i_iteration>=n_iterations_burn){
-            if(flag_init || flag_success){
-              memcpy(P_last,P_new,(size_t)n_P*sizeof(double));      
-              ln_likelihood_last=ln_likelihood_new;
-              for(i_DS=0;i_DS<n_DS;i_DS++)
-                memcpy(M_last[i_DS],M_new[i_DS],(size_t)n_M[i_DS]*sizeof(double));
-              flag_init=FALSE;
-            }
-            // Build coverage maps
-            if(flag_success){
-               for(i_P=0,i_coverage=0;i_P<n_P;i_P++){
-                  bin_x=(int)((double)(coverage_size)*(P_last[i_P]-P_min[i_P])/(P_max[i_P]-P_min[i_P]));
-                  for(j_P=i_P+1;j_P<n_P;j_P++,i_coverage++){
-                     bin_y=(int)((double)(coverage_size)*(P_last[j_P]-P_min[j_P])/(P_max[j_P]-P_min[j_P]));
-                     if(bin_x>=0 && bin_x<coverage_size && bin_y>=0 && bin_y<coverage_size)
-                        coverage_true[i_coverage][bin_x*coverage_size+bin_y]++;
-                  }
-               }
-            }
-            else{
-               for(i_P=0,i_coverage=0;i_P<n_P;i_P++){
-                  bin_x=(int)((double)(coverage_size)*(P_new[i_P]-P_min[i_P])/(P_max[i_P]-P_min[i_P]));
-                  for(j_P=i_P+1;j_P<n_P;j_P++,i_coverage++){
-                     bin_y=(int)((double)(coverage_size)*(P_new[j_P]-P_min[j_P])/(P_max[j_P]-P_min[j_P]));
-                     if(bin_x>=0 && bin_x<coverage_size && bin_y>=0 && bin_y<coverage_size)
-                        coverage_false[i_coverage][bin_x*coverage_size+bin_y]++;
-                  }
-               }
-            }
-            for(i_P=0,i_coverage=0;i_P<n_P;i_P++){
-              bin_x=(int)((double)(coverage_size)*(P_last[i_P]-P_min[i_P])/(P_max[i_P]-P_min[i_P]));
-              for(j_P=i_P+1;j_P<n_P;j_P++,i_coverage++){
-                bin_y=(int)((double)(coverage_size)*(P_last[j_P]-P_min[j_P])/(P_max[j_P]-P_min[j_P]));
-                if(bin_x>=0 && bin_x<coverage_size && bin_y>=0 && bin_y<coverage_size){
-                  coverage_keep[i_coverage][bin_x*coverage_size+bin_y]++;
-                  max_L_surface[i_coverage][bin_x*coverage_size+bin_y]  =MAX(max_L_surface[i_coverage][bin_x*coverage_size+bin_y],ln_likelihood_last);
-                  mean_L_surface[i_coverage][bin_x*coverage_size+bin_y]+=ln_likelihood_last;
-                }
-              }
-            }
 
-            // Build histograms
-            for(i_P=0,i_coverage=0;i_P<n_P;i_P++){
-              bin_x=(int)((double)(coverage_size)*(P_last[i_P]-P_min[i_P])/(P_max[i_P]-P_min[i_P]));
-              if(bin_x>=0 && bin_x<coverage_size){
-                P_histogram[i_P][bin_x]++;
-                mean_L_histogram[i_P][bin_x]+=ln_likelihood_last;
-                max_L_histogram[i_P][bin_x]  =MAX(max_L_histogram[i_P][bin_x],ln_likelihood_last);
-              }
-            }
-            for(i_DS=0;i_DS<n_DS;i_DS++){
-              for(i_M=0;i_M<n_M[i_DS];i_M++){
-                bin_x=(int)((double)(coverage_size)*(M_last[i_DS][i_M]-M_min[i_DS][i_M])/(M_max[i_DS][i_M]-M_min[i_DS][i_M]));
-                if(bin_x>=0 && bin_x<coverage_size)
-                  M_histogram[i_DS][i_M][bin_x]++;
-              }
-            }
-      
-            // Compute parameter standard deviations
-            for(i_P=0;i_P<n_P;i_P++){
-              dP_avg[i_P]+=pow(P_last[i_P]-P_avg[i_P],2.);
-            }
-            if(!flag_no_map_write){
-              for(i_DS=0;i_DS<n_DS;i_DS++){
-                for(i_M=0;i_M<n_M[i_DS];i_M++)
-                  dM_avg[i_DS][i_M]+=pow(M_last[i_DS][i_M]-M_avg[i_DS][i_M],2.);
-              }
-            }
-          }
-        }
-      } // i_iteration
-      if(!flag_minimize_IO)
-        fclose(fp_chain);
+      for(i_run=0;i_run<n_runs;i_run++){
+         if(!flag_minimize_IO){
+           // Set chain filename
+           if(i_run==0)
+              sprintf(filename_output_dir,"%s/",   MCMC->filename_output_root);
+           else
+              sprintf(filename_output_dir,"%s.%d/",MCMC->filename_output_root,i_run);
+           sprintf(filename_chain_dir,    "%s/chains/",              filename_output_dir);
+           sprintf(filename_chain,        "%s/chain_trace_%06d.dat", filename_chain_dir,my_chain);
+           sprintf(filename_chain_config, "%s/chain_config_%06d.dat",filename_chain_dir,my_chain);
+
+           // Read number of iterations
+           if((fp_chain=fopen(filename_chain_config,"rb"))==NULL)
+             SID_trap_error("Could not open chain configuration file {%s}.",ERROR_IO_OPEN,filename_chain);
+           fread(&n_iterations,     sizeof(int),1,fp_chain);
+           fread(&n_iterations_burn,sizeof(int),1,fp_chain);
+           fclose(fp_chain);
+
+           // Open chain file
+           if((fp_chain=fopen(filename_chain,"rb"))==NULL)
+             SID_trap_error("Could not open chain file {%s}.",ERROR_IO_OPEN,filename_chain);
+         }
+         i_iteration_buffer=0;
+         i_P_buffer        =0;
+         i_M_buffer        =0;
+         for(i_iteration=0,flag_init=TRUE;i_iteration<n_iterations;i_iteration++){
+           for(i_avg=0;i_avg<n_avg;i_avg++){
+             switch(flag_minimize_IO){
+               case TRUE:
+                 flag_success     =MCMC->flag_success_buffer[i_iteration_buffer];
+                 ln_likelihood_new=MCMC->ln_likelihood_new_buffer[i_iteration_buffer];
+                 i_iteration_buffer++;
+                 memcpy(P_new,&(MCMC->P_new_buffer[i_P_buffer]),(size_t)n_P*sizeof(double));
+                 i_P_buffer+=n_P;
+                 if(!flag_no_map_write){
+                   for(i_DS=0;i_DS<n_DS;i_DS++){
+                     memcpy(M_new[i_DS],&(MCMC->M_new_buffer[i_M_buffer]),(size_t)n_M[i_DS]*sizeof(double));
+                     i_M_buffer+=n_M[i_DS];
+                   }
+                 }
+                 break;
+               default:
+                 fread(&flag_success,     sizeof(char),  1,  fp_chain);
+                 fread(&ln_likelihood_new,sizeof(double),1,  fp_chain);
+                 fread(P_new,             sizeof(double),n_P,fp_chain);
+                 if(!flag_no_map_write){
+                   for(i_DS=0;i_DS<n_DS;i_DS++)
+                     fread(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
+                 }
+                 break;
+             }
+             if(i_iteration>=n_iterations_burn){
+               if(flag_init || flag_success){
+                 memcpy(P_last,P_new,(size_t)n_P*sizeof(double));      
+                 ln_likelihood_last=ln_likelihood_new;
+                 for(i_DS=0;i_DS<n_DS;i_DS++)
+                   memcpy(M_last[i_DS],M_new[i_DS],(size_t)n_M[i_DS]*sizeof(double));
+                 flag_init=FALSE;
+               }
+               // Build coverage maps
+               if(flag_success){
+                  for(i_P=0,i_coverage=0;i_P<n_P;i_P++){
+                     bin_x=(int)((double)(coverage_size)*(P_last[i_P]-P_min[i_P])/(P_max[i_P]-P_min[i_P]));
+                     for(j_P=i_P+1;j_P<n_P;j_P++,i_coverage++){
+                        bin_y=(int)((double)(coverage_size)*(P_last[j_P]-P_min[j_P])/(P_max[j_P]-P_min[j_P]));
+                        if(bin_x>=0 && bin_x<coverage_size && bin_y>=0 && bin_y<coverage_size)
+                           coverage_true[i_coverage][bin_x*coverage_size+bin_y]++;
+                     }
+                  }
+               }
+               else{
+                  for(i_P=0,i_coverage=0;i_P<n_P;i_P++){
+                     bin_x=(int)((double)(coverage_size)*(P_new[i_P]-P_min[i_P])/(P_max[i_P]-P_min[i_P]));
+                     for(j_P=i_P+1;j_P<n_P;j_P++,i_coverage++){
+                        bin_y=(int)((double)(coverage_size)*(P_new[j_P]-P_min[j_P])/(P_max[j_P]-P_min[j_P]));
+                        if(bin_x>=0 && bin_x<coverage_size && bin_y>=0 && bin_y<coverage_size)
+                           coverage_false[i_coverage][bin_x*coverage_size+bin_y]++;
+                     }
+                  }
+               }
+               for(i_P=0,i_coverage=0;i_P<n_P;i_P++){
+                 bin_x=(int)((double)(coverage_size)*(P_last[i_P]-P_min[i_P])/(P_max[i_P]-P_min[i_P]));
+                 for(j_P=i_P+1;j_P<n_P;j_P++,i_coverage++){
+                   bin_y=(int)((double)(coverage_size)*(P_last[j_P]-P_min[j_P])/(P_max[j_P]-P_min[j_P]));
+                   if(bin_x>=0 && bin_x<coverage_size && bin_y>=0 && bin_y<coverage_size){
+                     coverage_keep[i_coverage][bin_x*coverage_size+bin_y]++;
+                     max_L_surface[i_coverage][bin_x*coverage_size+bin_y]  =MAX(max_L_surface[i_coverage][bin_x*coverage_size+bin_y],ln_likelihood_last);
+                     mean_L_surface[i_coverage][bin_x*coverage_size+bin_y]+=ln_likelihood_last;
+                   }
+                 }
+               }
+
+               // Build histograms
+               for(i_P=0,i_coverage=0;i_P<n_P;i_P++){
+                 bin_x=(int)((double)(coverage_size)*(P_last[i_P]-P_min[i_P])/(P_max[i_P]-P_min[i_P]));
+                 if(bin_x>=0 && bin_x<coverage_size){
+                   P_histogram[i_P][bin_x]++;
+                   mean_L_histogram[i_P][bin_x]+=ln_likelihood_last;
+                   max_L_histogram[i_P][bin_x]  =MAX(max_L_histogram[i_P][bin_x],ln_likelihood_last);
+                 }
+               }
+               for(i_DS=0;i_DS<n_DS;i_DS++){
+                 for(i_M=0;i_M<n_M[i_DS];i_M++){
+                   bin_x=(int)((double)(coverage_size)*(M_last[i_DS][i_M]-M_min[i_DS][i_M])/(M_max[i_DS][i_M]-M_min[i_DS][i_M]));
+                   if(bin_x>=0 && bin_x<coverage_size)
+                     M_histogram[i_DS][i_M][bin_x]++;
+                 }
+               }
+         
+               // Compute parameter standard deviations
+               for(i_P=0;i_P<n_P;i_P++){
+                 dP_avg[i_P]+=pow(P_last[i_P]-P_avg[i_P],2.);
+               }
+               if(!flag_no_map_write){
+                 for(i_DS=0;i_DS<n_DS;i_DS++){
+                   for(i_M=0;i_M<n_M[i_DS];i_M++)
+                     dM_avg[i_DS][i_M]+=pow(M_last[i_DS][i_M]-M_avg[i_DS][i_M],2.);
+                 }
+               }
+             }
+           }
+         } // i_iteration
+         if(!flag_minimize_IO)
+            fclose(fp_chain);
+      }
+      SID_log("Number of used propositions: %d",SID_LOG_COMMENT,n_used);
 
       // Finish mean likelihood histograms & surfaces
       for(i_P=0,i_coverage=0;i_P<n_P;i_P++){
