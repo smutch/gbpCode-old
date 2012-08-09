@@ -142,12 +142,12 @@ class MCMCrun(object):
                 print line.rstrip('\n')
             line = line.split()
             if(line[0][0]!='#'):
-                self.P_best[i_P]    = np.float(line[-1])
+                self.P_max_l[i_P]   = np.float(line[-1])
                 self.P_upper95[i_P] = np.float(line[-2])
                 self.P_lower95[i_P] = np.float(line[-3])
                 self.P_upper68[i_P] = np.float(line[-4])
                 self.P_lower68[i_P] = np.float(line[-5])
-                self.P_max_l[i_P]   = np.float(line[-6])
+                self.P_best[i_P]    = np.float(line[-6])
                 self.P_std[i_P]     = np.float(line[-7])
                 self.P_av[i_P]      = np.float(line[-8])
                 self.P_initial[i_P] = np.float(line[-9])
@@ -320,14 +320,17 @@ class MCMCrun(object):
         """ Read in and return the best fit parameters. """
 
         lP_best  = []
+        lP_max_l = []
 
         for line in file(self.filename_root+'/results/fit_for_parameters.dat'):
             line = line.split()
             if(line[0][0]!='#'):
                 lP_best.append(line[4])
+                lP_max_l.append(line[9])
             self.P_best =np.array(lP_best,dtype='d')
+            self.P_max_l =np.array(lP_max_l,dtype='d')
 
-        return self.P_best
+        return self.P_best, self.P_max_l
 
 
     def read_histogram(self, i_DS):
@@ -392,12 +395,27 @@ class MCMCrun(object):
         if i_DS == None:
             for i, best in enumerate(self.P_best):
                 print "%-25s\t=\t%-1.3e" % (self.P_name[i], 10.0**best)
+                print "\t\t68%%: -%.3e  +%.3e" % (10.**best - 10.**self.P_lower68[i],
+                                             10.**self.P_upper68[i] - 10.**best)
+                print "\t\t95%%: -%.3e  +%.3e" % (10.**best - 10.**self.P_lower95[i],
+                                             10.**self.P_upper95[i] - 10.**best)
         else:
             if type(i_DS) == type(list()):
-                for i in i_DS: print "%15s\t=\t%-1.3e" % (self.P_name[i], 10.0**(self.P_best[i]))
+                for i in i_DS: 
+                    best = self.P_best[i]
+                    print "%-25s\t=\t%-1.3e" % (self.P_name[i], 10.0**(self.P_max_l[i]))
+                    print "\t\t68%%: -%.3e  +%.3e" % (10.**best - 10.**self.P_lower68[i],
+                                                 10.**self.P_upper68[i] - 10.**best)
+                    print "\t\t95%%: -%.3e  +%.3e" % (10.**best - 10.**self.P_lower95[i],
+                                                 10.**self.P_upper95[i] - 10.**best)
             else:
                 assert type(i_DS) == type(int())
-                print "%-25s\t=\t%-1.3e" % (self.P_name[i_DS], 10.0**(self.P_best[i_DS]))
+                best = self.P_best[i_DS]
+                print "%-25s\t=\t%-1.3e" % (self.P_name[i_DS], 10.0**(self.P_max_l[i_DS]))
+                print "\t\t68%%: -%.3e  +%.3e" % (10.**best - 10.**self.P_lower68[i_DS],
+                                             10.**self.P_upper68[i_DS] - 10.**best)
+                print "\t\t95%%: -%.3e  +%.3e" % (10.**best - 10.**self.P_lower95[i_DS],
+                                             10.**self.P_upper95[i_DS] - 10.**best)
         print "------------------------"
         print
 
@@ -471,14 +489,14 @@ class Chain(object):
         
         # Allocate the storage arrays
         n_P = run.n_P
-        flag_success = np.zeros(n_links, dtype='c')
+        flag_success = np.zeros(n_links, dtype='S1')
         ln_likelihood = np.zeros(n_links, np.double)
         p_vals_dtype = np.dtype((np.float64, n_P))
         param_vals = np.zeros(n_links, dtype=p_vals_dtype)
         
         # Read the values
         for l in xrange(n_links):
-            flag_success[l] = np.fromfile(fin, dtype='c', count=1)[0]
+            flag_success[l] = np.fromfile(fin, dtype='S1', count=1)[0]
             ln_likelihood[l] = np.fromfile(fin, dtype=np.float64, count=1)[0]
             param_vals[l] = np.fromfile(fin, dtype=p_vals_dtype, count=1)[0]
             if run.flag_no_map_write==0:
@@ -506,12 +524,24 @@ class Chain(object):
 
         # Read in the trace
         success, ln_likelihood, props = self.read_trace('integration')
-        
-        # Select only successful propositions
-        props = props[success!='']
+
+        # Construct the chain using the trace
+        pcur = self.run.P_init
+        for i in xrange(len(success)):
+            if success[i]=='':
+                props[i] = pcur
+            else:
+                pcur = props[i]
+
+        # These now do not match props and should not be used...
+        del(success, ln_likelihood)
         
         # subtract the mean (along columns)
         M = (props-np.mean(props.T,axis=1)).T 
+        # WARNING - ^!OR!v
+        # subtract the marginalised best parameters along the columns
+        # self.run.read_param_results()
+        # M = (props-self.run.P_best).T 
         
         # Calculate the eigenvectors and eigenvalues
         eigenval,eigenvec = np.linalg.eig(np.cov(M))
@@ -534,7 +564,9 @@ class Chain(object):
             for pc in xrange(eigenval.size):
                 print
                 print "Principle component #{:d}:".format(pc)
-                print "Energy fraction = {:.3f}".format(eigenval[pc]/eigenval_sum)
+                print "Energy fraction = {:.3f} (running total = {:.3f})"\
+                        .format(eigenval[pc]/eigenval_sum, \
+                                eigenval[:pc+1].sum()/eigenval_sum)
                 for p in np.argsort(np.abs(eigenvec[pc]))[::-1]:
                     print "{:s} : {:-.3f}  (^2 = {:-.3f})".format(
                         self.run.P_name[p].ljust(strlen),
@@ -653,4 +685,53 @@ def join_runs(run_list, joined_fname_root):
     fout.close()
 
 
+def restore_failed_chain(run, i_chain, n_iterations_burn, n_iterations, n_avg):
+    '''Try and restore a chain file to the last completed integration
+    iteration.  This is used to recover from a crashed run.'''
+
+    import shutil
+    import os
+
+    print "i_chain = %d" % i_chain
+    print "n_itertions_burn = %d" % n_iterations_burn
+    print "n_iterations = %d" % n_iterations
+    print "n_avg = %d" % n_avg
+    
+    # Read the chain trace and see how far we got before we failed
+    fname = run.filename_root+'/chains/chain_trace_%06d.dat'%(i_chain)
+
+    # Work out the number of bytes in the burnin
+    n_avg = run.n_avg
+    byte_seek = 1+8+(8*run.n_P)
+    if run.flag_no_map_write==0:
+        for i_DS in xrange(run.n_DS):
+            byte_seek += 8*run.n_M[i_DS]
+    burn_bytes = long(byte_seek*n_iterations_burn*n_avg)
+
+    # Now work out the number of successfully completed interations in the
+    # chain trace.
+    bytes_left = os.path.getsize(fname) - burn_bytes 
+    print "burn_bytes = %ld" % burn_bytes
+    print "bytes_left = %ld" % bytes_left
+    print "file_size = %ld" % os.path.getsize(fname)
+    print "byte_seek = %ld" % byte_seek
+    completed_iterations = int(bytes_left / (byte_seek*n_avg))
+    bytes_requested = long(completed_iterations*n_iterations*n_avg) + burn_bytes
+    print "Found %d successfully completed integration phase iterations..." % completed_iterations
+    print "Creating new file with %ld bytes..." % bytes_requested
+
+    # Copy the old chain trace file for backup
+    fname_bu = fname+'.backup'
+    shutil.move(fname, fname_bu)
+
+    # Write the new trace file
+    fout = open(fname, 'wb')
+    fin = open(fname_bu, 'rb')
+    fout.write(fin.read(bytes_requested))
+    fin.close()
+    fout.close()
+
+    print "Created new chain file:",fname
+    print "Original chain file copied to:",fname_bu
+    print
 
