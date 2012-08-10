@@ -255,13 +255,13 @@ void analyze_MCMC(MCMC_info *MCMC){
   P_new          =MCMC->P_new;
   P_last         =MCMC->P_last;
 
-  // Set directories
+  // Set default directories
   sprintf(filename_output_dir, "%s/",        MCMC->filename_output_dir);
   sprintf(filename_chain_dir,  "%s/chains/", filename_output_dir);
   sprintf(filename_results_dir,"%s/results/",filename_output_dir);
   sprintf(filename_plots_dir,  "%s/plots/",  filename_output_dir);
 
-  // Set filenames
+  // Set default filenames
   sprintf(filename_run,             "%s/run.dat",                  filename_output_dir);
   sprintf(filename_chain,           "%s/chain_trace_%06d.dat",     filename_chain_dir,my_chain);
   sprintf(filename_chain_config,    "%s/chain_config_%06d.dat",    filename_chain_dir,my_chain);
@@ -429,14 +429,16 @@ void analyze_MCMC(MCMC_info *MCMC){
       // Loop over all the chains
       for(i_run=0,n_used=0;i_run<n_runs;i_run++){
          if(!flag_minimize_IO){
-           // Set chain filename
-           if(i_run==0)
-              sprintf(filename_output_dir,"%s/",   MCMC->filename_output_root);
-           else
-              sprintf(filename_output_dir,"%s.%d/",MCMC->filename_output_root,i_run);
-           sprintf(filename_chain_dir,    "%s/chains/",              filename_output_dir);
-           sprintf(filename_chain,        "%s/chain_trace_%06d.dat", filename_chain_dir,my_chain);
-           sprintf(filename_chain_config, "%s/chain_config_%06d.dat",filename_chain_dir,my_chain);
+           // Set chain filename (use default if we are not analyzing all runs)
+           if(check_mode_for_flag(MCMC->mode,MCMC_MODE_ANALYZE_ALL_RUNS)){
+              if(i_run==0)
+                 sprintf(filename_output_dir,"%s/",   MCMC->filename_output_root);
+              else
+                 sprintf(filename_output_dir,"%s.%d/",MCMC->filename_output_root,i_run);
+              sprintf(filename_chain_dir,    "%s/chains/",              filename_output_dir);
+              sprintf(filename_chain,        "%s/chain_trace_%06d.dat", filename_chain_dir,my_chain);
+              sprintf(filename_chain_config, "%s/chain_config_%06d.dat",filename_chain_dir,my_chain);
+           }
 
            // Read number of iterations
            if((fp_chain=fopen(filename_chain_config,"rb"))==NULL)
@@ -544,14 +546,16 @@ void analyze_MCMC(MCMC_info *MCMC){
 
       for(i_run=0;i_run<n_runs;i_run++){
          if(!flag_minimize_IO){
-           // Set chain filename
-           if(i_run==0)
-              sprintf(filename_output_dir,"%s/",   MCMC->filename_output_root);
-           else
-              sprintf(filename_output_dir,"%s.%d/",MCMC->filename_output_root,i_run);
-           sprintf(filename_chain_dir,    "%s/chains/",              filename_output_dir);
-           sprintf(filename_chain,        "%s/chain_trace_%06d.dat", filename_chain_dir,my_chain);
-           sprintf(filename_chain_config, "%s/chain_config_%06d.dat",filename_chain_dir,my_chain);
+           // Set chain filename (use default if we are not analyzing all runs)
+           if(check_mode_for_flag(MCMC->mode,MCMC_MODE_ANALYZE_ALL_RUNS)){
+              if(i_run==0)
+                 sprintf(filename_output_dir,"%s/",   MCMC->filename_output_root);
+              else
+                 sprintf(filename_output_dir,"%s.%d/",MCMC->filename_output_root,i_run);
+              sprintf(filename_chain_dir,    "%s/chains/",              filename_output_dir);
+              sprintf(filename_chain,        "%s/chain_trace_%06d.dat", filename_chain_dir,my_chain);
+              sprintf(filename_chain_config, "%s/chain_config_%06d.dat",filename_chain_dir,my_chain);
+           }
 
            // Read number of iterations
            if((fp_chain=fopen(filename_chain_config,"rb"))==NULL)
@@ -688,7 +692,6 @@ void analyze_MCMC(MCMC_info *MCMC){
             dM_avg[i_DS][i_M]=sqrt(dM_avg[i_DS][i_M]/(double)n_used);
         }
       }
-      SID_log("Done.",SID_LOG_CLOSE);    
 
       // Finish covariance matrix
       for(i_P=0;i_P<n_P;i_P++)
@@ -702,7 +705,8 @@ void analyze_MCMC(MCMC_info *MCMC){
 
       // Write covariance matrix
       if(SID.I_am_Master){
-        fp_covariance=fopen(filename_covariance,"wb");
+        if((fp_covariance=fopen(filename_covariance,"wb"))==NULL)
+           SID_trap_error("Could not open {%s} for writing.",ERROR_IO_OPEN,filename_covariance);
         fwrite(&n_P,     sizeof(int),   1,      fp_covariance);
         fwrite(V_compute,sizeof(double),n_P*n_P,fp_covariance);
         fclose(fp_covariance);
@@ -852,6 +856,7 @@ void analyze_MCMC(MCMC_info *MCMC){
       fclose(fp_histograms);
       SID_log("Done.",SID_LOG_CLOSE);
    }
+   SID_log("Done.",SID_LOG_CLOSE);    
 
    // Compute best fit models and their likelihoods
    if(MCMC->map_P_to_M!=NULL){
