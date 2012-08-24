@@ -417,9 +417,16 @@ void write_gadget_binary(char        *filename_in,
               fwrite(&record_length,4,1,fp);
               flag_recordlength_written=TRUE;
             }
-            R1_array=(GBPREAL *)ADaPS_fetch(plist->data,"x_%s",pname[i]);
-            R2_array=(GBPREAL *)ADaPS_fetch(plist->data,"y_%s",pname[i]);
-            R3_array=(GBPREAL *)ADaPS_fetch(plist->data,"z_%s",pname[i]);
+            if(n_of_type_file_rank[i_file][i]>0){
+               R1_array=(GBPREAL *)ADaPS_fetch(plist->data,"x_%s",pname[i]);
+               R2_array=(GBPREAL *)ADaPS_fetch(plist->data,"y_%s",pname[i]);
+               R3_array=(GBPREAL *)ADaPS_fetch(plist->data,"z_%s",pname[i]);
+            }
+            else{
+               R1_array=NULL;
+               R2_array=NULL;
+               R3_array=NULL;
+            }
             for(k=0,j_file=0;j_file<i_file;j_file++) k+=n_of_type_file_rank[j_file][i];
             for(j=0;j<n_of_type_file_rank[i_file][i];j+=n_buffer,k+=n_buffer){
               n_buffer=MIN(GADGET_BUFFER_SIZE,n_of_type_file_rank[i_file][i]-j);
@@ -470,9 +477,16 @@ void write_gadget_binary(char        *filename_in,
               fwrite(&record_length,4,1,fp);
               flag_recordlength_written=TRUE;
             }
-            R1_array=(GBPREAL *)ADaPS_fetch(plist->data,"vx_%s",pname[i]);
-            R2_array=(GBPREAL *)ADaPS_fetch(plist->data,"vy_%s",pname[i]);
-            R3_array=(GBPREAL *)ADaPS_fetch(plist->data,"vz_%s",pname[i]);
+            if(n_of_type_file_rank[i_file][i]>0){
+               R1_array=(GBPREAL *)ADaPS_fetch(plist->data,"vx_%s",pname[i]);
+               R2_array=(GBPREAL *)ADaPS_fetch(plist->data,"vy_%s",pname[i]);
+               R3_array=(GBPREAL *)ADaPS_fetch(plist->data,"vz_%s",pname[i]);
+            }
+            else{
+               R1_array=NULL;
+               R2_array=NULL;
+               R3_array=NULL;
+            }
             for(k=0,j_file=0;j_file<i_file;j_file++) k+=n_of_type_file_rank[j_file][i];
             for(j=0;j<n_of_type_file_rank[i_file][i];j+=n_buffer,k+=n_buffer){
               n_buffer=MIN(GADGET_BUFFER_SIZE,n_of_type_file_rank[i_file][i]-j);
@@ -524,7 +538,10 @@ void write_gadget_binary(char        *filename_in,
             }
             // If ids are defined, then write them ...
             if(ADaPS_exist(plist->data,"id_%s",pname[i])){
-              id_array=(size_t *)ADaPS_fetch(plist->data,"id_%s",pname[i]);
+              if(n_of_type_file_rank[i_file][i]>0)
+                 id_array=(size_t *)ADaPS_fetch(plist->data,"id_%s",pname[i]);
+              else
+                 id_array=NULL;
               for(k=0,j_file=0;j_file<i_file;j_file++) k+=n_of_type_file_rank[j_file][i];
               for(j=0;j<n_of_type_file_rank[i_file][i];j+=n_buffer,k+=n_buffer){
                 n_buffer=MIN(GADGET_BUFFER_SIZE,n_of_type_file_rank[i_file][i]-j);
