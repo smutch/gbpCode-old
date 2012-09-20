@@ -29,7 +29,7 @@ void write_pspec(pspec_info *pspec,char *filename_out_root,plist_info *plist,cha
       strcpy(grouping_name,filename_out_root);
       strip_path(grouping_name);
       fp_out=fopen(filename_out_1D,"w");
-      fprintf(fp_out,"# 1D Power spectra for grouping {%s}\n",grouping_name);
+      fprintf(fp_out,"# 1D Power spectra for dataset {%s}\n",grouping_name);
       fprintf(fp_out,"#\n");
       switch(pspec->mass_assignment_scheme){
          case MAP2GRID_DIST_DWT20:
@@ -52,7 +52,9 @@ void write_pspec(pspec_info *pspec,char *filename_out_root,plist_info *plist,cha
       int i_column=1;
       int i_run;
       fprintf(fp_out,"#\n");
-      fprintf(fp_out,"# Column: (%02d) k [h/Mpc]\n",i_column++);
+      fprintf(fp_out,"# Column: (%02d) k_minimum [h/Mpc]\n",i_column++);
+      fprintf(fp_out,"#         (%02d) k_average [h/Mpc]\n",i_column++);
+      fprintf(fp_out,"#         (%02d) k_maximum [h/Mpc]\n",i_column++);
       fprintf(fp_out,"#         (%02d) # of Fourier modes in this bin\n",i_column++);
       for(i_run=0;i_run<4;i_run++){
          char run_name[128];
@@ -70,15 +72,29 @@ void write_pspec(pspec_info *pspec,char *filename_out_root,plist_info *plist,cha
                sprintf(run_name,"z-projected z");
                break;
          }
-         fprintf(fp_out,"#         (%02d) P(k)  [(Mpc/h)^3];  %s-space\n",i_column++,run_name);
-         fprintf(fp_out,"#         (%02d) dP(k) [(Mpc/h)^3];  %s-space\n",i_column++,run_name);
+         if(pspec->flag_processed[i_run]){
+            fprintf(fp_out,"#         (%02d) P(k)  [(Mpc/h)^3];  %s-space\n",i_column++,run_name);
+            fprintf(fp_out,"#         (%02d) dP(k) [(Mpc/h)^3];  %s-space\n",i_column++,run_name);
+         }
       }
       fprintf(fp_out,"#\n");
+      double k_min;
+      double k_max;
+      k_min=pspec->k_min_1D;
+      k_max=k_min+pspec->dk_1D;
       for(i_k=0;i_k<pspec->n_k_1D;i_k++){
-         fprintf(fp_out,"%9.3le %8d ",pspec->k_1D[i_k],pspec->n_modes_1D[i_k]);
-         for(i_run=0;i_run<4;i_run++)
-            fprintf(fp_out,"  %le %le",pspec->P_k_1D[i_run][i_k],pspec->dP_k_1D[i_run][i_k]);
-         fprintf(fp_out,"\n");
+         if(pspec->n_modes_1D[i_k]>0){
+            if(i_k==(pspec->n_k_1D-1))
+               k_max=pspec->k_max_1D;
+            fprintf(fp_out,"%9.3le %9.3le %9.3le %8d ",k_min,pspec->k_1D[i_k],k_max,pspec->n_modes_1D[i_k]);
+            for(i_run=0;i_run<4;i_run++){
+               if(pspec->flag_processed[i_run])
+                  fprintf(fp_out,"  %le %le",pspec->P_k_1D[i_run][i_k],pspec->dP_k_1D[i_run][i_k]);
+            }
+            fprintf(fp_out,"\n");
+            k_min=k_max;
+         }
+         k_max+=pspec->dk_1D;
       }
       fclose(fp_out);
 
@@ -90,8 +106,11 @@ void write_pspec(pspec_info *pspec,char *filename_out_root,plist_info *plist,cha
       fwrite(&(pspec->dk_2D),   sizeof(double),1,fp_out);
       fwrite(pspec->n_modes_2D, sizeof(int),   pspec->n_k_2D*pspec->n_k_2D,fp_out);
       for(i_run=0;i_run<4;i_run++){
-         fwrite(pspec->P_k_2D[i_run], sizeof(double),pspec->n_k_2D*pspec->n_k_2D,fp_out);
-         fwrite(pspec->dP_k_2D[i_run],sizeof(double),pspec->n_k_2D*pspec->n_k_2D,fp_out);
+         fwrite(&(pspec->flag_processed),sizeof(double),pspec->n_k_2D*pspec->n_k_2D,fp_out);
+         if(pspec->flag_processed){
+            fwrite(pspec->P_k_2D[i_run],    sizeof(double),pspec->n_k_2D*pspec->n_k_2D,fp_out);
+            fwrite(pspec->dP_k_2D[i_run],   sizeof(double),pspec->n_k_2D*pspec->n_k_2D,fp_out);
+         }
       }
       fclose(fp_out);
    }

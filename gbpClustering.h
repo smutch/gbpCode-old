@@ -47,6 +47,7 @@ struct pspec_info {
    double    **dP_k_1D;
    double    **P_k_2D;
    double    **dP_k_2D;
+   int         flag_processed[4];
    cosmo_info *cosmo;
    field_info  FFT;
 };

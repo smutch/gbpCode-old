@@ -314,6 +314,9 @@ void compute_pspec(plist_info  *plist,
   SID_free(SID_FARG P_k_2D_local);
   SID_free(SID_FARG n_modes_2D_local);
 
+  // Tell the datastructure that the calculation is done
+  pspec->flag_processed[i_run]=TRUE;
+
   SID_log("Done.",SID_LOG_CLOSE);
 
 }
