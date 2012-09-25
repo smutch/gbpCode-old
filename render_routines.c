@@ -606,8 +606,10 @@ int set_render_state(render_info *render,int frame,int mode){
          read_mark_file(&(render->plist),"mark",render->mark_filename_root,MARK_LIST_ONLY);
          render->flag_read_marked=FALSE;
       }
-      if(render->flag_add_absorption)
+      if(render->flag_add_absorption){
+         ADaPS_remove(&(render->plist.data),"flag_read_scatter");
          read_gadget_binary(render->snap_filename_root,render->snap_number,&(render->plist),READ_GADGET_DEFAULT);
+      }
       else
          read_gadget_binary_render(render->snap_filename_root,render->snap_number,&(render->plist));
       render->h_Hubble=((double *)ADaPS_fetch(render->plist.data,"h_Hubble"))[0];

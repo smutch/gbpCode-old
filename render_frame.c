@@ -531,9 +531,28 @@ void compute_perspective_transformation(double  x_o,
      double Dy_stereo;
      double Dz_stereo;
      double theta_roll_stereo=0.;
+     double cos_theta_over_d_xy;
      SID_log("Forcing theta=0 in stereo projection.",SID_LOG_COMMENT);
-     Dx_stereo=stereo_offset*cos(theta_roll_stereo)*d_y_o/(*d_xy);
-     Dy_stereo=stereo_offset*cos(theta_roll_stereo)*d_x_o/(*d_xy);
+     if(d_x_o>0.){
+        if(d_y_o>0.){
+           Dx_stereo= stereo_offset*cos(theta_roll_stereo)*d_y_o/(*d_xy);
+           Dy_stereo=-stereo_offset*cos(theta_roll_stereo)*d_x_o/(*d_xy);
+        }
+        else{
+           Dx_stereo=-stereo_offset*cos(theta_roll_stereo)*d_y_o/(*d_xy);
+           Dy_stereo=-stereo_offset*cos(theta_roll_stereo)*d_x_o/(*d_xy);
+        }
+     }
+     else{
+        if(d_y_o>0.){
+           Dx_stereo=+stereo_offset*cos(theta_roll_stereo)*d_y_o/(*d_xy);
+           Dy_stereo=+stereo_offset*cos(theta_roll_stereo)*d_x_o/(*d_xy);
+        }
+        else{
+           Dx_stereo=-stereo_offset*cos(theta_roll_stereo)*d_y_o/(*d_xy);
+           Dy_stereo=+stereo_offset*cos(theta_roll_stereo)*d_x_o/(*d_xy);
+        }
+     }
      if(theta_roll_stereo>0.)
         Dz_stereo=sqrt(stereo_offset*stereo_offset-Dx_stereo*Dx_stereo-Dy_stereo*Dy_stereo);
      else if(theta_roll_stereo==0.)
@@ -1408,10 +1427,8 @@ void render_frame(render_info  *render){
     xmin  = -FOV_x/2.; // Things will be centred on (x_o,y_o,z_o) later
     ymin  = -FOV_y/2.; // Things will be centred on (x_o,y_o,z_o) later
 
-    // Apply frustrum correction
-    if(stereo_offset<0.)
-       xmin-=stereo_offset;
-  
+    xmin+=stereo_offset;
+
     // Compute image scales
     n_pixels    =nx*ny;
     pixel_size_x=FOV_x/(double)nx;
