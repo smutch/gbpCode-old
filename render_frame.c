@@ -332,25 +332,6 @@ void init_particle_map_quantities(map_quantities_info *mq,plist_info *plist,ADaP
         mq->z=(GBPREAL *)ADaPS_fetch(plist->data,"z_%s",plist->species[i_type]);
         if(ADaPS_exist(plist->data,"r_smooth_%s",plist->species[i_type]))
            mq->h_smooth=(float *)ADaPS_fetch(plist->data,"r_smooth_%s",plist->species[i_type]);
-        /*
-        else if(ADaPS_exist(plist->data,"rho_%s",plist->species[i_type])){
-          (*h_smooth)=NULL;
-          if((*rho)==NULL)
-            (*rho)=(float *)ADaPS_fetch(plist->data,"rho_%s",plist->species[i_type]);
-          if(ADaPS_exist(plist->data,"M_%s",plist->species[i_type])){
-            if((*mass)==NULL)
-               (*mass)=(double *)ADaPS_fetch(plist->data,"M_%s",plist->species[i_type]);
-          }
-          else{
-            (*h_smooth)=NULL;
-            if(ADaPS_exist(plist->data,"mass_array_%s",plist->species[i_type])){
-              if((*mass_array)==NULL)
-                 (*mass_array)=((double *)ADaPS_fetch(plist->data,"M_%s",plist->species[i_type]))[0];
-              else
-                mass_array=1.;
-          }
-        }
-        */
         else
            SID_trap_error("No smoothing lengths available for type={%s} in make_map.",ERROR_LOGIC,plist->species[i_type]);
      }
