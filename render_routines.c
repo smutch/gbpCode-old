@@ -359,24 +359,14 @@ void seal_render_camera(render_info *render){
   copy_perspective(render->first_scene->first_perspective,render->camera->perspective);
 
   // Initialize image buffers (use colour_table=1 ... ie B&W ... for Y and Z images)
-  init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGB));
-  init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Y));
-  if(!check_mode_for_flag(render->camera->camera_mode,CAMERA_PLANE_PARALLEL))
-    init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Z));
-  init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGBY));
-  render->camera->mask_RGB =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
-  render->camera->mask_Y   =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
-  render->camera->mask_RGBY=(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
   if(check_mode_for_flag(render->camera->camera_mode,CAMERA_STEREO)){
     init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGB_left));
     init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Y_left));
-    if(!check_mode_for_flag(render->camera->camera_mode,CAMERA_PLANE_PARALLEL))
-      init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Z_left));
+    init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Z_left));
     init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGBY_left));    
     init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGB_right));
     init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Y_right));
-    if(!check_mode_for_flag(render->camera->camera_mode,CAMERA_PLANE_PARALLEL))
-      init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Z_right));
+    init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Z_right));
     init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGBY_right));    
     render->camera->mask_RGB_left  =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
     render->camera->mask_Y_left    =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
@@ -384,6 +374,16 @@ void seal_render_camera(render_info *render){
     render->camera->mask_RGB_right =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
     render->camera->mask_Y_right   =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
     render->camera->mask_RGBY_right=(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
+  }
+  else{
+     init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGB));
+     init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Y));
+     if(!check_mode_for_flag(render->camera->camera_mode,CAMERA_PLANE_PARALLEL))
+       init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Z));
+     init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGBY));
+     render->camera->mask_RGB =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
+     render->camera->mask_Y   =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
+     render->camera->mask_RGBY=(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
   }
 
   // Convert camera depth-range to Mpc/h
@@ -1097,8 +1097,7 @@ void write_frame(render_info *render,int frame,int mode){
   sprintf(filename_RGBY,"%s/RGBY_M_%05d",render->filename_out_dir,frame);
   write_image(render->camera->image_RGB, filename_RGB, mode);
   write_image(render->camera->image_Y,   filename_Y,   mode);
-  if(!check_mode_for_flag(render->camera->camera_mode,CAMERA_PLANE_PARALLEL))
-     write_image(render->camera->image_Z,   filename_Z,   mode);
+  write_image(render->camera->image_Z,   filename_Z,   mode);
   write_image(render->camera->image_RGBY,filename_RGBY,mode);
 
   // Write stereo-images
@@ -1110,8 +1109,7 @@ void write_frame(render_info *render,int frame,int mode){
     sprintf(filename_RGBY,"%s/RGBY_L_%05d",render->filename_out_dir,frame);
     write_image(render->camera->image_RGB_left,  filename_RGB, mode);
     write_image(render->camera->image_Y_left,    filename_Y,   mode);
-    if(!check_mode_for_flag(render->camera->camera_mode,CAMERA_PLANE_PARALLEL))
-      write_image(render->camera->image_Z_left,    filename_Z,   mode);
+    write_image(render->camera->image_Z_left,    filename_Z,   mode);
     write_image(render->camera->image_RGBY_left, filename_RGBY,mode);
 
     // Right
@@ -1121,8 +1119,7 @@ void write_frame(render_info *render,int frame,int mode){
     sprintf(filename_RGBY,"%s/RGBY_R_%05d",render->filename_out_dir,frame);
     write_image(render->camera->image_RGB_right, filename_RGB, mode);
     write_image(render->camera->image_Y_right,   filename_Y,   mode);
-    if(!check_mode_for_flag(render->camera->camera_mode,CAMERA_PLANE_PARALLEL))
-      write_image(render->camera->image_Z_right,   filename_Z,   mode);
+    write_image(render->camera->image_Z_right,   filename_Z,   mode);
     write_image(render->camera->image_RGBY_right,filename_RGBY,mode);
   }  
   SID_log("Done.",SID_LOG_CLOSE);

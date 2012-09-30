@@ -516,22 +516,22 @@ void compute_perspective_transformation(double  x_o,
      SID_log("Forcing theta=0 in stereo projection.",SID_LOG_COMMENT);
      if(d_x_o>0.){
         if(d_y_o>0.){
-           Dx_stereo= stereo_offset*cos(theta_roll_stereo)*d_y_o/(*d_xy);
-           Dy_stereo=-stereo_offset*cos(theta_roll_stereo)*d_x_o/(*d_xy);
+           Dx_stereo=-stereo_offset*cos(theta_roll_stereo)*fabs(d_y_o)/(*d_xy);
+           Dy_stereo= stereo_offset*cos(theta_roll_stereo)*fabs(d_x_o)/(*d_xy);
         }
         else{
-           Dx_stereo=-stereo_offset*cos(theta_roll_stereo)*d_y_o/(*d_xy);
-           Dy_stereo=-stereo_offset*cos(theta_roll_stereo)*d_x_o/(*d_xy);
+           Dx_stereo= stereo_offset*cos(theta_roll_stereo)*fabs(d_y_o)/(*d_xy);
+           Dy_stereo= stereo_offset*cos(theta_roll_stereo)*fabs(d_x_o)/(*d_xy); 
         }
      }
      else{
         if(d_y_o>0.){
-           Dx_stereo=+stereo_offset*cos(theta_roll_stereo)*d_y_o/(*d_xy);
-           Dy_stereo=+stereo_offset*cos(theta_roll_stereo)*d_x_o/(*d_xy);
+           Dx_stereo=-stereo_offset*cos(theta_roll_stereo)*fabs(d_y_o)/(*d_xy); 
+           Dy_stereo=-stereo_offset*cos(theta_roll_stereo)*fabs(d_x_o)/(*d_xy); 
         }
         else{
-           Dx_stereo=-stereo_offset*cos(theta_roll_stereo)*d_y_o/(*d_xy);
-           Dy_stereo=+stereo_offset*cos(theta_roll_stereo)*d_x_o/(*d_xy);
+           Dx_stereo= stereo_offset*cos(theta_roll_stereo)*fabs(d_y_o)/(*d_xy); 
+           Dy_stereo=-stereo_offset*cos(theta_roll_stereo)*fabs(d_x_o)/(*d_xy); 
         }
      }
      if(theta_roll_stereo>0.)
@@ -540,6 +540,13 @@ void compute_perspective_transformation(double  x_o,
         Dz_stereo=0.;
      else
         Dz_stereo=-sqrt(stereo_offset*stereo_offset-Dx_stereo*Dx_stereo-Dy_stereo*Dy_stereo);
+     if(stereo_offset!=0){
+        SID_log("Stereo offset results: (offset=%10.3le [Mpc])",SID_LOG_OPEN,stereo_offset/M_PER_MPC);
+        SID_log("(x_o,x_c,D_x)=(%10.3le,%10.3le,%10.3le) [Mpc]",SID_LOG_COMMENT,x_o/M_PER_MPC,x_c/M_PER_MPC,Dx_stereo/M_PER_MPC);
+        SID_log("(y_o,y_c,D_y)=(%10.3le,%10.3le,%10.3le) [Mpc]",SID_LOG_COMMENT,y_o/M_PER_MPC,y_c/M_PER_MPC,Dy_stereo/M_PER_MPC);
+        SID_log("(z_o,z_c,D_z)=(%10.3le,%10.3le,%10.3le) [Mpc]",SID_LOG_COMMENT,z_o/M_PER_MPC,z_c/M_PER_MPC,Dz_stereo/M_PER_MPC);
+        SID_log("",SID_LOG_SILENT_CLOSE);
+     }
      (*x_o_out)+=Dx_stereo;
      (*y_o_out)+=Dy_stereo;
      (*z_o_out)+=Dz_stereo;
@@ -1260,13 +1267,6 @@ void render_frame(render_info  *render){
         inv_kappa_abs_lo=inv_y_temp[0];
         inv_kappa_abs_hi=inv_y_temp[n_temp-1];
         init_interpolate(render->kappa_transfer->x,inv_y_temp,(size_t)n_temp,gsl_interp_linear,&inv_kappa_interp);
-        /*
-        if(SID.I_am_Master){
-          double x_test;
-          for(x_test=rho_abs_lo;x_test<rho_abs_hi;x_test+=(rho_abs_hi-rho_abs_lo)/100.)
-            fprintf(stderr,"%le %le %le\n",x_test,interpolate(render->kappa_transfer,x_test),interpolate(inv_kappa_interp,x_test));
-        }
-        */
         SID_free(SID_FARG inv_y_temp);
      }
      else{
@@ -1408,7 +1408,7 @@ void render_frame(render_info  *render){
     xmin  = -FOV_x/2.; // Things will be centred on (x_o,y_o,z_o) later
     ymin  = -FOV_y/2.; // Things will be centred on (x_o,y_o,z_o) later
 
-    xmin+=stereo_offset;
+    xmin-=stereo_offset;
 
     // Compute image scales
     n_pixels    =nx*ny;
@@ -1643,7 +1643,6 @@ void render_frame(render_info  *render){
                              absorption=1.;
                           else
                              absorption=interpolate(abs_interp,tau);
-                          //fprintf(stderr,"%e %le %le %le\n",w_i,interpolate(inv_kappa_interp,w_i),dtau,absorption);
                           column_depth[pos]+=dtau;
                           numerator[pos]   +=vw_i*kernel*absorption;
                           denominator[pos] += w_i*kernel*absorption;
