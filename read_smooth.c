@@ -50,8 +50,6 @@ void read_smooth(plist_info *plist,
 
   SID_log("Reading smooth file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_root_in);
 
-fprintf(stderr,"size=%zd",sizeof(smooth_header_info));
-
   // Read header info
   SID_log("Reading header information...",SID_LOG_OPEN);
   smooth_header_info header;
@@ -289,8 +287,7 @@ fprintf(stderr,"size=%zd",sizeof(smooth_header_info));
                unit_name);
      }
      SID_log("",SID_LOG_CLOSE|SID_LOG_NOPRINT);
-/**/  
-     SID_free(SID_FARG ids_index); 
+/**/   
      SID_log("Done.",SID_LOG_CLOSE);
   }
   else
