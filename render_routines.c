@@ -11,12 +11,14 @@
 void init_perspective(perspective_info **perspective,int mode){
   SID_log("Initializing perspective...",SID_LOG_OPEN);
   (*perspective)=(perspective_info *)SID_malloc(sizeof(perspective_info));
-  (*perspective)->p_o[0]= 0.;
-  (*perspective)->p_o[1]= 0.;
-  (*perspective)->p_o[2]= 0.;
-  (*perspective)->theta = 0.;
-  (*perspective)->zeta  = 0.;
-  (*perspective)->FOV   = 0.;
+  (*perspective)->p_o[0]       = 0.;
+  (*perspective)->p_o[1]       = 0.;
+  (*perspective)->p_o[2]       = 0.;
+  (*perspective)->theta        = 0.;
+  (*perspective)->zeta         = 0.;
+  (*perspective)->FOV          = 0.;
+  (*perspective)->focus_shift_x= 0.;
+  (*perspective)->focus_shift_y= 0.;
   if(check_mode_for_flag(mode,RENDER_INIT_EVOLVE)){
     (*perspective)->radius= 0.;
     (*perspective)->phi   = 0.;
@@ -50,15 +52,17 @@ void free_perspective(perspective_info **perspective){
 
 void copy_perspective(perspective_info *from,perspective_info *to){
   SID_log("Copying perspective...",SID_LOG_OPEN);
-  to->p_o[0]=from->p_o[0];  
-  to->p_o[1]=from->p_o[1];  
-  to->p_o[2]=from->p_o[2];  
-  to->radius=from->radius;     
-  to->FOV   =from->FOV;     
-  to->theta =from->theta;   
-  to->zeta  =from->zeta;    
-  to->phi   =from->phi;     
-  to->time  =from->time;    
+  to->p_o[0]       =from->p_o[0];  
+  to->p_o[1]       =from->p_o[1];  
+  to->p_o[2]       =from->p_o[2];  
+  to->radius       =from->radius;     
+  to->FOV          =from->FOV;     
+  to->focus_shift_x=from->focus_shift_x;   
+  to->focus_shift_y=from->focus_shift_y;   
+  to->theta        =from->theta;   
+  to->zeta         =from->zeta;    
+  to->phi          =from->phi;     
+  to->time         =from->time; 
   SID_log("Done.",SID_LOG_CLOSE);
 }
 
@@ -83,7 +87,6 @@ void free_perspective_interp(perspective_interp_info **perspective_interp){
   free_interpolate(SID_FARG (*perspective_interp)->p_o[1]);
   free_interpolate(SID_FARG (*perspective_interp)->p_o[2]);
   free_interpolate(SID_FARG (*perspective_interp)->theta);
-  free_interpolate(SID_FARG (*perspective_interp)->FOV);
   free_interpolate(SID_FARG (*perspective_interp)->FOV);
   free_interpolate(SID_FARG (*perspective_interp)->radius);
   free_interpolate(SID_FARG (*perspective_interp)->phi);
@@ -326,6 +329,9 @@ void init_camera(camera_info **camera, int mode){
   (*camera)->Z_mode       =0;
   (*camera)->Z_gamma      =NULL;
   (*camera)->Z_transfer   =NULL;
+  (*camera)->f_near_field =0.;
+  (*camera)->f_taper_field=0.;
+  (*camera)->f_image_plane=1.;
   strcpy((*camera)->RGB_param,"");
   strcpy((*camera)->Y_param,  "");
 
@@ -451,12 +457,12 @@ void init_render(render_info **render){
   (*render)->last_scene =(*render)->scenes;
 
   (*render)->n_frames           = 0;
+  (*render)->n_interpolate      = 1;
   (*render)->snap_number_read   =-1;
   (*render)->snap_number        = 0;
   (*render)->n_snap_a_list      = 0;
   (*render)->snap_a_list        = NULL;
   (*render)->h_Hubble           = 1.;
-  (*render)->near_field         = 0.;
   (*render)->kappa_absorption   =-1.;
   (*render)->kappa_transfer     = NULL;
   (*render)->flag_read_marked   = FALSE;
@@ -619,15 +625,15 @@ int set_render_state(render_info *render,int frame,int mode){
   }
   
   // Convert [Mpc/h] -> SI
-  perspective->p_o[0]*=M_PER_MPC/render->h_Hubble;
-  perspective->p_o[1]*=M_PER_MPC/render->h_Hubble;
-  perspective->p_o[2]*=M_PER_MPC/render->h_Hubble;
-  perspective->p_c[0]*=M_PER_MPC/render->h_Hubble;
-  perspective->p_c[1]*=M_PER_MPC/render->h_Hubble;
-  perspective->p_c[2]*=M_PER_MPC/render->h_Hubble;
-  perspective->d_o   *=M_PER_MPC/render->h_Hubble;
-  perspective->radius*=M_PER_MPC/render->h_Hubble;
-  perspective->FOV   *=M_PER_MPC/render->h_Hubble;
+  perspective->p_o[0]       *=M_PER_MPC/render->h_Hubble;
+  perspective->p_o[1]       *=M_PER_MPC/render->h_Hubble;
+  perspective->p_o[2]       *=M_PER_MPC/render->h_Hubble;
+  perspective->p_c[0]       *=M_PER_MPC/render->h_Hubble;
+  perspective->p_c[1]       *=M_PER_MPC/render->h_Hubble;
+  perspective->p_c[2]       *=M_PER_MPC/render->h_Hubble;
+  perspective->d_o          *=M_PER_MPC/render->h_Hubble;
+  perspective->radius       *=M_PER_MPC/render->h_Hubble;
+  perspective->FOV          *=M_PER_MPC/render->h_Hubble;
   
   return(r_val);
 }
@@ -711,9 +717,19 @@ void parse_render_file(render_info **render, char *filename){
             grab_double(line,i_word++,&d_value);
             (*render)->last_scene->last_perspective->time=d_value;
           }
+          else if(!strcmp(variable,"focus_shift_x")){
+            grab_double(line,i_word++,&d_value);
+            (*render)->last_scene->last_perspective->focus_shift_x=d_value;
+          }
+          else if(!strcmp(variable,"focus_shift_y")){
+            grab_double(line,i_word++,&d_value);
+            (*render)->last_scene->last_perspective->focus_shift_y=d_value;
+          }
           else
             SID_trap_error("Unknown variable {%s} for parameter {%s} for command {%s} on line %d",ERROR_LOGIC,variable,parameter,command,i_line);
         }
+        else if(!strcmp(parameter,"n_interpolate"))
+          grab_int(line,i_word++,&((*render)->n_interpolate));
         else if(!strcmp(parameter,"snap_file"))
           grab_word(line,i_word++,(*render)->snap_filename_root);
         else if(!strcmp(parameter,"mark_file")){
@@ -740,8 +756,6 @@ void parse_render_file(render_info **render, char *filename){
         }
         else if(!strcmp(parameter,"h_Hubble"))
           grab_double(line,i_word++,&((*render)->h_Hubble));
-        else if(!strcmp(parameter,"near_field"))
-          grab_double(line,i_word++,&((*render)->near_field));
         else if(!strcmp(parameter,"kappa_absorption")){
           if((*render)->flag_add_absorption)
              SID_trap_error("There are conflicting absorption criteria.",ERROR_LOGIC);
@@ -962,6 +976,15 @@ void parse_render_file(render_info **render, char *filename){
             }
             else
               SID_log_warning("Transfer arrays must be >2 elements long.",ERROR_LOGIC);
+          }
+          else if(!strcmp(variable,"f_near_field"))
+            grab_double(line,i_word++,&((*render)->camera->f_near_field));
+          else if(!strcmp(variable,"f_taper_field"))
+            grab_double(line,i_word++,&((*render)->camera->f_taper_field));
+          else if(!strcmp(variable,"f_image_plane")){
+            grab_double(line,i_word++,&((*render)->camera->f_image_plane));
+            if((*render)->camera->f_image_plane<=0.)
+               SID_trap_error("f_image_plane (%le) must be >0.  Consider using a plane-parallel projection.",ERROR_LOGIC,(*render)->camera->f_image_plane);
           }
           else
             SID_trap_error("Unknown variable {%s} for parameter {%s} for command {%s} on line %d",ERROR_LOGIC,variable,parameter,command,i_line);

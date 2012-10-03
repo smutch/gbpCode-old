@@ -105,6 +105,8 @@ void transform_particle(GBPREAL *x_i,
                         double   theta_roll,
                         double   box_size,
                         double   expansion_factor,
+                        double   focus_shift_x,
+                        double   focus_shift_y,
                         int      flag_comoving,
                         int      flag_force_periodic);
 void transform_particle(GBPREAL *x_i,
@@ -122,6 +124,8 @@ void transform_particle(GBPREAL *x_i,
                         double   theta_roll,
                         double   box_size,
                         double   expansion_factor,
+                        double   focus_shift_x,
+                        double   focus_shift_y,
                         int      flag_comoving,
                         int      flag_force_periodic){
 
@@ -162,7 +166,11 @@ void transform_particle(GBPREAL *x_i,
      (*z_i)*=expansion_factor;
    }
    
-   // Shift image plane
+   // Apply focus shift
+   (*x_i)-=focus_shift_x;
+   (*y_i)-=focus_shift_y;
+
+   // Shift zero to the camera position
    (*z_i)+=d_o;
 
 }
@@ -420,13 +428,13 @@ void set_particle_map_quantities(map_quantities_info *mq,int mode,size_t i_parti
   }
 }
 
-float compute_f_stretch(double d_xyz,float z_i,int flag_plane_parallel);
-float compute_f_stretch(double d_xyz,float z_i,int flag_plane_parallel){
+float compute_f_stretch(double d_image_plane,float z_i,int flag_plane_parallel);
+float compute_f_stretch(double d_image_plane,float z_i,int flag_plane_parallel){
    float f_i;
    switch(flag_plane_parallel){
       case FALSE:
          if(z_i>0.)
-            f_i=(float)d_xyz/(float)z_i;
+            f_i=(float)d_image_plane/(float)z_i;
          else
             f_i=0.;
          break;
@@ -438,7 +446,7 @@ float compute_f_stretch(double d_xyz,float z_i,int flag_plane_parallel){
 }
 
 // Compute the angle and the axis of rotation
-//   needed to place the camera at (0,0,-d_xyz)
+//   needed to place the camera at (0,0,-d_o)
 //   with the object at (0,0,0)
 void compute_perspective_transformation(double  x_o,
                                         double  y_o,
@@ -446,9 +454,11 @@ void compute_perspective_transformation(double  x_o,
                                         double  x_c,
                                         double  y_c,
                                         double  z_c,
+                                        double  f_image_plane,
                                         double  stereo_offset,
-                                        double *d_xy,
-                                        double *d_xyz,
+                                        double *FOV_x,
+                                        double *FOV_y,
+                                        double *d_o,
                                         double *x_o_out,
                                         double *y_o_out,
                                         double *z_o_out,
@@ -466,9 +476,11 @@ void compute_perspective_transformation(double  x_o,
                                         double  x_c,
                                         double  y_c,
                                         double  z_c,
+                                        double  f_image_plane,
                                         double  stereo_offset,
-                                        double *d_xy,
-                                        double *d_xyz,
+                                        double *FOV_x,
+                                        double *FOV_y,
+                                        double *d_o,
                                         double *x_o_out,
                                         double *y_o_out,
                                         double *z_o_out,
@@ -483,15 +495,16 @@ void compute_perspective_transformation(double  x_o,
   double d_x_o;
   double d_y_o;
   double d_z_o;
+  double d_xy;
   d_x_o   = x_o-x_c;
   d_y_o   = y_o-y_c;
   d_z_o   = z_o-z_c;
-  (*d_xy) = sqrt(pow(d_x_o,2.)+pow(d_y_o,2.));
-  (*d_xyz)= sqrt(pow(d_x_o,2.)+pow(d_y_o,2.)+pow(d_z_o,2.));
-  (*x_hat)= d_y_o/(*d_xy);
-  (*y_hat)=-d_x_o/(*d_xy);
+  d_xy    = sqrt(pow(d_x_o,2.)+pow(d_y_o,2.));
+  (*d_o)  = sqrt(pow(d_x_o,2.)+pow(d_y_o,2.)+pow(d_z_o,2.));
+  (*x_hat)= d_y_o/d_xy;
+  (*y_hat)=-d_x_o/d_xy;
   (*z_hat)= 0.;
-  (*theta)= acos(d_z_o/(*d_xyz));
+  (*theta)= acos(d_z_o/(*d_o));
   if(sqrt(d_x_o*d_x_o+d_y_o*d_y_o)>0.){
     (*theta_roll)=acos(-d_y_o/sqrt(d_x_o*d_x_o+d_y_o*d_y_o));
     if(d_x_o<0.)
@@ -516,22 +529,22 @@ void compute_perspective_transformation(double  x_o,
      SID_log("Forcing theta=0 in stereo projection.",SID_LOG_COMMENT);
      if(d_x_o>0.){
         if(d_y_o>0.){
-           Dx_stereo=-stereo_offset*cos(theta_roll_stereo)*fabs(d_y_o)/(*d_xy);
-           Dy_stereo= stereo_offset*cos(theta_roll_stereo)*fabs(d_x_o)/(*d_xy);
+           Dx_stereo=-stereo_offset*cos(theta_roll_stereo)*fabs(d_y_o)/d_xy;
+           Dy_stereo= stereo_offset*cos(theta_roll_stereo)*fabs(d_x_o)/d_xy;
         }
         else{
-           Dx_stereo= stereo_offset*cos(theta_roll_stereo)*fabs(d_y_o)/(*d_xy);
-           Dy_stereo= stereo_offset*cos(theta_roll_stereo)*fabs(d_x_o)/(*d_xy); 
+           Dx_stereo= stereo_offset*cos(theta_roll_stereo)*fabs(d_y_o)/d_xy;
+           Dy_stereo= stereo_offset*cos(theta_roll_stereo)*fabs(d_x_o)/d_xy; 
         }
      }
      else{
         if(d_y_o>0.){
-           Dx_stereo=-stereo_offset*cos(theta_roll_stereo)*fabs(d_y_o)/(*d_xy); 
-           Dy_stereo=-stereo_offset*cos(theta_roll_stereo)*fabs(d_x_o)/(*d_xy); 
+           Dx_stereo=-stereo_offset*cos(theta_roll_stereo)*fabs(d_y_o)/d_xy; 
+           Dy_stereo=-stereo_offset*cos(theta_roll_stereo)*fabs(d_x_o)/d_xy; 
         }
         else{
-           Dx_stereo= stereo_offset*cos(theta_roll_stereo)*fabs(d_y_o)/(*d_xy); 
-           Dy_stereo=-stereo_offset*cos(theta_roll_stereo)*fabs(d_x_o)/(*d_xy); 
+           Dx_stereo= stereo_offset*cos(theta_roll_stereo)*fabs(d_y_o)/d_xy; 
+           Dy_stereo=-stereo_offset*cos(theta_roll_stereo)*fabs(d_x_o)/d_xy; 
         }
      }
      if(theta_roll_stereo>0.)
@@ -554,6 +567,12 @@ void compute_perspective_transformation(double  x_o,
      (*y_c_out)+=Dy_stereo;
      (*z_c_out)+=Dz_stereo;
   }
+
+  // Recompute d_o to place the object in front/behind of the image plane
+  (*d_o)  /=f_image_plane;
+  (*FOV_x)*=f_image_plane;
+  (*FOV_y)*=f_image_plane;
+
 }
 
 void init_make_map(plist_info  *plist,
@@ -565,9 +584,10 @@ void init_make_map(plist_info  *plist,
                    double       x_c,
                    double       y_c,
                    double       z_c,
+                   double       f_image_plane,
                    double       box_size,
-                   double       FOV_x,
-                   double       FOV_y,
+                   double       FOV_x_in,
+                   double       FOV_y_in,
                    double       xmin,
                    double       ymin,
                    double       pixel_size_x,
@@ -577,7 +597,9 @@ void init_make_map(plist_info  *plist,
                    int          ny,
                    int          mode,
                    double       expansion_factor,
-                   double       near_field,
+                   double       focus_shift_x,
+                   double       focus_shift_y,
+                   double       d_near_field,
                    double       stereo_offset,
                    int          flag_comoving,
                    int          flag_force_periodic,
@@ -604,9 +626,10 @@ void init_make_map(plist_info  *plist,
                    double       x_c,
                    double       y_c,
                    double       z_c,
+                   double       f_image_plane,
                    double       box_size,
-                   double       FOV_x,
-                   double       FOV_y,
+                   double       FOV_x_in,
+                   double       FOV_y_in,
                    double       xmin,
                    double       ymin,
                    double       pixel_size_x,
@@ -616,7 +639,9 @@ void init_make_map(plist_info  *plist,
                    int          ny,
                    int          mode,
                    double       expansion_factor,
-                   double       near_field,
+                   double       focus_shift_x,
+                   double       focus_shift_y,
+                   double       d_near_field,
                    double       stereo_offset,
                    int          flag_comoving,
                    int          flag_force_periodic,
@@ -656,8 +681,7 @@ void init_make_map(plist_info  *plist,
   double   d_x_o;
   double   d_y_o;
   double   d_z_o;
-  double   d_xy;
-  double   d_xyz;
+  double   d_o;
   double   d_hat;
   double   particle_radius;
   double   x_tmp,y_tmp,z_tmp;
@@ -698,15 +722,19 @@ void init_make_map(plist_info  *plist,
   double x_c_in=x_c;
   double y_c_in=y_c;
   double z_c_in=z_c;
+  double FOV_x =FOV_x_in;
+  double FOV_y =FOV_y_in;
   compute_perspective_transformation(x_o_in,
                                      y_o_in,
                                      z_o_in,
                                      x_c_in,
                                      y_c_in,
                                      z_c_in,
+                                     f_image_plane,
                                      stereo_offset,
-                                     &d_xy,
-                                     &d_xyz,
+                                     &FOV_x,
+                                     &FOV_y,
+                                     &d_o,
                                      &x_o,
                                      &y_o,
                                      &z_o,
@@ -718,6 +746,9 @@ void init_make_map(plist_info  *plist,
                                      &z_hat,
                                      &theta,
                                      &theta_roll);
+
+  // The previous line sets d_o to the object distance.  Compute the distance to the image plane.
+  double d_image_plane=d_o*f_image_plane;
 
   // Determine how many particles are contributing to each 
   //    column of the image
@@ -752,17 +783,18 @@ void init_make_map(plist_info  *plist,
                             x_hat,
                             y_hat,
                             z_hat,
-                            d_xyz,
+                            d_o,
                             stereo_offset,
                             theta,
                             theta_roll,
                             box_size,
                             expansion_factor,
+                            focus_shift_x,
+                            focus_shift_y,
                             flag_comoving,
                             flag_force_periodic);
 
-
-         if(z_i>0){
+         if(z_i>d_near_field){
             double radius2_norm;
             double radius_kernel;
             double part_pos_x;
@@ -772,7 +804,7 @@ void init_make_map(plist_info  *plist,
             int    ky_min;
             int    ky_max;
             int    n_ky;
-            f_i=(float)compute_f_stretch(d_xyz,z_i,flag_plane_parallel);
+            f_i=(float)compute_f_stretch(d_image_plane,z_i,flag_plane_parallel);
             set_pixel_space(h_i,
                             x_i,
                             y_i,
@@ -876,16 +908,18 @@ void init_make_map(plist_info  *plist,
                             x_hat,
                             y_hat,
                             z_hat,
-                            d_xyz,
+                            d_o,
                             stereo_offset,
                             theta,
                             theta_roll,
                             box_size,
                             expansion_factor,
+                            focus_shift_x,
+                            focus_shift_y,
                             flag_comoving,
                             flag_force_periodic);
 
-         if(z_i>0){
+         if(z_i>d_near_field){
             double radius2_norm;
             double radius_kernel;
             double part_pos_x;
@@ -894,7 +928,7 @@ void init_make_map(plist_info  *plist,
             int    kx_max;
             int    ky_min;
             int    ky_max;
-            f_i=(float)compute_f_stretch(d_xyz,z_i,flag_plane_parallel);
+            f_i=(float)compute_f_stretch(d_image_plane,z_i,flag_plane_parallel);
             set_pixel_space(h_i,
                             x_i,
                             y_i,
@@ -993,16 +1027,18 @@ void init_make_map(plist_info  *plist,
                                x_hat,
                                y_hat,
                                z_hat,
-                               d_xyz,
+                               d_o,
                                stereo_offset,
                                theta,
                                theta_roll,
                                box_size,
                                expansion_factor,
+                               focus_shift_x,
+                               focus_shift_y,
                                flag_comoving,
                                flag_force_periodic);
 
-            if(z_i>0){
+            if(z_i>d_near_field){
                double radius2_norm;
                double radius_kernel;
                double part_pos_x;
@@ -1011,7 +1047,7 @@ void init_make_map(plist_info  *plist,
                int    kx_max;
                int    ky_min;
                int    ky_max;
-               f_i=(float)compute_f_stretch(d_xyz,z_i,flag_plane_parallel);
+               f_i=(float)compute_f_stretch(d_image_plane,z_i,flag_plane_parallel);
                set_pixel_space(h_i,
                                x_i,
                                y_i,
@@ -1206,8 +1242,10 @@ void render_frame(render_info  *render){
   double       x_c;
   double       y_c;
   double       z_c;
-  double       FOV_x;
-  double       FOV_y;
+  double       FOV_x_object_plane;
+  double       FOV_y_object_plane;
+  double       FOV_x_image_plane;
+  double       FOV_y_image_plane;
   double       box_size;
   int          nx;
   int          ny;
@@ -1219,9 +1257,14 @@ void render_frame(render_info  *render){
   int          flag_comoving;
   int          flag_force_periodic;
   double       expansion_factor;
+  double       focus_shift_x;
+  double       focus_shift_y;
   ADaPS       *transfer;
   double       h_Hubble;
-  double       near_field;
+  double       f_image_plane;
+  double       d_image_plane;
+  double       d_near_field;
+  double       d_taper_field;
   double       stereo_offset;
   int          i_x,i_y;
   int         *mask_buffer;
@@ -1307,18 +1350,39 @@ void render_frame(render_info  *render){
   flag_comoving      =render->flag_comoving;
   flag_force_periodic=render->flag_force_periodic;
   expansion_factor   =render->camera->perspective->time;
-  box_size        =((double *)ADaPS_fetch(plist->data,"box_size"))[0];
-  h_Hubble        =render->h_Hubble;
-  near_field      =render->near_field*d_o;
-  SID_log("near field =%le [Mpc/h]",SID_LOG_COMMENT,near_field*h_Hubble/M_PER_MPC);
+  box_size           =((double *)ADaPS_fetch(plist->data,"box_size"))[0];
+  h_Hubble           =render->h_Hubble;
+  focus_shift_x      =render->camera->perspective->focus_shift_x*M_PER_MPC/h_Hubble;
+  focus_shift_y      =render->camera->perspective->focus_shift_y*M_PER_MPC/h_Hubble;
+  f_image_plane      =render->camera->f_image_plane;
+  d_near_field       =render->camera->f_near_field*d_o;
+  d_taper_field      =render->camera->f_taper_field*d_o;
+  d_image_plane      =d_o*f_image_plane;
+
+  // Sanity check the taper distances
+  double taper_width=d_taper_field-d_near_field;
+  if(taper_width<0.)
+     SID_trap_error("The near-field distance (%le [Mpc/h]) must be less than the taper distance (%le [Mpc/h]) if non-zero.",ERROR_LOGIC,
+                    d_near_field*h_Hubble/M_PER_MPC,
+                    d_taper_field*h_Hubble/M_PER_MPC);
+
+  // Set FOV
+  if(d_near_field>0.)
+     SID_log("Near  field = %le [Mpc/h]",SID_LOG_COMMENT,d_near_field *h_Hubble/M_PER_MPC);
+  if(d_taper_field>0.)
+     SID_log("Taper field = %le [Mpc/h]",SID_LOG_COMMENT,d_taper_field*h_Hubble/M_PER_MPC);
+  if(d_near_field>0. || d_taper_field>0.)
+     SID_log("Image plane = %le [Mpc/h]",SID_LOG_COMMENT,d_image_plane*h_Hubble/M_PER_MPC);
   if(nx>=ny){
-    FOV_y=render->camera->perspective->FOV;
-    FOV_x=FOV_y*(double)nx/(double)ny;    
+    FOV_y_object_plane=render->camera->perspective->FOV;
+    FOV_x_object_plane=FOV_y_object_plane*(double)nx/(double)ny;    
   }
   else{
-    FOV_x=render->camera->perspective->FOV;
-    FOV_y=FOV_x*(double)nx/(double)ny;        
+    FOV_x_object_plane=render->camera->perspective->FOV;
+    FOV_y_object_plane=FOV_x_object_plane*(double)nx/(double)ny;        
   }
+  FOV_x_image_plane=FOV_x_object_plane*f_image_plane;
+  FOV_y_image_plane=FOV_y_object_plane*f_image_plane;
 
   if(check_mode_for_flag(camera_mode,CAMERA_STEREO)){
     n_images=6;
@@ -1339,14 +1403,6 @@ void render_frame(render_info  *render){
         image    =render->camera->image_RGB->values;
         z_image  =NULL;
         mask     =render->camera->mask_RGB;
-        if(nx>=ny){
-          FOV_y=render->camera->perspective->FOV;
-          FOV_x=FOV_y*(double)nx/(double)ny;
-        }
-        else{
-          FOV_x=render->camera->perspective->FOV;
-          FOV_y=FOV_x*(double)nx/(double)ny;
-        }
         stereo_offset=0.;
         break;
       // Mono luminance
@@ -1367,7 +1423,7 @@ void render_frame(render_info  *render){
         image         =render->camera->image_RGB_left->values;
         z_image       =NULL;
         mask          =render->camera->mask_RGB_left;
-        stereo_offset =-d_o/render->camera->stereo_ratio;
+        stereo_offset =-d_image_plane/render->camera->stereo_ratio;
         break;
       // Left luminance
       case 3:
@@ -1387,7 +1443,7 @@ void render_frame(render_info  *render){
         image         =render->camera->image_RGB_right->values;
         z_image       =NULL;
         mask          =render->camera->mask_RGB_right;
-        stereo_offset =d_o/render->camera->stereo_ratio;
+        stereo_offset =d_image_plane/render->camera->stereo_ratio;
         break;
       // Right luminance
       case 5:
@@ -1405,15 +1461,15 @@ void render_frame(render_info  *render){
     SID_log("Projecting {%s} to a %dx%d pixel array...",SID_LOG_OPEN|SID_LOG_TIMER,parameter,nx,ny);
 
     // Set physical image-plane domain
-    xmin  = -FOV_x/2.; // Things will be centred on (x_o,y_o,z_o) later
-    ymin  = -FOV_y/2.; // Things will be centred on (x_o,y_o,z_o) later
+    xmin  = -FOV_x_image_plane/2.; // Things will be centred on (x_o,y_o,z_o) later
+    ymin  = -FOV_y_image_plane/2.; // Things will be centred on (x_o,y_o,z_o) later
 
     xmin-=stereo_offset;
 
     // Compute image scales
     n_pixels    =nx*ny;
-    pixel_size_x=FOV_x/(double)nx;
-    pixel_size_y=FOV_y/(double)ny;
+    pixel_size_x=FOV_x_image_plane/(double)nx;
+    pixel_size_y=FOV_y_image_plane/(double)ny;
     pixel_size  =0.5*(pixel_size_x+pixel_size_y);
     pixel_area  =pixel_size_x*pixel_size_y;
     if(fabs((pixel_size_x-pixel_size_y)/pixel_size_x)>1e-4)
@@ -1433,6 +1489,8 @@ void render_frame(render_info  *render){
     double x_c_in=x_c;
     double y_c_in=y_c;
     double z_c_in=z_c;
+    double FOV_x =FOV_x_object_plane;
+    double FOV_y =FOV_y_object_plane;
     double x_o_out;
     double y_o_out;
     double z_o_out;
@@ -1444,17 +1502,18 @@ void render_frame(render_info  *render){
     double z_hat;
     double theta;
     double theta_roll;
-    double d_xy;
-    double d_xyz;
+    double d_o;
     compute_perspective_transformation(x_o_in,
                                        y_o_in,
                                        z_o_in,
                                        x_c_in,
                                        y_c_in,
                                        z_c_in,
+                                       f_image_plane,
                                        stereo_offset,
-                                       &d_xy,
-                                       &d_xyz,
+                                       &FOV_x,
+                                       &FOV_y,
+                                       &d_o,
                                        &x_o_out,
                                        &y_o_out,
                                        &z_o_out,
@@ -1475,14 +1534,17 @@ void render_frame(render_info  *render){
                   transfer,
                   x_o,y_o,z_o,
                   x_c,y_c,z_c,
-                  box_size,FOV_x,FOV_y,
+                  f_image_plane,
+                  box_size,FOV_x_object_plane,FOV_y_object_plane,
                   xmin,ymin,
                   pixel_size_x,pixel_size_y,
                   radius_kernel_norm,
                   nx,ny,
                   mode,
                   expansion_factor,
-                  near_field,
+                  focus_shift_x,
+                  focus_shift_y,
+                  d_near_field,
                   stereo_offset,
                   flag_comoving,
                   flag_force_periodic,
@@ -1521,13 +1583,6 @@ void render_frame(render_info  *render){
       mask[i_pixel]=FALSE;
     }
 
-    d_x_o=x_o-x_c;
-    d_y_o=y_o-y_c;
-    d_z_o=z_o-z_c;
-    d_o  =sqrt(pow(d_x_o,2.)+
-               pow(d_y_o,2.)+
-               pow(d_z_o,2.));
-
     // Report absorption statistics
     if(render->kappa_transfer!=NULL){
        float rho_min,rho_mean,rho_max;
@@ -1551,40 +1606,21 @@ void render_frame(render_info  *render){
 
     // Perform projection
     size_t        ii_particle;
+    size_t        n_particles_used_local;
+    size_t        n_particles_used;
     pcounter_info pcounter;
     SID_init_pcounter(&pcounter,n_particles,10);
     SID_log("Performing projection...",SID_LOG_OPEN|SID_LOG_TIMER);
-    for(ii_particle=0;ii_particle<n_particles;ii_particle++){
+    for(ii_particle=0,n_particles_used_local=0;ii_particle<n_particles;ii_particle++){
       i_particle=z_index[ii_particle];
       z_i       =(double)z[i_particle];
 
       part_h_z=(double)h_smooth[i_particle];
 
-      if(z_i>near_field){
+      if(z_i>d_near_field){
+        n_particles_used_local++;
 
         // Set pixel space ranges and positions
-        /*
-        set_pixel_space(h_smooth[i_particle],
-                        x[i_particle],
-                        y[i_particle],
-                        f_stretch[i_particle],
-                        xmin,
-                        ymin,
-                        FOV_x,
-                        FOV_y,
-                        pixel_size_x,
-                        pixel_size_y,
-                        radius_kernel_norm,
-                        &radius2_norm,
-                        &radius_kernel,
-                        &part_pos_x,
-                        &part_pos_y,
-                        &kx_min,
-                        &kx_max,
-                        &ky_min,
-                        &ky_max);
-        */
-
         part_h_xy    =part_h_z*f_stretch[i_particle];
         radius2_norm =1./(part_h_xy*part_h_xy);
         part_pos_x   =(double)(x[i_particle]*f_stretch[i_particle]);
@@ -1595,15 +1631,24 @@ void render_frame(render_info  *render){
         ky_min=(int)((part_pos_y-radius_kernel-ymin)/pixel_size_y);
         ky_max=(int)((part_pos_y+radius_kernel-ymin)/pixel_size_y+ONE_HALF);
 
+        // Compute any potential tapering
+        double f_taper;
+        if(taper_width>0. && z_i<d_taper_field)
+           f_taper=(z_i-d_near_field)/taper_width;
+        else
+           f_taper=1;
+
         // Set the particle values and weights
         double w_i;
         double v_i;
         double vw_i;
         v_i=(double)value[i_particle];
         if(denominator!=NULL){
-           w_i =(double)weight[i_particle];
+           w_i =(double)weight[i_particle]*f_taper;
            vw_i=v_i*w_i;
         }
+        else
+           v_i*=f_taper;
 
         // Loop over the kernal
         for(kx=kx_min,pixel_pos_x=xmin+(kx_min+0.5)*pixel_size_x;kx<=kx_max;kx++,pixel_pos_x+=pixel_size_x){
@@ -1700,6 +1745,8 @@ void render_frame(render_info  *render){
       SID_check_pcounter(&pcounter,ii_particle);
     }
     SID_Barrier(SID.COMM_WORLD);
+    SID_Allreduce(&n_particles_used_local,&n_particles_used,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
+    SID_log("n_particles_used=%zd",SID_LOG_COMMENT,n_particles_used);
     SID_log("Done.",SID_LOG_CLOSE);
 
     SID_log("Image normalization, etc...",SID_LOG_OPEN|SID_LOG_TIMER);
@@ -1799,7 +1846,7 @@ void render_frame(render_info  *render){
         SID_log("Z-frame statistics: (min,max)         =(%8.3le,%8.3le) [Mpc/h]",SID_LOG_COMMENT,h_Hubble*min_z_image/M_PER_MPC,h_Hubble*max_z_image/M_PER_MPC);
     }
     else
-      SID_out("Image is empty.",SID_LOG_COMMENT);
+      SID_log("IMAGE IS EMPTY.",SID_LOG_COMMENT);
 
     // Clean-up
     SID_free(SID_FARG x);

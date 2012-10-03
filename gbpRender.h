@@ -71,15 +71,17 @@ struct movie_info{
 
 typedef struct perspective_info perspective_info;
 struct perspective_info{
-  double p_o[3];  // Object position
-  double p_c[3];  // Camera position; computed from p_o, radius zeta and theta
-  double d_o;     // Separation between object and camera
-  double radius;  // Separation between object and camera modulo phi
-  double theta;   // Rotation angle (azimuthal)   of camera position about x,y,z_o (after c-o transformation)
-  double zeta;    // Rotation angle (altitudinal) of camera position about x,y,z_o (after c-o transformation)
-  double phi;     // Zoom factor
-  double FOV;     // Field of view at object position
-  double time;    // Used for time-evolving movies
+  double p_o[3];          // Object position
+  double p_c[3];          // Camera position; computed from p_o, radius zeta and theta
+  double d_o;             // Separation between object and camera
+  double radius;          // Separation between object and camera modulo phi
+  double theta;           // Rotation angle (azimuthal)   of camera position about x,y,z_o (after c-o transformation)
+  double zeta;            // Rotation angle (altitudinal) of camera position about x,y,z_o (after c-o transformation)
+  double phi;             // Zoom factor
+  double FOV;             // Field of view at object position
+  double time;            // Used for time-evolving movies
+  double focus_shift_x;   // After all transformations are applied, this shifts everything in the image-frame.  Useful
+  double focus_shift_y;   //    for cases where you want flag_comoving=FALSE but don't want (0,0,0) in the image-centre.
   perspective_info *next; // Used for perspective lists
 };
 
@@ -117,6 +119,9 @@ struct camera_info{
   int               width;
   int               height;
   double            stereo_ratio;
+  double            f_near_field;
+  double            f_taper_field;
+  double            f_image_plane;
   perspective_info *perspective; // Present perspective state of camera
   image_info       *image_RGBY;
   image_info       *image_RGBY_left;
@@ -161,6 +166,7 @@ struct render_info{
   scene_info  *scenes;
   scene_info  *first_scene;
   scene_info  *last_scene;
+  int          n_interpolate;
   int          n_frames;
   char         filename_out_dir[256];
   char         snap_filename_root[256];
@@ -179,7 +185,6 @@ struct render_info{
   double       h_Hubble;
   double       kappa_absorption;
   interp_info *kappa_transfer;
-  double       near_field;
   int          mode;
   int          sealed; // TRUE if the render is fully initialized
 };
