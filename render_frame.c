@@ -1681,7 +1681,7 @@ void render_frame(render_info  *render){
                              dtau=w_i*kernel*inv_kappa_abs_hi;
                           else
                              dtau=w_i*kernel*interpolate(inv_kappa_interp,w_i);
-                          tau=(double)column_depth[pos];
+                          tau=column_depth[pos];
                           if(tau>tau_max)
                              absorption=0.;
                           else if(tau<=0.)
@@ -1788,6 +1788,8 @@ void render_frame(render_info  *render){
       SID_Allreduce(SID_IN_PLACE,denominator,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
     if(z_image!=NULL)
       SID_Allreduce(SID_IN_PLACE,z_image,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
+    if(column_depth!=NULL)
+      SID_Allreduce(SID_IN_PLACE,column_depth,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
 
     // Normalize image (if needed)
     if(denominator!=NULL){
@@ -1815,6 +1817,30 @@ void render_frame(render_info  *render){
             z_image[i_pixel]=0.;
         }
       }
+    }
+
+    // Report some column depth statistics
+    if(column_depth!=NULL){
+       int     i_bin;
+       int     n_bins=20;
+       int    *column_hist;
+       double  bin_step=0.25;
+       column_hist=(int *)SID_calloc(sizeof(int)*(n_bins+1));
+       for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
+          i_bin=(int)((double)column_depth[i_pixel]/bin_step);
+          if(i_bin<n_bins)
+             column_hist[i_bin]++;
+          else
+             column_hist[n_bins]++;
+       }
+       SID_log("Column depth statistics:",SID_LOG_OPEN);
+       SID_log("  tau    %%",SID_LOG_COMMENT);
+       SID_log(" -----  ---",SID_LOG_COMMENT);
+       for(i_bin=0;i_bin<n_bins;i_bin++)
+          SID_log(" %5.2lf  %3d",SID_LOG_COMMENT,(double)i_bin*bin_step,(int)(1e2*(double)column_hist[i_bin]/(double)n_pixels));
+       SID_log(" %5.2lf+ %3d",SID_LOG_COMMENT,(double)n_bins*bin_step,(int)(1e2*(double)column_hist[n_bins]/(double)n_pixels));
+       SID_log("",SID_LOG_SILENT_CLOSE);
+       SID_free(SID_FARG column_hist);
     }
 
     // Take log_10 (if needed)
