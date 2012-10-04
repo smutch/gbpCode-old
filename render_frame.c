@@ -381,8 +381,10 @@ void set_particle_map_quantities(map_quantities_info *mq,int mode,size_t i_parti
                     (*w_i)*=MAX(0.,MIN(1.,interpolate(mq->transfer_rho,(double)(*w_i))));
                     break;
               }
+              /*
               if(!mq->flag_comoving)
                  (*w_i)*=mq->inv_expansion_factor_cubed;
+              */
            }
            break;
         case MAKE_MAP_NO_WEIGHTING:
