@@ -457,6 +457,8 @@ class Chain(object):
             print 'temperature            =',self.temp
             line_break()
 
+        def __repr__(object):
+            return "Chain"
 
     def read_trace(self, phase):
         """Read in the chain trace parameter values.
@@ -506,6 +508,16 @@ class Chain(object):
         fin.close()
         return flag_success, ln_likelihood, param_vals 
 
+    def _chain_(self,success,props):
+        """Construct the chain using the trace."""
+        pcur = self.run.P_init
+        for i in xrange(len(success)):
+            if success[i]=='':
+                props[i] = pcur
+            else:
+                pcur = props[i]
+        return props
+
 
     def PCA(self, quiet=False):
         """Carry out a Principle Component Analysis (PCA) of the successful
@@ -526,12 +538,7 @@ class Chain(object):
         success, ln_likelihood, props = self.read_trace('integration')
 
         # Construct the chain using the trace
-        pcur = self.run.P_init
-        for i in xrange(len(success)):
-            if success[i]=='':
-                props[i] = pcur
-            else:
-                pcur = props[i]
+        props = self._chain_(success, props)
 
         # These now do not match props and should not be used...
         del(success, ln_likelihood)
@@ -734,4 +741,84 @@ def restore_failed_chain(run, i_chain, n_iterations_burn, n_iterations, n_avg):
     print "Created new chain file:",fname
     print "Original chain file copied to:",fname_bu
     print
+
+
+class ConvergenceTests(object):
+    """A collection of convergence tests for MCMC chains.
+
+    Currently implemented:
+        Rubin-Gelman statistic (Requires >= 2 chains)
+    """
+
+    def __init__(self,chains):
+        # Make sure that chains is a list
+        if type(chains)!=list:
+            self.chains = [chains,]
+        else:
+            self.chains = chains
+        assert type(self.chains[0]) == Chain,\
+                "Valid chain object not passed..."
+        self.nchains = len(chains)
+    
+    def rubin_gelman(self):
+        """Rubin-Gelman statistic for chain convergence.
+
+        This test requires >=2 chains.
+
+        See
+        http://support.sas.com/documentation/cdl/en/statug/63033/HTML/default/viewer.htm#statug_introbayes_sect008.htm
+        for details on the implementation.
+        
+        Returns:
+            PSRF - The potential square reduction factor
+                   (target = 1.0 for converged chains)
+        """
+
+        if self.nchains<2:
+            raise ValueError('nchains is less than 2')   
+
+        nchains = float(self.nchains) 
+        chain_list = self.chains
+        nparams =  chain_list[0].run.n_P
+        param_names = chain_list[0].run.P_name
+        chain_mean = np.zeros((nchains, nparams), float)
+        chain_var  = np.zeros((nchains, nparams), float)
+        
+        # We need the same length for each chain hence we are restricted to the
+        # length of the shortest chain.
+        lengths = np.array([chain.n_integrate for chain in chain_list], float)
+        if any(lengths!=lengths[0]):
+            length = lengths.min()
+        else:
+            length = lengths[0]
+
+        for i_chain,chain in enumerate(chain_list):
+            success, ln_likelihood, props = chain.read_trace('integration')
+            props = chain._chain_(success, props)  # Reconstruct chain from trace
+            del(success, ln_likelihood)
+            if props.shape[0]>length:
+                props = props[:length]  # Trim the chain if necessary
+            chain_mean[i_chain] = props.mean(axis=0)
+            chain_var[i_chain]  = props.var(ddof=1, axis=0)
+
+        print
+        print "Rubin-Gelman Convergence Test:"
+        print "------------------------------"
+        print "Potential square reduction factors (target = 1.0):"
+
+        PSRF = np.zeros(nparams, float)
+        for i_param, param in enumerate(param_names):
+            B = chain_mean[:,i_param].var(ddof=1)*length  # inter-chain var
+            W = chain_var[:,i_param].mean()  # intra-chain var
+
+            # Posterior marginal variance
+            V = ((length-1)/length*W) + ((nchains+1)/(length*nchains)*B)
+
+            # potential square reduction factor
+            PSRF[i_param] = np.sqrt(V/W)
+
+            # print result
+            print "\t%-30s -> %.2f"%(param,PSRF[i_param])
+
+        return PSRF
 
