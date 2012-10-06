@@ -207,8 +207,8 @@ void free_particle_map_quantities(map_quantities_info *mq){
    SID_free(SID_FARG mq->ptype_used);
 }
 
-void init_particle_map_quantities(map_quantities_info *mq,plist_info *plist,ADaPS *transfer_list,char *parameter,int flag_comoving,double expansion_factor);
-void init_particle_map_quantities(map_quantities_info *mq,plist_info *plist,ADaPS *transfer_list,char *parameter,int flag_comoving,double expansion_factor){
+void init_particle_map_quantities(map_quantities_info *mq,camera_info *camera,plist_info *plist,ADaPS *transfer_list,int flag_comoving,double expansion_factor);
+void init_particle_map_quantities(map_quantities_info *mq,camera_info *camera,plist_info *plist,ADaPS *transfer_list,int flag_comoving,double expansion_factor){
 
   SID_log("Initializing quantities...",SID_LOG_OPEN);
 
@@ -241,48 +241,8 @@ void init_particle_map_quantities(map_quantities_info *mq,plist_info *plist,ADaP
   for(i_type=0;i_type<N_GADGET_TYPE;i_type++)
      mq->ptype_used[i_type]=FALSE;
 
-  // Render a dark matter surface density map
-  if(!strcmp(parameter,"Sigma_M_dark")){
-    mq->ptype_used[GADGET_TYPE_DARK]=TRUE;
-    mq->flag_weigh                  =FALSE;
-    mq->flag_line_integral          =FALSE;
-    mq->n_particles                 =((size_t *)ADaPS_fetch(plist->data,"n_dark"))[0];
-    if(ADaPS_exist(plist->data,"rho_dark"))
-      mq->rho=(float *)ADaPS_fetch(plist->data,"rho_dark");
-    else
-      SID_trap_error("No denisities available to compute %s in make_map.",ERROR_LOGIC,parameter);
-  }
-
-  // Render a dark matter column depth map
-  else if(!strcmp(parameter,"tau_dark")){
-    mq->ptype_used[GADGET_TYPE_DARK]=TRUE;
-    mq->flag_weigh                  =FALSE;
-    mq->flag_line_integral          =TRUE;
-    mq->n_particles                 =((size_t *)ADaPS_fetch(plist->data,"n_dark"))[0];
-    mq->v_mode=MAKE_MAP_MODE_RHO;
-    mq->w_mode=0;
-    if(ADaPS_exist(plist->data,"rho_dark")){
-      mq->rho=(float *)ADaPS_fetch(plist->data,"rho_dark");
-      if(ADaPS_exist(transfer_list,"rho_dark")){
-        if(ADaPS_exist(transfer_list,"rho_dark_log")) 
-          mq->flag_transfer_rho_log=TRUE;
-        mq->transfer_rho=(interp_info *)ADaPS_fetch(transfer_list,"rho_dark");
-      }
-      else{
-        mq->flag_transfer_rho_log=FALSE;
-        mq->transfer_rho         =NULL;
-      }
-    }
-    else if(ADaPS_exist(plist->data,"mass_array_dark")){
-      mq->rho       =NULL;
-      mq->mass_array=((double *)ADaPS_fetch(plist->data,"mass_array_dark"))[0];
-    }
-    else
-      SID_trap_error("No densities or masses available to compute %s in make_map.",ERROR_LOGIC,parameter);
-  }
-
   // Render a dark matter velocity dispersion map
-  else if(!strcmp(parameter,"sigma_v_dark")){
+  if(!strcmp(camera->RGB_param,"sigma_v_dark") && !strcmp(camera->Y_param,"rho_dark")){
     mq->ptype_used[GADGET_TYPE_DARK]=TRUE;
     mq->flag_weigh                  =TRUE;
     mq->flag_line_integral          =TRUE;
@@ -306,7 +266,7 @@ void init_particle_map_quantities(map_quantities_info *mq,plist_info *plist,ADaP
       mq->mass_array=((double *)ADaPS_fetch(plist->data,"mass_array_dark"))[0];
     }
     else
-      SID_trap_error("No densities or masses available to compute %s in make_map.",ERROR_LOGIC,parameter);
+      SID_trap_error("No densities or masses available in make_map.",ERROR_LOGIC);
 
     // Use sigma_v for values
     if(ADaPS_exist(plist->data,"sigma_v_dark")){
@@ -322,10 +282,10 @@ void init_particle_map_quantities(map_quantities_info *mq,plist_info *plist,ADaP
       }
     }
     else
-      SID_trap_error("No sigma_v's available to render %s in make_map.",ERROR_LOGIC,parameter);
+      SID_trap_error("No sigma_v's available in make_map.",ERROR_LOGIC);
   }
   else
-    SID_trap_error("Unknown parameter {%s}.",ERROR_LOGIC,parameter);
+    SID_trap_error("Unknown rendering configuration RGB={%s} Y={%s}.",ERROR_LOGIC,camera->RGB_param,camera->Y_param);
 
   // Initialize smoothings
   int n_type_used=0;
@@ -395,6 +355,7 @@ void set_particle_map_quantities(map_quantities_info *mq,int mode,size_t i_parti
      }
      // Set the particle value
      switch(mq->v_mode){
+        /*
         case MAKE_MAP_MODE_RHO:
            (*v_i)=mq->rho[i_particle];
            if(mq->transfer_rho!=NULL){
@@ -410,6 +371,7 @@ void set_particle_map_quantities(map_quantities_info *mq,int mode,size_t i_parti
                  (*v_i)*=mq->inv_expansion_factor_cubed;
            }
            break;
+        */
         case MAKE_MAP_MODE_SIGMA:
            (*v_i)=mq->sigma[i_particle];
            if(mq->transfer_sigma!=NULL){
@@ -578,8 +540,7 @@ void compute_perspective_transformation(double  x_o,
 }
 
 void init_make_map(plist_info  *plist,
-                   char        *parameter,
-                   ADaPS       *transfer_list,
+                   camera_info *camera,
                    double       x_o,
                    double       y_o,
                    double       z_o,
@@ -620,8 +581,7 @@ void init_make_map(plist_info  *plist,
                    int          *i_x_max_local_return,
                    size_t       *n_particles);
 void init_make_map(plist_info  *plist,
-                   char        *parameter,
-                   ADaPS       *transfer_list,
+                   camera_info *camera,
                    double       x_o,
                    double       y_o,
                    double       z_o,
@@ -687,8 +647,6 @@ void init_make_map(plist_info  *plist,
   double   d_hat;
   double   particle_radius;
   double   x_tmp,y_tmp,z_tmp;
-  interp_info *transfer;
-  double       transfer_val;
   int          flag_log;
   double       z_test;
   int          flag_use_Gadget;
@@ -712,7 +670,7 @@ void init_make_map(plist_info  *plist,
 
   // Initialize the mapping quantities
   map_quantities_info mq;
-  init_particle_map_quantities(&mq,plist,transfer_list,parameter,flag_comoving,expansion_factor);
+  init_particle_map_quantities(&mq,camera,plist,camera->transfer_list,flag_comoving,expansion_factor);
   (*n_particles)       =mq.n_particles;
   (*flag_weigh)        =mq.flag_weigh;
   (*flag_line_integral)=mq.flag_line_integral;
@@ -1292,7 +1250,7 @@ void render_frame(render_info  *render){
   interp_info *inv_kappa_interp;
 
   if(render->flag_add_absorption){
-     flag_add_absorption       =TRUE;
+     flag_add_absorption=TRUE;
      if(render->kappa_transfer){
         int     n_temp;
         int     i_temp;
@@ -1386,81 +1344,52 @@ void render_frame(render_info  *render){
   FOV_x_image_plane=FOV_x_object_plane*f_image_plane;
   FOV_y_image_plane=FOV_y_object_plane*f_image_plane;
 
-  if(check_mode_for_flag(camera_mode,CAMERA_STEREO)){
-    n_images=6;
-    i_image =2; // Skip mono images
-  }
-  else{
-    n_images=2;
+  // Loop over the left/right stereo pair (if necessary)
+  if(check_mode_for_flag(camera_mode,CAMERA_STEREO))
     i_image =0;
-  }
-
-  for(;i_image<n_images;i_image++){
+  else
+    i_image =1;
+  for(;i_image<2;i_image++){
 
     switch(i_image){
-      // Mono RGB
+      // Left image
       case 0:
-        parameter=render->camera->RGB_param;
-        transfer =render->camera->RGB_transfer;
-        image    =render->camera->image_RGB->values;
-        z_image  =NULL;
-        mask     =render->camera->mask_RGB;
-        stereo_offset=0.;
-        break;
-      // Mono luminance
-      case 1:
-        parameter=render->camera->Y_param;
-        transfer =render->camera->Y_transfer;
-        image    =render->camera->image_Y->values;
-        if(render->camera->image_Z!=NULL)
-           z_image=render->camera->image_Z->values;
-        else
-           z_image=NULL;
-        mask=render->camera->mask_Y;
-        break;
-      // Left RGB
-      case 2:
-        parameter     =render->camera->RGB_param;
-        transfer      =render->camera->RGB_transfer;
-        image         =render->camera->image_RGB_left->values;
-        z_image       =NULL;
-        mask          =render->camera->mask_RGB_left;
-        stereo_offset =-d_image_plane/render->camera->stereo_ratio;
-        break;
-      // Left luminance
-      case 3:
-        parameter=render->camera->Y_param;
-        transfer =render->camera->Y_transfer;
-        image    =render->camera->image_Y_left->values;
+        image      =render->camera->image_RGBY_left->values;
+        numerator  =render->camera->image_RGB_left->values;
+        denominator=render->camera->image_Y_left->values;
         if(render->camera->image_Z_left!=NULL)
            z_image=render->camera->image_Z_left->values;
         else
            z_image=NULL;
-        mask=render->camera->mask_Y_left;
+        stereo_offset=-d_image_plane/render->camera->stereo_ratio;
         break;
-      // Right RGB
-      case 4:
-        parameter     =render->camera->RGB_param;
-        transfer      =render->camera->RGB_transfer;
-        image         =render->camera->image_RGB_right->values;
-        z_image       =NULL;
-        mask          =render->camera->mask_RGB_right;
-        stereo_offset =d_image_plane/render->camera->stereo_ratio;
-        break;
-      // Right luminance
-      case 5:
-        parameter=render->camera->Y_param;
-        transfer =render->camera->Y_transfer;
-        image    =render->camera->image_Y_right->values;
-        if(render->camera->image_Y_right!=NULL)
-           z_image=render->camera->image_Z_right->values;
-        else
-           z_image=NULL;
-        mask=render->camera->mask_Y_right;
+      case 1:
+        // Right image
+        if(check_mode_for_flag(camera_mode,CAMERA_STEREO)){
+           image      =render->camera->image_RGBY_right->values;
+           numerator  =render->camera->image_RGB_right->values;
+           denominator=render->camera->image_Y_right->values;
+           if(render->camera->image_Y_right!=NULL)
+              z_image=render->camera->image_Z_right->values;
+           else
+              z_image=NULL;
+           stereo_offset=d_image_plane/render->camera->stereo_ratio;
+        }
+        // Mono image (stereo turned off)
+        else{
+           image      =render->camera->image_RGBY->values;
+           numerator  =render->camera->image_RGB->values;
+           denominator=render->camera->image_Y->values;
+           if(render->camera->image_Y!=NULL)
+              z_image=render->camera->image_Z->values;
+           else
+              z_image=NULL;
+           stereo_offset=0;           
+        }
         break;
     }
 
-    SID_log("Projecting {%s} to a %dx%d pixel array...",SID_LOG_OPEN|SID_LOG_TIMER,parameter,nx,ny);
+    SID_log("Projecting to a %dx%d pixel array...",SID_LOG_OPEN|SID_LOG_TIMER,nx,ny);
 
     // Set physical image-plane domain
     xmin  = -FOV_x_image_plane/2.; // Things will be centred on (x_o,y_o,z_o) later
@@ -1532,8 +1461,7 @@ void render_frame(render_info  *render){
     int i_x_min_local;
     int i_x_max_local;
     init_make_map(plist,
-                  parameter,
-                  transfer,
+                  render->camera,
                   x_o,y_o,z_o,
                   x_c,y_c,z_c,
                   f_image_plane,
@@ -1563,46 +1491,34 @@ void render_frame(render_info  *render){
                   &i_x_max_local,
                   &n_particles);
 
-    // Allocate and initialize image arrays
+    // Initialize image arrays
+    mask=(char   *)SID_malloc(sizeof(char)*n_pixels);
     if(flag_add_absorption)
        column_depth=(double *)SID_malloc(sizeof(double)*n_pixels);
     else
        column_depth=NULL;
-    if(flag_weigh)
-       denominator=(double *)SID_malloc(sizeof(double)*n_pixels);
-    else
-       denominator=NULL;
-    numerator=image;
     for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
-      image[i_pixel]    =0.;
-      numerator[i_pixel]=0.;
+      image[i_pixel]      =0.;
+      numerator[i_pixel]  =0.;
+      denominator[i_pixel]=0.;
+      mask[i_pixel]       =FALSE;
       if(column_depth!=NULL)
         column_depth[i_pixel]=0.;
-      if(denominator!=NULL)
-        denominator[i_pixel]=0.;
       if(z_image!=NULL)
         z_image[i_pixel] =0.;
-      mask[i_pixel]=FALSE;
     }
 
     // Report absorption statistics
     if(render->kappa_transfer!=NULL){
        float rho_min,rho_mean,rho_max;
-       if(denominator!=NULL){
-          calc_min_global( weight,&rho_min, n_particles,SID_FLOAT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-          calc_max_global( weight,&rho_max, n_particles,SID_FLOAT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-          calc_mean_global(weight,&rho_mean,n_particles,SID_FLOAT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-       }
-       else{
-          calc_min_global( value,&rho_min, n_particles,SID_FLOAT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-          calc_max_global( value,&rho_max, n_particles,SID_FLOAT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-          calc_mean_global(value,&rho_mean,n_particles,SID_FLOAT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-       }
+       calc_min_global( weight,&rho_min, n_particles,SID_FLOAT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+       calc_max_global( weight,&rho_max, n_particles,SID_FLOAT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+       calc_mean_global(weight,&rho_mean,n_particles,SID_FLOAT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
        SID_log("Absorption statistics:",SID_LOG_OPEN);
-       SID_log("rho_min    =%le",     SID_LOG_COMMENT,rho_min);
-       SID_log("rho_max    =%le",     SID_LOG_COMMENT,rho_max);
-       SID_log("rho_mean   =%le",     SID_LOG_COMMENT,rho_mean);
-       SID_log("table range=%le->%le",SID_LOG_COMMENT,rho_abs_lo,rho_abs_hi);
+       SID_log("weight_min  =%le",     SID_LOG_COMMENT,rho_min);
+       SID_log("weight_max  =%le",     SID_LOG_COMMENT,rho_max);
+       SID_log("weight_mean =%le",     SID_LOG_COMMENT,rho_mean);
+       SID_log("table range =%le->%le",SID_LOG_COMMENT,rho_abs_lo,rho_abs_hi);
        SID_log("",SID_LOG_CLOSE|SID_LOG_NOPRINT);
     }  
 
@@ -1645,12 +1561,8 @@ void render_frame(render_info  *render){
         double v_i;
         double vw_i;
         v_i=(double)value[i_particle];
-        if(denominator!=NULL){
-           w_i =(double)weight[i_particle]*f_taper;
-           vw_i=v_i*w_i;
-        }
-        else
-           v_i*=f_taper;
+        w_i =(double)weight[i_particle]*f_taper;
+        vw_i=v_i*w_i;
 
         // Loop over the kernal
         for(kx=kx_min,pixel_pos_x=xmin+(kx_min+0.5)*pixel_size_x;kx<=kx_max;kx++,pixel_pos_x+=pixel_size_x){
@@ -1669,74 +1581,35 @@ void render_frame(render_info  *render){
                   kernel =kernel_table[i_table]+
                     (kernel_table[i_table+1]-kernel_table[i_table])*
                     (f_table-kernel_radius[i_table])*(double)N_KERNEL_TABLE;
-                  if(denominator!=NULL){
-                    switch(flag_add_absorption){
-                       case TRUE:
-                          double absorption;
-                          double tau;
-                          double dtau;
-                          if(inv_kappa_interp==NULL)
-                             dtau=w_i*kernel*inv_kappa_absorption;
-                          else if(w_i<rho_abs_lo)
-                             dtau=w_i*kernel*inv_kappa_abs_lo;
-                          else if(w_i>rho_abs_hi)
-                             dtau=w_i*kernel*inv_kappa_abs_hi;
-                          else
-                             dtau=w_i*kernel*interpolate(inv_kappa_interp,w_i);
-                          tau=column_depth[pos];
-                          if(tau>tau_max)
-                             absorption=0.;
-                          else if(tau<=0.)
-                             absorption=1.;
-                          else
-                             absorption=interpolate(abs_interp,tau);
-                          column_depth[pos]+=dtau;
-                          numerator[pos]   +=vw_i*kernel*absorption;
-                          denominator[pos] += w_i*kernel*absorption;
-                          if(z_image!=NULL)
-                             z_image[pos]+=z_i*w_i*kernel*absorption;
-                          break;
-                       case FALSE:
-                          numerator[pos]  +=vw_i*kernel;
-                          denominator[pos]+=w_i*kernel;
-                          if(z_image!=NULL)
-                             z_image[pos]+=z_i*w_i*kernel;
-                          break;
-                    }
+                  switch(flag_add_absorption){
+                     case TRUE:
+                        double absorption;
+                        double tau;
+                        double dtau;
+                        if(inv_kappa_interp==NULL)
+                           dtau=w_i*kernel*inv_kappa_absorption;
+                        else if(w_i<rho_abs_lo)
+                           dtau=w_i*kernel*inv_kappa_abs_lo;
+                        else if(w_i>rho_abs_hi)
+                           dtau=w_i*kernel*inv_kappa_abs_hi;
+                        else
+                           dtau=w_i*kernel*interpolate(inv_kappa_interp,w_i);
+                        tau=column_depth[pos];
+                        if(tau>tau_max)
+                           absorption=0.;
+                        else if(tau<=0.)
+                           absorption=1.;
+                        else
+                           absorption=interpolate(abs_interp,tau);
+                        column_depth[pos]+=dtau;
+                        kernel           *=absorption;
+                        break;
                   }
-                  else{
-                    switch(flag_add_absorption){
-                       case TRUE:
-                          double absorption;
-                          double tau;
-                          double dtau;
-                          if(inv_kappa_interp==NULL)
-                             dtau=v_i*kernel*inv_kappa_absorption;
-                          else if(v_i<rho_abs_lo)
-                             dtau=v_i*kernel*inv_kappa_abs_lo;
-                          else if(v_i>rho_abs_hi)
-                             dtau=v_i*kernel*inv_kappa_abs_hi;
-                          else
-                             dtau=v_i*kernel*interpolate(inv_kappa_interp,v_i);
-                          tau=(double)column_depth[pos];
-                          if(tau>tau_max)
-                             absorption=0.;
-                          else if(tau<=0.)
-                             absorption=1.;
-                          else 
-                             absorption=interpolate(abs_interp,tau);
-                          column_depth[pos]+=dtau;
-                          numerator[pos]   +=v_i*kernel*absorption;
-                          if(z_image!=NULL)
-                             z_image[pos]+=z_i*v_i*kernel*absorption;
-                          break;
-                       case FALSE:
-                          numerator[pos]+=v_i*kernel;
-                          if(z_image!=NULL)
-                             z_image[pos]+=z_i*v_i*kernel;
-                          break;
-                    }
-                  }
+                  numerator[pos]  +=vw_i*kernel;
+                  denominator[pos]+=w_i*kernel;
+                  if(z_image!=NULL)
+                     z_image[pos]+=z_i*w_i*kernel;
+                  break;
                   mask[pos] =TRUE;
                 }
               }
@@ -1760,8 +1633,7 @@ void render_frame(render_info  *render){
           for(ky=0;ky<ny;ky++){
              pos=ky+kx*ny;
              numerator[pos]  =0.;
-             if(denominator!=NULL)
-                denominator[pos]=0.;
+             denominator[pos]=0.;
              if(z_image!=NULL)
                 z_image[pos]=0.;
              if(column_depth!=NULL)
@@ -1786,19 +1658,16 @@ void render_frame(render_info  *render){
     SID_free(SID_FARG mask_buffer);
 #endif
     SID_Allreduce(SID_IN_PLACE,numerator,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
-    if(denominator!=NULL)
-      SID_Allreduce(SID_IN_PLACE,denominator,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
+    SID_Allreduce(SID_IN_PLACE,denominator,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
     if(z_image!=NULL)
       SID_Allreduce(SID_IN_PLACE,z_image,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
     if(column_depth!=NULL)
       SID_Allreduce(SID_IN_PLACE,column_depth,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
 
-    // Normalize image (if needed)
-    if(denominator!=NULL){
-      for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
-        if(mask[i_pixel])
-          image[i_pixel]/=denominator[i_pixel];
-      }
+    // Create final normalize image
+    for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
+       if(mask[i_pixel])
+          image[i_pixel]=numerator[i_pixel]/denominator[i_pixel];
     }
 
     // Normalize z-frame (if needed)
@@ -1889,6 +1758,7 @@ void render_frame(render_info  *render){
       SID_free(SID_FARG denominator);
     if(column_depth!=NULL)
       SID_free(SID_FARG column_depth);
+    SID_free(SID_FARG mask);
   
     SID_log("Done.",SID_LOG_CLOSE);
   }

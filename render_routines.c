@@ -319,19 +319,18 @@ void init_camera(camera_info **camera, int mode){
   init_perspective(&((*camera)->perspective),RENDER_INIT_PERSPECTIVE);
 
   // Initialze image information
-  (*camera)->stereo_ratio =0.;
-  (*camera)->RGB_mode     =0;
-  (*camera)->RGB_gamma    =NULL;
-  (*camera)->RGB_transfer =NULL;
-  (*camera)->Y_mode       =0;
-  (*camera)->Y_gamma      =NULL;
-  (*camera)->Y_transfer   =NULL;
-  (*camera)->Z_mode       =0;
-  (*camera)->Z_gamma      =NULL;
-  (*camera)->Z_transfer   =NULL;
-  (*camera)->f_near_field =0.;
-  (*camera)->f_taper_field=0.;
-  (*camera)->f_image_plane=1.;
+  (*camera)->flag_calc_Z_image=FALSE;
+  (*camera)->stereo_ratio     =0.;
+  (*camera)->RGB_mode         =0;
+  (*camera)->RGB_gamma        =NULL;
+  (*camera)->transfer_list    =NULL;
+  (*camera)->Y_mode           =0;
+  (*camera)->Y_gamma          =NULL;
+  (*camera)->Z_mode           =0;
+  (*camera)->Z_gamma          =NULL;
+  (*camera)->f_near_field     =0.;
+  (*camera)->f_taper_field    =0.;
+  (*camera)->f_image_plane    =1.;
   strcpy((*camera)->RGB_param,"");
   strcpy((*camera)->Y_param,  "");
 
@@ -349,6 +348,15 @@ void init_camera(camera_info **camera, int mode){
   (*camera)->image_Y_right   =NULL;
   (*camera)->image_Z_right   =NULL;
   (*camera)->image_RGBY_right=NULL;
+  (*camera)->mask_RGB        =NULL;
+  (*camera)->mask_Y          =NULL;
+  (*camera)->mask_RGBY       =NULL;
+  (*camera)->mask_RGB_left   =NULL;
+  (*camera)->mask_Y_left     =NULL;
+  (*camera)->mask_RGBY_left  =NULL;
+  (*camera)->mask_RGB_right  =NULL;
+  (*camera)->mask_Y_right    =NULL;
+  (*camera)->mask_RGBY_right =NULL;
 
   SID_log("Done.",SID_LOG_CLOSE);
 }
@@ -368,28 +376,34 @@ void seal_render_camera(render_info *render){
   if(check_mode_for_flag(render->camera->camera_mode,CAMERA_STEREO)){
     init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGB_left));
     init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Y_left));
-    init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Z_left));
+    if(render->camera->flag_calc_Z_image)
+       init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Z_left));
     init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGBY_left));    
     init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGB_right));
     init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Y_right));
-    init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Z_right));
-    init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGBY_right));    
+    if(render->camera->flag_calc_Z_image)
+       init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Z_right));
+    init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGBY_right));
+    /*
     render->camera->mask_RGB_left  =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
     render->camera->mask_Y_left    =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
     render->camera->mask_RGBY_left =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
     render->camera->mask_RGB_right =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
     render->camera->mask_Y_right   =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
     render->camera->mask_RGBY_right=(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
+    */
   }
   else{
      init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGB));
      init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Y));
-     if(!check_mode_for_flag(render->camera->camera_mode,CAMERA_PLANE_PARALLEL))
+     if(render->camera->flag_calc_Z_image)
        init_image(render->camera->width,render->camera->height,1,&(render->camera->image_Z));
      init_image(render->camera->width,render->camera->height,render->camera->colour_table,&(render->camera->image_RGBY));
+     /*
      render->camera->mask_RGB =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
      render->camera->mask_Y   =(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
      render->camera->mask_RGBY=(char *)SID_malloc(sizeof(char)*render->camera->width*render->camera->height);
+     */
   }
 
   // Convert camera depth-range to Mpc/h
@@ -426,16 +440,12 @@ void free_camera(camera_info **camera){
   }
   if((*camera)->RGB_gamma!=NULL)
     free_interpolate(SID_FARG (*camera)->RGB_gamma);
-  if((*camera)->RGB_transfer!=NULL)
-    ADaPS_free(SID_FARG (*camera)->RGB_transfer);
+  if((*camera)->transfer_list!=NULL)
+    ADaPS_free(SID_FARG (*camera)->transfer_list);
   if((*camera)->Y_gamma!=NULL)
     free_interpolate(SID_FARG (*camera)->Y_gamma);
-  if((*camera)->Y_transfer!=NULL)
-    ADaPS_free(SID_FARG (*camera)->Y_transfer);
   if((*camera)->Z_gamma!=NULL)
     free_interpolate(SID_FARG (*camera)->Z_gamma);
-  if((*camera)->Z_transfer!=NULL)
-    ADaPS_free(SID_FARG (*camera)->Z_transfer);
   SID_free((void **)camera);
   SID_log("Done.",SID_LOG_CLOSE);
 }
@@ -805,7 +815,7 @@ void parse_render_file(render_info **render, char *filename){
           }
           else if(!strcmp(variable,"RGB_gamma"))
             i_word=set_transfer_function(line,i_word,&((*render)->camera->RGB_gamma));
-          else if(!strcmp(variable,"RGB_transfer")){
+          else if(!strcmp(variable,"transfer")){
             grab_word(line,i_word++,parameter);
             grab_word(line,i_word++,temp_word);
             if(!strcmp(temp_word,"log") || !strcmp(temp_word,"LOG"))
@@ -816,10 +826,10 @@ void parse_render_file(render_info **render, char *filename){
               SID_trap_error("log/linear flag not set to 'log' or 'linear' {%s}",ERROR_LOGIC,temp_word);
             i_word=set_transfer_function(line,i_word,&temp_interp);
             // Add to the transfer function list
-            ADaPS_store(&((*render)->camera->RGB_transfer),(void *)temp_interp,parameter,ADaPS_DEFAULT);
+            ADaPS_store(&((*render)->camera->transfer_list),(void *)temp_interp,parameter,ADaPS_DEFAULT);
             // If this is a log-defined transfer function, store that fact
             if(flag)
-              ADaPS_store(&((*render)->camera->RGB_transfer),(void *)&flag,"%s_log",ADaPS_SCALAR_INT,parameter);
+              ADaPS_store(&((*render)->camera->transfer_list),(void *)&flag,"%s_log",ADaPS_SCALAR_INT,parameter);
           }
           else if(!strcmp(variable,"Y_param")){
             grab_word(line,i_word++,c_value);
@@ -850,57 +860,6 @@ void parse_render_file(render_info **render, char *filename){
             else
               SID_log_warning("Gamma arrays bust be >2 elements long.",ERROR_LOGIC);
           }
-          else if(!strcmp(variable,"Y_transfer")){
-            grab_word(line,i_word++,parameter);
-            grab_word(line,i_word++,temp_word);
-            if(!strcmp(temp_word,"log") || !strcmp(temp_word,"LOG"))
-              flag=TRUE;
-            else if(!strcmp(temp_word,"linear") || !strcmp(temp_word,"LINEAR"))
-              flag=FALSE;
-            else
-              SID_trap_error("log/linear flag not set to 'log' or 'linear' {%s}",ERROR_LOGIC,temp_word);
-            n_transfer      =count_words(line)-i_word+1;
-            SID_log("parameter ={%s}",SID_LOG_COMMENT,parameter);
-            SID_log("log/lin   ={%s}",SID_LOG_COMMENT,temp_word);
-            SID_log("n_transfer=%d",SID_LOG_COMMENT,n_transfer);
-            if(n_transfer>2){
-              n_transfer+=2; // We need to add low/hi interpolation anchors
-              transfer_array_x=(double *)SID_malloc(sizeof(double)*n_transfer);
-              transfer_array_y=(double *)SID_malloc(sizeof(double)*n_transfer);
-              for(j_word=1;j_word<n_transfer-1;j_word++){
-                grab_word(line,i_word++,temp_word);
-                search_and_replace(temp_word,","," ");
-                if(count_words(temp_word)!=2)
-                  SID_trap_error("Error in formatting of transfer array {%s}{%s}",ERROR_LOGIC,line,temp_word);
-                grab_double(temp_word,1,&(transfer_array_x[j_word]));
-                grab_double(temp_word,2,&(transfer_array_y[j_word]));
-                SID_log("%le %le",SID_LOG_COMMENT,transfer_array_x[j_word],transfer_array_y[j_word]);
-              }
-              // Create low/hi interpolation anchors
-              transfer_array_y[0]           =transfer_array_y[1];
-              transfer_array_y[n_transfer-1]=transfer_array_y[n_transfer-2];
-              if(transfer_array_x[1]<0.)
-                transfer_array_x[0]=10.*transfer_array_x[1];
-              else
-                transfer_array_x[0]=0.1*transfer_array_x[1];
-              if(transfer_array_x[n_transfer-2]<0.)
-                transfer_array_x[n_transfer-1]= 0.1*transfer_array_x[n_transfer-2];
-              else
-                transfer_array_x[n_transfer-1]=10.0*transfer_array_x[n_transfer-2];
-              // Create interpolation array
-              init_interpolate(transfer_array_x,transfer_array_y,n_transfer,gsl_interp_cspline,&temp_interp);
-              // Add to the transfer function list
-              ADaPS_store(&((*render)->camera->Y_transfer),(void *)temp_interp,parameter,ADaPS_DEFAULT);
-              // If this is a log-defined transfer function, store that fact
-              if(flag)
-                ADaPS_store(&((*render)->camera->Y_transfer),(void *)&flag,"%s_log",ADaPS_SCALAR_INT,parameter);
-              // Free temporary arrays
-              SID_free(SID_FARG transfer_array_x);
-              SID_free(SID_FARG transfer_array_y);
-            }
-            else
-              SID_log_warning("Transfer arrays must be >2 elements long.",ERROR_LOGIC);
-          }
           else if(!strcmp(variable,"Z_range")){
             grab_double(line,i_word++,&d_value);
             (*render)->camera->Z_range[0]=d_value;
@@ -925,57 +884,6 @@ void parse_render_file(render_info **render, char *filename){
             }
             else
               SID_log_warning("Gamma arrays bust be >2 elements long.",ERROR_LOGIC);
-          }
-          else if(!strcmp(variable,"Z_transfer")){
-            grab_word(line,i_word++,parameter);
-            grab_word(line,i_word++,temp_word);
-            if(!strcmp(temp_word,"log") || !strcmp(temp_word,"LOG"))
-              flag=TRUE;
-            else if(!strcmp(temp_word,"linear") || !strcmp(temp_word,"LINEAR"))
-              flag=FALSE;
-            else
-              SID_trap_error("log/linear flag not set to 'log' or 'linear' {%s}",ERROR_LOGIC,temp_word);
-            n_transfer      =count_words(line)-i_word+1;
-            SID_log("parameter ={%s}",SID_LOG_COMMENT,parameter);
-            SID_log("log/lin   ={%s}",SID_LOG_COMMENT,temp_word);
-            SID_log("n_transfer=%d",SID_LOG_COMMENT,n_transfer);
-            if(n_transfer>2){
-              n_transfer+=2; // We need to add low/hi interpolation anchors
-              transfer_array_x=(double *)SID_malloc(sizeof(double)*n_transfer);
-              transfer_array_y=(double *)SID_malloc(sizeof(double)*n_transfer);
-              for(j_word=1;j_word<n_transfer-1;j_word++){
-                grab_word(line,i_word++,temp_word);
-                search_and_replace(temp_word,","," ");
-                if(count_words(temp_word)!=2)
-                  SID_trap_error("Error in formatting of transfer array {%s}{%s}",ERROR_LOGIC,line,temp_word);
-                grab_double(temp_word,1,&(transfer_array_x[j_word]));
-                grab_double(temp_word,2,&(transfer_array_y[j_word]));
-                SID_log("%le %le",SID_LOG_COMMENT,transfer_array_x[j_word],transfer_array_y[j_word]);
-              }
-              // Create low/hi interpolation anchors
-              transfer_array_y[0]           =transfer_array_y[1];
-              transfer_array_y[n_transfer-1]=transfer_array_y[n_transfer-2];
-              if(transfer_array_x[1]<0.)
-                transfer_array_x[0]=10.*transfer_array_x[1];
-              else
-                transfer_array_x[0]=0.1*transfer_array_x[1];
-              if(transfer_array_x[n_transfer-2]<0.)
-                transfer_array_x[n_transfer-1]= 0.1*transfer_array_x[n_transfer-2];
-              else
-                transfer_array_x[n_transfer-1]=10.0*transfer_array_x[n_transfer-2];
-              // Create interpolation array
-              init_interpolate(transfer_array_x,transfer_array_y,n_transfer,gsl_interp_cspline,&temp_interp);
-              // Add to the transfer function list
-              ADaPS_store(&((*render)->camera->Z_transfer),(void *)temp_interp,parameter,ADaPS_DEFAULT);
-              // If this is a log-defined transfer function, store that fact
-              if(flag)
-                ADaPS_store(&((*render)->camera->Z_transfer),(void *)&flag,"%s_log",ADaPS_SCALAR_INT,parameter);
-              // Free temporary arrays
-              SID_free(SID_FARG transfer_array_x);
-              SID_free(SID_FARG transfer_array_y);
-            }
-            else
-              SID_log_warning("Transfer arrays must be >2 elements long.",ERROR_LOGIC);
           }
           else if(!strcmp(variable,"f_near_field"))
             grab_double(line,i_word++,&((*render)->camera->f_near_field));

@@ -130,10 +130,11 @@ struct camera_info{
   char             *mask_RGBY_left;
   char             *mask_RGBY_right;
   int               RGB_mode;
+  int               flag_calc_Z_image;
   char              RGB_param[64];
   double            RGB_range[2];
   interp_info      *RGB_gamma;
-  ADaPS            *RGB_transfer;
+  ADaPS            *transfer_list;
   image_info       *image_RGB;
   image_info       *image_RGB_left;
   image_info       *image_RGB_right;
@@ -144,7 +145,6 @@ struct camera_info{
   char              Y_param[64];
   double            Y_range[2];
   interp_info      *Y_gamma;
-  ADaPS            *Y_transfer;
   image_info       *image_Y;
   image_info       *image_Y_left;
   image_info       *image_Y_right;
@@ -154,7 +154,6 @@ struct camera_info{
   int               Z_mode;
   double            Z_range[2];
   interp_info      *Z_gamma;
-  ADaPS            *Z_transfer;
   image_info       *image_Z;
   image_info       *image_Z_left;
   image_info       *image_Z_right;
