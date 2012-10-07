@@ -623,11 +623,14 @@ int set_render_state(render_info *render,int frame,int mode){
          render->flag_read_marked=FALSE;
       }
       if(render->flag_add_absorption){
+         /*
          ADaPS_remove(&(render->plist.data),"flag_read_scatter");
          read_gadget_binary(render->snap_filename_root,render->snap_number,&(render->plist),READ_GADGET_DEFAULT);
+         */
+         read_gadget_binary_render(render->snap_filename_root,render->snap_number,&(render->plist),READ_GADGET_RENDER_ID_ORDERED);
       }
       else
-         read_gadget_binary_render(render->snap_filename_root,render->snap_number,&(render->plist));
+         read_gadget_binary_render(render->snap_filename_root,render->snap_number,&(render->plist),READ_GADGET_RENDER_DEFAULT);
       render->h_Hubble=((double *)ADaPS_fetch(render->plist.data,"h_Hubble"))[0];
       read_smooth(&(render->plist),render->smooth_filename_root,render->snap_number,SMOOTH_DEFAULT);
       render->snap_number_read=render->snap_number;

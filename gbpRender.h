@@ -35,6 +35,10 @@
 #define WRITE_IMAGE_DEFAULT  2
 #define WRITE_IMAGE_PNG_ONLY 4
 
+#define READ_GADGET_RENDER_SCATTER    2
+#define READ_GADGET_RENDER_ID_ORDERED 4
+#define READ_GADGET_RENDER_DEFAULT    READ_GADGET_RENDER_SCATTER
+
 // Data structure which holds all info about an image
 typedef struct image_info image_info;
 struct image_info{
@@ -251,7 +255,8 @@ void read_image(image_info *image,char *filename_root);
 
 void read_gadget_binary_render(char       *filename_root_in,
                                int         snapshot_number,
-                               plist_info *plist);
+                               plist_info *plist,
+                               int         mode);
 
 #ifdef __cplusplus
 }
