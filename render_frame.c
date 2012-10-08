@@ -313,28 +313,41 @@ void init_particle_map_quantities(map_quantities_info *mq,render_info *render,AD
 }
 
 void set_particle_map_quantities(render_info *render,map_quantities_info *mq,int mode,size_t i_particle,
-                                 float *x_i,
-                                 float *y_i,
-                                 float *z_i,
-                                 float *h_i,
-                                 float *v_i,
-                                 float *w_i);
+                                 float    box_size,
+                                 float    half_box,
+                                 float   *x_i,
+                                 float   *y_i,
+                                 float   *z_i,
+                                 float   *h_i,
+                                 float   *v_i,
+                                 float   *w_i);
 void set_particle_map_quantities(render_info *render,map_quantities_info *mq,int mode,size_t i_particle,
-                                 float *x_i,
-                                 float *y_i,
-                                 float *z_i,
-                                 float *h_i,
-                                 float *v_i,
-                                 float *w_i){
-  if(render->n_interpolate==1){  
+                                 float   box_size,
+                                 float   half_box,
+                                 float  *x_i,
+                                 float  *y_i,
+                                 float  *z_i,
+                                 float  *h_i,
+                                 float  *v_i,
+                                 float  *w_i){
+  if(render->n_interpolate==1){ 
      (*x_i)=mq->x[0][i_particle];
      (*y_i)=mq->y[0][i_particle];
      (*z_i)=mq->z[0][i_particle];
   }
   else if(render->n_interpolate==2){
-     (*x_i)=mq->x[0][i_particle]+render->f_interpolate*(mq->x[1][i_particle]-mq->x[0][i_particle]);
-     (*y_i)=mq->y[0][i_particle]+render->f_interpolate*(mq->y[1][i_particle]-mq->y[0][i_particle]);
-     (*z_i)=mq->z[0][i_particle]+render->f_interpolate*(mq->z[1][i_particle]-mq->z[0][i_particle]);
+     float dx=(float)(mq->x[1][i_particle]-mq->x[0][i_particle]);
+     float dy=(float)(mq->y[1][i_particle]-mq->y[0][i_particle]);
+     float dz=(float)(mq->z[1][i_particle]-mq->z[0][i_particle]);
+     if(dx> half_box) dx-=box_size;
+     if(dx<-half_box) dx+=box_size;
+     if(dy> half_box) dy-=box_size;
+     if(dy<-half_box) dy+=box_size;
+     if(dz> half_box) dz-=box_size;
+     if(dz<-half_box) dz+=box_size;
+     (*x_i)=mq->x[0][i_particle]+render->f_interpolate*dx;
+     (*y_i)=mq->y[0][i_particle]+render->f_interpolate*dy;
+     (*z_i)=mq->z[0][i_particle]+render->f_interpolate*dz;
   }
   else
     SID_trap_error("n_interpolate>2 not supported (yet).",ERROR_LOGIC);
@@ -656,6 +669,8 @@ void init_make_map(render_info *render,
   int          flag_log;
   double       z_test;
   int          flag_use_Gadget;
+  float        box_size_float=(float)box_size;
+  float        half_box=0.5*box_size_float;
   
   SID_log("Initializing projection-space...",SID_LOG_OPEN|SID_LOG_TIMER);
 
@@ -737,7 +752,7 @@ void init_make_map(render_info *render,
       for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++){
 
          // Set the preoperties of the particle to be mapped
-         set_particle_map_quantities(render,&mq,TRUE,k_particle,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
+         set_particle_map_quantities(render,&mq,TRUE,k_particle,box_size_float,half_box,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
 
          // Transform particle to render-coordinates
          transform_particle(&x_i,
@@ -862,7 +877,7 @@ void init_make_map(render_info *render,
       for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++){
 
          // Set the preoperties of the particle to be mapped
-         set_particle_map_quantities(render,&mq,TRUE,k_particle,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
+         set_particle_map_quantities(render,&mq,TRUE,k_particle,box_size_float,half_box,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
 
          // Transform particle to render-coordinates
          transform_particle(&x_i,
@@ -981,7 +996,7 @@ void init_make_map(render_info *render,
          for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++){
 
             // Set the preoperties of the particle to be mapped
-            set_particle_map_quantities(render,&mq,TRUE,k_particle,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
+            set_particle_map_quantities(render,&mq,TRUE,k_particle,box_size_float,half_box,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
 
             // Transform particle to render-coordinates
             transform_particle(&x_i,
@@ -1536,7 +1551,7 @@ void render_frame(render_info  *render){
     SID_init_pcounter(&pcounter,n_particles,10);
     SID_log("Performing projection...",SID_LOG_OPEN|SID_LOG_TIMER);
     n_particles_used_local=0;
-/**/
+/*
     for(ii_particle=0;ii_particle<n_particles;ii_particle++){
       i_particle=z_index[ii_particle];
       z_i       =(double)z[i_particle];
@@ -1636,7 +1651,7 @@ void render_frame(render_info  *render){
       }
       SID_check_pcounter(&pcounter,ii_particle);
     }
-/**/
+*/
     SID_Barrier(SID.COMM_WORLD);
     SID_Allreduce(&n_particles_used_local,&n_particles_used,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
     SID_log("n_particles_used=%zd",SID_LOG_COMMENT,n_particles_used);
