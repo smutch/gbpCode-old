@@ -133,14 +133,14 @@ void read_gadget_binary_render(char       *filename_root_in,
    double    z_max_bcast;
    gadget_header_info header;
    int                read_rank;
-   RNG_info *RNG;
+   RNG_info          *RNG;
 
    // Determine file format
    flag_filefound=init_gadget_read(filename_root_in,snapshot_number,&flag_multifile,&flag_file_type,&header);
 
    // A file was found ... 
    if(flag_filefound){
-      SID_log("Reading GADGET binary file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_root_in);
+      SID_log("Reading GADGET binary file {%s;snap=%d}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_root_in,snapshot_number);
 
       pname=plist->species;
 
@@ -251,6 +251,7 @@ void read_gadget_binary_render(char       *filename_root_in,
          n_of_type_rank[i]=0;
 
       // These variables are used if we are storing things in ID-order
+      int        flag_alloc_keep=FALSE;
       size_t     id_local_min;
       size_t     id_local_max;
       long long *ids_long;
@@ -390,20 +391,19 @@ void read_gadget_binary_render(char       *filename_root_in,
             fread(&record_length_close,4,1,fp);
             if(record_length_open!=record_length_close)
                SID_log_warning("Problem with GADGET record size (close of header)",ERROR_LOGIC);
+            fread(&record_length_open,4,1,fp);
          }
+         SID_Bcast(&record_length_open,4,                  read_rank,SID.COMM_WORLD);
          SID_Bcast(&header,(int)sizeof(gadget_header_info),read_rank,SID.COMM_WORLD);
          for(i=0,n_particles_file=0;i<N_GADGET_TYPE;i++)
             n_particles_file+=(size_t)header.n_file[i];
 
          // Initialize buffer
-         int flag_allocate_keep=FALSE;
          SID_log("File domain decomposition...",SID_LOG_OPEN|SID_LOG_TIMER);
          buffer=SID_malloc((size_t)record_length_open); // This is large enough to hold any of the blocks
          if(check_mode_for_flag(mode,READ_GADGET_RENDER_SCATTER)){
-            flag_allocate_keep=TRUE;
+            flag_alloc_keep=TRUE;
             keep=(char *)SID_malloc(sizeof(char)*n_particles_file);
-            if(SID.My_rank==read_rank)
-               fread(&record_length_open,4,1,fp);
             for(i=0,jj=0;i<N_GADGET_TYPE;i++){
                n_keep[i]=0;
                for(j=0,k=0;j<header.n_file[i];j++,jj++){
@@ -428,7 +428,6 @@ void read_gadget_binary_render(char       *filename_root_in,
             // Read the IDs
             if(SID.My_rank==read_rank){
                // Skip positions
-               fread(&record_length_open,4,1,fp);
                fseeko(fp,(off_t)record_length_open,SEEK_CUR);
                fread(&record_length_close,4,1,fp);
                if(record_length_open!=record_length_close)
@@ -441,33 +440,34 @@ void read_gadget_binary_render(char       *filename_root_in,
                   SID_trap_error("Velocity record lengths don't match (ie. %d!=%d)",ERROR_LOGIC,record_length_open,record_length_close);
                // Read IDs
                fread(&record_length_open,4,1,fp);
-               if(record_length_open/(int)n_particles_file==sizeof(long long)){
-                  flag_LONGIDs=TRUE;
-                  ids_long    =(long long *)buffer;
-               }
-               else{
-                  flag_LONGIDs=FALSE;
-                  ids_int     =(int *)buffer;
-               }
-               fread(buffer,(size_t)record_length_open,1,fp);
-            }
-            SID_Barrier(SID.COMM_WORLD);
-            SID_Bcast(&flag_LONGIDs,sizeof(int),read_rank,SID.COMM_WORLD);
-            SID_Bcast(buffer,record_length_open,read_rank,SID.COMM_WORLD);
-
-            // Move back to the start of the positions
-            if(SID.My_rank==read_rank){
+               fread(buffer,record_length_open,1,fp);
                fread(&record_length_close,4,1,fp);
                if(record_length_open!=record_length_close)
                   SID_trap_error("IDs record lengths don't match (ie. %d!=%d)",ERROR_LOGIC,record_length_open,record_length_close);
+            }
+            SID_Barrier(SID.COMM_WORLD);
+            SID_Bcast(&record_length_open,4,read_rank,SID.COMM_WORLD);
+            SID_Bcast(buffer,record_length_open,read_rank,SID.COMM_WORLD);
+            if(record_length_open/(int)n_particles_file==sizeof(long long)){
+               flag_LONGIDs=TRUE;
+               ids_long    =(long long *)buffer;
+            }
+            else{
+               flag_LONGIDs=FALSE;
+               ids_int     =(int *)buffer;
+            }
+
+            // Move back to the start of the positions
+            if(SID.My_rank==read_rank){
                rewind(fp);
                fread(&record_length_open,4,1,fp);
                fseeko(fp,(off_t)record_length_open,SEEK_CUR);
                fread(&record_length_close,4,1,fp);
                if(record_length_open!=record_length_close)
-                  SID_trap_error("Position record lengths don't match (ie. %d!=%d)",ERROR_LOGIC,record_length_open,record_length_close);
+                  SID_trap_error("Header record lengths don't match (ie. %d!=%d)",ERROR_LOGIC,record_length_open,record_length_close);
                fread(&record_length_open,4,1,fp);
             }
+            SID_Bcast(&record_length_open,4,read_rank,SID.COMM_WORLD);
 
             // Determine which particles from this file will be kept on this rank
             if(flag_LONGIDs){
@@ -484,7 +484,7 @@ void read_gadget_binary_render(char       *filename_root_in,
             else{
                for(i=0,jj=0;i<N_GADGET_TYPE;i++){
                   for(j=0,k=0;j<header.n_file[i];j++,jj++){
-                     if(ids_int[jj]>=id_local_min && ids_long[jj]<=id_local_max){
+                     if(ids_int[jj]>=id_local_min && ids_int[jj]<=id_local_max){
                         n_keep[i]++;
                         n_particles_kept++;
                      }
@@ -517,6 +517,7 @@ void read_gadget_binary_render(char       *filename_root_in,
                SID_log_warning("Problem with GADGET record size (close of positions)",ERROR_LOGIC);
          }
          SID_Barrier(SID.COMM_WORLD);
+         SID_Bcast(&record_length_open,4,          read_rank,SID.COMM_WORLD);
          SID_Bcast(buffer2,(int)record_length_open,read_rank,SID.COMM_WORLD);
          if(check_mode_for_flag(mode,READ_GADGET_RENDER_SCATTER)){  
             for(i=0,jj=0;i<N_GADGET_TYPE;i++){
@@ -662,8 +663,8 @@ void read_gadget_binary_render(char       *filename_root_in,
                if(record_length_open!=record_length_close)
                   SID_log_warning("Problem with GADGET record size (close of IDs)",ERROR_LOGIC);
             }
-            SID_Bcast(&record_length_open,(int)sizeof(int),read_rank,SID.COMM_WORLD);
             SID_Barrier(SID.COMM_WORLD);
+            SID_Bcast(&record_length_open,(int)sizeof(int),read_rank,SID.COMM_WORLD);
             SID_Bcast(buffer2,(int)record_length_open,read_rank,SID.COMM_WORLD);
 
             // Decide what kind of IDs we have
@@ -734,7 +735,8 @@ void read_gadget_binary_render(char       *filename_root_in,
          SID_free(SID_FARG buffer);
          if(flag_alloc_buffer2)
             SID_free(SID_FARG buffer2);
-         SID_free(SID_FARG keep);
+         if(flag_alloc_keep)
+            SID_free(SID_FARG keep);
          if(n_files>1)
             SID_log("Done.",SID_LOG_CLOSE);
       }

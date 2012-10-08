@@ -407,8 +407,11 @@ void seal_render_camera(render_info *render){
   }
 
   // Convert camera depth-range to Mpc/h
-  render->camera->Z_range[0]*=M_PER_MPC/render->h_Hubble;
-  render->camera->Z_range[1]*=M_PER_MPC/render->h_Hubble;
+  if(render->camera->flag_calc_Z_image){
+     render->camera->Z_range[0]*=M_PER_MPC/render->h_Hubble;
+     render->camera->Z_range[1]*=M_PER_MPC/render->h_Hubble;
+  }
+
   SID_log("Done.",SID_LOG_CLOSE);
 }
 
@@ -468,8 +471,6 @@ void init_render(render_info **render){
 
   (*render)->n_frames           = 0;
   (*render)->n_interpolate      = 1;
-  (*render)->snap_number_read   =-1;
-  (*render)->snap_number        = 0;
   (*render)->n_snap_a_list      = 0;
   (*render)->snap_a_list        = NULL;
   (*render)->h_Hubble           = 1.;
@@ -477,29 +478,41 @@ void init_render(render_info **render){
   (*render)->kappa_transfer     = NULL;
   (*render)->flag_read_marked   = FALSE;
   (*render)->flag_comoving      = TRUE;
+  (*render)->flag_fade          = FALSE;
   (*render)->flag_force_periodic= FALSE;
   (*render)->flag_add_absorption= FALSE;
   (*render)->sealed             = FALSE;
-  (*render)->mode               = MAKE_MAP_LOG;
-
-  // Initialize the structure that holds the particle data
-  init_plist(&((*render)->plist),NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-  flag_scatter      =TRUE;
-  flag_no_velocities=TRUE;
-  ADaPS_store(&((*render)->plist.data),(void *)(&flag_scatter),      "flag_read_scatter", ADaPS_SCALAR_INT);
-  ADaPS_store(&((*render)->plist.data),(void *)(&flag_no_velocities),"flag_no_velocities",ADaPS_SCALAR_INT);
+  (*render)->v_mode             = MAKE_MAP_LOG;
+  (*render)->w_mode             = MAKE_MAP_LOG;
+  (*render)->plist_list         = NULL;
+  (*render)->kernel_radius      = NULL;
+  (*render)->kernel_table       = NULL;
+  (*render)->kernel_table_3d    = NULL;
+  (*render)->kernel_table_avg   = 0.;
+  (*render)->f_interpolate      = 0.;
 
   SID_log("Done.",SID_LOG_CLOSE);
 }
 
 void free_render(render_info **render){
+  int i_snap;
   SID_log("Freeing render structure...",SID_LOG_OPEN);
   SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
   free_camera(&((*render)->camera));
   free_scenes(&((*render)->scenes));
-  free_plist(&((*render)->plist));
+  if((*render)->plist_list!=NULL){
+     for(i_snap=0;i_snap<(*render)->n_interpolate;i_snap++)
+        free_plist((*render)->plist_list[i_snap]);
+     SID_free(SID_FARG (*render)->plist_list);
+     SID_free(SID_FARG (*render)->snap_list);
+  }
   if((*render)->snap_a_list!=NULL)
-    SID_free(SID_FARG (*render)->snap_a_list);
+     SID_free(SID_FARG (*render)->snap_a_list);
+  if((*render)->kappa_transfer!=NULL)
+     SID_free(SID_FARG (*render)->kappa_transfer);
+  SID_free(SID_FARG (*render)->kernel_radius);
+  SID_free(SID_FARG (*render)->kernel_table);
+  SID_free(SID_FARG (*render)->kernel_table_3d);
   SID_free(SID_FARG (*render));
   SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
   SID_log("Done.",SID_LOG_CLOSE);
@@ -556,7 +569,7 @@ int set_render_state(render_info *render,int frame,int mode){
   int               start_frame;
   int               stop_frame=0;
   int               r_val=FALSE;
-  int               i_snap,snap_best;
+  int               i_snap,j_snap,snap_best;
   double            snap_diff,snap_diff_best;
 
   if(!render->sealed)
@@ -600,53 +613,114 @@ int set_render_state(render_info *render,int frame,int mode){
  
   // Perform snapshot and smooth-file reading
   if(!check_mode_for_flag(mode,SET_RENDER_RESCALE)){
+    int *snap_list;
+    snap_list=(int *)SID_malloc(sizeof(int)*render->n_interpolate);
     // Determine which snapshot(s) to use
     if(render->snap_a_list!=NULL && render->n_snap_a_list>0){
-      SID_log("Selecting snapshot for t=%lf...",SID_LOG_OPEN,perspective->time);
+      if(render->n_interpolate>1)
+         SID_log("Selecting snapshots for t=%lf...",SID_LOG_OPEN,perspective->time);
+      else
+         SID_log("Selecting snapshot for t=%lf...",SID_LOG_OPEN,perspective->time);
       snap_best     =0;
       snap_diff_best=1e60;
       for(i_snap=0;i_snap<render->n_snap_a_list;i_snap++){
-        snap_diff=fabs(perspective->time-render->snap_a_list[i_snap]);
-        if(snap_diff<snap_diff_best){
+        snap_diff=perspective->time-render->snap_a_list[i_snap];
+        if(fabs(snap_diff)<fabs(snap_diff_best)){
           snap_diff_best=snap_diff;
           snap_best     =i_snap;
         }
       }
-      render->snap_number=snap_best;
-      SID_log("snap=%d is best with t=%lf...Done.",SID_LOG_CLOSE,render->snap_number,render->snap_a_list[render->snap_number]);
+
+      if(render->n_interpolate>1){
+         // Determine the list of best snapshots to use
+         if((render->n_interpolate%2)==0){
+            if(snap_diff_best<0)
+               snap_list[0]=MAX(0,snap_best-render->n_interpolate/2);
+            else
+               snap_list[0]=MAX(0,1+snap_best-render->n_interpolate/2);
+         }
+         else{
+            if(snap_diff_best<0)
+               snap_list[0]=MAX(0,snap_best-render->n_interpolate/2);
+            else
+               snap_list[0]=MAX(0,1+snap_best-render->n_interpolate/2);
+         }
+         for(i_snap=1;i_snap<render->n_interpolate;i_snap++)
+            snap_list[i_snap]=snap_list[i_snap-1]+1;
+         if(snap_list[render->n_interpolate-1]>=render->n_snap_a_list){
+            int j_snap;
+            for(i_snap=render->n_interpolate-1,j_snap=0;i_snap>=0;i_snap--,j_snap++)
+               snap_list[i_snap]=render->n_snap_a_list-1-j_snap;
+         }
+         for(i_snap=0;i_snap<render->n_interpolate;i_snap++)
+            SID_log("%03d (time=%8.6f)",SID_LOG_COMMENT,snap_list[i_snap],render->snap_a_list[snap_list[i_snap]]);
+         // Set interpolation factor (a_i-a_0)/(a_1-a_0)
+         // WARNING: THIS ASSUMES THAT n_interpolate==2
+         render->f_interpolate=(perspective->time-render->snap_a_list[snap_list[0]])/
+                               (render->snap_a_list[snap_list[1]]-render->snap_a_list[snap_list[0]]);
+         SID_log("f_interpolate=%le",SID_LOG_COMMENT,render->f_interpolate);
+         if(render->n_interpolate!=2)
+            SID_trap_error("n_interpolate>2 not supported (yet).",ERROR_NONE);
+
+         SID_log("Done.",SID_LOG_CLOSE);
+      }
+      else{
+         snap_list[0]=snap_best;
+         SID_log("snap=%d is best with t=%lf...Done.",SID_LOG_CLOSE,snap_list[0],render->snap_a_list[snap_best]);
+      }
     }
 
     // Check (and read if necessary) snapshots and smooth files here
-    if(render->snap_number_read!=render->snap_number){
-      if(render->flag_read_marked){
-         read_mark_file(&(render->plist),"mark",render->mark_filename_root,MARK_LIST_ONLY);
-         render->flag_read_marked=FALSE;
-      }
-      if(render->flag_add_absorption){
-         /*
-         ADaPS_remove(&(render->plist.data),"flag_read_scatter");
-         read_gadget_binary(render->snap_filename_root,render->snap_number,&(render->plist),READ_GADGET_DEFAULT);
-         */
-         read_gadget_binary_render(render->snap_filename_root,render->snap_number,&(render->plist),READ_GADGET_RENDER_ID_ORDERED);
-      }
-      else
-         read_gadget_binary_render(render->snap_filename_root,render->snap_number,&(render->plist),READ_GADGET_RENDER_DEFAULT);
-      render->h_Hubble=((double *)ADaPS_fetch(render->plist.data,"h_Hubble"))[0];
-      read_smooth(&(render->plist),render->smooth_filename_root,render->snap_number,SMOOTH_DEFAULT);
-      render->snap_number_read=render->snap_number;
+    if(render->plist_list==NULL){
+       render->plist_list=(plist_info **)SID_malloc(sizeof(plist_info *)*(render->n_interpolate));
+       render->snap_list =(int *)SID_calloc(sizeof(int)*(render->n_interpolate));
+       for(i_snap=0;i_snap<render->n_interpolate;i_snap++){
+          render->snap_list[i_snap] =-1;
+          render->plist_list[i_snap]=(plist_info *)SID_malloc(sizeof(plist_info));
+          init_plist(render->plist_list[i_snap],NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
+       }
     }
+    for(i_snap=0;i_snap<render->n_interpolate;i_snap++){
+       if(snap_list[i_snap]!=render->snap_list[i_snap]){
+          free_plist(render->plist_list[i_snap]);
+          init_plist(render->plist_list[i_snap],NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
+          render->snap_list[i_snap]=-1;
+          for(j_snap=i_snap+1;j_snap<render->n_interpolate;j_snap++){
+             if(snap_list[i_snap]==render->snap_list[j_snap]){
+                render->plist_list[i_snap]=render->plist_list[j_snap];
+                render->snap_list[i_snap] =render->snap_list[j_snap];
+                render->plist_list[j_snap]=NULL;
+                render->snap_list[j_snap] =-1;
+             }
+          }
+       }
+    }
+    for(i_snap=0;i_snap<render->n_interpolate;i_snap++){
+       if(render->snap_list[i_snap]<0){
+          render->snap_list[i_snap]=snap_list[i_snap];
+          if(render->flag_read_marked)
+             read_mark_file(render->plist_list[i_snap],"mark",render->mark_filename_root,MARK_LIST_ONLY);
+          if(render->n_interpolate>1)
+             read_gadget_binary_render(render->snap_filename_root,render->snap_list[i_snap],render->plist_list[i_snap],READ_GADGET_RENDER_ID_ORDERED);
+          else
+             read_gadget_binary_render(render->snap_filename_root,render->snap_list[i_snap],render->plist_list[i_snap],READ_GADGET_RENDER_DEFAULT);
+          read_smooth(render->plist_list[i_snap],render->smooth_filename_root,render->snap_list[i_snap],SMOOTH_DEFAULT);
+       }
+    }
+    SID_free(SID_FARG snap_list);
   }
   
   // Convert [Mpc/h] -> SI
-  perspective->p_o[0]       *=M_PER_MPC/render->h_Hubble;
-  perspective->p_o[1]       *=M_PER_MPC/render->h_Hubble;
-  perspective->p_o[2]       *=M_PER_MPC/render->h_Hubble;
-  perspective->p_c[0]       *=M_PER_MPC/render->h_Hubble;
-  perspective->p_c[1]       *=M_PER_MPC/render->h_Hubble;
-  perspective->p_c[2]       *=M_PER_MPC/render->h_Hubble;
-  perspective->d_o          *=M_PER_MPC/render->h_Hubble;
-  perspective->radius       *=M_PER_MPC/render->h_Hubble;
-  perspective->FOV          *=M_PER_MPC/render->h_Hubble;
+  render->h_Hubble=((double *)ADaPS_fetch(render->plist_list[0]->data,"h_Hubble"))[0];
+  perspective->p_o[0]*=M_PER_MPC/render->h_Hubble;
+  perspective->p_o[1]*=M_PER_MPC/render->h_Hubble;
+  perspective->p_o[2]*=M_PER_MPC/render->h_Hubble;
+  perspective->p_c[0]*=M_PER_MPC/render->h_Hubble;
+  perspective->p_c[1]*=M_PER_MPC/render->h_Hubble;
+  perspective->p_c[2]*=M_PER_MPC/render->h_Hubble;
+  perspective->d_o   *=M_PER_MPC/render->h_Hubble;
+  perspective->radius*=M_PER_MPC/render->h_Hubble;
+  perspective->FOV   *=M_PER_MPC/render->h_Hubble;
   
   return(r_val);
 }
@@ -785,6 +859,8 @@ void parse_render_file(render_info **render, char *filename){
           grab_int(line,i_word++,&((*render)->snap_number));
         else if(!strcmp(parameter,"flag_comoving"))
           grab_int(line,i_word++,&((*render)->flag_comoving));
+        else if(!strcmp(parameter,"flag_fade"))
+          grab_int(line,i_word++,&((*render)->flag_fade));
         else if(!strcmp(parameter,"force_periodic"))
           (*render)->flag_force_periodic=TRUE;
         else if(!strcmp(parameter,"camera")){
@@ -798,6 +874,7 @@ void parse_render_file(render_info **render, char *filename){
           else if(!strcmp(variable,"stereo_factor")){
             grab_double(line,i_word++,&d_value);
             (*render)->camera->stereo_ratio=d_value;
+            (*render)->camera->camera_mode|=CAMERA_STEREO;
           }
           else if(!strcmp(variable,"colour_table")){
             grab_int(line,i_word++,&i_value);

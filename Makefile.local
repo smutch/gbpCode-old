@@ -4,6 +4,7 @@
 
 INCFILES  = gbpRender.h
 OBJFILES  = close_movie.o               \
+	    set_sph_kernel.o            \
 	    set_transfer_function.o     \
 	    read_gadget_binary_render.o \
             create_colour_table.o       \

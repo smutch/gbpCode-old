@@ -185,12 +185,12 @@ struct map_quantities_info{
    int           flag_line_integral;
    int          *ptype_used;
    size_t        n_particles;
-   GBPREAL      *x;
-   GBPREAL      *y;
-   GBPREAL      *z;
-   float        *h_smooth;
-   float        *rho;
-   float        *sigma;
+   GBPREAL     **x;
+   GBPREAL     **y;
+   GBPREAL     **z;
+   float       **h_smooth;
+   float       **rho;
+   float       **sigma;
    double        mass_array;
    interp_info  *transfer_rho;
    int           flag_transfer_rho_log;
@@ -204,29 +204,36 @@ struct map_quantities_info{
 
 void free_particle_map_quantities(map_quantities_info *mq);
 void free_particle_map_quantities(map_quantities_info *mq){
+   SID_free(SID_FARG mq->h_smooth);
+   SID_free(SID_FARG mq->x);
+   SID_free(SID_FARG mq->y);
+   SID_free(SID_FARG mq->z);
+   SID_free(SID_FARG mq->rho);
+   SID_free(SID_FARG mq->sigma);
    SID_free(SID_FARG mq->ptype_used);
 }
 
-void init_particle_map_quantities(map_quantities_info *mq,camera_info *camera,plist_info *plist,ADaPS *transfer_list,int flag_comoving,double expansion_factor);
-void init_particle_map_quantities(map_quantities_info *mq,camera_info *camera,plist_info *plist,ADaPS *transfer_list,int flag_comoving,double expansion_factor){
+void init_particle_map_quantities(map_quantities_info *mq,render_info *render,ADaPS *transfer_list,int flag_comoving,double expansion_factor);
+void init_particle_map_quantities(map_quantities_info *mq,render_info *render,ADaPS *transfer_list,int flag_comoving,double expansion_factor){
+  int i_snap;
 
   SID_log("Initializing quantities...",SID_LOG_OPEN);
 
   // Defaults
   mq->flag_weigh             =FALSE;
   mq->flag_line_integral     =FALSE;
-  mq->n_particles            =0;
-  mq->h_smooth               =NULL;
-  mq->x                      =NULL;
-  mq->y                      =NULL;
-  mq->z                      =NULL;
-  mq->mass_array             =0.;
-  mq->rho                    =NULL;
-  mq->transfer_rho           =NULL;
-  mq->flag_transfer_rho_log  =FALSE;
-  mq->sigma                  =NULL;
-  mq->transfer_sigma         =NULL;
   mq->flag_transfer_sigma_log=FALSE;
+  mq->flag_transfer_rho_log  =FALSE;
+  mq->n_particles            =0;
+  mq->mass_array             =0.;
+  mq->h_smooth               =(float   **)SID_malloc(sizeof(float *)*render->n_interpolate);
+  mq->x                      =(GBPREAL **)SID_malloc(sizeof(float *)*render->n_interpolate);
+  mq->y                      =(GBPREAL **)SID_malloc(sizeof(float *)*render->n_interpolate);
+  mq->z                      =(GBPREAL **)SID_malloc(sizeof(float *)*render->n_interpolate);
+  mq->rho                    =(float   **)SID_malloc(sizeof(float *)*render->n_interpolate);
+  mq->sigma                  =(float   **)SID_malloc(sizeof(float *)*render->n_interpolate);
+  mq->transfer_sigma         =NULL;
+  mq->transfer_rho           =NULL;
 
   // Comoving?
   mq->flag_comoving=flag_comoving;
@@ -242,15 +249,16 @@ void init_particle_map_quantities(map_quantities_info *mq,camera_info *camera,pl
      mq->ptype_used[i_type]=FALSE;
 
   // Render a dark matter velocity dispersion map
-  if(!strcmp(camera->RGB_param,"sigma_v_dark") && !strcmp(camera->Y_param,"rho_dark")){
+  if(!strcmp(render->camera->RGB_param,"sigma_v_dark") && !strcmp(render->camera->Y_param,"tau_dark")){
     mq->ptype_used[GADGET_TYPE_DARK]=TRUE;
     mq->flag_weigh                  =TRUE;
     mq->flag_line_integral          =TRUE;
-    mq->n_particles                 =((size_t *)ADaPS_fetch(plist->data,"n_dark"))[0];
+    mq->n_particles                 =((size_t *)ADaPS_fetch(render->plist_list[0]->data,"n_dark"))[0];
     mq->v_mode=MAKE_MAP_MODE_SIGMA;
     mq->w_mode=MAKE_MAP_MODE_RHO;
-    if(ADaPS_exist(plist->data,"rho_dark")){
-      mq->rho  =(float *)ADaPS_fetch(plist->data,"rho_dark");
+    if(ADaPS_exist(render->plist_list[0]->data,"rho_dark")){
+      for(i_snap=0;i_snap<render->n_interpolate;i_snap++)
+         mq->rho[i_snap]=(float *)ADaPS_fetch(render->plist_list[i_snap]->data,"rho_dark");
       if(ADaPS_exist(transfer_list,"rho_dark")){
         if(ADaPS_exist(transfer_list,"rho_dark_log")) 
           mq->flag_transfer_rho_log=TRUE;
@@ -261,16 +269,13 @@ void init_particle_map_quantities(map_quantities_info *mq,camera_info *camera,pl
         mq->transfer_rho         =NULL;
       }
     }
-    else if(ADaPS_exist(plist->data,"mass_array_dark")){
-      mq->rho       =NULL;
-      mq->mass_array=((double *)ADaPS_fetch(plist->data,"mass_array_dark"))[0];
-    }
     else
-      SID_trap_error("No densities or masses available in make_map.",ERROR_LOGIC);
+      SID_trap_error("No densities available in make_map.",ERROR_LOGIC);
 
     // Use sigma_v for values
-    if(ADaPS_exist(plist->data,"sigma_v_dark")){
-      mq->sigma=(float *)ADaPS_fetch(plist->data,"sigma_v_dark");
+    if(ADaPS_exist(render->plist_list[0]->data,"sigma_v_dark")){
+      for(i_snap=0;i_snap<render->n_interpolate;i_snap++)
+         mq->sigma[i_snap]=(float *)ADaPS_fetch(render->plist_list[i_snap]->data,"sigma_v_dark");
       if(ADaPS_exist(transfer_list,"sigma_v_dark")){
         if(ADaPS_exist(transfer_list,"sigma_v_dark_log")) 
           mq->flag_transfer_sigma_log=TRUE;
@@ -285,7 +290,7 @@ void init_particle_map_quantities(map_quantities_info *mq,camera_info *camera,pl
       SID_trap_error("No sigma_v's available in make_map.",ERROR_LOGIC);
   }
   else
-    SID_trap_error("Unknown rendering configuration RGB={%s} Y={%s}.",ERROR_LOGIC,camera->RGB_param,camera->Y_param);
+    SID_trap_error("Unknown rendering configuration RGB={%s} Y={%s}.",ERROR_LOGIC,render->camera->RGB_param,render->camera->Y_param);
 
   // Initialize smoothings
   int n_type_used=0;
@@ -295,43 +300,60 @@ void init_particle_map_quantities(map_quantities_info *mq,camera_info *camera,pl
         n_type_used++;
         if(n_type_used>1)
            SID_trap_error("An invalid number of particle types (%d) are being used in make_map.",ERROR_LOGIC,n_type_used);
-        mq->x=(GBPREAL *)ADaPS_fetch(plist->data,"x_%s",plist->species[i_type]);
-        mq->y=(GBPREAL *)ADaPS_fetch(plist->data,"y_%s",plist->species[i_type]);
-        mq->z=(GBPREAL *)ADaPS_fetch(plist->data,"z_%s",plist->species[i_type]);
-        if(ADaPS_exist(plist->data,"r_smooth_%s",plist->species[i_type]))
-           mq->h_smooth=(float *)ADaPS_fetch(plist->data,"r_smooth_%s",plist->species[i_type]);
-        else
-           SID_trap_error("No smoothing lengths available for type={%s} in make_map.",ERROR_LOGIC,plist->species[i_type]);
+        for(i_snap=0;i_snap<render->n_interpolate;i_snap++){
+           mq->x[i_snap]       =(GBPREAL *)ADaPS_fetch(render->plist_list[i_snap]->data,"x_%s",       render->plist_list[i_snap]->species[i_type]);
+           mq->y[i_snap]       =(GBPREAL *)ADaPS_fetch(render->plist_list[i_snap]->data,"y_%s",       render->plist_list[i_snap]->species[i_type]);
+           mq->z[i_snap]       =(GBPREAL *)ADaPS_fetch(render->plist_list[i_snap]->data,"z_%s",       render->plist_list[i_snap]->species[i_type]);
+           mq->h_smooth[i_snap]=(float   *)ADaPS_fetch(render->plist_list[i_snap]->data,"r_smooth_%s",render->plist_list[i_snap]->species[i_type]);
+        }
      }
   }
   SID_log("%zd eligible for rendering...Done.",SID_LOG_CLOSE,mq->n_particles);
 
 }
 
-void set_particle_map_quantities(map_quantities_info *mq,int mode,size_t i_particle,
+void set_particle_map_quantities(render_info *render,map_quantities_info *mq,int mode,size_t i_particle,
                                  float *x_i,
                                  float *y_i,
                                  float *z_i,
                                  float *h_i,
                                  float *v_i,
                                  float *w_i);
-void set_particle_map_quantities(map_quantities_info *mq,int mode,size_t i_particle,
+void set_particle_map_quantities(render_info *render,map_quantities_info *mq,int mode,size_t i_particle,
                                  float *x_i,
                                  float *y_i,
                                  float *z_i,
                                  float *h_i,
                                  float *v_i,
                                  float *w_i){
-  
-  (*x_i)=mq->x[i_particle];
-  (*y_i)=mq->y[i_particle];
-  (*z_i)=mq->z[i_particle];
+
+  if(render->n_interpolate==1){  
+     (*x_i)=mq->x[0][i_particle];
+     (*y_i)=mq->y[0][i_particle];
+     (*z_i)=mq->z[0][i_particle];
+  }
+  else if(render->n_interpolate==2){
+     (*x_i)=mq->x[0][i_particle]+render->f_interpolate*(mq->x[1][i_particle]-mq->x[0][i_particle]);
+     (*y_i)=mq->y[0][i_particle]+render->f_interpolate*(mq->y[1][i_particle]-mq->y[0][i_particle]);
+     (*z_i)=mq->z[0][i_particle]+render->f_interpolate*(mq->z[1][i_particle]-mq->z[0][i_particle]);
+  }
+  else
+    SID_trap_error("n_interpolate>2 not supported (yet).",ERROR_LOGIC);
   if(mode==TRUE){
-     (*h_i)=mq->h_smooth[i_particle];
+     if(render->n_interpolate==1)
+        (*h_i)=mq->h_smooth[0][i_particle];
+     else if(render->n_interpolate==2)
+        (*h_i)=mq->h_smooth[0][i_particle]+render->f_interpolate*(mq->h_smooth[1][i_particle]-mq->h_smooth[0][i_particle]);
      // Set the particle weighting
      switch(mq->w_mode){
         case MAKE_MAP_MODE_RHO:
-           (*w_i)=mq->rho[i_particle];
+           if(render->n_interpolate==1)
+              (*w_i)=mq->rho[0][i_particle];
+           else if(render->n_interpolate==2){
+              double rho_0=take_log10(mq->rho[0][i_particle]);
+              double rho_1=take_log10(mq->rho[1][i_particle]);
+              (*w_i)=take_alog10(rho_0+render->f_interpolate*(rho_1-rho_0));
+           }
            if(mq->transfer_rho!=NULL){
               switch(mq->flag_transfer_rho_log){
                  case TRUE:
@@ -341,11 +363,11 @@ void set_particle_map_quantities(map_quantities_info *mq,int mode,size_t i_parti
                     (*w_i)*=MAX(0.,MIN(1.,interpolate(mq->transfer_rho,(double)(*w_i))));
                     break;
               }
-              /*
-              if(!mq->flag_comoving)
-                 (*w_i)*=mq->inv_expansion_factor_cubed;
-              */
            }
+           /*
+           if(!mq->flag_comoving)
+              (*w_i)*=mq->inv_expansion_factor_cubed;
+           */
            break;
         case MAKE_MAP_NO_WEIGHTING:
            break;
@@ -355,25 +377,14 @@ void set_particle_map_quantities(map_quantities_info *mq,int mode,size_t i_parti
      }
      // Set the particle value
      switch(mq->v_mode){
-        /*
-        case MAKE_MAP_MODE_RHO:
-           (*v_i)=mq->rho[i_particle];
-           if(mq->transfer_rho!=NULL){
-              switch(mq->flag_transfer_rho_log){
-                 case TRUE:
-                    (*v_i)*=MAX(0.,MIN(1.,interpolate(mq->transfer_rho,take_log10((double)(*v_i)))));
-                    break;
-                 case FALSE:
-                    (*v_i)*=MAX(0.,MIN(1.,interpolate(mq->transfer_rho,(double)(*v_i))));
-                    break;
-              }
-              if(!mq->flag_comoving)
-                 (*v_i)*=mq->inv_expansion_factor_cubed;
-           }
-           break;
-        */
         case MAKE_MAP_MODE_SIGMA:
-           (*v_i)=mq->sigma[i_particle];
+           if(render->n_interpolate==1)
+              (*v_i)=mq->sigma[0][i_particle];
+           else if(render->n_interpolate==2){
+              double sigma_0=take_log10(mq->sigma[0][i_particle]);
+              double sigma_1=take_log10(mq->sigma[1][i_particle]);
+              (*v_i)=take_alog10(sigma_0+render->f_interpolate*(sigma_1-sigma_0));
+           }
            if(mq->transfer_sigma!=NULL){
               switch(mq->flag_transfer_sigma_log){
                  case TRUE:
@@ -539,8 +550,7 @@ void compute_perspective_transformation(double  x_o,
 
 }
 
-void init_make_map(plist_info  *plist,
-                   camera_info *camera,
+void init_make_map(render_info *render,
                    double       x_o,
                    double       y_o,
                    double       z_o,
@@ -558,7 +568,6 @@ void init_make_map(plist_info  *plist,
                    double       radius_kernel_norm,
                    int          nx,
                    int          ny,
-                   int          mode,
                    double       expansion_factor,
                    double       focus_shift_x,
                    double       focus_shift_y,
@@ -580,8 +589,7 @@ void init_make_map(plist_info  *plist,
                    int          *i_x_min_local_return,
                    int          *i_x_max_local_return,
                    size_t       *n_particles);
-void init_make_map(plist_info  *plist,
-                   camera_info *camera,
+void init_make_map(render_info *render,
                    double       x_o,
                    double       y_o,
                    double       z_o,
@@ -599,7 +607,6 @@ void init_make_map(plist_info  *plist,
                    double       radius_kernel_norm,
                    int          nx,
                    int          ny,
-                   int          mode,
                    double       expansion_factor,
                    double       focus_shift_x,
                    double       focus_shift_y,
@@ -670,7 +677,7 @@ void init_make_map(plist_info  *plist,
 
   // Initialize the mapping quantities
   map_quantities_info mq;
-  init_particle_map_quantities(&mq,camera,plist,camera->transfer_list,flag_comoving,expansion_factor);
+  init_particle_map_quantities(&mq,render,render->camera->transfer_list,flag_comoving,expansion_factor);
   (*n_particles)       =mq.n_particles;
   (*flag_weigh)        =mq.flag_weigh;
   (*flag_line_integral)=mq.flag_line_integral;
@@ -726,12 +733,12 @@ void init_make_map(plist_info  *plist,
   n_column=(size_t *)SID_calloc(sizeof(size_t)*nx);
   SID_log("Compute slab domain decomposition...",SID_LOG_OPEN|SID_LOG_TIMER);
   for(i_type=0,j_particle=0;i_type<N_GADGET_TYPE;i_type++){
-    if(ptype_used[i_type] && ADaPS_exist(plist->data,"n_%s",plist->species[i_type])){
-      n_particles_species=((size_t *)ADaPS_fetch(plist->data,"n_%s",plist->species[i_type]))[0];
+    if(ptype_used[i_type] && ADaPS_exist(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type])){
+      n_particles_species=((size_t *)ADaPS_fetch(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type]))[0];
       for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++){
 
          // Set the preoperties of the particle to be mapped
-         set_particle_map_quantities(&mq,TRUE,k_particle,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
+         set_particle_map_quantities(render,&mq,TRUE,k_particle,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
 
          // Transform particle to render-coordinates
          transform_particle(&x_i,
@@ -851,12 +858,12 @@ void init_make_map(plist_info  *plist,
   n_rank_local=(size_t *)SID_calloc(sizeof(size_t)*SID.n_proc);
   SID_log("Count particles...",SID_LOG_OPEN|SID_LOG_TIMER);
   for(i_type=0,j_particle=0;i_type<N_GADGET_TYPE;i_type++){
-    if(ptype_used[i_type] && ADaPS_exist(plist->data,"n_%s",plist->species[i_type])){
-      n_particles_species=((size_t *)ADaPS_fetch(plist->data,"n_%s",plist->species[i_type]))[0];
+    if(ptype_used[i_type] && ADaPS_exist(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type])){
+      n_particles_species=((size_t *)ADaPS_fetch(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type]))[0];
       for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++){
 
          // Set the preoperties of the particle to be mapped
-         set_particle_map_quantities(&mq,TRUE,k_particle,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
+         set_particle_map_quantities(render,&mq,TRUE,k_particle,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
 
          // Transform particle to render-coordinates
          transform_particle(&x_i,
@@ -971,11 +978,11 @@ void init_make_map(plist_info  *plist,
      i_particle_rank=0;
      for(i_type=0,j_particle=0;i_type<N_GADGET_TYPE;i_type++){
        if(ptype_used[i_type]){
-         n_particles_species=((size_t *)ADaPS_fetch(plist->data,"n_%s",plist->species[i_type]))[0];
+         n_particles_species=((size_t *)ADaPS_fetch(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type]))[0];
          for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++){
 
             // Set the preoperties of the particle to be mapped
-            set_particle_map_quantities(&mq,TRUE,k_particle,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
+            set_particle_map_quantities(render,&mq,TRUE,k_particle,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
 
             // Transform particle to render-coordinates
             transform_particle(&x_i,
@@ -1167,10 +1174,6 @@ void render_frame(render_info  *render){
   size_t     n_x;
   size_t     n_y;
   size_t     n_z;
-  double     min_image;
-  double     max_image;
-  double     min_z_image;
-  double     max_z_image;
   double     kernel;
   int        flag_weigh;
   int        flag_line_integral;
@@ -1211,10 +1214,11 @@ void render_frame(render_info  *render){
   int          ny;
   double      *image;
   char        *mask;
-  int          mode;
+  int          v_mode;
+  int          w_mode;
   char        *parameter;
-  plist_info  *plist;
   int          flag_comoving;
+  int          flag_fade;
   int          flag_force_periodic;
   double       expansion_factor;
   double       focus_shift_x;
@@ -1295,7 +1299,6 @@ void render_frame(render_info  *render){
      inv_kappa_absorption  =0.;
   }
 
-  plist   =&(render->plist);
   x_o     =render->camera->perspective->p_o[0];
   y_o     =render->camera->perspective->p_o[1];
   z_o     =render->camera->perspective->p_o[2];
@@ -1305,12 +1308,14 @@ void render_frame(render_info  *render){
   z_c     =render->camera->perspective->p_c[2];
   nx      =render->camera->width;
   ny      =render->camera->height;
-  mode    =render->mode;
+  v_mode  =render->v_mode;
+  w_mode  =render->w_mode;
   camera_mode        =render->camera->camera_mode;
   flag_comoving      =render->flag_comoving;
+  flag_fade          =render->flag_fade;
   flag_force_periodic=render->flag_force_periodic;
   expansion_factor   =render->camera->perspective->time;
-  box_size           =((double *)ADaPS_fetch(plist->data,"box_size"))[0];
+  box_size           =((double *)ADaPS_fetch(render->plist_list[0]->data,"box_size"))[0];
   h_Hubble           =render->h_Hubble;
   focus_shift_x      =render->camera->perspective->focus_shift_x*M_PER_MPC/h_Hubble;
   focus_shift_y      =render->camera->perspective->focus_shift_y*M_PER_MPC/h_Hubble;
@@ -1354,8 +1359,8 @@ void render_frame(render_info  *render){
     switch(i_image){
       // Left image
       case 0:
-        image      =render->camera->image_RGBY_left->values;
-        numerator  =render->camera->image_RGB_left->values;
+        image      =render->camera->image_RGB_left->values;
+        numerator  =render->camera->image_RGBY_left->values; // Use as a temp. buffer.
         denominator=render->camera->image_Y_left->values;
         if(render->camera->image_Z_left!=NULL)
            z_image=render->camera->image_Z_left->values;
@@ -1366,10 +1371,10 @@ void render_frame(render_info  *render){
       case 1:
         // Right image
         if(check_mode_for_flag(camera_mode,CAMERA_STEREO)){
-           image      =render->camera->image_RGBY_right->values;
-           numerator  =render->camera->image_RGB_right->values;
+           image      =render->camera->image_RGB_right->values;
+           numerator  =render->camera->image_RGBY_right->values; // Use as a temp. buffer.;
            denominator=render->camera->image_Y_right->values;
-           if(render->camera->image_Y_right!=NULL)
+           if(render->camera->image_Z_right!=NULL)
               z_image=render->camera->image_Z_right->values;
            else
               z_image=NULL;
@@ -1377,10 +1382,10 @@ void render_frame(render_info  *render){
         }
         // Mono image (stereo turned off)
         else{
-           image      =render->camera->image_RGBY->values;
-           numerator  =render->camera->image_RGB->values;
+           image      =render->camera->image_RGB->values;
+           numerator  =render->camera->image_RGBY->values; // Use as a temp. buffer.;
            denominator=render->camera->image_Y->values;
-           if(render->camera->image_Y!=NULL)
+           if(render->camera->image_Z!=NULL)
               z_image=render->camera->image_Z->values;
            else
               z_image=NULL;
@@ -1407,10 +1412,14 @@ void render_frame(render_info  *render){
       SID_log_warning("pixels are not square by %7.3f%%",0,fabs((pixel_size_x-pixel_size_y)/pixel_size_x)*1e2);
 
     // Generate the smoothing kernal
-    set_sph_kernel(plist,SPH_KERNEL_GADGET|SPH_KERNEL_2D);
-    kernel_radius      =(double *)ADaPS_fetch(plist->data, "sph_kernel_radius");
-    kernel_table       =(double *)ADaPS_fetch(plist->data, "sph_kernel_2d");  
-    kernel_table_avg   =((double *)ADaPS_fetch(plist->data,"sph_kernel_2d_dA"))[0];  
+    set_sph_kernel(&(render->kernel_radius),
+                   &(render->kernel_table_3d),
+                   &(render->kernel_table),
+                   &(render->kernel_table_avg),
+                   SPH_KERNEL_GADGET|SPH_KERNEL_2D);
+    kernel_radius      =render->kernel_radius;
+    kernel_table       =render->kernel_table;
+    kernel_table_avg   =render->kernel_table_avg;
     radius_kernel_norm =kernel_radius[N_KERNEL_TABLE];
     radius_kernel_norm2=radius_kernel_norm*radius_kernel_norm;
 
@@ -1444,7 +1453,7 @@ void render_frame(render_info  *render){
                                        stereo_offset,
                                        &FOV_x,
                                        &FOV_y,
-                                       &d_o,
+                                       &d_o, // Includes f_image_plane correction
                                        &x_o_out,
                                        &y_o_out,
                                        &z_o_out,
@@ -1460,8 +1469,7 @@ void render_frame(render_info  *render){
     // Initialize make_map
     int i_x_min_local;
     int i_x_max_local;
-    init_make_map(plist,
-                  render->camera,
+    init_make_map(render,
                   x_o,y_o,z_o,
                   x_c,y_c,z_c,
                   f_image_plane,
@@ -1470,7 +1478,6 @@ void render_frame(render_info  *render){
                   pixel_size_x,pixel_size_y,
                   radius_kernel_norm,
                   nx,ny,
-                  mode,
                   expansion_factor,
                   focus_shift_x,
                   focus_shift_y,
@@ -1519,7 +1526,7 @@ void render_frame(render_info  *render){
        SID_log("weight_max  =%le",     SID_LOG_COMMENT,rho_max);
        SID_log("weight_mean =%le",     SID_LOG_COMMENT,rho_mean);
        SID_log("table range =%le->%le",SID_LOG_COMMENT,rho_abs_lo,rho_abs_hi);
-       SID_log("",SID_LOG_CLOSE|SID_LOG_NOPRINT);
+       SID_log("",SID_LOG_SILENT_CLOSE);
     }  
 
     // Perform projection
@@ -1529,7 +1536,9 @@ void render_frame(render_info  *render){
     pcounter_info pcounter;
     SID_init_pcounter(&pcounter,n_particles,10);
     SID_log("Performing projection...",SID_LOG_OPEN|SID_LOG_TIMER);
-    for(ii_particle=0,n_particles_used_local=0;ii_particle<n_particles;ii_particle++){
+    n_particles_used_local=0;
+/**/
+    for(ii_particle=0;ii_particle<n_particles;ii_particle++){
       i_particle=z_index[ii_particle];
       z_i       =(double)z[i_particle];
 
@@ -1549,6 +1558,13 @@ void render_frame(render_info  *render){
         ky_min=(int)((part_pos_y-radius_kernel-ymin)/pixel_size_y);
         ky_max=(int)((part_pos_y+radius_kernel-ymin)/pixel_size_y+ONE_HALF);
 
+        // Compute any potential fading
+        double f_fade;
+        if(flag_fade && z_i>d_o)
+           f_fade=pow(z_i/d_o,-2.);
+        else
+           f_fade=1;
+
         // Compute any potential tapering
         double f_taper;
         if(taper_width>0. && z_i<d_taper_field)
@@ -1556,12 +1572,16 @@ void render_frame(render_info  *render){
         else
            f_taper=1;
 
+        // Combine dimming factors into one
+        double f_dim;
+        f_dim=f_taper*f_fade;
+
         // Set the particle values and weights
         double w_i;
         double v_i;
         double vw_i;
-        v_i=(double)value[i_particle];
-        w_i =(double)weight[i_particle]*f_taper;
+        v_i =(double)value[i_particle];
+        w_i =(double)weight[i_particle];
         vw_i=v_i*w_i;
 
         // Loop over the kernal
@@ -1581,35 +1601,33 @@ void render_frame(render_info  *render){
                   kernel =kernel_table[i_table]+
                     (kernel_table[i_table+1]-kernel_table[i_table])*
                     (f_table-kernel_radius[i_table])*(double)N_KERNEL_TABLE;
-                  switch(flag_add_absorption){
-                     case TRUE:
-                        double absorption;
-                        double tau;
-                        double dtau;
-                        if(inv_kappa_interp==NULL)
-                           dtau=w_i*kernel*inv_kappa_absorption;
-                        else if(w_i<rho_abs_lo)
-                           dtau=w_i*kernel*inv_kappa_abs_lo;
-                        else if(w_i>rho_abs_hi)
-                           dtau=w_i*kernel*inv_kappa_abs_hi;
-                        else
-                           dtau=w_i*kernel*interpolate(inv_kappa_interp,w_i);
-                        tau=column_depth[pos];
-                        if(tau>tau_max)
-                           absorption=0.;
-                        else if(tau<=0.)
-                           absorption=1.;
-                        else
-                           absorption=interpolate(abs_interp,tau);
-                        column_depth[pos]+=dtau;
-                        kernel           *=absorption;
-                        break;
+                  if(flag_add_absorption){
+                     double absorption;
+                     double tau;
+                     double dtau;
+                     if(inv_kappa_interp==NULL)
+                        dtau=w_i*kernel*inv_kappa_absorption;
+                     else if(w_i<rho_abs_lo)
+                        dtau=w_i*kernel*inv_kappa_abs_lo;
+                     else if(w_i>rho_abs_hi)
+                        dtau=w_i*kernel*inv_kappa_abs_hi;
+                     else
+                        dtau=w_i*kernel*interpolate(inv_kappa_interp,w_i);
+                     tau=column_depth[pos];
+                     if(tau>tau_max)
+                        absorption=0.;
+                     else if(tau<=0.)
+                        absorption=1.;
+                     else
+                        absorption=interpolate(abs_interp,tau);
+                     column_depth[pos]+=dtau;
+                     kernel           *=absorption;
                   }
+                  kernel          *=f_dim;
                   numerator[pos]  +=vw_i*kernel;
-                  denominator[pos]+=w_i*kernel;
+                  denominator[pos]+= w_i*kernel;
                   if(z_image!=NULL)
                      z_image[pos]+=z_i*w_i*kernel;
-                  break;
                   mask[pos] =TRUE;
                 }
               }
@@ -1619,6 +1637,7 @@ void render_frame(render_info  *render){
       }
       SID_check_pcounter(&pcounter,ii_particle);
     }
+/**/
     SID_Barrier(SID.COMM_WORLD);
     SID_Allreduce(&n_particles_used_local,&n_particles_used,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
     SID_log("n_particles_used=%zd",SID_LOG_COMMENT,n_particles_used);
@@ -1657,37 +1676,28 @@ void render_frame(render_info  *render){
     }
     SID_free(SID_FARG mask_buffer);
 #endif
-    SID_Allreduce(SID_IN_PLACE,numerator,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
+    SID_Allreduce(SID_IN_PLACE,numerator,  n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
     SID_Allreduce(SID_IN_PLACE,denominator,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
     if(z_image!=NULL)
       SID_Allreduce(SID_IN_PLACE,z_image,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
     if(column_depth!=NULL)
       SID_Allreduce(SID_IN_PLACE,column_depth,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
 
-    // Create final normalize image
+    // Create final normalize image and clear the numerator which has been used as a buffer
     for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
        if(mask[i_pixel])
           image[i_pixel]=numerator[i_pixel]/denominator[i_pixel];
+       numerator[i_pixel]=0.;
     }
 
     // Normalize z-frame (if needed)
     if(z_image!=NULL){
-      if(denominator!=NULL){
-        for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
-          if(mask[i_pixel])
-            z_image[i_pixel]=z_image[i_pixel]/denominator[i_pixel];
-          else
-            z_image[i_pixel]=0.;
-        }
-      }
-      else{
-        for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
-          if(mask[i_pixel])
-            z_image[i_pixel]=z_image[i_pixel]/numerator[i_pixel];
-          else
-            z_image[i_pixel]=0.;
-        }
-      }
+       for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
+         if(mask[i_pixel])
+           z_image[i_pixel]=z_image[i_pixel]/denominator[i_pixel];
+         else
+           z_image[i_pixel]=0.;
+       }
     }
 
     // Report some column depth statistics
@@ -1715,7 +1725,7 @@ void render_frame(render_info  *render){
     }
 
     // Take log_10 (if needed)
-    if(check_mode_for_flag(mode,MAKE_MAP_LOG)){
+    if(check_mode_for_flag(v_mode,MAKE_MAP_LOG)){
       for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
         if(mask[i_pixel])
           image[i_pixel]=take_log10(image[i_pixel]);
@@ -1723,13 +1733,29 @@ void render_frame(render_info  *render){
           image[i_pixel]=LOG_ZERO;
       }
     }
+    if(check_mode_for_flag(w_mode,MAKE_MAP_LOG)){
+      for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
+        if(mask[i_pixel])
+          denominator[i_pixel]=take_log10(denominator[i_pixel]);
+        else
+          denominator[i_pixel]=LOG_ZERO;
+      }
+    }
 
     // Compute some image statistics
+    double min_image;
+    double max_image;
+    double min_z_image;
+    double max_z_image;
+    double min_denominator;
+    double max_denominator;
     for(i_pixel=0,n_unmasked=0;i_pixel<n_pixels;i_pixel++) 
       if(mask[i_pixel]) 
         n_unmasked++;
-    calc_min(image,&min_image, n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
-    calc_max(image,&max_image, n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+    calc_min(image,      &min_image,      n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+    calc_max(image,      &max_image,      n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+    calc_min(denominator,&min_denominator,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+    calc_max(denominator,&max_denominator,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
     if(z_image!=NULL){
       calc_min(z_image,&min_z_image, n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
       calc_max(z_image,&max_z_image, n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
@@ -1738,9 +1764,17 @@ void render_frame(render_info  *render){
   
     // Report image statistics
     if(n_unmasked>0){
-      SID_log("Image statistics:   (min,max,coverage)=(%8.3le,%8.3le,%3d%%)",SID_LOG_COMMENT,min_image,max_image,(int)(100.*n_unmasked/n_pixels));
-      if(z_image!=NULL)
-        SID_log("Z-frame statistics: (min,max)         =(%8.3le,%8.3le) [Mpc/h]",SID_LOG_COMMENT,h_Hubble*min_z_image/M_PER_MPC,h_Hubble*max_z_image/M_PER_MPC);
+       SID_log("Image statistics:",SID_LOG_OPEN);
+       SID_log("coverage=%3d%%",SID_LOG_COMMENT,(int)(100.*(double)n_unmasked/(double)n_pixels));
+       SID_log("RGB min =%le",SID_LOG_COMMENT,min_image);
+       SID_log("RGB max =%le",SID_LOG_COMMENT,max_image);
+       SID_log("Y   min =%le",SID_LOG_COMMENT,min_denominator);
+       SID_log("Y   max =%le",SID_LOG_COMMENT,max_denominator);
+       if(z_image!=NULL){
+          SID_log("Z   min =%le [Mpc/h]",SID_LOG_COMMENT,h_Hubble*min_z_image/M_PER_MPC);
+          SID_log("Z   max =%le [Mpc/h]",SID_LOG_COMMENT,h_Hubble*max_z_image/M_PER_MPC);
+       }
+       SID_log("",SID_LOG_SILENT_CLOSE);
     }
     else
       SID_log("IMAGE IS EMPTY.",SID_LOG_COMMENT);
@@ -1752,10 +1786,8 @@ void render_frame(render_info  *render){
     SID_free(SID_FARG h_smooth);
     SID_free(SID_FARG f_stretch);
     SID_free(SID_FARG value);
-    SID_free(SID_FARG z_index);
     SID_free(SID_FARG weight);
-    if(denominator!=NULL)
-      SID_free(SID_FARG denominator);
+    SID_free(SID_FARG z_index);
     if(column_depth!=NULL)
       SID_free(SID_FARG column_depth);
     SID_free(SID_FARG mask);

@@ -165,10 +165,15 @@ struct camera_info{
 
 typedef struct render_info render_info;
 struct render_info{
+  double      *kernel_radius;
+  double      *kernel_table;
+  double      *kernel_table_3d;
+  double       kernel_table_avg;
   camera_info *camera;
   scene_info  *scenes;
   scene_info  *first_scene;
   scene_info  *last_scene;
+  double       f_interpolate;
   int          n_interpolate;
   int          n_frames;
   char         filename_out_dir[256];
@@ -177,18 +182,20 @@ struct render_info{
   char         smooth_filename_root[256];
   char         snap_a_list_filename[256];
   int          n_snap_a_list;
-  double      *snap_a_list;
   int          snap_number;
-  int          snap_number_read;
+  double      *snap_a_list;
+  int         *snap_list;
   int          flag_comoving;
+  int          flag_fade;
   int          flag_force_periodic;
   int          flag_read_marked;
   int          flag_add_absorption;
-  plist_info   plist;
+  plist_info **plist_list;
   double       h_Hubble;
   double       kappa_absorption;
   interp_info *kappa_transfer;
-  int          mode;
+  int          w_mode;
+  int          v_mode;
   int          sealed; // TRUE if the render is fully initialized
 };
 
@@ -257,6 +264,12 @@ void read_gadget_binary_render(char       *filename_root_in,
                                int         snapshot_number,
                                plist_info *plist,
                                int         mode);
+
+void set_sph_kernel(double **kernel_radius,
+                    double **kernel_table_3d,
+                    double **kernel_table_2d,
+                    double  *kernel_table_2d_average,
+                    int      mode);
 
 #ifdef __cplusplus
 }
