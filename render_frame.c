@@ -326,7 +326,6 @@ void set_particle_map_quantities(render_info *render,map_quantities_info *mq,int
                                  float *h_i,
                                  float *v_i,
                                  float *w_i){
-
   if(render->n_interpolate==1){  
      (*x_i)=mq->x[0][i_particle];
      (*y_i)=mq->y[0][i_particle];
@@ -350,8 +349,8 @@ void set_particle_map_quantities(render_info *render,map_quantities_info *mq,int
            if(render->n_interpolate==1)
               (*w_i)=mq->rho[0][i_particle];
            else if(render->n_interpolate==2){
-              double rho_0=take_log10(mq->rho[0][i_particle]);
-              double rho_1=take_log10(mq->rho[1][i_particle]);
+              double rho_0=mq->rho[0][i_particle];
+              double rho_1=mq->rho[1][i_particle];
               (*w_i)=take_alog10(rho_0+render->f_interpolate*(rho_1-rho_0));
            }
            if(mq->transfer_rho!=NULL){
@@ -381,8 +380,8 @@ void set_particle_map_quantities(render_info *render,map_quantities_info *mq,int
            if(render->n_interpolate==1)
               (*v_i)=mq->sigma[0][i_particle];
            else if(render->n_interpolate==2){
-              double sigma_0=take_log10(mq->sigma[0][i_particle]);
-              double sigma_1=take_log10(mq->sigma[1][i_particle]);
+              double sigma_0=mq->sigma[0][i_particle];
+              double sigma_1=mq->sigma[1][i_particle];
               (*v_i)=take_alog10(sigma_0+render->f_interpolate*(sigma_1-sigma_0));
            }
            if(mq->transfer_sigma!=NULL){

@@ -704,7 +704,11 @@ int set_render_state(render_info *render,int frame,int mode){
              read_gadget_binary_render(render->snap_filename_root,render->snap_list[i_snap],render->plist_list[i_snap],READ_GADGET_RENDER_ID_ORDERED);
           else
              read_gadget_binary_render(render->snap_filename_root,render->snap_list[i_snap],render->plist_list[i_snap],READ_GADGET_RENDER_DEFAULT);
-          read_smooth(render->plist_list[i_snap],render->smooth_filename_root,render->snap_list[i_snap],SMOOTH_DEFAULT);
+          if(render->n_interpolate>1)
+             read_smooth(render->plist_list[i_snap],render->smooth_filename_root,render->snap_list[i_snap],
+                         SMOOTH_DEFAULT|READ_SMOOTH_LOG_SIGMA|READ_SMOOTH_LOG_RHO);
+          else
+             read_smooth(render->plist_list[i_snap],render->smooth_filename_root,render->snap_list[i_snap],SMOOTH_DEFAULT);
        }
     }
     SID_free(SID_FARG snap_list);
