@@ -46,6 +46,8 @@ void read_smooth(plist_info *plist,
   int     flag_file_type;
   int     flag_LONGIDs;
   int     read_rank=MASTER_RANK;
+  int     flag_log_sigma=FALSE;
+  int     flag_log_rho=FALSE;
   FILE   *fp;
 
   SID_log("Reading smooth file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_root_in);
@@ -55,6 +57,22 @@ void read_smooth(plist_info *plist,
   smooth_header_info header;
   flag_filefound   =init_smooth_read(filename_root_in,snapshot_number,&flag_multifile,&flag_file_type,&header);
   SID_log("Done.",SID_LOG_CLOSE);
+
+  // Interpret the mode passed to this function
+  int flag_logs_used   =FALSE;
+  int flag_log_quantity=FALSE;
+  if(check_mode_for_flag(mode,READ_SMOOTH_LOG_SIGMA)){
+     flag_log_sigma=TRUE;
+     flag_logs_used=TRUE;
+  }
+  else
+     flag_log_sigma=FALSE;
+  if(check_mode_for_flag(mode,READ_SMOOTH_LOG_RHO)){
+     flag_log_rho  =TRUE;
+     flag_logs_used=TRUE;
+  }
+  else
+     flag_log_rho=FALSE;
 
   // A file was found ... 
   if(flag_filefound){
@@ -194,6 +212,7 @@ void read_smooth(plist_info *plist,
        SID_Bcast(&n_files,          (int)sizeof(int),      read_rank,SID.COMM_WORLD);
        buffer=SID_malloc(sizeof(float)*n_particles_file);
        for(i_quantity=0;i_quantity<n_quantities;i_quantity++){
+         int flag_log_quantity;
          switch(i_quantity){
          case 0:
            SID_log("Reading lengths...",SID_LOG_OPEN);
@@ -227,7 +246,7 @@ void read_smooth(plist_info *plist,
          // Place in final array
          for(i_particle=0;i_particle<n_particles_file;i_particle++){
            if(mark[i_particle]>=0)
-             local_array[mark[i_particle]]=((float *)buffer)[i_particle]*unit_factor;
+              local_array[mark[i_particle]]=((float *)buffer)[i_particle]*unit_factor;
          }
          SID_log("Done.",SID_LOG_CLOSE);
        }
@@ -288,7 +307,35 @@ void read_smooth(plist_info *plist,
                unit_name);
      }
      SID_log("",SID_LOG_CLOSE|SID_LOG_NOPRINT);
-   
+
+     if(flag_logs_used){
+        SID_log("Taking needed logs of quantities...",SID_LOG_OPEN|SID_LOG_TIMER);   
+        for(i_quantity=0;i_quantity<n_quantities;i_quantity++){
+          switch(i_quantity){
+          case 0:
+            unit_factor=1./M_PER_MPC;
+            local_array=r_smooth_array;
+            flag_log_quantity=FALSE;
+            break;
+          case 1:
+            unit_factor=M_PER_MPC*M_PER_MPC*M_PER_MPC/M_SOL;
+            local_array=rho_array;
+            flag_log_quantity=flag_log_rho;
+            break;
+          case 2:
+            unit_factor=1e-3;
+            local_array=sigma_v_array;
+            flag_log_quantity=flag_log_sigma;
+            break;
+          }
+          if(flag_log_quantity){
+             for(i_particle=0;i_particle<n_particles_local;i_particle++)
+                local_array[i_particle]=take_log10(local_array[i_particle]);
+          }
+        }
+        SID_log("Done.",SID_LOG_CLOSE);
+     }
+
      SID_log("Done.",SID_LOG_CLOSE);
   }
   else

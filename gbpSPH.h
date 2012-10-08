@@ -31,6 +31,9 @@
 #define SMOOTH_NOT_PERIODIC 8
 #define SMOOTH_LONGIDS      16
 
+#define READ_SMOOTH_LOG_SIGMA 2
+#define READ_SMOOTH_LOG_RHO   4
+
 #define N_KERNEL_TABLE      20000
 #define SPH_KERNEL_2D       2
 #define SPH_KERNEL_GADGET   4
