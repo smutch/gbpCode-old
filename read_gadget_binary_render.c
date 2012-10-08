@@ -299,17 +299,19 @@ void read_gadget_binary_render(char       *filename_root_in,
          init_RNG(&seed2,RNG,RNG_GLOBAL);
          SID_log("Done.",SID_LOG_CLOSE);
       }
-    // In this case we store the particles in the order of their IDs.
-    // WARNING: This assumes that all IDs are represented between 0 and n_particles_all-1
+      // In this case we store the particles in the order of their IDs.
+      // WARNING: This assumes that all IDs are represented between 0 and n_particles_all-1
       else if(check_mode_for_flag(mode,READ_GADGET_RENDER_ID_ORDERED)){
-       // WARNING: This mode (as it is now) only works if n_non_zero==1
+         // WARNING: This mode (as it is now) only works if n_non_zero==1
          if(n_non_zero!=1)
             SID_trap_error("mode READ_GADGET_RENDER_ID_ORDERED does not work for multiple particle species (n=%d).",ERROR_LOGIC,n_non_zero);
 
-       // Decide on the ID range for each rank
+         // Decide on the ID range for each rank
          int    i_rank;
          size_t n_particles_step;
          size_t n_particles_left=n_particles_all;
+         size_t n_particles_local;
+         size_t n_particles_test;
          for(i_rank=0;i_rank<SID.n_proc;i_rank++){
             size_t id_local_min_i;
             size_t id_local_max_i;
@@ -335,8 +337,12 @@ void read_gadget_binary_render(char       *filename_root_in,
          }
          if(n_particles_left!=0)
             SID_trap_error("The full IDs range has not been properly rank-allocated (ie. %zd!=%zd).",ERROR_LOGIC,n_particles_left,0);
+         n_particles_local=id_local_max-id_local_min+1;
+         SID_Allreduce(&n_particles_local,&n_particles_test,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
+         if(n_particles_test!=n_particles_all)
+            SID_trap_error("Not all particles were allocated during domain decompositioni (%zd!=%zd).",ERROR_LOGIC,n_particles_test,n_particles_all);
 
-       // Set n_of_type_rank[i]
+         // Set n_of_type_rank[i]
          for(i=0,jj=0;i<N_GADGET_TYPE;i++){
             if(header.n_file[i]>0)
                n_of_type_rank[i]=id_local_max-id_local_min+1;
@@ -367,6 +373,10 @@ void read_gadget_binary_render(char       *filename_root_in,
                vz_array[i]=(GBPREAL   *)SID_malloc(sizeof(GBPREAL)  *(size_t)n_of_type_rank[i]);
             }
             id_array[i]=(size_t *)SID_malloc(sizeof(size_t)*(size_t)n_of_type_rank[i]);
+            // Initializing things like this will make it possible
+            //    to check that all IDs are properly set if ID-rank-decomposing
+            for(j=0;j<n_of_type_rank[i];j++)
+               id_array[i][j]=n_particles_all+1;
          }
       }
 
@@ -446,7 +456,7 @@ void read_gadget_binary_render(char       *filename_root_in,
                   SID_trap_error("IDs record lengths don't match (ie. %d!=%d)",ERROR_LOGIC,record_length_open,record_length_close);
             }
             SID_Barrier(SID.COMM_WORLD);
-            SID_Bcast(&record_length_open,4,read_rank,SID.COMM_WORLD);
+            SID_Bcast(&record_length_open,4,    read_rank,SID.COMM_WORLD);
             SID_Bcast(buffer,record_length_open,read_rank,SID.COMM_WORLD);
             if(record_length_open/(int)n_particles_file==sizeof(long long)){
                flag_LONGIDs=TRUE;
@@ -517,7 +527,6 @@ void read_gadget_binary_render(char       *filename_root_in,
                SID_log_warning("Problem with GADGET record size (close of positions)",ERROR_LOGIC);
          }
          SID_Barrier(SID.COMM_WORLD);
-         SID_Bcast(&record_length_open,4,          read_rank,SID.COMM_WORLD);
          SID_Bcast(buffer2,(int)record_length_open,read_rank,SID.COMM_WORLD);
          if(check_mode_for_flag(mode,READ_GADGET_RENDER_SCATTER)){  
             for(i=0,jj=0;i<N_GADGET_TYPE;i++){
@@ -613,9 +622,9 @@ void read_gadget_binary_render(char       *filename_root_in,
                            f1_value=((float *)buffer2)[3*jj+0];
                            f2_value=((float *)buffer2)[3*jj+1];
                            f3_value=((float *)buffer2)[3*jj+2];
-                           vx_array[i][index]=((GBPREAL)(f1_value))*(GBPREAL)(plist->length_unit/h_Hubble);
-                           vy_array[i][index]=((GBPREAL)(f2_value))*(GBPREAL)(plist->length_unit/h_Hubble);
-                           vz_array[i][index]=((GBPREAL)(f3_value))*(GBPREAL)(plist->length_unit/h_Hubble);
+                           vx_array[i][index]=((GBPREAL)(f1_value))*(GBPREAL)(plist->velocity_unit*sqrt(expansion_factor));
+                           vy_array[i][index]=((GBPREAL)(f2_value))*(GBPREAL)(plist->velocity_unit*sqrt(expansion_factor));
+                           vz_array[i][index]=((GBPREAL)(f3_value))*(GBPREAL)(plist->velocity_unit*sqrt(expansion_factor));
                         }
                      }
                   }
@@ -629,9 +638,9 @@ void read_gadget_binary_render(char       *filename_root_in,
                            f1_value=((float *)buffer2)[3*jj+0];
                            f2_value=((float *)buffer2)[3*jj+1];
                            f3_value=((float *)buffer2)[3*jj+2];
-                           vx_array[i][index]=((GBPREAL)(f1_value))*(GBPREAL)(plist->length_unit/h_Hubble);
-                           vy_array[i][index]=((GBPREAL)(f2_value))*(GBPREAL)(plist->length_unit/h_Hubble);
-                           vz_array[i][index]=((GBPREAL)(f3_value))*(GBPREAL)(plist->length_unit/h_Hubble);
+                           vx_array[i][index]=((GBPREAL)(f1_value))*(GBPREAL)(plist->velocity_unit*sqrt(expansion_factor));
+                           vy_array[i][index]=((GBPREAL)(f2_value))*(GBPREAL)(plist->velocity_unit*sqrt(expansion_factor));
+                           vz_array[i][index]=((GBPREAL)(f3_value))*(GBPREAL)(plist->velocity_unit*sqrt(expansion_factor));
                         }
                      }
                   }
@@ -705,7 +714,7 @@ void read_gadget_binary_render(char       *filename_root_in,
                      if(ids_long[jj]>=id_local_min && ids_long[jj]<=id_local_max){
                         size_t index;
                         index=ids_long[jj]-id_local_min;
-                        id_array[i][index]=index;
+                        id_array[i][index]=(size_t)ids_long[jj];
                      }
                   }
                }
@@ -716,7 +725,7 @@ void read_gadget_binary_render(char       *filename_root_in,
                      if(ids_int[jj]>=id_local_min && ids_int[jj]<=id_local_max){
                         size_t index;
                         index=ids_int[jj]-id_local_min;
-                        id_array[i][index]=index;
+                        id_array[i][index]=(size_t)ids_int[jj];
                      }
                   }
                }            
@@ -743,6 +752,16 @@ void read_gadget_binary_render(char       *filename_root_in,
 
       if(check_mode_for_flag(mode,READ_GADGET_RENDER_SCATTER))
          SID_free(SID_FARG RNG);
+
+      // Check that all particles have been properly initialized if ID-rank-decomposing 
+      if(check_mode_for_flag(mode,READ_GADGET_RENDER_ID_ORDERED)){
+         for(i=0,jj=0;i<N_GADGET_TYPE;i++){
+            for(j=0,k=0;j<n_of_type_rank[i];j++,jj++){
+               if(id_array[i][j]>n_particles_all)
+                  SID_trap_error("An uninitialized particle has been identified.",ERROR_LOGIC);
+            }
+         } 
+      }
 
       // Store everything in the data structure...
 
