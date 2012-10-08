@@ -9,12 +9,6 @@
 #define MAKE_MAP_COLOUR        8
 #define MAKE_MAP_LUMINOSITY    16
 
-#define MAP2GRID_DIST_NGP   1
-#define MAP2GRID_DIST_CIC   2
-#define MAP2GRID_DIST_TSC   4
-#define MAP2GRID_DIST_DWT12 8
-#define MAP2GRID_DIST_DWT20 16
-
 #define GADGET_BUFFER_SIZE  SIZE_OF_MEGABYTE
 
 #define GADGET_HEADER_SIZE  256
@@ -246,7 +240,6 @@ int sph_project(plist_info  *plist,
                 int        **mask,
                 int          proj_type,
                 char        *parameter);
-void set_sph_kernel(plist_info *plist,int mode);
 int sph_project2(plist_info  *plist,
                  double       x_c,
                  double       y_c,

@@ -13,7 +13,6 @@ OBJFILES  = display_gadget_header.o         \
             init_plist.o                    \
             mark_particles.o                \
             prep_types.o                    \
-	    set_sph_kernel.o                \
             read_mark_file.o                \
 	    read_smooth.o                   \
 	    read_gadget_binary.o            \

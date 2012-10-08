@@ -237,8 +237,9 @@ void read_smooth(plist_info *plist,
          fclose(fp);
        SID_log("Done.",SID_LOG_CLOSE);
      }
+     SID_free(SID_FARG ids_index);
      SID_Barrier(SID.COMM_WORLD);
-/**/
+
      SID_log("Summary...",SID_LOG_OPEN);
      for(i_quantity=0;i_quantity<n_quantities;i_quantity++){
        switch(i_quantity){
@@ -287,7 +288,7 @@ void read_smooth(plist_info *plist,
                unit_name);
      }
      SID_log("",SID_LOG_CLOSE|SID_LOG_NOPRINT);
-/**/   
+   
      SID_log("Done.",SID_LOG_CLOSE);
   }
   else
