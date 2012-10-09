@@ -1551,7 +1551,7 @@ void render_frame(render_info  *render){
     SID_init_pcounter(&pcounter,n_particles,10);
     SID_log("Performing projection...",SID_LOG_OPEN|SID_LOG_TIMER);
     n_particles_used_local=0;
-/*
+
     for(ii_particle=0;ii_particle<n_particles;ii_particle++){
       i_particle=z_index[ii_particle];
       z_i       =(double)z[i_particle];
@@ -1651,7 +1651,7 @@ void render_frame(render_info  *render){
       }
       SID_check_pcounter(&pcounter,ii_particle);
     }
-*/
+
     SID_Barrier(SID.COMM_WORLD);
     SID_Allreduce(&n_particles_used_local,&n_particles_used,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
     SID_log("n_particles_used=%zd",SID_LOG_COMMENT,n_particles_used);

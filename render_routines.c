@@ -633,18 +633,10 @@ int set_render_state(render_info *render,int frame,int mode){
 
       if(render->n_interpolate>1){
          // Determine the list of best snapshots to use
-         if((render->n_interpolate%2)==0){
-            if(snap_diff_best<0)
-               snap_list[0]=MAX(0,snap_best-render->n_interpolate/2);
-            else
-               snap_list[0]=MAX(0,1+snap_best-render->n_interpolate/2);
-         }
-         else{
-            if(snap_diff_best<0)
-               snap_list[0]=MAX(0,snap_best-render->n_interpolate/2);
-            else
-               snap_list[0]=MAX(0,1+snap_best-render->n_interpolate/2);
-         }
+         if(snap_diff_best<0)
+            snap_list[0]=MAX(0,snap_best-render->n_interpolate/2);
+         else
+            snap_list[0]=MAX(0,1+snap_best-render->n_interpolate/2);
          for(i_snap=1;i_snap<render->n_interpolate;i_snap++)
             snap_list[i_snap]=snap_list[i_snap-1]+1;
          if(snap_list[render->n_interpolate-1]>=render->n_snap_a_list){
@@ -664,13 +656,15 @@ int set_render_state(render_info *render,int frame,int mode){
 
          SID_log("Done.",SID_LOG_CLOSE);
       }
+      else if(render->n_interpolate<=0)
+         SID_trap_error("An invalid value for n_interpolate (%d) has been set.",ERROR_LOGIC,render->n_interpolate);
       else{
          snap_list[0]=snap_best;
          SID_log("snap=%d is best with t=%lf...Done.",SID_LOG_CLOSE,snap_list[0],render->snap_a_list[snap_best]);
       }
     }
 
-    // Check (and read if necessary) snapshots and smooth files here
+    // Initialize the array of pointers used to hold the snapshots
     if(render->plist_list==NULL){
        render->plist_list=(plist_info **)SID_malloc(sizeof(plist_info *)*(render->n_interpolate));
        render->snap_list =(int *)SID_calloc(sizeof(int)*(render->n_interpolate));
@@ -680,21 +674,27 @@ int set_render_state(render_info *render,int frame,int mode){
           init_plist(render->plist_list[i_snap],NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
        }
     }
+
+    // Move currently loaded snapshots to new locations in the list if necessary
     for(i_snap=0;i_snap<render->n_interpolate;i_snap++){
        if(snap_list[i_snap]!=render->snap_list[i_snap]){
-          free_plist(render->plist_list[i_snap]);
-          init_plist(render->plist_list[i_snap],NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
+          // Free plists we are done with before loading a new one to avoid
+          //   unnecessarily doubling-up on RAM usage
+          if(render->plist_list[i_snap]!=NULL)
+             ADaPS_free(SID_FARG render->plist_list[i_snap]->data);
           render->snap_list[i_snap]=-1;
           for(j_snap=i_snap+1;j_snap<render->n_interpolate;j_snap++){
              if(snap_list[i_snap]==render->snap_list[j_snap]){
-                render->plist_list[i_snap]=render->plist_list[j_snap];
-                render->snap_list[i_snap] =render->snap_list[j_snap];
-                render->plist_list[j_snap]=NULL;
-                render->snap_list[j_snap] =-1;
+                render->plist_list[i_snap]->data=render->plist_list[j_snap]->data;
+                render->snap_list[i_snap]       =render->snap_list[j_snap];
+                render->plist_list[j_snap]->data=NULL;
+                render->snap_list[j_snap]       =-1;
              }
           }
        }
     }
+
+    // Check and (if necessary) read snapshots and smooth files here
     for(i_snap=0;i_snap<render->n_interpolate;i_snap++){
        if(render->snap_list[i_snap]<0){
           render->snap_list[i_snap]=snap_list[i_snap];
