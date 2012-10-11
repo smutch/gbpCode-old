@@ -475,8 +475,6 @@ void init_render(render_info **render){
   (*render)->snap_a_list        = NULL;
   (*render)->h_Hubble           = 1.;
   (*render)->f_absorption       =-1.;
-  (*render)->kappa_absorption   =-1.;
-  (*render)->kappa_transfer     = NULL;
   (*render)->flag_read_marked   = FALSE;
   (*render)->flag_comoving      = TRUE;
   (*render)->flag_fade          = FALSE;
@@ -509,8 +507,6 @@ void free_render(render_info **render){
   }
   if((*render)->snap_a_list!=NULL)
      SID_free(SID_FARG (*render)->snap_a_list);
-  if((*render)->kappa_transfer!=NULL)
-     SID_free(SID_FARG (*render)->kappa_transfer);
   SID_free(SID_FARG (*render)->kernel_radius);
   SID_free(SID_FARG (*render)->kernel_table);
   SID_free(SID_FARG (*render)->kernel_table_3d);
@@ -848,19 +844,7 @@ void parse_render_file(render_info **render, char *filename){
         }
         else if(!strcmp(parameter,"h_Hubble"))
           grab_double(line,i_word++,&((*render)->h_Hubble));
-        else if(!strcmp(parameter,"kappa_absorption")){
-          if((*render)->flag_add_absorption)
-             SID_trap_error("There are conflicting absorption criteria.",ERROR_LOGIC);
-          (*render)->flag_add_absorption=TRUE;
-          grab_double(line,i_word++,&((*render)->kappa_absorption));
-        }
-        else if(!strcmp(parameter,"kappa_transfer")){
-          if((*render)->flag_add_absorption)
-             SID_trap_error("There are conflicting absorption criteria.",ERROR_LOGIC);
-          (*render)->flag_add_absorption=TRUE;
-          i_word=set_transfer_function(line,i_word,&((*render)->kappa_transfer));
-        }
-        else if(!strcmp(variable,"f_absorption")){
+        else if(!strcmp(parameter,"f_absorption")){
           if((*render)->flag_add_absorption)
              SID_trap_error("There are conflicting absorption criteria.",ERROR_LOGIC);
           (*render)->flag_add_absorption=TRUE;

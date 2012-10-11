@@ -1250,68 +1250,9 @@ void render_frame(render_info  *render){
   int          i_image;
   int          camera_mode;
 
-  // Create an absorption look-up table to speed things up
-  int          flag_add_absorption;
-  double       absorption_coefficient;
-  double       inv_kappa_absorption;
-  double      *column_depth;
-  double      *x_abs;
-  double      *y_abs;
-  size_t       n_abs=400;
-  int          i_abs;
-  double       tau_max=10.;
-  interp_info *abs_interp;
-  double       rho_abs_lo;
-  double       rho_abs_hi;
-  double       inv_kappa_abs_lo;
-  double       inv_kappa_abs_hi;
-  interp_info *inv_kappa_interp;
+  double       f_absorption;
 
-  if(render->flag_add_absorption){
-     flag_add_absorption=TRUE;
-     if(render->kappa_transfer){
-        int     n_temp;
-        int     i_temp;
-        double *inv_y_temp;
-        n_temp    =render->kappa_transfer->n;
-        inv_y_temp=(double *)SID_malloc(sizeof(double)*n_temp);
-        for(i_temp=0;i_temp<n_temp;i_temp++)
-           inv_y_temp[i_temp]=-render->kappa_transfer->y[i_temp];
-        for(i_temp=0;i_temp<n_temp;i_temp++)
-           inv_y_temp[i_temp]=1./render->kappa_transfer->y[i_temp];
-        rho_abs_lo      =take_alog10(render->kappa_transfer->x[0]);
-        rho_abs_hi      =take_alog10(render->kappa_transfer->x[n_temp-1]);
-        inv_kappa_abs_lo=take_alog10(inv_y_temp[0]);
-        inv_kappa_abs_hi=take_alog10(inv_y_temp[n_temp-1]);
-        rho_abs_lo      =render->kappa_transfer->x[0];
-        rho_abs_hi      =render->kappa_transfer->x[n_temp-1];
-        inv_kappa_abs_lo=inv_y_temp[0];
-        inv_kappa_abs_hi=inv_y_temp[n_temp-1];
-        init_interpolate(render->kappa_transfer->x,inv_y_temp,(size_t)n_temp,gsl_interp_linear,&inv_kappa_interp);
-        SID_free(SID_FARG inv_y_temp);
-     }
-     else{
-        inv_kappa_interp      =NULL;
-        absorption_coefficient=render->kappa_absorption;
-        inv_kappa_absorption  =1./absorption_coefficient;
-     }
-     x_abs   =(double *)SID_malloc(sizeof(double)*n_abs);
-     y_abs   =(double *)SID_malloc(sizeof(double)*n_abs);
-     x_abs[0]=0.;
-     for(i_abs=1;i_abs<(n_abs-1);i_abs++)
-        x_abs[i_abs]=(float)i_abs*((float)tau_max/(float)(n_abs-1));
-     x_abs[n_abs-1]=tau_max;
-     for(i_abs=0;i_abs<n_abs;i_abs++)
-        y_abs[i_abs]=exp(-x_abs[i_abs]);
-     init_interpolate(x_abs,y_abs,n_abs,gsl_interp_linear,&abs_interp);
-     SID_free(SID_FARG x_abs);
-     SID_free(SID_FARG y_abs);
-  }
-  else{
-     flag_add_absorption   =FALSE;
-     absorption_coefficient=0.;
-     inv_kappa_absorption  =0.;
-  }
+  f_absorption=render->f_absorption;
 
   x_o     =render->camera->perspective->p_o[0];
   y_o     =render->camera->perspective->p_o[1];
@@ -1513,35 +1454,15 @@ void render_frame(render_info  *render){
                   &n_particles);
 
     // Initialize image arrays
-    mask=(char   *)SID_malloc(sizeof(char)*n_pixels);
-    if(flag_add_absorption)
-       column_depth=(double *)SID_malloc(sizeof(double)*n_pixels);
-    else
-       column_depth=NULL;
+    mask=(char *)SID_malloc(sizeof(char)*n_pixels);
     for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
       image[i_pixel]      =0.;
       numerator[i_pixel]  =0.;
       denominator[i_pixel]=0.;
       mask[i_pixel]       =FALSE;
-      if(column_depth!=NULL)
-        column_depth[i_pixel]=0.;
       if(z_image!=NULL)
         z_image[i_pixel] =0.;
     }
-
-    // Report absorption statistics
-    if(render->kappa_transfer!=NULL){
-       float rho_min,rho_mean,rho_max;
-       calc_min_global( weight,&rho_min, n_particles,SID_FLOAT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-       calc_max_global( weight,&rho_max, n_particles,SID_FLOAT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-       calc_mean_global(weight,&rho_mean,n_particles,SID_FLOAT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-       SID_log("Absorption statistics:",SID_LOG_OPEN);
-       SID_log("weight_min  =%le",     SID_LOG_COMMENT,rho_min);
-       SID_log("weight_max  =%le",     SID_LOG_COMMENT,rho_max);
-       SID_log("weight_mean =%le",     SID_LOG_COMMENT,rho_mean);
-       SID_log("table range =%le->%le",SID_LOG_COMMENT,rho_abs_lo,rho_abs_hi);
-       SID_log("",SID_LOG_SILENT_CLOSE);
-    }  
 
     // Perform projection
     size_t        ii_particle;
@@ -1551,9 +1472,8 @@ void render_frame(render_info  *render){
     SID_init_pcounter(&pcounter,n_particles,10);
     SID_log("Performing projection...",SID_LOG_OPEN|SID_LOG_TIMER);
     n_particles_used_local=0;
-
     for(ii_particle=0;ii_particle<n_particles;ii_particle++){
-      i_particle=z_index[ii_particle];
+      i_particle=z_index[n_particles-1-ii_particle];
       z_i       =(double)z[i_particle];
 
       part_h_z=(double)h_smooth[i_particle];
@@ -1594,9 +1514,11 @@ void render_frame(render_info  *render){
         double w_i;
         double v_i;
         double vw_i;
+        double zw_i;
         v_i =(double)value[i_particle];
         w_i =(double)weight[i_particle];
         vw_i=v_i*w_i;
+        zw_i=z_i*w_i;
 
         // Loop over the kernal
         for(kx=kx_min,pixel_pos_x=xmin+(kx_min+0.5)*pixel_size_x;kx<=kx_max;kx++,pixel_pos_x+=pixel_size_x){
@@ -1615,34 +1537,12 @@ void render_frame(render_info  *render){
                   kernel =kernel_table[i_table]+
                     (kernel_table[i_table+1]-kernel_table[i_table])*
                     (f_table-kernel_radius[i_table])*(double)N_KERNEL_TABLE;
-                  if(flag_add_absorption){
-                     double absorption;
-                     double tau;
-                     double dtau;
-                     if(inv_kappa_interp==NULL)
-                        dtau=w_i*kernel*inv_kappa_absorption;
-                     else if(w_i<rho_abs_lo)
-                        dtau=w_i*kernel*inv_kappa_abs_lo;
-                     else if(w_i>rho_abs_hi)
-                        dtau=w_i*kernel*inv_kappa_abs_hi;
-                     else
-                        dtau=w_i*kernel*interpolate(inv_kappa_interp,w_i);
-                     tau=column_depth[pos];
-                     if(tau>tau_max)
-                        absorption=0.;
-                     else if(tau<=0.)
-                        absorption=1.;
-                     else
-                        absorption=interpolate(abs_interp,tau);
-                     column_depth[pos]+=dtau;
-                     kernel           *=absorption;
-                  }
                   kernel          *=f_dim;
-                  numerator[pos]  +=vw_i*kernel;
-                  denominator[pos]+= w_i*kernel;
+                  denominator[pos]+=(1.-f_absorption*denominator[pos])*w_i*kernel;
+                  numerator[pos]  +=(1.-f_absorption*numerator[pos])*vw_i*kernel;
                   if(z_image!=NULL)
-                     z_image[pos]+=z_i*w_i*kernel;
-                  mask[pos] =TRUE;
+                     z_image[pos]+=(1.-f_absorption*z_image[pos])*zw_i*kernel;
+                  mask[pos]=TRUE;
                 }
               }
             }
@@ -1651,7 +1551,6 @@ void render_frame(render_info  *render){
       }
       SID_check_pcounter(&pcounter,ii_particle);
     }
-
     SID_Barrier(SID.COMM_WORLD);
     SID_Allreduce(&n_particles_used_local,&n_particles_used,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
     SID_log("n_particles_used=%zd",SID_LOG_COMMENT,n_particles_used);
@@ -1669,8 +1568,6 @@ void render_frame(render_info  *render){
              denominator[pos]=0.;
              if(z_image!=NULL)
                 z_image[pos]=0.;
-             if(column_depth!=NULL)
-                column_depth[pos]=0.;
           }
        }
     }
@@ -1694,8 +1591,6 @@ void render_frame(render_info  *render){
     SID_Allreduce(SID_IN_PLACE,denominator,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
     if(z_image!=NULL)
       SID_Allreduce(SID_IN_PLACE,z_image,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
-    if(column_depth!=NULL)
-      SID_Allreduce(SID_IN_PLACE,column_depth,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
 
     // Create final normalize image and clear the numerator which has been used as a buffer
     for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
@@ -1712,30 +1607,6 @@ void render_frame(render_info  *render){
          else
            z_image[i_pixel]=0.;
        }
-    }
-
-    // Report some column depth statistics
-    if(column_depth!=NULL){
-       int     i_bin;
-       int     n_bins=20;
-       int    *column_hist;
-       double  bin_step=0.25;
-       column_hist=(int *)SID_calloc(sizeof(int)*(n_bins+1));
-       for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
-          i_bin=(int)((double)column_depth[i_pixel]/bin_step);
-          if(i_bin<n_bins)
-             column_hist[i_bin]++;
-          else
-             column_hist[n_bins]++;
-       }
-       SID_log("Column depth statistics:",SID_LOG_OPEN);
-       SID_log("  tau    %%",SID_LOG_COMMENT);
-       SID_log(" -----  ---",SID_LOG_COMMENT);
-       for(i_bin=0;i_bin<n_bins;i_bin++)
-          SID_log(" %5.2lf  %3d",SID_LOG_COMMENT,(double)i_bin*bin_step,(int)(1e2*(double)column_hist[i_bin]/(double)n_pixels));
-       SID_log(" %5.2lf+ %3d",SID_LOG_COMMENT,(double)n_bins*bin_step,(int)(1e2*(double)column_hist[n_bins]/(double)n_pixels));
-       SID_log("",SID_LOG_SILENT_CLOSE);
-       SID_free(SID_FARG column_hist);
     }
 
     // Take log_10 (if needed)
@@ -1802,17 +1673,9 @@ void render_frame(render_info  *render){
     SID_free(SID_FARG value);
     SID_free(SID_FARG weight);
     SID_free(SID_FARG z_index);
-    if(column_depth!=NULL)
-      SID_free(SID_FARG column_depth);
     SID_free(SID_FARG mask);
   
     SID_log("Done.",SID_LOG_CLOSE);
-  }
-
-  if(flag_add_absorption){
-     free_interpolate(SID_FARG abs_interp);
-     if(inv_kappa_interp!=NULL)
-        free_interpolate(SID_FARG inv_kappa_interp);
   }
 
 }

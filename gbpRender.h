@@ -192,8 +192,6 @@ struct render_info{
   int          flag_add_absorption;
   plist_info **plist_list;
   double       h_Hubble;
-  double       kappa_absorption;
-  interp_info *kappa_transfer;
   double       f_absorption;
   int          w_mode;
   int          v_mode;
