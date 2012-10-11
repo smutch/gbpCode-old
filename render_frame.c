@@ -1251,7 +1251,6 @@ void render_frame(render_info  *render){
   int          camera_mode;
 
   double       f_absorption;
-
   f_absorption=render->f_absorption;
 
   x_o     =render->camera->perspective->p_o[0];
@@ -1288,11 +1287,12 @@ void render_frame(render_info  *render){
 
   // Set FOV
   if(d_near_field>0.)
-     SID_log("Near  field = %le [Mpc/h]",SID_LOG_COMMENT,d_near_field *h_Hubble/M_PER_MPC);
+     SID_log("Near  field  = %le [Mpc/h]",SID_LOG_COMMENT,d_near_field *h_Hubble/M_PER_MPC);
   if(d_taper_field>0.)
-     SID_log("Taper field = %le [Mpc/h]",SID_LOG_COMMENT,d_taper_field*h_Hubble/M_PER_MPC);
+     SID_log("Taper field  = %le [Mpc/h]",SID_LOG_COMMENT,d_taper_field*h_Hubble/M_PER_MPC);
   if(d_near_field>0. || d_taper_field>0.)
-     SID_log("Image plane = %le [Mpc/h]",SID_LOG_COMMENT,d_image_plane*h_Hubble/M_PER_MPC);
+     SID_log("Image plane  = %le [Mpc/h]",SID_LOG_COMMENT,d_image_plane*h_Hubble/M_PER_MPC);
+  SID_log("f_absorption = %le",SID_LOG_COMMENT,f_absorption);
   if(nx>=ny){
     FOV_y_object_plane=render->camera->perspective->FOV;
     FOV_x_object_plane=FOV_y_object_plane*(double)nx/(double)ny;    
