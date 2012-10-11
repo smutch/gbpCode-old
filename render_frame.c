@@ -1575,7 +1575,7 @@ void render_frame(render_info  *render){
         // Compute any potential fading
         double f_fade;
         if(flag_fade && z_i>d_o)
-           f_fade=pow(z_i/d_o,-2.);
+           f_fade=(d_image_plane*d_image_plane)/(z_i*z_i);
         else
            f_fade=1;
 

@@ -194,6 +194,7 @@ struct render_info{
   double       h_Hubble;
   double       kappa_absorption;
   interp_info *kappa_transfer;
+  double       f_absorption;
   int          w_mode;
   int          v_mode;
   int          sealed; // TRUE if the render is fully initialized

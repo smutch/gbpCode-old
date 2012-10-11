@@ -474,6 +474,7 @@ void init_render(render_info **render){
   (*render)->n_snap_a_list      = 0;
   (*render)->snap_a_list        = NULL;
   (*render)->h_Hubble           = 1.;
+  (*render)->f_absorption       =-1.;
   (*render)->kappa_absorption   =-1.;
   (*render)->kappa_transfer     = NULL;
   (*render)->flag_read_marked   = FALSE;
@@ -700,10 +701,10 @@ int set_render_state(render_info *render,int frame,int mode){
           render->snap_list[i_snap]=snap_list[i_snap];
           if(render->flag_read_marked)
              read_mark_file(render->plist_list[i_snap],"mark",render->mark_filename_root,MARK_LIST_ONLY);
-          if(render->n_interpolate>1)
+          //if(render->n_interpolate>1)
              read_gadget_binary_render(render->snap_filename_root,render->snap_list[i_snap],render->plist_list[i_snap],READ_GADGET_RENDER_ID_ORDERED);
-          else
-             read_gadget_binary_render(render->snap_filename_root,render->snap_list[i_snap],render->plist_list[i_snap],READ_GADGET_RENDER_DEFAULT);
+          //else
+          //   read_gadget_binary_render(render->snap_filename_root,render->snap_list[i_snap],render->plist_list[i_snap],READ_GADGET_RENDER_DEFAULT);
           if(render->n_interpolate>1)
              read_smooth(render->plist_list[i_snap],render->smooth_filename_root,render->snap_list[i_snap],
                          SMOOTH_DEFAULT|READ_SMOOTH_LOG_SIGMA|READ_SMOOTH_LOG_RHO);
@@ -859,12 +860,20 @@ void parse_render_file(render_info **render, char *filename){
           (*render)->flag_add_absorption=TRUE;
           i_word=set_transfer_function(line,i_word,&((*render)->kappa_transfer));
         }
+        else if(!strcmp(variable,"f_absorption")){
+          if((*render)->flag_add_absorption)
+             SID_trap_error("There are conflicting absorption criteria.",ERROR_LOGIC);
+          (*render)->flag_add_absorption=TRUE;
+          grab_double(line,i_word++,&((*render)->f_absorption));
+          if((*render)->f_absorption<0.)
+             SID_trap_error("f_absorption has been set to %le but must be >=0.",ERROR_LOGIC,(*render)->f_absorption);
+        }
         else if(!strcmp(parameter,"snap_number"))
           grab_int(line,i_word++,&((*render)->snap_number));
         else if(!strcmp(parameter,"flag_comoving"))
           grab_int(line,i_word++,&((*render)->flag_comoving));
         else if(!strcmp(parameter,"flag_fade"))
-          grab_int(line,i_word++,&((*render)->flag_fade));
+          (*render)->flag_fade=TRUE;
         else if(!strcmp(parameter,"force_periodic"))
           (*render)->flag_force_periodic=TRUE;
         else if(!strcmp(parameter,"camera")){
