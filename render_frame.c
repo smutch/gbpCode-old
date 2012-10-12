@@ -1252,6 +1252,8 @@ void render_frame(render_info  *render){
 
   double       f_absorption;
   f_absorption=render->f_absorption;
+  if(f_absorption<0.)
+     f_absorption=0.;
 
   x_o     =render->camera->perspective->p_o[0];
   y_o     =render->camera->perspective->p_o[1];
@@ -1529,7 +1531,7 @@ void render_frame(render_info  *render){
                   (pixel_pos_x-part_pos_x)*(pixel_pos_x-part_pos_x)+
                   (pixel_pos_y-part_pos_y)*(pixel_pos_y-part_pos_y);
                 radius2*=radius2_norm;
-                // Construct image here
+                // Construct images here
                 if(radius2<radius_kernel_norm2){
                   pos    =ky+kx*ny;
                   f_table=sqrt(radius2);
@@ -1537,11 +1539,14 @@ void render_frame(render_info  *render){
                   kernel =kernel_table[i_table]+
                     (kernel_table[i_table+1]-kernel_table[i_table])*
                     (f_table-kernel_radius[i_table])*(double)N_KERNEL_TABLE;
-                  kernel          *=f_dim;
-                  denominator[pos]+=(1.-f_absorption*denominator[pos])*w_i*kernel;
-                  numerator[pos]  +=(1.-f_absorption*numerator[pos])*vw_i*kernel;
-                  if(z_image!=NULL)
-                     z_image[pos]+=(1.-f_absorption*z_image[pos])*zw_i*kernel;
+                  double I_o_n=numerator[pos];
+                  double I_o_d=denominator[pos];
+                  numerator[pos]  +=(f_dim*v_i-f_absorption*I_o_n)*w_i*kernel;
+                  denominator[pos]+=(f_dim-f_absorption*I_o_d)*w_i*kernel;
+                  if(z_image!=NULL){
+                     double I_o_z=z_image[pos];
+                     z_image[pos]+=(f_dim*z_i-f_absorption*I_o_z)*w_i*kernel;
+                  }
                   mask[pos]=TRUE;
                 }
               }
