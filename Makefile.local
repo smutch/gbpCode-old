@@ -13,7 +13,8 @@ OBJFILES  = write_match_results.o      \
 	    read_matches.o             \
 	    read_trees.o               
 LIBFILE   = libgbpTrees.a
-BINFILES  = tree_stats                 \
+BINFILES  = extract_trees_mergers      \
+	    tree_stats                 \
 	    matchfile2ascii            \
 	    query_match_file           \
 	    make_trees                 \

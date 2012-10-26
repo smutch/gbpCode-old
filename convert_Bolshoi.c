@@ -209,7 +209,7 @@ int main(int argc, char *argv[]){
   // Fetch user inputs
   m_p              =1.35e8;
   n_write          =5*5*5;
-  n_header_lines   =25;
+  n_header_lines   =8;
   //i_write_start  =atoi(argv[1]);
   //i_write_stop   =atoi(argv[2]);
 
@@ -218,6 +218,7 @@ int main(int argc, char *argv[]){
 
   sprintf(filename_dir_out,"/nfs/dset/shrek071/millenium/bolshoi/wip3/treedata/");
   sprintf(filename_dir_out,"/nfs/dset/shrek071/millenium/bolshoi/rockstar_final/");
+  sprintf(filename_dir_out,"/nfs/cluster/darren/simon/Bolshoi_trees/");
   progenitor_mode=TREE_PROGENITOR_ORDER_DELUCIA;
   //progenitor_mode=TREE_PROGENITOR_ORDER_DEFAULT;
   tree_mode      =0; // join-on
@@ -235,7 +236,7 @@ int main(int argc, char *argv[]){
           SID_log("Processing file %d out of %d...",SID_LOG_OPEN|SID_LOG_TIMER,i_write+1,n_write);
 
           // Open file
-          sprintf(filename_in,"/nfs/dset/shrek071/millenium/bolshoi/rockstar_final/tree_%d_%d_%d.dat",i_x,i_y,i_z);
+          sprintf(filename_in,"/nfs/cluster/darren/simon/Bolshoi_trees/tree_%d_%d_%d_df.dat",i_x,i_y,i_z);
           SID_log("Open file {%s}...",SID_LOG_OPEN,filename_in);
           fp_in=fopen(filename_in,"r");
           SID_log("Done.",SID_LOG_CLOSE);
@@ -256,6 +257,7 @@ int main(int argc, char *argv[]){
           SID_log("Reading scale list...",SID_LOG_OPEN);
           sprintf(filename_snaps,"/nfs/dset/shrek071/millenium/bolshoi/treedata/Bolshoi.a_list");
           sprintf(filename_snaps,"/nfs/dset/shrek071/millenium/bolshoi/rockstar_final/tree.a_list");
+          sprintf(filename_snaps,"/nfs/cluster/darren/simon/Bolshoi_trees/tree.a_list");
 
           fp_snaps=fopen(filename_snaps,"r");
           n_scales=count_lines_data(fp_snaps);
@@ -366,6 +368,7 @@ int main(int argc, char *argv[]){
                 grab_float(line,24,&(spin_x_array[i_halo]));
                 grab_float(line,25,&(spin_y_array[i_halo]));
                 grab_float(line,26,&(spin_z_array[i_halo]));
+                /*
                 grab_float(line,27,&(spin_amplitude));
                 spin_amplitude      /=(float)sqrt((double)(spin_x_array[i_halo]*spin_x_array[i_halo])+
                                                   (double)(spin_y_array[i_halo]*spin_y_array[i_halo])+
@@ -373,6 +376,10 @@ int main(int argc, char *argv[]){
                 spin_x_array[i_halo]*=spin_amplitude;
                 spin_y_array[i_halo]*=spin_amplitude;
                 spin_z_array[i_halo]*=spin_amplitude;
+                */
+                spin_x_array[i_halo]/=M_vir_in_array[i_halo];
+                spin_y_array[i_halo]/=M_vir_in_array[i_halo];
+                spin_z_array[i_halo]/=M_vir_in_array[i_halo];
                 if(j_halo==0){
                   if(uberparent_id_array[i_halo]>=0)
                     group_id=uberparent_id_array[i_halo];
@@ -418,7 +425,7 @@ int main(int argc, char *argv[]){
           SID_log("Correcting masses...",SID_LOG_OPEN|SID_LOG_TIMER);
           memcpy(M_vir_array,M_vir_in_array,n_halos*sizeof(float));
           merge_sort(halo_id_array,(size_t)n_halos,&halo_id_index,SID_INT,SORT_COMPUTE_INDEX,FALSE);
-          sprintf(filename_missing_parents_out,"/nfs/dset/shrek071/millenium/bolshoi/wip3/treedata/trees_%d.%d.missing",n_scales-1,i_write);
+          sprintf(filename_missing_parents_out,"/nfs/cluster/darren/simon/Bolshoi_trees/trees_%d.%d.missing",n_scales-1,i_write);
           fp_missing_parents_out=fopen(filename_missing_parents_out,"w");
           for(i_halo=0;i_halo<n_halos;i_halo++){
             if(parent_id_array[i_halo]>=0){
@@ -439,7 +446,7 @@ int main(int argc, char *argv[]){
           fclose(fp_missing_parents_out);
 
           // Print some mass statistics
-          sprintf(filename_masses_out,"/nfs/dset/shrek071/millenium/bolshoi/wip3/treedata/trees_%d.%d.masses", n_scales-1,i_write);
+          sprintf(filename_masses_out,"/nfs/cluster/darren/simon/Bolshoi_trees//trees_%d.%d.masses", n_scales-1,i_write);
           fp_masses_out=fopen(filename_masses_out,"w");
           for(i_halo=0;i_halo<n_halos;i_halo++)
             fprintf(fp_masses_out,"%8d %le %le %le\n",halo_id_array[i_halo],M_vir_in_array[i_halo],M_vir_array[i_halo],1.-M_vir_array[i_halo]/M_vir_in_array[i_halo]);
