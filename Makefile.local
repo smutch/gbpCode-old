@@ -3,6 +3,7 @@
 #############################
 INCFILES  = gbpSPH.h
 OBJFILES  = display_gadget_header.o         \
+	    display_gadget_info.o           \
 	    init_gadget_read.o              \
 	    init_smooth_read.o              \
 	    set_gadget_filename.o           \
@@ -29,6 +30,7 @@ LIBFILE   = libgbpSPH.a
 BINFILES  = gadget2ascii               \
             mark_gadget                \
             gadget2csv                 \
+            gadget_info                \
             gadget_header              \
             gadget_replicate           \
             gadget_splitmerge          \
