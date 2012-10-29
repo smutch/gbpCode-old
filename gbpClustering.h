@@ -6,6 +6,12 @@
 #include <gbpCosmo.h>
 #include <gbpSPH.h>
 
+#define MAP2GRID_DIST_NGP   1
+#define MAP2GRID_DIST_CIC   2
+#define MAP2GRID_DIST_TSC   4
+#define MAP2GRID_DIST_DWT12 8
+#define MAP2GRID_DIST_DWT20 16
+
 #define PSPEC_ADD_VX     256   // Must start at 256 to allow for MAP2GRID flags
 #define PSPEC_ADD_VY     512
 #define PSPEC_ADD_VZ     1024
@@ -139,6 +145,7 @@ void compute_pspec(plist_info  *plist,
                    char        *species_name,
                    pspec_info  *pspec,
                    int          i_run);
+void write_grid(field_info *field,char *filename_out_root,int i_run,int n_run,int mass_assignment_scheme,double box_size);
 void write_pspec(pspec_info *pspec,char *filename_out_root,plist_info *plist,char *species_name);
 
 #ifdef __cplusplus
