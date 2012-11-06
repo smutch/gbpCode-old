@@ -89,6 +89,7 @@ void free_perspective_interp(perspective_interp_info **perspective_interp){
   free_interpolate(SID_FARG (*perspective_interp)->theta);
   free_interpolate(SID_FARG (*perspective_interp)->FOV);
   free_interpolate(SID_FARG (*perspective_interp)->radius);
+  free_interpolate(SID_FARG (*perspective_interp)->zeta);
   free_interpolate(SID_FARG (*perspective_interp)->phi);
   free_interpolate(SID_FARG (*perspective_interp)->time);
   SID_free(SID_FARG (*perspective_interp));
