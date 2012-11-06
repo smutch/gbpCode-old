@@ -9,9 +9,10 @@
 #include <gbpHalos.h>
 #include <gbpTrees.h>
 
-void check_for_tree_matches_local(char *filename_root_out,int i_read_start,int i_read_stop,int i_read,int n_search_total,int *flag_go);
-void check_for_tree_matches_local(char *filename_root_out,int i_read_start,int i_read_stop,int i_read,int n_search_total,int *flag_go){
+void check_for_tree_matches_local(char *filename_root_out,int i_read_start,int i_read_stop,int i_read,int n_search_total,int *flag_go,int **flag_go_array);
+void check_for_tree_matches_local(char *filename_root_out,int i_read_start,int i_read_stop,int i_read,int n_search_total,int *flag_go,int **flag_go_array){
   int   j_read;
+  int   k_read;
   int   k_match;
   int   k_order;
   int   i_read_order;
@@ -25,11 +26,16 @@ void check_for_tree_matches_local(char *filename_root_out,int i_read_start,int i
   char  filename_out_dir_snap[256];
   FILE *fp_test;
 
+  if((*flag_go_array)==NULL)
+     (*flag_go_array)=(int *)SID_malloc(sizeof(int)*n_search_total);
+  for(k_read=0;k_read<n_search_total;k_read++)
+     (*flag_go_array)[k_read]=FALSE;
+
   if(SID.I_am_Master){
      strcpy(filename_out_dir, filename_root_out);
      strcpy(filename_out_name,filename_root_out);
      strip_path(filename_out_name);
-     for(j_read=i_read-1;j_read>=i_read-n_search_total && !(*flag_go);j_read--){
+     for(j_read=i_read-1,k_read=0;j_read>=i_read-n_search_total;j_read--,k_read++){
         if(j_read<=i_read_stop && j_read>=i_read_start && j_read!=i_read){
            for(k_order=0;k_order<2;k_order++){
               if(k_order==0){
@@ -58,14 +64,17 @@ void check_for_tree_matches_local(char *filename_root_out,int i_read_start,int i
                     sprintf(filename_out,"%s_%s_%s.%sgroup_matches",filename_out_name,filename_cat1_order,filename_cat2_order,group_text_prefix);
                  if((fp_test=fopen(filename_out,"r"))!=NULL)
                     fclose(fp_test);
-                 else
-                    (*flag_go)=TRUE;
+                 else{
+                    (*flag_go)              =TRUE;
+                    (*flag_go_array)[k_read]=TRUE;
+                 }
               }
            }
         }
      }
   }
-  SID_Bcast(flag_go,sizeof(int),MASTER_RANK,SID.COMM_WORLD);  
+  SID_Bcast(flag_go,         sizeof(int),               MASTER_RANK,SID.COMM_WORLD);  
+  SID_Bcast((*flag_go_array),sizeof(int)*n_search_total,MASTER_RANK,SID.COMM_WORLD);  
 }
 
 void compute_trees_matches(char   *filename_root_in,
@@ -85,6 +94,7 @@ void compute_trees_matches(char   *filename_root_in,
   SID_fp      fp_in;
   int         i_read,k_read,l_read;
   int         flag_go;
+  int        *flag_go_array=NULL;
   int         i_read_start_file;
   int         i_read_stop_file;
   int         i_read_step_file;
@@ -280,7 +290,7 @@ void compute_trees_matches(char   *filename_root_in,
   SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
   flag_go=FALSE;
   for(i_read=i_read_stop;i_read>i_read_start && !flag_go;i_read--)
-     check_for_tree_matches_local(filename_out_dir,i_read_start,i_read_stop,i_read,n_search_total,&flag_go);
+     check_for_tree_matches_local(filename_out_dir,i_read_start,i_read_stop,i_read,n_search_total,&flag_go,&flag_go_array);
   if(flag_go)
      i_read++;
   if(!flag_go)
@@ -299,7 +309,7 @@ void compute_trees_matches(char   *filename_root_in,
      // i_read gets initialized by the previous loop
      for(;i_read>i_read_start;i_read--){
         flag_go=FALSE;
-        check_for_tree_matches_local(filename_out_dir,i_read_start,i_read_stop,i_read,n_search_total,&flag_go);
+        check_for_tree_matches_local(filename_out_dir,i_read_start,i_read_stop,i_read,n_search_total,&flag_go,&flag_go_array);
         if(flag_go){
            SID_log("Processing matches for snapshot #%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_read);                 
 
@@ -311,11 +321,12 @@ void compute_trees_matches(char   *filename_root_in,
            //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
            // Compute each matching combaination and write the results to the file
+           int         k_read;
            int         i_read_order;
            int         j_read_order;
            plist_info *plist1_order;
            plist_info *plist2_order;
-           for(j_read=i_read-1;j_read>=i_read-n_search_total;j_read--){
+           for(j_read=i_read-1,k_read=0;j_read>=i_read-n_search_total;j_read--,k_read++){
               if(j_read<=i_read_stop && j_read>=i_read_start && j_read!=i_read){
                  int k_order;
                  int flag_read;
@@ -325,7 +336,7 @@ void compute_trees_matches(char   *filename_root_in,
 
                  // If this snapshot combination is missing at least one file, proceed.
                  flag_read=TRUE;
-                 if(flag_go){
+                 if(flag_go_array[k_read]){
                     for(k_order=0;k_order<2;k_order++){
                        if(k_order==0){
                           i_read_order=i_read;
@@ -452,6 +463,8 @@ void compute_trees_matches(char   *filename_root_in,
   }
   SID_Bcast((*n_subgroups_return),sizeof(int)*(*n_files_return),MASTER_RANK,SID.COMM_WORLD);
   SID_Bcast((*n_groups_return),   sizeof(int)*(*n_files_return),MASTER_RANK,SID.COMM_WORLD);
+  if(flag_go_array!=NULL)
+     SID_free(SID_FARG flag_go_array);
   SID_log("Done.",SID_LOG_CLOSE);
 
   SID_log("Done.",SID_LOG_CLOSE);
