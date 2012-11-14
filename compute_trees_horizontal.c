@@ -11,18 +11,18 @@
 
 void change_horizontal_ID_recursive(tree_horizontal_info *halo,int id_1,int id_2);
 void change_horizontal_ID_recursive(tree_horizontal_info *halo,int id_1,int id_2){
-  tree_horizontal_info *current;
+   tree_horizontal_info *current;
 
-  // Change IDs here
-  if(halo->id==id_1)
-    halo->id=id_2;
+   // Change IDs here
+   if(halo->id==id_1)
+      halo->id=id_2;
 
-  // Walk the tree
-  current=halo->first_progenitor.halo;
-  while(current!=NULL){
-    change_horizontal_ID_recursive(current,id_1,id_2);
-    current=current->next_progenitor.halo;
-  }
+   // Walk the tree
+   current=halo->first_progenitor.halo;
+   while(current!=NULL){
+      change_horizontal_ID_recursive(current,id_1,id_2);
+      current=current->next_progenitor.halo;
+   }
 }
 
 void compute_trees_horizontal_stats(tree_horizontal_info *halos,int n_halos,int n_halos_max,tree_horizontal_stats_info *stats);
@@ -312,6 +312,7 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
 
         // Write group information to the horizontal tree files
         SID_fwrite(&(groups[i_write%n_wrap][i_group].id),        sizeof(int),1,&fp_matches_out);
+        SID_fwrite(&(groups[i_write%n_wrap][i_group].type),      sizeof(int),1,&fp_matches_out);
         SID_fwrite(&(desc_id),                                   sizeof(int),1,&fp_matches_out);
         SID_fwrite(&(groups[i_write%n_wrap][i_group].tree_id),   sizeof(int),1,&fp_matches_out);
         SID_fwrite(&(file_offset),                               sizeof(int),1,&fp_matches_out);
@@ -329,6 +330,7 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
 
            // Write subgroup information to the horizontal trees files
            SID_fwrite(&(subgroups[i_write%n_wrap][i_subgroup].id),     sizeof(int),1,&fp_matches_out);
+           SID_fwrite(&(subgroups[i_write%n_wrap][i_subgroup].type),   sizeof(int),1,&fp_matches_out);
            SID_fwrite(&(desc_id),                                      sizeof(int),1,&fp_matches_out);
            SID_fwrite(&(subgroups[i_write%n_wrap][i_subgroup].tree_id),sizeof(int),1,&fp_matches_out);
            SID_fwrite(&(file_offset),                                  sizeof(int),1,&fp_matches_out);

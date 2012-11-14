@@ -57,7 +57,7 @@ struct match_info{
 struct tree_horizontal_info{
   int          id;                 // This halo's id
   int          tree_id;            // This halo's tree id
-  int          type;               // A flag list characterising this halo's matching
+  int          type;               // A bit-wise switch characterising this halo's matching
   int          file;               // This halo's file number
   int          n_particles;        // Number of particles in this halo
   int          n_particles_parent; // Number of particles in this halo's parent halo
@@ -192,6 +192,7 @@ void compute_trees_auxiliary(char *filename_root,
 void init_tree(int n_snaps,tree_info **tree);
 void free_tree(tree_info **tree);
 void add_node_to_tree(tree_info  *tree,
+                      int         match_type,
                       int         halo_id,
                       int         group_id,
                       int         descendant_id,

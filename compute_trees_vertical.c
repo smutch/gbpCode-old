@@ -42,6 +42,7 @@ void free_tree(tree_info **tree){
 }
 
 void add_node_to_tree(tree_info  *tree,
+                      int         match_type,
                       int         halo_id,
                       int         group_id,
                       int         descendant_id,
@@ -61,6 +62,7 @@ void add_node_to_tree(tree_info  *tree,
 
   // Copy halo properties into new node
   memcpy(&(new_node->halo),properties,sizeof(halo_info));
+  new_node->halo.match_type=match_type;
   
   // Set ids and pointer defaults for the new node
   new_node->depth_first_index    =       -1; // Default; back-filled later
@@ -452,8 +454,10 @@ void compute_trees_vertical(char *filename_root_out,
   int         n_tree_bins_subgroups_rank;
   int         n_subgroups_group;
   int         group_id;
+  int         group_type;
   int         group_tree_id;
   int         subgroup_id;
+  int         subgroup_type;
   int         subgroup_tree_id;
   int         min_sum;
   int         min_bin;
@@ -575,6 +579,7 @@ void compute_trees_vertical(char *filename_root_out,
   // Loop over each group, grouping together the trees of each's subgroups
   for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
     SID_fread(&(group_id),           sizeof(int),1,&fp_in);
+    SID_fread(&(group_type),         sizeof(int),1,&fp_in);
     SID_fread(&(group_descendant_id),sizeof(int),1,&fp_in);
     SID_fread(&(group_tree_id),      sizeof(int),1,&fp_in);
     SID_fread(&(group_file_offset),  sizeof(int),1,&fp_in);
@@ -586,6 +591,7 @@ void compute_trees_vertical(char *filename_root_out,
     }
     for(i_subgroup=0;i_subgroup<n_subgroups_group;i_subgroup++){
       SID_fread(&(subgroup_id),           sizeof(int),1,&fp_in);
+      SID_fread(&(subgroup_type),         sizeof(int),1,&fp_in);
       SID_fread(&(subgroup_descendant_id),sizeof(int),1,&fp_in);
       SID_fread(&(subgroup_tree_id),      sizeof(int),1,&fp_in);
       SID_fread(&(subgroup_file_offset),  sizeof(int),1,&fp_in);
@@ -635,6 +641,7 @@ void compute_trees_vertical(char *filename_root_out,
     SID_fread_all(&n_trees_group,    sizeof(int),1,&fp_in);
     for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
        SID_fread_all(&(group_id),           sizeof(int),1,&fp_in);
+       SID_fread_all(&(group_type),         sizeof(int),1,&fp_in);
        SID_fread_all(&(group_descendant_id),sizeof(int),1,&fp_in);
        SID_fread_all(&(group_tree_id),      sizeof(int),1,&fp_in);
        SID_fread_all(&(group_file_offset),  sizeof(int),1,&fp_in);
@@ -649,6 +656,7 @@ void compute_trees_vertical(char *filename_root_out,
        }
        for(i_subgroup=0,i_tree_subgroup_min=0;i_subgroup<n_subgroups_group;i_subgroup++){
          SID_fread_all(&(subgroup_id),           sizeof(int),1,&fp_in);
+         SID_fread_all(&(subgroup_type),         sizeof(int),1,&fp_in);
          SID_fread_all(&(subgroup_descendant_id),sizeof(int),1,&fp_in);
          SID_fread_all(&(subgroup_tree_id),      sizeof(int),1,&fp_in);
          SID_fread_all(&(subgroup_file_offset),  sizeof(int),1,&fp_in);
@@ -864,6 +872,8 @@ void compute_trees_vertical(char *filename_root_out,
 
       // Open horizontal tree file
       SID_fopen(filename_in,"r",&fp_in);
+
+      // Open properties catalog
       fopen_catalog(filename_cat_root_in,
                     i_read,
                     mode_cat_read,
@@ -879,6 +889,7 @@ void compute_trees_vertical(char *filename_root_out,
       // Read each group in turn
       for(i_group=0,i_subgroup=0,k_subgroup=0;i_group<n_groups;i_group++){
         SID_fread_all(&(group_id),           sizeof(int),1,&fp_in);
+        SID_fread_all(&(group_type),         sizeof(int),1,&fp_in);
         SID_fread_all(&(group_descendant_id),sizeof(int),1,&fp_in);
         SID_fread_all(&(group_tree_id),      sizeof(int),1,&fp_in);
         SID_fread_all(&(group_file_offset),  sizeof(int),1,&fp_in);
@@ -892,6 +903,7 @@ void compute_trees_vertical(char *filename_root_out,
           // Read each subgroup in turn
           for(i_subgroup=0;i_subgroup<n_subgroups_group;i_subgroup++,k_subgroup++){
             SID_fread_all(&(subgroup_id),           sizeof(int),1,&fp_in);
+            SID_fread_all(&(subgroup_type),         sizeof(int),1,&fp_in);
             SID_fread_all(&(subgroup_descendant_id),sizeof(int),1,&fp_in);
             SID_fread_all(&(subgroup_tree_id),      sizeof(int),1,&fp_in);
             SID_fread_all(&(subgroup_file_offset),  sizeof(int),1,&fp_in);
@@ -915,6 +927,7 @@ void compute_trees_vertical(char *filename_root_out,
                 properties->snap_num=halo_snap;
                 // ... add this halo to the trees ...
                 add_node_to_tree(trees[i_tree],
+                                 subgroup_type,
                                  subgroup_id,
                                  group_id,
                                  subgroup_descendant_id,
@@ -945,6 +958,7 @@ void compute_trees_vertical(char *filename_root_out,
                 properties->snap_num=halo_snap;
                 // ... add this halo to the trees ...
                 add_node_to_tree(trees[i_tree],
+                                 group_type,
                                  group_id,
                                  group_id,
                                  group_descendant_id,

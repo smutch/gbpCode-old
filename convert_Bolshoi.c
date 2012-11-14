@@ -554,6 +554,7 @@ int main(int argc, char *argv[]){
 
                 // Add this halo to its tree
                 add_node_to_tree(trees[j_tree],
+                                 0,
                                  halo_id,
                                  group_id,
                                  descendant_id,
