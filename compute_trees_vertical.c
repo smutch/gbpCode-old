@@ -953,7 +953,7 @@ void compute_trees_vertical(char *filename_root_out,
         }
         // ... else, process group trees 
         else{
-          SID_fseek(&fp_in,sizeof(int),n_subgroups_group*4,SID_SEEK_CUR);
+          SID_fseek(&fp_in,sizeof(int),n_subgroups_group*5,SID_SEEK_CUR);
           // Ignore negative IDs
           if(group_id>=0){
             if(group_tree_id>=0){
@@ -979,7 +979,7 @@ void compute_trees_vertical(char *filename_root_out,
               }
             }
           }
-        }
+        } // k_match
       } // i_group
       SID_fclose(&fp_in);
       fclose_catalog(&fp_group_properties);
