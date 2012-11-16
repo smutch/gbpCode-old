@@ -242,9 +242,10 @@ void compute_pspec(plist_info  *plist,
   SID_log("Done.",SID_LOG_CLOSE);
 
   // Perform binning for 2D power spectrum
-  SID_log("Performing 2-d bining of power spectrum...",SID_LOG_OPEN|SID_LOG_TIMER);
+//  SID_log("Performing 2-d bining of power spectrum...",SID_LOG_OPEN|SID_LOG_TIMER);
   k_2D_local=(double *)SID_malloc(sizeof(double)*((n_k_2D)*(n_k_2D)));
   k_2D      =(double *)SID_malloc(sizeof(double)*((n_k_2D)*(n_k_2D)));
+/*
   for(i_k=0;i_k<(n_k_2D)*(n_k_2D);i_k++){
     k_2D_local[i_k]=0.;
     k_2D[i_k]      =0.;
@@ -305,6 +306,7 @@ void compute_pspec(plist_info  *plist,
     P_k_2D[i_k] -=shot_noise;
   }
   SID_log("Done.",SID_LOG_CLOSE);
+*/
   
   SID_free(SID_FARG k_1D_local);
   SID_free(SID_FARG k_2D);

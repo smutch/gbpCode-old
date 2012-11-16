@@ -206,32 +206,17 @@ void read_gadget_binary_local(char       *filename_root_in,
                SID_Bcast(pos_buffer,sizeof(GBPREAL)*3*i_step,MASTER_RANK,SID.COMM_WORLD);
                for(i_buffer=0;i_buffer<i_step;i_buffer++){
                   pos_test=pos_buffer[3*i_buffer];
-                  if(pos_test<0)                pos_test+=header.box_size;
-                  if(pos_test>=header.box_size) pos_test-=header.box_size;
                   if(pos_test>=slab->x_min_local && pos_test<slab->x_max_local)
                     n_of_type_local[i_type]++;
                }
             }
+            i_step=MIN(READ_BUFFER_SIZE_LOCAL,header.n_file[i_type]-i_particle);
          }
       }
       if(n_files>1)
          SID_log("Done.",SID_LOG_CLOSE);
       fclose(fp_pos);
       fclose(fp_vel);
-    }
-    size_t n_local;
-    for(i_type=0,n_local=0;i_type<N_GADGET_TYPE;i_type++) 
-       n_local+=n_of_type_local[i_type];
-    if(SID.n_proc>1){
-       SID_log("Results:",SID_LOG_OPEN);
-       int i_rank;
-       for(i_rank=0;i_rank<SID.n_proc;i_rank++){
-          size_t n_report;
-          n_report=n_local;
-          SID_Bcast(&n_report,sizeof(size_t),i_rank,SID.COMM_WORLD);
-          SID_log("rank #%04d: n_particles=%zd",SID_LOG_COMMENT,i_rank,n_report);
-       }
-       SID_log("Done.",SID_LOG_SILENT_CLOSE);
     }
     SID_log("Done.",SID_LOG_CLOSE);
 
@@ -301,20 +286,20 @@ void read_gadget_binary_local(char       *filename_root_in,
                switch(i_coord){
                   case 1:
                      x_test+=(1e3*h_Hubble*((double)vel_buffer[index+0])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+                     if(x_test<0)                x_test+=header.box_size;
+                     if(x_test>=header.box_size) x_test-=header.box_size;
                      break;
                   case 2:
                      y_test+=(1e3*h_Hubble*((double)vel_buffer[index+1])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+                     if(y_test<0)                y_test+=header.box_size;
+                     if(y_test>=header.box_size) y_test-=header.box_size;
                      break;
                   case 3:
                      z_test+=(1e3*h_Hubble*((double)vel_buffer[index+2])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+                     if(z_test<0)                z_test+=header.box_size;
+                     if(z_test>=header.box_size) z_test-=header.box_size;
                      break;
                }
-               if(x_test<0)                x_test+=header.box_size;
-               if(x_test>=header.box_size) x_test-=header.box_size;
-               if(y_test<0)                y_test+=header.box_size;
-               if(y_test>=header.box_size) y_test-=header.box_size;
-               if(z_test<0)                z_test+=header.box_size;
-               if(z_test>=header.box_size) z_test-=header.box_size;
                if(x_test>=slab->x_min_local && x_test<slab->x_max_local){
                   x_array[i_type][type_counter[i_type]]=x_test;
                   y_array[i_type][type_counter[i_type]]=y_test;
@@ -357,7 +342,7 @@ void read_gadget_binary_local(char       *filename_root_in,
     for(i_type=0;i_type<N_GADGET_TYPE;i_type++){
       if(n_of_type[i_type]>0){
         ADaPS_store(&(plist->data),(void *)(&(n_of_type_local[i_type])),"n_%s",    ADaPS_SCALAR_SIZE_T,pname[i_type]);
-        ADaPS_store(&(plist->data),(void *)(&(n_of_type[i_type])),     "n_all_%s",ADaPS_SCALAR_SIZE_T,pname[i_type]);
+        ADaPS_store(&(plist->data),(void *)(&(n_of_type[i_type])),      "n_all_%s",ADaPS_SCALAR_SIZE_T,pname[i_type]);
       }
     }
     ADaPS_store(&(plist->data),(void *)(&n_particles_all),"n_particles_all",ADaPS_SCALAR_SIZE_T);
@@ -386,7 +371,7 @@ int main(int argc, char *argv[]){
   FILE           *fp_1D;
   FILE           *fp_2D;
   cosmo_info     *cosmo;
-  field_info      FFT;
+  field_info      field;
   plist_info      plist_header;
   plist_info      plist;
   FILE           *fp;
@@ -400,10 +385,9 @@ int main(int argc, char *argv[]){
   double *sigma_P_temp;
   double *shot_noise_temp;
   double *dP_temp;
-  int     pspec_mode;
   int     snapshot_number;
   int     i_compute;
-  int     mass_assignment_scheme;
+  int     distribution_scheme;
   double  k_min_1D;
   double  k_max_1D;
   double  k_min_2D;
@@ -432,7 +416,20 @@ int main(int argc, char *argv[]){
   snapshot_number=(int)atoi(argv[2]);
   strcpy(filename_out_root, argv[3]);
   grid_size      =(int)atoi(argv[4]);
-  SID_log("Processing the power spectra of {%s}, snapshot #%d...",SID_LOG_OPEN|SID_LOG_TIMER,filename_in_root,snapshot_number);
+  if(!strcmp(argv[5],"ngp") || !strcmp(argv[5],"NGP"))
+     distribution_scheme=MAP2GRID_DIST_NGP;
+  else if(!strcmp(argv[5],"cic") || !strcmp(argv[5],"CIC"))
+     distribution_scheme=MAP2GRID_DIST_CIC;
+  else if(!strcmp(argv[5],"tsc") || !strcmp(argv[5],"TSC"))
+     distribution_scheme=MAP2GRID_DIST_TSC;
+  else if(!strcmp(argv[5],"d12") || !strcmp(argv[5],"D12"))
+     distribution_scheme=MAP2GRID_DIST_DWT12;
+  else if(!strcmp(argv[5],"d20") || !strcmp(argv[5],"D20"))
+     distribution_scheme=MAP2GRID_DIST_DWT20;
+  else
+     SID_trap_error("Invalid distribution scheme {%s} specified.",ERROR_SYNTAX,argv[5]);
+
+  SID_log("Smoothing Gadget file {%s;snapshot=#%d} to a %dx%dx%d grid with %s kernel...",SID_LOG_OPEN|SID_LOG_TIMER,filename_in_root,snapshot_number,grid_size,grid_size,grid_size,argv[5]);
 
   // Initialization -- default cosmology
   init_cosmo_std(&cosmo);
@@ -448,38 +445,34 @@ int main(int argc, char *argv[]){
   redshift=header.redshift;
   h_Hubble=header.h_Hubble;
   box_size=header.box_size;
-  SID_log("Done.",SID_LOG_CLOSE);
-
-  // Set the k ranges
-  double k_Nyq;
-  k_Nyq   =(TWO_PI*(double)grid_size/box_size)/2.;
-  k_min_1D=0.02;
-  dk_1D   =0.02;
-  k_max_1D=dk_1D*(float)((int)(k_Nyq/dk_1D));
-  k_min_2D=0.0;
-  dk_2D   =0.02;
-  k_max_2D=dk_2D*(float)((int)(k_Nyq/dk_2D));
-
-  // Initialize the power spectrum
-  pspec_info *pspec;
-  pspec=(pspec_info *)SID_malloc(sizeof(pspec_info)*N_GADGET_TYPE);
-  for(i_species=0,n_all=0;i_species<N_GADGET_TYPE;i_species++){
-     if(i_species>0) SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
-     init_pspec(&(pspec[i_species]),
-                MAP2GRID_DIST_DWT20,
-                redshift,box_size,grid_size,
-                k_min_1D,k_max_1D,dk_1D,
-                k_min_2D,k_max_2D,dk_2D);
-     if(i_species>0) SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+  for(i_species=0,n_all=0;i_species<N_GADGET_TYPE;i_species++)
      n_all+=header.n_all[i_species];
+  if(flag_filefound){
+     if(SID.I_am_Master){
+        FILE *fp_in;
+        char  filename[MAX_FILENAME_LENGTH];
+        int   block_length_open;
+        int   block_length_close;
+        set_gadget_filename(filename_in_root,snapshot_number,0,flag_multifile,flag_file_type,filename);
+        fp_in=fopen(filename,"r");
+        fread(&block_length_open, sizeof(int),1,fp_in);
+        fread(&header,            sizeof(gadget_header_info),1,fp_in);
+        fread(&block_length_close,sizeof(int),1,fp_in);
+        fclose(fp_in);
+        if(block_length_open!=block_length_close)
+           SID_trap_error("Block lengths don't match (ie. %d!=%d).",ERROR_LOGIC,block_length_open,block_length_close);
+     }
+     SID_Bcast(&header,sizeof(gadget_header_info),MASTER_RANK,SID.COMM_WORLD);
   }
+  SID_log("Done.",SID_LOG_CLOSE);
 
   // Only process a species if there are >0 particles present
   if(n_all>0){
 
      // Loop over ithe real-space and 3 redshift-space frames
      int i_run;
-     for(i_run=0;i_run<4;i_run++){
+     int n_run=4;
+     for(i_run=0;i_run<n_run;i_run++){
 
         // Read catalog
         switch(i_run){
@@ -497,16 +490,22 @@ int main(int argc, char *argv[]){
            break;
         }
 
+        // Initialize the field that will hold the grid
+        field_info field;
+        int        n[]={grid_size,grid_size,grid_size};
+        double     L[]={box_size, box_size, box_size};
+        init_field(3,n,L,&field);
+
         // Initialization -- data structure which holds all   
         //                   the (local) particle information  
-        init_plist(&plist,&(pspec[0].FFT.slab),GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
+        init_plist(&plist,&(field.slab),GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
 
         // Initialization -- read gadget file
         char filename_root[MAX_FILENAME_LENGTH];
         read_gadget_binary_local(filename_in_root,
                                  snapshot_number,
                                  i_run,
-                                 &(pspec[0].FFT.slab),
+                                 &(field.slab),
                                  cosmo,
                                  &plist);
 
@@ -521,17 +520,46 @@ int main(int argc, char *argv[]){
 
            // Compute power spectrum and write results
            if(n_all>0){
-              compute_pspec(&plist,plist.species[i_species],&(pspec[i_species]),i_run);
+              // Fetch the needed information
+              size_t   n_particles;
+              size_t   n_particles_local;
+              GBPREAL *x_particles_local;
+              GBPREAL *y_particles_local;
+              GBPREAL *z_particles_local;
+              GBPREAL *m_particles_local;
+              n_particles      =((size_t  *)ADaPS_fetch(plist.data,"n_all_%s",plist.species[i_species]))[0];
+              n_particles_local=((size_t  *)ADaPS_fetch(plist.data,"n_%s",    plist.species[i_species]))[0];
+              x_particles_local= (GBPREAL *)ADaPS_fetch(plist.data,"x_%s",    plist.species[i_species]);
+              y_particles_local= (GBPREAL *)ADaPS_fetch(plist.data,"y_%s",    plist.species[i_species]);
+              z_particles_local= (GBPREAL *)ADaPS_fetch(plist.data,"z_%s",    plist.species[i_species]);
+              if(ADaPS_exist(plist.data,"M_%s",plist.species[i_species]))
+                m_particles_local=(GBPREAL *)ADaPS_fetch(plist.data,"M_%s",plist.species[i_species]);
+              else
+                m_particles_local=NULL;
+
+              // Generate mass-field
+              map_to_grid(n_particles_local,
+                          x_particles_local,
+                          y_particles_local,
+                          z_particles_local,
+                          m_particles_local,
+                          cosmo,
+                          redshift,
+                          distribution_scheme,
+                          (double)n_particles,
+                          &field);
+
               char filename_out_species[MAX_FILENAME_LENGTH];
               SID_log("Writing results for the %s particles...",SID_LOG_OPEN,plist.species[i_species]);
               sprintf(filename_out_species,"%s_%s",filename_out_root,plist.species[i_species]);
-              write_pspec(&(pspec[i_species]),filename_out_species,&plist,plist.species[i_species]);
+              write_grid(&field,filename_out_species,i_run,n_run,distribution_scheme,header.box_size);
               SID_log("Done.",SID_LOG_CLOSE);
            }
         }
 
         // Clean-up
         free_plist(&plist);
+        free_field(&field);
 
         SID_log("Done.",SID_LOG_CLOSE);
      }
@@ -540,9 +568,6 @@ int main(int argc, char *argv[]){
   // Clean-up
   SID_log("Clean-up...",SID_LOG_OPEN);
   free_cosmo(&cosmo);
-  for(i_species=0;i_species<N_GADGET_TYPE;i_species++)
-     free_pspec(&(pspec[i_species]));
-  SID_free(SID_FARG pspec);
   SID_log("Done.",SID_LOG_CLOSE);
 
   SID_log("Done.",SID_LOG_CLOSE);

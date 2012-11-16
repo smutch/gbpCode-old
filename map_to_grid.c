@@ -44,7 +44,7 @@ void map_to_grid(size_t      n_particles_local,
   double      k_max;
   double      norm_local;
   double      normalization;
-  double      x_i;
+  GBPREAL     x_i;
   GBPREAL     x_particle_i;
   GBPREAL     y_particle_i;
   GBPREAL     z_particle_i;
@@ -181,13 +181,13 @@ void map_to_grid(size_t      n_particles_local,
           for(i_coord=0,W_i=1.;i_coord<3;i_coord++){
             switch(i_coord){
             case 0:
-              x_i=(double)(i_i[0]+j_i[0])-(double)x_particle_i;
+              x_i=(GBPREAL)(i_i[0]+j_i[0])-x_particle_i;
               break;
             case 1:
-              x_i=(double)(i_i[1]+j_i[1])-(double)y_particle_i;
+              x_i=(GBPREAL)(i_i[1]+j_i[1])-y_particle_i;
               break;
             case 2:
-              x_i=(double)(i_i[2]+j_i[2])-(double)z_particle_i;
+              x_i=(GBPREAL)(i_i[2]+j_i[2])-z_particle_i;
               break;
             }
             switch(distribution_scheme){
@@ -253,9 +253,12 @@ void map_to_grid(size_t      n_particles_local,
             }
             else if(k_i[0]>field->i_R_stop_local[0]){
               k_i[0]-=(field->i_R_stop_local[0]+1);
-              if(k_i[0]>=W_search_hi)
-                 SID_trap_error("Right slab buffer limit exceeded by %d element(s).",ERROR_LOGIC,k_i[0]-W_search_hi+1);
-              send_right[index_FFT_R(field,k_i)]+=W_i;
+              if(k_i[0]>=W_search_hi){
+fprintf(stderr,"Arg! %d %d %e %e %le\n",k_i[0],W_search_hi,x_particle_i,x_particles_local[i_p],field->L[0]);
+//                 SID_trap_error("Right slab buffer limit exceeded by %d element(s).",ERROR_LOGIC,k_i[0]-W_search_hi+1);
+              }
+              else
+                 send_right[index_FFT_R(field,k_i)]+=W_i;
             }
             else
               field->field_local[index_local_FFT_R(field,k_i)]+=W_i;
