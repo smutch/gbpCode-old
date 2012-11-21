@@ -7,7 +7,6 @@
 #include <gbpSPH.h>
 #include <gbpHalos.h>
 #include <gbpClustering.h>
-#include <gbpDomain.h>
 
 void write_grid(field_info *field,char *filename_out_root,int i_run,int n_run,int mass_assignment_scheme,double box_size){
    // Now that all 4 runs are done, let's write the results
@@ -47,7 +46,7 @@ void write_grid(field_info *field,char *filename_out_root,int i_run,int n_run,in
    int     i_rank;
    size_t  alloc_size;
    size_t  alloc_size_local;
-   alloc_size_local=(size_t)field->n_R_local*sizeof(fftw_real);
+   alloc_size_local=(size_t)field->n_field*sizeof(fftw_real);
    SID_Allreduce(&alloc_size_local,&alloc_size,1,SID_SIZE_T,SID_MAX,SID.COMM_WORLD);
    buffer=SID_malloc(alloc_size);
    SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);

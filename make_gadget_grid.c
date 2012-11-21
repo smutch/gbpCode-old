@@ -16,12 +16,16 @@
 void read_gadget_binary_local(char       *filename_root_in,
                               int         snapshot_number,
                               int         i_coord,
+                              int         i_load,
+                              int         n_load,
                               slab_info  *slab,
                               cosmo_info *cosmo,
                               plist_info *plist);
 void read_gadget_binary_local(char       *filename_root_in,
                               int         snapshot_number,
                               int         i_coord,
+                              int         i_load,
+                              int         n_load,
                               slab_info  *slab,
                               cosmo_info *cosmo,
                               plist_info *plist){
@@ -145,7 +149,12 @@ void read_gadget_binary_local(char       *filename_root_in,
 
     // Determine how many particles of each type will end-up on each core
     SID_log("Performing domain decomposition...",SID_LOG_OPEN|SID_LOG_TIMER);
-    for(i_file=0;i_file<n_files;i_file++){
+    int n_read;
+    if(n_load<n_files)
+       n_read=n_files;
+    else
+       n_read=1;
+    for(i_file=i_load;i_file<n_read;i_file++){
 
       set_gadget_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
       if(n_files>1)
@@ -231,7 +240,7 @@ void read_gadget_binary_local(char       *filename_root_in,
 
     // Perform read
     SID_log("Performing read...",SID_LOG_OPEN|SID_LOG_TIMER);
-    for(i_file=0;i_file<n_files;i_file++){
+    for(i_file=i_load;i_file<n_read;i_file++){
 
       set_gadget_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
       if(n_files>1)
@@ -359,6 +368,9 @@ void read_gadget_binary_local(char       *filename_root_in,
 
 int main(int argc, char *argv[]){
   int     n_species;
+  int     n_load;
+  int     n_used;
+  int     flag_used[N_GADGET_TYPE];
   char    species_name[256];
   double  h_Hubble;
   double  n_spec;
@@ -371,7 +383,7 @@ int main(int argc, char *argv[]){
   FILE           *fp_1D;
   FILE           *fp_2D;
   cosmo_info     *cosmo;
-  field_info      field;
+  field_info     *field[N_GADGET_TYPE];
   plist_info      plist_header;
   plist_info      plist;
   FILE           *fp;
@@ -442,11 +454,6 @@ int main(int argc, char *argv[]){
   int    flag_file_type;
   SID_log("Reading Gadget header...",SID_LOG_OPEN);
   flag_filefound=init_gadget_read(filename_in_root,snapshot_number,&flag_multifile,&flag_file_type,&header);
-  redshift=header.redshift;
-  h_Hubble=header.h_Hubble;
-  box_size=header.box_size;
-  for(i_species=0,n_all=0;i_species<N_GADGET_TYPE;i_species++)
-     n_all+=header.n_all[i_species];
   if(flag_filefound){
      if(SID.I_am_Master){
         FILE *fp_in;
@@ -463,15 +470,32 @@ int main(int argc, char *argv[]){
            SID_trap_error("Block lengths don't match (ie. %d!=%d).",ERROR_LOGIC,block_length_open,block_length_close);
      }
      SID_Bcast(&header,sizeof(gadget_header_info),MASTER_RANK,SID.COMM_WORLD);
+     redshift=header.redshift;
+     h_Hubble=header.h_Hubble;
+     box_size=header.box_size;
+     if(SID.n_proc>1)
+        n_load=1;
+     else
+        n_load=header.n_files;
+     for(i_species=0,n_all=0,n_used=0;i_species<N_GADGET_TYPE;i_species++){
+        n_all+=header.n_all[i_species];
+        if(header.n_all[i_species]>0){
+           n_used++;
+           flag_used[i_species]=TRUE;
+        }
+        else
+           flag_used[i_species]=FALSE;
+     }
   }
   SID_log("Done.",SID_LOG_CLOSE);
 
-  // Only process a species if there are >0 particles present
-  if(n_all>0){
+  // Only process if there are >0 particles present
+  if(n_used>0){
 
      // Loop over ithe real-space and 3 redshift-space frames
      int i_run;
      int n_run=4;
+     n_run=1; // For now, hard-wire real-space calculation only
      for(i_run=0;i_run<n_run;i_run++){
 
         // Read catalog
@@ -491,75 +515,96 @@ int main(int argc, char *argv[]){
         }
 
         // Initialize the field that will hold the grid
-        field_info field;
         int        n[]={grid_size,grid_size,grid_size};
         double     L[]={box_size, box_size, box_size};
-        init_field(3,n,L,&field);
+        int        i_init;
+        for(i_species=0;i_species<N_GADGET_TYPE;i_species++){
+           if(flag_used[i_species]){
+              field[i_species]=(field_info *)SID_malloc(sizeof(field_info));
+              init_field(3,n,L,field[i_species]);
+              i_init=i_species;
+           }
+           else
+              field[i_species]=NULL;
+        }
 
         // Initialization -- data structure which holds all   
         //                   the (local) particle information  
-        init_plist(&plist,&(field.slab),GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
+        init_plist(&plist,&((field[i_init])->slab),GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
 
-        // Initialization -- read gadget file
-        char filename_root[MAX_FILENAME_LENGTH];
-        read_gadget_binary_local(filename_in_root,
-                                 snapshot_number,
-                                 i_run,
-                                 &(field.slab),
-                                 cosmo,
-                                 &plist);
+        int i_load;
+        for(i_load=0;i_load<n_load;i_load++){
+           // Initialization -- read gadget file
+           char filename_root[MAX_FILENAME_LENGTH];
+           read_gadget_binary_local(filename_in_root,
+                                    snapshot_number,
+                                    i_run,
+                                    i_load,
+                                    n_load,
+                                    &(field[i_init]->slab),
+                                    cosmo,
+                                    &plist);
 
-        // Generate power spectra
-        for(i_species=0;i_species<plist.n_species;i_species++){
+           // Generate power spectra
+           for(i_species=0;i_species<plist.n_species;i_species++){
 
-           // Determine how many particles of species i_species there are
-           if(ADaPS_exist(plist.data,"n_all_%s",plist.species[i_species]))
-              n_all=((size_t *)ADaPS_fetch(plist.data,"n_all_%s",plist.species[i_species]))[0];
-           else
-              n_all=0;
-
-           // Compute power spectrum and write results
-           if(n_all>0){
-              // Fetch the needed information
-              size_t   n_particles;
-              size_t   n_particles_local;
-              GBPREAL *x_particles_local;
-              GBPREAL *y_particles_local;
-              GBPREAL *z_particles_local;
-              GBPREAL *m_particles_local;
-              n_particles      =((size_t  *)ADaPS_fetch(plist.data,"n_all_%s",plist.species[i_species]))[0];
-              n_particles_local=((size_t  *)ADaPS_fetch(plist.data,"n_%s",    plist.species[i_species]))[0];
-              x_particles_local= (GBPREAL *)ADaPS_fetch(plist.data,"x_%s",    plist.species[i_species]);
-              y_particles_local= (GBPREAL *)ADaPS_fetch(plist.data,"y_%s",    plist.species[i_species]);
-              z_particles_local= (GBPREAL *)ADaPS_fetch(plist.data,"z_%s",    plist.species[i_species]);
-              if(ADaPS_exist(plist.data,"M_%s",plist.species[i_species]))
-                m_particles_local=(GBPREAL *)ADaPS_fetch(plist.data,"M_%s",plist.species[i_species]);
+              // Determine how many particles of species i_species there are
+              if(ADaPS_exist(plist.data,"n_all_%s",plist.species[i_species]))
+                 n_all=((size_t *)ADaPS_fetch(plist.data,"n_all_%s",plist.species[i_species]))[0];
               else
-                m_particles_local=NULL;
+                 n_all=0;
 
-              // Generate mass-field
-              map_to_grid(n_particles_local,
-                          x_particles_local,
-                          y_particles_local,
-                          z_particles_local,
-                          m_particles_local,
-                          cosmo,
-                          redshift,
-                          distribution_scheme,
-                          (double)n_particles,
-                          &field);
+              // Compute power spectrum and write results
+              if(n_all>0){
+                 // Fetch the needed information
+                 size_t   n_particles;
+                 size_t   n_particles_local;
+                 GBPREAL *x_particles_local;
+                 GBPREAL *y_particles_local;
+                 GBPREAL *z_particles_local;
+                 GBPREAL *m_particles_local;
+                 n_particles      =((size_t  *)ADaPS_fetch(plist.data,"n_all_%s",plist.species[i_species]))[0];
+                 n_particles_local=((size_t  *)ADaPS_fetch(plist.data,"n_%s",    plist.species[i_species]))[0];
+                 x_particles_local= (GBPREAL *)ADaPS_fetch(plist.data,"x_%s",    plist.species[i_species]);
+                 y_particles_local= (GBPREAL *)ADaPS_fetch(plist.data,"y_%s",    plist.species[i_species]);
+                 z_particles_local= (GBPREAL *)ADaPS_fetch(plist.data,"z_%s",    plist.species[i_species]);
+                 if(ADaPS_exist(plist.data,"M_%s",plist.species[i_species]))
+                    m_particles_local=(GBPREAL *)ADaPS_fetch(plist.data,"M_%s",plist.species[i_species]);
+                 else
+                    m_particles_local=NULL;
 
-              char filename_out_species[MAX_FILENAME_LENGTH];
+                 // Generate mass-field
+                 map_to_grid(n_particles_local,
+                             x_particles_local,
+                             y_particles_local,
+                             z_particles_local,
+                             m_particles_local,
+                             cosmo,
+                             redshift,
+                             distribution_scheme,
+                             (double)n_particles,
+                             field[i_species]);
+              }
+           }
+
+           // Clean-up
+           free_plist(&plist);
+        }
+        
+        // Write results to disk
+        char filename_out_species[MAX_FILENAME_LENGTH];
+        init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
+        for(i_species=0;i_species<plist.n_species;i_species++){
+           if(flag_used[i_species]){
               SID_log("Writing results for the %s particles...",SID_LOG_OPEN,plist.species[i_species]);
               sprintf(filename_out_species,"%s_%s",filename_out_root,plist.species[i_species]);
-              write_grid(&field,filename_out_species,i_run,n_run,distribution_scheme,header.box_size);
+              write_grid(field[i_species],filename_out_species,i_run,n_run,distribution_scheme,header.box_size);
+              free_field(field[i_species]);
+              SID_free(SID_FARG field[i_species]);
               SID_log("Done.",SID_LOG_CLOSE);
            }
         }
-
-        // Clean-up
         free_plist(&plist);
-        free_field(&field);
 
         SID_log("Done.",SID_LOG_CLOSE);
      }
