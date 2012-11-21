@@ -308,12 +308,12 @@ fprintf(stderr,"Arg! %d %d %e %e %le\n",k_i[0],W_search_hi,x_particle_i,x_partic
   if(!check_mode_for_flag(mode,MAP2GRID_MODE_NONORM)){
      SID_log("Applying normalization...",SID_LOG_OPEN);
      norm_local=0;
-     for(i_grid=0;i_grid<field->total_local_size;i_grid++)
+     for(i_grid=0;i_grid<field->n_field_R_local;i_grid++)
        norm_local+=(double)field->field_local[i_grid];  
      calc_sum_global(&norm_local,&normalization,1,SID_DOUBLE,CALC_MODE_DEFAULT,SID.COMM_WORLD);
      double normalization_factor;
      normalization_factor=normalization_target/normalization;
-     for(i_grid=0;i_grid<field->total_local_size;i_grid++)
+     for(i_grid=0;i_grid<field->n_field_R_local;i_grid++)
        field->field_local[i_grid]*=normalization_factor;
      SID_log("Done.",SID_LOG_CLOSE,normalization);
   }

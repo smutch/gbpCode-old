@@ -15,6 +15,6 @@ OBJFILES  = read_groupings.o   \
 	    compute_pspec.o    \
 	    map_to_grid.o      
 LIBFILE   = libgbpClustering.a
-BINFILES  = make_gadget_grid make_gadget_pspec make_groupings_cfunc make_groupings_pspec make_groupings
+BINFILES  = make_diff_grid make_gadget_grid make_gadget_pspec make_groupings_cfunc make_groupings_pspec make_groupings
 LIBS      = -lgbpClustering -lgbpSPH -lgbpHalos -lgbpCosmo -lgbpMath -lgbpLib
 #############################

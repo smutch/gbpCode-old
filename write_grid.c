@@ -56,12 +56,14 @@ void write_grid(field_info *field,char *filename_out_root,int i_run,int n_run,in
       fp_out=fopen(filename_out,"a");
    for(i_rank=0;i_rank<SID.n_proc;i_rank++){
       size_t alloc_size_i;
-      memcpy(buffer,field->field_local,field->total_local_size);
+      memcpy(buffer,field->field_local,alloc_size_local);
       alloc_size_i=alloc_size_local;
       SID_Bcast(&alloc_size_i,sizeof(size_t),i_rank,SID.COMM_WORLD);
       SID_Bcast(buffer,alloc_size_i,i_rank,SID.COMM_WORLD);
       if(SID.I_am_Master)
          fwrite(buffer,alloc_size_i,1,fp_out);
+int i_grid;
+for(i_grid=0;i_grid<10;i_grid++) fprintf(stderr,"Z: %le\n",(double)(((fftw_real *)buffer)[i_grid]));
    }
    SID_free(SID_FARG buffer);
    if(SID.I_am_Master)

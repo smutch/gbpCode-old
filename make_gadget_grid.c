@@ -570,7 +570,19 @@ int main(int argc, char *argv[]){
                     m_particles_local=NULL;
 
                  // Generate mass-field
-                 if(i_load==0)
+                 if(n_load==1)
+                    map_to_grid(n_particles_local,
+                                x_particles_local,
+                                y_particles_local,
+                                z_particles_local,
+                                m_particles_local,
+                                cosmo,
+                                redshift,
+                                distribution_scheme,
+                                1.,
+                                field[i_species],
+                                MAP2GRID_MODE_DEFAULT);
+                 else if(i_load==0 || n_load==1)
                     map_to_grid(n_particles_local,
                                 x_particles_local,
                                 y_particles_local,
