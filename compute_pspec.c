@@ -165,7 +165,8 @@ void compute_pspec(plist_info  *plist,
               redshift,
               distribution_scheme,
               (double)n_particles,
-              FFT);
+              FFT,
+              MAP2GRID_MODE_DEFAULT);
 
   // Compute the FFT of the mass-field
   SID_log("Computing FFT...",SID_LOG_OPEN|SID_LOG_TIMER);

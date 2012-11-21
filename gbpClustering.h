@@ -12,6 +12,10 @@
 #define MAP2GRID_DIST_DWT12 8
 #define MAP2GRID_DIST_DWT20 16
 
+#define MAP2GRID_MODE_DEFAULT 0
+#define MAP2GRID_MODE_NOCLEAN 2
+#define MAP2GRID_MODE_NONORM  4
+
 #define PSPEC_ADD_VX     256   // Must start at 256 to allow for MAP2GRID flags
 #define PSPEC_ADD_VY     512
 #define PSPEC_ADD_VZ     1024
@@ -119,7 +123,8 @@ void map_to_grid(size_t      n_particles_local,
                  double      redshift,
                  int         distribution_scheme,
                  double      normalization_target,
-                 field_info *field);
+                 field_info *field,
+                 int         mode);
 
 // Correlation function stuff
 void init_cfunc(cfunc_info *cfunc,int   F_random,int PHK_width,

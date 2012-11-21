@@ -15,7 +15,8 @@ void map_to_grid(size_t      n_particles_local,
                  double      redshift,
                  int         distribution_scheme,
                  double      normalization_target,
-                 field_info *field){
+                 field_info *field,
+                 int         mode){
   size_t      i_p;
   int         i_k;
   size_t      i_b;
@@ -147,7 +148,8 @@ void map_to_grid(size_t      n_particles_local,
   SID_log("Performing grid assignment...",SID_LOG_OPEN|SID_LOG_TIMER);
 
   // Clear the field
-  clear_field(field);
+  if(!check_mode_for_flag(mode,MAP2GRID_MODE_NOCLEAN))
+     clear_field(field);
 
   // It is essential that we not pad the field for the simple way that we add-in the boundary buffers below
   set_FFT_padding_state(field,FALSE);
@@ -303,16 +305,18 @@ fprintf(stderr,"Arg! %d %d %e %e %le\n",k_i[0],W_search_hi,x_particle_i,x_partic
   SID_log("Done.",SID_LOG_CLOSE);
   
   // Recompute local normalization (more accurate for large sample sizes)
-  SID_log("Applying normalization...",SID_LOG_OPEN);
-  norm_local=0;
-  for(i_grid=0;i_grid<field->total_local_size;i_grid++)
-    norm_local+=(double)field->field_local[i_grid];  
-  calc_sum_global(&norm_local,&normalization,1,SID_DOUBLE,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-  double normalization_factor;
-  normalization_factor=normalization/normalization_target;
-  for(i_grid=0;i_grid<field->total_local_size;i_grid++)
-    field->field_local[i_grid]*=normalization_factor;
-  SID_log("Done.",SID_LOG_CLOSE,normalization);
+  if(!check_mode_for_flag(mode,MAP2GRID_MODE_NONORM)){
+     SID_log("Applying normalization...",SID_LOG_OPEN);
+     norm_local=0;
+     for(i_grid=0;i_grid<field->total_local_size;i_grid++)
+       norm_local+=(double)field->field_local[i_grid];  
+     calc_sum_global(&norm_local,&normalization,1,SID_DOUBLE,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+     double normalization_factor;
+     normalization_factor=normalization_target/normalization;
+     for(i_grid=0;i_grid<field->total_local_size;i_grid++)
+       field->field_local[i_grid]*=normalization_factor;
+     SID_log("Done.",SID_LOG_CLOSE,normalization);
+  }
 
   if(W_r_Daub_interp!=NULL)
     free_interpolate(SID_FARG W_r_Daub_interp);

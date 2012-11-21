@@ -154,7 +154,7 @@ void read_gadget_binary_local(char       *filename_root_in,
        n_read=n_files;
     else
        n_read=1;
-    for(i_file=i_load;i_file<n_read;i_file++){
+    for(i_file=i_load;i_file<(i_load+n_read);i_file++){
 
       set_gadget_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
       if(n_files>1)
@@ -240,7 +240,7 @@ void read_gadget_binary_local(char       *filename_root_in,
 
     // Perform read
     SID_log("Performing read...",SID_LOG_OPEN|SID_LOG_TIMER);
-    for(i_file=i_load;i_file<n_read;i_file++){
+    for(i_file=i_load;i_file<(i_load+n_read);i_file++){
 
       set_gadget_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
       if(n_files>1)
@@ -339,11 +339,11 @@ void read_gadget_binary_local(char       *filename_root_in,
       n_particles_test +=header.n_all[i_type];
     }
     SID_Allreduce(&n_particles_local,&n_particles_read,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
-    if(n_particles_read!=n_particles_test)
+    if(n_particles_read!=n_particles_test && n_load==1)
        SID_trap_error("Total particle counts don't make sense after read_gadget (ie. %zd!=%zd).",ERROR_LOGIC,n_particles_read,n_particles_test);
     for(i_type=0;i_type<N_GADGET_TYPE;i_type++){
        SID_Allreduce(&(n_of_type_local[i_type]),&(n_of_type[i_type]),1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
-       if(n_of_type[i_type]!=header.n_all[i_type])
+       if(n_of_type[i_type]!=header.n_all[i_type] && n_load==1)
           SID_trap_error("Particle counts don't make sense after read_gadget (ie. %zd!=%zd).",ERROR_LOGIC,n_of_type[i_type],header.n_all[i_type]);
     }
 
@@ -528,13 +528,10 @@ int main(int argc, char *argv[]){
               field[i_species]=NULL;
         }
 
-        // Initialization -- data structure which holds all   
-        //                   the (local) particle information  
-        init_plist(&plist,&((field[i_init])->slab),GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-
         int i_load;
         for(i_load=0;i_load<n_load;i_load++){
            // Initialization -- read gadget file
+           init_plist(&plist,&((field[i_init])->slab),GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
            char filename_root[MAX_FILENAME_LENGTH];
            read_gadget_binary_local(filename_in_root,
                                     snapshot_number,
@@ -553,7 +550,6 @@ int main(int argc, char *argv[]){
                  n_all=((size_t *)ADaPS_fetch(plist.data,"n_all_%s",plist.species[i_species]))[0];
               else
                  n_all=0;
-
               // Compute power spectrum and write results
               if(n_all>0){
                  // Fetch the needed information
@@ -574,16 +570,42 @@ int main(int argc, char *argv[]){
                     m_particles_local=NULL;
 
                  // Generate mass-field
-                 map_to_grid(n_particles_local,
-                             x_particles_local,
-                             y_particles_local,
-                             z_particles_local,
-                             m_particles_local,
-                             cosmo,
-                             redshift,
-                             distribution_scheme,
-                             (double)n_particles,
-                             field[i_species]);
+                 if(i_load==0)
+                    map_to_grid(n_particles_local,
+                                x_particles_local,
+                                y_particles_local,
+                                z_particles_local,
+                                m_particles_local,
+                                cosmo,
+                                redshift,
+                                distribution_scheme,
+                                1.,
+                                field[i_species],
+                                MAP2GRID_MODE_DEFAULT|MAP2GRID_MODE_NONORM);
+                 else if(i_load==(n_load-1))
+                    map_to_grid(n_particles_local,
+                                x_particles_local,
+                                y_particles_local,
+                                z_particles_local,
+                                m_particles_local,
+                                cosmo,
+                                redshift,
+                                distribution_scheme,
+                                1.,
+                                field[i_species],
+                                MAP2GRID_MODE_NOCLEAN);
+                 else
+                    map_to_grid(n_particles_local,
+                                x_particles_local,
+                                y_particles_local,
+                                z_particles_local,
+                                m_particles_local,
+                                cosmo,
+                                redshift,
+                                distribution_scheme,
+                                1.,
+                                field[i_species],
+                                MAP2GRID_MODE_NOCLEAN|MAP2GRID_MODE_NONORM);
               }
            }
 
