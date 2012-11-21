@@ -62,8 +62,6 @@ void write_grid(field_info *field,char *filename_out_root,int i_run,int n_run,in
       SID_Bcast(buffer,alloc_size_i,i_rank,SID.COMM_WORLD);
       if(SID.I_am_Master)
          fwrite(buffer,alloc_size_i,1,fp_out);
-int i_grid;
-for(i_grid=0;i_grid<10;i_grid++) fprintf(stderr,"Z: %le\n",(double)(((fftw_real *)buffer)[i_grid]));
    }
    SID_free(SID_FARG buffer);
    if(SID.I_am_Master)
