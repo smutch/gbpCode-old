@@ -48,6 +48,7 @@ int fread_catalog_file(fp_catalog_info *fp_in,halo_info *properties_out,halo_pro
      properties_out->progenitor_next =0;
      properties_out->group_halo_first=0;
      properties_out->group_halo_next =0;             
+     properties_out->match_type      =0;             
      properties_out->n_particles     =properties_in.n_particles;
      properties_out->M_vir           =(float)(properties_in.M_vir/1e10);
      properties_out->R_vir           =properties_in.R_vir;

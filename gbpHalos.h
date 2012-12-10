@@ -106,16 +106,17 @@ struct fp_catalog_info{
 // This is the format used as the SAGE structure
 typedef struct halo_info halo_info;
 struct halo_info{
-  // merger tree pointers
+  // merger tree pointers and match type
   int descendant;
   int progenitor_first;
   int progenitor_next;
   int group_halo_first;
   int group_halo_next;
+  int match_type;
 
   // properties of halo
   int       n_particles;
-  float     M_vir;
+  float     M_vir;  // This is the FoF mass for the most massive substructure
   float     R_vir;
   float     pos[3];
   float     vel[3];
