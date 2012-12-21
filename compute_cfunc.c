@@ -15,72 +15,83 @@
 
 double calc_CFUNC_local(double DD,double DR,double RR,cfunc_info *cfunc);
 double calc_CFUNC_local(double DD,double DR,double RR,cfunc_info *cfunc){
-  if(RR>0)
-    return((DD*(double)(cfunc->F_random*cfunc->F_random)-2*DR*(double)(cfunc->F_random)+RR)/RR);
+  if(RR>0){
+    double NDD;
+    double NDR;
+    double NRR;
+    NDD=2.*(double)DD;
+    NDR=   (double)DR/(cfunc->F_random);
+    NRR=2.*(double)RR/(cfunc->F_random*cfunc->F_random);
+    return((NDD-2*NDR+NRR)/NRR);
+  }
   else
     return(0.);
 }
 
-void add_pair_CFUNC_local(double x_i,double y_i,double z_i,
-                          double x_j,double y_j,double z_j,
-                          int zone_i,int zone_j,
-                          int mode, cfunc_info *cfunc);
-void add_pair_CFUNC_local(double x_i,double y_i,double z_i,
-                          double x_j,double y_j,double z_j,
-                          int zone_i,int zone_j,
-                          int mode, cfunc_info *cfunc){
-   // Compute the separations in the periodic box
+int add_pair_CFUNC_local(double x_i,double y_i,double z_i,
+                         double x_j,double y_j,double z_j,
+                         int zone_i,int zone_j,
+                         int mode, cfunc_info *cfunc);
+int add_pair_CFUNC_local(double x_i,double y_i,double z_i,
+                         double x_j,double y_j,double z_j,
+                         int zone_i,int zone_j,
+                         int mode, cfunc_info *cfunc){
+   int    flag_used=FALSE;
    double dx,dy,dz;
-   dx =d_periodic(x_i-x_j,cfunc->box_size);
-   dy =d_periodic(y_i-y_j,cfunc->box_size);
-   dz =d_periodic(z_i-z_j,cfunc->box_size);
+   dx =x_i-x_j;
+   dy =y_i-y_j;
+   dz =z_i-z_j;
 
-   // ... 1D case ...
-   double sep_1D;
-   sep_1D=sqrt(dx*dx+dy*dy+dz*dz);
-   if(sep_1D<cfunc->r_max_1D){
+   if(fabs(dx)<=cfunc->r_max_1D && fabs(dy)<=cfunc->r_max_1D && fabs(dz)<=cfunc->r_max_1D){
+      // ... 1D case ...
+      double sep_1D;
+      sep_1D=sqrt(dx*dx+dy*dy+dz*dz);
+      if(sep_1D<cfunc->r_max_1D){
 
-     // Set the arrays we are adding to
-     long long **array;
-     long long **larray;
-     switch(mode){
-        case CFUNC_ADD_PAIR_DD:
-           array =cfunc->DD_1D;
-           larray=cfunc->DD_l1D;
-           break;
-        case CFUNC_ADD_PAIR_DR:
-           array =cfunc->DR_1D;
-           larray=cfunc->DR_l1D;
-           break;
-        case CFUNC_ADD_PAIR_RR:
-           array =cfunc->RR_1D;
-           larray=cfunc->RR_l1D;
-           break;
-     }
+        // Set the arrays we are adding to
+        long long **array;
+        long long **larray;
+        switch(mode){
+           case CFUNC_ADD_PAIR_DD:
+              array =cfunc->DD_1D;
+              larray=cfunc->DD_l1D;
+              break;
+           case CFUNC_ADD_PAIR_DR:
+              array =cfunc->DR_1D;
+              larray=cfunc->DR_l1D;
+              break;
+           case CFUNC_ADD_PAIR_RR:
+              array =cfunc->RR_1D;
+              larray=cfunc->RR_l1D;
+              break;
+        }
 
-     // Add to the linear array if we are within bounds
-     int bin_1D;
-     bin_1D=(int)((sep_1D)/cfunc->dr_1D); //r_min=0 in this case
-     if(bin_1D>=0 && bin_1D<cfunc->n_1D){
-       int i_jack=0;
-       array[i_jack++][bin_1D]++;
-       for(;i_jack<=cfunc->n_jack_total;i_jack++){
-         if(zone_i!=i_jack && zone_j!=i_jack)
-           array[i_jack][bin_1D]++;
-       }
-     }
+        // Add to the linear array if we are within bounds
+        int bin_1D;
+        bin_1D=(int)((sep_1D)/cfunc->dr_1D); //r_min=0 in this case
+        if(bin_1D>=0 && bin_1D<cfunc->n_1D){
+          int i_jack=0;
+          array[i_jack++][bin_1D]++; // Add to the non-jack-knife array
+          for(;i_jack<=cfunc->n_jack_total;i_jack++){
+            if(zone_i!=i_jack && zone_j!=i_jack)
+              array[i_jack][bin_1D]++; // Add to all but one jack-knife region
+          }
+          flag_used=TRUE;
+        }
 
-     // Add to the logarythmic array if we are within bounds
-     int bin_l1D;
-     bin_l1D=(int)((take_log10(sep_1D)-cfunc->r_min_l1D)/cfunc->dr_l1D);
-     if(bin_l1D>=0 && bin_l1D<cfunc->n_1D){
-       int i_jack=0;
-       larray[i_jack++][bin_1D]++;
-       for(;i_jack<=cfunc->n_jack_total;i_jack++){
-         if(zone_i!=i_jack && zone_j!=i_jack)
-           larray[i_jack][bin_1D]++;
-       }
-     }
+        // Add to the logarythmic array if we are within bounds
+        int bin_l1D;
+        bin_l1D=(int)((take_log10(sep_1D)-cfunc->r_min_l1D)/cfunc->dr_l1D);
+        if(bin_l1D>=0 && bin_l1D<cfunc->n_1D){
+          int i_jack=0;
+          larray[i_jack++][bin_1D]++; // Add to the non-jack-knife array
+          for(;i_jack<=cfunc->n_jack_total;i_jack++){
+            if(zone_i!=i_jack && zone_j!=i_jack)
+              larray[i_jack][bin_1D]++; // Add to all but one jack-knife region;
+          }
+          flag_used=TRUE;
+        }
+      }
    }
 
    // ... 2D case ...
@@ -89,44 +100,49 @@ void add_pair_CFUNC_local(double x_i,double y_i,double z_i,
    int    bin_2D_x;
    int    bin_2D_y;
    int    bin_2D;
-   sep_2D_x=sqrt(dx*dx+dy*dy);
-   bin_2D_x=(int)((sep_2D_x-cfunc->r_min_2D)/cfunc->dr_2D);
-   if(bin_2D_x>=0 && bin_2D_x<cfunc->n_2D){
-      sep_2D_y=sqrt(dz*dz);
-      bin_2D_y=(int)((sep_2D_x-cfunc->r_min_2D)/cfunc->dr_2D);
-      if(bin_2D_y>=0 && bin_2D_y<cfunc->n_2D){
+   if(fabs(dx)<=cfunc->r_max_2D && fabs(dy)<=cfunc->r_max_2D){
+      sep_2D_x=sqrt(dx*dx+dy*dy);
+      bin_2D_x=(int)((sep_2D_x-cfunc->r_min_2D)/cfunc->dr_2D);
+      if(bin_2D_x>=0 && bin_2D_x<cfunc->n_2D){
+         sep_2D_y=sqrt(dz*dz);
+         bin_2D_y=(int)((sep_2D_x-cfunc->r_min_2D)/cfunc->dr_2D);
+         if(bin_2D_y>=0 && bin_2D_y<cfunc->n_2D){
 
-         // Compute bin
-         bin_2D_x=(int)((sep_2D_x-cfunc->r_min_2D)/cfunc->dr_2D);
-         bin_2D_y=(int)((sep_2D_y-cfunc->r_min_2D)/cfunc->dr_2D);
-         bin_2D=bin_2D_y*cfunc->n_2D+bin_2D_x;
+            // Compute bin
+            bin_2D_x=(int)((sep_2D_x-cfunc->r_min_2D)/cfunc->dr_2D);
+            bin_2D_y=(int)((sep_2D_y-cfunc->r_min_2D)/cfunc->dr_2D);
+            bin_2D=bin_2D_y*cfunc->n_2D+bin_2D_x;
 
-         // Set the arrays we are adding to
-         long long **array;
-         switch(mode){
-            case CFUNC_ADD_PAIR_DD:
-               array =cfunc->DD_2D;
-               break;
-            case CFUNC_ADD_PAIR_DR:
-               array =cfunc->DR_2D;
-               break;
-            case CFUNC_ADD_PAIR_RR:
-               array =cfunc->RR_2D;
-               break;
-         } 
+            // Set the arrays we are adding to
+            long long **array;
+            switch(mode){
+               case CFUNC_ADD_PAIR_DD:
+                  array =cfunc->DD_2D;
+                  break;
+               case CFUNC_ADD_PAIR_DR:
+                  array =cfunc->DR_2D;
+                  break;
+               case CFUNC_ADD_PAIR_RR:
+                  array =cfunc->RR_2D;
+                  break;
+            } 
 
-         // Add to the array if we are within bounds
-         if(bin_2D>=0 && bin_2D<cfunc->n_2D){
-            int i_jack=0;
-            array[i_jack++][bin_2D]++;
-            for(;i_jack<=cfunc->n_jack_total;i_jack++){
-               if(zone_i!=i_jack && zone_j!=i_jack)
-                  array[i_jack][bin_2D]++;
+            // Add to the array if we are within bounds
+            if(bin_2D>=0 && bin_2D<cfunc->n_2D){
+               int i_jack=0;
+               array[i_jack++][bin_2D]++;
+               for(;i_jack<=cfunc->n_jack_total;i_jack++){
+                  if(zone_i!=i_jack && zone_j!=i_jack)
+                     array[i_jack][bin_2D]++;
+               }
             }
+            flag_used=TRUE;
          }
       }
    }
+   return(flag_used);
 }
+
 void calc_pairs_local(char       *species_name1,
                       char       *species_name2,
                       int         i_rank,
@@ -205,8 +221,8 @@ void calc_pairs_local(char       *species_name1,
       zone_data2_rank   = (int     *)ADaPS_fetch(plist->data,"zone_%s",       species_name2);
    }
    else{
-      n_data1_local     =((size_t  *)ADaPS_fetch(plist->data,"n_boundary_%s",species_name1))[0];
-      n_data2_rank      =((size_t  *)ADaPS_fetch(plist->data,"n_boundary_%s",species_name2))[0];
+      n_data1_local     =((size_t  *)ADaPS_fetch(plist->data,"n_boundary_%s",          species_name1))[0];
+      n_data2_rank      =((size_t  *)ADaPS_fetch(plist->data,"n_xchg_%s",              species_name2))[0];
       x_data2_rank      = (GBPREAL *)ADaPS_fetch(plist->data,"x_xchg_%s",              species_name2);
       y_data2_rank      = (GBPREAL *)ADaPS_fetch(plist->data,"y_xchg_%s",              species_name2);
       z_data2_rank      = (GBPREAL *)ADaPS_fetch(plist->data,"z_xchg_%s",              species_name2);
@@ -258,11 +274,15 @@ void calc_pairs_local(char       *species_name1,
    PHK_t  *PHK_volume=NULL;
    size_t *index_PHK_volume=NULL;
    int     n_PHK_volume;
-   PHK_last_local=PHK_N_KEYS_3D(cfunc->n_bits_PHK)+1;
+   PHK_last_local=PHK_N_KEYS_3D(cfunc->n_bits_PHK)+1; // This is an impossible key and will force the check (*) below
+//FILE *fp_test;
+//char  filename_test[256];
+//sprintf(filename_test,"RR_pairs_%03d.dat",SID.My_rank);
+//if(check_mode_for_flag(mode,CFUNC_ADD_PAIR_RR)) fp_test=fopen(filename_test,"w");
    for(i_data1=0;i_data1<n_data1_local;i_data1++){
       index_i=PHK_idx_data1_local[i_data1];
 
-      // Determine the PHKs within the local volume of i_data1
+      // Determine the PHKs within the local volume of i_data1 (*)
       if(PHK_last_local!=PHK_data1_local[index_i]){
 
          // Change the last key to the new current key
@@ -276,8 +296,8 @@ void calc_pairs_local(char       *species_name1,
                                  0,cfunc->PHK_width,
                                  &n_PHK_volume,&PHK_volume);
          
-         // Compute the indices to the first rank item with each neighbouring key.
-         //    Only keep keys that have something in them.
+         // Compute the indices to the first rank item in catalog 2 having each volume key.
+         //    Only keep keys that will be used.
          size_t i_key_rank;
          int    n_key_rank_use;
          if(index_PHK_volume!=NULL)
@@ -300,12 +320,14 @@ void calc_pairs_local(char       *species_name1,
          index_j =PHK_idx_data2_rank[j_data2];
          if(flag_self_match){
             while(PHK_data2_rank[index_j]==PHK_i){
-               if((i_rank==0 && index_i<index_j) || SID.My_rank<((SID.My_rank+i_rank)%SID.n_proc)) // Avoids double counting
+               if((i_rank==0 && index_i<index_j) || SID.My_rank<((SID.My_rank+i_rank)%SID.n_proc)){ // Avoids double counting
                   add_pair_CFUNC_local(x_data1_local[index_i],y_data1_local[index_i],z_data1_local[index_i],
                                        x_data2_rank[index_j], y_data2_rank[index_j], z_data2_rank[index_j],
                                        zone_data1_local[index_i],zone_data2_rank[index_j],
                                        flag_pair_type,
                                        cfunc);
+//if(check_mode_for_flag(mode,CFUNC_ADD_PAIR_RR)) fprintf(fp_test,"%4d %4d %4d %4d\n",index_i,index_j,PHK_data2_rank[index_j],PHK_i);
+               }
                j_data2++;
                if(j_data2>=n_data2_rank) break;
                index_j=PHK_idx_data2_rank[j_data2];
@@ -325,6 +347,8 @@ void calc_pairs_local(char       *species_name1,
          }
       }
    }
+//if(check_mode_for_flag(mode,CFUNC_ADD_PAIR_RR)) fclose(fp_test);
+//if(check_mode_for_flag(mode,CFUNC_ADD_PAIR_RR)) SID_exit(ERROR_NONE);
 
    // Clean-up
    if(PHK_volume!=NULL)
@@ -705,6 +729,8 @@ void compute_cfunc(plist_info  *plist,
       exchange_ring_buffer(PHK_random_local,     sizeof(size_t), n_random_local,PHK_random_rank,    &n_random_rank,i_rank);
       exchange_ring_buffer(PHK_bidx_random_local,sizeof(size_t), n_random_local,PHK_idx_random_rank,&n_random_rank,i_rank);
       exchange_ring_buffer(zone_random_local,    sizeof(int),    n_random_local,zone_random_rank,   &n_random_rank,i_rank);
+      ADaPS_store(&(plist->data),(void *)(&n_data_rank),  "n_xchg_%s",ADaPS_SCALAR_SIZE_T,species_name);
+      ADaPS_store(&(plist->data),(void *)(&n_random_rank),"n_xchg_%s",ADaPS_SCALAR_SIZE_T,random_name);
       SID_log("Done.",SID_LOG_CLOSE);
     }
 
@@ -744,18 +770,18 @@ void compute_cfunc(plist_info  *plist,
   // Compile correlation functions from data and random pair counts
   SID_log("Processing correlation functions...",SID_LOG_OPEN);
   for(i_bin=0;i_bin<n_1D;i_bin++){
-    CFUNC_1D[i_bin] =calc_CFUNC_local((double)DD_1D[0][i_bin]/(double)((n_data)*(n_data-1)),
-                                      (double)DR_1D[0][i_bin]/(double)((n_data)*(n_random)),
-                                      (double)RR_1D[0][i_bin]/(double)((n_random)*(n_random-1)),cfunc);
-    CFUNC_l1D[i_bin]=calc_CFUNC_local((double)DD_l1D[0][i_bin]/(double)((n_data)*(n_data-1)),
-                                      (double)DR_l1D[0][i_bin]/(double)((n_data)*(n_random)),
-                                      (double)RR_l1D[0][i_bin]/(double)((n_random)*(n_random-1)),cfunc);
-if(SID.I_am_Master) fprintf(stderr,"%10.3le %7lld %7lld %7lld %10.3le\n",(double)(i_bin*cfunc->dr_1D),DD_1D[0][i_bin],DR_1D[0][i_bin],RR_1D[0][i_bin],CFUNC_1D[i_bin]);
+    CFUNC_1D[i_bin] =calc_CFUNC_local((double)DD_1D[0][i_bin],
+                                      (double)DR_1D[0][i_bin],
+                                      (double)RR_1D[0][i_bin],cfunc);
+    CFUNC_l1D[i_bin]=calc_CFUNC_local((double)DD_l1D[0][i_bin],
+                                      (double)DR_l1D[0][i_bin],
+                                      (double)RR_l1D[0][i_bin],cfunc);
+//if(SID.I_am_Master) fprintf(stderr,"%10.3le %7lld %7lld %7lld %10.3le\n",(double)(i_bin*cfunc->dr_1D),DD_1D[0][i_bin],DR_1D[0][i_bin],RR_1D[0][i_bin],CFUNC_1D[i_bin]);
   }
   for(i_bin=0;i_bin<n_2D*n_2D;i_bin++)
-    CFUNC_2D[i_bin]=calc_CFUNC_local((double)DD_2D[0][i_bin]/(double)((n_data)*(n_data-1)),
-                                     (double)DR_2D[0][i_bin]/(double)((n_data)*(n_random)),
-                                     (double)RR_2D[0][i_bin]/(double)((n_random)*(n_random-1)),cfunc);
+    CFUNC_2D[i_bin]=calc_CFUNC_local((double)DD_2D[0][i_bin],
+                                     (double)DR_2D[0][i_bin],
+                                     (double)RR_2D[0][i_bin],cfunc);
   SID_log("Done.",SID_LOG_CLOSE);
 
   // Generate 1D covariance matrices
@@ -763,22 +789,22 @@ if(SID.I_am_Master) fprintf(stderr,"%10.3le %7lld %7lld %7lld %10.3le\n",(double
   // ... process log-space profile first ...
   for(i_bin=0;i_bin<n_1D;i_bin++){
     for(i_jack=1,bar_i=0.;i_jack<=n_jack_total;i_jack++){
-      bar_i+=calc_CFUNC_local((double)DD_l1D[i_jack][i_bin]/(double)((n_data)*(n_data-1)),
-                              (double)DR_l1D[i_jack][i_bin]/(double)((n_data)*(n_random)),
-                              (double)RR_l1D[i_jack][i_bin]/(double)((n_random)*(n_random-1)),cfunc);
+      bar_i+=calc_CFUNC_local((double)DD_l1D[i_jack][i_bin],
+                              (double)DR_l1D[i_jack][i_bin],
+                              (double)RR_l1D[i_jack][i_bin],cfunc);
     }
     bar_i/=(double)n_jack_total;
     for(j_bin=0;j_bin<n_1D;j_bin++){
       for(i_jack=1,bar_j=0.,bar_ij=0.;i_jack<=n_jack_total;i_jack++){
-        bar_j +=calc_CFUNC_local((double)DD_l1D[i_jack][j_bin]/(double)((n_data)*(n_data-1)),
-                                 (double)DR_l1D[i_jack][j_bin]/(double)((n_data)*(n_random)),
-                                 (double)RR_l1D[i_jack][j_bin]/(double)((n_random)*(n_random-1)),cfunc);
-        bar_ij+=calc_CFUNC_local((double)DD_l1D[i_jack][i_bin]/(double)((n_data)*(n_data-1)),
-                                 (double)DR_l1D[i_jack][i_bin]/(double)((n_data)*(n_random)),
-                                 (double)RR_l1D[i_jack][i_bin]/(double)((n_random)*(n_random-1)),cfunc)*
-                calc_CFUNC_local((double)DD_l1D[i_jack][j_bin]/(double)((n_data)*(n_data-1)),
-                                 (double)DR_l1D[i_jack][j_bin]/(double)((n_data)*(n_random)),
-                                 (double)RR_l1D[i_jack][j_bin]/(double)((n_random)*(n_random-1)),cfunc);
+        bar_j +=calc_CFUNC_local((double)DD_l1D[i_jack][j_bin],
+                                 (double)DR_l1D[i_jack][j_bin],
+                                 (double)RR_l1D[i_jack][j_bin],cfunc);
+        bar_ij+=calc_CFUNC_local((double)DD_l1D[i_jack][i_bin],
+                                 (double)DR_l1D[i_jack][i_bin],
+                                 (double)RR_l1D[i_jack][i_bin],cfunc)*
+                calc_CFUNC_local((double)DD_l1D[i_jack][j_bin],
+                                 (double)DR_l1D[i_jack][j_bin],
+                                 (double)RR_l1D[i_jack][j_bin],cfunc);
       }
       bar_j /=(double)n_jack_total;
       bar_ij/=(double)n_jack_total;
@@ -788,22 +814,22 @@ if(SID.I_am_Master) fprintf(stderr,"%10.3le %7lld %7lld %7lld %10.3le\n",(double
   // ... then process the linear-space profile ...
   for(i_bin=0;i_bin<n_1D;i_bin++){
     for(i_jack=1,bar_i=0.;i_jack<=n_jack_total;i_jack++){
-      bar_i+=calc_CFUNC_local((double)DD_1D[i_jack][i_bin]/(double)((n_data)*(n_data-1)),
-                              (double)DR_1D[i_jack][i_bin]/(double)((n_data)*(n_random)),
-                              (double)RR_1D[i_jack][i_bin]/(double)((n_random)*(n_random-1)),cfunc);
+      bar_i+=calc_CFUNC_local((double)DD_1D[i_jack][i_bin],
+                              (double)DR_1D[i_jack][i_bin],
+                              (double)RR_1D[i_jack][i_bin],cfunc);
     }
     bar_i/=(double)n_jack_total;
     for(j_bin=0;j_bin<n_1D;j_bin++){
       for(i_jack=1,bar_j=0.,bar_ij=0.;i_jack<=n_jack_total;i_jack++){
-        bar_j +=calc_CFUNC_local((double)DD_1D[i_jack][j_bin]/(double)((n_data)*(n_data-1)),
-                                 (double)DR_1D[i_jack][j_bin]/(double)((n_data)*(n_random)),
-                                 (double)RR_1D[i_jack][j_bin]/(double)((n_random)*(n_random-1)),cfunc);
-        bar_ij+=calc_CFUNC_local((double)DD_1D[i_jack][i_bin]/(double)((n_data)*(n_data-1)),
-                                 (double)DR_1D[i_jack][i_bin]/(double)((n_data)*(n_random)),
-                                 (double)RR_1D[i_jack][i_bin]/(double)((n_random)*(n_random-1)),cfunc)*
-                calc_CFUNC_local((double)DD_1D[i_jack][j_bin]/(double)((n_data)*(n_data-1)),
-                                 (double)DR_1D[i_jack][j_bin]/(double)((n_data)*(n_random)),
-                                 (double)RR_1D[i_jack][j_bin]/(double)((n_random)*(n_random-1)),cfunc);
+        bar_j +=calc_CFUNC_local((double)DD_1D[i_jack][j_bin],
+                                 (double)DR_1D[i_jack][j_bin],
+                                 (double)RR_1D[i_jack][j_bin],cfunc);
+        bar_ij+=calc_CFUNC_local((double)DD_1D[i_jack][i_bin],
+                                 (double)DR_1D[i_jack][i_bin],
+                                 (double)RR_1D[i_jack][i_bin],cfunc)*
+                calc_CFUNC_local((double)DD_1D[i_jack][j_bin],
+                                 (double)DR_1D[i_jack][j_bin],
+                                 (double)RR_1D[i_jack][j_bin],cfunc);
       }
       bar_j /=(double)n_jack_total;
       bar_ij/=(double)n_jack_total;
@@ -813,22 +839,22 @@ if(SID.I_am_Master) fprintf(stderr,"%10.3le %7lld %7lld %7lld %10.3le\n",(double
   // ... and finally, the 2D case ...
   for(i_bin=0;i_bin<n_2D_total;i_bin++){
     for(i_jack=1,bar_i=0.;i_jack<=n_jack_total;i_jack++){
-      bar_i+=calc_CFUNC_local((double)DD_2D[i_jack][i_bin]/(double)((n_data)*(n_data-1)),
-                              (double)DR_2D[i_jack][i_bin]/(double)((n_data)*(n_random)),
-                              (double)RR_2D[i_jack][i_bin]/(double)((n_random)*(n_random-1)),cfunc);
+      bar_i+=calc_CFUNC_local((double)DD_2D[i_jack][i_bin],
+                              (double)DR_2D[i_jack][i_bin],
+                              (double)RR_2D[i_jack][i_bin],cfunc);
     }
     bar_i/=(double)n_jack_total;
     for(j_bin=0;j_bin<n_2D_total;j_bin++){
       for(i_jack=1,bar_j=0.,bar_ij=0.;i_jack<=n_jack_total;i_jack++){
-        bar_j +=calc_CFUNC_local((double)DD_2D[i_jack][j_bin]/(double)((n_data)*(n_data-1)),
-                                 (double)DR_2D[i_jack][j_bin]/(double)((n_data)*(n_random)),
-                                 (double)RR_2D[i_jack][j_bin]/(double)((n_random)*(n_random-1)),cfunc);
-        bar_ij+=calc_CFUNC_local((double)DD_2D[i_jack][i_bin]/(double)((n_data)*(n_data-1)),
-                                 (double)DR_2D[i_jack][i_bin]/(double)((n_data)*(n_random)),
-                                 (double)RR_2D[i_jack][i_bin]/(double)((n_random)*(n_random-1)),cfunc)*
-                calc_CFUNC_local((double)DD_2D[i_jack][j_bin]/(double)((n_data)*(n_data-1)),
-                                 (double)DR_2D[i_jack][j_bin]/(double)((n_data)*(n_random)),
-                                 (double)RR_2D[i_jack][j_bin]/(double)((n_random)*(n_random-1)),cfunc);
+        bar_j +=calc_CFUNC_local((double)DD_2D[i_jack][j_bin],
+                                 (double)DR_2D[i_jack][j_bin],
+                                 (double)RR_2D[i_jack][j_bin],cfunc);
+        bar_ij+=calc_CFUNC_local((double)DD_2D[i_jack][i_bin],
+                                 (double)DR_2D[i_jack][i_bin],
+                                 (double)RR_2D[i_jack][i_bin],cfunc)*
+                calc_CFUNC_local((double)DD_2D[i_jack][j_bin],
+                                 (double)DR_2D[i_jack][j_bin],
+                                 (double)RR_2D[i_jack][j_bin],cfunc);
       }
       bar_j /=(double)n_jack_total;
       bar_ij/=(double)n_jack_total;
@@ -842,25 +868,25 @@ if(SID.I_am_Master) fprintf(stderr,"%10.3le %7lld %7lld %7lld %10.3le\n",(double
   // ... 1D case ...
   for(i_bin=0;i_bin<n_1D;i_bin++){
     for(i_jack=1,mean=0.;i_jack<=n_jack_total;i_jack++)
-      mean+=calc_CFUNC_local((double)DD_l1D[i_jack][i_bin]/(double)((n_data)*(n_data-1)),
-                             (double)DR_l1D[i_jack][i_bin]/(double)((n_data)*(n_random)),
-                             (double)RR_l1D[i_jack][i_bin]/(double)((n_random)*(n_random-1)),cfunc);    
+      mean+=calc_CFUNC_local((double)DD_l1D[i_jack][i_bin],
+                             (double)DR_l1D[i_jack][i_bin],
+                             (double)RR_l1D[i_jack][i_bin],cfunc);    
     mean/=(double)n_jack_total;
     for(i_jack=1,std_dev=0.;i_jack<=n_jack_total;i_jack++)
-      std_dev+=pow(mean-calc_CFUNC_local((double)DD_l1D[i_jack][i_bin]/(double)((n_data)*(n_data-1)),
-                                         (double)DR_l1D[i_jack][i_bin]/(double)((n_data)*(n_random)),
-                                         (double)RR_l1D[i_jack][i_bin]/(double)((n_random)*(n_random-1)),cfunc),2.);
+      std_dev+=pow(mean-calc_CFUNC_local((double)DD_l1D[i_jack][i_bin],
+                                         (double)DR_l1D[i_jack][i_bin],
+                                         (double)RR_l1D[i_jack][i_bin],cfunc),2.);
     std_dev=sqrt(std_dev/(double)n_jack_total);
     dCFUNC_l1D[i_bin]=std_dev*sqrt((double)(n_jack_total-1));
     for(i_jack=1,mean=0.;i_jack<=n_jack_total;i_jack++)
-      mean+=calc_CFUNC_local((double)DD_1D[i_jack][i_bin]/(double)((n_data)*(n_data-1)),
-                             (double)DR_1D[i_jack][i_bin]/(double)((n_data)*(n_random)),
-                             (double)RR_1D[i_jack][i_bin]/(double)((n_random)*(n_random-1)),cfunc);    
+      mean+=calc_CFUNC_local((double)DD_1D[i_jack][i_bin],
+                             (double)DR_1D[i_jack][i_bin],
+                             (double)RR_1D[i_jack][i_bin],cfunc);    
     mean/=(double)n_jack_total;
     for(i_jack=1,std_dev=0.;i_jack<=n_jack_total;i_jack++)
-      std_dev+=pow(mean-calc_CFUNC_local((double)DD_1D[i_jack][i_bin]/(double)((n_data)*(n_data-1)),
-                                         (double)DR_1D[i_jack][i_bin]/(double)((n_data)*(n_random)),
-                                         (double)RR_1D[i_jack][i_bin]/(double)((n_random)*(n_random-1)),cfunc),2.);
+      std_dev+=pow(mean-calc_CFUNC_local((double)DD_1D[i_jack][i_bin],
+                                         (double)DR_1D[i_jack][i_bin],
+                                         (double)RR_1D[i_jack][i_bin],cfunc),2.);
     std_dev=sqrt(std_dev/(double)n_jack_total);
     dCFUNC_1D[i_bin]=std_dev*sqrt((double)(n_jack_total-1));
   }
@@ -868,14 +894,14 @@ if(SID.I_am_Master) fprintf(stderr,"%10.3le %7lld %7lld %7lld %10.3le\n",(double
   // ... 2D case ...
   for(i_bin=0;i_bin<n_2D*n_2D;i_bin++){
     for(i_jack=1,mean=0.;i_jack<=n_jack_total;i_jack++)
-      mean+=calc_CFUNC_local((double)DD_2D[i_jack][i_bin]/(double)((n_data)*(n_data-1)),
-                             (double)DR_2D[i_jack][i_bin]/(double)((n_data)*(n_random)),
-                             (double)RR_2D[i_jack][i_bin]/(double)((n_random)*(n_random-1)),cfunc);    
+      mean+=calc_CFUNC_local((double)DD_2D[i_jack][i_bin],
+                             (double)DR_2D[i_jack][i_bin],
+                             (double)RR_2D[i_jack][i_bin],cfunc);    
     mean/=(double)n_jack_total;
     for(i_jack=1,std_dev=0.;i_jack<=n_jack_total;i_jack++)
-      std_dev+=pow(mean-calc_CFUNC_local((double)DD_2D[i_jack][i_bin]/(double)((n_data)*(n_data-1)),
-                                         (double)DR_2D[i_jack][i_bin]/(double)((n_data)*(n_random)),
-                                         (double)RR_2D[i_jack][i_bin]/(double)((n_random)*(n_random-1)),cfunc),2.);
+      std_dev+=pow(mean-calc_CFUNC_local((double)DD_2D[i_jack][i_bin],
+                                         (double)DR_2D[i_jack][i_bin],
+                                         (double)RR_2D[i_jack][i_bin],cfunc),2.);
     std_dev=sqrt(std_dev/(double)n_jack_total);
     dCFUNC_2D[i_bin]=std_dev*sqrt((double)(n_jack_total-1));
   }

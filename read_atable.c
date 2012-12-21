@@ -12,7 +12,7 @@
 
 #define N_BITS_MIN 1
 
-void read_groupings(char *filename_root,int grouping_number,plist_info *plist,int mode,...){
+void read_atable(char *filename_in,plist_info *plist,int x_column,int y_column,int z_column,int vx_column,int vy_column,int vz_column,int mode,...){
    // Interpret variable arguments
    double      box_size;
    double      redshift;
@@ -24,22 +24,20 @@ void read_groupings(char *filename_root,int grouping_number,plist_info *plist,in
    // Interpret mode ...
 
    // ... domain decomposition ...
-   double     r_max;
    int        n_bits_PHK;
    int        PHK_width;
    slab_info *slab;
    if(check_mode_for_flag(mode,READ_GROUPING_SLAB) && check_mode_for_flag(mode,READ_GROUPING_PHK))
-      SID_trap_error("Multiple domain decompositions have been set in read_groupings().",ERROR_LOGIC);
+      SID_trap_error("Multiple domain decompositions have been set in read_atable().",ERROR_LOGIC);
    if(check_mode_for_flag(mode,READ_GROUPING_SLAB))
       slab =(slab_info *)va_arg(vargs,slab_info *);
    else if(check_mode_for_flag(mode,READ_GROUPING_PHK)){
-      r_max     =(double)va_arg(vargs,double);
-      box_size  =(double)va_arg(vargs,double);
       n_bits_PHK=(int)   va_arg(vargs,int);
       PHK_width =(int)   va_arg(vargs,int);
    }
    else
-      SID_trap_error("No domain decomposition has been set in read_groupings().",ERROR_LOGIC);
+      SID_trap_error("No domain decomposition has been set in read_atable().",ERROR_LOGIC);
+   box_size=(double)va_arg(vargs,double);
 
    // ... redshift space? ...
    int    flag_add_zspace_x;
@@ -55,41 +53,20 @@ void read_groupings(char *filename_root,int grouping_number,plist_info *plist,in
       SID_trap_error("More then one redshift-space dimension (%d) has been specified.",ERROR_LOGIC,n_z_dims);
    else if(n_z_dims==1){
       flag_add_zspace=TRUE;
-      if(check_mode_for_flag(mode,READ_GROUPING_SLAB))
-         box_size=(double)va_arg(vargs,double);
-      redshift   =va_arg(vargs,double);
-      cosmo      =va_arg(vargs,cosmo_info *);
-      h_Hubble   =((double *)ADaPS_fetch(cosmo,"h_Hubble"))[0];
+      redshift=va_arg(vargs,double);
+      cosmo   =va_arg(vargs,cosmo_info *);
+      h_Hubble=((double *)ADaPS_fetch(cosmo,"h_Hubble"))[0];
    }
 
    // Set filename, open file and count the number of items
-   char   filename_in[MAX_FILENAME_LENGTH];
    char   filename_name[MAX_FILENAME_LENGTH];
    FILE  *fp_in;
    size_t n_halos;
-   sprintf(filename_in,"%s_grouping_%03d.dat",filename_root,grouping_number);
    strcpy(filename_name,filename_in);
    strip_path(filename_name);
-   SID_log("Reading grouping catalog {%s}...",SID_LOG_OPEN,filename_name);
+   SID_log("Reading ascii table {%s}...",SID_LOG_OPEN,filename_name);
    fp_in  =fopen(filename_in,"r");
    n_halos=(size_t)count_lines_data(fp_in);
-
-   // Set the columns of the file we're reading
-   int x_column     =10;
-   int y_column     =11;
-   int z_column     =12;
-   int vx_sub_column=14;
-   int vy_sub_column=15;
-   int vz_sub_column=16;
-   int vx_FoF_column=17;
-   int vy_FoF_column=18;
-   int vz_FoF_column=19;
-   int vx_sys_column=20;
-   int vy_sys_column=21;
-   int vz_sys_column=22;
-   int vx_column    =vx_sub_column; // Used for z-space distortions
-   int vy_column    =vy_sub_column; // Used for z-space distortions
-   int vz_column    =vz_sub_column; // Used for z-space distortions
 
    // Set initial values for position bounds of the objects we will read
    GBPREAL x_min;
@@ -187,9 +164,9 @@ void read_groupings(char *filename_root,int grouping_number,plist_info *plist,in
            x_halos[n_halos_local] =(GBPREAL)x_in;
            y_halos[n_halos_local] =(GBPREAL)y_in;
            z_halos[n_halos_local] =(GBPREAL)z_in;
-           grab_real(line,vx_sub_column,&vx_in);
-           grab_real(line,vy_sys_column,&vy_in);
-           grab_real(line,vz_sys_column,&vz_in);
+           grab_real(line,vx_column,&vx_in);
+           grab_real(line,vy_column,&vy_in);
+           grab_real(line,vz_column,&vz_in);
            vx_halos[n_halos_local]=(GBPREAL)vx_in;
            vy_halos[n_halos_local]=(GBPREAL)vy_in;
            vz_halos[n_halos_local]=(GBPREAL)vz_in;

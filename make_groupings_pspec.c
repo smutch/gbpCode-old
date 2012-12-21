@@ -93,7 +93,7 @@ int main(int argc, char *argv[]){
    // Initialize the power spectrum
    pspec_info pspec;
    init_pspec(&pspec,
- 	     MAP2GRID_DIST_NGP,
+ 	     MAP2GRID_DIST_DWT20,
              redshift,box_size,grid_size,
              k_min_1D,k_max_1D,dk_1D,
              k_min_2D,k_max_2D,dk_2D);

@@ -8,7 +8,7 @@
 #include <gbpHalos.h>
 #include <gbpClustering.h>
 
-void init_cfunc(cfunc_info *cfunc,int    F_random,int    PHK_width,
+void init_cfunc(cfunc_info *cfunc,int    n_data,  int    F_random,int    n_bits_PHK,
                 double redshift,  double box_size,int    n_jack,
                 double r_min_l1D, double r_max_1D,double dr_1D,
                 double r_min_2D,  double r_max_2D,double dr_2D){
@@ -19,6 +19,8 @@ void init_cfunc(cfunc_info *cfunc,int    F_random,int    PHK_width,
   cfunc->flag_compute_RR=TRUE;
 
   // Initialize constants
+  cfunc->n_data   =n_data;
+  cfunc->n_random =n_data*F_random;
   cfunc->F_random =F_random;
   cfunc->redshift =redshift;
   cfunc->box_size =box_size;
@@ -31,6 +33,12 @@ void init_cfunc(cfunc_info *cfunc,int    F_random,int    PHK_width,
   cfunc->dr_1D    =dr_1D;
   cfunc->dr_2D    =dr_2D;
 
+  // Decide on PHK boundary widths
+  cfunc->n_bits_PHK=n_bits_PHK;
+  for(cfunc->PHK_width=1;cfunc->PHK_width<20 && (double)cfunc->PHK_width*(cfunc->box_size/pow(2.,(double)(cfunc->n_bits_PHK)))<cfunc->r_max;) cfunc->PHK_width++;
+  SID_log("using %d-bit keys and %d-key boundries...",SID_LOG_CONTINUE,cfunc->n_bits_PHK,cfunc->PHK_width);
+
+/*
   // Initialize the bit size of the PHKs
   int i_shift    =PHK_width;
   int n_bits_PHK;
@@ -42,6 +50,7 @@ void init_cfunc(cfunc_info *cfunc,int    F_random,int    PHK_width,
      i_shift/=2;
      cfunc->n_bits_PHK++;
   }
+*/
 
   // Initialize the number of bins
   cfunc->n_1D        =(int)(0.5+(cfunc->r_max_1D)/cfunc->dr_1D);

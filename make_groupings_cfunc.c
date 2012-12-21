@@ -84,11 +84,20 @@ int main(int argc, char *argv[]){
    int F_random=5;
 
    // Set the PHK boundary width (must be a power of 2)
-   int PHK_width=4; 
+   int n_bits_PHK=5; 
+
+   // Count the number of objects involved
+   int   n_data;
+   char  filename_count[MAX_FILENAME_LENGTH];
+   FILE *fp_count;
+   sprintf(filename_count,"%s_grouping%03d.dat",filename_in_root,i_grouping_start);
+   fp_count=fopen(filename_count,"r");
+   n_data=count_lines_data(fp_count);
+   fclose(fp_count);
  
    // Initialize the power spectrum
    cfunc_info cfunc;
-   init_cfunc(&cfunc,F_random,PHK_width,
+   init_cfunc(&cfunc,n_data,F_random,n_bits_PHK,
               redshift,box_size,n_jack,
               r_min_l1D,r_max_1D,dr_1D,
               r_min_2D, r_max_2D,dr_2D);
@@ -128,23 +137,21 @@ int main(int argc, char *argv[]){
   
          // Generate randoms
          if(flag_compute_randoms){
-            generate_randoms(&cfunc,&plist,"halos","randoms");
+            generate_randoms(&cfunc,&plist,"halos","./randoms.dat","randoms");
             flag_compute_randoms=FALSE;
          }
 
          // Compute power spectrum
          compute_cfunc(&plist,"halos","randoms",&cfunc,i_run);
 
-         // Write jack-knifes
-  
+         // Now that all 4 runs are done, let's write the results
+         char filename_out_root_grouping[MAX_FILENAME_LENGTH];
+         sprintf(filename_out_root_grouping,"%s_grouping_%03d",filename_out_root,i_grouping);
+         write_cfunc(&cfunc,filename_out_root_grouping,&plist,"halos","randoms",i_run);
+ 
          SID_log("Done.",SID_LOG_CLOSE);
       } // Loop over 4 P(k)'s
   
-      // Now that all 4 runs are done, let's write the results
-      char filename_out_root_grouping[MAX_FILENAME_LENGTH];
-      sprintf(filename_out_root_grouping,"%s_grouping_%03d",filename_out_root,i_grouping);
-      write_cfunc(&cfunc,filename_out_root_grouping,&plist,"halos","randoms");
- 
       SID_log("Done.",SID_LOG_CLOSE);
    } // Loop over groupings
  
