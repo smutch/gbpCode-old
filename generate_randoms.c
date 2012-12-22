@@ -68,9 +68,9 @@ void generate_randoms(cfunc_info *cfunc,plist_info *plist,char *species_name,cha
          z_i/=cfunc->box_size;
       }
       else{
-         x_i=random_number(&RNG);force_periodic(&x_i,0.,1.);
-         y_i=random_number(&RNG);force_periodic(&y_i,0.,1.);
-         z_i=random_number(&RNG);force_periodic(&z_i,0.,1.);
+         x_i=random_number(&RNG);force_periodic(&x_i,0.,1.);if(x_i==1.) x_i=0.;
+         y_i=random_number(&RNG);force_periodic(&y_i,0.,1.);if(y_i==1.) y_i=0.;
+         z_i=random_number(&RNG);force_periodic(&z_i,0.,1.);if(z_i==1.) z_i=0.;
       }
       PHK_i=compute_PHK_from_Cartesian(cfunc->n_bits_PHK,3,(double)x_i,(double)y_i,(double)z_i);
       if(PHK_i>=(PHK_t)PHK_min_local && PHK_i<=(PHK_t)PHK_max_local){
