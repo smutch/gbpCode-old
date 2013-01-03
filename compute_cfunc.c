@@ -81,13 +81,13 @@ int add_pair_CFUNC_local(double x_i,double y_i,double z_i,
 
         // Add to the logarythmic array if we are within bounds
         int bin_l1D;
-        bin_l1D=(int)((take_log10(sep_1D)-cfunc->r_min_l1D)/cfunc->dr_l1D);
+        bin_l1D=(int)((take_log10(sep_1D)-cfunc->lr_min_l1D)/cfunc->dr_l1D);
         if(bin_l1D>=0 && bin_l1D<cfunc->n_1D){
           int i_jack=0;
-          larray[i_jack++][bin_1D]++; // Add to the non-jack-knife array
+          larray[i_jack++][bin_l1D]++; // Add to the non-jack-knife array
           for(;i_jack<=cfunc->n_jack_total;i_jack++){
             if(zone_i!=i_jack && zone_j!=i_jack)
-              larray[i_jack][bin_1D]++; // Add to all but one jack-knife region;
+              larray[i_jack][bin_l1D]++; // Add to all but one jack-knife region;
           }
           flag_used=TRUE;
         }
@@ -468,7 +468,6 @@ void compute_cfunc(plist_info  *plist,
   int          n_2D_total;
   int          n_jack_total;
   double       box_size;
-  double       r_min_l1D;
   double       r_max_1D;
   double       r_min_2D;
   double       r_max_2D;
@@ -496,7 +495,6 @@ void compute_cfunc(plist_info  *plist,
   n_2D_total  =cfunc->n_2D_total;
   n_jack_total=cfunc->n_jack_total;
   box_size    =cfunc->box_size;
-  r_min_l1D   =cfunc->r_min_l1D;
   r_max_1D    =cfunc->r_max_1D;
   r_min_2D    =cfunc->r_min_2D;
   r_max_2D    =cfunc->r_max_2D;

@@ -2,7 +2,7 @@
 #include <gbpLib.h>
 #include <gbpClustering.h>
 
-void generate_randoms(cfunc_info *cfunc,plist_info *plist,char *species_name,char *filename_out_randoms,char *random_name){
+void generate_randoms(cfunc_info *cfunc,plist_info *plist,char *species_name,char *random_name,char *filename_out_randoms){
 
    // Fetch the number of objects and set the number of random
    size_t n_random_target;

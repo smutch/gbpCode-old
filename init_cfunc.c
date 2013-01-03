@@ -19,19 +19,20 @@ void init_cfunc(cfunc_info *cfunc,int    n_data,  int    F_random,int    n_bits_
   cfunc->flag_compute_RR=TRUE;
 
   // Initialize constants
-  cfunc->n_data   =n_data;
-  cfunc->n_random =n_data*F_random;
-  cfunc->F_random =F_random;
-  cfunc->redshift =redshift;
-  cfunc->box_size =box_size;
-  cfunc->n_jack   =n_jack;
-  cfunc->r_min_l1D=r_min_l1D;
-  cfunc->r_max_1D =r_max_1D;
-  cfunc->r_min_2D =r_min_2D;
-  cfunc->r_max_2D =r_max_2D;
-  cfunc->r_max    =MAX(cfunc->r_max_1D,cfunc->r_max_2D);
-  cfunc->dr_1D    =dr_1D;
-  cfunc->dr_2D    =dr_2D;
+  cfunc->n_data    =n_data;
+  cfunc->n_random  =n_data*F_random;
+  cfunc->F_random  =F_random;
+  cfunc->redshift  =redshift;
+  cfunc->box_size  =box_size;
+  cfunc->n_jack    =n_jack;
+  cfunc->r_min_l1D =r_min_l1D;
+  cfunc->lr_min_l1D=take_log10(r_min_l1D);
+  cfunc->r_max_1D  =r_max_1D;
+  cfunc->r_min_2D  =r_min_2D;
+  cfunc->r_max_2D  =r_max_2D;
+  cfunc->r_max     =MAX(cfunc->r_max_1D,cfunc->r_max_2D);
+  cfunc->dr_1D     =dr_1D;
+  cfunc->dr_2D     =dr_2D;
 
   // Decide on PHK boundary widths
   cfunc->n_bits_PHK=n_bits_PHK;
@@ -59,7 +60,7 @@ void init_cfunc(cfunc_info *cfunc,int    n_data,  int    F_random,int    n_bits_
   cfunc->n_jack_total=cfunc->n_jack*cfunc->n_jack*cfunc->n_jack;
 
   // Initialize logarythmic bin sizes
-  cfunc->dr_l1D=(take_log10(cfunc->r_max_1D)-take_log10(cfunc->r_min_l1D))/(double)cfunc->n_1D;
+  cfunc->dr_l1D=(take_log10(cfunc->r_max_1D)-cfunc->lr_min_l1D)/(double)cfunc->n_1D;
 
   // Initialize arrays
   cfunc->CFUNC_l1D =(double **)SID_malloc(sizeof(double *)*4);

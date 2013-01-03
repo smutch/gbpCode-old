@@ -81,6 +81,7 @@ struct cfunc_info {
    double       dr_1D;
    double       dr_2D;
    double       r_min_l1D;
+   double       lr_min_l1D;
    double       r_max_1D;
    double       r_min_2D;
    double       r_max_2D;
@@ -116,7 +117,7 @@ extern "C" {
 
 void read_groupings(char *filename_root,int grouping_number,plist_info *plist,int mode,...);
 void read_atable(char *filename_in,plist_info *plist,int x_column,int y_column,int z_column,int vx_column,int vy_column,int vz_column,int mode,...);
-void generate_randoms(cfunc_info *cfunc,plist_info *plist,char *species_name,char *filename_out_root,char *random_name);
+void generate_randoms(cfunc_info *cfunc,plist_info *plist,char *species_name,char *random_name,char *filename_out_randoms);
 void map_to_grid(size_t      n_particles_local,
                  GBPREAL    *x_particles_local,
                  GBPREAL    *y_particles_local,

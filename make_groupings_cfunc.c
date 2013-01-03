@@ -90,7 +90,7 @@ int main(int argc, char *argv[]){
    int   n_data;
    char  filename_count[MAX_FILENAME_LENGTH];
    FILE *fp_count;
-   sprintf(filename_count,"%s_grouping%03d.dat",filename_in_root,i_grouping_start);
+   sprintf(filename_count,"%s_grouping_%03d.dat",filename_in_root,i_grouping_start);
    fp_count=fopen(filename_count,"r");
    n_data=count_lines_data(fp_count);
    fclose(fp_count);
@@ -137,7 +137,9 @@ int main(int argc, char *argv[]){
   
          // Generate randoms
          if(flag_compute_randoms){
-            generate_randoms(&cfunc,&plist,"halos","./randoms.dat","randoms");
+            char filename_randoms[MAX_FILENAME_LENGTH];
+            sprintf(filename_randoms,"%s_randoms.dat",filename_out_root);
+            generate_randoms(&cfunc,&plist,"halos","randoms",filename_randoms);
             flag_compute_randoms=FALSE;
          }
 

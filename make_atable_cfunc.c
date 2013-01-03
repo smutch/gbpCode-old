@@ -138,7 +138,9 @@ int main(int argc, char *argv[]){
 
       // Generate randoms
       if(flag_compute_randoms){
-         generate_randoms(&cfunc,&plist,"halos","./randoms.dat","randoms");
+         char filename_randoms[MAX_FILENAME_LENGTH];
+         sprintf(filename_randoms,"%s_randoms.dat",filename_out_root);
+         generate_randoms(&cfunc,&plist,"halos","randoms",filename_randoms);
          flag_compute_randoms=FALSE;
       }
 

@@ -74,7 +74,7 @@ void write_cfunc(cfunc_info *cfunc,char *filename_out_root,plist_info *plist,cha
          fprintf(fp_out,"#\n");
          double r_log;
          double r_lin;
-         r_log=take_log10(cfunc->r_min_l1D)+0.5*cfunc->dr_l1D;
+         r_log=cfunc->lr_min_l1D+0.5*cfunc->dr_l1D;
          r_lin=0.5*cfunc->dr_1D;
          for(i_r=0;i_r<cfunc->n_1D;i_r++,r_log+=cfunc->dr_l1D,r_lin+=cfunc->dr_1D){
             fprintf(fp_out,"%9.4le %9.3le ",take_alog10(r_log),r_lin);
