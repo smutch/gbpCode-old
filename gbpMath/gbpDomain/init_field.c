@@ -185,7 +185,8 @@ void init_field(int        n_d,
     FFT->slab.x_max_local  =FFT->R_field[0][FFT->i_R_stop_local[0]+1];
   else
     FFT->slab.x_max_local  =FFT->slab.x_min_local;
-  FFT->slab.x_max          =FFT->R_field[0][FFT->n[0]];
+  //FFT->slab.x_max          =FFT->R_field[0][FFT->n[0]];
+  SID_Allreduce(&(FFT->slab.x_max_local),&(FFT->slab.x_max),1,SID_DOUBLE,SID_MAX,SID.COMM_WORLD);
 
 #if USE_MPI
 
