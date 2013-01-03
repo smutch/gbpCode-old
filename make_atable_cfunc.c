@@ -120,19 +120,19 @@ int main(int argc, char *argv[]){
       switch(i_run){
       case 0:
          SID_log("Processing real-space ...",SID_LOG_OPEN|SID_LOG_TIMER);
-         read_atable(filename_in,&plist,x_column,y_column,z_column,vx_column,vy_column,vz_column,READ_GROUPING_PHK,cfunc.n_bits_PHK,cfunc.PHK_width,box_size);
+         read_atable(filename_in,&plist,x_column,y_column,z_column,vx_column,vy_column,vz_column,"objs",READ_GROUPING_PHK,cfunc.n_bits_PHK,cfunc.PHK_width,box_size);
          break;
       case 1:
          SID_log("Processing v_x redshift space...",SID_LOG_OPEN|SID_LOG_TIMER);
-         read_atable(filename_in,&plist,x_column,y_column,z_column,vx_column,vy_column,vz_column,READ_GROUPING_PHK|READ_GROUPING_ADD_VX,cfunc.n_bits_PHK,cfunc.PHK_width,box_size,redshift,cfunc.cosmo);
+         read_atable(filename_in,&plist,x_column,y_column,z_column,vx_column,vy_column,vz_column,"objs",READ_GROUPING_PHK|READ_GROUPING_ADD_VX,cfunc.n_bits_PHK,cfunc.PHK_width,box_size,redshift,cfunc.cosmo);
          break;
       case 2:
          SID_log("Processing v_y redshift space...",SID_LOG_OPEN|SID_LOG_TIMER);
-         read_atable(filename_in,&plist,x_column,y_column,z_column,vx_column,vy_column,vz_column,READ_GROUPING_PHK|READ_GROUPING_ADD_VY,cfunc.n_bits_PHK,cfunc.PHK_width,box_size,redshift,cfunc.cosmo);
+         read_atable(filename_in,&plist,x_column,y_column,z_column,vx_column,vy_column,vz_column,"objs",READ_GROUPING_PHK|READ_GROUPING_ADD_VY,cfunc.n_bits_PHK,cfunc.PHK_width,box_size,redshift,cfunc.cosmo);
          break;
       case 3:
          SID_log("Processing v_z redsift space...",SID_LOG_OPEN|SID_LOG_TIMER);
-         read_atable(filename_in,&plist,x_column,y_column,z_column,vx_column,vy_column,vz_column,READ_GROUPING_PHK|READ_GROUPING_ADD_VZ,cfunc.n_bits_PHK,cfunc.PHK_width,box_size,redshift,cfunc.cosmo);
+         read_atable(filename_in,&plist,x_column,y_column,z_column,vx_column,vy_column,vz_column,"objs",READ_GROUPING_PHK|READ_GROUPING_ADD_VZ,cfunc.n_bits_PHK,cfunc.PHK_width,box_size,redshift,cfunc.cosmo);
          break;
       }
 
@@ -140,15 +140,15 @@ int main(int argc, char *argv[]){
       if(flag_compute_randoms){
          char filename_randoms[MAX_FILENAME_LENGTH];
          sprintf(filename_randoms,"%s_randoms.dat",filename_out_root);
-         generate_randoms(&cfunc,&plist,"halos","randoms",filename_randoms);
+         generate_randoms(&cfunc,&plist,"objs","randoms",filename_randoms);
          flag_compute_randoms=FALSE;
       }
 
       // Compute power spectrum
-      compute_cfunc(&plist,"halos","randoms",&cfunc,i_run);
+      compute_cfunc(&plist,"objs","randoms",&cfunc,i_run);
 
       // Now that all 4 runs are done, let's write the results
-      write_cfunc(&cfunc,filename_out_root,&plist,"halos","randoms",i_run);
+      write_cfunc(&cfunc,filename_out_root,&plist,"objs","randoms",i_run);
 
       SID_log("Done.",SID_LOG_CLOSE);
    } // Loop over 4 P(k)'s

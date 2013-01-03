@@ -116,7 +116,9 @@ extern "C" {
 #endif
 
 void read_groupings(char *filename_root,int grouping_number,plist_info *plist,int mode,...);
-void read_atable(char *filename_in,plist_info *plist,int x_column,int y_column,int z_column,int vx_column,int vy_column,int vz_column,int mode,...);
+void read_atable(char *filename_in,plist_info *plist,
+                 int x_column,int y_column,int z_column,int vx_column,int vy_column,int vz_column,
+                 char *species_name,int mode,...);
 void generate_randoms(cfunc_info *cfunc,plist_info *plist,char *species_name,char *random_name,char *filename_out_randoms);
 void map_to_grid(size_t      n_particles_local,
                  GBPREAL    *x_particles_local,
@@ -160,5 +162,6 @@ void write_pspec(pspec_info *pspec,char *filename_out_root,plist_info *plist,cha
 #ifdef __cplusplus
 }
 #endif
+
 #endif
 

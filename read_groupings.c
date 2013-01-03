@@ -147,8 +147,8 @@ void read_groupings(char *filename_root,int grouping_number,plist_info *plist,in
          if(flag_add_zspace_x){
             grab_real(line,vx_column,&vx_in);
             x_in+=(GBPREAL)(1e3*h_Hubble*((double)vx_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-            force_periodic(&x_in,0.,(GBPREAL)box_size);
          }
+         force_periodic(&x_in,0.,(GBPREAL)box_size);
          if(x_in>=slab->x_min_local && x_in<slab->x_max_local)
             n_halos_allocate++;
       }
@@ -169,8 +169,8 @@ void read_groupings(char *filename_root,int grouping_number,plist_info *plist,in
         if(flag_add_zspace_x){
            grab_real(line,vx_column,&vx_in);
            x_in+=(GBPREAL)(1e3*h_Hubble*((double)vx_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-           force_periodic(&x_in,0.,(GBPREAL)box_size);
         }
+        force_periodic(&x_in,0.,(GBPREAL)box_size);
         if(x_in>=slab->x_min_local && x_in<slab->x_max_local){
            grab_real(line,y_column,&y_in);
            grab_real(line,z_column,&z_in);

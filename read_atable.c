@@ -12,7 +12,7 @@
 
 #define N_BITS_MIN 1
 
-void read_atable(char *filename_in,plist_info *plist,int x_column,int y_column,int z_column,int vx_column,int vy_column,int vz_column,int mode,...){
+void read_atable(char *filename_in,plist_info *plist,int x_column,int y_column,int z_column,int vx_column,int vy_column,int vz_column,char *species_name,int mode,...){
    // Interpret variable arguments
    double      box_size;
    double      redshift;
@@ -100,7 +100,6 @@ void read_atable(char *filename_in,plist_info *plist,int x_column,int y_column,i
    int      i_halo; 
    char    *line=NULL; 
    size_t   line_length=0;
-   GBPREAL  x_in;
    GBPREAL  y_in;
    GBPREAL  z_in;
    GBPREAL  vx_in;
@@ -117,6 +116,7 @@ void read_atable(char *filename_in,plist_info *plist,int x_column,int y_column,i
    size_t  *PHK_halo;
    size_t  *read_index;
    if(check_mode_for_flag(mode,READ_GROUPING_SLAB)){
+      GBPREAL   x_in;
       // Count the number of halos that will be read (slab decomposed)
       for(i_halo=0,n_halos_allocate=0;i_halo<n_halos;i_halo++){
          grab_next_line_data(fp_in,&line,&line_length);
@@ -124,17 +124,17 @@ void read_atable(char *filename_in,plist_info *plist,int x_column,int y_column,i
          if(flag_add_zspace_x){
             grab_real(line,vx_column,&vx_in);
             x_in+=(GBPREAL)(1e3*h_Hubble*((double)vx_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-            force_periodic(&x_in,0.,(GBPREAL)box_size);
          }
-         if(x_in>=slab->x_min_local && x_in<slab->x_max_local)
+         force_periodic(&x_in,0,(GBPREAL)slab->x_max);
+         if((double)x_in>=slab->x_min_local && (double)x_in<slab->x_max_local)
             n_halos_allocate++;
       }
       rewind(fp_in);
 
       // Allocate storage arrays
-      x_halos     =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_allocate);
-      y_halos     =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_allocate);
-      z_halos     =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_allocate);
+      x_halos =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_allocate);
+      y_halos =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_allocate);
+      z_halos =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_allocate);
       vx_halos=(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_allocate);
       vy_halos=(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_allocate);
       vz_halos=(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_allocate);
@@ -146,20 +146,22 @@ void read_atable(char *filename_in,plist_info *plist,int x_column,int y_column,i
         if(flag_add_zspace_x){
            grab_real(line,vx_column,&vx_in);
            x_in+=(GBPREAL)(1e3*h_Hubble*((double)vx_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-           force_periodic(&x_in,0.,(GBPREAL)box_size);
         }
-        if(x_in>=slab->x_min_local && x_in<slab->x_max_local){
+        force_periodic(&x_in,0,(GBPREAL)slab->x_max);
+        int flag_test;
+        flag_test=0;
+        if((double)x_in>=slab->x_min_local && (double)x_in<slab->x_max_local){
            grab_real(line,y_column,&y_in);
            grab_real(line,z_column,&z_in);
            if(flag_add_zspace_y){
               grab_real(line,vy_column,&vy_in);
               y_in+=(GBPREAL)(1e3*h_Hubble*((double)vy_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-              force_periodic(&y_in,0.,(GBPREAL)box_size);
+              force_periodic(&y_in,0,(GBPREAL)box_size);
            }
            if(flag_add_zspace_z){
               grab_real(line,vz_column,&vz_in);
               z_in+=(GBPREAL)(1e3*h_Hubble*((double)vz_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-              force_periodic(&z_in,0.,(GBPREAL)box_size);
+              force_periodic(&z_in,0,(GBPREAL)box_size);
            }
            x_halos[n_halos_local] =(GBPREAL)x_in;
            y_halos[n_halos_local] =(GBPREAL)y_in;
@@ -187,10 +189,17 @@ void read_atable(char *filename_in,plist_info *plist,int x_column,int y_column,i
 
            // Count the number of halos read locally
            n_halos_local++;
+           flag_test=1;
+        }
+        SID_Allreduce(SID_IN_PLACE,&flag_test,1,SID_INT,SID_SUM,SID.COMM_WORLD);
+        if(flag_test!=1){
+           fprintf(stderr,"[%03d] %le %le %le\n",SID.My_rank,x_in,slab->x_min_local,slab->x_max_local);
+           SID_trap_error("Read error.",ERROR_LOGIC);
         }
       }
    }
    else if(check_mode_for_flag(mode,READ_GROUPING_PHK)){
+      GBPREAL x_in;
       // Determine what key size to use.  We want the size of each key's region to exceed
       //   the largest scale we're interested in.
       SID_log("Using %d bit-per-dimension keys (%d keys; size=%le [Mpc/h]).",SID_LOG_COMMENT,
@@ -376,8 +385,8 @@ void read_atable(char *filename_in,plist_info *plist,int x_column,int y_column,i
             SID_log("Done.",SID_LOG_CLOSE);
 
             // Store some stuff
-            ADaPS_store(&(plist->data),&PHK_min_local,"PHK_min_local_halos",ADaPS_SCALAR_INT);
-            ADaPS_store(&(plist->data),&PHK_max_local,"PHK_max_local_halos",ADaPS_SCALAR_INT);
+            ADaPS_store(&(plist->data),&PHK_min_local,"PHK_min_local_%s",ADaPS_SCALAR_INT,species_name);
+            ADaPS_store(&(plist->data),&PHK_max_local,"PHK_max_local_%s",ADaPS_SCALAR_INT,species_name);
          }
 
          // Change n_halos_allocate for the final read
@@ -394,6 +403,13 @@ void read_atable(char *filename_in,plist_info *plist,int x_column,int y_column,i
          PHK_min_local   =0;
          PHK_max_local   =PHK_N_KEYS_3D(n_bits_PHK)-1;
       }
+
+      // Check that the counts are correct
+      size_t n_halos_allocate_check;
+      SID_Allreduce(&n_halos_allocate,&n_halos_allocate_check,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
+      if(n_halos_allocate_check!=n_halos)
+         SID_trap_error("The correct number of halos was not allocated (ie. %lld!=%lld).  There must be a coordinate/box size problem.",
+                        ERROR_LOGIC,n_halos_allocate_check,n_halos);
 
       // Ok, each core now knows it's key range and the number of halos it's going to read. Allocate RAM ...
       x_halos   =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_allocate);
@@ -441,14 +457,22 @@ void read_atable(char *filename_in,plist_info *plist,int x_column,int y_column,i
          PHK_i=compute_PHK_from_Cartesian(n_bits_PHK,3,(double)x_in/box_size,(double)y_in/box_size,(double)z_in/box_size);
 
          // Assign to the right rank
+         int flag_test;
+         flag_test=0;
          if(PHK_i>=(PHK_t)PHK_min_local && PHK_i<=(PHK_t)PHK_max_local){
             if(n_halos_local>=n_halos_allocate)
-               SID_trap_error("Trying to read past storage allocation in PHK doain decomposition.",ERROR_LOGIC);
+               SID_trap_error("Trying to read past storage allocation in PHK domain decomposition.",ERROR_LOGIC);
             if(is_a_member(&PHK_i,keys_boundary,n_keys_boundary,SID_PHK_T))
                n_boundary++;
             else
                n_interior++;
             n_halos_local++;
+            flag_test=1;
+         }
+         SID_Allreduce(SID_IN_PLACE,&flag_test,1,SID_INT,SID_SUM,SID.COMM_WORLD);
+         if(flag_test!=1){
+            fprintf(stderr,"[%03d] %d %d %d\n",SID.My_rank,PHK_i,PHK_min_local,PHK_max_local);
+            SID_trap_error("Read error.",ERROR_LOGIC);
          }
       }
       rewind(fp_in);
@@ -562,13 +586,13 @@ void read_atable(char *filename_in,plist_info *plist,int x_column,int y_column,i
       merge_sort(PHK_halo,n_boundary,      &PHK_index_boundary,SID_SIZE_T,SORT_COMPUTE_INDEX,FALSE);
 
       // Store read indices, PHKs and their sort indices
-      ADaPS_store(&(plist->data),(void *)read_index,        "read_index_halos",        ADaPS_DEFAULT);
-      ADaPS_store(&(plist->data),(void *)PHK_halo,          "PHK_halos",               ADaPS_DEFAULT);
-      ADaPS_store(&(plist->data),(void *)PHK_index,         "PHK_index_halos",         ADaPS_DEFAULT);
-      ADaPS_store(&(plist->data),(void *)PHK_index_boundary,"PHK_index_boundary_halos",ADaPS_DEFAULT);
-      ADaPS_store(&(plist->data),(void *)(&PHK_min_local),  "PHK_min_local_halos",     ADaPS_SCALAR_INT);
-      ADaPS_store(&(plist->data),(void *)(&PHK_max_local),  "PHK_max_local_halos",     ADaPS_SCALAR_INT);
-      ADaPS_store(&(plist->data),(void *)(&n_boundary),     "n_boundary_halos",        ADaPS_SCALAR_SIZE_T);
+      ADaPS_store(&(plist->data),(void *)read_index,        "read_index_%s",        ADaPS_DEFAULT      ,species_name);
+      ADaPS_store(&(plist->data),(void *)PHK_halo,          "PHK_%s",               ADaPS_DEFAULT      ,species_name);
+      ADaPS_store(&(plist->data),(void *)PHK_index,         "PHK_index_%s",         ADaPS_DEFAULT      ,species_name);
+      ADaPS_store(&(plist->data),(void *)PHK_index_boundary,"PHK_index_boundary_%s",ADaPS_DEFAULT      ,species_name);
+      ADaPS_store(&(plist->data),(void *)(&PHK_min_local),  "PHK_min_local_%s",     ADaPS_SCALAR_INT   ,species_name);
+      ADaPS_store(&(plist->data),(void *)(&PHK_max_local),  "PHK_max_local_%s",     ADaPS_SCALAR_INT   ,species_name);
+      ADaPS_store(&(plist->data),(void *)(&n_boundary),     "n_boundary_%s",        ADaPS_SCALAR_SIZE_T,species_name);
 
       // Clean-up
       SID_free(SID_FARG keys_boundary);
@@ -605,14 +629,14 @@ void read_atable(char *filename_in,plist_info *plist,int x_column,int y_column,i
    SID_log("vz_range=%le->%le",SID_LOG_COMMENT,vz_min,vz_max);
 
    // Store Arrays
-   ADaPS_store(&(plist->data),(void *)&n_halos,      "n_all_halos", ADaPS_SCALAR_SIZE_T);
-   ADaPS_store(&(plist->data),(void *)&n_halos_local,"n_halos",     ADaPS_SCALAR_SIZE_T);
-   ADaPS_store(&(plist->data),(void *)x_halos,       "x_halos",     ADaPS_DEFAULT);
-   ADaPS_store(&(plist->data),(void *)y_halos,       "y_halos",     ADaPS_DEFAULT);
-   ADaPS_store(&(plist->data),(void *)z_halos,       "z_halos",     ADaPS_DEFAULT);
-   ADaPS_store(&(plist->data),(void *)vx_halos,      "vx_halos",    ADaPS_DEFAULT);
-   ADaPS_store(&(plist->data),(void *)vy_halos,      "vy_halos",    ADaPS_DEFAULT);
-   ADaPS_store(&(plist->data),(void *)vz_halos,      "vz_halos",    ADaPS_DEFAULT);
+   ADaPS_store(&(plist->data),(void *)&n_halos,      "n_all_%s",ADaPS_SCALAR_SIZE_T,species_name);
+   ADaPS_store(&(plist->data),(void *)&n_halos_local,"n_%s",    ADaPS_SCALAR_SIZE_T,species_name);
+   ADaPS_store(&(plist->data),(void *)x_halos,       "x_%s",    ADaPS_DEFAULT,      species_name);
+   ADaPS_store(&(plist->data),(void *)y_halos,       "y_%s",    ADaPS_DEFAULT,      species_name);
+   ADaPS_store(&(plist->data),(void *)z_halos,       "z_%s",    ADaPS_DEFAULT,      species_name);
+   ADaPS_store(&(plist->data),(void *)vx_halos,      "vx_%s",   ADaPS_DEFAULT,      species_name);
+   ADaPS_store(&(plist->data),(void *)vy_halos,      "vy_%s",   ADaPS_DEFAULT,      species_name);
+   ADaPS_store(&(plist->data),(void *)vz_halos,      "vz_%s",   ADaPS_DEFAULT,      species_name);
 
    // Clean-up
    SID_free(SID_FARG line);

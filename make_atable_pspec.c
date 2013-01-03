@@ -107,19 +107,19 @@ int main(int argc, char *argv[]){
       switch(i_run){
       case 0:
          SID_log("Processing real-space ...",SID_LOG_OPEN|SID_LOG_TIMER);
-         read_atable(filename_in,&plist,x_column,y_column,z_column,vx_column,vy_column,vz_column,READ_GROUPING_DEFAULT,&(pspec.FFT.slab),box_size);
+         read_atable(filename_in,&plist,x_column,y_column,z_column,vx_column,vy_column,vz_column,"objs",READ_GROUPING_DEFAULT,&(pspec.FFT.slab),box_size);
          break;
       case 1:
          SID_log("Processing v_x redshift space...",SID_LOG_OPEN|SID_LOG_TIMER);
-         read_atable(filename_in,&plist,x_column,y_column,z_column,vx_column,vy_column,vz_column,READ_GROUPING_DEFAULT|READ_GROUPING_ADD_VX,&(pspec.FFT.slab),box_size,redshift,pspec.cosmo);
+         read_atable(filename_in,&plist,x_column,y_column,z_column,vx_column,vy_column,vz_column,"objs",READ_GROUPING_DEFAULT|READ_GROUPING_ADD_VX,&(pspec.FFT.slab),box_size,redshift,pspec.cosmo);
          break;
       case 2:
          SID_log("Processing v_y redshift space...",SID_LOG_OPEN|SID_LOG_TIMER);
-         read_atable(filename_in,&plist,x_column,y_column,z_column,vx_column,vy_column,vz_column,READ_GROUPING_DEFAULT|READ_GROUPING_ADD_VY,&(pspec.FFT.slab),box_size,redshift,pspec.cosmo);
+         read_atable(filename_in,&plist,x_column,y_column,z_column,vx_column,vy_column,vz_column,"objs",READ_GROUPING_DEFAULT|READ_GROUPING_ADD_VY,&(pspec.FFT.slab),box_size,redshift,pspec.cosmo);
          break;
       case 3:
          SID_log("Processing v_z redsift space...",SID_LOG_OPEN|SID_LOG_TIMER);
-         read_atable(filename_in,&plist,x_column,y_column,z_column,vx_column,vy_column,vz_column,READ_GROUPING_DEFAULT|READ_GROUPING_ADD_VZ,&(pspec.FFT.slab),box_size,redshift,pspec.cosmo);
+         read_atable(filename_in,&plist,x_column,y_column,z_column,vx_column,vy_column,vz_column,"objs",READ_GROUPING_DEFAULT|READ_GROUPING_ADD_VZ,&(pspec.FFT.slab),box_size,redshift,pspec.cosmo);
          break;
       }
   
