@@ -294,10 +294,9 @@ void compute_MCMC(MCMC_info *MCMC){
     // Read/Write Header file
     if(SID.I_am_Master){
       // If run.dat already exists, this is a restart.  Check that it is consistant with the current run.
-      if((fp_run=fopen(filename_run,"r"))!=NULL){
+      if((fp_run=fopen(filename_run,"rb"))!=NULL){
         flag_restart=TRUE;
         SID_log("Checking the consistancy of this run with the previous run...",SID_LOG_OPEN);
-        fp_run=fopen(filename_run,"rb");
         fread(problem_name_test,sizeof(char),MCMC_NAME_SIZE,fp_run);
         if(strcmp(problem_name_test,MCMC->problem_name))
           SID_trap_error("Problem names are inconsistant (i.e. {%s}!={%s}).",ERROR_LOGIC,MCMC->problem_name,problem_name_test);
@@ -390,7 +389,8 @@ void compute_MCMC(MCMC_info *MCMC){
       // ... else if run.dat does not exist, create it
       else{
         SID_log("Write header file...",SID_LOG_OPEN);
-        fp_run=fopen(filename_run,"wb");
+        if((fp_run=fopen(filename_run,"wb"))==NULL)
+          SID_trap_error("Could not open file for writing {%s}.",ERROR_IO_OPEN,filename_run);
         // Stuff relating to this MCMC project
         fwrite(MCMC->problem_name,sizeof(char),MCMC_NAME_SIZE,fp_run);
         fwrite(&(MCMC->n_chains), sizeof(int),   1,   fp_run);
@@ -456,9 +456,12 @@ void compute_MCMC(MCMC_info *MCMC){
 
       // Set the initial state
       SID_log("Writing chain config file...",SID_LOG_OPEN);
-      fp_chain             =fopen(filename_chain,"wb");
-      fp_stats             =fopen(filename_stats,"wb");
-      fp_chain_config      =fopen(filename_chain_config,"wb");
+      if((fp_chain       =fopen(filename_chain,       "wb"))==NULL)
+         SID_trap_error("Could not open file for writing {%s}.",ERROR_IO_OPEN,filename_chain);
+      if((fp_stats       =fopen(filename_stats,       "wb"))==NULL)
+         SID_trap_error("Could not open file for writing {%s}.",ERROR_IO_OPEN,filename_stats);
+      if((fp_chain_config=fopen(filename_chain_config,"wb"))==NULL)
+         SID_trap_error("Could not open file for writing {%s}.",ERROR_IO_OPEN,filename_chain_config);
       fwrite(&n_iterations_file_total,sizeof(int),   1,      fp_chain_config);
       fwrite(&n_iterations_file_burn, sizeof(int),   1,      fp_chain_config);
       fwrite(&(MCMC->temperature),    sizeof(double),1,      fp_chain_config);

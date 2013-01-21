@@ -471,7 +471,7 @@ if (flag_trace_on==1):
       ln_Pr_max_c[i] =fromfile(file=fd,dtype='d',count=1)
       slopes[i,:]    =fromfile(file=fd,dtype='d',count=n_P)
       drift[i,:]     =fromfile(file=fd,dtype='d',count=n_P)
-      ln_Pr_limit_min=-5.00
+      ln_Pr_limit_min=-2.00
       ln_Pr_limit_max= 0.05
 
    # ln_Pr trace
