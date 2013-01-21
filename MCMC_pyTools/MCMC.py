@@ -2,6 +2,7 @@
 
 import numpy as np
 from utility import line_break, mkdir
+import random
 
 class MCMCrun(object):
 
@@ -586,6 +587,34 @@ class Chain(object):
 
 
         return eigenval, cumenergy, eigenvec
+
+
+    def sample_chain(self, n_samples, seed=None):
+        """Construct the chain from the trace and then randomly sample from it.
+
+        Args:
+            n_samples   :  The number of samples to draw
+            seed        :  Optional seed for random number generator
+
+        Returns:
+            samples     :  The sampled chain
+        """
+
+        # Read in the trace
+        success, ln_likelihood, props = self.read_trace('integration')
+
+        # Construct the chain using the trace
+        props = self._chain_(success, props)
+
+        # These now do not match props and should not be used...
+        del(success, ln_likelihood)
+
+        # Set up the RNG
+        random.seed(seed) 
+
+        # Sample the chain and return the values
+        return random.sample(props, n_samples)
+
 
 
 def check_param_compatibility(run_list, param):
