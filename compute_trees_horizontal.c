@@ -245,6 +245,7 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
    int         j_halo;
    int         k_halo;
    int         file_offset;
+   int         file_index;
    int         i_subgroup;
    int         j_subgroup;
    int         i_group;
@@ -308,7 +309,8 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
            file_offset=match_file_local(&(groups[i_write%n_wrap][i_group].descendant))-i_write;
         else
            file_offset=-1;
-        desc_id=match_id_local(&(groups[i_write%n_wrap][i_group].descendant));
+        file_index=match_index_local(&(groups[i_write%n_wrap][i_group].descendant));
+        desc_id   =match_id_local(&(groups[i_write%n_wrap][i_group].descendant));
 
         // Write group information to the horizontal tree files
         SID_fwrite(&(groups[i_write%n_wrap][i_group].id),        sizeof(int),1,&fp_matches_out);
@@ -316,6 +318,7 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
         SID_fwrite(&(desc_id),                                   sizeof(int),1,&fp_matches_out);
         SID_fwrite(&(groups[i_write%n_wrap][i_group].tree_id),   sizeof(int),1,&fp_matches_out);
         SID_fwrite(&(file_offset),                               sizeof(int),1,&fp_matches_out);
+        SID_fwrite(&(file_index),                                sizeof(int),1,&fp_matches_out);
         SID_fwrite(&(n_subgroups_group[i_write%n_wrap][i_group]),sizeof(int),1,&fp_matches_out);
 
         // Write the subgroup information to the horizontal tree files
@@ -326,7 +329,8 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
              file_offset=match_file_local(&(subgroups[i_write%n_wrap][i_subgroup].descendant))-i_write;
            else
              file_offset=-1;
-           desc_id=match_id_local(&(subgroups[i_write%n_wrap][i_subgroup].descendant));
+           file_index=match_index_local(&(subgroups[i_write%n_wrap][i_subgroup].descendant));
+           desc_id   =match_id_local(&(subgroups[i_write%n_wrap][i_subgroup].descendant));
 
            // Write subgroup information to the horizontal trees files
            SID_fwrite(&(subgroups[i_write%n_wrap][i_subgroup].id),     sizeof(int),1,&fp_matches_out);
@@ -334,7 +338,7 @@ void write_trees_horizontal(tree_horizontal_info **groups,   int n_groups,    in
            SID_fwrite(&(desc_id),                                      sizeof(int),1,&fp_matches_out);
            SID_fwrite(&(subgroups[i_write%n_wrap][i_subgroup].tree_id),sizeof(int),1,&fp_matches_out);
            SID_fwrite(&(file_offset),                                  sizeof(int),1,&fp_matches_out);
-
+           SID_fwrite(&(file_index),                                   sizeof(int),1,&fp_matches_out);
         }
      }
    }
