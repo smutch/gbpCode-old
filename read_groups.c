@@ -645,7 +645,13 @@ void read_groups(char        *filename_groups_root,
    int *read_index_group_store;
    read_index_group_store=(int *)SID_malloc(sizeof(int)*n_groups_local);
    for(i_group=0;i_group<n_groups_local;i_group++)
-     read_index_group_store[storage_index_group[i_group]]=read_index_group[i_group];
+      read_index_group_store[storage_index_group[i_group]]=-2;
+   for(i_group=0;i_group<n_groups_local;i_group++)
+      read_index_group_store[storage_index_group[i_group]]=read_index_group[i_group];
+   for(i_group=0;i_group<n_groups_local;i_group++){
+      if(read_index_group_store[i_group]==-2)
+         SID_trap_error("There is an uninitialized value for read_index_group_store (rank=%d, element=%d) in read_groups.",ERROR_LOGIC,SID.My_rank,i_group);
+   }
    ADaPS_store(&(plist->data),(void *)(read_index_group_store),"file_index_groups_%s",ADaPS_DEFAULT,catalog_name);
 
    // Consistancy checks
@@ -780,7 +786,6 @@ void read_groups(char        *filename_groups_root,
                   read_seek_subgroup[j_group]+=buffer[i_buffer];
                i_subgroup+=buffer[i_buffer];
             }
-            
             SID_free(SID_FARG buffer);
             if(j_group!=n_groups_local)
               SID_trap_error("Group counts don't make sense (ie. %d!=%d) after reading no. of subgroups per group.",ERROR_LOGIC,j_group,n_groups_local);
@@ -885,7 +890,6 @@ void read_groups(char        *filename_groups_root,
             ADaPS_store(&(plist->data),group_offset,       "particle_offset_group_%s",ADaPS_DEFAULT,   catalog_name);
             ADaPS_store(&(plist->data),n_subgroups_group,  "n_subgroups_group_%s",    ADaPS_DEFAULT,   catalog_name);
             ADaPS_store(&(plist->data),read_index_subgroup,"file_index_subgroups_%s", ADaPS_DEFAULT,   catalog_name);
-    
             SID_log("Done. (%d groups)",SID_LOG_CLOSE,n_groups);
          }
          else{
