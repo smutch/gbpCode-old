@@ -150,7 +150,7 @@ void write_match_results(char       *filename_out_dir,
         if(SID.I_am_Master){
            // Sanity check
            for(i_buffer=0;i_buffer<n_buffer;i_buffer++){
-              if(buffer_int[i_buffer]<-1)
+              if(buffer_int[i_buffer]<-1 || buffer_int[i_buffer]>=n_groups_1)
                  SID_trap_error("Illegal match_id result (%d) for group No. %d.",ERROR_LOGIC,buffer_int[i_buffer],i_group+i_buffer);
            }
            // Write the buffer
