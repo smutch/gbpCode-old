@@ -440,6 +440,7 @@ void compute_trees_vertical(char *filename_root_out,
   int         group_descendant_id;
   int         subgroup_descendant_id;
   int         group_file_offset;
+  int         group_file_index;
   int         tree_lo_rank;
   int         n_groups;
   int         n_subgroups;
@@ -501,6 +502,7 @@ void compute_trees_vertical(char *filename_root_out,
   int  n_trees_subgroup_local;
   int  n_trees_group_local;
   int  subgroup_file_offset;
+  int  subgroup_file_index;
   char group_text_prefix[4];
   int  n_conjoined;
   int  n_conjoined_total;
@@ -583,10 +585,11 @@ void compute_trees_vertical(char *filename_root_out,
     SID_fread(&(group_descendant_id),sizeof(int),1,&fp_in);
     SID_fread(&(group_tree_id),      sizeof(int),1,&fp_in);
     SID_fread(&(group_file_offset),  sizeof(int),1,&fp_in);
+    SID_fread(&(group_file_index),   sizeof(int),1,&fp_in);
     SID_fread(&(n_subgroups_group),  sizeof(int),1,&fp_in);
     if(group_id>=0 && group_tree_id>=0){
       if(group_tree_id>=n_trees_group)
-        SID_trap_error("group_tree_id (%d) exceeds the number of trees (%d) in the %dth file.",ERROR_LOGIC,group_tree_id,n_trees_group,i_read);
+        SID_trap_error("group_tree_id (%d) exceeds the number of trees (%d) in the %dth file.",ERROR_LOGIC,group_tree_id,n_trees_group,i_read_stop);
       i_tree_group[group_tree_id]=i_group;
     }
     for(i_subgroup=0;i_subgroup<n_subgroups_group;i_subgroup++){
@@ -595,9 +598,10 @@ void compute_trees_vertical(char *filename_root_out,
       SID_fread(&(subgroup_descendant_id),sizeof(int),1,&fp_in);
       SID_fread(&(subgroup_tree_id),      sizeof(int),1,&fp_in);
       SID_fread(&(subgroup_file_offset),  sizeof(int),1,&fp_in);
+      SID_fread(&(subgroup_file_index),  sizeof(int),1,&fp_in);
       if(subgroup_id>=0 && subgroup_tree_id>=0){
         if(subgroup_tree_id>=n_trees_subgroup)
-          SID_trap_error("subgroup_tree_id (%d) exceeds the number of trees (%d) in the %dth file.",ERROR_LOGIC,subgroup_tree_id,n_trees_subgroup,i_read);
+          SID_trap_error("subgroup_tree_id (%d) exceeds the number of trees (%d) in the %dth file.",ERROR_LOGIC,subgroup_tree_id,n_trees_subgroup,i_read_stop);
         i_tree_subgroup[subgroup_tree_id]=i_group;
       }
     }
@@ -645,6 +649,7 @@ void compute_trees_vertical(char *filename_root_out,
        SID_fread_all(&(group_descendant_id),sizeof(int),1,&fp_in);
        SID_fread_all(&(group_tree_id),      sizeof(int),1,&fp_in);
        SID_fread_all(&(group_file_offset),  sizeof(int),1,&fp_in);
+       SID_fread_all(&(group_file_index),   sizeof(int),1,&fp_in);
        SID_fread_all(&(n_subgroups_group),  sizeof(int),1,&fp_in);
        if(group_tree_id>=0)
          group_tree_id=i_tree_group[group_tree_id];
@@ -660,6 +665,7 @@ void compute_trees_vertical(char *filename_root_out,
          SID_fread_all(&(subgroup_descendant_id),sizeof(int),1,&fp_in);
          SID_fread_all(&(subgroup_tree_id),      sizeof(int),1,&fp_in);
          SID_fread_all(&(subgroup_file_offset),  sizeof(int),1,&fp_in);
+         SID_fread_all(&(subgroup_file_index),   sizeof(int),1,&fp_in);
          if(subgroup_tree_id>=0)
            subgroup_tree_id=i_tree_subgroup[subgroup_tree_id];
          else
@@ -899,6 +905,7 @@ void compute_trees_vertical(char *filename_root_out,
         SID_fread_all(&(group_descendant_id),sizeof(int),1,&fp_in);
         SID_fread_all(&(group_tree_id),      sizeof(int),1,&fp_in);
         SID_fread_all(&(group_file_offset),  sizeof(int),1,&fp_in);
+        SID_fread_all(&(group_file_index),   sizeof(int),1,&fp_in);
         SID_fread_all(&(n_subgroups_group),  sizeof(int),1,&fp_in);
         if(group_tree_id>=0)
           group_tree_id=i_tree_group[group_tree_id];
@@ -917,6 +924,7 @@ void compute_trees_vertical(char *filename_root_out,
             SID_fread_all(&(subgroup_descendant_id),sizeof(int),1,&fp_in);
             SID_fread_all(&(subgroup_tree_id),      sizeof(int),1,&fp_in);
             SID_fread_all(&(subgroup_file_offset),  sizeof(int),1,&fp_in);
+            SID_fread_all(&(subgroup_file_index),   sizeof(int),1,&fp_in);
             // Ignore negative ids
             if(subgroup_tree_id>=0)
               subgroup_tree_id=i_tree_subgroup[subgroup_tree_id];
