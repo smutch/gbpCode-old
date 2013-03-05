@@ -59,7 +59,10 @@ int main(int argc, char *argv[]){
      sprintf(group_text_prefix,"");
      break;
   }
-  sprintf(filename_in,"%s.%sgroup_matches",filename_root_in,group_text_prefix);
+  char filename_base[MAX_FILENAME_LENGTH];
+  strcpy(filename_base,filename_root_in);
+  strip_path(filename_base);
+  sprintf(filename_in,"%s/%s.%sgroup_matches_header",filename_root_in,filename_base,group_text_prefix);
 
   // Read header information
   SID_log("Reading header information...",SID_LOG_OPEN);
@@ -72,6 +75,8 @@ int main(int argc, char *argv[]){
      SID_fread(&l_read,  sizeof(int),1,&fp_in);
      SID_fread(&n_groups,sizeof(int),1,&fp_in);
      SID_fseek(&fp_in,   sizeof(int),n_groups,SID_SEEK_CUR);
+     if(mode==MATCH_GROUPS)
+        SID_fseek(&fp_in,   sizeof(int),n_groups,SID_SEEK_CUR);
      max_n_groups=MAX(max_n_groups,n_groups);
   }
   SID_log("Max # groups=%d",SID_LOG_COMMENT,max_n_groups);
@@ -87,6 +92,7 @@ int main(int argc, char *argv[]){
 
   // Loop over all matching combinations
   SID_log("Processing forward matches...",SID_LOG_COMMENT);
+  SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
   for(j_read=MIN(i_read_stop,i_read+n_search);j_read>=MAX(0,i_read-n_search);j_read--){
      if(i_read!=j_read){
         read_matches(filename_root_in,
