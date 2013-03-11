@@ -81,6 +81,7 @@ struct tree_node_info{
   int             depth_first_index;
   int             group_id;
   int             halo_id;
+  int             descendant_id;
   int             n_progenitors;
   tree_node_info *descendant;
   tree_node_info *progenitor_first;

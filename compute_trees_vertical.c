@@ -62,21 +62,25 @@ void add_node_to_tree(tree_info  *tree,
 
   // Copy halo properties into new node
   memcpy(&(new_node->halo),properties,sizeof(halo_info));
-  new_node->halo.match_type=match_type;
+  new_node->halo.match_type   =match_type;
+  new_node->halo.halo_id      =halo_id;
+  new_node->halo.group_id     =group_id;
+  new_node->halo.descendant_id=descendant_id;
   
   // Set ids and pointer defaults for the new node
-  new_node->depth_first_index    =       -1; // Default; back-filled later
-  new_node->n_progenitors        =        0;
-  new_node->group_id             = group_id;
-  new_node->halo_id              =  halo_id;
-  new_node->descendant           =     NULL; // Set below
-  new_node->progenitor_first     =     NULL; // Set below
-  new_node->progenitor_next      =     NULL; // Set below
-  new_node->progenitor_last      =     NULL; // Set below
-  new_node->group_halo_first     = new_node; // Set below if group_id>=0
-  new_node->group_halo_next      =     NULL; // Set below
-  new_node->neighbour_halo_next  =     NULL; // Set below
-  new_node->next                 =     NULL;
+  new_node->depth_first_index    =            -1; // Default; back-filled later
+  new_node->n_progenitors        =             0;
+  new_node->group_id             =      group_id;
+  new_node->halo_id              =       halo_id;
+  new_node->descendant_id        = descendant_id;
+  new_node->descendant           =          NULL; // Set below
+  new_node->progenitor_first     =          NULL; // Set below
+  new_node->progenitor_next      =          NULL; // Set below
+  new_node->progenitor_last      =          NULL; // Set below
+  new_node->group_halo_first     =      new_node; // Set below if group_id>=0
+  new_node->group_halo_next      =          NULL; // Set below
+  new_node->neighbour_halo_next  =          NULL; // Set below
+  new_node->next                 =          NULL;
 
   // Find the halo's descendant and set various pointers
   //   All used halos must be added to the neighbour list (done below) for this to work
@@ -913,7 +917,7 @@ void compute_trees_vertical(char *filename_root_out,
           group_tree_id=-1;
 
         // Read halo information from catalog files (needed even for subgroup trees; we need FoF masses for the most massive progenitors)
-        fread_catalog_file(&fp_group_properties,group_properties,NULL,i_group);
+        fread_catalog_file(&fp_group_properties,group_properties,NULL,NULL,i_group);
 
         // If we are processing subgroup trees ...
         if(k_match==0){
@@ -940,7 +944,7 @@ void compute_trees_vertical(char *filename_root_out,
                 else
                   descendant_snap=(i_file+subgroup_file_offset);
                 // ... read halo information from catalog files ...
-                fread_catalog_file(&fp_subgroup_properties,subgroup_properties,NULL,k_subgroup);
+                fread_catalog_file(&fp_subgroup_properties,subgroup_properties,NULL,NULL,k_subgroup);
                 // ... set the most massive progenitor's mass to the FoF mass ...
                 if(i_subgroup==0)
                    subgroup_properties->M_vir=group_properties->M_vir;
@@ -961,7 +965,7 @@ void compute_trees_vertical(char *filename_root_out,
         }
         // ... else, process group trees 
         else{
-          SID_fseek(&fp_in,sizeof(int),n_subgroups_group*5,SID_SEEK_CUR);
+          SID_fseek(&fp_in,sizeof(int),n_subgroups_group*6,SID_SEEK_CUR);
           // Ignore negative IDs
           if(group_id>=0){
             if(group_tree_id>=0){

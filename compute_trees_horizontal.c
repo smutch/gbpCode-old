@@ -1734,8 +1734,8 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                                               &max_id,
                                               n_wrap);
                    else
-                      SID_log_warning("descendant ID out of bounds (ie. %d>%d) in snapshot %03d -> snapshot %03d %sgroup matching.",SID_WARNING_DEFAULT,
-                                      my_descendant_index,n_halos_2_matches-1,j_read_1,j_read_2,group_text_prefix);
+                      SID_log_warning("descendant ID out of bounds (ie. %d>%d) in snapshot %03d -> snapshot %03d %sgroup matching for i_halo=%d.",SID_WARNING_DEFAULT,
+                                      my_descendant_index,n_halos_2_matches-1,j_read_1,j_read_2,group_text_prefix,i_halo);
                 }
              }
           }
