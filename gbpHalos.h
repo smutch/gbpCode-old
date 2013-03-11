@@ -130,6 +130,7 @@ struct halo_info{
   int   halo_index;
   int   halo_id;
   int   group_id;
+  int   descendant_id;
 };
 
 typedef struct halo_MBP_info halo_MBP_info;
@@ -166,7 +167,7 @@ int fopen_catalog(char            *filename_catalog_root,
                   int              mode,
                   fp_catalog_info *fp_out);
 int  fopen_nth_catalog_file(fp_catalog_info *fp_in,int n);
-int  fread_catalog_file(fp_catalog_info *fp_in,halo_info *properties_out,halo_profile_info *profiles_out,int halo_index);
+int  fread_catalog_file(fp_catalog_info *fp_in,halo_info *properties_out,halo_properties_info *properties_all_out,halo_profile_info *profiles_out,int halo_index);
 int  fread_catalog_raw(fp_catalog_info *fp_in,halo_properties_info *properties_out,halo_profile_info *profiles_out,int halo_index);
 void fclose_catalog(fp_catalog_info *fp_in);
                  

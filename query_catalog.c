@@ -55,51 +55,42 @@ int main(int argc, char *argv[]){
     SID_log("Selected %sgroup profiles   file:{%s}",SID_LOG_COMMENT,prefix_text,filename_profiles);
     SID_log("Selected %sgroup number         : %d", SID_LOG_COMMENT,prefix_text,i_group_selected);
 
-    fp_properties=fopen(filename_properties,"r");
-    fp_profiles  =fopen(filename_profiles,  "r");
-    fread(&i_file,             sizeof(int),1,fp_properties);
-    fread(&n_files,            sizeof(int),1,fp_properties);
-    fread(&n_groups_properties,sizeof(int),1,fp_properties);
-    fread(&n_groups_all,       sizeof(int),1,fp_properties);
-    fread(&i_file,             sizeof(int),1,fp_profiles);
-    fread(&n_files,            sizeof(int),1,fp_profiles);
-    fread(&n_groups_profiles,  sizeof(int),1,fp_profiles);
-    fread(&n_groups_all,       sizeof(int),1,fp_profiles);
-
-    if(n_groups_properties!=n_groups_profiles)
-      SID_trap_error("There's a mismatch in the number (ie %d!=%d) of groups in the 2 files.",ERROR_LOGIC,n_groups_properties,n_groups_profiles);
-    else if(i_group_selected>=n_groups_properties)
-      SID_trap_error("You have requested a %sgroup exceeding the number in the file (max=%d)",ERROR_LOGIC,prefix_text,n_groups_properties);
+    fp_catalog_info fp_group_properties;
+    if(flag_process_group)
+      fopen_catalog(filename_root,
+                    snap_number,
+                    READ_CATALOG_GROUPS|READ_CATALOG_PROPERTIES,
+                    &fp_group_properties);
     else
-      SID_log("Number of %sgroups in file:     : %d",SID_LOG_COMMENT,prefix_text,n_groups_properties);
+      fopen_catalog(filename_root,
+                    snap_number,
+                    READ_CATALOG_SUBGROUPS|READ_CATALOG_PROPERTIES,
+                    &fp_group_properties);
+
+    SID_log("Number of %sgroups in file:     : %d",SID_LOG_COMMENT,prefix_text,fp_group_properties.n_halos_total);
 
     // Skip unwanted halos
-    SID_log("Skipping halos...",SID_LOG_OPEN);
-    for(i_group=0;i_group<i_group_selected;i_group++){
-      fread(&(profile.n_bins),sizeof(int),1,fp_profiles);
-      fseeko(fp_properties,sizeof(halo_properties_info),SEEK_CUR);
-      fseeko(fp_profiles,  sizeof(halo_profile_bin_info)*profile.n_bins,SEEK_CUR);
-    }
-    SID_log("Done.",SID_LOG_CLOSE);
+    //SID_log("Skipping halos...",SID_LOG_OPEN);
+    //for(i_group=0;i_group<i_group_selected;i_group++){
+    //  fread(&(profile.n_bins),sizeof(int),1,fp_profiles);
+    //  fseeko(fp_properties,sizeof(halo_properties_info),SEEK_CUR);
+    //  fseeko(fp_profiles,  sizeof(halo_profile_bin_info)*profile.n_bins,SEEK_CUR);
+    //}
+    //SID_log("Done.",SID_LOG_CLOSE);
 
+    // Perform read 
     SID_log("Reading selected halo...",SID_LOG_OPEN);
-    // Read properties
-    fread(&properties,sizeof(halo_properties_info),1,fp_properties);
-
-    // Read profiles
-    fread(&(profile.n_bins),sizeof(int),                  1,             fp_profiles);
-    fread(profile.bins,     sizeof(halo_profile_bin_info),profile.n_bins,fp_profiles);
+    fread_catalog_file(&fp_group_properties,NULL,&properties,NULL,i_group_selected);
     SID_log("Done.",SID_LOG_CLOSE);
 
-    // Close files
-    fclose(fp_properties);
-    fclose(fp_profiles);
+    // Close file
+    fclose_catalog(&fp_group_properties);
 
     // Write output
     v_c       =sqrt(G_NEWTON*properties.M_vir*M_SOL/(properties.R_vir*M_PER_MPC))*1e-3;
     lambda    =sqrt(properties.spin[0]*properties.spin[0]+properties.spin[1]*properties.spin[1]+properties.spin[2]*properties.spin[2])/(sqrt(2.)*properties.R_vir*v_c);
     offset_COM=sqrt(pow(properties.position_COM[0]-properties.position_MBP[0],2.)+pow(properties.position_COM[1]-properties.position_MBP[1],2.)+pow(properties.position_COM[2]-properties.position_MBP[2],2.));
-    SID_log("Analysis of %sgroup #%d in snap #%d of %s",SID_LOG_COMMENT,prefix_text,i_group,snap_number,filename_root);
+    SID_log("Analysis of %sgroup #%d in snap #%d of %s",SID_LOG_COMMENT,prefix_text,i_group_selected,snap_number,filename_root);
     SID_log("   id_MBP      =%14lld",                      SID_LOG_COMMENT,properties.id_MBP);
     SID_log("   n_particles =%14d",                        SID_LOG_COMMENT,properties.n_particles);
     SID_log("   position_COM=%14.6e %14.6e %14.6e [Mpc/h]",SID_LOG_COMMENT,properties.position_COM[0],properties.position_COM[1],properties.position_COM[2]);

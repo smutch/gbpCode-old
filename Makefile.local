@@ -2,16 +2,16 @@
 # Library-specific settings #
 #############################
 INCFILES  = gbpHalos.h
-OBJFILES  = fopen_catalog.o            \
-	    fread_catalog.o            \
-	    fclose_catalog.o           \
-	    read_groups.o              \
-	    read_groups_AHF.o          \
-	    match_halos.o              \
-	    compute_group_analysis.o   \
-	    read_group_properties.o    \
+OBJFILES  = fopen_catalog.o          \
+	    fread_catalog.o          \
+	    fclose_catalog.o         \
+	    read_groups.o            \
+	    read_groups_AHF.o        \
+	    match_halos.o            \
+	    compute_group_analysis.o \
+	    read_group_properties.o  \
 	    write_group_analysis.o     
 LIBFILE   = libgbpHalos.a
-BINFILES  = make_group_PHKs make_group_report make_catalog_ascii make_group_ascii make_group_analysis cat_group_analysis convert_AHF
+BINFILES  = make_group_PHKs query_group query_catalog make_catalog_ascii make_catalog_group_ascii make_group_analysis cat_group_analysis convert_AHF
 LIBS      = -lgbpHalos -lgbpSPH -lgbpCosmo -lgbpMath -lgbpLib
 #############################
