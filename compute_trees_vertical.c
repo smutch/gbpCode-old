@@ -572,7 +572,8 @@ void compute_trees_vertical(char *filename_root_out,
   tree_count_subgroup_rank=(int *)SID_malloc(sizeof(int)*SID.n_proc);  
   tree_lo_subgroup_file   =(int *)SID_malloc(sizeof(int)*n_files_subgroups);  
   tree_hi_subgroup_file   =(int *)SID_malloc(sizeof(int)*n_files_subgroups);  
-  tree_count_subgroup_file=(int *)SID_malloc(sizeof(int)*n_files_subgroups);  
+  tree_count_subgroup_file=(int *)SID_malloc(sizeof(int)*n_files_subgroups);
+
   // Initialize arrays
   for(i_tree=0;i_tree<n_trees_group;i_tree++){
     i_tree_group[i_tree]      =n_trees_group+1;
@@ -582,7 +583,9 @@ void compute_trees_vertical(char *filename_root_out,
     i_tree_subgroup[i_tree]      =n_trees_subgroup+1;
     n_halos_tree_subgroup[i_tree]=0;
   }
+
   // Loop over each group, grouping together the trees of each's subgroups
+  //  (this is where isotrees get assigned to the forest they will be in)
   for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
     SID_fread(&(group_id),           sizeof(int),1,&fp_in);
     SID_fread(&(group_type),         sizeof(int),1,&fp_in);
@@ -602,7 +605,7 @@ void compute_trees_vertical(char *filename_root_out,
       SID_fread(&(subgroup_descendant_id),sizeof(int),1,&fp_in);
       SID_fread(&(subgroup_tree_id),      sizeof(int),1,&fp_in);
       SID_fread(&(subgroup_file_offset),  sizeof(int),1,&fp_in);
-      SID_fread(&(subgroup_file_index),  sizeof(int),1,&fp_in);
+      SID_fread(&(subgroup_file_index),   sizeof(int),1,&fp_in);
       if(subgroup_id>=0 && subgroup_tree_id>=0){
         if(subgroup_tree_id>=n_trees_subgroup)
           SID_trap_error("subgroup_tree_id (%d) exceeds the number of trees (%d) in the %dth file.",ERROR_LOGIC,subgroup_tree_id,n_trees_subgroup,i_read_stop);
