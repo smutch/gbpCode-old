@@ -434,6 +434,7 @@ void compute_trees_vertical(char *filename_root_out,
   int         j_file;
   int         i_group;
   int         i_subgroup;
+  int         j_subgroup;
   int         k_match;
   int         n_trees_local;
   int         i_rank;
@@ -599,7 +600,7 @@ void compute_trees_vertical(char *filename_root_out,
         SID_trap_error("group_tree_id (%d) exceeds the number of trees (%d) in the %dth file.",ERROR_LOGIC,group_tree_id,n_trees_group,i_read_stop);
       i_tree_group[group_tree_id]=i_group;
     }
-    for(i_subgroup=0;i_subgroup<n_subgroups_group;i_subgroup++){
+    for(j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
       SID_fread(&(subgroup_id),           sizeof(int),1,&fp_in);
       SID_fread(&(subgroup_type),         sizeof(int),1,&fp_in);
       SID_fread(&(subgroup_descendant_id),sizeof(int),1,&fp_in);
@@ -666,7 +667,7 @@ void compute_trees_vertical(char *filename_root_out,
          n_halos_tree_group[group_tree_id]++;
          n_halos_groups++;
        }
-       for(i_subgroup=0,i_tree_subgroup_min=0;i_subgroup<n_subgroups_group;i_subgroup++){
+       for(j_subgroup=0,i_tree_subgroup_min=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
          SID_fread_all(&(subgroup_id),           sizeof(int),1,&fp_in);
          SID_fread_all(&(subgroup_type),         sizeof(int),1,&fp_in);
          SID_fread_all(&(subgroup_descendant_id),sizeof(int),1,&fp_in);
@@ -905,7 +906,7 @@ void compute_trees_vertical(char *filename_root_out,
       SID_fread_all(&n_trees_group,    sizeof(int),1,&fp_in);
       
       // Read each group in turn
-      for(i_group=0,i_subgroup=0,k_subgroup=0;i_group<n_groups;i_group++){
+      for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
         // Read horizontal trees for groups
         SID_fread_all(&(group_id),           sizeof(int),1,&fp_in);
         SID_fread_all(&(group_type),         sizeof(int),1,&fp_in);
@@ -925,7 +926,7 @@ void compute_trees_vertical(char *filename_root_out,
         // If we are processing subgroup trees ...
         if(k_match==0){
           // Read each subgroup in turn
-          for(i_subgroup=0;i_subgroup<n_subgroups_group;i_subgroup++,k_subgroup++){
+          for(j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
             SID_fread_all(&(subgroup_id),           sizeof(int),1,&fp_in);
             SID_fread_all(&(subgroup_type),         sizeof(int),1,&fp_in);
             SID_fread_all(&(subgroup_descendant_id),sizeof(int),1,&fp_in);
@@ -947,9 +948,9 @@ void compute_trees_vertical(char *filename_root_out,
                 else
                   descendant_snap=(i_file+subgroup_file_offset);
                 // ... read halo information from catalog files ...
-                fread_catalog_file(&fp_subgroup_properties,subgroup_properties,NULL,NULL,k_subgroup);
+                fread_catalog_file(&fp_subgroup_properties,subgroup_properties,NULL,NULL,i_subgroup);
                 // ... set the most massive progenitor's mass to the FoF mass ...
-                if(i_subgroup==0)
+                if(j_subgroup==0)
                    subgroup_properties->M_vir=group_properties->M_vir;
                 // ... adjust snap counter to make things work with skipped snaps ...
                 subgroup_properties->snap_num=halo_snap;

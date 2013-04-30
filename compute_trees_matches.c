@@ -286,11 +286,10 @@ void compute_trees_matches(char   *filename_root_in,
 
   // Check to see if there are any matches needing to be completed
   SID_log("Checking for matching files...",SID_LOG_OPEN);
-  //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
   SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
   flag_go=FALSE;
-  for(i_read=i_read_stop;i_read>i_read_start && !flag_go;i_read--)
-     check_for_tree_matches_local(filename_out_dir,i_read_start,i_read_stop,i_read,n_search_total,&flag_go,&flag_go_array);
+  //for(i_read=i_read_stop;i_read>i_read_start && !flag_go;i_read--)
+  //   check_for_tree_matches_local(filename_out_dir,i_read_start,i_read_stop,i_read,n_search_total,&flag_go,&flag_go_array);
   if(flag_go)
      i_read++;
   if(!flag_go)
