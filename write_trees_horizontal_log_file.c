@@ -1,6 +1,6 @@
 #include <gbpTrees.h>
 
-void write_horizontal_trees_log_file(char *filename_log,int l_write,int j_write,int i_k_match,int n_k_match,tree_horizontal_stats_info *stats,double *a_list,cosmo_info **cosmo,int flag_init){
+void write_trees_horizontal_log_file(char *filename_log,int l_write,int j_write,int i_k_match,int n_k_match,tree_horizontal_stats_info *stats,double *a_list,cosmo_info **cosmo,int flag_init){
    FILE *fp;
    char  group_text_prefix[5];
    if(flag_init){

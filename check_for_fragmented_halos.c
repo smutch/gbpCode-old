@@ -40,9 +40,13 @@ void check_for_fragmented_halos(int k_match,tree_horizontal_info **groups,int n_
          }
       }
    }
-   SID_log("# of new lost      fragmented halos = %-8d",SID_LOG_COMMENT,n_lost);
-   SID_log("# of new returned  fragmented halos = %-8d",SID_LOG_COMMENT,n_returned);
-   SID_log("# of new exchanged fragmented halos = %-8d",SID_LOG_COMMENT,n_exchanged);
+   if(n_lost!=0 || n_returned!=0 || n_exchanged!=0){
+      SID_log("# of new lost      fragmented halos = %-8d",SID_LOG_COMMENT,n_lost);
+      SID_log("# of new returned  fragmented halos = %-8d",SID_LOG_COMMENT,n_returned);
+      SID_log("# of new exchanged fragmented halos = %-8d",SID_LOG_COMMENT,n_exchanged);
+   }
+   else
+      SID_log("none found...",SID_LOG_CONTINUE);
    SID_log("Done.",SID_LOG_CLOSE);
 }
 

@@ -32,26 +32,26 @@ void interpolate_halo_local(halo_properties_info *halo_initial,
    // Perform interpolation
    halo_return->M_vir          =halo_initial->M_vir+f_interpolate*(halo_final->M_vir-halo_initial->M_vir);
    halo_return->n_particles    =0;
-   halo_return->position_COM[0]=0.;
-   halo_return->position_COM[1]=0.;
-   halo_return->position_COM[2]=0.;
-   halo_return->velocity_COM[0]=0.;
-   halo_return->velocity_COM[1]=0.;
-   halo_return->velocity_COM[2]=0.;
-   halo_return->position_MBP[0]=0.;
-   halo_return->position_MBP[1]=0.;
-   halo_return->position_MBP[2]=0.;
-   halo_return->velocity_MBP[0]=0.;
-   halo_return->velocity_MBP[1]=0.;
-   halo_return->velocity_MBP[2]=0.;
+   halo_return->position_COM[0]=halo_initial->position_COM[0]+f_interpolate*(halo_final->position_COM[0]-halo_initial->position_COM[0]);
+   halo_return->position_COM[1]=halo_initial->position_COM[1]+f_interpolate*(halo_final->position_COM[1]-halo_initial->position_COM[1]);
+   halo_return->position_COM[2]=halo_initial->position_COM[2]+f_interpolate*(halo_final->position_COM[2]-halo_initial->position_COM[2]);
+   halo_return->velocity_COM[0]=halo_initial->velocity_COM[0]+f_interpolate*(halo_final->velocity_COM[0]-halo_initial->velocity_COM[0]);
+   halo_return->velocity_COM[1]=halo_initial->velocity_COM[1]+f_interpolate*(halo_final->velocity_COM[1]-halo_initial->velocity_COM[1]);
+   halo_return->velocity_COM[2]=halo_initial->velocity_COM[2]+f_interpolate*(halo_final->velocity_COM[2]-halo_initial->velocity_COM[2]);
+   halo_return->position_MBP[0]=halo_initial->position_MBP[0]+f_interpolate*(halo_final->position_MBP[0]-halo_initial->position_MBP[0]);
+   halo_return->position_MBP[1]=halo_initial->position_MBP[1]+f_interpolate*(halo_final->position_MBP[1]-halo_initial->position_MBP[1]);
+   halo_return->position_MBP[2]=halo_initial->position_MBP[2]+f_interpolate*(halo_final->position_MBP[2]-halo_initial->position_MBP[2]);
+   halo_return->velocity_MBP[0]=halo_initial->velocity_MBP[0]+f_interpolate*(halo_final->velocity_MBP[0]-halo_initial->velocity_MBP[0]);
+   halo_return->velocity_MBP[1]=halo_initial->velocity_MBP[1]+f_interpolate*(halo_final->velocity_MBP[1]-halo_initial->velocity_MBP[1]);
+   halo_return->velocity_MBP[2]=halo_initial->velocity_MBP[2]+f_interpolate*(halo_final->velocity_MBP[2]-halo_initial->velocity_MBP[2]);
    halo_return->R_vir          =halo_initial->R_vir  +f_interpolate*(halo_final->R_vir  -halo_initial->R_vir);
    halo_return->R_halo         =halo_initial->R_halo +f_interpolate*(halo_final->R_halo -halo_initial->R_halo);
    halo_return->R_max          =halo_initial->R_max  +f_interpolate*(halo_final->R_max  -halo_initial->R_max);
    halo_return->V_max          =halo_initial->V_max  +f_interpolate*(halo_final->V_max  -halo_initial->V_max);
    halo_return->sigma_v        =halo_initial->sigma_v+f_interpolate*(halo_final->sigma_v-halo_initial->sigma_v);
-   halo_return->spin[0]        =0.;
-   halo_return->spin[1]        =0.;
-   halo_return->spin[2]        =0.;
+   halo_return->spin[0]        =halo_initial->spin[0]+f_interpolate*(halo_final->spin[0]-halo_initial->spin[0]);
+   halo_return->spin[1]        =halo_initial->spin[1]+f_interpolate*(halo_final->spin[1]-halo_initial->spin[1]);
+   halo_return->spin[2]        =halo_initial->spin[2]+f_interpolate*(halo_final->spin[2]-halo_initial->spin[2]);
    halo_return->q_triaxial     =halo_initial->q_triaxial+f_interpolate*(halo_final->q_triaxial-halo_initial->q_triaxial);
    halo_return->s_triaxial     =halo_initial->s_triaxial+f_interpolate*(halo_final->s_triaxial-halo_initial->s_triaxial);
    int i_vec;
@@ -86,7 +86,7 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
    halo_properties_info  *subgroup_return;
    group_return   =(halo_properties_info *)SID_calloc(sizeof(halo_properties_info));
    subgroup_return=(halo_properties_info *)SID_calloc(sizeof(halo_properties_info));
-//fprintf(stderr,"write_ghost_catalog: i_write=%d j_write=%d l_write=%d\n",i_write,j_write,l_write);
+   SID_log("Writing ghost catalogs for snapshot #%03d...",SID_LOG_OPEN,j_write);
 
    // Open files and write headers
    SID_fp fp_groups;
@@ -105,8 +105,8 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
    mkdir(filename_output_dir_horizontal_ghosts,02755);
    strcpy(filename_cat_root,filename_cat);
    strip_path(filename_cat_root);
-   sprintf(filename_groups,   "%s/%s_%03d.group_properties",   filename_output_dir_horizontal_ghosts,filename_cat_root,j_write);
-   sprintf(filename_subgroups,"%s/%s_%03d.subgroup_properties",filename_output_dir_horizontal_ghosts,filename_cat_root,j_write);
+   sprintf(filename_groups,   "%s/ghosts_%03d.group_properties",   filename_output_dir_horizontal_ghosts,j_write);
+   sprintf(filename_subgroups,"%s/ghosts_%03d.subgroup_properties",filename_output_dir_horizontal_ghosts,j_write);
    SID_fopen(filename_groups,"w",&fp_groups);
    SID_fwrite(&i_file,        sizeof(int),1,&fp_groups);
    SID_fwrite(&n_files,       sizeof(int),1,&fp_groups);
@@ -131,7 +131,6 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
          double                time_final;
          double                time_return;
          group_i         =&(groups[i_group]);
-//fprintf(stderr,"interp_group: %d %d -> %d %d (type=%d)\n",group_i->interp.file_start,group_i->interp.index_start,group_i->interp.file_stop,group_i->interp.index_stop,group_i->type);
          group_initial   =group_properties[(group_i->interp.file_start)%n_wrap][group_i->interp.index_start];
          group_final     =group_properties[(group_i->interp.file_stop)%n_wrap][group_i->interp.index_stop];
          time_initial    =group_i->interp.time_start;
@@ -151,7 +150,6 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
             double                time_initial;
             double                time_final;
             double                time_return;
-//fprintf(stderr,"interp_subgroup: %d %d -> %d %d (type=%d)\n",current->interp.file_start,current->interp.index_start,current->interp.file_stop,current->interp.index_stop,current->type);
             subgroup_initial=subgroup_properties[(current->interp.file_start)%n_wrap][current->interp.index_start];
             subgroup_final  =subgroup_properties[(current->interp.file_stop)%n_wrap][current->interp.index_stop];
             time_initial    =current->interp.time_start;
@@ -169,5 +167,7 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
    SID_fclose(&fp_subgroups);
    SID_free(SID_FARG group_return);
    SID_free(SID_FARG subgroup_return);
+
+   SID_log("Done.",SID_LOG_CLOSE);
 }
 

@@ -50,8 +50,7 @@ int main(int argc, char *argv[]){
 
   // Create snapshot expansion factor list
   if(SID.I_am_Master){
-    sprintf(filename_snap_list_out,"%s.a_list",filename_root_out);
-    SID_log("Creating snapshot list {%s}...",SID_LOG_OPEN,filename_snap_list_out);
+    SID_log("Creating snapshot list...",SID_LOG_OPEN);
 
     // Read the original list
     fp_in     =fopen(filename_snap_list_in, "r");
@@ -76,7 +75,7 @@ int main(int argc, char *argv[]){
     strcpy(filename_output_file_root,filename_root_out);
     strip_path(filename_output_file_root);
     mkdir(filename_root_out,02755);
-    sprintf(filename_snap_list_out,"%s/%s.a_list",filename_root_out,filename_output_file_root);
+    sprintf(filename_snap_list_out,"%s/a_list.txt",filename_root_out);
     fp_out=fopen(filename_snap_list_out,"w");
     for(i_write=n_keep-1;i_write>=0;i_write--){
       fprintf(fp_out,"%le\n",a_list_out[i_write]);
@@ -104,3 +103,4 @@ int main(int argc, char *argv[]){
   SID_log("Done.",SID_LOG_CLOSE);
   SID_exit(ERROR_NONE);
 }
+

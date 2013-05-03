@@ -45,7 +45,6 @@ void compute_trees_horizontal_ghosts(int         *n_groups,
   for(i_read=j_write_last,l_read=l_write_last,i_file=0;
       i_read<=i_read_stop;
       i_read+=i_read_step,l_read--,i_file++){
-
      // Sum the number of halos (real+ghost) 
      int n_groups_in;
      int n_subgroups_in;
@@ -62,8 +61,6 @@ void compute_trees_horizontal_ghosts(int         *n_groups,
   }
   calc_max(n_groups_ghost,   &n_groups_ghost_max,   n_files,SID_INT,CALC_MODE_DEFAULT);
   calc_max(n_subgroups_ghost,&n_subgroups_ghost_max,n_files,SID_INT,CALC_MODE_DEFAULT);
-  SID_free(SID_FARG n_groups_ghost);
-  SID_free(SID_FARG n_subgroups_ghost);
   SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
   SID_log("Done.",SID_LOG_CLOSE);
 
@@ -115,7 +112,6 @@ void compute_trees_horizontal_ghosts(int         *n_groups,
      // Read horizontal tree files (make sure we stay ahead by n_search snapshots)
      int n_groups_in;
      int n_subgroups_in;
-     int n_progenitors_max_in=0;
      int n_trees_subgroup_in =0;
      int n_trees_group_in    =0;
      while(i_read>=i_read_start && i_file>(i_write-n_search)){
@@ -123,7 +119,6 @@ void compute_trees_horizontal_ghosts(int         *n_groups,
         read_trees_horizontal((void **)groups_ghost,   &n_groups_in,
                               (void **)subgroups_ghost,&n_subgroups_in,
                               n_subgroups_group[i_file%n_wrap],
-                              &n_progenitors_max_in,
                               &n_trees_subgroup_in,
                               &n_trees_group_in,
                               i_file,
@@ -180,14 +175,16 @@ void compute_trees_horizontal_ghosts(int         *n_groups,
      // Write the ghost-populated trees
      write_trees_horizontal((void **)groups_ghost,
                             (void **)subgroups_ghost,
-                            n_groups[l_write],   n_groups_max,   n_groups_ghost_used[i_write],
-                            n_subgroups[l_write],n_subgroups_max,n_subgroups_ghost_used[i_write],
+                            n_groups_ghost[i_write],   n_groups_ghost_max,   
+                            n_subgroups_ghost[i_write],n_subgroups_ghost_max,
                             n_subgroups_group,
                             max_tree_id_subgroup,
                             max_tree_id_group,
                             i_write,
                             j_write,
                             l_write,
+                            i_read_step,
+                            n_search,
                             n_wrap,
                             i_file_start,
                             filename_cat_root_in,
@@ -198,7 +195,6 @@ void compute_trees_horizontal_ghosts(int         *n_groups,
                             TREE_HORIZONTAL_WRITE_GHOSTS|TREE_HORIZONTAL_WRITE_NOCASES);
 
      // Write the ghost catalog files
-     SID_log("Writing ghost catalogs for snapshot #%03d...",SID_LOG_OPEN,j_write);
      write_ghost_catalog(groups_ghost[i_write%n_wrap],
                          group_properties,
                          n_groups[l_write],
@@ -215,7 +211,6 @@ void compute_trees_horizontal_ghosts(int         *n_groups,
                          n_wrap,
                          a_list,
                          cosmo);
-     SID_log("Done.",SID_LOG_CLOSE);
   }
   SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
   SID_log("Done.",SID_LOG_CLOSE);
@@ -232,6 +227,8 @@ void compute_trees_horizontal_ghosts(int         *n_groups,
   }
   SID_free(SID_FARG groups_ghost);
   SID_free(SID_FARG subgroups_ghost);
+  SID_free(SID_FARG n_groups_ghost);
+  SID_free(SID_FARG n_subgroups_ghost);
   SID_free(SID_FARG n_groups_ghost_used);
   SID_free(SID_FARG n_subgroups_ghost_used);
   SID_free(SID_FARG group_properties);

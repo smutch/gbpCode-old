@@ -29,16 +29,6 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
   int         n_strays_drop;
   int         n_strays_bridge;
   int         i_stray;
-  int         n_unlinked;
-  int         n_unprocessed;
-  int         n_multimatch;
-  int         n_sputter;
-  int         n_bridge_candidates;
-  int         n_bridge_systems;
-  int         n_mergers;
-  int         n_mergers_drop;
-  int         n_mergers_bridge;
-  int         n_bridges;
   int         n_match;
   int         n_match_halos;
   int         n_back_match;
@@ -80,26 +70,16 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
   int         progenitor_index;
   int         my_descendant_index,my_descendant_id,my_descendant_list,my_index;
   int         index;
-  int         max_id;
-  int         max_id_group;
-  int         max_id_subgroup;
-  int         my_id;
-  int         my_tree;
-  int         my_descendant_tree;
-  int         my_idx_1;
-  int         my_idx_2;
+  int         max_id         =0;
+  int         max_id_group   =0;
+  int         max_id_subgroup=0;
   int        *my_descendant;
   int        *n_particles;
   int        *n_particles_groups;
   int        *n_particles_subgroups;
   int         my_trunk;
   double      expansion_factor;
-  double      delta_x,delta_y,delta_z,delta_vx,delta_vy,delta_vz,f_M;
-  double      mass_fraction;
-  double      max_mass_fraction;
-  int         n_drop;
   int         n_found;
-  int         n_drop_found;
   int         n_found_bridge;
   double      delta_r;
   double      delta_M;
@@ -116,10 +96,6 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
   int         flag_first;
   int         n_particles_max;
   int         trunk_index;
-  int         biggest_stray;
-  int         biggest_stray_drop;
-  int         biggest_stray_bridge;
-  int         biggest_sputter;
   int        *n_groups=NULL;
   int        *n_subgroups=NULL;
   int         max_tree_id_group;
@@ -168,21 +144,8 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
   int     k_index_temp;
 
   int     n_wrap;
-  
-  int     n_strayed;
-  int     n_sputtered;
-  int     n_bridged;
-  int     n_dropped;
-  int     n_bridged_systems;
-  int     max_strayed_size;
-  int     max_sputtered_size;
-  int     max_dropped_size;
-  int     max_emerged_size;
-  int     n_bridge_emerged;
   int     i_file_start;
   
-  tree_horizontal_stats_info stats;
- 
   char  filename_output_dir_horizontal[MAX_FILENAME_LENGTH];
   char  filename_output_dir_horizontal_cases[MAX_FILENAME_LENGTH];
   char  filename_output_file_root[MAX_FILENAME_LENGTH];
@@ -221,9 +184,10 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
   calc_max(n_groups,   &n_groups_max,   n_files,SID_INT,CALC_MODE_DEFAULT);
   n_halos_max=MAX(n_subgroups_max,n_groups_max);
 
-  // We need indices that allow us to hold-on to descendants until outputting
+  // We need enough indices to allow us to hold-on to descendants until outputting
   //   and for the current and last i_file as well
-  n_wrap=2*n_search+2;
+  n_wrap      =2*n_search+2;
+  i_file_start=n_files-1;
      
   // Initialize arrays
   SID_log("Creating arrays...",SID_LOG_OPEN);
@@ -244,157 +208,26 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
 
   // Process the first file separately
   //   (just give everything ids from a running index) ...
-  SID_log("Initializing tree roots...",SID_LOG_OPEN|SID_LOG_TIMER);
-
-  // Initialize everything to a 1:1 simple match
-  read_matches(filename_root_matches,
-               i_read_stop,i_read_stop-i_read_step,
-               MATCH_GROUPS,
-               &n_halos_1_matches,
-               &n_halos_2_matches,
-               n_particles_groups,
-               NULL,
-               n_subgroups_group[0],
-               n_subgroups_group[1],
-               match_id,
-               match_score,
-               match_index);
-  for(i_search=1;i_search<n_wrap;i_search++)
-    memcpy(n_subgroups_group[i_search],n_subgroups_group[0],n_halos_1_matches*sizeof(int));
-
-  i_file_start=n_files-1;
-
-  for(i_halo=0,max_id_group=0,max_tree_id_group=0;i_halo<n_groups_max;i_halo++,j_halo++){
-     for(i_search=0;i_search<n_wrap;i_search++){
-        groups[i_search][i_halo].file                  =   i_file_start; // The resulting file offset must be -ve for tree roots
-        groups[i_search][i_halo].snap                  =   i_read_start; 
-        groups[i_search][i_halo].index                 =(size_t)i_halo;
-        groups[i_search][i_halo].n_bridges             =   0;
-        groups[i_search][i_halo].descendant.halo       =NULL;
-        groups[i_search][i_halo].descendant.score      =  0.;
-        groups[i_search][i_halo].first_progenitor.halo =NULL;
-        groups[i_search][i_halo].first_progenitor.score=  0.;
-        groups[i_search][i_halo].last_progenitor.halo  =NULL;
-        groups[i_search][i_halo].last_progenitor.score =  0.;
-        groups[i_search][i_halo].next_progenitor.halo  =NULL;
-        groups[i_search][i_halo].next_progenitor.score =  0.;
-        groups[i_search][i_halo].bridge_forematch.halo =NULL;
-        groups[i_search][i_halo].bridge_forematch.score=  0.;
-        groups[i_search][i_halo].bridge_backmatch.halo =NULL;
-        groups[i_search][i_halo].bridge_backmatch.score=  0.;
-        groups[i_search][i_halo].bridges               =NULL;
-        groups[i_search][i_halo].type                  =TREE_CASE_INVALID;
-        groups[i_search][i_halo].id                    =-1;
-        groups[i_search][i_halo].main_progenitor_id    =-1;
-        groups[i_search][i_halo].tree_id               =-1; 
-        groups[i_search][i_halo].n_particles           = 0;
-        groups[i_search][i_halo].n_particles_parent    = 0;
-        groups[i_search][i_halo].n_progenitors         = 0;
-        if(i_halo<n_halos_1_matches){
-           groups[i_search][i_halo].id                    =max_id_group;
-           groups[i_search][i_halo].main_progenitor_id    =max_id_group;
-           groups[i_search][i_halo].tree_id               =max_tree_id_group;
-           groups[i_search][i_halo].type                  =TREE_CASE_SIMPLE|TREE_CASE_MAIN_PROGENITOR|TREE_CASE_NO_PROGENITORS;
-           groups[i_search][i_halo].n_particles           =n_particles_groups[i_halo];
-           groups[i_search][i_halo].n_particles_parent    =n_particles_groups[i_halo];
-           groups[i_search][i_halo].descendant.halo       =&(subgroups[(i_search+1)%n_wrap][i_halo]);
-           groups[i_search][i_halo].descendant.score       =1.;
-           if(i_search!=(i_file_start%n_wrap)){
-              groups[i_search][i_halo].n_progenitors       =1;
-              if(i_search>0){
-                 groups[i_search][i_halo].first_progenitor.halo =&(groups[i_search-1][i_halo]);
-                 groups[i_search][i_halo].last_progenitor.halo  =&(groups[i_search-1][i_halo]);
-              }
-              else{
-                 groups[i_search][i_halo].first_progenitor.halo =&(groups[n_wrap-1][i_halo]);
-                 groups[i_search][i_halo].last_progenitor.halo  =&(groups[n_wrap-1][i_halo]);
-              }
-              groups[i_search][i_halo].first_progenitor.score=1.;
-              groups[i_search][i_halo].last_progenitor.score =1.;
-           }
-        }
-     }
-     if(i_halo<n_halos_1_matches){
-        max_id_group++;
-        max_tree_id_group++;
-     }
-  }
-
-  // Initialize everything to a 1:1 simple match
-  read_matches(filename_root_matches,
-               i_read_stop,i_read_stop-i_read_step,
-               MATCH_SUBGROUPS,
-               &n_halos_1_matches,
-               &n_halos_2_matches,
-               n_particles_subgroups,
-               NULL,
-               NULL,
-               NULL,
-               match_id,
-               match_score,
-               match_index);
-                     
-  for(i_halo=0,j_halo=0,k_halo=0,max_id_subgroup=0,max_tree_id_subgroup=0;i_halo<n_subgroups_max;i_halo++,j_halo++){
-     if(j_halo>n_subgroups_group[0][k_halo] && i_halo<n_halos_1_matches){
-       k_halo++;
-       j_halo=0;
-     }
-     for(i_search=0;i_search<n_wrap;i_search++){
-        subgroups[i_search][i_halo].file                  =   i_file_start; // The resulting file offset must be -ve for tree roots
-        subgroups[i_search][i_halo].snap                  =   i_read_start; 
-        subgroups[i_search][i_halo].index                 =(size_t)i_halo;
-        subgroups[i_search][i_halo].n_bridges             =   0;
-        subgroups[i_search][i_halo].descendant.halo       =NULL;
-        subgroups[i_search][i_halo].descendant.score      =  0.;
-        subgroups[i_search][i_halo].first_progenitor.halo =NULL;
-        subgroups[i_search][i_halo].first_progenitor.score=  0.;
-        subgroups[i_search][i_halo].last_progenitor.halo  =NULL;
-        subgroups[i_search][i_halo].last_progenitor.score =  0.;
-        subgroups[i_search][i_halo].next_progenitor.halo  =NULL;
-        subgroups[i_search][i_halo].next_progenitor.score =  0.;
-        subgroups[i_search][i_halo].bridge_forematch.halo =NULL;
-        subgroups[i_search][i_halo].bridge_forematch.score=  0.;
-        subgroups[i_search][i_halo].bridge_backmatch.halo =NULL;
-        subgroups[i_search][i_halo].bridge_backmatch.score=  0.;
-        subgroups[i_search][i_halo].bridges               =NULL;
-        subgroups[i_search][i_halo].type                  =TREE_CASE_INVALID;
-        subgroups[i_search][i_halo].id                    =-1;
-        subgroups[i_search][i_halo].main_progenitor_id    =-1;
-        subgroups[i_search][i_halo].tree_id               =-1; 
-        subgroups[i_search][i_halo].n_particles           = 0;
-        subgroups[i_search][i_halo].n_particles_parent    = 0;
-        subgroups[i_search][i_halo].n_progenitors         = 0;
-        if(i_halo<n_halos_1_matches){
-           subgroups[i_search][i_halo].id                    =max_id_subgroup;
-           subgroups[i_search][i_halo].main_progenitor_id    =max_id_subgroup;
-           subgroups[i_search][i_halo].tree_id               =max_tree_id_subgroup;
-           subgroups[i_search][i_halo].type                  =TREE_CASE_SIMPLE|TREE_CASE_MAIN_PROGENITOR|TREE_CASE_NO_PROGENITORS;
-           subgroups[i_search][i_halo].n_particles           =n_particles_subgroups[i_halo];
-           subgroups[i_search][i_halo].n_particles_parent    =n_particles_groups[k_halo];
-           subgroups[i_search][i_halo].descendant.halo       =&(subgroups[(i_search+1)%n_wrap][i_halo]);
-           subgroups[i_search][i_halo].descendant.score       =1.;
-           if(i_search!=(i_file_start%n_wrap)){
-              subgroups[i_search][i_halo].n_progenitors       =1;
-              if(i_search>0){
-                 subgroups[i_search][i_halo].first_progenitor.halo =&(subgroups[i_search-1][i_halo]);
-                 subgroups[i_search][i_halo].last_progenitor.halo  =&(subgroups[i_search-1][i_halo]);
-              }
-              else{
-                 subgroups[i_search][i_halo].first_progenitor.halo =&(subgroups[n_wrap-1][i_halo]);
-                 subgroups[i_search][i_halo].last_progenitor.halo  =&(subgroups[n_wrap-1][i_halo]);
-              }
-              subgroups[i_search][i_halo].first_progenitor.score=1.;
-              subgroups[i_search][i_halo].last_progenitor.score =1.;
-           }
-        }
-     }
-     if(i_halo<n_halos_1_matches){
-        max_id_subgroup++;
-        max_tree_id_subgroup++;
-     }
-  }
-
-  SID_log("Done.",SID_LOG_CLOSE);
+  init_trees_horizontal_roots(groups,
+                              subgroups,
+                              match_id,
+                              match_score,
+                              match_index,
+                              n_particles_groups,
+                              n_particles_subgroups,
+                              n_subgroups_group,
+                              n_groups_max,
+                              n_subgroups_max,
+                              filename_root_matches,
+                              i_read_start,
+                              i_read_stop,
+                              i_read_step,
+                              i_file_start,
+                              n_wrap,
+                              &max_id_group,
+                              &max_tree_id_group,
+                              &max_id_subgroup,
+                              &max_tree_id_subgroup);
 
   // The first snapshot is done now (set to defaults as the roots of trees) ... now loop over all other snapshots ...
   //   There are a bunch of counters at work here.  Because we aren't necessarily using every 
@@ -419,7 +252,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
     // Loop twice (1st to process subgroups, 2nd to process groups)
     for(k_match=0;k_match<n_k_match;k_match++){
 
-       // Initialize a bunch of stuff depending on whether
+       // Initialize a bunch of stuff which depends on whether
        //   we are processing groups or subgroups
        switch(k_match){
           case 0:
@@ -443,520 +276,87 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
        }
        halos_i  =halos[i_file%n_wrap];
        n_halos_i=n_halos[j_file];
+
        SID_log("Processing %d %sgroups...",SID_LOG_OPEN|SID_LOG_TIMER,n_halos_i,group_text_prefix);
 
        // Initialize tree pointer-arrays with dummy values
-       for(i_halo=0;i_halo<n_halos_max;i_halo++){
-          halos_i[i_halo].file                  = i_file;
-          halos_i[i_halo].snap                  = i_read;
-          halos_i[i_halo].index                 = (size_t)i_halo;
-          halos_i[i_halo].n_bridges             =   0;
-          halos_i[i_halo].descendant.halo       =NULL;
-          halos_i[i_halo].descendant.score      =  0.;
-          halos_i[i_halo].first_progenitor.halo =NULL;
-          halos_i[i_halo].first_progenitor.score=  0.;
-          halos_i[i_halo].last_progenitor.halo  =NULL;
-          halos_i[i_halo].last_progenitor.score =  0.;
-          halos_i[i_halo].next_progenitor.halo  =NULL;
-          halos_i[i_halo].next_progenitor.score =  0.;
-          halos_i[i_halo].bridge_forematch.halo =NULL;
-          halos_i[i_halo].bridge_forematch.score=  0.;
-          halos_i[i_halo].bridge_backmatch.halo =NULL;
-          halos_i[i_halo].bridge_backmatch.score=  0.;
-          SID_free(SID_FARG halos_i[i_halo].bridges);
-          if(i_halo<n_halos_i)
-             halos_i[i_halo].type=TREE_CASE_UNPROCESSED|TREE_CASE_NO_PROGENITORS;
-          else
-             halos_i[i_halo].type=TREE_CASE_INVALID;
-          halos_i[i_halo].id                =-1;
-          halos_i[i_halo].main_progenitor_id=-1;
-          halos_i[i_halo].tree_id           =-1;
-          halos_i[i_halo].n_particles       = 0;
-          halos_i[i_halo].n_progenitors     = 0;
-       }
+       init_trees_horizontal_snapshot(halos_i,n_halos_i,i_read,i_file,n_halos_max);
        
        // Use back-matching to identify bridged halos ...
-       if(flag_fix_bridges){
-          SID_log("Identifying bridge candidates from back-matching...",SID_LOG_OPEN|SID_LOG_TIMER);
-          SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
-          //    ... first, do an initial count of matches.  This will not be a list of unique halos
-          //        though, since the same halos are likely to appear in repeated snapshots.
-          for(j_file_1  =i_file+1,
-                j_file_2=i_file,
-                j_read_1=i_read+i_read_step,
-                j_read_2=i_read,
-                i_search=0;
-              j_read_1<=i_read_stop && i_search<n_search;
-              j_file_1++,
-                j_read_1+=i_read_step,
-                i_search++){
-
-             SID_log("Counting matches between files %d->%d...",SID_LOG_OPEN,j_read_1,j_read_2);
-
-             // Read back-matching
-             read_matches(filename_root_matches,
-                          j_read_1,j_read_2,
-                          flag_match_subgroups,
-                          &n_halos_1_matches,
-                          &n_halos_2_matches,
-                          NULL,
-                          n_particles,
-                          NULL,
-                          NULL,
-                          match_id,
-                          match_score,
-                          match_index);
-
-             // Store halo sizes
-             if(i_search==0){
-                for(i_halo=0;i_halo<n_halos_2_matches;i_halo++)
-                   halos[i_file%n_wrap][i_halo].n_particles=n_particles[i_halo];
-             }
-
-             // Perform initial back-match count
-             for(i_halo=0;i_halo<n_halos_i;i_halo++){
-                j_halo=find_index_int(match_id,i_halo,n_halos_1_matches,match_index);
-                while(match_id[match_index[j_halo]]==i_halo && j_halo<(n_halos_1_matches-1)){
-                   halos_i[i_halo].n_bridges++;
-                   j_halo++;
-                }
-                if(match_id[match_index[j_halo]]==i_halo && j_halo==(n_halos_1_matches-1)){
-                   halos_i[i_halo].n_bridges++;
-                   j_halo++;
-                }
-             }
-             SID_log("Done.",SID_LOG_CLOSE);
-          }
-       
-          //    ... second, do a conservative allocation using the non-unique counts and reset the counter.
-          for(i_halo=0;i_halo<n_halos_i;i_halo++){
-             if((halos_i[i_halo].n_bridges)>0)
-                (halos_i[i_halo].bridges)=(bridge_info *)SID_calloc(sizeof(bridge_info)*(halos_i[i_halo].n_bridges));
-             else
-                (halos_i[i_halo].bridges)=NULL;
-             halos_i[i_halo].n_bridges =0;
-          }
-
-          //    ... third, assemble the list of unique back-matched halos.
-          for(j_file_1  =i_file+1,
-                j_file_2=i_file,
-                j_read_1=i_read+i_read_step,
-                j_read_2=i_read,
-                i_search=0;
-              j_read_1<=i_read_stop && i_search<n_search;
-              j_file_1++,
-                j_read_1+=i_read_step,
-                i_search++){
-
-             SID_log("Finding unique matches between files %d->%d...",SID_LOG_OPEN,j_read_1,j_read_2);
-          
-             // Read back-matching
-             read_matches(filename_root_matches,
-                          j_read_1,j_read_2,
-                          flag_match_subgroups,
-                          &n_halos_1_matches,
-                          &n_halos_2_matches,
-                          NULL,
-                          NULL,
-                          NULL,
-                          NULL,
-                          match_id,
-                          match_score,
-                          match_index);
-                             
-             // For all the halos in i_file_1 with back-matches ...
-             for(i_halo=0;i_halo<n_halos_i;i_halo++){
-                if((halos_i[i_halo].bridges)!=NULL){
-                   // Scan over the list of halos from snapshot=j_read_1 
-                   //   that match this halo in j_read_2 ...
-                   bridges=halos_i[i_halo].bridges;
-                   j_halo =find_index_int(match_id,i_halo,n_halos_1_matches,match_index);
-                   // Loop over all but the last halo in the list ...
-                   while(match_id[match_index[j_halo]]==i_halo && j_halo<(n_halos_1_matches-1)){
-                      // Check to see if this halo is already in the bridge list (keep all sputtered/strayed halos as well) ...
-                      flag_continue=TRUE;
-                      if(halos[j_file_1%n_wrap][match_index[j_halo]].id>=0){
-                         for(k_halo=0,flag_continue=TRUE;k_halo<halos_i[i_halo].n_bridges && flag_continue;k_halo++){
-                            if(bridges[k_halo].halo->id==halos[j_file_1%n_wrap][match_index[j_halo]].id)
-                               flag_continue=FALSE;
-                         }
-                      }
-                      // ... if not, add it
-                      if(flag_continue){
-                         bridges[halos_i[i_halo].n_bridges].score=match_score[match_index[j_halo]];
-                         bridges[halos_i[i_halo].n_bridges].halo =&(halos[j_file_1%n_wrap][match_index[j_halo]]);
-                         (halos_i[i_halo].n_bridges)++;
-                      }
-                      j_halo++;
-                   }
-                   // ... then do the last halo in the list ...
-                   if(match_id[match_index[j_halo]]==i_halo && j_halo==(n_halos_1_matches-1)){
-                      // Check to see if this halo is already in the list (keep all sputtered/strayed halos as well) ...
-                      flag_continue=TRUE;
-                      if(halos[j_file_1%n_wrap][match_index[j_halo]].id>=0){
-                         for(k_halo=0;k_halo<halos_i[i_halo].n_bridges && flag_continue;k_halo++){
-                            if(bridges[k_halo].halo->id==halos[j_file_1%n_wrap][match_index[j_halo]].id)
-                               flag_continue=FALSE;
-                         }
-                      }
-                      // ... if not, add it
-                      if(flag_continue){
-                         bridges[halos_i[i_halo].n_bridges].score=match_score[match_index[j_halo]];
-                         bridges[halos_i[i_halo].n_bridges].halo =&(halos[j_file_1%n_wrap][match_index[j_halo]]);
-                         (halos_i[i_halo].n_bridges)++;
-                      }
-                      j_halo++;
-                   }
-                }
-             }
-             SID_log("Done.",SID_LOG_CLOSE);
-          }
-
-          // ... lastly, reorder the emerged halos by score, keep only the most immediate bridge descendants and finalize the list ...
-          SID_log("Re-ordering bridges...",SID_LOG_OPEN);
-          for(i_halo=0;i_halo<n_halos_i;i_halo++){
-             if((halos_i[i_halo].n_bridges)>1){ 
-
-                // We may need to remove several halos from the list.  This array will keep track of this.
-                bridge_keep=(int *)SID_malloc(sizeof(int)*halos_i[i_halo].n_bridges);
-
-                // Reorder the bridges by their score.  We make a temporary copy of the list 
-                //   to do this and initially set all bridges as halos to keep..
-                bridges=(bridge_info *)SID_calloc(sizeof(bridge_info)*(halos_i[i_halo].n_bridges));
-                for(j_halo=0;j_halo<halos_i[i_halo].n_bridges;j_halo++){
-                   bridge=&(halos_i[i_halo].bridges[j_halo]);
-                   memcpy(&(bridges[j_halo]),bridge,sizeof(bridge_info));
-                   match_score[j_halo]=bridge->score;
-                   bridge_keep[j_halo]=TRUE;
-                }
-                merge_sort((void *)match_score,(size_t)(halos_i[i_halo].n_bridges),&bridge_index,SID_INT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
-
-                // Remove any mutual descendants from the list
-                //   (since they have their own IDs, this is 
-                //    needed to avoid calling them emerged halos)
-                for(j_halo=0;j_halo<halos_i[i_halo].n_bridges;j_halo++){
-                   bridge = &(bridges[bridge_index[j_halo]]);
-                   tree_horizontal_info *current;
-                   // ... walk the tree upwards ...
-                   current=bridge->halo->descendant.halo;
-                   if(current!=NULL)
-                      k_file=current->file;
-                   l_file=k_file;
-                   while(current!=NULL && k_file>=l_file && k_file<MIN(n_files,i_file+(n_search+1))){
-                      for(k_halo=0;k_halo<halos_i[i_halo].n_bridges;k_halo++){
-                         bridge = &(bridges[bridge_index[k_halo]]);
-                         if(bridge->halo==current)
-                            bridge_keep[k_halo]=FALSE;
-                      }
-                      current=current->descendant.halo;
-                      l_file=k_file;
-                      if(current!=NULL)
-                         k_file =current->file;
-                   }
-                }
-
-                // Since we may have trimmed the list, recount the number remaining
-                n_list=halos_i[i_halo].n_bridges;
-                for(j_halo=n_list-1,halos_i[i_halo].n_bridges=0;j_halo>=0;j_halo--){
-                  if(bridge_keep[j_halo])
-                     halos_i[i_halo].n_bridges++;
-                }
-
-                // We've removed some halos and may not actually be a bridged halo anymore.  Clean-up if so.
-                if(halos_i[i_halo].n_bridges<1){
-                   halos_i[i_halo].type&=(~TREE_CASE_BRIDGED);
-                   SID_free(SID_FARG halos_i[i_halo].bridges);
-                   halos_i[i_halo].n_bridges=0;
-                }
-                else{
-                   halos_i[i_halo].type|=TREE_CASE_BRIDGED;
-                   n_bridged++;
-
-                   // Because we've overallocated previously, reallocate the bridge list here to save RAM.
-                   SID_free(SID_FARG halos_i[i_halo].bridges);
-                   (halos_i[i_halo].bridges)=(bridge_info *)SID_calloc(sizeof(bridge_info)*(halos_i[i_halo].n_bridges));
-
-                   // Copy the sorted temporary list to the permanent list.
-                   for(j_halo=n_list-1,l_halo=0;j_halo>=0;j_halo--){
-                      if(bridge_keep[j_halo]){
-                         memcpy(&(halos_i[i_halo].bridges[l_halo]),&(bridges[bridge_index[j_halo]]),sizeof(bridge_info));
-                         if(halos[(bridges[bridge_index[j_halo]].halo->file)%n_wrap][bridges[bridge_index[j_halo]].halo->index].bridge_backmatch.halo==NULL){
-                            halos[(bridges[bridge_index[j_halo]].halo->file)%n_wrap][bridges[bridge_index[j_halo]].halo->index].bridge_backmatch.halo =&(halos_i[i_halo]);
-                            halos[(bridges[bridge_index[j_halo]].halo->file)%n_wrap][bridges[bridge_index[j_halo]].halo->index].bridge_backmatch.score=match_score[bridge_index[j_halo]];
-                         }
-                         l_halo++;
-                      }
-                   }
-                }
-
-                // Clean-up
-                SID_free(SID_FARG bridge_keep);
-                SID_free(SID_FARG bridge_index);
-                SID_free(SID_FARG bridges);
-             }
-             // This halo is not a bridge.  Perform cleaning.
-             else{
-                halos_i[i_halo].type&=(~TREE_CASE_BRIDGED);
-                SID_free(SID_FARG halos_i[i_halo].bridges);
-                halos_i[i_halo].n_bridges=0;
-             }
-          }
-          SID_log("Done.",SID_LOG_CLOSE);
-          SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
-          SID_log("Done.",SID_LOG_CLOSE);
-       }
+       if(flag_fix_bridges)
+          identify_bridges(halos,
+                           halos_i,
+                           n_halos_i,
+                           match_id,
+                           match_score,
+                           match_index,
+                           n_particles,
+                           i_file,
+                           i_read,
+                           i_read_start,
+                           i_read_stop,
+                           i_read_step,
+                           n_search,
+                           n_wrap,
+                           n_files,
+                           filename_root_matches,
+                           flag_match_subgroups);
 
        // Perform forward-matching
-       SID_log("Constructing progenitors from forward-matching...",SID_LOG_OPEN|SID_LOG_TIMER);
-       for(j_file_1  =i_file,
-             j_file_2=i_file+1,
-             j_read_1=i_read,
-             j_read_2=i_read+i_read_step,
-             i_search=0;
-           j_read_2<=i_read_stop && i_search<n_search;
-           j_file_2++,
-             j_read_2+=i_read_step,
-             i_search++){
-
-          // Read forward-matching
-          read_matches(filename_root_matches,
-                       j_read_1,j_read_2,
-                       flag_match_subgroups,
-                       &n_halos_1_matches,
-                       &n_halos_2_matches,
-                       n_particles,
-                       NULL,
-                       n_subgroups_group[j_file_1%n_wrap],
-                       n_subgroups_group[j_file_2%n_wrap],
-                       match_id,
-                       match_score,
-                       match_index);
-
-          // Store halo sizes
-          if(!flag_fix_bridges){
-             if(i_search==0){
-                for(i_halo=0;i_halo<n_halos_1_matches;i_halo++)
-                   halos[i_file%n_wrap][i_halo].n_particles=n_particles[i_halo];
-             }
-          }
- 
-          // Perform matching for all the halos in i_file_1.  This loop should deal completely with
-          //   all simple matches and dropped halos.  It also identifies matches to bridges, which
-          //   require special treatment in the loop that follows (to look for matches to emergent halos)
-          //   and at the end of the loop over j_read/i_search to finalize those not matched to emerged halos.
-          for(i_halo=0;i_halo<n_halos_1_matches;i_halo++){
-             // If this halo hasn't been processed during earlier searches ...
-             if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_UNPROCESSED)){
-                my_descendant_index=match_id[i_halo];
-                // If this halo has been matched to something in i_file_2 ...
-                if(my_descendant_index>=0){
-                   if(my_descendant_index<n_halos_2_matches)
-                      set_halo_and_descendant(halos,
-                                              i_file,
-                                              i_halo,
-                                              j_file_2,
-                                              my_descendant_index,
-                                              match_score[i_halo],
-                                              &max_id,
-                                              n_wrap);
-                   else
-                      SID_log_warning("descendant ID out of bounds (ie. %d>%d) in snapshot %03d -> snapshot %03d %sgroup matching for i_halo=%d.",
-                                      SID_WARNING_DEFAULT,my_descendant_index,n_halos_2_matches-1,j_read_1,j_read_2,group_text_prefix,i_halo);
-                }
-             }
-          }
-
-          // Try to match halos-matched-to-bridges to the candidate emergent halos identified in the bridge-lists
-          for(i_halo=0,n_drop=0;i_halo<n_halos_1_matches;i_halo++){
-             if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED)){
-                // Loop over all the emergent halos identified with the bridge that i_halo has been matched to
-                if(halos_i[i_halo].bridge_forematch.halo==NULL)
-                  SID_trap_error("Bridge match not defined during emerged halo search.",ERROR_LOGIC);
-                bridges=halos[(halos_i[i_halo].bridge_forematch.halo->file)%n_wrap][halos_i[i_halo].bridge_forematch.halo->index].bridges;
-                if(bridges==NULL)
-                  SID_trap_error("Bridges not defined during emerged halo search.",ERROR_LOGIC);
-                n_list=halos[(halos_i[i_halo].bridge_forematch.halo->file)%n_wrap][halos_i[i_halo].bridge_forematch.halo->index].n_bridges;
-                for(k_halo=0;k_halo<n_list;k_halo++){
-                   if(bridges[k_halo].halo->file==j_file_2 && match_id[i_halo]==bridges[k_halo].halo->index){
-                      set_halo_and_descendant(halos,
-                                              i_file,
-                                              i_halo,
-                                              bridges[k_halo].halo->file,
-                                              bridges[k_halo].halo->index,
-                                              match_score[i_halo],
-                                              &max_id,
-                                              n_wrap);
-                   }
-                }
-             }
-          }
-       }
-       SID_log("Done.",SID_LOG_CLOSE);
+       construct_progenitors(halos,
+                             halos_i,
+                             n_subgroups_group,
+                             n_halos_i,
+                             match_id,
+                             match_score,
+                             match_index,
+                             n_particles,
+                             i_file,
+                             i_read,
+                             i_read_start,
+                             i_read_stop,
+                             i_read_step,
+                             n_search,
+                             n_wrap,
+                             n_files,
+                             flag_fix_bridges,
+                             &max_id,
+                             &n_halos_1_matches,
+                             &n_halos_2_matches,
+                             filename_root_matches,
+                             group_text_prefix,
+                             flag_match_subgroups);
       
        // Finalize matches to unprocessed halos ...
-       SID_log("Applying defaults to unprocessed halos...",SID_LOG_OPEN|SID_LOG_TIMER);
-       // ... first unprocessed matches to bridged halos (apply default behavior)
-       for(i_halo=0,n_drop=0;i_halo<n_halos_1_matches;i_halo++){
-          if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED)){
-             // The descendant info is already set.  Just increment it's progenitor counter and set this halo's info.
-             //   Leave the target flag untouched so we can later identify which BRIDGE_PROGENITORS were found
-             halos_i[i_halo].type|=(TREE_CASE_BRIDGE_FINALIZE|TREE_CASE_BRIDGE_DEFAULT);
-             set_halo_and_descendant(halos,
-                                     i_file,
-                                     i_halo,
-                                     halos_i[i_halo].bridge_forematch.halo->file,
-                                     halos_i[i_halo].bridge_forematch.halo->index,
-                                     halos_i[i_halo].bridge_forematch.score,
-                                     &max_id,
-                                     n_wrap);
-          }
-       }
-       // ... then assign flags for halos not successfully processed.  They must be strays.
-       for(i_halo=0;i_halo<n_halos_i;i_halo++){
-          if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_UNPROCESSED)){
-             halos_i[i_halo].type|=TREE_CASE_STRAYED;
-             halos_i[i_halo].type&=(~TREE_CASE_UNPROCESSED);
-          }
-       }
-       SID_log("Done.",SID_LOG_CLOSE);
+       apply_horizontal_tree_defaults(n_halos_1_matches,
+                                      n_halos_i,
+                                      halos,
+                                      halos_i,
+                                      i_file,
+                                      n_wrap,
+                                      &max_id);
  
        // Now that we have assigned all the IDs for the halos in the active snapshot,
-       //   we need to remove all descendants of the bridge from the lists of candidate emerged halos 
+       //   we need to remove all descendants of bridged halos from the lists of candidate emerged halos 
        //   to avoid incorrectly matching to the main progenitor's descendants later-on when when 
        //   we are scaning emerged halo candidates.  Real matches to bridges are dealt-with
        //   when halos marked TREE_CASE_BRIDGE_DEFAULT are processed. 
-       SID_log("Removing main progenitors from candidate emerged halo lists...",SID_LOG_OPEN|SID_LOG_TIMER);
-       for(i_halo=0;i_halo<n_halos_i;i_halo++){
-          // Check all bridged halos ...
-          if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGED)){
-             n_list=halos_i[i_halo].n_bridges;
-             // ... and check all of their descendants ...
-             tree_horizontal_info *current;
-             current=halos_i[i_halo].descendant.halo;
-             if(current!=NULL)
-                k_file=current->file;
-             l_file=k_file;
-             while(current!=NULL && k_file>=l_file && k_file<MIN(n_files,i_file+(n_search+1))){
-                for(j_halo=0;j_halo<halos_i[i_halo].n_bridges;){
-                   bridge=&(halos_i[i_halo].bridges[j_halo]);
-                   if(bridge->halo==current){
-                      // Remove halos by decrementing the counter ...
-                      halos_i[i_halo].n_bridges--;
-                      // ... and sliding all the halos down ...
-                      for(k_halo=j_halo;k_halo<halos_i[i_halo].n_bridges;k_halo++)
-                         memcpy(&(halos_i[i_halo].bridges[k_halo]),&(halos_i[i_halo].bridges[k_halo+1]),sizeof(bridge_info));
-                   }
-                   else
-                     j_halo++; // We only need to increment the counter if we don't find a match
-                }
-                current=current->descendant.halo;
-                l_file=k_file;
-                if(current!=NULL)
-                   k_file =current->file;
-             }
-
-             // Since we may have removed items, we might not have a bridged halo any more.
-             if(halos_i[i_halo].n_bridges<1){
-                halos_i[i_halo].type&=(~TREE_CASE_BRIDGED);
-                SID_free(SID_FARG halos_i[i_halo].bridges);
-                halos_i[i_halo].n_bridges=0;
-             }
-             // If this halo is still bridged, label the halos in the remaining back-match list as candidate emerged halos
-             else{
-                for(j_halo=0;j_halo<halos_i[i_halo].n_bridges;j_halo++){
-                   bridge = &(halos_i[i_halo].bridges[j_halo]);
-                   bridge->halo->type|=TREE_CASE_EMERGED_CANDIDATE;
-                }
-             }
-          }
-       }
-       SID_log("Done.",SID_LOG_CLOSE);
+       clean_emerged_halo_list(halos_i,
+                               n_halos_i,
+                               i_file,
+                               n_search,
+                               n_files);
 
        // This has to be written right after a snapshot is read and processed (because it needs all forward scan information), 
        //    so it is separate from the rest of the log output code.
-       SID_log("Writing candidate emerged halo information...",SID_LOG_OPEN|SID_LOG_TIMER);
-       sprintf(filename_output_dir_horizontal,      "%s/horizontal",   filename_output_dir);
-       sprintf(filename_output_dir_horizontal_cases,"%s/special_cases",filename_output_dir_horizontal);
-       mkdir(filename_output_dir,                   02755);
-       mkdir(filename_output_dir_horizontal,        02755);
-       mkdir(filename_output_dir_horizontal_cases,  02755);
-       strcpy(filename_output_file_root,filename_output_dir);
-       strip_path(filename_output_file_root);
-       sprintf(filename_matching_out,"%s/%s.%sgroups_emerged_candidates_%d",filename_output_dir_horizontal_cases,filename_output_file_root,group_text_prefix,i_read);
-       fp_matching_out=fopen(filename_matching_out,"w");
-       i_column=1;
-       fprintf(fp_matching_out,"# (%02d): Bridge number\n",                    i_column++);
-       fprintf(fp_matching_out,"# (%02d): Halo file\n",                        i_column++);
-       fprintf(fp_matching_out,"# (%02d): Halo index\n",                       i_column++);
-       fprintf(fp_matching_out,"# (%02d): Halo ID\n",                          i_column++);
-       fprintf(fp_matching_out,"# (%02d): Tree ID\n",                          i_column++);
-       fprintf(fp_matching_out,"# (%02d): Descendant file\n",                  i_column++);
-       fprintf(fp_matching_out,"# (%02d): Descendant index\n",                 i_column++);
-       fprintf(fp_matching_out,"# (%02d): Descendant ID\n",                    i_column++);
-       fprintf(fp_matching_out,"# (%02d): Bridge file\n",                      i_column++);
-       fprintf(fp_matching_out,"# (%02d): Bridge index\n",                     i_column++);
-       fprintf(fp_matching_out,"# (%02d): Bridge ID\n",                        i_column++);
-       fprintf(fp_matching_out,"# (%02d): Descendant match score\n",           i_column++);
-       fprintf(fp_matching_out,"# (%02d): Bridge     match score\n",           i_column++);
-       fprintf(fp_matching_out,"# (%02d): Number of particles in halo\n",      i_column++);
-       fprintf(fp_matching_out,"# (%02d): Number of particles in descendant\n",i_column++);
-       fprintf(fp_matching_out,"# (%02d): Number of particles in bridge\n",    i_column++);
-       for(i_halo=0;i_halo<n_halos_i;i_halo++){
-          // Print bridge info
-          if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGED)){
-             for(j_halo=0;j_halo<halos_i[i_halo].n_bridges;j_halo++){
-                bridge=&(halos_i[i_halo].bridges[j_halo]);
-                fprintf(fp_matching_out,"%3d %7d   %4d %7d %7d   %4d %7d %7d   %4d %7d %7d   %10.4f %10.4f   %7d %7d %7d\n",
-                        j_halo,
-                        i_read,
-                        halos_i[i_halo].tree_id,
-                        i_halo,
-                        halos_i[i_halo].id,
-                        set_match_snapshot(&(halos_i[i_halo].descendant)),
-                        set_match_index(&(halos_i[i_halo].descendant)),
-                        set_match_id(&(halos_i[i_halo].descendant)),
-                        set_match_snapshot(bridge),
-                        set_match_index(bridge),
-                        set_match_id(bridge),
-                        set_match_score(&(halos_i[i_halo].descendant)),
-                        set_match_score(bridge),
-                        halos_i[i_halo].n_particles,
-                        set_match_n_particles(&(halos_i[i_halo].descendant)),
-                        set_match_n_particles(bridge));
-             }
-          }
-       }
-       fclose(fp_matching_out);
-       SID_log("Done.",SID_LOG_CLOSE);
+       write_trees_horizontal_emerged_candidates(i_read,n_halos_i,halos_i,group_text_prefix,filename_output_dir,j_file==1);
 
        // Report some statistics
        //   n.b.: This is only an estimate in some cases, since subsequent snapshots may alter this snapshot.  
-       //         See the written log file for the most accurate numbers.
-       compute_trees_horizontal_stats(halos_i,n_halos_i,n_halos_max,&stats,TRUE);
-       SID_log("Results (estimates which may change with continued processing):",SID_LOG_OPEN);
-       SID_log("# of halos                  =%-8d",SID_LOG_COMMENT,stats.n_halos);
-       SID_log("# of simple matches         =%-8d (%d mergers)",SID_LOG_COMMENT,stats.n_simple,stats.n_mergers);
-       if(stats.n_strayed>0)
-          SID_log("# of strayed halos          =%-8d (largest=%d particles)",SID_LOG_COMMENT,stats.n_strayed,stats.max_strayed_size);
-       else
-          SID_log("# of strayed halos          =%-8d",SID_LOG_COMMENT,stats.n_strayed);
-       if(stats.n_sputtered>0)
-          SID_log("# of sputtering halos       =%-8d (largest=%d particles)",SID_LOG_COMMENT,stats.n_sputtered,stats.max_sputtered_size);
-       else
-          SID_log("# of sputtering halos       =%-8d",SID_LOG_COMMENT,stats.n_sputtered);
-       if(stats.n_dropped>0)
-          SID_log("# of dropped halos          =%-8d (largest=%d particles)",SID_LOG_COMMENT,stats.n_dropped,stats.max_dropped_size);
-       else
-          SID_log("# of dropped halos          =%-8d",SID_LOG_COMMENT,stats.n_dropped);
-       SID_log("# of bridged halos          =%-8d",SID_LOG_COMMENT,stats.n_bridged);
-       SID_log("# of bridge progenitors     =%-8d",SID_LOG_COMMENT,stats.n_bridge_progenitors);
-       if(stats.n_emerged_progenitors>0)
-          SID_log("# of emerged progenitors    =%-8d (largest=%d particles)",SID_LOG_COMMENT,stats.n_emerged_progenitors,stats.max_emerged_progenitor_size);
-       else
-          SID_log("# of emerged progenitors    =%-8d",SID_LOG_COMMENT,stats.n_emerged_progenitors);      
-       SID_log("",SID_LOG_CLOSE|SID_LOG_NOPRINT);
-      
-       // Update things changed in this k_match iteration
+       //         See the final written log.txt file for accurate numbers.
+       write_trees_horizontal_report(n_halos_i,n_halos_max,halos_i);
+
+       // Update the max_id variables
        switch(k_match){
           case 0:
             max_id_subgroup=max_id;
@@ -968,21 +368,23 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
        SID_log("Done.",SID_LOG_CLOSE);
     } // k_match
     
-    // Write tree info once a few files have been processed
-    //   and no more dropped groups need to be given ids
+    // Write trees once a few files have been processed
+    //   and no more dropped groups etc. need to be given ids
     if(j_file>n_search){
        check_for_fragmented_halos(0,subgroups,n_subgroups[l_write],i_write,j_write,n_wrap);
        check_for_fragmented_halos(1,groups,   n_groups[l_write],   i_write,j_write,n_wrap);
        write_trees_horizontal((void **)groups, 
                               (void **)subgroups,
-                              n_groups[l_write],   n_groups_max,   0,
-                              n_subgroups[l_write],n_subgroups_max,0,
+                              n_groups[l_write],   n_groups_max,   
+                              n_subgroups[l_write],n_subgroups_max,
                               n_subgroups_group,
                               max_tree_id_subgroup,
                               max_tree_id_group,
                               i_write,
                               j_write,
                               l_write,
+                              i_read_step,
+                              n_search,
                               n_wrap,
                               i_file_start,
                               filename_cat_root_in,
@@ -1004,14 +406,16 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
      check_for_fragmented_halos(1,groups,   n_groups[l_write],   i_write,j_write,n_wrap);
      write_trees_horizontal((void **)groups,   
                             (void **)subgroups,
-                            n_groups[l_write],   n_groups_max,   0,
-                            n_subgroups[l_write],n_subgroups_max,0,
+                            n_groups[l_write],   n_groups_max,   
+                            n_subgroups[l_write],n_subgroups_max,
                             n_subgroups_group,
                             max_tree_id_subgroup,
                             max_tree_id_group,
                             i_write,
                             j_write,
                             l_write,
+                            i_read_step,
+                            n_search,
                             n_wrap,
                             i_file_start,
                             filename_cat_root_in,

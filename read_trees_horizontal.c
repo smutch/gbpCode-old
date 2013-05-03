@@ -11,7 +11,6 @@
 void read_trees_horizontal(void **groups_in,   int *n_groups_in,
                            void **subgroups_in,int *n_subgroups_in,
                            int   *n_subgroups_group,
-                           int   *n_progenitors_max_in,
                            int   *n_trees_subgroup_in,
                            int   *n_trees_group_in,
                            int    i_file, // tree snapshot index
@@ -50,18 +49,24 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
    sprintf(filename_output_dir_horizontal,      "%s/horizontal",filename_output_dir);
    sprintf(filename_output_dir_horizontal_trees,"%s/trees",     filename_output_dir_horizontal);
    if(flag_read_extended)
-      sprintf(filename_in,"%s/%s.trees_horizontal_%d_tmp",filename_output_dir_horizontal_trees,filename_output_file_root,i_read);
+      sprintf(filename_in,"%s/horizontal_trees_tmp_%03d.dat",filename_output_dir_horizontal_trees,i_read);
    else
-      sprintf(filename_in,"%s/%s.trees_horizontal_%d",filename_output_dir_horizontal_trees,filename_output_file_root,i_read);
+      sprintf(filename_in,"%s/horizontal_trees_%03d.dat",filename_output_dir_horizontal_trees,i_read);
    SID_fopen(filename_in,"r",&fp_in);
 
    // Read header
-   SID_fread_all(n_groups_in,         sizeof(int),1,&fp_in);
-   SID_fread_all(n_subgroups_in,      sizeof(int),1,&fp_in);
-   SID_fread_all(n_progenitors_max_in,sizeof(int),1,&fp_in);
-   SID_fread_all(n_trees_subgroup_in, sizeof(int),1,&fp_in);
-   SID_fread_all(n_trees_group_in,    sizeof(int),1,&fp_in);
-
+   int n_step_in;
+   int n_search_in;
+   int n_groups_max_in;
+   int n_subgroups_max_in;
+   SID_fread_all(&n_step_in,         sizeof(int),1,&fp_in);
+   SID_fread_all(&n_search_in,       sizeof(int),1,&fp_in);
+   SID_fread_all(n_groups_in,        sizeof(int),1,&fp_in);
+   SID_fread_all(n_subgroups_in,     sizeof(int),1,&fp_in);
+   SID_fread_all(&n_groups_max_in,   sizeof(int),1,&fp_in);
+   SID_fread_all(&n_subgroups_max_in,sizeof(int),1,&fp_in);
+   SID_fread_all(n_trees_subgroup_in,sizeof(int),1,&fp_in);
+   SID_fread_all(n_trees_group_in,   sizeof(int),1,&fp_in);
    if(flag_store_extended){
       groups_extended       =(tree_horizontal_read_info  *)groups_in[i_file%n_wrap];
       subgroups_extended    =(tree_horizontal_read_info  *)subgroups_in[i_file%n_wrap];
@@ -94,7 +99,6 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
       if(group_type<=0) 
          SID_trap_error("Invalid match type (%d) for i_group=%d",ERROR_LOGIC,
                         group_type,i_group);
-//if(group_index<0 && group_file_offset>=0) fprintf(stderr,"!!! group index=%d offset=%d\n",group_index,group_file_offset);
       if(flag_store_extended){
          groups_extended[i_group].id           =group_id;
          groups_extended[i_group].type         =group_type;
@@ -170,7 +174,6 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
          SID_fread_all(&subgroup_tree_id,      sizeof(int),1,&fp_in);
          SID_fread_all(&subgroup_file_offset,  sizeof(int),1,&fp_in);
          SID_fread_all(&subgroup_index,        sizeof(int),1,&fp_in);
-//if(subgroup_index<0 && subgroup_file_offset>=0) fprintf(stderr,"!!! subgroup index=%d offset=%d\n",subgroup_index,subgroup_file_offset);
          if(subgroup_type<=0) 
             SID_trap_error("Invalid match type (%d) for i_group,j_subgroup,i_subgroup=%d,%d,%d",ERROR_LOGIC,
                            subgroup_type,i_group,j_subgroup,i_subgroup);
@@ -202,16 +205,14 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
             // Add this substructure to it's group's link list of substructures.  This
             //   list is used to keep track of ghost halos and is needed when the trees
             //   are written for computing halo indices.
-            if(subgroup_file_offset<=1){ // Other halos will be dealt with when we create the ghosts
-               if(subgroup_file_offset>0 && subgroup_index>=0)
-                  add_substructure_to_horizontal_tree_group(&(groups_ghost[i_group]),
-                                                            &(subgroups_ghost_all[(i_file+subgroup_file_offset)%n_wrap][subgroup_index]),
-                                                            &(subgroups_ghost[i_subgroup]));
-               else
-                  add_substructure_to_horizontal_tree_group(&(groups_ghost[i_group]),
-                                                            NULL,
-                                                            &(subgroups_ghost[i_subgroup]));
-            }
+            if(subgroup_file_offset>0 && subgroup_index>=0)
+               add_substructure_to_horizontal_tree_group(&(groups_ghost[i_group]),
+                                                         &(subgroups_ghost_all[(i_file+subgroup_file_offset)%n_wrap][subgroup_index]),
+                                                         &(subgroups_ghost[i_subgroup]));
+            else
+               add_substructure_to_horizontal_tree_group(&(groups_ghost[i_group]),
+                                                         NULL,
+                                                         &(subgroups_ghost[i_subgroup]));
          }
          if(flag_read_extended){
             int   subgroup_n_particles;
@@ -245,6 +246,14 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
             }
          }
       }
+   }
+   for(;i_group<n_groups_max_in;i_group++){
+      if(flag_store_extended)    groups_extended[i_group].type=TREE_CASE_INVALID;
+      else if(flag_store_ghosts) groups_ghost[i_group].type   =TREE_CASE_INVALID;
+   }
+   for(;i_subgroup<n_subgroups_max_in;i_subgroup++){
+      if(flag_store_extended)    subgroups_extended[i_subgroup].type=TREE_CASE_INVALID;
+      else if(flag_store_ghosts) subgroups_ghost[i_subgroup].type   =TREE_CASE_INVALID;
    }
    SID_fclose(&fp_in);
    SID_log("Done.",SID_LOG_CLOSE);

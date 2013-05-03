@@ -10,14 +10,16 @@
 
 void write_trees_horizontal(void  **groups_in, 
                             void  **subgroups_in,
-                            int     n_groups,    int n_groups_max,   int n_groups_ghosts,
-                            int     n_subgroups, int n_subgroups_max,int n_subgroups_ghosts,
+                            int     n_groups,    int n_groups_max,   
+                            int     n_subgroups, int n_subgroups_max,
                             int   **n_subgroups_group,
                             int     max_tree_id_subgroup,
                             int     max_tree_id_group,
                             int     i_write,
                             int     j_write,
                             int     l_write,
+                            int     n_step,
+                            int     n_search,
                             int     n_wrap,
                             int     i_file_start,
                             char   *filename_cat_root_in,
@@ -94,7 +96,6 @@ void write_trees_horizontal(void  **groups_in,
    int                         desc_id;
 
    SID_log("Writing results for snapshot #%d...",SID_LOG_OPEN|SID_LOG_TIMER,j_write);
-//fprintf(stderr,"write_trees_horizontal: i_write=%d j_write=%d l_write=%d\n",i_write,j_write,l_write);
 
    // Interpret the mode
    int flag_write_allcases;
@@ -105,14 +106,13 @@ void write_trees_horizontal(void  **groups_in,
    flag_write_nocases =check_mode_for_flag(mode,TREE_HORIZONTAL_WRITE_NOCASES);
    flag_write_extended=check_mode_for_flag(mode,TREE_HORIZONTAL_WRITE_EXTENDED);
    flag_write_ghosts  =check_mode_for_flag(mode,TREE_HORIZONTAL_WRITE_GHOSTS);
+   if(flag_write_extended && flag_write_ghosts) SID_trap_error("Incompatible mode flags set in write_trees_horizontal.",ERROR_LOGIC);
    if(flag_write_ghosts){
       flag_write_nocases =TRUE;
       flag_write_allcases=FALSE;
    }
 
-   if(flag_write_extended && flag_write_ghosts) SID_trap_error("Incompatible mode flags set in write_trees_horizontal.",ERROR_LOGIC);
-
-   // Set filename and open file
+   // Set filenames and open file for writing
    sprintf(filename_output_dir_horizontal,      "%s/horizontal",   filename_output_dir);
    sprintf(filename_output_dir_horizontal_trees,"%s/trees",        filename_output_dir_horizontal);
    sprintf(filename_output_dir_horizontal_cases,"%s/special_cases",filename_output_dir_horizontal);
@@ -123,25 +123,24 @@ void write_trees_horizontal(void  **groups_in,
    strcpy(filename_output_file_root,filename_output_dir);
    strip_path(filename_output_file_root);
    if(flag_write_extended)
-      sprintf(filename_matches_out,"%s/%s.trees_horizontal_%d_tmp",filename_output_dir_horizontal_trees,filename_output_file_root,j_write);
+      sprintf(filename_matches_out,"%s/horizontal_trees_tmp_%03d.dat",filename_output_dir_horizontal_trees,j_write);
    else if(flag_write_ghosts)
-      sprintf(filename_matches_out,"%s/%s.trees_horizontal_ghosts_%d",filename_output_dir_horizontal_trees,filename_output_file_root,j_write);
+      sprintf(filename_matches_out,"%s/horizontal_trees_ghosts_%03d.dat",filename_output_dir_horizontal_trees,j_write);
    else
-      sprintf(filename_matches_out,"%s/%s.trees_horizontal_%d",filename_output_dir_horizontal_trees,filename_output_file_root,j_write);
+      sprintf(filename_matches_out,"%s/horizontal_trees_%03d.dat",filename_output_dir_horizontal_trees,j_write);
    SID_fopen(filename_matches_out,"w",&fp_matches_out);
 
    // Write the header information for the horizontal trees files
-   int n_groups_header;
-   int n_subgroups_header;
    int n_halos_max_header;
-   n_groups_header   =n_groups+n_groups_ghosts;
-   n_subgroups_header=n_subgroups+n_subgroups_ghosts;
    n_halos_max_header=MAX(n_subgroups_max,n_groups_max);
-   SID_fwrite(&(n_groups_header),     sizeof(int),1,&fp_matches_out);
-   SID_fwrite(&(n_subgroups_header),  sizeof(int),1,&fp_matches_out);
-   SID_fwrite(&(n_halos_max_header),  sizeof(int),1,&fp_matches_out);
-   SID_fwrite(&(max_tree_id_subgroup),sizeof(int),1,&fp_matches_out);
-   SID_fwrite(&(max_tree_id_group),   sizeof(int),1,&fp_matches_out);
+   SID_fwrite(&n_step,              sizeof(int),1,&fp_matches_out);
+   SID_fwrite(&n_search,            sizeof(int),1,&fp_matches_out);
+   SID_fwrite(&n_groups,            sizeof(int),1,&fp_matches_out);
+   SID_fwrite(&n_subgroups,         sizeof(int),1,&fp_matches_out);
+   SID_fwrite(&n_groups_max,        sizeof(int),1,&fp_matches_out);
+   SID_fwrite(&n_subgroups_max,     sizeof(int),1,&fp_matches_out);
+   SID_fwrite(&max_tree_id_subgroup,sizeof(int),1,&fp_matches_out);
+   SID_fwrite(&max_tree_id_group,   sizeof(int),1,&fp_matches_out);
 
    // Write the horizontal tree files
    if(flag_write_ghosts){
@@ -150,7 +149,7 @@ void write_trees_horizontal(void  **groups_in,
       int j_group;
       tree_horizontal_ghost_group_info *groups;
       groups=(tree_horizontal_ghost_group_info *)groups_in[i_write%n_wrap];
-      for(i_group=0,i_subgroup=0;i_group<n_groups_header;i_group++){
+      for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
          tree_horizontal_ghost_subgroup_info *current;
          current=groups[i_group].first_substructure;
          while(current!=NULL){
@@ -166,7 +165,7 @@ void write_trees_horizontal(void  **groups_in,
       // Loop over the groups to perform the write
       int n_subgroups_written=0;
       int n_ghosts_written   =0;
-      for(i_group=0,i_subgroup=0;i_group<n_groups_header;i_group++){
+      for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
          int   group_id;
          int   group_type;
          int   group_descendant_id;
@@ -178,7 +177,6 @@ void write_trees_horizontal(void  **groups_in,
          group_descendant_id=groups[i_group].descendant_id;
          group_tree_id      =groups[i_group].tree_id;
          group_file_index   =groups[i_group].halo_index;
-//fprintf(stderr,"testA %d %d\n",i_group,n_groups);
 
          // Write group information to the horizontal tree files
          SID_fwrite(&group_id,           sizeof(int),1,&fp_matches_out);
@@ -187,7 +185,6 @@ void write_trees_horizontal(void  **groups_in,
          SID_fwrite(&group_tree_id,      sizeof(int),1,&fp_matches_out);
          SID_fwrite(&group_file_index,   sizeof(int),1,&fp_matches_out);
          SID_fwrite(&(groups[i_group].n_subgroups),sizeof(int),1,&fp_matches_out);
-//if(i_group>=n_groups) fprintf(stderr,"ghost_group %7d %d\n",i_group,groups[i_group].n_subgroups);
  
          // Write the substructure information
          tree_horizontal_ghost_subgroup_info *current;
@@ -195,12 +192,12 @@ void write_trees_horizontal(void  **groups_in,
          int n_ghosts_i   =0;
          current=groups[i_group].first_substructure;
          while(current!=NULL){
-            int   subgroup_id;
-            int   subgroup_type;
-            int   subgroup_descendant_id;
-            int   subgroup_tree_id;
-            int   subgroup_file_offset;
-            int   subgroup_file_index;
+            int subgroup_id;
+            int subgroup_type;
+            int subgroup_descendant_id;
+            int subgroup_tree_id;
+            int subgroup_file_offset;
+            int subgroup_file_index;
             subgroup_id           =current->id;
             subgroup_type         =current->type;
             subgroup_descendant_id=current->descendant_id;
@@ -220,16 +217,16 @@ void write_trees_horizontal(void  **groups_in,
             current=current->next_substructure;
          }
          n_subgroups_written+=n_subgroups_i;
-         n_ghosts_written   +=n_ghosts_i;
-         //if(n_subgroups_i!=(groups[i_group].n_subgroups))
-         //   SID_log_warning("Substructure counts don't make sense in write_trees_horizontal (ie. %d!=%d for i_group=%d of %d; n_ghosts_written=%d).",
-         //                  SID_WARNING_DEFAULT,
-         //                  n_subgroups_i,groups[i_group].n_subgroups,i_group,n_groups,n_ghosts_i);
+         if(n_subgroups_i!=groups[i_group].n_subgroups)
+            SID_trap_error("The number of substructures written for i_group=%d does not match the given count (ie. %d!=%d).",
+                           ERROR_LOGIC,
+                           i_group,n_subgroups_i,groups[i_group].n_subgroups);
+         n_ghosts_written+=n_ghosts_i;
       }
-      //if(n_subgroups_written!=n_subgroups_header)
-      //   SID_log_warning("The number of substructures written do not match the given substructure counts (ie. %d!=%d+%d=%d; n_ghosts_written=%d).",
-      //                  SID_WARNING_DEFAULT,
-      //                  n_subgroups_written,n_subgroups,n_subgroups_ghosts,n_subgroups_header,n_ghosts_written);
+      if(n_subgroups_written!=n_subgroups)
+         SID_trap_error("The number of substructures written do not match the given substructure counts (ie. %d!=%d; n_ghosts_written=%d n_groups=%d).",
+                        ERROR_LOGIC,
+                        n_subgroups_written,n_subgroups,n_ghosts_written,n_groups);
    }
    else{
       if(n_groups>0){
@@ -396,6 +393,31 @@ void write_trees_horizontal(void  **groups_in,
    SID_fclose(&fp_matches_out);
 
    // Write statistics to ascii files
+   if(!flag_write_ghosts){
+      for(i_k_match=0;i_k_match<n_k_match;i_k_match++){
+         // Initialize a bunch of stuff depending on whether
+         //   we are processing groups or subgroups
+         switch(i_k_match){
+            case 0:
+               compute_trees_horizontal_stats((void *)(subgroups_in[i_write%n_wrap]),n_subgroups,n_subgroups_max,&stats,flag_write_allcases);
+               break;
+            case 1:
+               compute_trees_horizontal_stats((void *)(groups_in[i_write%n_wrap]),   n_groups,   n_groups_max,   &stats,flag_write_allcases);
+               break;
+         }
+
+         // Write snapshot summary statistics
+         if(flag_write_extended)
+            sprintf(filename_log,"%s/log_preprop.txt",filename_output_dir_horizontal);
+         else
+            sprintf(filename_log,"%s/log.txt",filename_output_dir_horizontal);
+         if(l_write==0 && i_k_match==0)
+            write_trees_horizontal_log_file(filename_log,l_write,j_write,i_k_match,n_k_match,&stats,a_list,cosmo,TRUE);
+         else
+            write_trees_horizontal_log_file(filename_log,l_write,j_write,i_k_match,n_k_match,&stats,a_list,cosmo,FALSE);
+      }
+   }
+
    if(flag_write_allcases){
       tree_horizontal_info  *halos;
       tree_horizontal_info **halos_all;
@@ -404,14 +426,12 @@ void write_trees_horizontal(void  **groups_in,
          //   we are processing groups or subgroups
          switch(i_k_match){
             case 0:
-               compute_trees_horizontal_stats((void *)(subgroups_in[i_write%n_wrap]),n_subgroups,n_subgroups_max,&stats,flag_write_allcases);
                halos    =(tree_horizontal_info  *)subgroups_in[i_write%n_wrap];
                halos_all=(tree_horizontal_info **)subgroups_in;
                n_halos  =n_subgroups;
                sprintf(group_text_prefix,"sub");
                break;
             case 1:
-               compute_trees_horizontal_stats((void *)(groups_in[i_write%n_wrap]),   n_groups,   n_groups_max,   &stats,flag_write_allcases);
                halos    =(tree_horizontal_info  *)groups_in[i_write%n_wrap];
                halos_all=(tree_horizontal_info **)groups_in;
                n_halos  =n_groups;
@@ -419,25 +439,15 @@ void write_trees_horizontal(void  **groups_in,
                break;
          }
 
-         // Write snapshot summary statistics
-         if(flag_write_allcases)
-            sprintf(filename_log,"%s/%s.log_preclean",filename_output_dir_horizontal,filename_output_file_root);
-         else
-            sprintf(filename_log,"%s/%s.log",filename_output_dir_horizontal,filename_output_file_root);
-         if(l_write==0 && i_k_match==0)
-            write_horizontal_trees_log_file(filename_log,l_write,j_write,i_k_match,n_k_match,&stats,a_list,cosmo,TRUE);
-         else
-            write_horizontal_trees_log_file(filename_log,l_write,j_write,i_k_match,n_k_match,&stats,a_list,cosmo,FALSE);
-
          // Write matching and special case information
-         sprintf(filename_matching_out,  "%s/%s.%sgroups_progenitors",   filename_output_dir_horizontal_cases,filename_output_file_root,group_text_prefix);
-         sprintf(filename_strayed_out,   "%s/%s.%sgroups_strays",        filename_output_dir_horizontal_cases,filename_output_file_root,group_text_prefix);
-         sprintf(filename_sputtered_out, "%s/%s.%sgroups_sputters",      filename_output_dir_horizontal_cases,filename_output_file_root,group_text_prefix);
-         sprintf(filename_dropped_out,   "%s/%s.%sgroups_drops",         filename_output_dir_horizontal_cases,filename_output_file_root,group_text_prefix);
-         sprintf(filename_bridged_out,   "%s/%s.%sgroups_bridges",       filename_output_dir_horizontal_cases,filename_output_file_root,group_text_prefix);
-         sprintf(filename_emerged_out,   "%s/%s.%sgroups_emerged",       filename_output_dir_horizontal_cases,filename_output_file_root,group_text_prefix);
-         sprintf(filename_mergers_out,   "%s/%s.%sgroups_mergers",       filename_output_dir_horizontal_cases,filename_output_file_root,group_text_prefix);
-         sprintf(filename_fragmented_out,"%s/%s.%sgroups_fragmented_new",filename_output_dir_horizontal_cases,filename_output_file_root,group_text_prefix);
+         sprintf(filename_matching_out,  "%s/%sgroup_progenitors.txt",   filename_output_dir_horizontal_cases,group_text_prefix);
+         sprintf(filename_strayed_out,   "%s/%sgroup_strays.txt",        filename_output_dir_horizontal_cases,group_text_prefix);
+         sprintf(filename_sputtered_out, "%s/%sgroup_sputters.txt",      filename_output_dir_horizontal_cases,group_text_prefix);
+         sprintf(filename_dropped_out,   "%s/%sgroup_drops.txt",         filename_output_dir_horizontal_cases,group_text_prefix);
+         sprintf(filename_bridged_out,   "%s/%sgroup_bridges.txt",       filename_output_dir_horizontal_cases,group_text_prefix);
+         sprintf(filename_emerged_out,   "%s/%sgroup_emerged.txt",       filename_output_dir_horizontal_cases,group_text_prefix);
+         sprintf(filename_mergers_out,   "%s/%sgroup_mergers.txt",       filename_output_dir_horizontal_cases,group_text_prefix);
+         sprintf(filename_fragmented_out,"%s/%sgroup_fragmented_new.txt",filename_output_dir_horizontal_cases,group_text_prefix);
          if(i_k_match==0 && l_write==0){
             fp_matching_out  =fopen(filename_matching_out,  "w");
             fp_strayed_out   =fopen(filename_strayed_out,   "w");
@@ -763,8 +773,8 @@ void write_trees_horizontal(void  **groups_in,
          }
 
          // Set filenames and open files
-         sprintf(filename_mergers_out,   "%s/%s.%sgroups_mergers",       filename_output_dir_horizontal_cases,filename_output_file_root,group_text_prefix);
-         sprintf(filename_fragmented_out,"%s/%s.%sgroups_fragmented_new",filename_output_dir_horizontal_cases,filename_output_file_root,group_text_prefix);
+         sprintf(filename_mergers_out,   "%s/%sgroup_mergers.txt",       filename_output_dir_horizontal_cases,group_text_prefix);
+         sprintf(filename_fragmented_out,"%s/%sgroup_fragmented_new.txt",filename_output_dir_horizontal_cases,group_text_prefix);
          if(i_k_match==0 && l_write==0){
             fp_mergers_out   =fopen(filename_mergers_out,   "w");
             fp_fragmented_out=fopen(filename_fragmented_out,"w");

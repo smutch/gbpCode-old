@@ -39,11 +39,6 @@ void compute_trees_horizontal_fragmented(int         *n_groups,
   //    walk the trees forward in time to propagate the TREE_CASE_FRAGMENTED_* flags.
   //    We will also change other flags (such as TREE_CASE_MERGER) as well.  This
   //    will require a rewrite of the horizontal tree files and of the log files.
-  SID_fp fp_in;
-  char   filename_in[MAX_FILENAME_LENGTH];
-  char   filename_out[MAX_FILENAME_LENGTH];
-  char   filename_output_dir_horizontal_trees[MAX_FILENAME_LENGTH];
-
   SID_log("Propagating fragmented halo information forward...",SID_LOG_OPEN|SID_LOG_TIMER);
   SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
 
@@ -66,13 +61,11 @@ void compute_trees_horizontal_fragmented(int         *n_groups,
      if(j_read<=i_read_stop){
         int n_groups_in;
         int n_subgroups_in;
-        int n_progenitors_max_in=0;
         int n_trees_subgroup_in =0;
         int n_trees_group_in    =0;
         read_trees_horizontal((void **)groups_read,   &n_groups_in,
                               (void **)subgroups_read,&n_subgroups_in,
                               n_subgroups_group[i_read%n_wrap],
-                              &n_progenitors_max_in,
                               &n_trees_subgroup_in,
                               &n_trees_group_in,
                               i_read,
@@ -94,20 +87,22 @@ void compute_trees_horizontal_fragmented(int         *n_groups,
         propagate_fragmented_halos(groups_read,   n_groups,
                                    subgroups_read,n_subgroups,
                                    n_subgroups_group,
-                                   i_write, // tree snapshot index
-                                   j_write,
+                                   i_write, // tree index
+                                   j_write, // actual snapshot number
                                    l_write,
                                    n_wrap);
         write_trees_horizontal((void **)groups_read,
                                (void **)subgroups_read,
-                               n_groups[l_write],   n_groups_max,   0,
-                               n_subgroups[l_write],n_subgroups_max,0,
+                               n_groups[l_write],   n_groups_max,   
+                               n_subgroups[l_write],n_subgroups_max,
                                n_subgroups_group,
                                max_tree_id_subgroup,
                                max_tree_id_group,
                                i_write,
                                j_write,
                                l_write,
+                               i_read_step,
+                               n_search,
                                n_wrap,
                                i_file_start,
                                NULL,

@@ -71,7 +71,7 @@ void write_trees_vertical(tree_info **trees,
   SID_log("Writing headers...",SID_LOG_OPEN);
   for(i_rank=0,i_write=0,i_tree=0,n_halos_written=0,n_trees_written=0,flag_write_init=TRUE;i_rank<SID.n_proc;i_rank++){
     if(SID.My_rank==i_rank){
-      sprintf(filename_out,"%s.%sgroup_trees.%d",filename_root_out,group_text_prefix,i_write);
+      sprintf(filename_out,"%s/%sgroup_trees_%03d.dat",filename_root_out,group_text_prefix,i_write);
       if(flag_write_init){
         SID_fopen(filename_out,"w",&fp_out);
         n_trees_file=tree_hi_file[i_write]-tree_lo_file[i_write]+1;
@@ -90,7 +90,7 @@ void write_trees_vertical(tree_info **trees,
           if(i_write<n_files){
             flag_write_init=TRUE;
             SID_fclose(&fp_out);
-            sprintf(filename_out,  "%s.%sgroup_trees.%d",filename_root_out,group_text_prefix,i_write);
+            sprintf(filename_out,  "%s/%sgroup_trees_%03d.dat",filename_root_out,group_text_prefix,i_write);
             SID_fopen(filename_out,"w",&fp_out);
             n_trees_file=tree_hi_file[i_write]-tree_lo_file[i_write]+1;
             SID_fwrite(&n_trees_file,           sizeof(int),1,&fp_out);
@@ -114,7 +114,7 @@ void write_trees_vertical(tree_info **trees,
   SID_log("Writing %d halos...",SID_LOG_OPEN,n_halos);
   for(i_rank=0,i_write=0,i_tree=0,n_halos_written=0,n_trees_written=0,flag_write_init=TRUE;i_rank<SID.n_proc;i_rank++){
     if(SID.My_rank==i_rank){
-      sprintf(filename_out,"%s.%sgroup_trees.%d",filename_root_out,group_text_prefix,i_write);
+      sprintf(filename_out,"%s/%sgroup_trees_%03d.dat",filename_root_out,group_text_prefix,i_write);
       SID_fopen(filename_out,"a",&fp_out);
       for(j_tree=0;j_tree<n_trees_local;i_tree++,j_tree++){
         n_halos_tree_written=0;
@@ -133,7 +133,7 @@ void write_trees_vertical(tree_info **trees,
           if(i_write<n_files){
             flag_write_init=TRUE;
             SID_fclose(&fp_out);
-            sprintf(filename_out,  "%s.%sgroup_trees.%d",filename_root_out,group_text_prefix,i_write);
+            sprintf(filename_out,  "%s/%sgroup_trees_%03d.dat",filename_root_out,group_text_prefix,i_write);
             SID_fopen(filename_out,"a",&fp_out);
             n_trees_file=tree_hi_file[i_write]-tree_lo_file[i_write]+1;
           }
