@@ -81,15 +81,15 @@ void write_match_results(char       *filename_out_dir,
   // Set filename and open file
   sprintf(filename_out_dir_snap,"%s/%s",filename_out_dir,filename_cat1);
   if(filename_out_dir!=NULL)
-     sprintf(filename_out,"%s/%s_%s_%s.%sgroup_matches",filename_out_dir_snap,filename_out_root,filename_cat1,filename_cat2,group_text_prefix);
+     sprintf(filename_out,"%s/%sgroup_matches_%s_%s.dat",filename_out_dir_snap,group_text_prefix,filename_cat1,filename_cat2);
   else
-     sprintf(filename_out,"%s_%s_%s.%sgroup_matches",filename_out_root,filename_cat1,filename_cat2,group_text_prefix);
+     sprintf(filename_out,"%s_%sgroup_matches_%s_%s.dat",filename_out_root,group_text_prefix,filename_cat1,filename_cat2);
 
   SID_log("Writing match results to {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_out);                 
 
   // Fetch halo counts ...
-  n_groups_1      =((int   *)ADaPS_fetch(plist1->data,"n_%sgroups_all_%s",     group_text_prefix,filename_cat1))[0];
-  n_groups_2      =((int   *)ADaPS_fetch(plist2->data,"n_%sgroups_all_%s",     group_text_prefix,filename_cat2))[0];
+  n_groups_1=((int *)ADaPS_fetch(plist1->data,"n_%sgroups_all_%s",group_text_prefix,filename_cat1))[0];
+  n_groups_2=((int *)ADaPS_fetch(plist2->data,"n_%sgroups_all_%s",group_text_prefix,filename_cat2))[0];
 
   // Write header.
   if(SID.I_am_Master){
@@ -150,8 +150,8 @@ void write_match_results(char       *filename_out_dir,
         if(SID.I_am_Master){
            // Sanity check
            for(i_buffer=0;i_buffer<n_buffer;i_buffer++){
-              if(buffer_int[i_buffer]<-1 || buffer_int[i_buffer]>=n_groups_1)
-                 SID_trap_error("Illegal match_id result (%d) for group No. %d.",ERROR_LOGIC,buffer_int[i_buffer],i_group+i_buffer);
+              if(buffer_int[i_buffer]<-1 || buffer_int[i_buffer]>=n_groups_2)
+                 SID_trap_error("Illegal match_id result (%d) for group No. %d.  There are %d groups in the target catalog.",ERROR_LOGIC,buffer_int[i_buffer],i_group+i_buffer,n_groups_2);
            }
            // Write the buffer
            fwrite(buffer_int,sizeof(int),(size_t)n_buffer,fp_out);

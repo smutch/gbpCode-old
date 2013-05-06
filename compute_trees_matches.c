@@ -59,9 +59,9 @@ void check_for_tree_matches_local(char *filename_root_out,int i_read_start,int i
                     break;
                  }
                  if(filename_out_dir!=NULL)
-                    sprintf(filename_out,"%s/%s_%s_%s.%sgroup_matches",filename_out_dir_snap,filename_out_name,filename_cat1_order,filename_cat2_order,group_text_prefix);
+                    sprintf(filename_out,"%s/%sgroup_matches_%s_%s.dat",filename_out_dir_snap,group_text_prefix,filename_cat1_order,filename_cat2_order);
                  else
-                    sprintf(filename_out,"%s_%s_%s.%sgroup_matches",filename_out_name,filename_cat1_order,filename_cat2_order,group_text_prefix);
+                    sprintf(filename_out,"%s_%sgroup_matches_%s_%s.dat",filename_out_name,    group_text_prefix,filename_cat1_order,filename_cat2_order);
                  if((fp_test=fopen(filename_out,"r"))!=NULL)
                     fclose(fp_test);
                  else{
@@ -90,7 +90,7 @@ void compute_trees_matches(char   *filename_root_in,
   char        filename_out_dir[256];
   char        filename_out_name[256];
   FILE       *fp_test;
-  SID_fp      fp_out;
+  FILE       *fp_out;
   SID_fp      fp_in;
   int         i_read,k_read,l_read;
   int         flag_go;
@@ -173,7 +173,7 @@ void compute_trees_matches(char   *filename_root_in,
         }
 
         // Set filenames
-        sprintf(filename_out,"%s/%s.%sgroup_matches_header",filename_out_dir,filename_out_name,group_text_prefix);
+        sprintf(filename_out,"%s/%sgroup_matches_header.dat",filename_out_dir,group_text_prefix);
         flag_go=TRUE;
         if((fp_test=fopen(filename_out,"r"))!=NULL){
            fclose(fp_test);
@@ -211,7 +211,6 @@ void compute_trees_matches(char   *filename_root_in,
      if(flag_compute_header_subgroups || flag_compute_header_groups){
         SID_log("Constructing header files...",SID_LOG_OPEN|SID_LOG_TIMER);
         SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
-        //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
         // ... count the number of matches and files that we will store ...
         for(i_read=i_read_stop,n_matches=0,n_files=0;i_read>=i_read_start;i_read--){
@@ -242,39 +241,74 @@ void compute_trees_matches(char   *filename_root_in,
                  break;
               }
               if(flag_compute_header){
-                 sprintf(filename_out,"%s/%s.%sgroup_matches_header",filename_out_dir,filename_out_name,group_text_prefix);
+                 sprintf(filename_out,"%s/%sgroup_matches_header.dat",filename_out_dir,group_text_prefix);
 
-                 // Write the header's header ;)         
+                 // This gets written just once 
                  if(i_read==i_read_stop && SID.I_am_Master){
                     mkdir(filename_out_dir,02755);
-                    SID_fopen(filename_out,"w",&fp_out);
-                    SID_fwrite(&i_read_start,  sizeof(int),1,&fp_out);
-                    SID_fwrite(&i_read_stop,   sizeof(int),1,&fp_out);
-                    SID_fwrite(&n_search_total,sizeof(int),1,&fp_out);
-                    SID_fwrite(&n_files,       sizeof(int),1,&fp_out);
-                    SID_fclose(&fp_out);
+                    fp_out=fopen(filename_out,"w");
+                    fwrite(&i_read_start,  sizeof(int),1,fp_out);
+                    fwrite(&i_read_stop,   sizeof(int),1,fp_out);
+                    fwrite(&n_search_total,sizeof(int),1,fp_out);
+                    fwrite(&n_files,       sizeof(int),1,fp_out);
+                    fclose(fp_out);
                  }
 
+                 // This gets written for every snapshot
                  n_groups_1      =((int    *)ADaPS_fetch(plist1.data,"n_%sgroups_all_%s",group_text_prefix,filename_cat1))[0];
                  n_groups_1_local=((int    *)ADaPS_fetch(plist1.data,"n_%sgroups_%s",    group_text_prefix,filename_cat1))[0];
-
                  if(SID.I_am_Master){
-                    SID_fopen(filename_out,"a",&fp_out);
-                    SID_fwrite(&i_read,    sizeof(int),1,&fp_out);
-                    SID_fwrite(&n_groups_1,sizeof(int),1,&fp_out);
-                    SID_fclose(&fp_out);
+                    fp_out=fopen(filename_out,"a");
+                    fwrite(&i_read,    sizeof(int),1,fp_out);
+                    fwrite(&n_groups_1,sizeof(int),1,fp_out);
+                    fclose(fp_out);
                  }
                  SID_Barrier(SID.COMM_WORLD);
-                 SID_fopen(filename_out,"a",&fp_out);
+
+                 // Write the arrays for each snapshot
+                 fp_out=fopen(filename_out,"a");
                  if(n_groups_1>0){
+
+                    // Initialize a buffer for writing
+                    int   n_groups_1_local_max;
+                    int   n_buffer;
+                    char *buffer;
+                    calc_max_global(&n_groups_1_local,&n_groups_1_local_max,1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+                    buffer=(char *)SID_malloc(n_groups_1_local_max*sizeof(int));
+
+                    // Write the group/subgroup sizes
+                    int i_rank;
                     n_particles=(int *)ADaPS_fetch(plist1.data,"n_particles_%sgroup_%s",group_text_prefix,filename_cat1);
-                    SID_fwrite_ordered(n_particles,sizeof(int),(size_t)n_groups_1_local,&fp_out);
+                    for(i_rank=0;i_rank<SID.n_proc;i_rank++){
+                       if(i_rank==SID.My_rank){
+                          n_buffer=n_groups_1_local;
+                          memcpy(buffer,n_particles,n_buffer*sizeof(int));
+                       }
+                       SID_Bcast(&n_buffer,         sizeof(int),i_rank,SID.COMM_WORLD);
+                       SID_Bcast(buffer,   n_buffer*sizeof(int),i_rank,SID.COMM_WORLD);
+                       if(SID.I_am_Master)
+                          fwrite(buffer,n_buffer,sizeof(int),fp_out);
+                    }
+
+                    // Write the number of substructures per group
                     if(flag_match_subgroups==MATCH_GROUPS){
                        n_sub_group=(int *)ADaPS_fetch(plist1.data,"n_subgroups_group_%s",filename_cat1);
-                       SID_fwrite_ordered(n_sub_group,sizeof(int),(size_t)n_groups_1_local,&fp_out);
+                       for(i_rank=0;i_rank<SID.n_proc;i_rank++){
+                          if(i_rank==SID.My_rank){
+                             n_buffer=n_groups_1_local;
+                             memcpy(buffer,n_sub_group,n_buffer*sizeof(int));
+                          }
+                          SID_Bcast(&n_buffer,         sizeof(int),i_rank,SID.COMM_WORLD);
+                          SID_Bcast(buffer,   n_buffer*sizeof(int),i_rank,SID.COMM_WORLD);
+                          if(SID.I_am_Master)
+                             fwrite(buffer,n_buffer,sizeof(int),fp_out);
+                       }
                     }
+
+                    // Free the buffer
+                    SID_free(SID_FARG buffer);
                  }
-                 SID_fclose(&fp_out);
+                 fclose(fp_out);
               } // If flag_compute_header
            } // Loop over k_match
            free_plist(&plist1);
@@ -288,8 +322,8 @@ void compute_trees_matches(char   *filename_root_in,
   SID_log("Checking for matching files...",SID_LOG_OPEN);
   SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
   flag_go=FALSE;
-  //for(i_read=i_read_stop;i_read>i_read_start && !flag_go;i_read--)
-  //   check_for_tree_matches_local(filename_out_dir,i_read_start,i_read_stop,i_read,n_search_total,&flag_go,&flag_go_array);
+  for(i_read=i_read_stop;i_read>i_read_start && !flag_go;i_read--)
+     check_for_tree_matches_local(filename_out_dir,i_read_start,i_read_stop,i_read,n_search_total,&flag_go,&flag_go_array);
   if(flag_go)
      i_read++;
   if(!flag_go)
@@ -302,9 +336,8 @@ void compute_trees_matches(char   *filename_root_in,
 
   // Generate matches (if needed).  Loop over base groups first...
   if(flag_go){
-     SID_log("Generating matches...",SID_LOG_OPEN);
-     //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
-     SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
+     SID_log("Generating matches...",SID_LOG_OPEN|SID_LOG_TIMER);
+     SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,1);
      // i_read gets initialized by the previous loop
      for(;i_read>i_read_start;i_read--){
         flag_go=FALSE;
@@ -330,7 +363,7 @@ void compute_trees_matches(char   *filename_root_in,
                  int k_order;
                  int flag_read;
                  // Loop over forward/back matching
-                 SID_log("Processing matches between snaps %03d and %03d...",SID_LOG_OPEN,i_read,j_read);                 
+                 SID_log("Processing matches between snaps %03d and %03d...",SID_LOG_OPEN|SID_LOG_TIMER,i_read,j_read);
                  sprintf(filename_cat2,"%03d",j_read);
 
                  // If this snapshot combination is missing at least one file, proceed.
@@ -401,6 +434,7 @@ void compute_trees_matches(char   *filename_root_in,
            SID_log("Done.",SID_LOG_CLOSE);
         } // If this snapshot needs to be processed
      } // Loop over base snapshots
+     SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
      SID_log("Done.",SID_LOG_CLOSE);
   }
 
@@ -431,7 +465,7 @@ void compute_trees_matches(char   *filename_root_in,
         for(i_read=i_read_stop,j_read=0;i_read>=i_read_start;j_read++){
            // Open file and skip header           
            if(i_read==i_read_stop){
-              sprintf(filename_out,"%s/%s.%sgroup_matches_header",filename_out_dir,filename_out_name,group_text_prefix);
+              sprintf(filename_out,"%s/%sgroup_matches_header.dat",filename_out_dir,group_text_prefix);
               if((fp_read_header=fopen(filename_out,"r"))==NULL)
                  SID_trap_error("Could not open file {%s} when reading header information.",ERROR_IO_OPEN,filename_out);
               fseek(fp_read_header,4*sizeof(int),SEEK_SET);
