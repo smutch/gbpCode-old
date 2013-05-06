@@ -24,8 +24,6 @@ void match_halos(plist_info  *plist_1_in,
   int     i_mark;
   size_t  i_particle;
   size_t  j_particle;
-  char    i_hist;
-  char    j_hist;
   size_t  n_particles_1;
   size_t  n_particles_1_local;
   size_t  n_particles_1_all;
@@ -426,6 +424,11 @@ void match_halos(plist_info  *plist_1_in,
           hist_score_array[i_group]=NULL;
        }
     }
+    int hist_size_max=0;
+    for(i_group=0;i_group<n_groups_1;i_group++){
+       if(hist_size_array[i_group]>hist_size_max) 
+          hist_size_max=hist_size_array[i_group]; 
+    }
     SID_log("Done.",SID_LOG_CLOSE|SID_LOG_TIMER);
 
     // Perform matching
@@ -579,6 +582,8 @@ void match_halos(plist_info  *plist_1_in,
                 file_index_2_j=file_index_2[j_group];
                 // ... if the corresponding group_id in catalog_2 has already been 
                 //     involved in a match, then add to its score
+                short int i_hist;
+                short int j_hist;
                 switch(flag_match_substructure){
                    case TRUE:
                       for(i_hist=0,flag=TRUE;i_hist<n_hist_array[i_group] && flag;i_hist++){
@@ -610,6 +615,8 @@ void match_halos(plist_info  *plist_1_in,
                    if(n_hist_array[i_group]>=hist_size_array[i_group]){
                       short int n_old;
                       n_old=hist_size_array[i_group];
+                      if(hist_size_array[i_group]>=hist_size_max)
+                         hist_size_max=2*(int)hist_size_array[i_group];
                       hist_size_array[i_group]*=2;
                       /*
                       hist_list_array[i_group] =(int   *)SID_realloc(hist_list_array[i_group], (size_t)(hist_size_array[i_group])*sizeof(int));
@@ -659,40 +666,55 @@ void match_halos(plist_info  *plist_1_in,
 
     // Determine the best matches
     for(i_group=0,i_mark=0;i_group<n_groups_1_local;i_group++){
-       hist_list =hist_list_array[i_group];
-       hist_score=hist_score_array[i_group];
-
        if(hist_size_array[i_group]>0){
           // Find the best match here
-          j_hist=0;
           if(n_hist_array[i_group]>0){
+             short int i_hist;
+             short int j_hist;
+             j_hist    =0;
+             hist_list =hist_list_array[i_group];
+             hist_score=hist_score_array[i_group];
              switch(flag_match_substructure){
-                /// Keep the smallest system if we are matching substructure
+                // Keep the smallest system if we are matching substructure
                 case TRUE:
-                for(i_hist=1;i_hist<n_hist_array[i_group];i_hist++){
-                  if(n_particles_group_2[hist_list[i_hist]]<
-                     n_particles_group_2[hist_list[j_hist]])
-                    j_hist=i_hist;
-                }
-                break;
+                   for(i_hist=1;i_hist<n_hist_array[i_group];i_hist++){
+                     if(n_particles_group_2[hist_list[i_hist]]<
+                        n_particles_group_2[hist_list[j_hist]])
+                       j_hist=i_hist;
+                   }
+                   break;
                 // Keep the system with the highest score otherwise
                 default:
-                for(i_hist=1;i_hist<n_hist_array[i_group];i_hist++){
-                  if(hist_score[i_hist]>hist_score[j_hist])
-                    j_hist=i_hist;
-                }
-                break;
+                   for(i_hist=1;i_hist<n_hist_array[i_group];i_hist++){
+                     if(hist_score[i_hist]>hist_score[j_hist])
+                       j_hist=i_hist;
+                   }
+                   break;
              }
-          }
-          // Set match results here; the default (set above) is -1 for unmatched groups
-          if(hist_score[j_hist]>0.){
-             match_score[i_mark]=hist_score[j_hist];
-             match[i_mark]      =hist_list[j_hist];
-             n_match++;
+             // Set match results here; the default (set above) is -1 for unmatched groups
+             if(hist_score[j_hist]>0.){
+                match_score[i_mark]=hist_score[j_hist];
+                match[i_mark]      =hist_list[j_hist];
+                n_match++;
+             }
+             if(match[i_mark]<(-1) || match[i_mark]>=n_groups_2_all){
+                SID_log_warning("Invalid match_id (%d) for i_mark/i_group=%d/%d.  There are %d objects in the target catalog. n_hist/j_hist=%d/%d",
+                                ERROR_LOGIC,match[i_mark],i_mark,i_group,n_groups_2_all,n_hist_array[i_group],j_hist);
+                SID_trap_error("Invalid match_id (%d) for i_mark/i_group=%d/%d.  There are %d objects in the target catalog.",
+                               ERROR_LOGIC,match[i_mark],i_mark,i_group,n_groups_2_all);
+             }
           }
           i_mark++;
        }
     }
+
+    // Check that the hist_size array didn't over-flow
+    int hist_size_max_global;
+    int hist_size_limit=32767; // Largest number supported by 16-bit signed int
+    calc_max_global(&hist_size_max,&hist_size_max_global,1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+    SID_log("Largest hist size=%d",SID_LOG_COMMENT,hist_size_max_global);
+    if(hist_size_max_global>hist_size_limit)
+       SID_trap_error("The histogram size array has overflowed (ie. %d>%d)",SID_LOG_COMMENT,hist_size_max_global,hist_size_limit);
 
     // How many matches across all ranks?
     calc_sum_global(&n_match,&n_match_all,1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
