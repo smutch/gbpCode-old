@@ -27,6 +27,7 @@ OBJFILES  = display_gadget_header.o         \
             write_gadget_binary.o           
 LIBFILE   = libgbpSPH.a
 BINFILES  = gadget2ascii               \
+	    gadget_split               \
             mark_gadget                \
             gadget2csv                 \
             gadget_header              \
