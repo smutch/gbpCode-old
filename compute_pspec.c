@@ -160,12 +160,13 @@ void compute_pspec(plist_info  *plist,
               x_particles_local,
               y_particles_local,
               z_particles_local,
+              NULL,
               m_particles_local,
               cosmo,
               redshift,
               distribution_scheme,
               (double)n_particles,
-              FFT,
+              FFT,NULL,
               MAP2GRID_MODE_DEFAULT);
 
   // Compute the FFT of the mass-field

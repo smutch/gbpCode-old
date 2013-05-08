@@ -177,13 +177,13 @@ void read_groupings(char *filename_root,int grouping_number,plist_info *plist,in
            if(flag_add_zspace_y){
               grab_real(line,vy_column,&vy_in);
               y_in+=(GBPREAL)(1e3*h_Hubble*((double)vy_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-              force_periodic(&y_in,0.,(GBPREAL)box_size);
            }
+           force_periodic(&y_in,0.,(GBPREAL)box_size);
            if(flag_add_zspace_z){
               grab_real(line,vz_column,&vz_in);
               z_in+=(GBPREAL)(1e3*h_Hubble*((double)vz_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-              force_periodic(&z_in,0.,(GBPREAL)box_size);
            }
+           force_periodic(&z_in,0.,(GBPREAL)box_size);
            x_halos[n_halos_local] =(GBPREAL)x_in;
            y_halos[n_halos_local] =(GBPREAL)y_in;
            z_halos[n_halos_local] =(GBPREAL)z_in;
@@ -233,6 +233,11 @@ void read_groupings(char *filename_root,int grouping_number,plist_info *plist,in
 
          // Compute keys for the objects we're reading
          int     j_halo;
+         GBPREAL z_space_i      =0;
+         GBPREAL z_space        =0;
+         GBPREAL z_space_local  =0;
+         size_t  n_z_space      =0;
+         size_t  n_z_space_local=0;
          SID_log("Generating PHKs for domain decomposition...",SID_LOG_OPEN|SID_LOG_TIMER);
          for(i_halo=0,j_halo=0;i_halo<n_halos;i_halo++){
             grab_next_line_data(fp_in,&line,&line_length);
@@ -244,22 +249,37 @@ void read_groupings(char *filename_root,int grouping_number,plist_info *plist,in
                // Apply z-space distortions if needed
                if(flag_add_zspace_x){
                   grab_real(line,vx_column,&vx_in);
-                  x_in+=(GBPREAL)(1e3*h_Hubble*((double)vx_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-                  force_periodic(&x_in,0.,box_size);
+                  z_space_i=(GBPREAL)(1e3*h_Hubble*((double)vx_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+                  x_in+=z_space_i;
+                  z_space_local+=z_space_i;
+                  n_z_space_local++;
                }
                else if(flag_add_zspace_y){
                   grab_real(line,vy_column,&vy_in);
-                  y_in+=(GBPREAL)(1e3*h_Hubble*((double)vy_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-                  force_periodic(&y_in,0.,box_size);
+                  z_space_i=(GBPREAL)(1e3*h_Hubble*((double)vy_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+                  y_in+=z_space_i;
+                  z_space_local+=z_space_i;
+                  n_z_space_local++;
                }
                else if(flag_add_zspace_z){
                   grab_real(line,vz_column,&vz_in);
-                  z_in+=(GBPREAL)(1e3*h_Hubble*((double)vz_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-                  force_periodic(&z_in,0.,box_size);
+                  z_space_i=(GBPREAL)(1e3*h_Hubble*((double)vz_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+                  z_in+=z_space_i;
+                  z_space_local+=z_space_i;
+                  n_z_space_local++;
                }
+               force_periodic(&x_in,0.,box_size);
+               force_periodic(&y_in,0.,box_size);
+               force_periodic(&z_in,0.,box_size);
                // Compute key
                PHK_halo[j_halo++]=(size_t)compute_PHK_from_Cartesian(n_bits_PHK,3,(double)x_in/box_size,(double)y_in/box_size,(double)z_in/box_size);
             }
+         }
+         SID_Allreduce(&n_z_space_local,&n_z_space,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
+         if(n_z_space>0){
+            SID_Allreduce(&z_space_local,&z_space,1,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
+            z_space/=(double)n_z_space;
+            SID_log("Average z-space dispacement=%le [Mpc/h]",SID_LOG_COMMENT,z_space);
          }
          rewind(fp_in);
          SID_log("Done.",SID_LOG_CLOSE);
@@ -446,18 +466,18 @@ void read_groupings(char *filename_root,int grouping_number,plist_info *plist,in
          if(flag_add_zspace_x){
             grab_real(line,vx_column,&vx_in);
             x_in+=(GBPREAL)(1e3*h_Hubble*((double)vx_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-            force_periodic(&x_in,0.,box_size);
          }
          else if(flag_add_zspace_y){
             grab_real(line,vy_column,&vy_in);
             y_in+=(GBPREAL)(1e3*h_Hubble*((double)vy_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-            force_periodic(&y_in,0.,box_size);
          }
          else if(flag_add_zspace_z){
             grab_real(line,vz_column,&vz_in);
             z_in+=(GBPREAL)(1e3*h_Hubble*((double)vz_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-            force_periodic(&z_in,0.,box_size);
          }
+         force_periodic(&x_in,0.,box_size);
+         force_periodic(&y_in,0.,box_size);
+         force_periodic(&z_in,0.,box_size);
 
          // Compute key
          PHK_t PHK_i;
@@ -516,18 +536,18 @@ void read_groupings(char *filename_root,int grouping_number,plist_info *plist,in
          if(flag_add_zspace_x){
             grab_real(line,vx_column,&vx_in);
             x_in+=(GBPREAL)(1e3*h_Hubble*((double)vx_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-            force_periodic(&x_in,0.,box_size);
          }
          else if(flag_add_zspace_y){
             grab_real(line,vy_column,&vy_in);
             y_in+=(GBPREAL)(1e3*h_Hubble*((double)vy_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-            force_periodic(&y_in,0.,box_size);
          }
          else if(flag_add_zspace_z){
             grab_real(line,vz_column,&vz_in);
             z_in+=(GBPREAL)(1e3*h_Hubble*((double)vz_in)/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-            force_periodic(&z_in,0.,box_size);
          }
+         force_periodic(&x_in,0.,box_size);
+         force_periodic(&y_in,0.,box_size);
+         force_periodic(&z_in,0.,box_size);
 
          // Compute key
          PHK_t PHK_i;

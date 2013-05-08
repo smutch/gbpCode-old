@@ -12,9 +12,13 @@
 #define MAP2GRID_DIST_DWT12 8
 #define MAP2GRID_DIST_DWT20 16
 
-#define MAP2GRID_MODE_DEFAULT 0
-#define MAP2GRID_MODE_NOCLEAN 2
-#define MAP2GRID_MODE_NONORM  4
+#define MAP2GRID_MODE_DEFAULT       0
+#define MAP2GRID_MODE_NOCLEAN       2
+#define MAP2GRID_MODE_NONORM        4
+#define MAP2GRID_MODE_FORCENORM     8
+#define MAP2GRID_MODE_APPLYFACTOR  16
+
+#define GRID_IDENTIFIER_SIZE 32
 
 #define PSPEC_ADD_VX     256   // Must start at 256 to allow for MAP2GRID flags
 #define PSPEC_ADD_VY     512
@@ -124,12 +128,14 @@ void map_to_grid(size_t      n_particles_local,
                  GBPREAL    *x_particles_local,
                  GBPREAL    *y_particles_local,
                  GBPREAL    *z_particles_local,
+                 GBPREAL    *w_particles_local,
                  GBPREAL    *m_particles_local,
                  cosmo_info *cosmo,
                  double      redshift,
                  int         distribution_scheme,
                  double      normalization_target,
                  field_info *field,
+                 field_info *field_norm,
                  int         mode);
 
 // Correlation function stuff
@@ -144,6 +150,7 @@ void compute_cfunc(plist_info  *plist,
                    cfunc_info  *cfunc,
                    int          i_run);
 void write_cfunc(cfunc_info *cfunc,char *filename_out_root,plist_info *plist,char *species_name,char *randoms_name,int i_run);
+void read_cfunc( cfunc_info *cfunc,char *filename_out_root,int i_run);
 
 // Power spectrum stuff
 void init_pspec(pspec_info *pspec,
@@ -156,7 +163,13 @@ void compute_pspec(plist_info  *plist,
                    char        *species_name,
                    pspec_info  *pspec,
                    int          i_run);
-void write_grid(field_info *field,char *filename_out_root,int i_run,int n_run,int mass_assignment_scheme,double box_size);
+void write_grid(field_info *field,
+                char       *filename_out_root,
+                int         i_run,
+                int         n_run,
+                int         mass_assignment_scheme,
+                char       *grid_identifier,
+                double      box_size);
 void write_pspec(pspec_info *pspec,char *filename_out_root,plist_info *plist,char *species_name);
 
 #ifdef __cplusplus

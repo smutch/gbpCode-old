@@ -10,12 +10,14 @@ void map_to_grid(size_t      n_particles_local,
                  GBPREAL    *x_particles_local,
                  GBPREAL    *y_particles_local,
                  GBPREAL    *z_particles_local,
-                 GBPREAL    *m_particles_local,
+                 GBPREAL    *v_particles_local,
+                 GBPREAL    *w_particles_local,
                  cosmo_info *cosmo,
                  double      redshift,
                  int         distribution_scheme,
-                 double      normalization_target,
+                 double      normalization_constant,
                  field_info *field,
+                 field_info *field_norm,
                  int         mode){
   size_t      i_p;
   int         i_k;
@@ -26,8 +28,11 @@ void map_to_grid(size_t      n_particles_local,
   int         j_i[3];
   int         k_i[3];
   size_t      n_particles;
-  double      m_p;
-  int         flag_multimass;
+  double      v_p;
+  double      w_p;
+  int         flag_valued_particles;
+  int         flag_weight_particles;
+  int         flag_weight;
   int         flag_active;
   int         flag_viable;
   double      k_mag;
@@ -55,17 +60,19 @@ void map_to_grid(size_t      n_particles_local,
   size_t      receive_left_size=0;
   size_t      receive_right_size=0;
   size_t      index_best;
-  field_info  buffer_left;
-  field_info  buffer_right;
   int         n_buffer[3];
   size_t      n_send_left;
   size_t      n_send_right;
   size_t      send_size_left;
   size_t      send_size_right;
-  GBPREAL    *send_left;
-  GBPREAL    *send_right;
+  GBPREAL    *send_left=NULL;
+  GBPREAL    *send_right=NULL;
   GBPREAL    *receive_left=NULL;
   GBPREAL    *receive_right=NULL;
+  GBPREAL    *send_left_norm=NULL;
+  GBPREAL    *send_right_norm=NULL;
+  GBPREAL    *receive_left_norm=NULL;
+  GBPREAL    *receive_right_norm=NULL;
   double       r_i,r_min,r_i_max=0;
   double       W_i;
   int          index_i;
@@ -74,12 +81,9 @@ void map_to_grid(size_t      n_particles_local,
   double      *W_Daub;
   double       h_Hubble;
   int          n_Daub;
-  size_t       i_p_next_report;
-  int          i_report;
   interp_info *W_r_Daub_interp=NULL;
   int          i_rank;
   size_t       buffer_index;
-  size_t      *field_sum_index;
   int          i_test;
   double       accumulator;
 
@@ -88,12 +92,41 @@ void map_to_grid(size_t      n_particles_local,
   SID_log("Distributing %zu items onto a %dx%dx%d grid...",
           SID_LOG_OPEN,n_particles,field->n[0],field->n[1],field->n[2]);
 
+  // If we've been given a normalization field, make sure it's got the same geometry as the results field
+  if(field_norm!=NULL){
+     if(field->n_d!=field_norm->n_d)
+        SID_trap_error("grid dimension counts don't match (ie. %d!=%d)",ERROR_LOGIC,field->n_d,field_norm->n_d);
+     int i_d;
+     for(i_d=0;i_d<field->n_d;i_d++){
+        if(field->n[i_d]!=field_norm->n[i_d])
+           SID_trap_error("grid dimension No. %d's sizes don't match (ie. %d!=%d)",ERROR_LOGIC,i_d,field->n[i_d],field_norm->n[i_d]);
+        if(field->n_R_local[i_d]!=field_norm->n_R_local[i_d])
+           SID_trap_error("grid dimension No. %d's slab sizes don't match (ie. %d!=%d)",ERROR_LOGIC,i_d,field->n_R_local[i_d],field_norm->n_R_local[i_d]);
+        if(field->i_R_start_local[i_d]!=field_norm->i_R_start_local[i_d])
+           SID_trap_error("grid dimension No. %d's start positions don't match (ie. %le!=%le)",ERROR_LOGIC,i_d,field->i_R_start_local[i_d],field_norm->i_R_start_local[i_d]);
+        if(field->i_R_stop_local[i_d]!=field_norm->i_R_stop_local[i_d])
+           SID_trap_error("grid dimension No. %d's stop positions don't match (ie. %le!=%le)",ERROR_LOGIC,i_d,field->i_R_stop_local[i_d],field_norm->i_R_stop_local[i_d]);
+     }
+     if(field->n_field!=field_norm->n_field)
+        SID_trap_error("grid field sizes don't match (ie. %d!=%d)",ERROR_LOGIC,field->n_field,field_norm->n_field);
+     if(field->n_field_R_local!=field_norm->n_field_R_local)
+        SID_trap_error("grid local field sizes don't match (ie. %d!=%d)",ERROR_LOGIC,field->n_field_R_local,field_norm->n_field_R_local);
+     if(field->total_local_size!=field_norm->total_local_size)
+        SID_trap_error("grid total local sizes don't match (ie. %d!=%d)",ERROR_LOGIC,field->total_local_size,field_norm->total_local_size);
+  }
+
   // Set some variables
-  if(m_particles_local!=NULL)
-    flag_multimass=TRUE;
+  if(v_particles_local!=NULL)
+    flag_valued_particles=TRUE;
   else{
-    flag_multimass=FALSE;
-    m_p=1.;
+    flag_valued_particles=FALSE;
+    v_p=1.;
+  }
+  if(w_particles_local!=NULL)
+    flag_weight_particles=TRUE;
+  else{
+    flag_weight_particles=FALSE;
+    w_p=1.;
   }
   h_Hubble=((double *)ADaPS_fetch(cosmo,"h_Hubble"))[0];
 
@@ -143,21 +176,40 @@ void map_to_grid(size_t      n_particles_local,
   send_right     =(GBPREAL *)SID_calloc(send_size_right);
   receive_left   =(GBPREAL *)SID_calloc(send_size_right);
   receive_right  =(GBPREAL *)SID_calloc(send_size_left);
+  if(field_norm!=NULL){
+     send_left_norm      =(GBPREAL *)SID_calloc(send_size_left);
+     send_right_norm     =(GBPREAL *)SID_calloc(send_size_right);
+     receive_left_norm   =(GBPREAL *)SID_calloc(send_size_right);
+     receive_right_norm  =(GBPREAL *)SID_calloc(send_size_left);
+  }
 
   // Create the mass distribution
   SID_log("Performing grid assignment...",SID_LOG_OPEN|SID_LOG_TIMER);
 
   // Clear the field
-  if(!check_mode_for_flag(mode,MAP2GRID_MODE_NOCLEAN))
+  if(!check_mode_for_flag(mode,MAP2GRID_MODE_NOCLEAN)){
      clear_field(field);
+     if(field_norm!=NULL)
+        clear_field(field);
+  }
 
   // It is essential that we not pad the field for the simple way that we add-in the boundary buffers below
   set_FFT_padding_state(field,FALSE);
+  if(field_norm!=NULL)
+     set_FFT_padding_state(field_norm,FALSE);
 
   // Loop over all the objects
-  for(i_p=0,norm_local=0.,i_report=0,i_p_next_report=n_particles_local/10;i_p<n_particles_local;i_p++){     
-    if(flag_multimass)
-      m_p=(double)(m_particles_local[i_p]);
+  pcounter_info pcounter;
+  SID_init_pcounter(&pcounter,n_particles_local,10);
+  for(i_p=0,norm_local=0.;i_p<n_particles_local;i_p++){
+    double norm_i;
+    double value_i;
+    if(flag_valued_particles)
+      v_p=(double)(v_particles_local[i_p]);
+    if(flag_weight_particles)
+      w_p=(double)(w_particles_local[i_p]);
+    norm_i =w_p;
+    value_i=v_p*norm_i;
 
     // Particle's position
     x_particle_i=(GBPREAL)x_particles_local[i_p];
@@ -229,7 +281,6 @@ void map_to_grid(size_t      n_particles_local,
             }
           }
           if(flag_active){ // This flags-out regions of the kernal with no support to save some time
-            W_i*=m_p;
             // Set the grid indices (enforce periodic BCs; do x-coordinate last) ...
             //   ... y-coordinate ...
             k_i[1]=(i_i[1]+j_i[1]);
@@ -251,32 +302,32 @@ void map_to_grid(size_t      n_particles_local,
               k_i[0]-=(field->i_R_start_local[0]-W_search_lo);
               if(k_i[0]<0)
                  SID_trap_error("Left slab buffer limit exceeded by %d element(s).",ERROR_LOGIC,-k_i[0]);
-              send_left[index_FFT_R(field,k_i)]+=W_i;
+              send_left[index_FFT_R(field,k_i)]+=W_i*value_i;
+              if(field_norm!=NULL)
+                 send_left_norm[index_FFT_R(field_norm,k_i)]+=W_i*norm_i;
             }
             else if(k_i[0]>field->i_R_stop_local[0]){
               k_i[0]-=(field->i_R_stop_local[0]+1);
-              if(k_i[0]>=W_search_hi){
-fprintf(stderr,"Arg! %d %d %e %e %le\n",k_i[0],W_search_hi,x_particle_i,x_particles_local[i_p],field->L[0]);
-//                 SID_trap_error("Right slab buffer limit exceeded by %d element(s).",ERROR_LOGIC,k_i[0]-W_search_hi+1);
+              if(k_i[0]>=W_search_hi)
+                 SID_trap_error("Right slab buffer limit exceeded by %d element(s).",ERROR_LOGIC,k_i[0]-W_search_hi+1);
+              else{
+                 send_right[index_FFT_R(field,k_i)]+=W_i*value_i;
+                 if(field_norm!=NULL)
+                    send_right_norm[index_FFT_R(field_norm,k_i)]+=W_i*norm_i;
               }
-              else
-                 send_right[index_FFT_R(field,k_i)]+=W_i;
             }
-            else
-              field->field_local[index_local_FFT_R(field,k_i)]+=W_i;
-            norm_local+=W_i;
+            else{
+              field->field_local[index_local_FFT_R(field,k_i)]+=W_i*value_i;
+              if(field_norm!=NULL)
+                 field_norm->field_local[index_local_FFT_R(field_norm,k_i)]+=W_i*norm_i;
+            }
             flag_viable=FALSE;
           }
         }
       }
     }
-    if(SID.I_am_Master){
-     if(i_p==i_p_next_report){
-       i_report++;
-       SID_log("%3d%% complete.",SID_LOG_COMMENT|SID_LOG_TIMER,10*i_report);
-       i_p_next_report=MIN(n_particles_local,n_particles_local*(i_report+1)/10);
-     } 
-    }
+    // Report the calculation's progress
+    SID_check_pcounter(&pcounter,i_p);
   }
   SID_log("Done.",SID_LOG_CLOSE);
 
@@ -284,6 +335,7 @@ fprintf(stderr,"Arg! %d %d %e %e %le\n",k_i[0],W_search_hi,x_particle_i,x_partic
   //    Note: it's important that the FFT field not be padded (see above, where
   //          this is set) for this to work the way it's done.
   SID_log("Adding-in the slab buffers...",SID_LOG_OPEN|SID_LOG_TIMER);
+  // Numerator first ...
   exchange_slab_buffer_left(send_left,
                             send_size_left,
                             receive_right,
@@ -298,23 +350,58 @@ fprintf(stderr,"Arg! %d %d %e %e %le\n",k_i[0],W_search_hi,x_particle_i,x_partic
     field->field_local[i_b]+=receive_left[i_b];
   for(i_b=0;i_b<n_send_left;i_b++)
     field->field_local[field->n_field_R_local-n_send_left+i_b]+=receive_right[i_b];
+  // ... then denominator (if it's being used)
+  if(field_norm!=NULL){
+     exchange_slab_buffer_left(send_left_norm,
+                               send_size_left,
+                               receive_right_norm,
+                               &receive_right_size,
+                               &(field_norm->slab));
+     exchange_slab_buffer_right(send_right_norm,
+                                send_size_right,
+                                receive_left_norm,
+                                &receive_left_size,
+                                &(field_norm->slab));
+     for(i_b=0;i_b<n_send_right;i_b++)
+       field_norm->field_local[i_b]+=receive_left_norm[i_b];
+     for(i_b=0;i_b<n_send_left;i_b++)
+       field_norm->field_local[field_norm->n_field_R_local-n_send_left+i_b]+=receive_right[i_b];
+  }
   SID_free(SID_FARG send_left);
   SID_free(SID_FARG send_right);
   SID_free(SID_FARG receive_left);
   SID_free(SID_FARG receive_right);
+  if(field_norm!=NULL){
+     SID_free(SID_FARG send_left_norm);
+     SID_free(SID_FARG send_right_norm);
+     SID_free(SID_FARG receive_left_norm);
+     SID_free(SID_FARG receive_right_norm);
+  }
   SID_log("Done.",SID_LOG_CLOSE);
   
   // Recompute local normalization (more accurate for large sample sizes)
   if(!check_mode_for_flag(mode,MAP2GRID_MODE_NONORM)){
      SID_log("Applying normalization...",SID_LOG_OPEN);
-     norm_local=0;
-     for(i_grid=0;i_grid<field->n_field_R_local;i_grid++)
-       norm_local+=(double)field->field_local[i_grid];  
-     calc_sum_global(&norm_local,&normalization,1,SID_DOUBLE,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-     double normalization_factor;
-     normalization_factor=normalization_target/normalization;
-     for(i_grid=0;i_grid<field->n_field_R_local;i_grid++)
-       field->field_local[i_grid]*=normalization_factor;
+     if(field_norm!=NULL){
+        for(i_grid=0;i_grid<field->n_field_R_local;i_grid++){
+           if(field_norm->field_local[i_grid]!=0)
+              field->field_local[i_grid]/=field_norm->field_local[i_grid];
+        }
+     }
+     if(check_mode_for_flag(mode,MAP2GRID_MODE_APPLYFACTOR)){
+        for(i_grid=0;i_grid<field->n_field_R_local;i_grid++)
+          field->field_local[i_grid]*=normalization_constant;
+     }
+     if(check_mode_for_flag(mode,MAP2GRID_MODE_FORCENORM)){
+        norm_local=0;
+        for(i_grid=0;i_grid<field->n_field_R_local;i_grid++)
+          norm_local+=(double)field->field_local[i_grid];  
+        calc_sum_global(&norm_local,&normalization,1,SID_DOUBLE,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+        double normalization_factor;
+        normalization_factor=normalization_constant/normalization;
+        for(i_grid=0;i_grid<field->n_field_R_local;i_grid++)
+          field->field_local[i_grid]*=normalization_factor;
+     }
      SID_log("Done.",SID_LOG_CLOSE,normalization);
   }
 

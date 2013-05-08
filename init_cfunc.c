@@ -36,28 +36,18 @@ void init_cfunc(cfunc_info *cfunc,int    n_data,  int    F_random,int    n_bits_
 
   // Decide on PHK boundary widths
   cfunc->n_bits_PHK=n_bits_PHK;
-  for(cfunc->PHK_width=1;cfunc->PHK_width<20 && (double)cfunc->PHK_width*(cfunc->box_size/pow(2.,(double)(cfunc->n_bits_PHK)))<cfunc->r_max;) cfunc->PHK_width++;
-  SID_log("using %d-bit keys and %d-key boundries...",SID_LOG_CONTINUE,cfunc->n_bits_PHK,cfunc->PHK_width);
-
-/*
-  // Initialize the bit size of the PHKs
-  int i_shift    =PHK_width;
-  int n_bits_PHK;
-  cfunc->PHK_width=PHK_width;
-  for(cfunc->n_bits_PHK=1;(cfunc->box_size/pow(2.,(double)(cfunc->n_bits_PHK+1)))>cfunc->r_max && cfunc->n_bits_PHK<=20;) cfunc->n_bits_PHK++;
-
-  // Add bits to allow for the boundary width
-  while(i_shift>1){
-     i_shift/=2;
-     cfunc->n_bits_PHK++;
-  }
-*/
+  for(cfunc->PHK_width=1;cfunc->PHK_width<20 && (double)cfunc->PHK_width*(cfunc->box_size/pow(2.,(double)(cfunc->n_bits_PHK)))<cfunc->r_max;) 
+     cfunc->PHK_width++;
 
   // Initialize the number of bins
   cfunc->n_1D        =(int)(0.5+(cfunc->r_max_1D)/cfunc->dr_1D);
   cfunc->n_2D        =(int)(0.5+(cfunc->r_max_2D-cfunc->r_min_2D)/cfunc->dr_2D);
   cfunc->n_2D_total  =cfunc->n_2D*cfunc->n_2D;
   cfunc->n_jack_total=cfunc->n_jack*cfunc->n_jack*cfunc->n_jack;
+  SID_log("keys        =%d-bit", SID_LOG_COMMENT,cfunc->n_bits_PHK);
+  SID_log("boundries   =%d keys",SID_LOG_COMMENT,cfunc->PHK_width);
+  SID_log("# of 1D bins=%d",     SID_LOG_COMMENT,cfunc->n_1D);
+  SID_log("# of 2D bins=%d",     SID_LOG_COMMENT,cfunc->n_2D);
 
   // Initialize logarythmic bin sizes
   cfunc->dr_l1D=(take_log10(cfunc->r_max_1D)-cfunc->lr_min_l1D)/(double)cfunc->n_1D;

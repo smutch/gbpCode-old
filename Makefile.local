@@ -8,6 +8,7 @@ OBJFILES  = read_groupings.o   \
 	    init_cfunc.o       \
 	    free_cfunc.o       \
 	    write_cfunc.o      \
+	    read_cfunc.o       \
 	    compute_cfunc.o    \
 	    init_pspec.o       \
 	    free_pspec.o       \

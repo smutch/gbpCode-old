@@ -275,10 +275,6 @@ void calc_pairs_local(char       *species_name1,
    size_t *index_PHK_volume=NULL;
    int     n_PHK_volume;
    PHK_last_local=PHK_N_KEYS_3D(cfunc->n_bits_PHK)+1; // This is an impossible key and will force the check (*) below
-//FILE *fp_test;
-//char  filename_test[256];
-//sprintf(filename_test,"RR_pairs_%03d.dat",SID.My_rank);
-//if(check_mode_for_flag(mode,CFUNC_ADD_PAIR_RR)) fp_test=fopen(filename_test,"w");
    for(i_data1=0;i_data1<n_data1_local;i_data1++){
       index_i=PHK_idx_data1_local[i_data1];
 
@@ -326,7 +322,6 @@ void calc_pairs_local(char       *species_name1,
                                        zone_data1_local[index_i],zone_data2_rank[index_j],
                                        flag_pair_type,
                                        cfunc);
-//if(check_mode_for_flag(mode,CFUNC_ADD_PAIR_RR)) fprintf(fp_test,"%4d %4d %4d %4d\n",index_i,index_j,PHK_data2_rank[index_j],PHK_i);
                }
                j_data2++;
                if(j_data2>=n_data2_rank) break;
@@ -347,8 +342,6 @@ void calc_pairs_local(char       *species_name1,
          }
       }
    }
-//if(check_mode_for_flag(mode,CFUNC_ADD_PAIR_RR)) fclose(fp_test);
-//if(check_mode_for_flag(mode,CFUNC_ADD_PAIR_RR)) SID_exit(ERROR_NONE);
 
    // Clean-up
    if(PHK_volume!=NULL)
@@ -412,9 +405,6 @@ void compute_cfunc(plist_info  *plist,
   GBPREAL    *x_data_local;
   GBPREAL    *y_data_local;
   GBPREAL    *z_data_local;
-  GBPREAL    *vx_data_local;
-  GBPREAL    *vy_data_local;
-  GBPREAL    *vz_data_local;
   GBPREAL    *x_random_local;
   GBPREAL    *y_random_local;
   GBPREAL    *z_random_local;
@@ -697,19 +687,40 @@ void compute_cfunc(plist_info  *plist,
         PHK_idx_random_rank=(size_t  *)SID_calloc(sizeof(size_t) *n_random_allocate);
         zone_random_rank   =(int     *)SID_calloc(sizeof(int)    *n_random_allocate);
 
-        // Store the buffers
-        ADaPS_store(&(plist->data),(void *)x_data_rank,        "x_xchg_%s",        ADaPS_DEFAULT,species_name);
-        ADaPS_store(&(plist->data),(void *)y_data_rank,        "y_xchg_%s",        ADaPS_DEFAULT,species_name);
-        ADaPS_store(&(plist->data),(void *)z_data_rank,        "z_xchg_%s",        ADaPS_DEFAULT,species_name);
+        // Store the buffers (store in original coordinate order)
         ADaPS_store(&(plist->data),(void *)PHK_data_rank,      "PHK_xchg_%s",      ADaPS_DEFAULT,species_name);
         ADaPS_store(&(plist->data),(void *)PHK_idx_data_rank,  "PHK_index_xchg_%s",ADaPS_DEFAULT,species_name);
         ADaPS_store(&(plist->data),(void *)zone_data_rank,     "zone_xchg_%s",     ADaPS_DEFAULT,species_name);
-        ADaPS_store(&(plist->data),(void *)x_random_rank,      "x_xchg_%s",        ADaPS_DEFAULT,random_name);
-        ADaPS_store(&(plist->data),(void *)y_random_rank,      "y_xchg_%s",        ADaPS_DEFAULT,random_name);
-        ADaPS_store(&(plist->data),(void *)z_random_rank,      "z_xchg_%s",        ADaPS_DEFAULT,random_name);
         ADaPS_store(&(plist->data),(void *)PHK_random_rank,    "PHK_xchg_%s",      ADaPS_DEFAULT,random_name);
         ADaPS_store(&(plist->data),(void *)PHK_idx_random_rank,"PHK_index_xchg_%s",ADaPS_DEFAULT,random_name);
         ADaPS_store(&(plist->data),(void *)zone_random_rank,   "zone_xchg_%s",     ADaPS_DEFAULT,random_name);
+        switch(i_run){
+           case 1:
+              ADaPS_store(&(plist->data),(void *)x_data_rank,  "y_xchg_%s",ADaPS_DEFAULT,species_name);
+              ADaPS_store(&(plist->data),(void *)y_data_rank,  "z_xchg_%s",ADaPS_DEFAULT,species_name);
+              ADaPS_store(&(plist->data),(void *)z_data_rank,  "x_xchg_%s",ADaPS_DEFAULT,species_name);
+              ADaPS_store(&(plist->data),(void *)x_random_rank,"y_xchg_%s",ADaPS_DEFAULT,random_name);
+              ADaPS_store(&(plist->data),(void *)y_random_rank,"z_xchg_%s",ADaPS_DEFAULT,random_name);
+              ADaPS_store(&(plist->data),(void *)z_random_rank,"x_xchg_%s",ADaPS_DEFAULT,random_name);
+              break;
+           case 2:
+              ADaPS_store(&(plist->data),(void *)x_data_rank,  "x_xchg_%s",ADaPS_DEFAULT,species_name);
+              ADaPS_store(&(plist->data),(void *)y_data_rank,  "z_xchg_%s",ADaPS_DEFAULT,species_name);
+              ADaPS_store(&(plist->data),(void *)z_data_rank,  "y_xchg_%s",ADaPS_DEFAULT,species_name);
+              ADaPS_store(&(plist->data),(void *)x_random_rank,"x_xchg_%s",ADaPS_DEFAULT,random_name);
+              ADaPS_store(&(plist->data),(void *)y_random_rank,"z_xchg_%s",ADaPS_DEFAULT,random_name);
+              ADaPS_store(&(plist->data),(void *)z_random_rank,"y_xchg_%s",ADaPS_DEFAULT,random_name);
+              break;
+           case 0:
+           case 3:
+              ADaPS_store(&(plist->data),(void *)x_data_rank,  "x_xchg_%s",ADaPS_DEFAULT,species_name);
+              ADaPS_store(&(plist->data),(void *)y_data_rank,  "y_xchg_%s",ADaPS_DEFAULT,species_name);
+              ADaPS_store(&(plist->data),(void *)z_data_rank,  "z_xchg_%s",ADaPS_DEFAULT,species_name);
+              ADaPS_store(&(plist->data),(void *)x_random_rank,"x_xchg_%s",ADaPS_DEFAULT,random_name);
+              ADaPS_store(&(plist->data),(void *)y_random_rank,"y_xchg_%s",ADaPS_DEFAULT,random_name);
+              ADaPS_store(&(plist->data),(void *)z_random_rank,"z_xchg_%s",ADaPS_DEFAULT,random_name);
+              break;
+        }
 
         SID_log("Done.",SID_LOG_CLOSE);
       }
@@ -774,7 +785,6 @@ void compute_cfunc(plist_info  *plist,
     CFUNC_l1D[i_bin]=calc_CFUNC_local((double)DD_l1D[0][i_bin],
                                       (double)DR_l1D[0][i_bin],
                                       (double)RR_l1D[0][i_bin],cfunc);
-//if(SID.I_am_Master) fprintf(stderr,"%10.3le %7lld %7lld %7lld %10.3le\n",(double)(i_bin*cfunc->dr_1D),DD_1D[0][i_bin],DR_1D[0][i_bin],RR_1D[0][i_bin],CFUNC_1D[i_bin]);
   }
   for(i_bin=0;i_bin<n_2D*n_2D;i_bin++)
     CFUNC_2D[i_bin]=calc_CFUNC_local((double)DD_2D[0][i_bin],
