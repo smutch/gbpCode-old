@@ -91,7 +91,7 @@ if ( $HOSTTYPE == 'x86_64-linux' ) then
 #----------------------------------------------------------------------
 else if ( $HOSTTYPE == 'intel-mac' ) then
   setenv GBP_VALGRIND_PLAT x86-darwin
-  setenv USE_GETLINE 1
+  setenv USE_GETLINE 0
 else
   echo 'Unsupported HOSTTYPE in .cshrc.gbpCode'
 endif
