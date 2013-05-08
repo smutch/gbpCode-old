@@ -16,6 +16,12 @@ void init_RNG(int *seed,RNG_info *RNG,int mode){
       RNG->stream=init_sprng(RNG->seed,SPRNG_DEFAULT);
     #endif
   #else
+    #if USE_MPI
+      if(check_mode_for_flag(mode,RNG_GLOBAL))
+        RNG->global=TRUE;
+      else
+        RNG->global=FALSE;
+    #endif
     if((*seed)<0)
       RNG->stream= (long)(RNG->seed-(long)(173*SID.My_rank));
     else

@@ -1,0 +1,111 @@
+#----------------------------------------------------------------------
+#
+# This file sets the user's system-dependant settings:
+#   1) Copy this file to .zshrc.myCode (so it doesn't get
+#      overwritten the next time you pull from the repo!)
+#   2) Add your own system to the list
+#   3) Place it in the directory pointed to by $GBP_SRC on your system
+#   3) Source it in your .cshrc, after setting $GBP_SRC
+#        eg. place the following lines in your .cshrc
+#              > setenv GBP_SRC  ${HOME}'/gbpCode/' 
+#              > source ${GBP_SRC}/.zshrc.myCode
+#
+# See the INSTALL file in this directory for more information.
+#
+#----------------------------------------------------------------------
+
+#----------------------------------------------------------------------
+# Defaults (illustrating the set of environment variables that need to
+#           be set in this file; we're assuming GBP_SRC is already set
+#           before this file gets sourced)
+#----------------------------------------------------------------------
+export GBP_QUEUE_TYPE=NONE
+
+# If any of the following 'USE' flags are set to 1, you must
+#   then set the corresponding GBP_XXX_DIR variable below
+export USE_GSL=1
+export USE_MPI=0
+export USE_VALGRIND=0
+export USE_FFTW=0
+export USE_CFITSIO=0
+export USE_SPRNG=0
+export USE_HDF5=0
+export USE_GADGET=0
+
+# Set this to 1 if you need to link-in the Intel math library.  If you are
+#   getting errors like 'feupdateenv is not implemented and will always fail'
+#   then you need to do this.
+export USE_INTEL_MATH=0
+
+# Directories for each of the USE_ flags set to '1' above.  You don't need to do
+#   this if the library is loaded as a module, since the appropriate paths are
+#   already set automatically in the environment variables.
+#export GBP_GSL_DIR="${GBP_SRC}/3rd_Party/gsl"
+#export GBP_MPI="${GBP_SRC}/3rd_Party/openmpi"
+#export GBP_VALGRIND_DIR="${GBP_SRC}/3rd_Party/valgrind"
+#export GBP_FFTW_DIR="${GBP_SRC}/3rd_Party/fftw"
+#export GBP_SPRNG_DIR="${GBP_SRC}/3rd_Party/sprng"
+#export GBP_CFITSIO_DIR="${GBP_SRC}/3rd_Party/cfitsio"
+#export GBP_HDF5_DIR="${GBP_SRC}/3rd_Party/"
+
+# This is where the compiled gbpCode libraries, etc will be stored
+export GBP_LIB="${GBP_SRC}/myLib/"
+export GBP_INC="${GBP_SRC}/myInclude/"
+export GBP_BIN="${GBP_SRC}/myBin/"
+export GBP_DAT="${GBP_SRC}/myData/"
+
+# Stup Mac OSX deoen't have getline() so we need to 
+#   compile our own version on that platform
+export USE_GETLINE=0
+
+# Set a default for the GBP_MPI path
+if (( !${+GBP_MPI} )); then
+  export GBP_MPI='/usr/'
+endif
+
+# Set a default for the GBP_MPI path
+if (( !${+GBP_MPI} )); then
+  if (( !${+MPI_DIR} )); then
+     export GBP_MPI="${MPI_DIR}"
+  else
+     export GBP_MPI=""
+ fi
+fi
+
+# If you're gonna use valgrind with this code, you have to supply your
+#  system's platform here.
+export GBP_VALGRIND_PLAT="x86-darwin"
+
+#----------------------------------------------------------------------
+# Swinburne cluster
+#----------------------------------------------------------------------
+if [[ ${HOSTTYPE} = "x86_64-linux" ]]; then
+  export GBP_MPI=/usr/local/gnu/x86_64/openmpi-1.4/
+  export GBP_VALGRIND_PLAT=amd64-linux
+
+#----------------------------------------------------------------------
+# Intel Macintosh
+#----------------------------------------------------------------------
+elif [[ ${HOSTTYPE} = "intel-mac" ]]; then
+  export USE_GETLINE=1
+else
+  echo 'Unsupported HOSTTYPE in .zshrc.gbpCode'
+fi
+
+#----------------------------------------------------------------------
+# The rest of this file should generally be left untouched
+#----------------------------------------------------------------------
+
+# Add to the library path
+if (( ${+LD_LIBRARY_PATH} )); then
+  export LD_LIBRARY_PATH=${GBP_LIB}/cuda/:${LD_LIBRARY_PATH}
+else
+  export LD_LIBRARY_PATH=${GBP_LIB}
+fi
+
+# Add to the path
+if (( ${+PATH} )); then
+  export PATH=${PATH}:${GBP_BIN}
+else
+  export PATH=${GBP_BIN}
+fi
