@@ -112,7 +112,7 @@ void read_gadget_binary_local(char       *filename_root_in,
   int       flag_zperiod;
   FILE     *fp;
   void     *buffer;
-  size_t   *buffer_index;
+  size_t   *buffer_index=NULL;
   void     *buffer_i;
   size_t    id_search;
   size_t    id_value;
@@ -365,14 +365,12 @@ void read_gadget_binary_local(char       *filename_root_in,
       if(SID.My_rank==read_rank){
         // Skip positions
         fread(&record_length_open,4,1,fp);
-        //fseeko64(fp,(off64_t)record_length_open,SEEK_CUR);
         fseeko(fp,(off_t)record_length_open,SEEK_CUR);
         fread(&record_length_close,4,1,fp);
         if(record_length_open!=record_length_close)
           SID_log_warning("Problem with GADGET record size (close of positions)",ERROR_LOGIC);
         // Skip velocities
         fread(&record_length_open,4,1,fp);
-        //fseeko64(fp,(off64_t)record_length_open,SEEK_CUR);
         fseeko(fp,(off_t)record_length_open,SEEK_CUR);
         fread(&record_length_close,4,1,fp);
         if(record_length_open!=record_length_close)
@@ -404,10 +402,12 @@ void read_gadget_binary_local(char       *filename_root_in,
         SID_log("(long long)...",SID_LOG_CONTINUE);
         flag_LONGIDS=TRUE;
       }
-      else{
+      else if(record_length_open/n_particles_file==sizeof(int)){
         SID_log("(int)...",SID_LOG_CONTINUE);
         flag_LONGIDS=FALSE;
       }
+      else
+        SID_trap_error("ID record length and particle count don't reconsile (record_length=%d, n_particles=%d)",ERROR_LOGIC,record_length_open,n_particles_file);
 
       // Process IDs
       for(i=0,jj=0;i<N_GADGET_TYPE;i++){
