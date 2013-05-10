@@ -19,4 +19,5 @@ OBJFILES  = read_groupings.o   \
 LIBFILE   = libgbpClustering.a
 BINFILES  = make_gadget_grid make_diff_grid make_gadget_pspec make_groupings make_groupings_pspec make_groupings_cfunc make_atable_pspec make_atable_cfunc  
 LIBS      = -lgbpClustering -lgbpSPH -lgbpHalos -lgbpCosmo -lgbpMath -lgbpLib
+SCRIPTS   = view_grid_slice.py 
 #############################
