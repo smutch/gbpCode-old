@@ -20,6 +20,12 @@ int main(int argc, char *argv[]){
   char        filename_output_profiles_dir[256];
   char        filename_output_properties_temp[256];
   char        filename_output_profiles_temp[256];
+  char        filename_input_properties[256];
+  char        filename_input_properties_dir[256];
+  char        filename_input_profiles[256];
+  char        filename_input_profiles_dir[256];
+  char        filename_input_properties_temp[256];
+  char        filename_input_profiles_temp[256];
   char        group_text_prefix[4];
   int         n_groups_process;
   int         n_groups;
@@ -81,7 +87,7 @@ int main(int argc, char *argv[]){
   halo_profile_info     profile;
   int                   n_files,n_files_i;
   int                   n_files_temp=1;
-  int                   flag_process_profiles=FALSE;
+  int                   flag_process_profiles;
 
   SID_init(&argc,&argv,NULL);
 
@@ -90,6 +96,8 @@ int main(int argc, char *argv[]){
   i_file_lo  =atoi(argv[2]);
   i_file_hi  =atoi(argv[3]);
   i_file_skip=atoi(argv[4]);
+
+  flag_process_profiles=FALSE;
 
   SID_log("Processing group/subgroup statistics for files #%d->#%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file_lo,i_file_hi);
 
@@ -107,17 +115,25 @@ int main(int argc, char *argv[]){
         break;
       }
       SID_log("Processing %sgroup files...",SID_LOG_OPEN|SID_LOG_TIMER,group_text_prefix);
-      sprintf(filename_output_properties,     "%s_%s.catalog_%sgroups_properties",   filename_groups_root,filename_number,group_text_prefix);
-      sprintf(filename_output_properties_dir, "%s.x",filename_output_properties);
+      char filename_base[MAX_FILENAME_LENGTH];
+      sprintf(filename_base,"%s_%03d",filename_groups_root,i_file);
+      strip_path(filename_base);
+      sprintf(filename_input_properties,     "%s_%s.catalog_%sgroups_properties",    filename_groups_root,filename_number,group_text_prefix);
+      sprintf(filename_output_properties,    "%s_cat_%s.catalog_%sgroups_properties",filename_groups_root,filename_number,group_text_prefix);
+      sprintf(filename_input_properties_dir, "%s",filename_input_properties);
+      sprintf(filename_output_properties_dir,"%s",filename_output_properties);
       if(flag_process_profiles){
-        sprintf(filename_output_profiles,       "%s_%s.catalog_%sgroups_profiles",     filename_groups_root,filename_number,group_text_prefix);
-        sprintf(filename_output_profiles_dir,   "%s.x",filename_output_profiles);
+        sprintf(filename_input_profiles,     "%s_%s.catalog_%sgroups_profiles",    filename_groups_root,filename_number,group_text_prefix);
+        sprintf(filename_output_profiles,    "%s_cat_%s.catalog_%sgroups_profiles",filename_groups_root,filename_number,group_text_prefix);
+        sprintf(filename_input_profiles_dir, "%s",filename_input_profiles);
+        sprintf(filename_output_profiles_dir,"%s",filename_output_profiles);
       }
 
       // Get the number of files involved
       j_file=0;
-      sprintf(filename_output_properties_temp,"%s/catalog_%sgroups_properties_%09d_%09d",filename_output_properties_dir,group_text_prefix,i_file,j_file);
-      fp_properties_temp=fopen(filename_output_properties_temp,"r");
+      sprintf(filename_input_properties_temp,"%s/%s.catalog_%sgroups_properties.%d",filename_input_properties_dir,filename_base,group_text_prefix,j_file);
+      if((fp_properties_temp=fopen(filename_input_properties_temp,"r"))==NULL)
+         SID_trap_error("Can not open {%s}",ERROR_IO_OPEN,filename_output_properties_temp);
       fread(&j_file,      sizeof(int),1,fp_properties_temp);
       fread(&n_files,     sizeof(int),1,fp_properties_temp);
       fclose(fp_properties_temp);
@@ -128,18 +144,18 @@ int main(int argc, char *argv[]){
         fp_profiles  =fopen(filename_output_profiles,  "w");
       for(j_file=0;j_file<n_files;j_file++){
 
-        SID_log("Processing file %3d of %3d...",SID_LOG_OPEN,j_file,n_files);
+        SID_log("Processing file No. %d of %d...",SID_LOG_OPEN,j_file+1,n_files);
         // Set filenames
-        sprintf(filename_output_properties_temp,"%s/catalog_%sgroups_properties_%09d_%09d",filename_output_properties_dir,group_text_prefix,i_file,j_file);
-        if(flag_process_profiles)
-          sprintf(filename_output_profiles_temp,  "%s/catalog_%sgroups_profiles_%09d_%09d",  filename_output_profiles_dir,  group_text_prefix,i_file,j_file);
+        sprintf(filename_input_properties_temp,"%s/%s.catalog_%sgroups_properties.%d",filename_input_properties_dir,filename_base,group_text_prefix,j_file);
+        sprintf(filename_input_profiles_temp,  "%s/%s.catalog_%sgroups_profiles.%d",  filename_input_properties_dir,filename_base,group_text_prefix,j_file);
         // Cat properties
-        fp_properties_temp=fopen(filename_output_properties_temp,"r");
+        if((fp_properties_temp=fopen(filename_input_properties_temp,"r"))==NULL)
+           SID_trap_error("Can't open file {%s}",ERROR_IO_OPEN,filename_output_properties_temp);
         fread(&j_file_in,   sizeof(int),1,fp_properties_temp);
         fread(&n_files_i,   sizeof(int),1,fp_properties_temp);
         fread(&n_groups,    sizeof(int),1,fp_properties_temp);
         fread(&n_groups_all,sizeof(int),1,fp_properties_temp);
-        SID_log("Processing properties for file %3d of %3d (%d groups of %d)...",SID_LOG_OPEN,j_file_in,n_files_i,n_groups,n_groups_all);
+        SID_log("Processing properties (%d of %d %sgroups)...",SID_LOG_OPEN,n_groups,n_groups_all,group_text_prefix);
         if(j_file==0){
           fwrite(&j_file,      sizeof(int),1,fp_properties);
           fwrite(&n_files_temp,sizeof(int),1,fp_properties);
@@ -160,7 +176,7 @@ int main(int argc, char *argv[]){
           fread(&n_files_i,   sizeof(int),1,fp_profiles_temp);
           fread(&n_groups,    sizeof(int),1,fp_profiles_temp);
           fread(&n_groups_all,sizeof(int),1,fp_profiles_temp);
-          SID_log("Processing profiles   for file %3d of %3d (%d groups of %d)...",SID_LOG_OPEN,j_file_in,n_files_i,n_groups,n_groups_all);
+          SID_log("Processing profiles (%d of %d %sgroups)...",SID_LOG_OPEN,n_groups,n_groups_all,group_text_prefix);
           if(j_file==0){
             fwrite(&j_file,      sizeof(int),1,fp_profiles);
             fwrite(&n_files_temp,sizeof(int),1,fp_profiles);

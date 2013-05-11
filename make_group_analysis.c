@@ -635,7 +635,7 @@ int main(int argc, char *argv[]){
   int        *n_particles_groups_process;
   int        *n_particles_groups;
   int        *n_particles_subgroups;
-  unsigned int *group_offset;
+  size_t     *group_offset;
   size_t      n_particles_in_groups;
   size_t     *ids_snapshot;
   size_t     *ids_groups;
@@ -668,6 +668,7 @@ int main(int argc, char *argv[]){
   halo_properties_info  properties;
   halo_profile_info     profile;
   int                   n_temp;
+  int                   n_truncated_local;
   int                   n_truncated;
   int                   largest_truncated;
   int                   largest_truncated_local;
@@ -781,8 +782,8 @@ int main(int argc, char *argv[]){
         n_groups_all=((int *)ADaPS_fetch(plist.data,"n_%sgroups_all_%s",group_text_prefix,filename_number))[0];
 
         // Fetch some stuff
-        n_particles_groups = (int          *)ADaPS_fetch(plist.data,"n_particles_%sgroup_%s"    ,group_text_prefix,filename_number);
-        group_offset       = (unsigned int *)ADaPS_fetch(plist.data,"particle_offset_%sgroup_%s",group_text_prefix,filename_number);
+        n_particles_groups = (int    *)ADaPS_fetch(plist.data,"n_particles_%sgroup_%s"    ,group_text_prefix,filename_number);
+        group_offset       = (size_t *)ADaPS_fetch(plist.data,"particle_offset_%sgroup_%s",group_text_prefix,filename_number);
 
         // Create filenames, directories, etc
         sprintf(filename_output_properties_temp,"%s_%s.catalog_%sgroups_properties",filename_groups_root,filename_number,group_text_prefix);
@@ -843,7 +844,7 @@ int main(int argc, char *argv[]){
         }          
 
         // Create and write the properties and profiles of each group/subgroup in turn
-        for(i_group=0,n_truncated=0,largest_truncated_local=0;i_group<n_groups;i_group++){
+        for(i_group=0,n_truncated_local=0,largest_truncated_local=0;i_group<n_groups;i_group++){
           if(compute_group_analysis(&properties,
                                     &profile,
                                     ids_snapshot,
@@ -861,7 +862,7 @@ int main(int argc, char *argv[]){
                                     n_particles_groups[i_group],
                                     redshift,
                                     cosmo)!=TRUE){
-             n_truncated++;
+             n_truncated_local++;
              largest_truncated_local=MAX(largest_truncated_local,n_particles_groups[i_group]);
           }
           write_group_analysis(fp_properties,
@@ -873,9 +874,10 @@ int main(int argc, char *argv[]){
           fclose(fp_properties);
         if(fp_profiles!=NULL)
           fclose(fp_profiles);
+        calc_sum_global(&n_truncated_local,      &n_truncated,      1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
         calc_max_global(&largest_truncated_local,&largest_truncated,1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD); 
 
-        SID_log("Done. (f_truncated=%6.2lf%% largest=%d)",SID_LOG_CLOSE,100.*(double)n_truncated/(double)n_groups,largest_truncated);
+        SID_log("Done. (f_truncated=%6.2lf%% largest=%d)",SID_LOG_CLOSE,100.*(double)n_truncated/(double)n_groups_all,largest_truncated);
       }
 
       // Clean-up

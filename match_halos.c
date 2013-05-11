@@ -49,9 +49,9 @@ void match_halos(plist_info  *plist_1_in,
   int    *n_particles_group_2;
   int    *n_particles_group_2_local;
   int    *file_index_1;
-  unsigned int    *group_offset_1;
-  unsigned int    *group_offset_2;
-  unsigned int    *group_offset_2_local;
+  size_t *group_offset_1;
+  size_t *group_offset_2;
+  size_t *group_offset_2_local;
   int    *file_index_2;
   int    *file_index_2_local;
   size_t *mark_list_index_1      =NULL;
@@ -252,14 +252,14 @@ void match_halos(plist_info  *plist_1_in,
     n_particles_1      =((size_t *)ADaPS_fetch(plist_1->data,"n_particles_%s",    catalog_1))[0];
     id_1               = (size_t *)ADaPS_fetch(plist_1->data,"particle_ids_%s",   catalog_1);
     if(flag_match_subgroups){
-      n_particles_group_1= (int          *)ADaPS_fetch(plist_1->data,"n_particles_subgroup_%s",    catalog_1);
-      group_offset_1     = (unsigned int *)ADaPS_fetch(plist_1->data,"particle_offset_subgroup_%s",catalog_1);
-      file_index_1       = (int          *)ADaPS_fetch(plist_1->data,"file_index_subgroups_%s",    catalog_1);
+      n_particles_group_1= (int    *)ADaPS_fetch(plist_1->data,"n_particles_subgroup_%s",    catalog_1);
+      group_offset_1     = (size_t *)ADaPS_fetch(plist_1->data,"particle_offset_subgroup_%s",catalog_1);
+      file_index_1       = (int    *)ADaPS_fetch(plist_1->data,"file_index_subgroups_%s",    catalog_1);
     }
     else{
-      n_particles_group_1= (int          *)ADaPS_fetch(plist_1->data,"n_particles_group_%s",    catalog_1);
-      group_offset_1     = (unsigned int *)ADaPS_fetch(plist_1->data,"particle_offset_group_%s",catalog_1);
-      file_index_1       = (int          *)ADaPS_fetch(plist_1->data,"file_index_groups_%s",    catalog_1);
+      n_particles_group_1= (int    *)ADaPS_fetch(plist_1->data,"n_particles_group_%s",    catalog_1);
+      group_offset_1     = (size_t *)ADaPS_fetch(plist_1->data,"particle_offset_group_%s",catalog_1);
+      file_index_1       = (int    *)ADaPS_fetch(plist_1->data,"file_index_groups_%s",    catalog_1);
     }
 
     // Fetch needed info for catalog_2
@@ -267,14 +267,14 @@ void match_halos(plist_info  *plist_1_in,
     n_particles_2_local=((size_t *)ADaPS_fetch(plist_2->data,"n_particles_%s",    catalog_2))[0];
     id_2_local         = (size_t *)ADaPS_fetch(plist_2->data,"particle_ids_%s",   catalog_2);
     if(flag_match_subgroups){
-      n_particles_group_2_local= (int          *)ADaPS_fetch(plist_2->data,"n_particles_subgroup_%s",    catalog_2);
-      group_offset_2_local     = (unsigned int *)ADaPS_fetch(plist_2->data,"particle_offset_subgroup_%s",catalog_2);
-      file_index_2_local       = (int          *)ADaPS_fetch(plist_2->data,"file_index_subgroups_%s",    catalog_2);
+      n_particles_group_2_local= (int    *)ADaPS_fetch(plist_2->data,"n_particles_subgroup_%s",    catalog_2);
+      group_offset_2_local     = (size_t *)ADaPS_fetch(plist_2->data,"particle_offset_subgroup_%s",catalog_2);
+      file_index_2_local       = (int    *)ADaPS_fetch(plist_2->data,"file_index_subgroups_%s",    catalog_2);
     }
     else{
-      n_particles_group_2_local= (int          *)ADaPS_fetch(plist_2->data,"n_particles_group_%s",    catalog_2);
-      group_offset_2_local     = (unsigned int *)ADaPS_fetch(plist_2->data,"particle_offset_group_%s",catalog_2);
-      file_index_2_local       = (int          *)ADaPS_fetch(plist_2->data,"file_index_groups_%s",    catalog_2);
+      n_particles_group_2_local= (int    *)ADaPS_fetch(plist_2->data,"n_particles_group_%s",    catalog_2);
+      group_offset_2_local     = (size_t *)ADaPS_fetch(plist_2->data,"particle_offset_group_%s",catalog_2);
+      file_index_2_local       = (int    *)ADaPS_fetch(plist_2->data,"file_index_groups_%s",    catalog_2);
     }
 
     // Set the number of particles that need to be checked by exchanges
