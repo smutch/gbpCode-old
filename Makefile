@@ -24,8 +24,13 @@ ECHO = /bin/echo
 #CCFLAGS := $(CCFLAGS) -lm
 
 # Compile getline() on Macs
+ifndef USE_GETLINE
+  USE_GETLINE=0
+endif
 ifneq ($(USE_GETLINE),0)
-  CCFLAGS := $(CCFLAGS) -DUSE_GETLINE
+  CCFLAGS := $(CCFLAGS) -DUSE_GETLINE=1
+else
+  CCFLAGS := $(CCFLAGS) -DUSE_GETLINE=0
 endif
 
 # Set default so that real=float

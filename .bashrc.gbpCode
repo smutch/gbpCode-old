@@ -88,6 +88,7 @@ if [ $HOSTTYPE=='x86_64-linux' ]; then
 #----------------------------------------------------------------------
 elif [ $HOSTTYPE=='intel-mac' ]; then
   export USE_GETLINE=1
+  export USE_GETLINE=0
 else
   echo 'Unsupported HOSTTYPE in .cshrc.gbpCode'
 fi
