@@ -1,6 +1,7 @@
 *.o
 *.a
 *.dSYM
+*.pyc
 .install*
 .printed_status
 todo
