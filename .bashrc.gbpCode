@@ -64,18 +64,13 @@ export USE_GETLINE=0
 #     your system's platform here.
 #======================================================================
 # Set a default for the GBP_MPI path
-if [ !($?GBP_MPI) ]; then
-  export GBP_MPI='/usr/'
-endif
-
-# Set a default for the GBP_MPI path
-if [ !($?GBP_MPI) ]; then
-  if [ !($?MPI_DIR) ]; then
-     export GBP_MPI="${MPI_DIR}"
-  else
+if [ -z "$GBP_MPI" ]; then
+  if [ -z "$MPI_DIR" ]; then
      export GBP_MPI=""
-  endif
-endif
+  else
+     export GBP_MPI="${MPI_DIR}"
+  fi
+fi
 
 # If you're gonna use valgrind with this code, you have to supply your
 #  system's platform here.
