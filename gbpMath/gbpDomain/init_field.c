@@ -82,7 +82,12 @@ void init_field(int        n_d,
           		      &(i_y_start_transpose_local),
           		      &total_local_size_int);
     #else
-      SID_trap_error("Parallel FFTs are not supported without FFTW support.",ERROR+LOGIC);
+      n_x_local                =0;
+      i_x_start_local          =0;
+      n_y_transpose_local      =0;
+      i_y_start_transpose_local=0;
+      total_local_size_int     =0;
+      SID_trap_error("Parallel FFTs are not supported without FFTW support.",ERROR_LOGIC);
     #endif
     FFT->total_local_size=(size_t)total_local_size_int;
     if(n_x_local==0)

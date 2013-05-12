@@ -1,5 +1,6 @@
 #define  _MAIN
 #include <gbpLib.h>
+#include <stdlib.h>
 #include <gbpPHKs.h>
 
 int main(int argc,char *argv[]){
