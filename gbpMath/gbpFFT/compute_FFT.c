@@ -2,18 +2,23 @@
 #include <gbpFFT.h>
 
 void compute_FFT(field_info *FFT){
-  int flag_padded;
-  flag_padded=FFT->flag_padded;
-  add_buffer_FFT_R(FFT);
-  if(FFT->flag_padded)
-    SID_log("Performing FFT...",SID_LOG_OPEN|SID_LOG_TIMER);
+
+  // Add the FFTW padding if we need to.  The log message
+  //   is only needed if we do add a buffer.
+  int flag_log_message=FALSE;
+  if(add_buffer_FFT_R(FFT)){
+     SID_log("Performing FFT...",SID_LOG_OPEN|SID_LOG_TIMER);
+     flag_log_message=TRUE;
+  }
+
+  // Perform the FFT
   #if USE_MPI
     rfftwnd_mpi(FFT->plan,1,FFT->field_local,NULL,FFTW_TRANSPOSED_ORDER);
   #else
     rfftwnd_one_real_to_complex(FFT->plan,FFT->field_local,NULL);
   #endif
-  if(!flag_padded)
-    SID_log("Done.",SID_LOG_CLOSE);
-  if(!flag_padded)
-    remove_buffer_FFT_k(FFT);
+
+  if(flag_log_message)
+     SID_log("Done.",SID_LOG_CLOSE);
 }
+

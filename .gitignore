@@ -1,11 +1,13 @@
 *.o
 *.a
 *.dSYM
+*.pyc
 .install*
 .printed_status
 todo
 wip
 *.my*
+*.old
 3rd_Party
 gbpProj
 myBin

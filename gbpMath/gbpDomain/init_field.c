@@ -46,14 +46,14 @@ void init_field(int        n_d,
 
   // Initialize FFT sizes
   FFT->n_d            =n_d;
-  FFT->n              =(int    *)malloc(sizeof(int)*FFT->n_d);
-  FFT->L              =(double *)malloc(sizeof(double)*FFT->n_d);
-  FFT->n_k_local      =(int *)malloc(sizeof(int)*FFT->n_d);
-  FFT->n_R_local      =(int *)malloc(sizeof(int)*FFT->n_d);
-  FFT->i_R_start_local=(int *)malloc(sizeof(int)*FFT->n_d);
-  FFT->i_k_start_local=(int *)malloc(sizeof(int)*FFT->n_d);
-  FFT->i_R_stop_local =(int *)malloc(sizeof(int)*FFT->n_d);
-  FFT->i_k_stop_local =(int *)malloc(sizeof(int)*FFT->n_d);
+  FFT->n              =(int    *)SID_calloc(sizeof(int)*FFT->n_d);
+  FFT->L              =(double *)SID_calloc(sizeof(double)*FFT->n_d);
+  FFT->n_k_local      =(int    *)SID_calloc(sizeof(int)*FFT->n_d);
+  FFT->n_R_local      =(int    *)SID_calloc(sizeof(int)*FFT->n_d);
+  FFT->i_R_start_local=(int    *)SID_calloc(sizeof(int)*FFT->n_d);
+  FFT->i_k_start_local=(int    *)SID_calloc(sizeof(int)*FFT->n_d);
+  FFT->i_R_stop_local =(int    *)SID_calloc(sizeof(int)*FFT->n_d);
+  FFT->i_k_stop_local =(int    *)SID_calloc(sizeof(int)*FFT->n_d);
   for(i_d=0;i_d<FFT->n_d;i_d++){
     FFT->n[i_d]              =n[i_d];
     FFT->L[i_d]              =L[i_d];
@@ -90,10 +90,12 @@ void init_field(int        n_d,
       SID_trap_error("Parallel FFTs are not supported without FFTW support.",ERROR_LOGIC);
     #endif
     FFT->total_local_size=(size_t)total_local_size_int;
+    // Set empty slabs to start at 0 to make ignoring them simple.
     if(n_x_local==0)
       i_x_start_local=0;
     if(n_y_transpose_local==0)
       i_y_start_transpose_local=0;
+    // Modify the local slab dimensions according to what FFTW chose.
     FFT->i_R_start_local[0]=i_x_start_local;
     FFT->n_R_local[0]      =n_x_local;
     if(FFT->n_d>1){
@@ -113,9 +115,9 @@ void init_field(int        n_d,
     #endif
   #endif
   #if USE_FFTW
-    FFT->field_local =(fftw_real *)SID_malloc(sizeof(fftw_complex)*FFT->total_local_size); 
+    FFT->field_local =(fftw_real *)SID_calloc(sizeof(fftw_real)*FFT->total_local_size); 
   #else
-    FFT->field_local =(GBPREAL   *)SID_malloc(sizeof(GBPREAL)*FFT->total_local_size); 
+    FFT->field_local =(GBPREAL   *)SID_calloc(sizeof(GBPREAL)*FFT->total_local_size); 
   #endif
 
   // Upper limits of slab decomposition
@@ -127,7 +129,7 @@ void init_field(int        n_d,
   // FFTW padding sizes
   if(FFT->n_d>1){
     FFT->pad_size_R=2*(FFT->n_R_local[FFT->n_d-1]/2+1)-FFT->n_R_local[FFT->n_d-1];
-    FFT->pad_size_k=1;
+    FFT->pad_size_k=0;
   }
   else{
     FFT->pad_size_R=0;
@@ -150,10 +152,10 @@ void init_field(int        n_d,
   clear_field(FFT);
 
   // Initialize the FFT's real-space grid
-  FFT->R_field=(double **)malloc(sizeof(double *)*FFT->n_d);
-  FFT->dR     =(double  *)malloc(sizeof(double *)*FFT->n_d);
+  FFT->R_field=(double **)SID_malloc(sizeof(double *)*FFT->n_d);
+  FFT->dR     =(double  *)SID_malloc(sizeof(double *)*FFT->n_d);
   for(i_d=0;i_d<FFT->n_d;i_d++){
-    FFT->R_field[i_d]=(double *)malloc(sizeof(double)*(FFT->n[i_d]+1));
+    FFT->R_field[i_d]=(double *)SID_malloc(sizeof(double)*(FFT->n[i_d]+1));
     FFT->dR[i_d]     =FFT->L[i_d]/(double)(FFT->n[i_d]);
     for(i_i=0;i_i<FFT->n[i_d];i_i++)
       FFT->R_field[i_d][i_i]=FFT->L[i_d]*((double)i_i/(double)(FFT->n[i_d]));
@@ -161,11 +163,11 @@ void init_field(int        n_d,
   }
 
   // Initialize the FFT's k-space grid
-  FFT->k_field  =(double **)malloc(sizeof(double *)*FFT->n_d);
-  FFT->dk       =(double  *)malloc(sizeof(double *)*FFT->n_d);
-  FFT->k_Nyquist=(double  *)malloc(sizeof(double *)*FFT->n_d);
+  FFT->k_field  =(double **)SID_malloc(sizeof(double *)*FFT->n_d);
+  FFT->dk       =(double  *)SID_malloc(sizeof(double *)*FFT->n_d);
+  FFT->k_Nyquist=(double  *)SID_malloc(sizeof(double *)*FFT->n_d);
   for(i_d=0;i_d<FFT->n_d;i_d++){
-    FFT->k_field[i_d]  =(double *)malloc(sizeof(double)*FFT->n[i_d]);
+    FFT->k_field[i_d]  =(double *)SID_malloc(sizeof(double)*FFT->n[i_d]);
     FFT->dk[i_d]       =TWO_PI/FFT->L[i_d];
     FFT->k_Nyquist[i_d]=TWO_PI*(double)(FFT->n[i_d])/FFT->L[i_d]/2.;
     for(i_i=0;i_i<FFT->n[i_d];i_i++){
@@ -188,14 +190,15 @@ void init_field(int        n_d,
     FFT->slab.x_max_local  =FFT->R_field[0][FFT->i_R_stop_local[0]+1];
   else
     FFT->slab.x_max_local  =FFT->slab.x_min_local;
-  FFT->slab.x_max          =FFT->R_field[0][FFT->n[0]];
+  //FFT->slab.x_max          =FFT->R_field[0][FFT->n[0]];
+  SID_Allreduce(&(FFT->slab.x_max_local),&(FFT->slab.x_max),1,SID_DOUBLE,SID_MAX,SID.COMM_WORLD);
 
 #if USE_MPI
 
   // All ranks are not necessarily assigned any slices, so
   //   we need to figure out what ranks are to the right and the left for
   //   buffer exchanges
-  n_x_rank=(int *)malloc(sizeof(int)*SID.n_proc);
+  n_x_rank=(int *)SID_malloc(sizeof(int)*SID.n_proc);
   n_x_rank[SID.My_rank]=FFT->slab.n_x_local;
   if(n_x_rank[SID.My_rank]>0)
     flag_active=TRUE;

@@ -3,6 +3,8 @@
 #include <stdarg.h>
 #include <gbpCommon.h>
 
+#define DEFAULT_MAX_WALLCLOCK_TIME 172800
+
 #if USE_MPI
   #ifndef MPI_AWAKE
     #include <mpi.h>
@@ -43,17 +45,18 @@ _FILE_C_CLASS int b;
 
 #define SID_FARG (void **)&
 
-#define SID_LOG_MAX_LEVELS 30
-#define SID_LOG_OPEN       1
-#define SID_LOG_CLOSE      2
-#define SID_LOG_TIMER      4
-#define SID_LOG_CONTINUE   8
-#define SID_LOG_SINGLE     16
-#define SID_LOG_IO_RATE    32
-#define SID_LOG_COMMENT    64
-#define SID_LOG_NOPRINT    128
-#define SID_LOG_ALLRANKS   256
-#define SID_LOG_CHECKPOINT 512
+#define SID_LOG_MAX_LEVELS   30
+#define SID_LOG_OPEN         1
+#define SID_LOG_CLOSE        2
+#define SID_LOG_TIMER        4
+#define SID_LOG_CONTINUE     8
+#define SID_LOG_SINGLE       16
+#define SID_LOG_IO_RATE      32
+#define SID_LOG_COMMENT      64
+#define SID_LOG_NOPRINT      128
+#define SID_LOG_ALLRANKS     256
+#define SID_LOG_CHECKPOINT   512
+#define SID_LOG_SILENT_CLOSE SID_LOG_CLOSE|SID_LOG_NOPRINT
 
 #define SID_SET_VERBOSITY_DEFAULT  0
 #define SID_SET_VERBOSITY_ABSOLUTE 1
@@ -131,6 +134,16 @@ _FILE_C_CLASS int b;
 #define CALC_MODE_RETURN_DOUBLE 1
 #define CALC_MODE_ABS           2
 
+// Variable limits
+#include <limits.h>
+#include <float.h>
+#define SID_MAX_DOUBLE DBL_MAX
+#define SID_MIN_DOUBLE DBL_MIN
+#define SID_MAX_FLOAT  FLT_MAX
+#define SID_MIN_FLOAT  FLT_MIN
+#define SID_MAX_INT    INT_MAX
+#define SID_MIN_INT    INT_MIN
+
 // Structures for parsing the command line
 typedef void** SID_args;
 typedef struct SID_arg SID_arg;
@@ -173,6 +186,7 @@ struct SID_info{
   int       rank_to_left;
   int       rank_to_right;
   time_t    time_start;
+  time_t    max_wallclock;
   time_t    time_stop;
   time_t   *time_start_level;
   time_t   *time_stop_level;
@@ -199,10 +213,19 @@ struct SID_info{
 
 // Default values
 #ifdef _MAIN
-SID_info SID={NULL,NULL,FALSE,0,0,FALSE,MASTER_RANK,1,NULL,TRUE,TRUE,MASTER_RANK,MASTER_RANK,0,0,NULL,NULL,NULL,NULL,NULL,FALSE,FALSE,0,0};
+SID_info SID={NULL,NULL,FALSE,0,0,FALSE,MASTER_RANK,1,NULL,TRUE,TRUE,MASTER_RANK,MASTER_RANK,0,0,0,NULL,NULL,NULL,NULL,NULL,FALSE,FALSE,0,0};
 #else
 extern SID_info SID;
 #endif 
+
+// Datastructure for managing progress counters
+typedef struct pcounter_info pcounter_info;
+struct pcounter_info{
+  size_t n_i;
+  size_t i_report_next;
+  int    n_report;
+  int    i_report;
+};
 
 // Structures to define file header info for chunked files
 typedef struct chunked_header_info chunked_header_info;
@@ -411,6 +434,14 @@ void calc_sum_global(void   *data_local,
                      SID_Datatype type,
                      int          mode,
                      SID_Comm    *comm);
+
+// These routines manage progress counters
+void SID_init_pcounter(pcounter_info *pcounter,
+                       size_t         n_i,
+                       int            n_report);
+void SID_check_pcounter(pcounter_info *pcounter,
+                        size_t         i);
+
 
 // Cuda functions
 void calc_array_multiply(void         *data_1,

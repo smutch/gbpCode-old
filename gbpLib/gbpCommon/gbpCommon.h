@@ -24,7 +24,9 @@
 #define M_PER_PC       3.08568025E16  /* in meters       */
 #define M_PER_KPC      3.08568025E19  /* in meters       */
 #define M_PER_MPC      3.08568025E22  /* in meters       */
-#define CM_PER_MPC     3.08568025E24  /* in cm           */
+#ifndef CM_PER_MPC
+   #define CM_PER_MPC  3.08568025E24  /* in cm           */
+#endif
 #define S_PER_GYR      3.155693e+16   /* in seconds      */
 #define S_PER_MYR      3.155693e+13   /* in seconds      */
 #define S_PER_YR       3.155693e+7    /* in seconds      */

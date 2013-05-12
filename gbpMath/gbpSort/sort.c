@@ -73,12 +73,15 @@ void sort(void          *sval,
     #if USE_MPI
     if(flag_local==SORT_GLOBAL && SID.n_proc>1){
       SID_log("Sorting distributed items...",SID_LOG_OPEN|SID_LOG_TIMER);
+
       // ... get the largest number of items on any rank ...
       SID_Allreduce(&nval,&nval_max,1,SID_SIZE_T,SID_MAX,SID.COMM_WORLD);
+
       // ... get the size of our data-type ...
       SID_Type_size(data_type,&data_type_size_i);
       data_type_size=(size_t)data_type_size_i;
-      // ... create two temporary directories that are needed for the sort ...
+
+      // ... create two temporary arrays that are needed for the sort ...
       sval_tmp =(void   *)SID_malloc((size_t)data_type_size*(nval+nval_max));
       increment=(size_t *)SID_calloc(sizeof(size_t)*nval);
 
@@ -109,28 +112,30 @@ void sort(void          *sval,
         }
         nval_all=nval+nval_tmp;
 
-        // A STABLE sort algorythm MUST be used here!
-	merge_sort(sval_tmp,
-		   nval_all,
-		   &index_tmp,
-		   data_type,
-		   SORT_COMPUTE_RANK,
-		   SORT_COMPUTE_INPLACE);
+        if(nval_all>0){
+           // A STABLE sort algorythm MUST be used here!
+	   merge_sort(sval_tmp,
+	   	   nval_all,
+	   	   &index_tmp,
+	   	   data_type,
+	   	   SORT_COMPUTE_RANK,
+	   	   SORT_COMPUTE_INPLACE);
 
-	// Figure-out where the local values lie in the new sort
-	//   and increment rank for each if any values from
-	//   receive_from_rank's array are less than it
-	if(rank_receive_from<SID.My_rank){
-	  for(i=0,j=0;i<nval;i++)
-	    increment[i]+=index_tmp[i+nval_tmp]-(*index)[i];
-	}
-	else{
-	  for(i=0,j=0;i<nval;i++)
-	    increment[i]+=index_tmp[i]-(*index)[i];
-	}
+	   // Figure-out where the local values lie in the new sort
+	   //   and increment rank for each if any values from
+	   //   receive_from_rank's array are less than it
+	   if(rank_receive_from<SID.My_rank){
+	     for(i=0,j=0;i<nval;i++)
+	       increment[i]+=index_tmp[i+nval_tmp]-(*index)[i];
+	   }
+	   else{
+	     for(i=0,j=0;i<nval;i++)
+	       increment[i]+=index_tmp[i]-(*index)[i];
+	   }
 
-        // Free sort ranks
-	SID_free(SID_FARG index_tmp);
+           // Free sort ranks
+	   SID_free(SID_FARG index_tmp);
+        }
         SID_log("Done.",SID_LOG_CLOSE);
       } // loop over ranks
 
@@ -168,7 +173,7 @@ void sort(void          *sval,
       sort_ranks=(*index);
       (*index)  =(size_t *)SID_malloc(sizeof(size_t)*nval);
       rank_rank =(size_t *)SID_malloc(sizeof(size_t)*nval_max);
-      // ... perform exchanges and set indices ...
+      // ... loop over ranks, performing exchanges and setting indices ...
       for(i_rank=0,offset=0;i_rank<SID.n_proc;i_rank++){
         nval_tmp=nval;
         SID_Bcast(&nval_tmp,sizeof(size_t),i_rank,SID.COMM_WORLD);
@@ -179,7 +184,7 @@ void sort(void          *sval,
         //     are supposed to be pointed to by the indices stored locally ...
         for(i_val=0;i_val<nval_tmp;i_val++){
           if(rank_rank[i_val]>=first_index && rank_rank[i_val]<(nval+first_index))
-            (*index)[rank_rank[i_val]]=offset+i_val;
+            (*index)[rank_rank[i_val]-first_index]=offset+i_val;
         }
         offset+=nval_tmp;
       }
