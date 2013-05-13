@@ -1,8 +1,9 @@
-"""Usage: view_grid_slice.py <grid_file> <slice_axis> (<fps> [--bitrate=<val>] | --single=<val>)
+"""Usage: view_grid_slice.py <grid_file> <slice_axis> (<fps> [--bitrate=<val>] | --single=<val>) [--novel]
 
 -h, --help        show this help
 --single=<val>    single slice at `val` h^-1 Mpc
 --bitrate=<val>   bitrate of movie [default: 3600]
+--novel           don't plot velocity quivers
 
 Note that the movie generation may not work for some matplotlib backends.  On a
 mac try qt4 for the best performance.
@@ -41,6 +42,10 @@ else:
     FPS = int(arg['<fps>'])
     INDEX = 0
     BITRATE = int(arg['--bitrate'])
+if arg['--novel']: 
+    PLOTVEL=False
+else:
+    PLOTVEL=True
 
 def read_grid_header(fin):
     """Read in the grid file header from the open file handle `fin`."""
@@ -67,6 +72,8 @@ def read_grids(fname):
     with open(fname, "rb") as fin:
         n_cell, box_size, n_grids, ma_scheme = read_grid_header(fin)
         n_elem = n_cell.cumprod()[-1]
+        if not PLOTVEL:
+            n_grids = 1
         for i_grid in xrange(n_grids):
             ident = np.fromfile(fin, 'S32', 1)[0]
             print("Reading grid "+ident)
@@ -88,8 +95,9 @@ def animate(index):
 
     # update the data in the density image and quivers
     cax.set_data(grid['rho_r_dark'][s])
-    quiver.set_UVC(grid['v_'+LABELS[(AXIS-1)%3]+'_r_dark'][s][quiver_s],
-                   grid['v_'+LABELS[(AXIS+1)%3]+'_r_dark'][s][quiver_s])
+    if PLOTVEL:
+        quiver.set_UVC(grid['v_'+LABELS[(AXIS-1)%3]+'_r_dark'][s][quiver_s],
+                       grid['v_'+LABELS[(AXIS+1)%3]+'_r_dark'][s][quiver_s])
 
     # update the figure title
     slice_pos = index*(cell_half_width[AXIS]*2.)+cell_half_width[AXIS]
@@ -115,11 +123,12 @@ grid['rho_r_dark'] = grid['rho_r_dark']*1.e10
 min_density, max_density = grid['rho_r_dark'][grid['rho_r_dark']>0].min(), grid['rho_r_dark'].max()
 
 # mask the velocity fields to ignore zero density cells
-print "Masking the velocity fields to remove zero density cells..."
-bool_arr = grid['rho_r_dark'] < min_density
-for k in grid.iterkeys():
-    if k is not 'rho_r_dark':
-        grid[k] = np.ma.masked_where(bool_arr, grid[k], copy=False)
+if PLOTVEL:
+    print "Masking the velocity fields to remove zero density cells..."
+    bool_arr = grid['rho_r_dark'] < min_density
+    for k in grid.iterkeys():
+        if k is not 'rho_r_dark':
+            grid[k] = np.ma.masked_where(bool_arr, grid[k], copy=False)
 
 print "Plotting..."
 # set up the figure
@@ -156,27 +165,29 @@ cax = plt.imshow(grid['rho_r_dark'][s], origin='lower', extent=extent,
 cb = plt.colorbar(cax)
 
 # add quivers for the velocity field
-X,Y = np.meshgrid(np.linspace(extent[0]+cell_half_width[plotted_axis[0]],
-                              extent[1]-cell_half_width[plotted_axis[0]],
-                              n_cell[plotted_axis[0]]),
-                  np.linspace(extent[2]+cell_half_width[plotted_axis[1]],
-                              extent[3]-cell_half_width[plotted_axis[1]],
-                              n_cell[plotted_axis[1]]))
-quiver_s = list(np.s_[:,:])
-for i,a in enumerate(plotted_axis):
-    if n_cell[a]>64:
-        quiver_s[i] = np.s_[::int(n_cell[a]/64)]
-quiver = ax.quiver(X[quiver_s],Y[quiver_s],
-                   grid['v_'+LABELS[(AXIS-1)%3]+'_r_dark'][s][quiver_s],
-                   grid['v_'+LABELS[(AXIS+1)%3]+'_r_dark'][s][quiver_s],
-                   units='xy', scale=500,
-                   color='w', alpha=0.6,
-                   pivot='tail',
-                   headaxislength=5,
-                   headwidth=2.5)
+if PLOTVEL:
+    X,Y = np.meshgrid(np.linspace(extent[0]+cell_half_width[plotted_axis[0]],
+                                  extent[1]-cell_half_width[plotted_axis[0]],
+                                  n_cell[plotted_axis[0]]),
+                      np.linspace(extent[2]+cell_half_width[plotted_axis[1]],
+                                  extent[3]-cell_half_width[plotted_axis[1]],
+                                  n_cell[plotted_axis[1]]))
+    quiver_s = list(np.s_[:,:])
+    for i,a in enumerate(plotted_axis):
+        if n_cell[a]>64:
+            quiver_s[i] = np.s_[::int(n_cell[a]/64)]
+    quiver = ax.quiver(X[quiver_s],Y[quiver_s],
+                       grid['v_'+LABELS[(AXIS-1)%3]+'_r_dark'][s][quiver_s],
+                       grid['v_'+LABELS[(AXIS+1)%3]+'_r_dark'][s][quiver_s],
+                       units='xy', scale=500,
+                       color='w', alpha=0.6,
+                       pivot='tail',
+                       headaxislength=5,
+                       headwidth=2.5)
 
-# add a key for the quivers that indicates the normailsation of the lengths
-quiverkey = ax.quiverkey(quiver, 0.9, 0.93, 500, r'500 ks$^{-1}$', fontproperties={'weight': 'bold'}, labelcolor='w', alpha=1, coordinates='axes')
+    # add a key for the quivers that indicates the normailsation of the lengths
+    quiverkey = ax.quiverkey(quiver, 0.9, 0.93, 500, r'500 ks$^{-1}$', 
+                             fontproperties={'weight': 'bold'}, labelcolor='w', alpha=1, coordinates='axes')
 
 # set the axis labels and figure title
 units = r"h$^{-1}$ [Mpc]"
