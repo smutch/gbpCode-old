@@ -193,7 +193,7 @@ if PLOTVEL:
 units = r"h$^{-1}$ [Mpc]"
 plt.xlabel(LABELS[(AXIS+1)%3]+units)
 plt.ylabel(LABELS[(AXIS-1)%3]+units)
-cb.set_label(r"h$^{-1}$ [M$_{\odot}$ Mpc$^{-3}$]")
+cb.set_label(r"h$^2$ [M$_{\odot}$ Mpc$^{-3}$]")
 slice_pos = INDEX*(cell_half_width[AXIS]*2.)+cell_half_width[AXIS]
 plt.title(LABELS[AXIS]+" = {:03.2f}".format(slice_pos)+r"h$^{-1}$ Mpc")
 
