@@ -88,8 +88,8 @@ def animate(index):
 
     # update the data in the density image and quivers
     cax.set_data(grid['rho_r_dark'][s])
-    quiver.set_UVC(grid['v_'+LABELS[(AXIS-1)%3]+'_r_dark'][s],
-                   grid['v_'+LABELS[(AXIS+1)%3]+'_r_dark'][s])
+    quiver.set_UVC(grid['v_'+LABELS[(AXIS-1)%3]+'_r_dark'][s][quiver_s],
+                   grid['v_'+LABELS[(AXIS+1)%3]+'_r_dark'][s][quiver_s])
 
     # update the figure title
     slice_pos = index*(cell_half_width[AXIS]*2.)+cell_half_width[AXIS]
