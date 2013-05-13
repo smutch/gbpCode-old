@@ -123,7 +123,7 @@ for k in grid.iterkeys():
 
 print "Plotting..."
 # set up the figure
-fig = plt.figure(0, figsize=(16, 12)
+fig = plt.figure(0, figsize=(16, 12))
 ax = plt.subplot(111)
 
 # calculcate useful quantities
