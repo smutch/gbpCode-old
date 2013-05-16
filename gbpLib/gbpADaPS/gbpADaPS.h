@@ -54,16 +54,16 @@ extern "C" {
 void ADaPS_init(ADaPS **list);
 void ADaPS_store(ADaPS **list,
                  void   *data,
-                 char   *name,
+                 const char   *name,
                  int     mode, ...);
 void *ADaPS_fetch(ADaPS *list,
-                  char  *name_in,...);
+                  const char  *name_in,...);
 int  ADaPS_exist(ADaPS *list,
-                 char  *name, ...);
+                 const char  *name, ...);
 void ADaPS_free(void **list);
 void ADaPS_deallocate(ADaPS **remove);
 void ADaPS_remove(ADaPS **list, 
-                  char   *name,...);
+                  const char   *name,...);
 void ADaPS_status(ADaPS *list);
 #ifdef __cplusplus
 }

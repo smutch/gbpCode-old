@@ -4,8 +4,8 @@
 #include <gbpCommon.h>
 #include <gbpADaPS.h>
 
-int ADaPS_exist(ADaPS *list,
-                char  *name_in, ...){
+int ADaPS_exist(ADaPS      *list,
+                const char *name_in, ...){
   ADaPS   *current;
   va_list  vargs;
   char     name[ADaPS_NAME_LENGTH];

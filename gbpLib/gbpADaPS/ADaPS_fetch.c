@@ -4,8 +4,8 @@
 #include <gbpCommon.h>
 #include <gbpADaPS.h>
 
-void *ADaPS_fetch(ADaPS *list,
-                  char  *name_in,...){
+void *ADaPS_fetch(ADaPS      *list,
+                  const char *name_in,...){
   ADaPS   *current;
   int      flag;
   void    *r_val;

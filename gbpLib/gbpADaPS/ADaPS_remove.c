@@ -3,8 +3,8 @@
 #include <stdarg.h>
 #include <gbpADaPS.h>
 
-void ADaPS_remove(ADaPS **list, 
-                  char   *name_in,...){
+void ADaPS_remove(ADaPS      **list, 
+                  const char  *name_in,...){
   ADaPS *last   =NULL;
   ADaPS *current=NULL;
   ADaPS *remove =NULL;

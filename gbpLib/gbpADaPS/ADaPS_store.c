@@ -6,10 +6,10 @@
 #include <gbpSID.h>
 #include <gbpADaPS.h>
 
-void ADaPS_store(ADaPS  **list,
-                 void    *data,
-                 char    *name,
-                 int      mode, ...){
+void ADaPS_store(ADaPS      **list,
+                 void        *data,
+                 const char  *name,
+                 int          mode, ...){
   ADaPS   *new_item;
   size_t   n_subarray;
   size_t   data_size;
