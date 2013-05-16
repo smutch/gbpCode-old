@@ -52,7 +52,7 @@ void read_gadget_binary_local(char       *filename_root_in,
   // A file was found ... 
   if(flag_filefound){
     char **pname;
-    SID_log("Reading GADGET binary file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_root_in);
+    SID_log("Reading GADGET binary file...",SID_LOG_OPEN|SID_LOG_TIMER);
 
     pname=plist->species;
 
@@ -164,8 +164,6 @@ void read_gadget_binary_local(char       *filename_root_in,
     for(i_file=i_load;i_file<(i_load+n_read);i_file++){
 
       set_gadget_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
-      if(n_files>1)
-         SID_log("Processing file #%d of %d...",SID_LOG_OPEN,i_file+1,n_files);
 
       // Read header and move to the positions
       FILE *fp_pos;
@@ -187,7 +185,7 @@ void read_gadget_binary_local(char       *filename_root_in,
       fseeko(fp_vel,(off_t)(record_length_open),SEEK_CUR);
       fread(&record_length_close,4,1,fp_vel);
       if(record_length_open!=record_length_close)
-        SID_log_warning("Problem with GADGET record size (close of header)",ERROR_LOGIC);
+        SID_log_warning("Problem with GADGET record size (close of positons)",ERROR_LOGIC);
       fread(&record_length_open,4,1,fp_vel);
 
       // We only have to worry about z-space effects for domain decomposition in this one case.
@@ -232,8 +230,6 @@ void read_gadget_binary_local(char       *filename_root_in,
             i_step=MIN(READ_BUFFER_SIZE_LOCAL,header.n_file[i_type]-i_particle);
          }
       }
-      if(n_files>1)
-         SID_log("Done.",SID_LOG_CLOSE);
       fclose(fp_pos);
       fclose(fp_vel);
     }
@@ -256,8 +252,6 @@ void read_gadget_binary_local(char       *filename_root_in,
     for(i_file=i_load;i_file<(i_load+n_read);i_file++){
 
       set_gadget_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
-      if(n_files>1)
-         SID_log("Processing file #%d of %d...",SID_LOG_OPEN,i_file+1,n_files);
 
       // Read header and move to the positions
       FILE *fp_pos;
@@ -279,7 +273,7 @@ void read_gadget_binary_local(char       *filename_root_in,
       fseeko(fp_vel,(off_t)(record_length_open),SEEK_CUR);
       fread(&record_length_close,4,1,fp_vel);
       if(record_length_open!=record_length_close)
-        SID_log_warning("Problem with GADGET record size (close of header)",ERROR_LOGIC);
+        SID_log_warning("Problem with GADGET record size (close of positions)",ERROR_LOGIC);
       fread(&record_length_open,4,1,fp_vel);
 
       // Perform the read and populate the local position arrays
@@ -342,9 +336,6 @@ void read_gadget_binary_local(char       *filename_root_in,
       // Close file pointers
       fclose(fp_pos);
       fclose(fp_vel);
-
-      if(n_files>1)
-         SID_log("Done.",SID_LOG_CLOSE);
     }
     SID_free(SID_FARG pos_buffer);
     SID_free(SID_FARG vel_buffer);
@@ -466,7 +457,8 @@ int main(int argc, char *argv[]){
   else
      SID_trap_error("Invalid distribution scheme {%s} specified.",ERROR_SYNTAX,argv[5]);
 
-  SID_log("Smoothing Gadget file {%s;snapshot=#%d} to a %dx%dx%d grid with %s kernel...",SID_LOG_OPEN|SID_LOG_TIMER,filename_in_root,snapshot_number,grid_size,grid_size,grid_size,argv[5]);
+  SID_log("Smoothing Gadget file {%s;snapshot=#%d} to a %dx%dx%d grid with %s kernel...",SID_LOG_OPEN|SID_LOG_TIMER,
+          filename_in_root,snapshot_number,grid_size,grid_size,grid_size,argv[5]);
 
   // Initialization -- default cosmology
   init_cosmo_std(&cosmo);
@@ -599,6 +591,9 @@ int main(int argc, char *argv[]){
            // Loop over all the files that this rank will read
            int i_load;
            for(i_load=0;i_load<n_load;i_load++){
+              if(n_load>1)
+                 SID_log("Processing file No. %d of %d...",SID_LOG_OPEN|SID_LOG_TIMER,i_load+1,n_load);
+
               // Initialization -- read gadget file
               GBPREAL mass_array[N_GADGET_TYPE];
               init_plist(&plist,&((field[i_init])->slab),GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
@@ -723,6 +718,8 @@ int main(int argc, char *argv[]){
 
               // Clean-up
               free_plist(&plist);
+              if(n_load>1)
+                 SID_log("Done.",SID_LOG_CLOSE);
            } // loop over i_load
            
            // Write results to disk

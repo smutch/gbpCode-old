@@ -183,20 +183,22 @@ void map_to_grid(size_t      n_particles_local,
      receive_right_norm  =(GBPREAL *)SID_calloc(send_size_left);
   }
 
-  // Create the mass distribution
-  SID_log("Performing grid assignment...",SID_LOG_OPEN|SID_LOG_TIMER);
-
   // Clear the field
   if(!check_mode_for_flag(mode,MAP2GRID_MODE_NOCLEAN)){
+     SID_log("Clearing fields...",SID_LOG_OPEN);
      clear_field(field);
      if(field_norm!=NULL)
         clear_field(field);
+     SID_log("Done.",SID_LOG_CLOSE);
   }
 
   // It is essential that we not pad the field for the simple way that we add-in the boundary buffers below
   set_FFT_padding_state(field,FALSE);
   if(field_norm!=NULL)
      set_FFT_padding_state(field_norm,FALSE);
+
+  // Create the mass distribution
+  SID_log("Performing grid assignment...",SID_LOG_OPEN|SID_LOG_TIMER);
 
   // Loop over all the objects
   pcounter_info pcounter;
