@@ -740,7 +740,6 @@ void read_gadget_binary_local(char       *filename_root_in,
     SID_trap_error("Could not find file with root {%s}",ERROR_IO_OPEN,filename_root_in);
 }
 
-
 int main(int argc, char *argv[]){
   plist_info  plist;
   char        filename_halos_in_root[256];
@@ -1132,11 +1131,15 @@ int main(int argc, char *argv[]){
     calc_sum_global(&n_subgroups_local,&n_subgroups_all,1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
 
     // Allocate a buffer for writing
-    int   n_buffer_alloc;
-    void *buffer;
+    int     n_buffer_alloc;
+    void   *buffer;
+    int    *buffer_int;
+    size_t *buffer_size_t;
     n_buffer_alloc=n_particles_local;
     SID_Allreduce(SID_IN_PLACE,&n_buffer_alloc,1,SID_INT,SID_MAX,SID.COMM_WORLD);
-    buffer=SID_malloc(sizeof(size_t)*n_buffer_alloc);
+    buffer       =SID_malloc(sizeof(size_t)*n_buffer_alloc);
+    buffer_int   =(int    *)buffer;
+    buffer_size_t=(size_t *)buffer;
 
     // Read the ID and offset byte-sizes from the input catalog
     FILE *fp_in_groups;
@@ -1169,6 +1172,11 @@ int main(int argc, char *argv[]){
     SID_Bcast(&n_byte_offsets_groups,   sizeof(int),MASTER_RANK,SID.COMM_WORLD);
     SID_Bcast(&n_byte_offsets_subgroups,sizeof(int),MASTER_RANK,SID.COMM_WORLD);
     SID_Bcast(&n_byte_ids,              sizeof(int),MASTER_RANK,SID.COMM_WORLD);
+    SID_log("Halo catalog byte-sizes:", SID_LOG_OPEN);
+    SID_log("particle IDs    = %d byte",SID_LOG_COMMENT,n_byte_ids);
+    SID_log("group    offset = %d byte",SID_LOG_COMMENT,n_byte_offsets_groups);
+    SID_log("subgroup offset = %d byte",SID_LOG_COMMENT,n_byte_offsets_subgroups);
+    SID_log("",SID_LOG_CLOSE|SID_LOG_NOPRINT);
 
     // Write results
     SID_log("Writing new halo catalog files...",SID_LOG_OPEN|SID_LOG_TIMER);
@@ -1183,9 +1191,9 @@ int main(int argc, char *argv[]){
     sprintf(filename_out_groups,   "%s_%s.catalog_groups",   filename_halos_out_root,filename_number);
     sprintf(filename_out_subgroups,"%s_%s.catalog_subgroups",filename_halos_out_root,filename_number);
     sprintf(filename_out_particles,"%s_%s.catalog_particles",filename_halos_out_root,filename_number);
-FILE *fp_test;
+
+    // Open files and write header
     if(SID.I_am_Master){
-fp_test=fopen("test.out","w");
        // Open files
        fp_out_groups   =fopen(filename_out_groups,   "w");
        fp_out_subgroups=fopen(filename_out_subgroups,"w");
@@ -1205,10 +1213,11 @@ fp_test=fopen("test.out","w");
           fwrite(&n_particles_head,sizeof(int64_t),1,fp_out_particles);
        }
     }
+
+    // Write group sizes
     for(i_rank=0;i_rank<SID.n_proc;i_rank++){
-       // Write group sizes
        if(SID.My_rank==i_rank){
-          buffer_size=sizeof(int)*n_groups_local;
+          buffer_size=(int)(sizeof(int)*n_groups_local);
           memcpy(buffer,size_groups,buffer_size);
        }
        SID_Bcast(&buffer_size,sizeof(int),i_rank,SID.COMM_WORLD);
@@ -1219,16 +1228,16 @@ fp_test=fopen("test.out","w");
           if(n_write!=buffer_size)
              SID_trap_error("buffer not written properly",ERROR_IO_WRITE);
        }
+    }
 
-       // Write group offsets
+    // Write group offsets
+    for(i_rank=0;i_rank<SID.n_proc;i_rank++){
        if(SID.My_rank==i_rank){
           memcpy(buffer,offset_groups,sizeof(size_t)*n_groups_local);
           if(n_byte_offsets_groups==sizeof(unsigned int)){
-             int     i_buffer;
-             int    *buffer_int   =(int    *)buffer;
-             size_t *buffer_size_t=(size_t *)buffer;
+             int i_buffer;
              for(i_buffer=0;i_buffer<n_groups_local;i_buffer++)
-                buffer_int[i_buffer]=buffer_size_t[i_buffer]; 
+                buffer_int[i_buffer]=(int)buffer_size_t[i_buffer]; 
           }
           else if(n_byte_offsets_groups!=sizeof(int64_t))
              SID_trap_error("Invalid group offset byte-size (%d)",ERROR_LOGIC,n_byte_offsets_groups);
@@ -1238,14 +1247,14 @@ fp_test=fopen("test.out","w");
        SID_Bcast(buffer,      buffer_size,i_rank,SID.COMM_WORLD);
        if(SID.I_am_Master){
           int n_write;
-int i_test;
-for(i_test=0;i_test<buffer_size/8;i_test++) fprintf(fp_test,"%2d %lld\n",i_rank,((size_t *)buffer)[i_test]);
           n_write=fwrite(buffer,1,buffer_size,fp_out_groups);
           if(n_write!=buffer_size)
              SID_trap_error("buffer not written properly",ERROR_IO_WRITE);
        }
+    }
 
-       // Write group subgroup counts
+    // Write group subgroup counts
+    for(i_rank=0;i_rank<SID.n_proc;i_rank++){
        if(SID.My_rank==i_rank){
           buffer_size=sizeof(int)*n_groups_local;
           memcpy(buffer,n_subgroups_group,buffer_size);
@@ -1258,8 +1267,10 @@ for(i_test=0;i_test<buffer_size/8;i_test++) fprintf(fp_test,"%2d %lld\n",i_rank,
           if(n_write!=buffer_size)
              SID_trap_error("buffer not written properly",ERROR_IO_WRITE);
        }
+    }
 
-       // Write subgroup sizes
+    // Write subgroup sizes
+    for(i_rank=0;i_rank<SID.n_proc;i_rank++){
        if(SID.My_rank==i_rank){
           buffer_size=sizeof(int)*n_subgroups_local;
           memcpy(buffer,size_subgroups,buffer_size);
@@ -1272,16 +1283,16 @@ for(i_test=0;i_test<buffer_size/8;i_test++) fprintf(fp_test,"%2d %lld\n",i_rank,
           if(n_write!=buffer_size)
              SID_trap_error("buffer not written properly",ERROR_IO_WRITE);
        }
+    }
 
-       // Write subgroup offsets
+    // Write subgroup offsets
+    for(i_rank=0;i_rank<SID.n_proc;i_rank++){
        if(SID.My_rank==i_rank){
           memcpy(buffer,offset_subgroups,sizeof(size_t)*n_subgroups_local);
           if(n_byte_offsets_subgroups==sizeof(unsigned int)){
-             int     i_buffer;
-             int    *buffer_int   =(int    *)buffer;
-             size_t *buffer_size_t=(size_t *)buffer;
+             int i_buffer;
              for(i_buffer=0;i_buffer<n_subgroups_local;i_buffer++)
-                buffer_int[i_buffer]=buffer_size_t[i_buffer];
+                buffer_int[i_buffer]=(int)buffer_size_t[i_buffer];
           }
           else if(n_byte_offsets_subgroups!=sizeof(int64_t))
              SID_trap_error("Invalid subgroup offset byte-size (%d)",ERROR_LOGIC,n_byte_offsets_subgroups);
@@ -1295,16 +1306,16 @@ for(i_test=0;i_test<buffer_size/8;i_test++) fprintf(fp_test,"%2d %lld\n",i_rank,
           if(n_write!=buffer_size)
              SID_trap_error("buffer not written properly",ERROR_IO_WRITE);
        }
+    }
 
-       // Write particle IDs
+    // Write particle IDs
+    for(i_rank=0;i_rank<SID.n_proc;i_rank++){
        if(SID.My_rank==i_rank){
           memcpy(buffer,id_list_local,sizeof(size_t)*n_particles_local);
           if(n_byte_ids==sizeof(int)){
-             int     i_buffer;
-             int    *buffer_int   =(int    *)buffer;
-             size_t *buffer_size_t=(size_t *)buffer;
+             int i_buffer;
              for(i_buffer=0;i_buffer<n_particles_local;i_buffer++)
-                buffer_int[i_buffer]=buffer_size_t[i_buffer];
+                buffer_int[i_buffer]=(int)buffer_size_t[i_buffer];
           }
           else if(n_byte_ids!=sizeof(int64_t))
              SID_trap_error("Invalid ID byte-size (%d)",ERROR_LOGIC,n_byte_ids);
@@ -1321,7 +1332,6 @@ for(i_test=0;i_test<buffer_size/8;i_test++) fprintf(fp_test,"%2d %lld\n",i_rank,
     }
     SID_log("Done.",SID_LOG_CLOSE);
     if(SID.I_am_Master){
-fclose(fp_test);
        fclose(fp_out_groups);
        fclose(fp_out_subgroups);
        fclose(fp_out_particles);
