@@ -12,7 +12,7 @@ void match_halos(plist_info  *plist_1_in,
                  int          i_file_2_in,
                  int         *mark_list_2_local,
                  int          n_mark_2_local,
-                 char        *catalog_1to2,
+                 const char  *catalog_1to2,
                  int          mode){
   plist_info  *plist_store;
   plist_info  *plist_1;

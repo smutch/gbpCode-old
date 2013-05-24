@@ -422,6 +422,12 @@ void read_groups(char        *filename_groups_root,
            n_groups_left   =n_groups   -n_groups_check;
         } 
 
+        // If this rank has been given dummy PHKs larger than allowed range, 
+        //    set n_bits=0 to avoid throwing errors later
+        PHK_t PHK_max=PHK_N_KEYS_3D(n_bits_PHK)-1;
+        if(PHK_min_local>PHK_max || PHK_max_local>PHK_max)
+           n_bits_PHK=0;
+
         // Sanity checks
         if(n_particles_left!=0)
            SID_trap_error("Particle number mismatch (%zd unassigned) after setting PHK ranges.",ERROR_LOGIC,n_particles_left);

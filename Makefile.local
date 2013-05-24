@@ -12,6 +12,6 @@ OBJFILES  = fopen_catalog.o          \
 	    read_group_properties.o  \
 	    write_group_analysis.o     
 LIBFILE   = libgbpHalos.a
-BINFILES  = update_halo_files_format make_group_PHKs query_group query_catalog make_catalog_ascii make_catalog_group_ascii make_group_analysis cat_group_analysis convert_AHF
+BINFILES  = remove_duplicates update_halo_files_format make_group_PHKs query_group query_catalog make_catalog_ascii make_catalog_group_ascii make_group_analysis cat_group_analysis convert_AHF
 LIBS      = -lgbpHalos -lgbpSPH -lgbpCosmo -lgbpMath -lgbpLib
 #############################

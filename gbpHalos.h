@@ -203,7 +203,7 @@ void match_halos(plist_info  *plist_1_in,
                  int          i_file_2_in,
                  int         *mark_list_2,
                  int          n_mark_2,
-                 char        *catalog_1to2,
+                 const char  *catalog_1to2,
                  int          mode);
 
 #ifdef __cplusplus
