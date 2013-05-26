@@ -51,8 +51,12 @@ int main(int argc, char *argv[]){
      n_files=0;
   if(n_files<SID.n_proc)
      SID_log("You are processing %d files with %d cores.  %d cores will go unused.",SID_LOG_COMMENT,n_files,SID.n_proc,SID.n_proc-n_files);
-  char filename_in[MAX_FILENAME_LENGTH];
-  char filename_out[MAX_FILENAME_LENGTH];
+  char  filename_in[MAX_FILENAME_LENGTH];
+  char  filename_out[MAX_FILENAME_LENGTH];
+  int   n_alloc;
+  char *buffer;
+  n_alloc=32*1024*1024;
+  buffer =(char *)SID_malloc(3*sizeof(GBPREAL)*n_alloc);
   for(i_file=0;i_file<n_files;i_file++){
      if(n_files>1)
         SID_log("Processing file(s) %d->%d...",SID_LOG_OPEN,i_file,MIN(i_file+SID.n_proc-1,n_files-1));
@@ -119,8 +123,10 @@ int main(int argc, char *argv[]){
         }
 
         // Create read buffer (this is long enough for all blocks, even if IDs are long)
-        char *buffer;
-        buffer=(char *)SID_malloc(3*sizeof(GBPREAL)*n_buffer_max);
+        if(n_buffer_max>n_alloc){
+           n_alloc=n_buffer_max;
+           buffer =(char *)SID_realloc(buffer,3*sizeof(GBPREAL)*n_alloc);
+        }
 
         // Write the header
         fwrite(&record_length_header,sizeof(int),1,fp_out);
@@ -178,9 +184,6 @@ int main(int argc, char *argv[]){
         // Update the particle counters
         for(i_type=0;i_type<N_GADGET_TYPE;i_type++)
            n_written[i_type]+=header.n_file[i_type];
-
-        // Clean-up
-        SID_free(SID_FARG buffer);
      }
      fclose(fp_in);
      fclose(fp_out);
@@ -189,6 +192,7 @@ int main(int argc, char *argv[]){
   }
   
   // Clean-up 
+  SID_free(SID_FARG buffer);
   free_plist(&plist);
   SID_log("Done.",SID_LOG_CLOSE);
 
