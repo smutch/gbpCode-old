@@ -155,7 +155,9 @@ s[AXIS] = INDEX
 # plot the density grid
 palette = plt.cm.jet
 palette.set_bad('k')
-cax = plt.imshow(grid['rho_r_dark'][s], origin='lower', extent=extent,
+
+# note the transpose here!
+cax = plt.imshow(grid['rho_r_dark'][s].T, origin='lower', extent=extent,
                  interpolation='bicubic',
                  vmin=min_density, vmax=max_density,
                  norm=LogNorm(),
