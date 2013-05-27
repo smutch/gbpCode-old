@@ -459,11 +459,11 @@ void match_halos(plist_info  *plist_1_in,
          n_particles_2=n_particles_2_local;
          n_groups_2   =n_groups_2_local;
          if(SID.n_proc>1){
-            memcpy(n_particles_group_2,n_particles_group_2_local,sizeof(int)         *n_groups_2);
-            memcpy(group_index_2,      group_index_2_local,      sizeof(int)         *n_particles_2);
-            memcpy(file_index_2,       file_index_2_local,       sizeof(int)         *n_groups_2);
-            memcpy(id_2,               id_2_local,               sizeof(size_t)      *n_particles_2);
-            memcpy(index_2,            index_2_local,            sizeof(size_t)      *n_particles_2);
+            memcpy(n_particles_group_2,n_particles_group_2_local,sizeof(int)   *n_groups_2);
+            memcpy(group_index_2,      group_index_2_local,      sizeof(int)   *n_particles_2);
+            memcpy(file_index_2,       file_index_2_local,       sizeof(int)   *n_groups_2);
+            memcpy(id_2,               id_2_local,               sizeof(size_t)*n_particles_2);
+            memcpy(index_2,            index_2_local,            sizeof(size_t)*n_particles_2);
          }
          else{
             n_particles_group_2=n_particles_group_2_local;
