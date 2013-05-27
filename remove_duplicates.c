@@ -204,7 +204,6 @@ void inject_duplicates_local(plist_info *plist,const char *filename_number,
          size_t i_particle;
          size_t index_k;
          index_k=index_duplicate_added_to[i_duplicate]+offset_group[index_i];
-fprintf(stderr,"Rank %d: %lld\n",SID.My_rank,index_k);
          for(i_particle=n_particles_local;i_particle>index_k && i_particle>0;i_particle--)
             id_list_local[i_particle]=id_list_local[i_particle-1];
          if(i_particle!=index_k)
@@ -563,7 +562,6 @@ void read_gadget_binary_local(char       *filename_root_in,
   int       flag_ages;
   int       flag_entropyICs;
   double    expansion_factor;
-  double    h_Hubble;
   double    box_size;
   double    d_value;
   double    d1_value;
@@ -593,7 +591,6 @@ void read_gadget_binary_local(char       *filename_root_in,
   int       flag_multimass     =FALSE;
   int       flag_file_type     =0;
   int       flag_filefound     =FALSE;
-  int       flag_gas           =FALSE;
   int       flag_initpositions =FALSE;
   int       flag_LONGIDS       =FALSE;
   int       flag_read_marked   =FALSE;
@@ -645,8 +642,8 @@ void read_gadget_binary_local(char       *filename_root_in,
   double    z_min_bcast;
   double    z_max_bcast;
   gadget_header_info header;
-  // Determine file format
-  n_files=1;
+
+/*
   for(i_file=0;i_file<3 && !flag_filefound;i_file++){
     if(i_file==0)
       sprintf(filename,"%s/snapshot_%03d/snapshot_%03d",filename_root_in,snapshot_number,snapshot_number);
@@ -671,21 +668,14 @@ void read_gadget_binary_local(char       *filename_root_in,
       }
     }
   }
+*/
+  flag_filefound=init_gadget_read(filename_root_in,snapshot_number,&flag_multifile,&flag_file_type,&header);
 
   // A file was found ... 
   SID_log("Reading GADGET binary file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_root_in);
   if(flag_filefound){
 
     pname=plist->species;
-
-    // Header record length
-    SID_log("Reading header...",SID_LOG_OPEN);
-    fread(&record_length_open,4,1,fp);
-    if(record_length_open!=GADGET_HEADER_SIZE)
-      SID_log_warning("Problem with GADGET record size (opening size of header is wrong)",ERROR_LOGIC);
-
-    // Read header
-    fread(&header,sizeof(gadget_header_info),1,fp);
 
     // Number of particles for each species in this file
     for(i=0;i<N_GADGET_TYPE;i++)
@@ -719,13 +709,10 @@ void read_gadget_binary_local(char       *filename_root_in,
     d_value=(double)header.Omega_Lambda;
     ADaPS_store(&(plist->data),(void *)(&d_value),"Omega_Lambda",ADaPS_SCALAR_DOUBLE);
 
-    // Hubble parameter 
-    h_Hubble=(double)header.h_Hubble;
-    if(h_Hubble<1e-10) h_Hubble=1.;
-    box_size=header.box_size*plist->length_unit/h_Hubble;
+    // Box size
     ADaPS_store(&(plist->data),(void *)(&box_size),"box_size",ADaPS_SCALAR_DOUBLE);
-    ADaPS_store(&(plist->data),(void *)(&h_Hubble),"h_Hubble",ADaPS_SCALAR_DOUBLE);
 
+    // Species total particle counts and mass array
     for(i=0;i<N_GADGET_TYPE;i++){
       mass_array[i]=header.mass_array[i];
       if(header.n_all_high_word[i]>0)
@@ -740,7 +727,8 @@ void read_gadget_binary_local(char       *filename_root_in,
         n_non_zero++;
       }
     }
-    // List numbers of particles in the log output
+
+    // Report the number of particles
     SID_log("%lld",SID_LOG_CONTINUE,n_particles_all);
     if(n_non_zero>0)
       SID_log(" (",SID_LOG_CONTINUE,n_particles_all);
@@ -765,19 +753,12 @@ void read_gadget_binary_local(char       *filename_root_in,
     else
       SID_log(" particles...",SID_LOG_CONTINUE);
 
-    // Check closing record length
-    fread(&record_length_close,4,1,fp);
-    if(record_length_open!=record_length_close)
-      SID_log_warning("Problem with GADGET record size (close of header)",ERROR_LOGIC);
-
     // Close file
-    fclose(fp);
     SID_log("Done.",SID_LOG_CLOSE);
 
     // Store mass array
     for(i=0;i<N_GADGET_TYPE;i++){
       if(n_all[i]>0){
-        mass_array[i]*=plist->mass_unit/h_Hubble;
         if(mass_array[i]!=0.){
           d_value=mass_array[i];
           ADaPS_store(&(plist->data),(void *)(&d_value),"mass_array_%s",ADaPS_SCALAR_DOUBLE,plist->species[i]);
@@ -786,18 +767,6 @@ void read_gadget_binary_local(char       *filename_root_in,
       else
         mass_array[i]=0.;
     }
-
-    // Is this a multimass snapshot?
-    flag_multimass=FALSE;
-    for(i=0;i<N_GADGET_TYPE;i++)
-      if(n_all[i]>0 && mass_array[i]==0.)
-        flag_multimass=TRUE;
-
-    // Is sph being used?
-    if(n_all[GADGET_TYPE_GAS]>0)
-      flag_gas=TRUE;
-    else
-      flag_gas=FALSE;
 
     // Fetch (and sort by id) local group particles
     SID_log("Sorting group particle ids...",SID_LOG_OPEN);
@@ -821,6 +790,7 @@ void read_gadget_binary_local(char       *filename_root_in,
         SID_log("Performing read...",SID_LOG_OPEN|SID_LOG_TIMER);
 
       // Set filename
+/*
       if(flag_file_type==0)
         sprintf(filename,"%s/snapshot_%03d/snapshot_%03d",filename_root_in,snapshot_number,snapshot_number);
       else if(flag_file_type==1)
@@ -829,6 +799,8 @@ void read_gadget_binary_local(char       *filename_root_in,
         sprintf(filename,"%s_%03d",filename_root_in,snapshot_number);
       if(flag_multifile)
         sprintf(filename,"%s.%d",filename,i_file);
+*/
+      set_gadget_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
 
       // Read header and set positions pointer
       FILE *fp_positions;
@@ -1027,7 +999,6 @@ int main(int argc, char *argv[]){
   size_t     *ids_groups_sort_index;
   size_t      n_particles_snapshot;
   int         i_value;
-  double      h_Hubble;
   double      Omega_M;
   double      Omega_b;
   double      Omega_Lambda;
@@ -1121,6 +1092,10 @@ int main(int argc, char *argv[]){
 
     // For testing purposes: read a list of duplicates from the ./remove_duplicates_testing.dat
     //    file and inject them into the catalog.  Does nothing if the file is not present.
+    //    The file should have 4 columns of integers -- one line per artificial duplicate --
+    //    with the first two columns specifying the group number and group particle index 
+    //    for the particle to be duplicated, followed by the group number and group particle
+    //    index of where it will be duplicated to.
     int     flag_add_duplicates;
     int     n_duplicates_added;
     int     n_duplicates_added_local;
