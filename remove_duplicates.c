@@ -734,9 +734,6 @@ void read_gadget_binary_local(char       *filename_root_in,
     else
       SID_log(" particles...",SID_LOG_CONTINUE);
 
-    // Close file
-    SID_log("Done.",SID_LOG_CLOSE);
-
     // Store mass array
     for(i=0;i<N_GADGET_TYPE;i++){
       if(n_all[i]>0){
