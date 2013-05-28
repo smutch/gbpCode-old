@@ -488,31 +488,38 @@ void construct_duplicate_list_local(plist_info *plist,
      int    i_subgroup;
      int    i_duplicate;
      size_t index_i;
+     size_t index_j;
      index_duplicates_group_local   =(int *)SID_malloc(sizeof(int)*n_particles_local);
      index_duplicates_subgroup_local=(int *)SID_malloc(sizeof(int)*n_particles_local);
      for(i_duplicate=0;i_duplicate<n_duplicates_local;i_duplicate++){
         index_duplicates_group_local[i_duplicate]   =-1;
         index_duplicates_subgroup_local[i_duplicate]=-1;
      }
+
      for(i_duplicate=0,i_group=0,i_subgroup=0;i_duplicate<n_duplicates_local;i_duplicate++){
-        index_i=index_duplicates_local[index_duplicates_local_index[i_duplicate]];
+        index_i=index_duplicates_local_index[i_duplicate];
+        index_j=index_duplicates_local[index_i];
         // Identify group
-        while(index_i>(offset_groups[i_group]+size_groups[i_group]) && i_group<(n_groups-1)) 
+        while(index_j>=(offset_groups[i_group]+(size_t)size_groups[i_group]) && i_group<(n_groups-1)) 
            i_group++;
-        if(index_i>=offset_groups[i_group] && index_i<(offset_groups[i_group]+size_groups[i_group]))
-           index_duplicates_group_local[index_duplicates_local_index[i_duplicate]]=i_group;
+        if(index_j>=offset_groups[i_group] && index_j<(offset_groups[i_group]+(size_t)size_groups[i_group]))
+           index_duplicates_group_local[index_i]=i_group;
         // Identify subgroup
-        while(index_i>(offset_subgroup[i_subgroup]+size_subgroups[i_subgroup]) && i_subgroup<(n_subgroups-1)) 
+        while(index_j>=(offset_subgroup[i_subgroup]+(size_t)size_subgroups[i_subgroup]) && i_subgroup<(n_subgroups-1)) 
            i_subgroup++;
-        if(index_i>=offset_subgroup[i_subgroup] && index_i<(offset_subgroup[i_subgroup]+size_subgroups[i_subgroup]))
-           index_duplicates_subgroup_local[index_duplicates_local_index[i_duplicate]]=i_subgroup;
+        if(index_j>=offset_subgroup[i_subgroup] && index_j<(offset_subgroup[i_subgroup]+(size_t)size_subgroups[i_subgroup]))
+           index_duplicates_subgroup_local[index_i]=i_subgroup;
      }
 
-     // Sanity checks
+     // Sanity check
+     int n_bad=0;
      for(i_duplicate=0;i_duplicate<n_duplicates_local;i_duplicate++){
         if(index_duplicates_group_local[i_duplicate]<0 && index_duplicates_subgroup_local[i_duplicate]<0)
-           SID_trap_error("A duplicate has not been sucessfully assigned to a group or subgroup.",ERROR_LOGIC);
+           n_bad++;
      }
+     SID_Allreduce(SID_IN_PLACE,&n_bad,1,SID_INT,SID_SUM,SID.COMM_WORLD);
+     if(n_bad>0)
+        SID_trap_error("%d duplicate(s) have not been sucessfully assigned to a group or subgroup.",ERROR_LOGIC,n_bad);
   }
 
   // Clean-up
@@ -643,32 +650,6 @@ void read_gadget_binary_local(char       *filename_root_in,
   double    z_max_bcast;
   gadget_header_info header;
 
-/*
-  for(i_file=0;i_file<3 && !flag_filefound;i_file++){
-    if(i_file==0)
-      sprintf(filename,"%s/snapshot_%03d/snapshot_%03d",filename_root_in,snapshot_number,snapshot_number);
-    else if(i_file==1)
-      sprintf(filename,"%s/snapshot_%03d",filename_root_in,snapshot_number);
-    else if(i_file==2)
-      sprintf(filename,"%s_%03d",filename_root_in,snapshot_number);
-    fp=fopen(filename,"r");
-    if(fp!=NULL){
-      flag_filefound=TRUE;
-      flag_multifile=FALSE;
-      flag_file_type=i_file;
-    }
-    // ... if that doesn't work, check for multi-file
-    else{
-      strcat(filename,".0");
-      fp=fopen(filename,"r");
-      if(fp!=NULL){
-        flag_filefound=TRUE;
-        flag_multifile=TRUE;
-        flag_file_type=i_file;
-      }
-    }
-  }
-*/
   flag_filefound=init_gadget_read(filename_root_in,snapshot_number,&flag_multifile,&flag_file_type,&header);
 
   // A file was found ... 
@@ -790,16 +771,6 @@ void read_gadget_binary_local(char       *filename_root_in,
         SID_log("Performing read...",SID_LOG_OPEN|SID_LOG_TIMER);
 
       // Set filename
-/*
-      if(flag_file_type==0)
-        sprintf(filename,"%s/snapshot_%03d/snapshot_%03d",filename_root_in,snapshot_number,snapshot_number);
-      else if(flag_file_type==1)
-        sprintf(filename,"%s/snapshot_%03d",filename_root_in,snapshot_number);
-      else if(flag_file_type==2)
-        sprintf(filename,"%s_%03d",filename_root_in,snapshot_number);
-      if(flag_multifile)
-        sprintf(filename,"%s.%d",filename,i_file);
-*/
       set_gadget_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
 
       // Read header and set positions pointer
@@ -1150,30 +1121,6 @@ int main(int argc, char *argv[]){
     n_particles_all  =((size_t *)ADaPS_fetch(plist.data,"n_particles_all_%03d",i_file))[0];
     n_particles_local=((size_t *)ADaPS_fetch(plist.data,"n_particles_%03d",    i_file))[0];
     id_list_local    = (size_t *)ADaPS_fetch(plist.data,"particle_ids_%03d",   i_file);
-
-/*
-int     i_test;
-int     j_test;
-int     j_rank;
-int     n_test;
-size_t *id_test;
-id_test=(size_t *)SID_malloc(sizeof(size_t)*1024*1024);
-for(j_rank=0,j_test=0;j_rank<SID.n_proc;j_rank++){
-  if(SID.My_rank==j_rank){
-    n_test=(int)n_particles_local;
-    memcpy(id_test,id_list_local,sizeof(size_t)*n_test);
-  }
-  SID_Bcast(&n_test,sizeof(int),          j_rank,SID.COMM_WORLD);
-  SID_Bcast(id_test,sizeof(size_t)*n_test,j_rank,SID.COMM_WORLD);
-  if(SID.I_am_Master){
-     for(i_test=0;i_test<n_test;i_test++,j_test++){
-       fprintf(stdout,"%7d %7lld\n",j_test,id_test[i_test]);
-     }
-  }
-}
-SID_free(SID_FARG id_test);
-SID_exit(ERROR_NONE);
-*/
 
     // If there's any groups to analyze ...
     size_t *id_duplicates_local            =NULL;
