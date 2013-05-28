@@ -1019,7 +1019,7 @@ void read_groups(char        *filename_groups_root,
                if(read_index_group[j_group]==i_group){
                   index_group   =storage_index_group[j_group];
                   index_subgroup=storage_index_subgroup[j_group];
-                  fseeko(fp_subgroups,(off_t)(read_seek_subgroup[j_group]*sizeof(int)),SEEK_CUR);
+                  fseeko(fp_subgroups,(off_t)(read_seek_subgroup[j_group]*subgroup_offset_byte_size),SEEK_CUR);
                   unsigned int offset_ui;
                   int64_t      offset_ll;
                   switch(flag_subgroup_long_offsets){
