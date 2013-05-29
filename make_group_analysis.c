@@ -6,6 +6,7 @@
 #include <gbpLib.h>
 #include <gbpHalos.h>
 #include <sys/stat.h>
+#include <gsl/gsl_errno.h>
 
 #define GADGET_BUFFER_SIZE_LOCAL  128*SIZE_OF_MEGABYTE
 
@@ -802,6 +803,10 @@ int main(int argc, char *argv[]){
            fwrite(&n_groups_all,  sizeof(int),1,fp_profiles);
         }          
 
+        // Turn off the gsl error handler
+        gsl_error_handler_t *original_handler;
+        original_handler=gsl_set_error_handler_off();
+
         // Create and write the properties and profiles of each group/subgroup in turn
         for(i_group=0,n_truncated_local=0,largest_truncated_local=0;i_group<n_groups;i_group++){
           if(compute_group_analysis(&properties,
@@ -835,6 +840,9 @@ int main(int argc, char *argv[]){
           fclose(fp_profiles);
         calc_sum_global(&n_truncated_local,      &n_truncated,      1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
         calc_max_global(&largest_truncated_local,&largest_truncated,1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD); 
+
+        // Restore the original handler
+        gsl_set_error_handler(original_handler);
 
         SID_log("Done. (f_truncated=%6.2lf%% largest=%d)",SID_LOG_CLOSE,100.*(double)n_truncated/(double)n_groups_all,largest_truncated);
       }
