@@ -541,12 +541,14 @@ void read_gadget_binary_local(char       *filename_root_in,
                               int         snapshot_number,
                               plist_info *plist,
                               size_t     *id_list,
-                              size_t      n_particles_rank);
+                              size_t      n_particles_rank,
+                              double     *box_size);
 void read_gadget_binary_local(char       *filename_root_in,
                               int         snapshot_number,
                               plist_info *plist,
                               size_t     *id_list,
-                              size_t      n_particles_rank){
+                              size_t      n_particles_rank,
+                              double     *box_size){
   char    **pname;
   char     *name_initpositions;
   char      filename[MAX_FILENAME_LENGTH];
@@ -569,7 +571,6 @@ void read_gadget_binary_local(char       *filename_root_in,
   int       flag_ages;
   int       flag_entropyICs;
   double    expansion_factor;
-  double    box_size;
   double    d_value;
   double    d1_value;
   double    d2_value;
@@ -691,7 +692,7 @@ void read_gadget_binary_local(char       *filename_root_in,
     ADaPS_store(&(plist->data),(void *)(&d_value),"Omega_Lambda",ADaPS_SCALAR_DOUBLE);
 
     // Box size
-    ADaPS_store(&(plist->data),(void *)(&box_size),"box_size",ADaPS_SCALAR_DOUBLE);
+    ADaPS_store(&(plist->data),(void *)(box_size),"box_size",ADaPS_SCALAR_DOUBLE);
 
     // Species total particle counts and mass array
     for(i=0;i<N_GADGET_TYPE;i++){
@@ -947,8 +948,8 @@ int main(int argc, char *argv[]){
   int         i_file_hi;
   int         i_file;
   int         i_file_skip;
-  int         i_particle;
-  int         j_particle;
+  size_t      i_particle;
+  size_t      j_particle;
   int         i_process;
   int         n_particles;
   int         n_particles_max;
@@ -975,7 +976,6 @@ int main(int argc, char *argv[]){
   double      sigma_8;
   double      n_spec;
   double      redshift;
-  double      box_size;
   double      particle_mass;
   
   int         r_val;
@@ -992,13 +992,14 @@ int main(int argc, char *argv[]){
   SID_init(&argc,&argv,NULL);
 
   // Fetch user inputs
+  int min_halo_size;
   strcpy(filename_halos_in_root, argv[1]);
   strcpy(filename_snapshot_root, argv[2]);
   strcpy(filename_halos_out_root,argv[3]);
-  box_size    =atof(argv[4]);
-  i_file_lo_in=atoi(argv[5]);
-  i_file_hi_in=atoi(argv[6]);
-  i_file_skip =atoi(argv[7]);
+  min_halo_size=atof(argv[4]);
+  i_file_lo_in =atoi(argv[5]);
+  i_file_hi_in =atoi(argv[6]);
+  i_file_skip  =atoi(argv[7]);
 
   if(i_file_lo_in<i_file_hi_in){
      i_file_lo=i_file_lo_in;
@@ -1170,10 +1171,11 @@ int main(int argc, char *argv[]){
        SID_log("Done.",SID_LOG_CLOSE);
        
        // Read the needed particle positions from the snapshot
-       read_gadget_binary_local(filename_snapshot_root,i_file,&plist,id_list_master,(size_t)n_id_list_master);
+       double box_size;
+       read_gadget_binary_local(filename_snapshot_root,i_file,&plist,id_list_master,(size_t)n_id_list_master,&box_size);
 
        // Compute each duplicate's separation from its MBP
-       SID_log("Computing displacements from MBPs...",SID_LOG_OPEN|SID_LOG_TIMER);
+       SID_log("Computing displacements from MBPs...(using box size=%le)...",SID_LOG_OPEN|SID_LOG_TIMER,box_size);
        GBPREAL *x_array;
        GBPREAL *y_array;
        GBPREAL *z_array;
@@ -1382,7 +1384,6 @@ int main(int argc, char *argv[]){
              }
           }
        }
-
        SID_free(SID_FARG r2_duplicates_local);
        SID_Allreduce(&n_removed_local,&n_removed,1,SID_INT,SID_SUM,SID.COMM_WORLD);
        n_particles_local-=n_removed_local;
@@ -1391,11 +1392,133 @@ int main(int argc, char *argv[]){
        SID_log("Done.",SID_LOG_CLOSE);
     }
 
+    // Remove groups and subgroups that no longer have any particles
+    int     i_group;
+    int     j_group;
+    int     i_subgroup;
+    int     j_subgroup;
+    int     k_subgroup;
+    int     n_groups_removed;
+    int     n_subgroups_removed;
+    int     n_subgroups_removed_i;
+    size_t  n_particles_removed;
+    int     size_groups_max;
+    size_t *buffer_group_ids;
+    SID_log("Removing groups/subgroups with less than %d particles...",SID_LOG_OPEN|SID_LOG_TIMER,min_halo_size);
+    calc_max(size_groups,&size_groups_max,n_groups_local,SID_INT,CALC_MODE_DEFAULT);
+    buffer_group_ids=(size_t *)SID_malloc(sizeof(size_t)*size_groups_max);
+    for(i_group=0,j_group=0,i_subgroup=0,j_subgroup=0,n_subgroups_removed=0,n_groups_removed=0,n_particles_removed=0,i_particle=0,j_particle=0;
+        i_group<n_groups_local;
+        i_group++){
+       // If this group is too small, remove it and all it's substructures
+       if(size_groups[i_group]<min_halo_size){
+          i_subgroup         +=n_subgroups_group[i_group];
+          i_particle         +=size_groups[i_group];
+          n_subgroups_removed+=n_subgroups_group[i_group];
+          n_particles_removed+=size_groups[i_group];
+          n_groups_removed++;
+       }
+       // ... else we're keeping the group, but check if it has any subgroups that are too small ...
+       else{
+          // Count the number of subgroups that are too small
+          int n_remove_i;
+          int n_particles_subs;
+          for(k_subgroup=0,n_remove_i=0,n_particles_subs=0;k_subgroup<n_subgroups_group[i_group];k_subgroup++){
+             if(size_subgroups[i_subgroup+k_subgroup]<min_halo_size)
+                n_remove_i++;
+             else
+                n_particles_subs+=size_subgroups[i_subgroup+k_subgroup];
+          }
+          // This sufficiently-large group has subgroups that need to be removed.  This is tricky
+          //    since we need to move the particles of the discarded subgroup to the end of the group's list.
+          if(n_remove_i>0){
+             int i_particle_head;
+             int i_particle_tail;
+             int n_particles_copied;
+             // Loop over each substructure, filling a buffer with a re-ordered particle list
+             for(k_subgroup=0,i_particle_head=0,i_particle_tail=n_particles_subs,n_particles_copied=0,n_remove_i=0;k_subgroup<n_subgroups_group[i_group];k_subgroup++){
+                // Remove a small subgroup, placing it's particles at the 'tail' of the group's list
+                if(size_subgroups[i_subgroup]<min_halo_size){
+                   memmove(&(buffer_group_ids[i_particle_tail]),&(id_list_local[i_particle]),sizeof(size_t)*size_subgroups[i_subgroup]);
+                   i_particle_tail+=size_subgroups[i_subgroup];
+                   n_subgroups_removed++;
+                   n_remove_i++;
+                }
+                // Keep a subgroup
+                else{
+                   size_subgroups[j_subgroup]  =size_subgroups[i_subgroup];
+                   offset_subgroups[j_subgroup]=j_particle+i_particle_head;
+                   memmove(&(buffer_group_ids[i_particle_head]),&(id_list_local[i_particle]),sizeof(size_t)*size_subgroups[i_subgroup]);
+                   i_particle_head+=size_subgroups[i_subgroup];
+                   j_subgroup++;
+                }
+                n_particles_copied+=size_subgroups[i_subgroup];
+                i_particle        +=size_subgroups[i_subgroup];
+                i_subgroup++;
+             }
+             // Copy the rest of the tail particles
+             int n_left;
+             n_left=size_groups[i_group]-n_particles_copied;
+             memmove(&(buffer_group_ids[i_particle_tail]),&(id_list_local[i_particle]),sizeof(size_t)*n_left);
+             i_particle_tail+=n_left;
+             // Sanity checks
+             if(i_particle_head!=n_particles_subs)
+                SID_trap_error("A group's substructure particles have not been copied correctly while removing small substructures.",ERROR_LOGIC);
+             if(i_particle_tail!=size_groups[i_group])
+                SID_trap_error("A group's tail particles have not been copied correctly while removing small substructures.",ERROR_LOGIC);
+             // Set group information
+             size_groups[j_group]      =size_groups[i_group];
+             offset_groups[j_group]    =j_particle;
+             n_subgroups_group[j_group]=n_subgroups_group[i_group]-n_remove_i;
+             // Perform final copy of particle IDs
+             memmove(&(id_list_local[j_particle]),buffer_group_ids,sizeof(size_t)*size_groups[j_group]);
+             j_particle+=size_groups[j_group];
+          }
+          // Default action.  This group and it's subgroups are all fine.  Keep them.
+          else{
+             size_t subgroup_offset_i;
+             size_groups[j_group]      =size_groups[i_group];
+             offset_groups[j_group]    =j_particle;
+             n_subgroups_group[j_group]=n_subgroups_group[i_group];
+             for(k_subgroup=0,subgroup_offset_i=offset_groups[j_group];k_subgroup<n_subgroups_group[j_group];k_subgroup++){
+                size_subgroups[j_subgroup]  =size_subgroups[i_subgroup];
+                offset_subgroups[j_subgroup]=subgroup_offset_i;
+                subgroup_offset_i          +=(size_t)size_subgroups[j_subgroup];
+                i_subgroup++;
+                j_subgroup++;
+             }
+             memmove(&(id_list_local[j_particle]),&(id_list_local[i_particle]),sizeof(size_t)*size_groups[j_group]);
+             i_particle+=size_groups[i_group];
+             j_particle+=size_groups[j_group];
+          }
+          j_group++;
+       } // if keep group
+    } // i_group<n_groups_local
+    if(i_particle!=n_particles_local)
+       SID_trap_error("Somehow, only %lld of %lld particles have been processed.",ERROR_LOGIC,i_particle,n_particles_local);
+    SID_free(SID_FARG buffer_group_ids);
+
+    // Recompute the global group/subgroup/particle counts
+    n_groups_local   =j_group;
+    n_subgroups_local=j_subgroup;
+    n_particles_local=j_particle;
+    SID_Allreduce(SID_IN_PLACE,      &n_groups_removed,   1,SID_INT,   SID_SUM,SID.COMM_WORLD);
+    SID_Allreduce(SID_IN_PLACE,      &n_subgroups_removed,1,SID_INT,   SID_SUM,SID.COMM_WORLD);
+    SID_Allreduce(SID_IN_PLACE,      &n_particles_removed,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
+    SID_Allreduce(&n_groups_local,   &n_groups_all,       1,SID_INT,   SID_SUM,SID.COMM_WORLD);
+    SID_Allreduce(&n_subgroups_local,&n_subgroups_all,    1,SID_INT,   SID_SUM,SID.COMM_WORLD);
+    SID_Allreduce(&n_particles_local,&n_particles_all,    1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
+    SID_log("No. of groups    removed = %d",SID_LOG_COMMENT,n_groups_removed);
+    SID_log("No. of subgroups removed = %d",SID_LOG_COMMENT,n_subgroups_removed);
+    SID_log("No. of particles removed = %d",SID_LOG_COMMENT,n_particles_removed);
+    SID_log("No. of groups    kept    = %d",SID_LOG_COMMENT,n_groups_all);
+    SID_log("No. of subgroups kept    = %d",SID_LOG_COMMENT,n_subgroups_all);
+    SID_log("No. of particles kept    = %d",SID_LOG_COMMENT,n_particles_all);
+    SID_log("Done.",SID_LOG_CLOSE);
+
     // Convert group/subgroup offsets to global references (instead of their current local reference)
     SID_log("Determine global offsets of the halo catalog...",SID_LOG_OPEN|SID_LOG_TIMER);
     size_t offset_to_global=0;
-    int    i_subgroup;
-    int    j_subgroup;
     for(i_rank=0;i_rank<SID.n_proc;i_rank++){
        if(SID.My_rank==i_rank){
           for(i_group=0;i_group<n_groups_local;i_group++)
@@ -1406,43 +1529,6 @@ int main(int argc, char *argv[]){
        }
        SID_Bcast(&offset_to_global,sizeof(size_t),i_rank,SID.COMM_WORLD);
     }
-    SID_log("Done.",SID_LOG_CLOSE);
-
-    // Remove groups and subgroups that no longer have any particles
-    SID_log("Remove zero-sized groups/subgroups...",SID_LOG_OPEN|SID_LOG_TIMER);
-    int j_group;
-    int n_groups_removed;
-    int n_subgroups_removed;
-    int n_subgroups_removed_i;
-    for(i_group=0,j_group=0,i_subgroup=0,j_subgroup=0,n_subgroups_removed=0,n_groups_removed=0;i_group<n_groups_local;i_group++){
-       int k_subgroup;
-       for(k_subgroup=0,n_subgroups_removed_i=0;k_subgroup<n_subgroups_group[i_group];i_subgroup++,k_subgroup++){
-          if(size_subgroups[i_subgroup]>0){
-             offset_subgroups[j_subgroup]=offset_subgroups[i_subgroup];
-             size_subgroups[j_subgroup]  =size_subgroups[i_subgroup];
-             j_subgroup++;
-          }
-          else
-             n_subgroups_removed_i++;
-       }
-       if(size_groups[i_group]>0){
-          offset_groups[j_group]     =offset_groups[i_group];
-          size_groups[j_group]       =size_groups[i_group];
-          n_subgroups_group[j_group]=n_subgroups_group[i_group]-n_subgroups_removed_i;
-          j_group++;
-       }
-       else
-          n_groups_removed++;
-       n_subgroups_removed+=n_subgroups_removed_i;
-    }
-
-    // Recompute the global group/subgroup counts
-    n_groups_local   =j_group;
-    n_subgroups_local=j_subgroup;
-    calc_sum_global(&n_groups_local,   &n_groups_all,   1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-    calc_sum_global(&n_subgroups_local,&n_subgroups_all,1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-    SID_log("No. of groups    removed = %d",SID_LOG_COMMENT,n_groups_removed);
-    SID_log("No. of subgroups removed = %d",SID_LOG_COMMENT,n_subgroups_removed);
     SID_log("Done.",SID_LOG_CLOSE);
 
     // Allocate a buffer for writing
