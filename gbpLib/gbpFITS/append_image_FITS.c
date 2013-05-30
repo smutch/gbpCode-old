@@ -1,7 +1,7 @@
 #include <gbpSID.h>
 #include <gbpFITS.h>
 
-int append_image_FITS(void *image,SID_Datatype dtype,int n_D,int *D_in,char *filename,char *ext_name){
+int append_image_FITS(void *image,SID_Datatype dtype,int n_D,int *D_in,const char *filename,const char *ext_name){
   fitsfile *fp;
   FILE     *fp_test;
   int   naxis=2;
