@@ -56,12 +56,15 @@ setenv GBP_INC ${GBP_SRC}'myInclude/'
 setenv GBP_BIN ${GBP_SRC}'myBin/'
 setenv GBP_DAT ${GBP_SRC}'myData/'
 
-# Mac OSX deoen't have getline() so we need to 
-#   compile our own version on that platform.
-#   By default, set this off and we will 
-#   switch it on below if needed.
+# Mac OSX doesn't have getline() so we need to 
+#   compile our own version on that platform
 setenv USE_GETLINE 0
 
+#======================================================================
+# SET SOME SYSTEM-SPECIFIC THINGS HERE
+# eg. If you're gonna use valgrind with this code, you have to supply 
+#     your system's platform here.
+#======================================================================
 # If you're gonna use valgrind with this code, you have to supply your
 #  system's platform here.
 setenv GBP_VALGRIND_PLAT x86-darwin
@@ -78,19 +81,8 @@ endif
 #----------------------------------------------------------------------
 # Swinburne cluster
 #----------------------------------------------------------------------
-if ( $HOSTTYPE == 'x86_64-linux' ) then
+if ( $HOSTTYPE=='x86_64-linux' ) then
   setenv GBP_VALGRIND_PLAT amd64-linux
-  # We have to check for the HOSTNAME variable, because scp, sshfs etc does
-  #   not define it and things crash if we try to reference it
-  if ( $?HOSTNAME ) then
-    if ( $HOSTNAME == 'green.ssi.swin.edu.au' ) then
-      setenv GBP_QUEUE_TYPE PBS
-    endif
-  endif
-
-#----------------------------------------------------------------------
-# Intel Macintosh
-#----------------------------------------------------------------------
 else if ( $HOSTTYPE == 'intel-mac' ) then
   setenv GBP_VALGRIND_PLAT x86-darwin
   setenv USE_GETLINE 0
