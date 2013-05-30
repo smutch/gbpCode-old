@@ -692,7 +692,7 @@ void read_gadget_binary_local(char       *filename_root_in,
     ADaPS_store(&(plist->data),(void *)(&d_value),"Omega_Lambda",ADaPS_SCALAR_DOUBLE);
 
     // Box size
-    ADaPS_store(&(plist->data),(void *)(box_size),"box_size",ADaPS_SCALAR_DOUBLE);
+    (*box_size)=(double)(header.box_size);
 
     // Species total particle counts and mass array
     for(i=0;i<N_GADGET_TYPE;i++){
@@ -1356,7 +1356,7 @@ int main(int argc, char *argv[]){
              id_list_local[j_particle++]=id_list_local[i_particle++];
           // Sanity check
           if(id_list_local[i_particle]!=id_duplicates_local[index_i])
-             SID_trap_error("Could not find a duplicate in the ID list.",ERROR_LOGIC);
+             SID_log_warning("Could not find a duplicate (%lld) in the ID list (index=%lld of %lld).",ERROR_LOGIC,id_duplicates_local[index_i],index_i,n_particles_local);
           // Keep this duplicate ...
           if(flag_keep_local[index_i])
              id_list_local[j_particle++]=id_list_local[i_particle++];
@@ -1370,6 +1370,7 @@ int main(int argc, char *argv[]){
        while(i_particle<n_particles_local)
           id_list_local[j_particle++]=id_list_local[i_particle++];
 
+       // Adjust sizes and offsets
        for(i_duplicate=0;i_duplicate<n_duplicates_local;i_duplicate++){
           if(!(flag_keep_local[i_duplicate])){
              if(index_duplicates_group_local[i_duplicate]>=0){
