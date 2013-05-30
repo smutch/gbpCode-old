@@ -19,6 +19,7 @@ void sort(void          *sval,
   int     rank_receive_from;
   size_t  i,ir,j,l,k;
   size_t  nval_tmp;
+  size_t  nval_max;
   size_t  nval_all;
   size_t *index_tmp;
   size_t *rank;
@@ -83,7 +84,7 @@ void sort(void          *sval,
     SID_log("Done.",SID_LOG_CLOSE);
 
     // ... get the largest number of items on any rank ...
-    SID_Allreduce(&nval,&nval_tmp,1,SID_SIZE_T,SID_MAX,SID.COMM_WORLD);
+    SID_Allreduce(&nval,&nval_max,1,SID_SIZE_T,SID_MAX,SID.COMM_WORLD);
 
     // ... get the size of our data-type ...
     SID_Type_size(data_type,&data_type_size_i);
@@ -94,8 +95,8 @@ void sort(void          *sval,
       SID_log("Sorting distributed items...",SID_LOG_OPEN|SID_LOG_TIMER);
 
       // ... create two temporary arrays for exchanges ...
-      sval_tmp =(void   *)SID_malloc((size_t)data_type_size*nval_tmp);
-      index_tmp=(size_t *)SID_malloc(sizeof(size_t)*nval_tmp);
+      sval_tmp =(void   *)SID_malloc((size_t)data_type_size*nval_max);
+      index_tmp=(size_t *)SID_malloc(sizeof(size_t)*nval_max);
 
       // ... perform exchanges and sorts ...
       for(i_rank=1;i_rank<SID.n_proc;i_rank++){
@@ -332,7 +333,7 @@ void sort(void          *sval,
       size_t  i_val;
       sort_ranks=(*index);
       (*index)  =(size_t *)SID_calloc(sizeof(size_t)*nval);
-      rank_rank =(size_t *)SID_malloc(sizeof(size_t)*nval_tmp);
+      rank_rank =(size_t *)SID_malloc(sizeof(size_t)*nval_max);
       // ... loop over ranks, performing exchanges and setting indices ...
       for(i_rank=0,offset=0;i_rank<SID.n_proc;i_rank++){
         nval_tmp=nval;
