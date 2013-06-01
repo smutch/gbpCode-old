@@ -247,6 +247,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
       i_read-=i_read_step,    
          i_file--, 
          j_file++){
+/*
     SID_log("Processing snapshot #%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_read);
 
     // Loop twice (1st to process subgroups, 2nd to process groups)
@@ -367,10 +368,12 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
        }
        SID_log("Done.",SID_LOG_CLOSE);
     } // k_match
-    
+*/
+ 
     // Write trees once a few files have been processed
     //   and no more dropped groups etc. need to be given ids
     if(j_file>n_search){
+/*
        check_for_fragmented_halos(0,subgroups,n_subgroups[l_write],i_write,j_write,n_wrap);
        check_for_fragmented_halos(1,groups,   n_groups[l_write],   i_write,j_write,n_wrap);
        write_trees_horizontal((void **)groups, 
@@ -393,15 +396,19 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                               cosmo,
                               n_k_match,
                               TREE_HORIZONTAL_WRITE_EXTENDED|TREE_HORIZONTAL_WRITE_ALLCASES);
+*/
        i_write--;
        l_write++;
        j_write-=i_read_step;
     }
+/*
     SID_log("Done.",SID_LOG_CLOSE);
+*/
   } // loop over snaps
 
   // Write the remaining snapshots
   for(;j_write>=i_read_start;i_write--,j_write-=i_read_step,l_write++){
+/*
      check_for_fragmented_halos(0,subgroups,n_subgroups[l_write],i_write,j_write,n_wrap);
      check_for_fragmented_halos(1,groups,   n_groups[l_write],   i_write,j_write,n_wrap);
      write_trees_horizontal((void **)groups,   
@@ -424,6 +431,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                             cosmo,
                             n_k_match,
                             TREE_HORIZONTAL_WRITE_EXTENDED|TREE_HORIZONTAL_WRITE_ALLCASES);
+*/
   }
   int i_write_last;
   int l_write_last;
@@ -456,6 +464,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
 
   // At this point, fragmented halos are only labeled when they appear.
   //    This will propagate the fragmented halo flags forward in time.
+/*
   if(flag_compute_fragmented)
      compute_trees_horizontal_fragmented(n_groups,
                                          n_subgroups,
@@ -477,6 +486,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                                          a_list,
                                          cosmo,
                                          filename_output_dir);
+*/
 
   // Compute ghost-populated trees if we're asked to
   if(flag_compute_ghosts)

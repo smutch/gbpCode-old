@@ -47,8 +47,8 @@ void write_trees_vertical(tree_info **trees,
                           int        *tree_hi_file,
                           int        *n_halos_file,
                           int         n_files,
-                          char       *filename_root_out,
-                          char       *group_text_prefix){
+                          const char *filename_root_out,
+                          const char *group_text_prefix){
   int              i_rank;
   int              i_write;
   int              i_tree,j_tree;

@@ -33,7 +33,7 @@ void create_ghosts(tree_horizontal_ghost_group_info    **groups_in,
       int group_file_offset;
       int group_ghost_base_type;
       int flag_progenitor_is_new_ghost=FALSE;
-      int flag_ghost_merger       =FALSE;
+      int flag_ghost_merger           =FALSE;
 
       // Loop over the search range, building group ghost-chains (if needed) and the descendant history of this group
       group_progenitor =&(groups_in[i_file%n_wrap][i_group]);
@@ -113,6 +113,9 @@ void create_ghosts(tree_horizontal_ghost_group_info    **groups_in,
                if(flag_ghost_merger)
                   group_progenitor->type|=TREE_CASE_MERGER;
             }
+//fprintf(stderr,"testA:  %d %d %d %d %d\n",flag_progenitor_is_new_ghost,flag_ghost_merger,file,i_offset,group_file_offset);
+//fprintf(stderr," testB: %p\n",group_progenitor);
+//fprintf(stderr," testC: %d\n",group_progenitor->file_index);
             group_progenitor=&(groups_in[file%n_wrap][group_progenitor->file_index]); 
             flag_progenitor_is_new_ghost=FALSE;
          }

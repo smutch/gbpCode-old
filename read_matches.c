@@ -61,7 +61,7 @@ void read_matches(char    *filename_in_dir,
    char filename_in_name[256];
    strcpy(filename_in_name,filename_in_dir);
    strip_path(filename_in_name);
-   sprintf(filename_in,"%s/%s.%sgroup_matches_header",filename_in_dir,filename_in_name,group_text_prefix);
+   sprintf(filename_in,"%s/%sgroup_matches_header.dat",filename_in_dir,group_text_prefix);
    SID_fopen(filename_in,"r",&fp_in);
    SID_fread(&i_read_start,  sizeof(int),1,&fp_in);
    SID_fread(&i_read_stop,   sizeof(int),1,&fp_in);
@@ -120,9 +120,10 @@ void read_matches(char    *filename_in_dir,
    sprintf(filename_cat2,"%03d",j_read_in);
    sprintf(filename_in_dir_snap,"%s/%s",filename_in_dir,filename_cat1);
    if(filename_in_dir!=NULL)
-      sprintf(filename_in,"%s/%s_%s_%s.%sgroup_matches",filename_in_dir_snap,filename_in_name,filename_cat1,filename_cat2,group_text_prefix);
+      sprintf(filename_in,"%s/%sgroup_matches_%s_%s.dat",filename_in_dir_snap,group_text_prefix,filename_cat1,filename_cat2);
    else
-      sprintf(filename_in,"%s_%s_%s.%sgroup_matches",filename_in_name,filename_cat1,filename_cat2,group_text_prefix);
+      sprintf(filename_in,"%s_%sgroup_matches_%s_%s.dat",filename_in_name,    group_text_prefix,filename_cat1,filename_cat2);
+
    SID_fopen(filename_in,"r",&fp_in);
    SID_fread(&i_read_file,sizeof(int),1,&fp_in);
    SID_fread(&j_read_file,sizeof(int),1,&fp_in);

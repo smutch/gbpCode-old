@@ -76,10 +76,10 @@ void compute_trees_horizontal_ghosts(int         *n_groups,
   halo_properties_info               ***subgroup_properties;
   int                                  *n_groups_ghost_used;
   int                                  *n_subgroups_ghost_used;
-  groups_ghost          =(tree_horizontal_ghost_group_info    **)SID_malloc(sizeof(tree_horizontal_ghost_group_info     *)*n_wrap);
-  subgroups_ghost       =(tree_horizontal_ghost_subgroup_info **)SID_malloc(sizeof(tree_horizontal_ghost_subgroup_info  *)*n_wrap);
-  group_properties      =(halo_properties_info               ***)SID_malloc(sizeof(halo_properties_info                **)*n_wrap);
-  subgroup_properties   =(halo_properties_info               ***)SID_malloc(sizeof(halo_properties_info                **)*n_wrap);
+  groups_ghost       =(tree_horizontal_ghost_group_info    **)SID_malloc(sizeof(tree_horizontal_ghost_group_info     *)*n_wrap);
+  subgroups_ghost    =(tree_horizontal_ghost_subgroup_info **)SID_malloc(sizeof(tree_horizontal_ghost_subgroup_info  *)*n_wrap);
+  group_properties   =(halo_properties_info               ***)SID_malloc(sizeof(halo_properties_info                **)*n_wrap);
+  subgroup_properties=(halo_properties_info               ***)SID_malloc(sizeof(halo_properties_info                **)*n_wrap);
   for(i_search=0;i_search<n_wrap;i_search++){
      groups_ghost[i_search]       =(tree_horizontal_ghost_group_info    *)SID_calloc(sizeof(tree_horizontal_ghost_group_info)   *n_groups_ghost_max);
      subgroups_ghost[i_search]    =(tree_horizontal_ghost_subgroup_info *)SID_calloc(sizeof(tree_horizontal_ghost_subgroup_info)*n_subgroups_ghost_max);
@@ -197,12 +197,12 @@ void compute_trees_horizontal_ghosts(int         *n_groups,
      // Write the ghost catalog files
      write_ghost_catalog(groups_ghost[i_write%n_wrap],
                          group_properties,
-                         n_groups[l_write],
-                         n_groups_ghost_used[i_write],
+                         n_groups_ghost[i_write]-n_groups[n_files-i_write-1],
+                         n_groups[n_files-i_write-1],
                          subgroups_ghost[i_write%n_wrap],
                          subgroup_properties,
-                         n_subgroups[l_write],
-                         n_subgroups_ghost_used[i_write],
+                         n_subgroups_ghost[i_write]-n_subgroups[n_files-i_write-1],
+                         n_subgroups[n_files-i_write-1],
                          filename_output_dir,
                          filename_cat_root_in,
                          i_write,
@@ -234,6 +234,7 @@ void compute_trees_horizontal_ghosts(int         *n_groups,
   SID_free(SID_FARG group_properties);
   SID_free(SID_FARG subgroup_properties);
   SID_log("Done.",SID_LOG_CLOSE);
+
   SID_log("Done.",SID_LOG_CLOSE);
 }
 

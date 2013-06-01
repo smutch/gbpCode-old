@@ -147,6 +147,7 @@ void write_trees_horizontal(void  **groups_in,
 
       // Create indices
       int j_group;
+      int n_subgroups_indexed;
       tree_horizontal_ghost_group_info *groups;
       groups=(tree_horizontal_ghost_group_info *)groups_in[i_write%n_wrap];
       for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
@@ -161,6 +162,11 @@ void write_trees_horizontal(void  **groups_in,
             current=current->next_substructure;
          }
       }
+      n_subgroups_indexed=i_subgroup;
+      if(n_subgroups_indexed!=n_subgroups)
+         SID_trap_error("The number of substructures indexed do not match the given substructure counts (ie. %d!=%d).",
+                        ERROR_LOGIC,
+                        n_subgroups_indexed,n_subgroups);
 
       // Loop over the groups to perform the write
       int n_subgroups_written=0;

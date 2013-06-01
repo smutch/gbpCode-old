@@ -10,18 +10,18 @@ void interpolate_halo_local(halo_properties_info *halo_initial,
                             halo_properties_info *halo_return,
                             double                time_initial,
                             double                time_final,
-                            double                time_return);
+                            double                time_return,int i_group,int mode,int offset,const char *txt);
 void interpolate_halo_local(halo_properties_info *halo_initial,
                             halo_properties_info *halo_final,
                             halo_properties_info *halo_return,
                             double                time_initial,
                             double                time_final,
-                            double                time_return){
+                            double                time_return,int i_group,int mode,int offset,const char *txt){
 
    if(halo_initial==NULL)
-      SID_trap_error("Initial halo is undefined in interpolate_halo_local().",ERROR_LOGIC);
+      SID_trap_error("Initial halo is undefined in interpolate_halo_local(). i_%sgroup=%d mode=%d offset=%d",ERROR_LOGIC,txt,i_group,mode,offset);
    if(halo_final==NULL)
-      SID_trap_error("Final halo is undefined in interpolate_halo_local().",ERROR_LOGIC);
+      SID_trap_error("Final halo is undefined in interpolate_halo_local(). i_%sgroup=%d mode=%d offset=%d",ERROR_LOGIC,txt,i_group,mode,offset);
 
    double f_interpolate;
    f_interpolate=(time_return-time_initial)/(time_final-time_initial);
@@ -65,12 +65,12 @@ void interpolate_halo_local(halo_properties_info *halo_initial,
 
 void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
                          halo_properties_info                ***group_properties,
-                         int                                    n_groups,
                          int                                    n_group_ghosts,
+                         int                                    n_groups,
                          tree_horizontal_ghost_subgroup_info   *subgroups,
                          halo_properties_info                ***subgroup_properties,
-                         int                                    n_subgroups,
                          int                                    n_subgroup_ghosts,
+                         int                                    n_subgroups,
                          char                                  *filename_output_dir,
                          char                                  *filename_cat,
                          int                                    i_write,
@@ -81,7 +81,6 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
                          cosmo_info                           **cosmo){
 
    int  i_loop;
-   int  n_subgroups_written;
    halo_properties_info  *group_return;
    halo_properties_info  *subgroup_return;
    group_return   =(halo_properties_info *)SID_calloc(sizeof(halo_properties_info));
@@ -96,7 +95,7 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
    char   filename_cat_root[MAX_FILENAME_LENGTH];
    char   filename_groups[MAX_FILENAME_LENGTH];
    char   filename_subgroups[MAX_FILENAME_LENGTH];
-   int    i_file =1;
+   int    i_file =0;
    int    n_files=1;
    sprintf(filename_output_dir_horizontal,       "%s/horizontal",    filename_output_dir);
    sprintf(filename_output_dir_horizontal_ghosts,"%s/ghost_catalogs",filename_output_dir_horizontal);
@@ -105,8 +104,8 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
    mkdir(filename_output_dir_horizontal_ghosts,02755);
    strcpy(filename_cat_root,filename_cat);
    strip_path(filename_cat_root);
-   sprintf(filename_groups,   "%s/ghosts_%03d.group_properties",   filename_output_dir_horizontal_ghosts,j_write);
-   sprintf(filename_subgroups,"%s/ghosts_%03d.subgroup_properties",filename_output_dir_horizontal_ghosts,j_write);
+   sprintf(filename_groups,   "%s/ghosts_%03d.catalog_groups_properties",   filename_output_dir_horizontal_ghosts,j_write);
+   sprintf(filename_subgroups,"%s/ghosts_%03d.catalog_subgroups_properties",filename_output_dir_horizontal_ghosts,j_write);
    SID_fopen(filename_groups,"w",&fp_groups);
    SID_fwrite(&i_file,        sizeof(int),1,&fp_groups);
    SID_fwrite(&n_files,       sizeof(int),1,&fp_groups);
@@ -130,15 +129,15 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
          double                time_initial;
          double                time_final;
          double                time_return;
-         group_i         =&(groups[i_group]);
-         group_initial   =group_properties[(group_i->interp.file_start)%n_wrap][group_i->interp.index_start];
-         group_final     =group_properties[(group_i->interp.file_stop)%n_wrap][group_i->interp.index_stop];
-         time_initial    =group_i->interp.time_start;
-         time_final      =group_i->interp.time_stop;
-         time_return     =deltat_a(cosmo,a_list[l_write],0.)/S_PER_YEAR;
-         interpolate_halo_local(group_initial,group_final,group_return,time_initial,time_final,time_return);
+         group_i      =&(groups[i_group]);
+         group_initial=group_properties[(group_i->interp.file_start)%n_wrap][group_i->interp.index_start];
+         group_final  =group_properties[(group_i->interp.file_stop)%n_wrap][group_i->interp.index_stop];
+         time_initial =group_i->interp.time_start;
+         time_final   =group_i->interp.time_stop;
+         time_return  =deltat_a(cosmo,a_list[l_write],0.)/S_PER_YEAR;
+         interpolate_halo_local(group_initial,group_final,group_return,time_initial,time_final,time_return,i_group,group_i->type,group_i->file_offset,"");
          SID_fwrite(group_return,sizeof(halo_properties_info),1,&fp_groups);
-      }  
+      }
 
       // Write the substructure information
       tree_horizontal_ghost_subgroup_info *current;
@@ -155,7 +154,7 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
             time_initial    =current->interp.time_start;
             time_final      =current->interp.time_stop;
             time_return     =deltat_a(cosmo,a_list[l_write],0.)/S_PER_YEAR;
-            interpolate_halo_local(subgroup_initial,subgroup_final,subgroup_return,time_initial,time_final,time_return);
+            interpolate_halo_local(subgroup_initial,subgroup_final,subgroup_return,time_initial,time_final,time_return,i_group,current->type,current->file_offset,"sub");
             SID_fwrite(subgroup_return,sizeof(halo_properties_info),1,&fp_subgroups);
          }
          current=current->next_substructure;

@@ -20,16 +20,10 @@ void read_catalog_ghost_interpolation(tree_horizontal_ghost_group_info     *grou
                  i_read,
                  READ_CATALOG_SUBGROUPS|READ_CATALOG_PROPERTIES,
                  &fp_properties);
-//fprintf(stderr,"%d {%s} %d\n",i_file,fp_properties.filename_properties_root,fp_properties.snap_num);
    if(fp_properties.n_halos_total!=n_subgroups)
       SID_trap_error("Mismatched subgroup counts (ie. %d!=%d) in read_catalog_ghost_interpolation().",ERROR_LOGIC,fp_properties.n_halos_total,n_subgroups);
    for(i_subgroup=0;i_subgroup<n_subgroups;i_subgroup++){
-//if(i_file==14 && i_subgroup==169771){
-//fprintf(stderr,"halo type=%d\n",subgroups[i_subgroup].type);
-//SID_exit(ERROR_NONE);
-//}
       if(subgroups[i_subgroup].file_offset>1 || check_mode_for_flag(subgroups[i_subgroup].type,TREE_CASE_FOUND)){
-//fprintf(stderr,"read subgroup: %d %d %d %d->%d\n",i_file,i_subgroup,subgroups[i_subgroup].file_offset,subgroups[i_subgroup].type,check_mode_for_flag(subgroups[i_subgroup].type,TREE_CASE_FOUND));
          if(subgroup_properties[i_subgroup]==NULL)
             subgroup_properties[i_subgroup]=(halo_properties_info *)SID_malloc(sizeof(halo_properties_info));
          fread_catalog_file(&fp_properties,NULL,subgroup_properties[i_subgroup],NULL,i_subgroup);
@@ -49,7 +43,6 @@ void read_catalog_ghost_interpolation(tree_horizontal_ghost_group_info     *grou
       SID_trap_error("Mismatched group counts (ie. %d!=%d) in read_catalog_ghost_interpolation().",ERROR_LOGIC,fp_properties.n_halos_total,n_groups);
    for(i_group=0;i_group<n_groups;i_group++){
       if(groups[i_group].file_offset>1 || check_mode_for_flag(groups[i_group].type,TREE_CASE_FOUND)){
-//fprintf(stderr,"read group: %d %d %d %d->%d\n",i_file,i_group,groups[i_group].file_offset,groups[i_group].type,check_mode_for_flag(groups[i_group].type,TREE_CASE_FOUND));
          if(group_properties[i_group]==NULL)
             group_properties[i_group]=(halo_properties_info *)SID_malloc(sizeof(halo_properties_info));
          fread_catalog_file(&fp_properties,NULL,group_properties[i_group],NULL,i_group);

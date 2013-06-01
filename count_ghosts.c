@@ -99,6 +99,8 @@ void count_ghosts(int  *n_groups_in,    int *n_group_ghosts,
             n_subgroup_ghosts[i_file]++;
             n_subgroup_strays_count++;
          }
+         else if(subgroup_file_offset==0)
+            SID_log_warning("subgroup_file_offset==0!",ERROR_NONE);
          else{
             int i_offset;
             for(i_offset=0;i_offset<subgroup_file_offset;i_offset++) 
@@ -108,6 +110,7 @@ void count_ghosts(int  *n_groups_in,    int *n_group_ghosts,
       }
    }
    SID_fclose(&fp_in);
+fprintf(stderr,"count_ghosts: i_file=%d n_g=%d\n",i_file,n_subgroup_ghosts_count);
    if(i_subgroup!=(*n_subgroups_in))
       SID_trap_error("There's a problem with the substructure counts while reading trees for ghost-counting (ie. %d!=%d)",ERROR_LOGIC,
                      i_subgroup,(*n_subgroups_in));

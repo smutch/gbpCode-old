@@ -1021,7 +1021,7 @@ void compute_trees_vertical(char *filename_root_out,
       // If flag_clean=TRUE, then delete the input files used here.
       if((*flag_clean)==TRUE){
         if(k_match==1){
-          sprintf(filename_in,"%s/horizontal_trees_%03d.dat",filename_output_dir_horizontal_trees,filename_output_file_root,i_read);
+          sprintf(filename_in,"%s/horizontal_trees_%03d.dat",filename_output_dir_horizontal_trees,i_read);
           remove(filename_in);
         }
       }      
