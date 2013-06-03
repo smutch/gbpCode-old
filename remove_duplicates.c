@@ -450,7 +450,7 @@ void construct_duplicate_list_local(plist_info *plist,
       index_last=buffer_index_local[i_buffer];
       flag_last =buffer_flag_local[i_buffer];
     } // i_buffer
-  }
+  } // i_particle
   SID_log("No. of duplicates found = %d",SID_LOG_COMMENT,n_duplicates_global);
   SID_log("No. that are unique     = %d",SID_LOG_COMMENT,n_duplicates_unique_global);
 
@@ -1356,7 +1356,7 @@ int main(int argc, char *argv[]){
              id_list_local[j_particle++]=id_list_local[i_particle++];
           // Sanity check
           if(id_list_local[i_particle]!=id_duplicates_local[index_i])
-             SID_log_warning("Could not find a duplicate (%lld) in the ID list (index=%lld of %lld).",ERROR_LOGIC,id_duplicates_local[index_i],index_i,n_particles_local);
+             SID_log_warning("Could not find a duplicate (id=%lld at index=%lld of %lld) in the ID list.",ERROR_LOGIC,id_duplicates_local[index_i],index_j,n_particles_local);
           // Keep this duplicate ...
           if(flag_keep_local[index_i])
              id_list_local[j_particle++]=id_list_local[i_particle++];
