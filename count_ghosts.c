@@ -77,6 +77,26 @@ void count_ghosts(int  *n_groups_in,    int *n_group_ghosts,
          n_group_ghosts_count+=(group_file_offset-1);
       }
 
+      // Determine if the descendant line of this group leads to 
+      //   a stray before n_search snapshots, thus potentially
+      //   leading to the need for naked ghost groups.
+/*
+      tree_horizontal_ghost_group_info *group_progenitor=NULL;
+      group_progenitor =&(groups_in[i_file%n_wrap][i_group]);
+      group_file_offset=groups_in[i_file%n_wrap][i_group].file_offset;
+      flag_ghost_merger=check_mode_for_flag(group_progenitor->type,TREE_CASE_MERGER);
+      for(i_offset=1,file=i_file+1;i_offset<n_search && i_offset<group_file_offset && file<=i_file_start;i_offset++,file++){
+         if(group_progenitor!=NULL){
+            if(group_progenitor->file_index>=0)
+               group_progenitor=&(groups_in[file%n_wrap][group_progenitor->file_index]);
+            else
+               group_progenitor=NULL
+         }
+         group_descendants[i_offset]=group_progenitor;
+      }
+*/
+
+      // Process the subgroups of this group
       int j_subgroup;
       for(j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
 

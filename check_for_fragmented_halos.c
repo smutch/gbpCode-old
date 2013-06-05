@@ -2,8 +2,12 @@
 #include <gbpMath.h>
 #include <gbpTrees.h>
 
-void check_for_fragmented_halos(int k_match,tree_horizontal_info **groups,int n_groups,
-                               int i_write,int j_write,int n_wrap){
+void check_for_fragmented_halos(int k_match,
+                                tree_horizontal_info **groups,
+                                int n_groups,
+                                int i_write,
+                                int j_write,
+                                int n_wrap){
    if(k_match==0)
       SID_log("Checking for fragmented groups in snapshot #%03d...",SID_LOG_OPEN,j_write);
    else

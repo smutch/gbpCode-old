@@ -120,8 +120,11 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
    // Scan through the trees, writing ghosts in the order that we find them
    int i_group;
    int i_subgroup;
+   int flag_naked_ghost;
    for(i_group=0,i_subgroup=0;i_group<(n_groups+n_group_ghosts);i_group++){
+
       // Write ghost groups
+      flag_naked_ghost=FALSE;
       if(i_group>=n_groups){
          tree_horizontal_ghost_group_info *group_i;
          halo_properties_info *group_initial;
@@ -129,19 +132,25 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
          double                time_initial;
          double                time_final;
          double                time_return;
-         group_i      =&(groups[i_group]);
-         group_initial=group_properties[(group_i->interp.file_start)%n_wrap][group_i->interp.index_start];
-         group_final  =group_properties[(group_i->interp.file_stop)%n_wrap][group_i->interp.index_stop];
-         time_initial =group_i->interp.time_start;
-         time_final   =group_i->interp.time_stop;
-         time_return  =deltat_a(cosmo,a_list[l_write],0.)/S_PER_YEAR;
-         interpolate_halo_local(group_initial,group_final,group_return,time_initial,time_final,time_return,i_group,group_i->type,group_i->file_offset,"");
-         SID_fwrite(group_return,sizeof(halo_properties_info),1,&fp_groups);
+         group_i         =&(groups[i_group]);
+         // Check if this is a naked group.  If it is, write it when we write the substructure (below).
+         flag_naked_ghost=check_mode_for_flag(group_i->type,TREE_CASE_GHOST_NAKED);
+         if(!flag_naked_ghost){
+            group_initial   =group_properties[(group_i->interp.file_start)%n_wrap][group_i->interp.index_start];
+            group_final     =group_properties[(group_i->interp.file_stop)%n_wrap][group_i->interp.index_stop];
+            time_initial    =group_i->interp.time_start;
+            time_final      =group_i->interp.time_stop;
+            time_return     =deltat_a(cosmo,a_list[l_write],0.)/S_PER_YEAR;
+            interpolate_halo_local(group_initial,group_final,group_return,time_initial,time_final,time_return,i_group,group_i->type,group_i->file_offset,"");
+            SID_fwrite(group_return,sizeof(halo_properties_info),1,&fp_groups);
+         }
       }
 
       // Write the substructure information
+      int n_subgroups_i;
       tree_horizontal_ghost_subgroup_info *current;
-      current=groups[i_group].first_substructure;
+      current      =groups[i_group].first_substructure;
+      n_subgroups_i=0;
       while(current!=NULL){
          if(check_mode_for_flag(current->type,TREE_CASE_GHOST)){
             halo_properties_info *subgroup_initial;
@@ -154,8 +163,24 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
             time_initial    =current->interp.time_start;
             time_final      =current->interp.time_stop;
             time_return     =deltat_a(cosmo,a_list[l_write],0.)/S_PER_YEAR;
-            interpolate_halo_local(subgroup_initial,subgroup_final,subgroup_return,time_initial,time_final,time_return,i_group,current->type,current->file_offset,"sub");
+            interpolate_halo_local(subgroup_initial,
+                                   subgroup_final,
+                                   subgroup_return,
+                                   time_initial,
+                                   time_final,
+                                   time_return,
+                                   i_group,current->type,current->file_offset,"sub");
+
+            // Write the group properties of a naked ghost
+            if(flag_naked_ghost){
+               if(n_subgroups_i>1)
+                  SID_trap_error("Multiple subgroups have been assigned to a naked ghost.",ERROR_LOGIC);
+               SID_fwrite(subgroup_return,sizeof(halo_properties_info),1,&fp_groups);
+            }
+
+            // Write subgroup ghost properties
             SID_fwrite(subgroup_return,sizeof(halo_properties_info),1,&fp_subgroups);
+            n_subgroups_i++;
          }
          current=current->next_substructure;
       }

@@ -40,7 +40,7 @@ void compute_trees_horizontal_fragmented(int         *n_groups,
   //    We will also change other flags (such as TREE_CASE_MERGER) as well.  This
   //    will require a rewrite of the horizontal tree files and of the log files.
   SID_log("Propagating fragmented halo information forward...",SID_LOG_OPEN|SID_LOG_TIMER);
-  SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
+  //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
 
   // Loop over all the used snapshots (first set write counters to last-used values)
   int i_read;

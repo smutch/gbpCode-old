@@ -29,10 +29,11 @@
 #define TREE_CASE_MATCHED_TO_BRIDGE             8192    // Set when a halo is matched to one with TREE_CASE_BRIDGED set
 #define TREE_CASE_BRIDGE_DEFAULT                16384   // Set when a halo matched to a bridge is not matched to any emerged candidate halos
 #define TREE_CASE_GHOST                         32768   // Marks ghost halos in ghost-populated trees
-#define TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED 65536   // For internal use.  This should never be seen in the output.
-#define TREE_CASE_BRIDGE_FINALIZE               131072  // For internal use.  This should never be seen in the output.
-#define TREE_CASE_UNPROCESSED                   262144  // For internal use.  This should never be seen in the output.
-#define TREE_CASE_INVALID                       524288  // For internal use.  This should never be seen in the output.
+#define TREE_CASE_GHOST_NAKED                   65536   // Marks a ghost halo where a subgroup is it's own group (product of a default action).
+#define TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED 131072  // For internal use.  This should never be seen in the output.
+#define TREE_CASE_BRIDGE_FINALIZE               262144  // For internal use.  This should never be seen in the output.
+#define TREE_CASE_UNPROCESSED                   524288  // For internal use.  This should never be seen in the output.
+#define TREE_CASE_INVALID                       1048576 // For internal use.  This should never be seen in the output.
 #define TREE_CASE_EMERGED                       (TREE_CASE_EMERGED_CANDIDATE+TREE_CASE_FOUND)
 #define TREE_CASE_FRAGMENTED_NEW                (TREE_CASE_EMERGED_CANDIDATE+TREE_CASE_NO_PROGENITORS)
 
