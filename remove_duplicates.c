@@ -346,13 +346,13 @@ void construct_duplicate_list_local(plist_info *plist,
   size_t *buffer_id;
   size_t *buffer_index_local;
   char   *buffer_flag_local;
-  int     n_buffer_max=1024*1024;
-  int     n_buffer;
+  size_t  n_buffer_max=1024*1024;
+  size_t  n_buffer;
   size_t  id_last;
   size_t  index_last;
   char    flag_last;
-  int     i_buffer;
-  int     index_rank_test_local;  
+  size_t  i_buffer;
+  int64_t index_rank_test_local;  
   int     n_duplicates_unique_global=0;
   int     n_duplicates_global=0;
   int     n_duplicates_local =0;
@@ -371,11 +371,13 @@ void construct_duplicate_list_local(plist_info *plist,
   size_t i_particle;
   size_t j_particle;
   int    count;
-  id_last=28991029248+1; // sufficient for Tiamat
+  id_last   =28991029248+1; // sufficient for Tiamat
+  index_last=n_particles_local+1;
+  flag_last =FALSE;
   for(i_particle=0,count=0;i_particle<n_particles_all_in_groups;i_particle+=n_buffer){
 
     //Decide this buffer iteration's size
-    n_buffer=MIN(n_buffer_max,n_particles_all_in_groups-i_particle);
+    n_buffer=MIN(n_buffer_max,(size_t)(n_particles_all_in_groups-i_particle));
 
     //Set the buffer to a default value smaller than (or equal to) the smallest possible data size
     for(i_buffer=0;i_buffer<n_buffer;i_buffer++){
@@ -386,7 +388,7 @@ void construct_duplicate_list_local(plist_info *plist,
 
     // Determine if any of the local data is needed for this buffer ...
     for(j_particle=0;j_particle<n_particles_local;j_particle++){
-      index_rank_test_local=id_list_local_rank[j_particle]-i_particle;
+      index_rank_test_local=(int64_t)(id_list_local_rank[j_particle]-i_particle);
       //... if so, set the appropriate buffer value
       if(index_rank_test_local>=0 && index_rank_test_local<n_buffer){
         buffer_id[index_rank_test_local]         =id_list_local[j_particle];
