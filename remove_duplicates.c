@@ -1528,12 +1528,12 @@ int main(int argc, char *argv[]){
     SID_Allreduce(&n_groups_local,   &n_groups_all,       1,SID_INT,   SID_SUM,SID.COMM_WORLD);
     SID_Allreduce(&n_subgroups_local,&n_subgroups_all,    1,SID_INT,   SID_SUM,SID.COMM_WORLD);
     SID_Allreduce(&n_particles_local,&n_particles_all,    1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
-    SID_log("No. of groups    removed = %d",SID_LOG_COMMENT,n_groups_removed);
-    SID_log("No. of subgroups removed = %d",SID_LOG_COMMENT,n_subgroups_removed);
-    SID_log("No. of particles removed = %d",SID_LOG_COMMENT,n_particles_removed);
-    SID_log("No. of groups    kept    = %d",SID_LOG_COMMENT,n_groups_all);
-    SID_log("No. of subgroups kept    = %d",SID_LOG_COMMENT,n_subgroups_all);
-    SID_log("No. of particles kept    = %d",SID_LOG_COMMENT,n_particles_all);
+    SID_log("No. of groups    removed = %d",  SID_LOG_COMMENT,n_groups_removed);
+    SID_log("No. of subgroups removed = %d",  SID_LOG_COMMENT,n_subgroups_removed);
+    SID_log("No. of particles removed = %d",  SID_LOG_COMMENT,n_particles_removed);
+    SID_log("No. of groups    kept    = %d",  SID_LOG_COMMENT,n_groups_all);
+    SID_log("No. of subgroups kept    = %d",  SID_LOG_COMMENT,n_subgroups_all);
+    SID_log("No. of particles kept    = %lld",SID_LOG_COMMENT,n_particles_all);
     SID_log("Done.",SID_LOG_CLOSE);
 
     // Convert group/subgroup offsets to global references (instead of their current local reference)
