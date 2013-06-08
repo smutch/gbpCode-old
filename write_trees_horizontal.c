@@ -98,18 +98,26 @@ void write_trees_horizontal(void  **groups_in,
    SID_log("Writing results for snapshot #%d...",SID_LOG_OPEN|SID_LOG_TIMER,j_write);
 
    // Interpret the mode
+   int flag_check_fragmented;
    int flag_write_allcases;
    int flag_write_nocases;
    int flag_write_extended;
    int flag_write_ghosts;
-   flag_write_allcases=check_mode_for_flag(mode,TREE_HORIZONTAL_WRITE_ALLCASES);
-   flag_write_nocases =check_mode_for_flag(mode,TREE_HORIZONTAL_WRITE_NOCASES);
-   flag_write_extended=check_mode_for_flag(mode,TREE_HORIZONTAL_WRITE_EXTENDED);
-   flag_write_ghosts  =check_mode_for_flag(mode,TREE_HORIZONTAL_WRITE_GHOSTS);
+   flag_check_fragmented=check_mode_for_flag(mode,TREE_HORIZONTAL_WRITE_CHECK_FRAGMENTED);
+   flag_write_allcases  =check_mode_for_flag(mode,TREE_HORIZONTAL_WRITE_ALLCASES);
+   flag_write_nocases   =check_mode_for_flag(mode,TREE_HORIZONTAL_WRITE_NOCASES);
+   flag_write_extended  =check_mode_for_flag(mode,TREE_HORIZONTAL_WRITE_EXTENDED);
+   flag_write_ghosts    =check_mode_for_flag(mode,TREE_HORIZONTAL_WRITE_GHOSTS);
    if(flag_write_extended && flag_write_ghosts) SID_trap_error("Incompatible mode flags set in write_trees_horizontal.",ERROR_LOGIC);
    if(flag_write_ghosts){
       flag_write_nocases =TRUE;
       flag_write_allcases=FALSE;
+   }
+
+   // Check for fragemented halos
+   if(flag_check_fragmented){
+      check_for_fragmented_halos(0,(tree_horizontal_info **)subgroups_in,n_subgroups,i_write,j_write,n_wrap);
+      check_for_fragmented_halos(1,(tree_horizontal_info **)groups_in,   n_groups,   i_write,j_write,n_wrap);
    }
 
    // Set filenames and open file for writing
@@ -131,6 +139,7 @@ void write_trees_horizontal(void  **groups_in,
    SID_fopen(filename_matches_out,"w",&fp_matches_out);
 
    // Write the header information for the horizontal trees files
+   SID_log("Writing tree files...",SID_LOG_OPEN);
    int n_halos_max_header;
    n_halos_max_header=MAX(n_subgroups_max,n_groups_max);
    SID_fwrite(&n_step,              sizeof(int),1,&fp_matches_out);
@@ -285,8 +294,8 @@ void write_trees_horizontal(void  **groups_in,
               group_id_bridge         =set_match_id(   &(groups[i_write%n_wrap][i_group].bridge_backmatch));
            }
            else{
-              tree_horizontal_read_info **groups;
-              groups             =(tree_horizontal_read_info **)groups_in;
+              tree_horizontal_extended_info **groups;
+              groups             =(tree_horizontal_extended_info **)groups_in;
               group_id           =groups[i_write%n_wrap][i_group].id;
               group_type         =groups[i_write%n_wrap][i_group].type;
               group_descendant_id=groups[i_write%n_wrap][i_group].descendant_id;
@@ -364,8 +373,8 @@ void write_trees_horizontal(void  **groups_in,
                  subgroup_id_bridge         =set_match_id(   &(subgroups[i_write%n_wrap][i_subgroup].bridge_backmatch));
               }
               else{
-                 tree_horizontal_read_info **subgroups;
-                 subgroups             =(tree_horizontal_read_info **)subgroups_in;
+                 tree_horizontal_extended_info **subgroups;
+                 subgroups             =(tree_horizontal_extended_info **)subgroups_in;
                  subgroup_id           =subgroups[i_write%n_wrap][i_subgroup].id;
                  subgroup_type         =subgroups[i_write%n_wrap][i_subgroup].type;
                  subgroup_descendant_id=subgroups[i_write%n_wrap][i_subgroup].descendant_id;
@@ -397,8 +406,10 @@ void write_trees_horizontal(void  **groups_in,
       }
    }
    SID_fclose(&fp_matches_out);
+   SID_log("Done.",SID_LOG_CLOSE);
 
    // Write statistics to ascii files
+   SID_log("Writing statistics etc...",SID_LOG_OPEN|SID_LOG_TIMER);
    if(!flag_write_ghosts){
       for(i_k_match=0;i_k_match<n_k_match;i_k_match++){
          // Initialize a bunch of stuff depending on whether
@@ -871,20 +882,20 @@ void write_trees_horizontal(void  **groups_in,
                halo_backmatch_id      =set_match_id(&(halos[i_halo].bridge_backmatch));
             }
             else{
-               tree_horizontal_read_info  *halos;
-               tree_horizontal_read_info **halos_all;
+               tree_horizontal_extended_info  *halos;
+               tree_horizontal_extended_info **halos_all;
                // Initialize a bunch of stuff depending on whether
                //   we are processing groups or subgroups
                switch(i_k_match){
                   case 0:
-                     halos    =(tree_horizontal_read_info  *)subgroups_in[i_write%n_wrap];
-                     halos_all=(tree_horizontal_read_info **)subgroups_in;
+                     halos    =(tree_horizontal_extended_info  *)subgroups_in[i_write%n_wrap];
+                     halos_all=(tree_horizontal_extended_info **)subgroups_in;
                      n_halos  =n_subgroups;
                      sprintf(group_text_prefix,"sub");
                      break;
                   case 1:
-                     halos    =(tree_horizontal_read_info  *)groups_in[i_write%n_wrap];
-                     halos_all=(tree_horizontal_read_info **)groups_in;
+                     halos    =(tree_horizontal_extended_info  *)groups_in[i_write%n_wrap];
+                     halos_all=(tree_horizontal_extended_info **)groups_in;
                      n_halos  =n_groups;
                      sprintf(group_text_prefix,"");
                      break;
@@ -964,6 +975,7 @@ void write_trees_horizontal(void  **groups_in,
          fclose(fp_fragmented_out);
       } // Loop over i_k_match
    }
+   SID_log("Done.",SID_LOG_CLOSE);
    SID_log("Done.",SID_LOG_CLOSE);
 }
 

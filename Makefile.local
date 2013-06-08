@@ -16,7 +16,7 @@ OBJFILES  = write_match_results.o                       \
 	    set_match_n_particles.o                     \
 	    set_match_index.o                           \
 	    set_match_score.o                           \
-	    create_ghosts.o                             \
+	    process_ghosts.o                            \
 	    check_for_fragmented_halos.o                \
 	    add_to_trees_horizontal_stats.o             \
 	    init_trees_horizontal_roots.o               \
@@ -31,7 +31,6 @@ OBJFILES  = write_match_results.o                       \
 	    write_trees_horizontal_log_file.o           \
 	    write_trees_horizontal_report.o             \
 	    write_trees_horizontal.o                    \
-	    count_ghosts.o                              \
 	    add_substructure_to_horizontal_tree_group.o \
 	    read_trees_horizontal.o                     \
 	    propagate_fragmented_halos.o                \

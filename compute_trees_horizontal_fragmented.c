@@ -26,13 +26,13 @@ void compute_trees_horizontal_fragmented(int         *n_groups,
 
   // Allocate new data structures for propagating the fragmented halos
   int i_search;
-  tree_horizontal_read_info **subgroups_read;
-  tree_horizontal_read_info **groups_read;
-  subgroups_read=(tree_horizontal_read_info **)SID_malloc(sizeof(tree_horizontal_read_info *)*n_wrap);
-  groups_read   =(tree_horizontal_read_info **)SID_malloc(sizeof(tree_horizontal_read_info *)*n_wrap);
+  tree_horizontal_extended_info **subgroups_read;
+  tree_horizontal_extended_info **groups_read;
+  subgroups_read=(tree_horizontal_extended_info **)SID_malloc(sizeof(tree_horizontal_extended_info *)*n_wrap);
+  groups_read   =(tree_horizontal_extended_info **)SID_malloc(sizeof(tree_horizontal_extended_info *)*n_wrap);
   for(i_search=0;i_search<n_wrap;i_search++){
-     subgroups_read[i_search]=(tree_horizontal_read_info *)SID_calloc(sizeof(tree_horizontal_read_info)*n_subgroups_max);
-     groups_read[i_search]   =(tree_horizontal_read_info *)SID_calloc(sizeof(tree_horizontal_read_info)*n_groups_max);
+     subgroups_read[i_search]=(tree_horizontal_extended_info *)SID_calloc(sizeof(tree_horizontal_extended_info)*n_subgroups_max);
+     groups_read[i_search]   =(tree_horizontal_extended_info *)SID_calloc(sizeof(tree_horizontal_extended_info)*n_groups_max);
   }
 
   // Because fragmented halos might persist longer than the search interval, we have to
@@ -40,7 +40,7 @@ void compute_trees_horizontal_fragmented(int         *n_groups,
   //    We will also change other flags (such as TREE_CASE_MERGER) as well.  This
   //    will require a rewrite of the horizontal tree files and of the log files.
   SID_log("Propagating fragmented halo information forward...",SID_LOG_OPEN|SID_LOG_TIMER);
-  //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
+  SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
 
   // Loop over all the used snapshots (first set write counters to last-used values)
   int i_read;

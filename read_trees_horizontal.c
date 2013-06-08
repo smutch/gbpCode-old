@@ -27,9 +27,9 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
    SID_log("Reading horizontal trees for snapshot #%03d...",SID_LOG_OPEN,i_read);
 
    // Parse the mode and set things up accordingly
-   tree_horizontal_read_info            *groups_extended;
-   tree_horizontal_read_info            *subgroups_extended;
-   tree_horizontal_read_info           **subgroups_extended_all;
+   tree_horizontal_extended_info            *groups_extended;
+   tree_horizontal_extended_info            *subgroups_extended;
+   tree_horizontal_extended_info           **subgroups_extended_all;
    tree_horizontal_ghost_group_info     *groups_ghost;
    tree_horizontal_ghost_subgroup_info  *subgroups_ghost;
    tree_horizontal_ghost_subgroup_info **subgroups_ghost_all;
@@ -68,9 +68,9 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
    SID_fread_all(n_trees_subgroup_in,sizeof(int),1,&fp_in);
    SID_fread_all(n_trees_group_in,   sizeof(int),1,&fp_in);
    if(flag_store_extended){
-      groups_extended       =(tree_horizontal_read_info  *)groups_in[i_file%n_wrap];
-      subgroups_extended    =(tree_horizontal_read_info  *)subgroups_in[i_file%n_wrap];
-      subgroups_extended_all=(tree_horizontal_read_info **)subgroups_in;
+      groups_extended       =(tree_horizontal_extended_info  *)groups_in[i_file%n_wrap];
+      subgroups_extended    =(tree_horizontal_extended_info  *)subgroups_in[i_file%n_wrap];
+      subgroups_extended_all=(tree_horizontal_extended_info **)subgroups_in;
    }
    if(flag_store_ghosts){
       groups_ghost       =(tree_horizontal_ghost_group_info     *)groups_in[i_file%n_wrap];

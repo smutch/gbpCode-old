@@ -243,18 +243,6 @@ void assign_progenitor_order_recursive(tree_node_info *tree,int *M_i,int mode){
         progenitors[i_progenitor]->progenitor_next=NULL;
     }
 
-    /*
-    if(tree->n_progenitors>1){
-      i_progenitor=0;
-      current     =tree->progenitor_first;
-      fprintf(stderr,"\n");
-      while(current!=NULL){
-        fprintf(stderr,"i=%4d n_p=%7d M_vir=%13.6le\n",i_progenitor++,current->halo.n_particles,current->halo.M_vir);
-        current=current->progenitor_next;
-      }
-    }
-    */
-
     SID_free(SID_FARG progenitors);
     SID_free(SID_FARG M_iN);
     SID_free(SID_FARG M_iN_index);

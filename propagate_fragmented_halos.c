@@ -2,8 +2,8 @@
 #include <gbpMath.h>
 #include <gbpTrees.h>
 
-void propagate_fragmented_halos(tree_horizontal_read_info **groups,   int *n_groups,
-                                tree_horizontal_read_info **subgroups,int *n_subgroups,
+void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n_groups,
+                                tree_horizontal_extended_info **subgroups,int *n_subgroups,
                                 int        **n_subgroups_group,
                                 int          i_read, // tree snapshot index
                                 int          j_read,

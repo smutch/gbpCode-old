@@ -11,6 +11,7 @@
 #define TREE_CASE_MAIN_PROGENITOR               2       // Set for the progenitor with the highest match score. (propagated for ghosts)
 #define TREE_CASE_MERGER                        4       // Set when new IDs are created (ie. last point the halo was seen).
                                                         //    Set only for the last ghost in ghost-populated trees for mergers w/ offset>1.
+                                                        //    Turned off if fragmented halo propagation is on and the halo is fragmented.
 #define TREE_CASE_DROPPED                       8       // Set if file_offset>1 and TREE_CASE_MATCHED_TO_BRIDGE is not set
 #define TREE_CASE_STRAYED                       16      // Set for halos for which a descendant was not found
 #define TREE_CASE_SPUTTERED                     32      // Set for halos whose descendant was not given a valid ID. (propagated for ghosts)
@@ -29,7 +30,9 @@
 #define TREE_CASE_MATCHED_TO_BRIDGE             8192    // Set when a halo is matched to one with TREE_CASE_BRIDGED set
 #define TREE_CASE_BRIDGE_DEFAULT                16384   // Set when a halo matched to a bridge is not matched to any emerged candidate halos
 #define TREE_CASE_GHOST                         32768   // Marks ghost halos in ghost-populated trees
-#define TREE_CASE_GHOST_NAKED                   65536   // Marks a ghost halo where a subgroup is it's own group (product of a default action).
+#define TREE_CASE_GHOST_NULL                    65536   // Marks a ghost halo where a subgroup is it's own group.
+                                                        //    This is a default behaviour that occurs when a group is strayed but one of 
+                                                        //    it's subgroups isn't.
 #define TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED 131072  // For internal use.  This should never be seen in the output.
 #define TREE_CASE_BRIDGE_FINALIZE               262144  // For internal use.  This should never be seen in the output.
 #define TREE_CASE_UNPROCESSED                   524288  // For internal use.  This should never be seen in the output.
@@ -42,11 +45,12 @@
 #define TREE_HORIZONTAL_STORE_EXTENDED 2
 #define TREE_HORIZONTAL_STORE_GHOSTS   4
 
-#define TREE_HORIZONTAL_WRITE_DEFAULT   0
-#define TREE_HORIZONTAL_WRITE_ALLCASES  1
-#define TREE_HORIZONTAL_WRITE_NOCASES   2
-#define TREE_HORIZONTAL_WRITE_EXTENDED  4
-#define TREE_HORIZONTAL_WRITE_GHOSTS    8
+#define TREE_HORIZONTAL_WRITE_DEFAULT           0
+#define TREE_HORIZONTAL_WRITE_ALLCASES          1
+#define TREE_HORIZONTAL_WRITE_NOCASES           2
+#define TREE_HORIZONTAL_WRITE_EXTENDED          4
+#define TREE_HORIZONTAL_WRITE_GHOSTS            8
+#define TREE_HORIZONTAL_WRITE_CHECK_FRAGMENTED 16
 
 // Data structures for horizontal tree construction
 typedef struct tree_horizontal_stats_info tree_horizontal_stats_info;
@@ -107,8 +111,8 @@ struct tree_horizontal_info{
   match_info   descendant;         // Contains all the needed pointers to the descendant
 };
 
-typedef struct tree_horizontal_read_info tree_horizontal_read_info;
-struct tree_horizontal_read_info{
+typedef struct tree_horizontal_extended_info tree_horizontal_extended_info;
+struct tree_horizontal_extended_info{
   int          id;                 // This halo's id
   int          n_particles;        // Number of particles in this halo
   int          tree_id;            // This halo's tree id
@@ -404,10 +408,6 @@ void write_trees_horizontal_emerged_candidates(int                   i_read,
                                                char                 *group_text_prefix,
                                                char                 *filename_output_dir,
                                                int                   flag_start_new_file);
-void count_ghosts(int  *n_groups_in,    int *n_group_ghosts,
-                  int  *n_subgroups_in, int *n_subgroup_ghosts,
-                  char *filename_output_dir,
-                  int   i_file,int i_read);
 void read_trees_horizontal(void **groups,   int *n_groups_in,
                            void **subgroups,int *n_subgroups_in,
                            int   *n_subgroups_group,
@@ -419,8 +419,8 @@ void read_trees_horizontal(void **groups,   int *n_groups_in,
                            int    n_wrap,
                            char  *filename_output_dir,
                            int    mode);
-void propagate_fragmented_halos(tree_horizontal_read_info **groups,   int *n_groups,
-                                tree_horizontal_read_info **subgroups,int *n_subgroups,
+void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n_groups,
+                                tree_horizontal_extended_info **subgroups,int *n_subgroups,
                                 int        **n_subgroups_group,
                                 int          i_read, // tree snapshot index
                                 int          j_read,
@@ -434,21 +434,23 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
                              float                  score,
                              int                   *max_id,
                              int                    n_wrap);
-void create_ghosts(tree_horizontal_ghost_group_info    **groups,
-                   tree_horizontal_ghost_subgroup_info **subgroups,
-                   int        *n_groups,
-                   int        *n_subgroups,
-                   int       **n_subgroups_group,
-                   int        *n_group_ghosts_used,
-                   int        *n_subgroup_ghosts_used,
-                   int         i_read,
-                   int         l_read,
-                   int         j_file,
-                   int         i_file_start,
-                   int         n_search,
-                   int         n_wrap,
-                   double     *a_list,
-                   cosmo_info **cosmo);
+void process_ghosts(tree_horizontal_ghost_group_info    **groups,
+                    tree_horizontal_ghost_subgroup_info **subgroups,
+                    int        *n_groups,
+                    int        *n_subgroups,
+                    int       **n_subgroups_group,
+                    int        *n_group_ghosts,
+                    int        *n_subgroup_ghosts,
+                    int        *n_group_ghosts_used,
+                    int        *n_subgroup_ghosts_used,
+                    int         i_read,
+                    int         l_read,
+                    int         j_file,
+                    int         i_file_start,
+                    int         n_search,
+                    int         n_wrap,
+                    double     *a_list,
+                    cosmo_info **cosmo);
 void add_substructure_to_horizontal_tree_group(tree_horizontal_ghost_group_info    *group,
                                                tree_horizontal_ghost_subgroup_info *subgroup_descendant,
                                                tree_horizontal_ghost_subgroup_info *subgroup);

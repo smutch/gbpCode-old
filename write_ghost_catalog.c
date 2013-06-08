@@ -44,21 +44,23 @@ void interpolate_halo_local(halo_properties_info *halo_initial,
    halo_return->velocity_MBP[0]=halo_initial->velocity_MBP[0]+f_interpolate*(halo_final->velocity_MBP[0]-halo_initial->velocity_MBP[0]);
    halo_return->velocity_MBP[1]=halo_initial->velocity_MBP[1]+f_interpolate*(halo_final->velocity_MBP[1]-halo_initial->velocity_MBP[1]);
    halo_return->velocity_MBP[2]=halo_initial->velocity_MBP[2]+f_interpolate*(halo_final->velocity_MBP[2]-halo_initial->velocity_MBP[2]);
-   halo_return->R_vir          =halo_initial->R_vir  +f_interpolate*(halo_final->R_vir  -halo_initial->R_vir);
-   halo_return->R_halo         =halo_initial->R_halo +f_interpolate*(halo_final->R_halo -halo_initial->R_halo);
-   halo_return->R_max          =halo_initial->R_max  +f_interpolate*(halo_final->R_max  -halo_initial->R_max);
-   halo_return->V_max          =halo_initial->V_max  +f_interpolate*(halo_final->V_max  -halo_initial->V_max);
-   halo_return->sigma_v        =halo_initial->sigma_v+f_interpolate*(halo_final->sigma_v-halo_initial->sigma_v);
-   halo_return->spin[0]        =halo_initial->spin[0]+f_interpolate*(halo_final->spin[0]-halo_initial->spin[0]);
-   halo_return->spin[1]        =halo_initial->spin[1]+f_interpolate*(halo_final->spin[1]-halo_initial->spin[1]);
-   halo_return->spin[2]        =halo_initial->spin[2]+f_interpolate*(halo_final->spin[2]-halo_initial->spin[2]);
-   halo_return->q_triaxial     =halo_initial->q_triaxial+f_interpolate*(halo_final->q_triaxial-halo_initial->q_triaxial);
-   halo_return->s_triaxial     =halo_initial->s_triaxial+f_interpolate*(halo_final->s_triaxial-halo_initial->s_triaxial);
+   halo_return->spin[0]        =halo_initial->spin[0]        +f_interpolate*(halo_final->spin[0]        -halo_initial->spin[0]);
+   halo_return->spin[1]        =halo_initial->spin[1]        +f_interpolate*(halo_final->spin[1]        -halo_initial->spin[1]);
+   halo_return->spin[2]        =halo_initial->spin[2]        +f_interpolate*(halo_final->spin[2]        -halo_initial->spin[2]);
+   halo_return->R_vir          =halo_initial->R_vir          +f_interpolate*(halo_final->R_vir          -halo_initial->R_vir);
+   halo_return->R_halo         =halo_initial->R_halo         +f_interpolate*(halo_final->R_halo         -halo_initial->R_halo);
+   halo_return->R_max          =halo_initial->R_max          +f_interpolate*(halo_final->R_max          -halo_initial->R_max);
+   halo_return->V_max          =halo_initial->V_max          +f_interpolate*(halo_final->V_max          -halo_initial->V_max);
+   halo_return->sigma_v        =halo_initial->sigma_v        +f_interpolate*(halo_final->sigma_v        -halo_initial->sigma_v);
+   halo_return->q_triaxial     =halo_initial->q_triaxial     +f_interpolate*(halo_final->q_triaxial     -halo_initial->q_triaxial);
+   halo_return->s_triaxial     =halo_initial->s_triaxial     +f_interpolate*(halo_final->s_triaxial     -halo_initial->s_triaxial);
    int i_vec;
    int j_vec;
    for(i_vec=0;i_vec<3;i_vec++){
       for(j_vec=0;j_vec<3;j_vec++){
-         halo_return->shape_eigen_vectors[i_vec][j_vec]=0.;
+         halo_return->shape_eigen_vectors[i_vec][j_vec]=
+            halo_initial->shape_eigen_vectors[i_vec][j_vec]+
+            f_interpolate*(halo_final->shape_eigen_vectors[i_vec][j_vec]-halo_initial->shape_eigen_vectors[i_vec][j_vec]);
       }
    }
 }
@@ -120,11 +122,11 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
    // Scan through the trees, writing ghosts in the order that we find them
    int i_group;
    int i_subgroup;
-   int flag_naked_ghost;
+   int flag_null_ghost;
    for(i_group=0,i_subgroup=0;i_group<(n_groups+n_group_ghosts);i_group++){
 
       // Write ghost groups
-      flag_naked_ghost=FALSE;
+      flag_null_ghost=FALSE;
       if(i_group>=n_groups){
          tree_horizontal_ghost_group_info *group_i;
          halo_properties_info *group_initial;
@@ -132,10 +134,10 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
          double                time_initial;
          double                time_final;
          double                time_return;
+         // Check if this is a null group.  If it is, write it when we write the substructure (below).
          group_i         =&(groups[i_group]);
-         // Check if this is a naked group.  If it is, write it when we write the substructure (below).
-         flag_naked_ghost=check_mode_for_flag(group_i->type,TREE_CASE_GHOST_NAKED);
-         if(!flag_naked_ghost){
+         flag_null_ghost=check_mode_for_flag(group_i->type,TREE_CASE_GHOST_NULL);
+         if(!flag_null_ghost){
             group_initial   =group_properties[(group_i->interp.file_start)%n_wrap][group_i->interp.index_start];
             group_final     =group_properties[(group_i->interp.file_stop)%n_wrap][group_i->interp.index_stop];
             time_initial    =group_i->interp.time_start;
@@ -171,16 +173,16 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
                                    time_return,
                                    i_group,current->type,current->file_offset,"sub");
 
-            // Write the group properties of a naked ghost
-            if(flag_naked_ghost){
+            // Write the group properties of a null ghost
+            n_subgroups_i++;
+            if(flag_null_ghost){
                if(n_subgroups_i>1)
-                  SID_trap_error("Multiple subgroups have been assigned to a naked ghost.",ERROR_LOGIC);
+                  SID_trap_error("Multiple subgroups have been assigned to a null ghost.",ERROR_LOGIC);
                SID_fwrite(subgroup_return,sizeof(halo_properties_info),1,&fp_groups);
             }
 
             // Write subgroup ghost properties
             SID_fwrite(subgroup_return,sizeof(halo_properties_info),1,&fp_subgroups);
-            n_subgroups_i++;
          }
          current=current->next_substructure;
       }
