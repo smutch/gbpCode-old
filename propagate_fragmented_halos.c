@@ -65,12 +65,14 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
                SID_trap_error("Multiple TREE_CASE_FRAGMENT switches present (%d) for i_group=%d when a max of one is alowed.",ERROR_LOGIC,i_count,i_group);
          }
       }
+      /*
       // Fragmented halos should not be counted as mergers when they're accreated
       else if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_LOST)     ||
               check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_RETURNED) ||
               check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_EXCHANGED)){
          groups[i_read%n_wrap][i_group].type&=(~TREE_CASE_MERGER);
       }
+      */
 
       // Propagate the information about the bridge as well
       if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_LOST)     ||
