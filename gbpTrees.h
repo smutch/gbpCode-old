@@ -11,7 +11,6 @@
 #define TREE_CASE_MAIN_PROGENITOR               2       // Set for the progenitor with the highest match score. (propagated for ghosts)
 #define TREE_CASE_MERGER                        4       // Set when new IDs are created (ie. last point the halo was seen).
                                                         //    Set only for the last ghost in ghost-populated trees for mergers w/ offset>1.
-                                                        //    Turned off if fragmented halo propagation is on and the halo is fragmented.
 #define TREE_CASE_DROPPED                       8       // Set if file_offset>1 and TREE_CASE_MATCHED_TO_BRIDGE is not set
 #define TREE_CASE_STRAYED                       16      // Set for halos for which a descendant was not found
 #define TREE_CASE_SPUTTERED                     32      // Set for halos whose descendant was not given a valid ID. (propagated for ghosts)

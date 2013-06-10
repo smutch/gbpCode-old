@@ -465,7 +465,7 @@ void write_trees_horizontal(void  **groups_in,
          sprintf(filename_emerged_out,   "%s/%sgroup_emerged.txt",       filename_output_dir_horizontal_cases,group_text_prefix);
          sprintf(filename_mergers_out,   "%s/%sgroup_mergers.txt",       filename_output_dir_horizontal_cases,group_text_prefix);
          sprintf(filename_fragmented_out,"%s/%sgroup_fragmented_new.txt",filename_output_dir_horizontal_cases,group_text_prefix);
-         if(i_k_match==0 && l_write==0){
+         if(l_write==0){
             fp_matching_out  =fopen(filename_matching_out,  "w");
             fp_strayed_out   =fopen(filename_strayed_out,   "w");
             fp_sputtered_out =fopen(filename_sputtered_out, "w");
@@ -481,7 +481,7 @@ void write_trees_horizontal(void  **groups_in,
             fp_bridged_out   =fopen(filename_bridged_out,   "a");
             fp_emerged_out   =fopen(filename_emerged_out,   "a");
          }
-         if(i_k_match==0 && l_write==0){
+         if(l_write==0){
             fp=fp_matching_out;
             i_column=1;
             fprintf(fp,"# (%02d): Progenitor number\n",                i_column++);
