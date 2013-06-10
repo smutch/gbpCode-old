@@ -10,6 +10,23 @@
 #include <gbpHalos.h>
 
 #define GADGET_BUFFER_SIZE_LOCAL  128*SIZE_OF_MEGABYTE
+#define MAX_SEND_LOCAL            128*SIZE_OF_MEGABYTE
+
+void SID_Bcast_local(void *buffer,size_t buffer_size,int source_rank,SID_Comm *comm){
+#if USE_MPI
+   size_t size_send;
+   size_t size_left;
+   size_t size_offset;
+   size_left  =buffer_size;
+   size_offset=0;
+   while(size_left>0){
+     size_send=MIN(size_left,MAX_SEND_LOCAL);
+     MPI_Bcast(&(((char *)buffer)[size_offset]),(int)(size_send),MPI_BYTE,source_rank,(MPI_Comm)(comm->comm));
+     size_left  -=size_send;
+     size_offset+=size_send;
+   }
+#endif
+}
 
 void read_duplicates_file_local(const char  *filename_in,const char *filename_number,
                                 plist_info  *plist,
@@ -346,13 +363,13 @@ void construct_duplicate_list_local(plist_info *plist,
   size_t *buffer_id;
   size_t *buffer_index_local;
   char   *buffer_flag_local;
-  int     n_buffer_max=1024*1024;
-  int     n_buffer;
+  size_t  n_buffer_max=1024*1024;
+  size_t  n_buffer;
   size_t  id_last;
   size_t  index_last;
   char    flag_last;
-  int     i_buffer;
-  int     index_rank_test_local;  
+  size_t  i_buffer;
+  int64_t index_rank_test_local;  
   int     n_duplicates_unique_global=0;
   int     n_duplicates_global=0;
   int     n_duplicates_local =0;
@@ -371,11 +388,13 @@ void construct_duplicate_list_local(plist_info *plist,
   size_t i_particle;
   size_t j_particle;
   int    count;
-  id_last=28991029248+1; // sufficient for Tiamat
+  id_last   =28991029248+1; // sufficient for Tiamat
+  index_last=n_particles_local+1;
+  flag_last =FALSE;
   for(i_particle=0,count=0;i_particle<n_particles_all_in_groups;i_particle+=n_buffer){
 
     //Decide this buffer iteration's size
-    n_buffer=MIN(n_buffer_max,n_particles_all_in_groups-i_particle);
+    n_buffer=MIN(n_buffer_max,(size_t)(n_particles_all_in_groups-i_particle));
 
     //Set the buffer to a default value smaller than (or equal to) the smallest possible data size
     for(i_buffer=0;i_buffer<n_buffer;i_buffer++){
@@ -386,7 +405,7 @@ void construct_duplicate_list_local(plist_info *plist,
 
     // Determine if any of the local data is needed for this buffer ...
     for(j_particle=0;j_particle<n_particles_local;j_particle++){
-      index_rank_test_local=id_list_local_rank[j_particle]-i_particle;
+      index_rank_test_local=(int64_t)(id_list_local_rank[j_particle]-i_particle);
       //... if so, set the appropriate buffer value
       if(index_rank_test_local>=0 && index_rank_test_local<n_buffer){
         buffer_id[index_rank_test_local]         =id_list_local[j_particle];
@@ -1509,12 +1528,12 @@ int main(int argc, char *argv[]){
     SID_Allreduce(&n_groups_local,   &n_groups_all,       1,SID_INT,   SID_SUM,SID.COMM_WORLD);
     SID_Allreduce(&n_subgroups_local,&n_subgroups_all,    1,SID_INT,   SID_SUM,SID.COMM_WORLD);
     SID_Allreduce(&n_particles_local,&n_particles_all,    1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
-    SID_log("No. of groups    removed = %d",SID_LOG_COMMENT,n_groups_removed);
-    SID_log("No. of subgroups removed = %d",SID_LOG_COMMENT,n_subgroups_removed);
-    SID_log("No. of particles removed = %d",SID_LOG_COMMENT,n_particles_removed);
-    SID_log("No. of groups    kept    = %d",SID_LOG_COMMENT,n_groups_all);
-    SID_log("No. of subgroups kept    = %d",SID_LOG_COMMENT,n_subgroups_all);
-    SID_log("No. of particles kept    = %d",SID_LOG_COMMENT,n_particles_all);
+    SID_log("No. of groups    removed = %d",  SID_LOG_COMMENT,n_groups_removed);
+    SID_log("No. of subgroups removed = %d",  SID_LOG_COMMENT,n_subgroups_removed);
+    SID_log("No. of particles removed = %d",  SID_LOG_COMMENT,n_particles_removed);
+    SID_log("No. of groups    kept    = %d",  SID_LOG_COMMENT,n_groups_all);
+    SID_log("No. of subgroups kept    = %d",  SID_LOG_COMMENT,n_subgroups_all);
+    SID_log("No. of particles kept    = %lld",SID_LOG_COMMENT,n_particles_all);
     SID_log("Done.",SID_LOG_CLOSE);
 
     // Convert group/subgroup offsets to global references (instead of their current local reference)
@@ -1533,12 +1552,12 @@ int main(int argc, char *argv[]){
     SID_log("Done.",SID_LOG_CLOSE);
 
     // Allocate a buffer for writing
-    int     n_buffer_alloc;
+    size_t  n_buffer_alloc;
     void   *buffer;
     int    *buffer_int;
     size_t *buffer_size_t;
     n_buffer_alloc=n_particles_local;
-    SID_Allreduce(SID_IN_PLACE,&n_buffer_alloc,1,SID_INT,SID_MAX,SID.COMM_WORLD);
+    SID_Allreduce(SID_IN_PLACE,&n_buffer_alloc,1,SID_SIZE_T,SID_MAX,SID.COMM_WORLD);
     buffer       =SID_malloc(sizeof(size_t)*n_buffer_alloc);
     buffer_int   =(int    *)buffer;
     buffer_size_t=(size_t *)buffer;
@@ -1582,14 +1601,14 @@ int main(int argc, char *argv[]){
 
     // Write results
     SID_log("Writing new halo catalog files...",SID_LOG_OPEN|SID_LOG_TIMER);
-    int   i_rank;
-    int   buffer_size;
-    FILE *fp_out_groups;
-    FILE *fp_out_subgroups;
-    FILE *fp_out_particles;
-    char  filename_out_groups[MAX_FILENAME_LENGTH];
-    char  filename_out_subgroups[MAX_FILENAME_LENGTH];
-    char  filename_out_particles[MAX_FILENAME_LENGTH];
+    int     i_rank;
+    size_t  buffer_size;
+    FILE   *fp_out_groups;
+    FILE   *fp_out_subgroups;
+    FILE   *fp_out_particles;
+    char    filename_out_groups[MAX_FILENAME_LENGTH];
+    char    filename_out_subgroups[MAX_FILENAME_LENGTH];
+    char    filename_out_particles[MAX_FILENAME_LENGTH];
     sprintf(filename_out_groups,   "%s_%s.catalog_groups",   filename_halos_out_root,filename_number);
     sprintf(filename_out_subgroups,"%s_%s.catalog_subgroups",filename_halos_out_root,filename_number);
     sprintf(filename_out_particles,"%s_%s.catalog_particles",filename_halos_out_root,filename_number);
@@ -1617,22 +1636,25 @@ int main(int argc, char *argv[]){
     }
 
     // Write group sizes
+    SID_log("Writing group sizes...",SID_LOG_OPEN);
     for(i_rank=0;i_rank<SID.n_proc;i_rank++){
        if(SID.My_rank==i_rank){
-          buffer_size=(int)(sizeof(int)*n_groups_local);
+          buffer_size=sizeof(int)*(size_t)n_groups_local;
           memcpy(buffer,size_groups,buffer_size);
        }
-       SID_Bcast(&buffer_size,sizeof(int),i_rank,SID.COMM_WORLD);
-       SID_Bcast(buffer,      buffer_size,i_rank,SID.COMM_WORLD); 
+       SID_Bcast(&buffer_size,sizeof(size_t),i_rank,SID.COMM_WORLD);
+       SID_Bcast_local(buffer,      buffer_size,   i_rank,SID.COMM_WORLD); 
        if(SID.I_am_Master){
-          int n_write;
+          size_t n_write;
           n_write=fwrite(buffer,1,buffer_size,fp_out_groups);
           if(n_write!=buffer_size)
              SID_trap_error("buffer not written properly",ERROR_IO_WRITE);
        }
     }
+    SID_log("Done.",SID_LOG_CLOSE);
 
     // Write group offsets
+    SID_log("Writing group offsets...",SID_LOG_OPEN);
     int n_groups_written=0;
     for(i_rank=0;i_rank<SID.n_proc;i_rank++){
        if(SID.My_rank==i_rank){
@@ -1644,52 +1666,58 @@ int main(int argc, char *argv[]){
           }
           else if(n_byte_offsets_groups!=sizeof(int64_t))
              SID_trap_error("Invalid group offset byte-size (%d)",ERROR_LOGIC,n_byte_offsets_groups);
-          buffer_size=n_byte_offsets_groups*n_groups_local;
+          buffer_size=(size_t)n_byte_offsets_groups*(size_t)n_groups_local;
        }
-       SID_Bcast(&buffer_size,sizeof(int),i_rank,SID.COMM_WORLD);
-       SID_Bcast(buffer,      buffer_size,i_rank,SID.COMM_WORLD);
+       SID_Bcast(&buffer_size,sizeof(size_t),i_rank,SID.COMM_WORLD);
+       SID_Bcast_local(buffer,      buffer_size,i_rank,SID.COMM_WORLD);
        if(SID.I_am_Master){
-          int n_write;
+          size_t n_write;
           n_write=fwrite(buffer,1,buffer_size,fp_out_groups);
           if(n_write!=buffer_size)
              SID_trap_error("buffer not written properly",ERROR_IO_WRITE);
           n_groups_written+=n_write/n_byte_offsets_groups;
        }
     }
+    SID_log("Done.",SID_LOG_CLOSE);
 
     // Write group subgroup counts
+    SID_log("Writing group subgroup counts...",SID_LOG_OPEN);
     for(i_rank=0;i_rank<SID.n_proc;i_rank++){
        if(SID.My_rank==i_rank){
-          buffer_size=sizeof(int)*n_groups_local;
+          buffer_size=sizeof(int)*(size_t)n_groups_local;
           memcpy(buffer,n_subgroups_group,buffer_size);
        }
-       SID_Bcast(&buffer_size,sizeof(int),i_rank,SID.COMM_WORLD);
-       SID_Bcast(buffer,      buffer_size,i_rank,SID.COMM_WORLD);
+       SID_Bcast(&buffer_size,sizeof(size_t),i_rank,SID.COMM_WORLD);
+       SID_Bcast_local(buffer,      buffer_size,i_rank,SID.COMM_WORLD);
        if(SID.I_am_Master){
-          int n_write;
+          size_t n_write;
           n_write=fwrite(buffer,1,buffer_size,fp_out_groups);
           if(n_write!=buffer_size)
              SID_trap_error("buffer not written properly",ERROR_IO_WRITE);
        }
     }
+    SID_log("Done.",SID_LOG_CLOSE);
 
     // Write subgroup sizes
+    SID_log("Writing subgroup sizes...",SID_LOG_OPEN);
     for(i_rank=0;i_rank<SID.n_proc;i_rank++){
        if(SID.My_rank==i_rank){
-          buffer_size=sizeof(int)*n_subgroups_local;
+          buffer_size=sizeof(int)*(size_t)n_subgroups_local;
           memcpy(buffer,size_subgroups,buffer_size);
        }
-       SID_Bcast(&buffer_size,sizeof(int),i_rank,SID.COMM_WORLD);
-       SID_Bcast(buffer,      buffer_size,i_rank,SID.COMM_WORLD);
+       SID_Bcast(&buffer_size,sizeof(size_t),i_rank,SID.COMM_WORLD);
+       SID_Bcast_local(buffer,      buffer_size,i_rank,SID.COMM_WORLD);
        if(SID.I_am_Master){
-          int n_write;
+          size_t n_write;
           n_write=fwrite(buffer,1,buffer_size,fp_out_subgroups);
           if(n_write!=buffer_size)
              SID_trap_error("buffer not written properly",ERROR_IO_WRITE);
        }
     }
+    SID_log("Done.",SID_LOG_CLOSE);
 
     // Write subgroup offsets
+    SID_log("Writing subgroup offsets...",SID_LOG_OPEN);
     int n_subgroups_written=0;
     for(i_rank=0;i_rank<SID.n_proc;i_rank++){
        if(SID.My_rank==i_rank){
@@ -1701,20 +1729,22 @@ int main(int argc, char *argv[]){
           }
           else if(n_byte_offsets_subgroups!=sizeof(int64_t))
              SID_trap_error("Invalid subgroup offset byte-size (%d)",ERROR_LOGIC,n_byte_offsets_subgroups);
-          buffer_size=n_byte_offsets_subgroups*n_subgroups_local;
+          buffer_size=(size_t)n_byte_offsets_subgroups*(size_t)n_subgroups_local;
        }
-       SID_Bcast(&buffer_size,sizeof(int),i_rank,SID.COMM_WORLD);
-       SID_Bcast(buffer,      buffer_size,i_rank,SID.COMM_WORLD);
+       SID_Bcast(&buffer_size,sizeof(size_t),i_rank,SID.COMM_WORLD);
+       SID_Bcast_local(buffer,   buffer_size,i_rank,SID.COMM_WORLD);
        if(SID.I_am_Master){
-          int n_write;
+          size_t n_write;
           n_write=fwrite(buffer,1,buffer_size,fp_out_subgroups);
           if(n_write!=buffer_size)
              SID_trap_error("buffer not written properly",ERROR_IO_WRITE);
           n_subgroups_written+=n_write/n_byte_offsets_subgroups;
        }
     }
+    SID_log("Done.",SID_LOG_CLOSE);
 
     // Write particle IDs
+    SID_log("Writing IDs...",SID_LOG_OPEN);
     size_t n_particles_written=0;
     for(i_rank=0;i_rank<SID.n_proc;i_rank++){
        if(SID.My_rank==i_rank){
@@ -1726,18 +1756,19 @@ int main(int argc, char *argv[]){
           }
           else if(n_byte_ids!=sizeof(int64_t))
              SID_trap_error("Invalid ID byte-size (%d)",ERROR_LOGIC,n_byte_ids);
-          buffer_size=n_byte_ids*n_particles_local;
+          buffer_size=(size_t)n_byte_ids*(size_t)n_particles_local;
        }
-       SID_Bcast(&buffer_size,sizeof(int),i_rank,SID.COMM_WORLD);
-       SID_Bcast(buffer,      buffer_size,i_rank,SID.COMM_WORLD);
+       SID_Bcast(&buffer_size,sizeof(size_t),i_rank,SID.COMM_WORLD);
+       SID_Bcast_local(buffer,      buffer_size,i_rank,SID.COMM_WORLD);
        if(SID.I_am_Master){
-          int n_write;
+          size_t n_write;
           n_write=fwrite(buffer,1,buffer_size,fp_out_particles);
           if(n_write!=buffer_size)
              SID_trap_error("buffer not written properly",ERROR_IO_WRITE);
           n_particles_written+=n_write/n_byte_ids;
        }
     }
+    SID_log("Done.",SID_LOG_CLOSE);
     SID_log("No. of groups    written = %d",  SID_LOG_COMMENT,n_groups_written);
     SID_log("No. of subgroups written = %d",  SID_LOG_COMMENT,n_subgroups_written);
     SID_log("No. of particles written = %lld",SID_LOG_COMMENT,n_particles_written);
