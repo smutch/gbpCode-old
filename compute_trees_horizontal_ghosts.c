@@ -167,14 +167,16 @@ void compute_trees_horizontal_ghosts(int         *n_groups,
   int i_write;
   int j_write;
   int l_write;
+  int flag_init_write;
   for(i_read   =i_read_stop,
         i_file =i_file_start,
         j_file =0,
         i_write=i_file_start,
         j_write=i_read_stop,
-        l_write=0;
+        l_write=0,
+        flag_init_write=TRUE;
       j_write>=i_read_start;
-        i_write--,
+      i_write--,
         j_write-=i_read_step,
         l_write++){
 
@@ -273,7 +275,9 @@ void compute_trees_horizontal_ghosts(int         *n_groups,
                             a_list,
                             cosmo,
                             n_k_match,
+                            flag_init_write,
                             TREE_HORIZONTAL_WRITE_GHOSTS|TREE_HORIZONTAL_WRITE_NOCASES);
+     flag_init_write=FALSE;
 
      // Write the ghost catalog files
      write_ghost_catalog(groups_ghost[i_write%n_wrap],

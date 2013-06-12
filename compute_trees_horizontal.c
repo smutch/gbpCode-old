@@ -395,6 +395,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                               a_list,
                               cosmo,
                               n_k_match,
+                              l_write==0,
                               mode_write);
        i_write--;
        l_write++;
@@ -430,6 +431,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                             a_list,
                             cosmo,
                             n_k_match,
+                            l_write==0,
                             mode_write);
   }
   int i_write_last;

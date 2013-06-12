@@ -132,7 +132,7 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
          int   group_n_particles_proj;
          float group_score_desc;
          float group_score_prog;
-         int   group_file_bridge;
+         int   group_snap_bridge;
          int   group_index_bridge;
          int   group_id_bridge;
          SID_fread(&group_n_particles,       sizeof(int),  1,&fp_in);
@@ -141,7 +141,7 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
          SID_fread(&group_n_particles_proj,  sizeof(int),  1,&fp_in);
          SID_fread(&group_score_desc,        sizeof(float),1,&fp_in);
          SID_fread(&group_score_prog,        sizeof(float),1,&fp_in);
-         SID_fread(&group_file_bridge,       sizeof(int),  1,&fp_in);
+         SID_fread(&group_snap_bridge,       sizeof(int),  1,&fp_in);
          SID_fread(&group_index_bridge,      sizeof(int),  1,&fp_in);
          SID_fread(&group_id_bridge,         sizeof(int),  1,&fp_in);
          if(flag_store_extended){
@@ -151,7 +151,7 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
             groups_extended[i_group].n_particles_proj  =group_n_particles_proj;
             groups_extended[i_group].score_desc        =group_score_desc;
             groups_extended[i_group].score_prog        =group_score_prog;
-            groups_extended[i_group].file_bridge       =group_file_bridge;
+            groups_extended[i_group].snap_bridge       =group_snap_bridge;
             groups_extended[i_group].index_bridge      =group_index_bridge;
             groups_extended[i_group].id_bridge         =group_id_bridge;
          }
@@ -221,7 +221,7 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
             int   subgroup_n_particles_proj;
             float subgroup_score_desc;
             float subgroup_score_prog;
-            int   subgroup_file_bridge;
+            int   subgroup_snap_bridge;
             int   subgroup_index_bridge;
             int   subgroup_id_bridge;
             SID_fread(&subgroup_n_particles,       sizeof(int),  1,&fp_in);
@@ -230,7 +230,7 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
             SID_fread(&subgroup_n_particles_proj,  sizeof(int),  1,&fp_in);
             SID_fread(&subgroup_score_desc,        sizeof(float),1,&fp_in);
             SID_fread(&subgroup_score_prog,        sizeof(float),1,&fp_in);
-            SID_fread(&subgroup_file_bridge,       sizeof(int),  1,&fp_in);
+            SID_fread(&subgroup_snap_bridge,       sizeof(int),  1,&fp_in);
             SID_fread(&subgroup_index_bridge,      sizeof(int),  1,&fp_in);
             SID_fread(&subgroup_id_bridge,         sizeof(int),  1,&fp_in);
             if(flag_store_extended){
@@ -240,7 +240,7 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
                subgroups_extended[i_subgroup].n_particles_proj  =subgroup_n_particles_proj;
                subgroups_extended[i_subgroup].score_desc        =subgroup_score_desc;
                subgroups_extended[i_subgroup].score_prog        =subgroup_score_prog;
-               subgroups_extended[i_subgroup].file_bridge       =subgroup_file_bridge;
+               subgroups_extended[i_subgroup].snap_bridge       =subgroup_snap_bridge;
                subgroups_extended[i_subgroup].index_bridge      =subgroup_index_bridge;
                subgroups_extended[i_subgroup].id_bridge         =subgroup_id_bridge;
             }

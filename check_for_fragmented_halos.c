@@ -7,6 +7,7 @@ void check_for_fragmented_halos(int k_match,
                                 int n_groups,
                                 int i_write,
                                 int j_write,
+                                int l_write,
                                 int n_wrap){
    if(k_match==0)
       SID_log("Checking for fragmented groups in snapshot #%03d...",SID_LOG_OPEN,j_write);
@@ -27,20 +28,26 @@ void check_for_fragmented_halos(int k_match,
          SID_trap_error("Invalid group match_type flag (%d) for i_group=%d",ERROR_LOGIC,groups[i_write%n_wrap][i_group].type,i_group);
 
       // Perform checks for fragmented halos here
-      if(check_mode_for_flag(groups[i_write%n_wrap][i_group].type,TREE_CASE_FRAGMENTED_NEW)){
+      if(check_mode_for_flag(groups[i_write%n_wrap][i_group].type,TREE_CASE_FRAGMENTED_NEW) && l_write!=0){
          int bridge_id;
-         bridge_id=set_match_id(&(groups[i_write%n_wrap][i_group].bridge_backmatch));
-         if(groups[i_write%n_wrap][i_group].main_progenitor_id<0){
+         int subgroup_id;
+         int descendant_id;
+         int main_progenitor_id;
+         bridge_id         =set_match_id(&(groups[i_write%n_wrap][i_group].bridge_backmatch));
+         subgroup_id       =groups[i_write%n_wrap][i_group].id;
+         descendant_id     =set_match_id(&(groups[i_write%n_wrap][i_group].descendant));
+         main_progenitor_id=groups[i_write%n_wrap][i_group].main_progenitor_id;
+         if(subgroup_id<0){
             groups[i_write%n_wrap][i_group].type|=TREE_CASE_FRAGMENTED_LOST;
             n_lost++;
          }
-         else if(groups[i_write%n_wrap][i_group].main_progenitor_id!=bridge_id){
-            groups[i_write%n_wrap][i_group].type|=TREE_CASE_FRAGMENTED_EXCHANGED;
-            n_exchanged++;
-         }
-         else if(groups[i_write%n_wrap][i_group].main_progenitor_id==bridge_id){
+         else if(main_progenitor_id==bridge_id){
             groups[i_write%n_wrap][i_group].type|=TREE_CASE_FRAGMENTED_RETURNED;
             n_returned++;
+         }
+         else{
+            groups[i_write%n_wrap][i_group].type|=TREE_CASE_FRAGMENTED_EXCHANGED;
+            n_exchanged++;
          }
       }
    }

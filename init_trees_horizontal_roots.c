@@ -53,7 +53,7 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
   for(i_halo=0,(*max_id_group)=0,(*max_tree_id_group)=0;i_halo<n_groups_max;i_halo++,j_halo++){
      for(i_search=0;i_search<n_wrap;i_search++){
         groups[i_search][i_halo].file                  =   i_file_start; // The resulting file offset must be -ve for tree roots
-        groups[i_search][i_halo].snap                  =   i_read_start;
+        groups[i_search][i_halo].snap                  =   i_read_stop;
         groups[i_search][i_halo].index                 =(size_t)i_halo;
         groups[i_search][i_halo].n_bridges             =   0;
         groups[i_search][i_halo].descendant.halo       =NULL;
@@ -127,7 +127,7 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
      }
      for(i_search=0;i_search<n_wrap;i_search++){
         subgroups[i_search][i_halo].file                  =   i_file_start; // The resulting file offset must be -ve for tree roots
-        subgroups[i_search][i_halo].snap                  =   i_read_start;
+        subgroups[i_search][i_halo].snap                  =   i_read_stop;
         subgroups[i_search][i_halo].index                 =(size_t)i_halo;
         subgroups[i_search][i_halo].n_bridges             =   0;
         subgroups[i_search][i_halo].descendant.halo       =NULL;

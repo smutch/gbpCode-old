@@ -44,7 +44,8 @@ OBJFILES  = write_match_results.o                       \
 	    read_matches.o                              \
 	    read_trees.o               
 LIBFILE   = libgbpTrees.a
-BINFILES  = parse_match_type           \
+BINFILES  = validate_ghost_trees       \
+	    parse_match_type           \
 	    extract_trees_mergers      \
 	    tree_stats                 \
 	    matchfile2ascii            \

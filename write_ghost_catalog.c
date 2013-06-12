@@ -143,7 +143,16 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
             time_initial    =group_i->interp.time_start;
             time_final      =group_i->interp.time_stop;
             time_return     =deltat_a(cosmo,a_list[l_write],0.)/S_PER_YEAR;
-            interpolate_halo_local(group_initial,group_final,group_return,time_initial,time_final,time_return,i_group,group_i->type,group_i->file_offset,"");
+            interpolate_halo_local(group_initial,
+                                   group_final,
+                                   group_return,
+                                   time_initial,
+                                   time_final,
+                                   time_return,
+                                   i_group,
+                                   group_i->type,
+                                   group_i->file_offset,
+                                   "");
             SID_fwrite(group_return,sizeof(halo_properties_info),1,&fp_groups);
          }
       }
@@ -171,7 +180,9 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
                                    time_initial,
                                    time_final,
                                    time_return,
-                                   i_group,current->type,current->file_offset,"sub");
+                                   i_group,current->type,
+                                   current->file_offset,
+                                   "sub");
 
             // Write the group properties of a null ghost
             n_subgroups_i++;

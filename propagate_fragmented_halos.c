@@ -26,7 +26,7 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
       int group_n_particles_proj;
       int group_score_desc;
       int group_score_prog;
-      int group_file_bridge;
+      int group_snap_bridge;
       int group_index_bridge;
       int group_id_bridge;
       int group_index;
@@ -41,7 +41,7 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
       group_n_particles_proj  =groups[i_read%n_wrap][i_group].n_particles_proj;
       group_score_desc        =groups[i_read%n_wrap][i_group].score_desc;
       group_score_prog        =groups[i_read%n_wrap][i_group].score_prog;
-      group_file_bridge       =groups[i_read%n_wrap][i_group].file_bridge;
+      group_snap_bridge       =groups[i_read%n_wrap][i_group].snap_bridge;
       group_index_bridge      =groups[i_read%n_wrap][i_group].index_bridge;
       group_id_bridge         =groups[i_read%n_wrap][i_group].id_bridge;
       group_index             =groups[i_read%n_wrap][i_group].index;
@@ -83,7 +83,7 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
             int desc_file;
             desc_file=i_read+group_file_offset;
             groups[desc_file%n_wrap][group_index].id_bridge   =group_id_bridge;
-            groups[desc_file%n_wrap][group_index].file_bridge =group_file_bridge;
+            groups[desc_file%n_wrap][group_index].snap_bridge =group_snap_bridge;
             groups[desc_file%n_wrap][group_index].index_bridge=group_index_bridge;
          }
       }
@@ -101,7 +101,7 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
          int subgroup_n_particles_proj;
          int subgroup_score_desc;
          int subgroup_score_prog;
-         int subgroup_file_bridge;
+         int subgroup_snap_bridge;
          int subgroup_index_bridge;
          int subgroup_id_bridge;
          int subgroup_index;
@@ -116,7 +116,7 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
          subgroup_n_particles_proj  =subgroups[i_read%n_wrap][i_subgroup].n_particles_proj;
          subgroup_score_desc        =subgroups[i_read%n_wrap][i_subgroup].score_desc;
          subgroup_score_prog        =subgroups[i_read%n_wrap][i_subgroup].score_prog;
-         subgroup_file_bridge       =subgroups[i_read%n_wrap][i_subgroup].file_bridge;
+         subgroup_snap_bridge       =subgroups[i_read%n_wrap][i_subgroup].snap_bridge;
          subgroup_index_bridge      =subgroups[i_read%n_wrap][i_subgroup].index_bridge;
          subgroup_id_bridge         =subgroups[i_read%n_wrap][i_subgroup].id_bridge;
          subgroup_index             =subgroups[i_read%n_wrap][i_subgroup].index;
@@ -161,7 +161,7 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
                int desc_file;
                desc_file=i_read+group_file_offset;
                subgroups[desc_file%n_wrap][subgroup_index].id_bridge   =subgroup_id_bridge;
-               subgroups[desc_file%n_wrap][subgroup_index].file_bridge =subgroup_file_bridge;
+               subgroups[desc_file%n_wrap][subgroup_index].snap_bridge =subgroup_snap_bridge;
                subgroups[desc_file%n_wrap][subgroup_index].index_bridge=subgroup_index_bridge;
             }
          }

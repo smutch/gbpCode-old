@@ -50,10 +50,11 @@ void compute_trees_horizontal_fragmented(int         *n_groups,
   int i_write;
   int j_write;
   int l_write;
+  int flag_init_write;
   i_write=i_write_last;
   j_write=j_write_last;
   l_write=l_write_last;
-  for(i_read=i_write,j_read=j_write,l_read=l_write,j_file=0;
+  for(i_read=i_write,j_read=j_write,l_read=l_write,j_file=0,flag_init_write=TRUE;
       j_write<=i_read_stop;
       i_read++,j_read+=i_read_step,l_read--,j_file++){
 
@@ -110,10 +111,12 @@ void compute_trees_horizontal_fragmented(int         *n_groups,
                                a_list,
                                cosmo,
                                n_k_match,
+                               flag_init_write,
                                TREE_HORIZONTAL_WRITE_DEFAULT);
         i_write++;
         l_write--;
         j_write+=i_read_step;
+        flag_init_write=FALSE;
      }
   }
 

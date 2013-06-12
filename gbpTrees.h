@@ -123,7 +123,7 @@ struct tree_horizontal_extended_info{
   int          n_particles_proj;   // Number of particles in this halo's progenitor
   int          score_desc;         // Matching score of this halo to it's descendant
   int          score_prog;         // Matching score of this halo to it's descendant
-  int          file_bridge;        // File index of any halo that this halo may be matched to
+  int          snap_bridge;        // File index of any halo that this halo may be matched to
   int          index_bridge;       // Index of any bridge this halo may be matched to
   int          id_bridge;          // ID of any bridge this halo may be matched to
   int          index;              // This halo's index in the halo catalog
@@ -292,7 +292,7 @@ int   set_match_n_particles(match_info *match);
 int   set_match_index(match_info *match);
 float set_match_score(match_info *match);
 void check_for_fragmented_halos(int k_match,tree_horizontal_info **groups,int n_groups,
-                               int i_write,int j_write,int n_wrap);
+                                int i_write,int j_write,int l_write,int n_wrap);
 void add_to_trees_horizontal_stats(tree_horizontal_stats_info *stats,int id,int type,int n_particles);
 void init_trees_horizontal_roots(tree_horizontal_info **groups,
                                  tree_horizontal_info **subgroups,
@@ -400,6 +400,7 @@ void write_trees_horizontal(void **groups_in,
                             double *a_list,
                             cosmo_info **cosmo,
                             int     n_k_match,
+                            int     flag_init_write,
                             int     mode);
 void write_trees_horizontal_emerged_candidates(int                   i_read,
                                                int                   n_halos_i,

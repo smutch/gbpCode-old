@@ -42,8 +42,8 @@ void write_trees_horizontal_emerged_candidates(int                   i_read,
       fprintf(fp_matching_out,"# (%02d): Emerged halo candidate snapshot\n",                 i_column++);
       fprintf(fp_matching_out,"# (%02d): Emerged halo candidate index\n",                    i_column++);
       fprintf(fp_matching_out,"# (%02d): Emerged halo candidate ID\n",                       i_column++);
-      fprintf(fp_matching_out,"# (%02d): Bridge->descendant match score (check this)\n",                  i_column++);
-      fprintf(fp_matching_out,"# (%02d): Emerged candidate's back-match score (check this)\n",            i_column++);
+      fprintf(fp_matching_out,"# (%02d): Bridge->descendant match score\n",                  i_column++);
+      fprintf(fp_matching_out,"# (%02d): Emerged candidate's back-match score\n",            i_column++);
       fprintf(fp_matching_out,"# (%02d): Number of particles in bridged halo\n",             i_column++);
       fprintf(fp_matching_out,"# (%02d): Number of particles in bridged halo's descendant\n",i_column++);
       fprintf(fp_matching_out,"# (%02d): Number of particles in emerged candidate\n",        i_column++);
@@ -58,21 +58,21 @@ void write_trees_horizontal_emerged_candidates(int                   i_read,
          for(j_halo=0;j_halo<halos_i[i_halo].n_bridges;j_halo++){
             bridge_info *bridge;
             bridge=&(halos_i[i_halo].bridges[j_halo]);
-            fprintf(fp_matching_out,"%4d %7d %7d   %4d %7d %7d  %3d  %4d %7d %7d   %10.4f %10.4f   %7d %7d %7d\n",
+            fprintf(fp_matching_out,"%4d %7d %7d   %4d %7d %7d   %3d   %4d %7d %7d   %10.4f %10.4f   %7d %7d %7d\n",
                     i_read,
                     i_halo,
                     halos_i[i_halo].id,
                     set_match_snapshot(&(halos_i[i_halo].descendant)),
-                    set_match_index(&(halos_i[i_halo].descendant)),
-                    set_match_id(&(halos_i[i_halo].descendant)),
+                    set_match_index(   &(halos_i[i_halo].descendant)),
+                    set_match_id(      &(halos_i[i_halo].descendant)),
+                    j_halo,
                     set_match_snapshot(bridge),
-                    set_match_index(bridge),
-                    set_match_id(bridge),
+                    set_match_index(   bridge),
+                    set_match_id(      bridge),
                     set_match_score(&(halos_i[i_halo].descendant)),
                     set_match_score(bridge),
                     halos_i[i_halo].n_particles,
                     set_match_n_particles(&(halos_i[i_halo].descendant)),
-                    j_halo,
                     set_match_n_particles(bridge));
          }
       }
