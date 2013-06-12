@@ -89,7 +89,6 @@ int main(int argc,char *argv[]){
      int n_null_ghost_groups=0;
      SID_log("No. of groups            = %d [%d ghost]",SID_LOG_COMMENT,n_groups,n_group_ghosts);
      SID_log("No. of subgroups         = %d [%d ghost]",SID_LOG_COMMENT,n_subgroups,n_subgroup_ghosts);
-     SID_log("No. of null ghost groups = %d",           SID_LOG_COMMENT,n_null_ghost_groups);
      for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
   
         // Read groups
