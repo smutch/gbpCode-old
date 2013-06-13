@@ -49,7 +49,8 @@ void   interpolate_maximum(interp_info *interp,
     x_hi   =gsl_min_fminimizer_x_upper(s); 
     status =gsl_min_test_interval(x_lo,x_hi,0.,threshold); 
   } 
-  while(status==GSL_CONTINUE && iter<max_iter); 
+  while(status==GSL_CONTINUE && iter<max_iter);
+  gsl_min_fminimizer_free(s);
   (*x_maxima)=x_guess;
   (*y_maxima)=interpolate(interp,x_guess);
 }
