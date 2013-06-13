@@ -918,6 +918,7 @@ int main(int argc, char *argv[]){
         // Restore the original handler
         gsl_set_error_handler(original_handler);
 
+        SID_Barrier(SID.COMM_WORLD);
         SID_log("Done. (f_truncated=%6.2lf%% largest=%d)",SID_LOG_CLOSE,100.*(double)n_truncated/(double)n_groups_all,largest_truncated);
       }
 
