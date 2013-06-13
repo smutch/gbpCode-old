@@ -187,14 +187,28 @@ int  compute_group_analysis(halo_properties_info *properties,
                             double                particle_mass,
                             int                   n_particles,
                             double                redshift,
+                            double                expansion_factor,
+                            int                   i_halo,
+                            double               *x,
+                            double               *y,
+                            double               *z,
+                            double               *vx,
+                            double               *vy,
+                            double               *vz,
+                            double               *R,
+                            size_t              **R_index,
+                            int                   flag_manual_centre,
                             cosmo_info           *cosmo);
 void read_group_properties(FILE  *fp,halo_info            *properties_out,int   halo_index,int i_read);
 void write_group_properties(FILE *fp,halo_properties_info *properties,    double h_Hubble);
 void write_group_profiles(FILE   *fp,halo_profile_info    *profiles,      double h_Hubble,double redshift,cosmo_info *cosmo);
 void write_group_analysis(FILE                 *fp_properties,
                           FILE                 *fp_profiles,
+                          FILE                 *fp_indices,
                           halo_properties_info *properties,
-                          halo_profile_info    *profile);
+                          halo_profile_info    *profile,
+                          size_t               *R_index,
+                          int                   n_particles);
 void match_halos(plist_info  *plist_1_in,
                  int          i_file_1_in,
                  int         *mark_list_1,

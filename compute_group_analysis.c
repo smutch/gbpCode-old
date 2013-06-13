@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <gbpLib.h>
+#include <gbpMath.h>
 #include <gbpHalos.h>
 
 #define FLAG_INTERP_MIN_BIN 4
@@ -24,8 +25,18 @@ int compute_group_analysis(halo_properties_info  *properties,
                            double                 particle_mass,
                            int                    n_particles,
                            double                 redshift,
+                           double                 expansion_factor,
+                           int                    i_halo,
+                           double                *x,
+                           double                *y,
+                           double                *z,
+                           double                *vx,
+                           double                *vy,
+                           double                *vz,
+                           double                *R,
+                           size_t               **R_index_in,
+                           int                    flag_manual_centre,
                            cosmo_info            *cosmo){
-  double      *R;
   size_t      *R_index;
   size_t       index_MBP;
   int          i,j;
@@ -39,12 +50,6 @@ int compute_group_analysis(halo_properties_info  *properties,
   int          next_bin_particle;
   interp_info *V_R_interpolate;
   interp_info *vir_interpolate;
-  double      *vx;
-  double      *vy;
-  double      *vz;
-  double      *x;
-  double      *y;
-  double      *z;
   int          i_bin;
   int          n_in_bin;
   double       n_per_bin;
@@ -88,8 +93,6 @@ int compute_group_analysis(halo_properties_info  *properties,
   double x_vir,gamma;
 
   Delta=Delta_vir(redshift,cosmo);
-  Omega=Omega_z(redshift,cosmo);
-  Delta=200.;
   Omega=1.;
 
   // Initialize properties
@@ -132,15 +135,6 @@ int compute_group_analysis(halo_properties_info  *properties,
   if(n_particles==0)
     profile->n_bins=0;
   else{
-    // Allocate some temporary arrays for particle positions/velocities
-    x =(double *)SID_malloc(sizeof(double)*n_particles);
-    y =(double *)SID_malloc(sizeof(double)*n_particles);
-    z =(double *)SID_malloc(sizeof(double)*n_particles);
-    vx=(double *)SID_malloc(sizeof(double)*n_particles);
-    vy=(double *)SID_malloc(sizeof(double)*n_particles);
-    vz=(double *)SID_malloc(sizeof(double)*n_particles);
-    R =(double *)SID_malloc(sizeof(double)*n_particles);
-
     // Create a v_c(0)=0 bin
     r_c[0]=0.;
     v_c[0]=0.;
@@ -175,13 +169,49 @@ int compute_group_analysis(halo_properties_info  *properties,
 
     // Fill temporary arrays for particle positions, radii (all w.r.t MBP) and velocities
     //   Also, enforce periodic box on particle positions
+    double x_cen;
+    double y_cen;
+    double z_cen;
+    x_cen=(double)properties->position_MBP[0];
+    y_cen=(double)properties->position_MBP[1];
+    z_cen=(double)properties->position_MBP[2];
+    if(flag_manual_centre){
+       double x_cen_manual;
+       double y_cen_manual;
+       double z_cen_manual;
+       // Compute a rough comoving centre
+       for(j_particle=0;j_particle<n_particles;j_particle++){
+         k_particle=ids_sort_index[j_particle];
+         x[j_particle]=d_periodic((double)(x_array[k_particle])-x_cen,box_size);
+         y[j_particle]=d_periodic((double)(y_array[k_particle])-y_cen,box_size);
+         z[j_particle]=d_periodic((double)(z_array[k_particle])-z_cen,box_size);
+       }
+       // Refine it with shrinking spheres
+       compute_centroid3D(NULL,
+                          x,
+                          y,
+                          z,
+                          n_particles,
+                          1e-3, // 1 kpc
+                          0.75,
+                          30,
+                          CENTROID3D_MODE_FACTOR|CENTROID3D_MODE_INPLACE,
+                          &x_cen_manual,
+                          &y_cen_manual,
+                          &z_cen_manual);
+
+       x_cen+=x_cen_manual;
+       y_cen+=y_cen_manual;
+       z_cen+=z_cen_manual;
+    }
+    
     for(j_particle=0;j_particle<n_particles;j_particle++){
       k_particle=ids_sort_index[j_particle];
 
       // ... halo-centric particle positions ...
-      x[j_particle]=d_periodic((double)(x_array[k_particle])-(double)properties->position_MBP[0],box_size);
-      y[j_particle]=d_periodic((double)(y_array[k_particle])-(double)properties->position_MBP[1],box_size);
-      z[j_particle]=d_periodic((double)(z_array[k_particle])-(double)properties->position_MBP[2],box_size);
+      x[j_particle]=d_periodic((double)(x_array[k_particle])-x_cen,box_size)*expansion_factor;
+      y[j_particle]=d_periodic((double)(y_array[k_particle])-y_cen,box_size)*expansion_factor;
+      z[j_particle]=d_periodic((double)(z_array[k_particle])-z_cen,box_size)*expansion_factor;
 
       // ... velocities ...
       vx[j_particle]=(double)(vx_array[k_particle]);
@@ -193,7 +223,8 @@ int compute_group_analysis(halo_properties_info  *properties,
     }
     
     // Sort particles by radius
-    merge_sort((void *)R,(size_t)n_particles,&R_index,SID_DOUBLE,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
+    merge_sort((void *)R,(size_t)n_particles,R_index_in,SID_DOUBLE,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
+    R_index=(*R_index_in);
 
     // We need the COM velocity at R_vir before we can get halo centric velocities.  Thus,
     //   we need the overdensity profile first
@@ -606,9 +637,9 @@ int compute_group_analysis(halo_properties_info  *properties,
     }
 
     // Enforce periodic box on COM position
-    properties->position_COM[0]+=properties->position_MBP[0];
-    properties->position_COM[1]+=properties->position_MBP[1];
-    properties->position_COM[2]+=properties->position_MBP[2];
+    properties->position_COM[0]+=x_cen;
+    properties->position_COM[1]+=y_cen;
+    properties->position_COM[2]+=z_cen;
     if(properties->position_COM[0]< box_size) properties->position_COM[0]+=box_size;
     if(properties->position_COM[1]< box_size) properties->position_COM[1]+=box_size;
     if(properties->position_COM[2]< box_size) properties->position_COM[2]+=box_size;
@@ -660,16 +691,8 @@ int compute_group_analysis(halo_properties_info  *properties,
       profile->bins[i_bin].spin[2]        *=1e-3*h_Hubble/M_PER_MPC;
     }
   
-    // Clean-up
-    SID_free(SID_FARG x);
-    SID_free(SID_FARG y);
-    SID_free(SID_FARG z);
-    SID_free(SID_FARG vx);
-    SID_free(SID_FARG vy);
-    SID_free(SID_FARG vz);
-    SID_free(SID_FARG R);
-    SID_free(SID_FARG R_index);
   }
+
   return(flag_interpolated);
 }
 

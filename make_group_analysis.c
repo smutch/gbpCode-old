@@ -552,6 +552,8 @@ void read_gadget_binary_local(char       *filename_root_in,
         ADaPS_store(&(plist->data),(void *)id_array[i],"id_%s",ADaPS_DEFAULT,pname[i]);
     }
 
+    SID_free(SID_FARG id_list_index);
+
     SID_log("Done.",SID_LOG_CLOSE);
   }
   else
@@ -569,8 +571,11 @@ int main(int argc, char *argv[]){
   char        filename_output_properties[256];
   char        filename_output_profiles_dir[256];
   char        filename_output_profiles[256];
+  char        filename_output_indices[256];
+  char        filename_output_indices_dir[256];
   char        filename_output_properties_temp[256];
   char        filename_output_profiles_temp[256];
+  char        filename_output_indices_temp[256];
   char        group_text_prefix[4];
   int         n_groups_process;
   int         n_groups;
@@ -613,6 +618,7 @@ int main(int argc, char *argv[]){
   double      sigma_8;
   double      n_spec;
   double      redshift;
+  double      expansion_factor;
   double      box_size;
   double      particle_mass;
   
@@ -624,6 +630,7 @@ int main(int argc, char *argv[]){
   
   FILE       *fp_properties;
   FILE       *fp_profiles;
+  FILE       *fp_indices;
   cosmo_info *cosmo;
   halo_properties_info  properties;
   halo_profile_info     profile;
@@ -634,6 +641,8 @@ int main(int argc, char *argv[]){
   int                   largest_truncated_local;
   int flag_write_properties=TRUE;
   int flag_write_profiles  =TRUE;
+  int flag_write_indices   =TRUE;
+  int flag_manual_centre   =TRUE;
 
   SID_init(&argc,&argv,NULL);
 
@@ -680,11 +689,12 @@ int main(int argc, char *argv[]){
       }
 
       // Initialize cosmology
-      box_size    =((double *)ADaPS_fetch(plist.data,"box_size"))[0];
-      h_Hubble    =((double *)ADaPS_fetch(plist.data,"h_Hubble"))[0];
-      redshift    =((double *)ADaPS_fetch(plist.data,"redshift"))[0];
-      Omega_M     =((double *)ADaPS_fetch(plist.data,"Omega_M"))[0];
-      Omega_Lambda=((double *)ADaPS_fetch(plist.data,"Omega_Lambda"))[0];
+      box_size        =((double *)ADaPS_fetch(plist.data,"box_size"))[0];
+      h_Hubble        =((double *)ADaPS_fetch(plist.data,"h_Hubble"))[0];
+      redshift        =((double *)ADaPS_fetch(plist.data,"redshift"))[0];
+      expansion_factor=((double *)ADaPS_fetch(plist.data,"expansion_factor"))[0];
+      Omega_M         =((double *)ADaPS_fetch(plist.data,"Omega_M"))[0];
+      Omega_Lambda    =((double *)ADaPS_fetch(plist.data,"Omega_Lambda"))[0];
       f_gas  =Omega_b/Omega_M;
       Omega_k=1.-Omega_Lambda-Omega_M;
       Omega_b=0.;
@@ -748,6 +758,7 @@ int main(int argc, char *argv[]){
         // Create filenames, directories, etc
         sprintf(filename_output_properties_temp,"%s_%s.catalog_%sgroups_properties",filename_groups_root,filename_number,group_text_prefix);
         sprintf(filename_output_profiles_temp,  "%s_%s.catalog_%sgroups_profiles",  filename_groups_root,filename_number,group_text_prefix);
+        sprintf(filename_output_indices_temp,   "%s_%s.catalog_%sgroups_indices",   filename_groups_root,filename_number,group_text_prefix);
         if(SID.n_proc>1){
            // Create property filenames
            if(flag_write_properties){
@@ -771,10 +782,22 @@ int main(int argc, char *argv[]){
               SID_Barrier(SID.COMM_WORLD);
               sprintf(filename_output_profiles,"%s/%s.%d",filename_output_profiles_dir,profiles_root,SID.My_rank);
            }
+           // Create sort indices filenames
+           if(flag_write_indices){
+              char indices_root[MAX_FILENAME_LENGTH];
+              strcpy(indices_root,filename_output_indices_temp);
+              strip_path(indices_root);
+              strcpy(filename_output_indices_dir,filename_output_indices_temp);
+              if(SID.I_am_Master)
+                mkdir(filename_output_indices_dir,02755);
+              SID_Barrier(SID.COMM_WORLD);
+              sprintf(filename_output_indices,"%s/%s.%d",filename_output_indices_dir,indices_root,SID.My_rank);
+           }
         }
         else{
            strcpy(filename_output_properties,filename_output_properties_temp);
            strcpy(filename_output_profiles,  filename_output_profiles_temp);
+           strcpy(filename_output_indices,   filename_output_indices_temp);
         }
         SID_Barrier(SID.COMM_WORLD); // This makes sure that any created directories are there before proceeding
 
@@ -788,6 +811,10 @@ int main(int argc, char *argv[]){
            fp_profiles=fopen(filename_output_profiles,"w");
         else
            fp_profiles=NULL;
+        if(flag_write_indices)
+           fp_indices=fopen(filename_output_indices,"w");
+        else
+           fp_indices=NULL;
 
         // Write header
         if(fp_properties!=NULL){
@@ -801,13 +828,39 @@ int main(int argc, char *argv[]){
            fwrite(&(SID.n_proc),  sizeof(int),1,fp_profiles);
            fwrite(&n_groups,      sizeof(int),1,fp_profiles);
            fwrite(&n_groups_all,  sizeof(int),1,fp_profiles);
-        }          
+        }
+        if(fp_indices!=NULL){
+           fwrite(&(SID.My_rank), sizeof(int),1,fp_indices);
+           fwrite(&(SID.n_proc),  sizeof(int),1,fp_indices);
+           fwrite(&n_groups,      sizeof(int),1,fp_indices);
+           fwrite(&n_groups_all,  sizeof(int),1,fp_indices);
+        }
 
         // Turn off the gsl error handler
         gsl_error_handler_t *original_handler;
         original_handler=gsl_set_error_handler_off();
 
         // Create and write the properties and profiles of each group/subgroup in turn
+
+        // Allocate some temporary arrays for particle positions/velocities
+        int     n_particles_alloc;
+        double *x;
+        double *y;
+        double *z;
+        double *vx;
+        double *vy;
+        double *vz;
+        double *R;
+        size_t *R_index=NULL;
+        calc_max(n_particles_groups,&n_particles_alloc,n_groups,SID_INT,CALC_MODE_DEFAULT);
+        x                =(double *)SID_malloc(sizeof(double)*n_particles_alloc);
+        y                =(double *)SID_malloc(sizeof(double)*n_particles_alloc);
+        z                =(double *)SID_malloc(sizeof(double)*n_particles_alloc);
+        vx               =(double *)SID_malloc(sizeof(double)*n_particles_alloc);
+        vy               =(double *)SID_malloc(sizeof(double)*n_particles_alloc);
+        vz               =(double *)SID_malloc(sizeof(double)*n_particles_alloc);
+        R                =(double *)SID_malloc(sizeof(double)*n_particles_alloc);
+
         for(i_group=0,n_truncated_local=0,largest_truncated_local=0;i_group<n_groups;i_group++){
           if(compute_group_analysis(&properties,
                                     &profile,
@@ -825,19 +878,40 @@ int main(int argc, char *argv[]){
                                     particle_mass,
                                     n_particles_groups[i_group],
                                     redshift,
+                                    expansion_factor,
+                                    i_group,
+                                    x,y,z,vx,vy,vz,R,&R_index,
+                                    flag_manual_centre,
                                     cosmo)!=TRUE){
              n_truncated_local++;
              largest_truncated_local=MAX(largest_truncated_local,n_particles_groups[i_group]);
           }
           write_group_analysis(fp_properties,
                                fp_profiles,
+                               fp_indices,
                                &properties,
-                               &profile);
+                               &profile,
+                               R_index,
+                               n_particles_groups[i_group]);
+
+          SID_free(SID_FARG R_index);
         }
+
+        // Free arrays
+        SID_free(SID_FARG x);
+        SID_free(SID_FARG y);
+        SID_free(SID_FARG z);
+        SID_free(SID_FARG vx);
+        SID_free(SID_FARG vy);
+        SID_free(SID_FARG vz);
+        SID_free(SID_FARG R);
+
         if(fp_properties!=NULL)
           fclose(fp_properties);
         if(fp_profiles!=NULL)
           fclose(fp_profiles);
+        if(fp_indices!=NULL)
+          fclose(fp_indices);
         calc_sum_global(&n_truncated_local,      &n_truncated,      1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
         calc_max_global(&largest_truncated_local,&largest_truncated,1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD); 
 
