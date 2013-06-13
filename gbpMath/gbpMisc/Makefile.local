@@ -4,6 +4,7 @@
 INCFILES = gbpMisc.h 
 OBJFILES = init_array_linear.o                 \
 	   init_array_log.o                    \
+	   compute_centroid3D.o                \
 	   take_log10.o                        \
            take_alog10.o                       \
 	   take_ln.o                           \
