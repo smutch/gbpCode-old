@@ -204,6 +204,9 @@ int compute_group_analysis(halo_properties_info  *properties,
        y_cen+=y_cen_manual;
        z_cen+=z_cen_manual;
     }
+    properties->position_MBP[0]=x_cen;
+    properties->position_MBP[1]=y_cen;
+    properties->position_MBP[2]=z_cen;
     
     for(j_particle=0;j_particle<n_particles;j_particle++){
       k_particle=ids_sort_index[j_particle];
@@ -225,6 +228,24 @@ int compute_group_analysis(halo_properties_info  *properties,
     // Sort particles by radius
     merge_sort((void *)R,(size_t)n_particles,R_index_in,SID_DOUBLE,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
     R_index=(*R_index_in);
+
+    // Use the average of the central 30 particles for the MBP velocity if we are
+    //    manually computing centres
+    if(flag_manual_centre){
+       double vx_cen_temp=0.;
+       double vy_cen_temp=0.;
+       double vz_cen_temp=0.;
+       int    n_cen =0;
+       for(i_particle=0;i_particle<MIN(30,n_particles);i_particle++){
+          vx_cen_temp+=vx[j_particle];
+          vy_cen_temp+=vy[j_particle];
+          vz_cen_temp+=vz[j_particle];
+          n_cen++;
+       }
+       properties->position_MBP[0]=vx_cen_temp/(double)n_cen;
+       properties->position_MBP[1]=vy_cen_temp/(double)n_cen;
+       properties->position_MBP[2]=vz_cen_temp/(double)n_cen;
+    }
 
     // We need the COM velocity at R_vir before we can get halo centric velocities.  Thus,
     //   we need the overdensity profile first
