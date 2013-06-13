@@ -187,25 +187,31 @@ int compute_group_analysis(halo_properties_info  *properties,
          z[j_particle]=d_periodic((double)(z_array[k_particle])-z_cen,box_size);
        }
        // Refine it with shrinking spheres
-       compute_centroid3D(NULL,
-                          x,
-                          y,
-                          z,
-                          n_particles,
-                          1e-3, // 1 kpc
-                          0.75,
-                          30,
-                          CENTROID3D_MODE_FACTOR|CENTROID3D_MODE_INPLACE,
-                          &x_cen_manual,
-                          &y_cen_manual,
-                          &z_cen_manual);
-
+       int n_iterations;
+       n_iterations=compute_centroid3D(NULL,
+                                       x,
+                                       y,
+                                       z,
+                                       n_particles,
+                                       1e-3, // 1 kpc
+                                       0.75,
+                                       30,
+                                       CENTROID3D_MODE_FACTOR|CENTROID3D_MODE_INPLACE,
+                                       &x_cen_manual,
+                                       &y_cen_manual,
+                                       &z_cen_manual);
        x_cen+=x_cen_manual;
        y_cen+=y_cen_manual;
        z_cen+=z_cen_manual;
        properties->position_MBP[0]=x_cen;
        properties->position_MBP[1]=y_cen;
        properties->position_MBP[2]=z_cen;
+       if(properties->position_MBP[0]< box_size) properties->position_MBP[0]+=box_size;
+       if(properties->position_MBP[1]< box_size) properties->position_MBP[1]+=box_size;
+       if(properties->position_MBP[2]< box_size) properties->position_MBP[2]+=box_size;
+       if(properties->position_MBP[0]>=box_size) properties->position_MBP[0]-=box_size;
+       if(properties->position_MBP[1]>=box_size) properties->position_MBP[1]-=box_size;
+       if(properties->position_MBP[2]>=box_size) properties->position_MBP[2]-=box_size;
     }
     
     for(j_particle=0;j_particle<n_particles;j_particle++){
@@ -555,17 +561,17 @@ int compute_group_analysis(halo_properties_info  *properties,
     if(flag_interpolated==TRUE){
       //  ... COM positions ...
       for(i_profile=0;i_profile<profile->n_bins;i_profile++)
-        y_interp[i_profile]=(double)profile->bins[i_profile].position_COM[0];
+        y_interp[i_profile]=(double)profile->bins[i_profile].position_COM[0]/expansion_factor;
       init_interpolate(r_interp,y_interp,profile->n_bins,interp_type,&vir_interpolate);
       properties->position_COM[0]=(float)interpolate(vir_interpolate,properties->R_vir);
       free_interpolate(SID_FARG vir_interpolate);
       for(i_profile=0;i_profile<profile->n_bins;i_profile++)
-        y_interp[i_profile]=(double)profile->bins[i_profile].position_COM[1];
+        y_interp[i_profile]=(double)profile->bins[i_profile].position_COM[1]/expansion_factor;
       init_interpolate(r_interp,y_interp,profile->n_bins,interp_type,&vir_interpolate);
       properties->position_COM[1]=(float)interpolate(vir_interpolate,properties->R_vir);
       free_interpolate(SID_FARG vir_interpolate);
       for(i_profile=0;i_profile<profile->n_bins;i_profile++)
-        y_interp[i_profile]=(double)profile->bins[i_profile].position_COM[2];
+        y_interp[i_profile]=(double)profile->bins[i_profile].position_COM[2]/expansion_factor;
       init_interpolate(r_interp,y_interp,profile->n_bins,interp_type,&vir_interpolate);
       properties->position_COM[2]=(float)interpolate(vir_interpolate,properties->R_vir);
       free_interpolate(SID_FARG vir_interpolate);
@@ -631,9 +637,9 @@ int compute_group_analysis(halo_properties_info  *properties,
       else SID_trap_error("Unrecognized value for flag_interpolated {%d}.",flag_interpolated);
 
       //  ... COM positions ...
-      properties->position_COM[0]=(double)profile->bins[i_profile].position_COM[0];
-      properties->position_COM[1]=(double)profile->bins[i_profile].position_COM[1];
-      properties->position_COM[2]=(double)profile->bins[i_profile].position_COM[2];
+      properties->position_COM[0]=(double)(profile->bins[i_profile].position_COM[0])/expansion_factor;
+      properties->position_COM[1]=(double)(profile->bins[i_profile].position_COM[1])/expansion_factor;
+      properties->position_COM[2]=(double)(profile->bins[i_profile].position_COM[2])/expansion_factor;
       //  ... M_vir ...
       properties->M_vir=(double)profile->bins[i_profile].M_r;
       //  ... sigma_v ...

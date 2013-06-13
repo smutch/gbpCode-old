@@ -643,6 +643,7 @@ int main(int argc, char *argv[]){
   int flag_write_profiles  =TRUE;
   int flag_write_indices   =TRUE;
   int flag_manual_centre   =TRUE;
+  //flag_manual_centre=FALSE;
 
   SID_init(&argc,&argv,NULL);
 
