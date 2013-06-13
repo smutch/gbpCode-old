@@ -203,10 +203,10 @@ int compute_group_analysis(halo_properties_info  *properties,
        x_cen+=x_cen_manual;
        y_cen+=y_cen_manual;
        z_cen+=z_cen_manual;
+       properties->position_MBP[0]=x_cen;
+       properties->position_MBP[1]=y_cen;
+       properties->position_MBP[2]=z_cen;
     }
-    properties->position_MBP[0]=x_cen;
-    properties->position_MBP[1]=y_cen;
-    properties->position_MBP[2]=z_cen;
     
     for(j_particle=0;j_particle<n_particles;j_particle++){
       k_particle=ids_sort_index[j_particle];
@@ -237,14 +237,14 @@ int compute_group_analysis(halo_properties_info  *properties,
        double vz_cen_temp=0.;
        int    n_cen =0;
        for(i_particle=0;i_particle<MIN(30,n_particles);i_particle++){
-          vx_cen_temp+=vx[j_particle];
-          vy_cen_temp+=vy[j_particle];
-          vz_cen_temp+=vz[j_particle];
+          vx_cen_temp+=vx[i_particle];
+          vy_cen_temp+=vy[i_particle];
+          vz_cen_temp+=vz[i_particle];
           n_cen++;
        }
-       properties->position_MBP[0]=vx_cen_temp/(double)n_cen;
-       properties->position_MBP[1]=vy_cen_temp/(double)n_cen;
-       properties->position_MBP[2]=vz_cen_temp/(double)n_cen;
+       properties->velocity_MBP[0]=vx_cen_temp/(double)n_cen;
+       properties->velocity_MBP[1]=vy_cen_temp/(double)n_cen;
+       properties->velocity_MBP[2]=vz_cen_temp/(double)n_cen;
     }
 
     // We need the COM velocity at R_vir before we can get halo centric velocities.  Thus,
@@ -447,9 +447,9 @@ int compute_group_analysis(halo_properties_info  *properties,
         k_particle=R_index[i_particle+j_particle];
       
         // ... spins ...
-        spin_x_accumulator+=(float)(y[k_particle]*vz[k_particle]-z[k_particle]*vy[k_particle]);
-        spin_y_accumulator+=(float)(z[k_particle]*vx[k_particle]-x[k_particle]*vz[k_particle]);
-        spin_z_accumulator+=(float)(x[k_particle]*vy[k_particle]-y[k_particle]*vx[k_particle]);
+        spin_x_accumulator+=(double)(y[k_particle]*vz[k_particle]-z[k_particle]*vy[k_particle]);
+        spin_y_accumulator+=(double)(z[k_particle]*vx[k_particle]-x[k_particle]*vz[k_particle]);
+        spin_z_accumulator+=(double)(x[k_particle]*vy[k_particle]-y[k_particle]*vx[k_particle]);
 
         // ... mean velocities (needed below for velocity dispersions) ...
         if(R[k_particle]>0.){
@@ -460,9 +460,9 @@ int compute_group_analysis(halo_properties_info  *properties,
           v_rad_mean+=v_rad;
         }
       }
-      profile->bins[i_bin].spin[0]=(float)(spin_x_accumulator/(double)n_cumulative);
-      profile->bins[i_bin].spin[1]=(float)(spin_y_accumulator/(double)n_cumulative);
-      profile->bins[i_bin].spin[2]=(float)(spin_z_accumulator/(double)n_cumulative);
+      profile->bins[i_bin].spin[0]=(float)(spin_x_accumulator);
+      profile->bins[i_bin].spin[1]=(float)(spin_y_accumulator);
+      profile->bins[i_bin].spin[2]=(float)(spin_z_accumulator);
       v_x_mean  /=(double)n_in_bin;
       v_y_mean  /=(double)n_in_bin;
       v_z_mean  /=(double)n_in_bin;
