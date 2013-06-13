@@ -29,7 +29,7 @@ double add_quad(int n_d, ...);
 void   compute_Daubechies_scaling_fctns(int D_order,int l_max,double **x_return,double **y_return,int *n_return);
 void   force_periodic(GBPREAL *coord,GBPREAL min,GBPREAL box_size);
 double d_periodic(double d,double box_size);
-void compute_centroid3D(double  *W,
+int  compute_centroid3D(double  *W,
                         double  *x_in,
                         double  *y_in,
                         double  *z_in,

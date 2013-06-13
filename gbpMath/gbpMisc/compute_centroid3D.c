@@ -12,18 +12,20 @@ double calc_weight_local(double *W,int i){
       return(1.);
 }
 
-void compute_centroid3D(double  *W,
-                        double  *x_in,
-                        double  *y_in,
-	                double  *z_in,
-                        int      n,
-                        double   R_min,
-                        double   step,
-                        int      convergence_N,
-                        int      mode,
-                        double  *xcen_out,
-	   	        double  *ycen_out,
-	   	        double  *zcen_out){
+int compute_centroid3D(double  *W,
+                       double  *x_in,
+                       double  *y_in,
+	               double  *z_in,
+                       int      n,
+                       double   R_min,
+                       double   step,
+                       int      convergence_N,
+                       int      mode,
+                       double  *xcen_out,
+	   	       double  *ycen_out,
+	   	       double  *zcen_out){
+  int n_iterations=0;
+
   // Parse the mode flags
   int flag_centroid_step;
   int flag_centroid_inplace;
@@ -114,7 +116,6 @@ void compute_centroid3D(double  *W,
 
     // Loop until convergence
     int continue_flag;
-    int i_iteration=0;
     if(N>convergence_N && R_ap>R_min)
        continue_flag=TRUE;
     else
@@ -122,14 +123,14 @@ void compute_centroid3D(double  *W,
     while(continue_flag){
 
       // Recentre particles and recompute radii
-      if(i_iteration>0){
+      if(n_iterations>0){
          for(i=0;i<n;i++){
-           x[i]=x[i]-x_next;
-           y[i]=y[i]-y_next;
-           z[i]=z[i]-z_next;
-           R[i]=pow(x[i]*x[i]+
-                    y[i]*y[i]+
-                    z[i]*z[i],0.5);
+           x[i]-=x_next;
+           y[i]-=y_next;
+           z[i]-=z_next;
+           R[i] =pow(x[i]*x[i]+
+                     y[i]*y[i]+
+                     z[i]*z[i],0.5);
          }
 
          // Sort radii
@@ -147,12 +148,12 @@ void compute_centroid3D(double  *W,
       j     =0;
       i     =R_index[j];
       for(;j<n && R[i]<=R_ap ;j++){
-        i         =R_index[j];
-        weight_i  =calc_weight_local(W,i);
-        x_next   +=weight_i*x[i];
-        y_next   +=weight_i*y[i];
-        z_next   +=weight_i*z[i];
-        W_tot+=weight_i;
+        i        =R_index[j];
+        weight_i =calc_weight_local(W,i);
+        x_next  +=weight_i*x[i];
+        y_next  +=weight_i*y[i];
+        z_next  +=weight_i*z[i];
+        W_tot   +=weight_i;
         N++;
       }
       if(N>=convergence_N && R_ap>R_min){
@@ -169,7 +170,7 @@ void compute_centroid3D(double  *W,
       }
       else
         continue_flag=FALSE;
-      i_iteration++;
+      n_iterations++;
     }
 
     // Clean-up
@@ -188,5 +189,6 @@ void compute_centroid3D(double  *W,
   (*ycen_out)=ycen;
   (*zcen_out)=zcen;
 
+  return(n_iterations);
 }
 
