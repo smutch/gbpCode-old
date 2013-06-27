@@ -42,7 +42,7 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
    if(file_offset==0)
       SID_trap_error("A zero file offset has been requested.  It should be -ve for roots and +ve otherwise.",ERROR_LOGIC);
 
-   // Set non-bridged halos or finalize bridge matches (ie. set defaults for bridge progenitors not matched to emerged halos)
+   // Set non-bridged halos or finalize bridge matches (ie. apply defaults for bridge progenitors not matched to emerged halos)
    if(!check_mode_for_flag(halos_j[j_halo].type,TREE_CASE_BRIDGED)                       ||
        check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED) ||
        check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGE_FINALIZE)){
@@ -110,9 +110,6 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
             //   the correct halo gets the main progenitor ID and all others get a new one ...
             memcpy(&old_progenitor,&(halos_j[j_halo].first_progenitor),sizeof(match_info));
             if(score>old_progenitor.score){
-               // ... set new main progenitor ...
-               memcpy(&(halos_j[j_halo].first_progenitor),                      &new_progenitor,sizeof(match_info));
-               memcpy(&(halos_j[j_halo].first_progenitor.halo->next_progenitor),&old_progenitor,sizeof(match_info));
                // ... let the new main progenitor inherit the descendant's id ...
                halos_i[i_halo].id=halos_j[j_halo].id;
                // ... and give the old main progenitor the new id ...
@@ -122,6 +119,9 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
                old_progenitor.halo->type&=(~TREE_CASE_MAIN_PROGENITOR);
                new_progenitor.halo->type&=(~TREE_CASE_MERGER);
                new_progenitor.halo->type|=  TREE_CASE_MAIN_PROGENITOR;
+               // ... set new main progenitor ...
+               memcpy(&(halos_j[j_halo].first_progenitor),                      &new_progenitor,sizeof(match_info));
+               memcpy(&(halos_j[j_halo].first_progenitor.halo->next_progenitor),&old_progenitor,sizeof(match_info));
             }
             // ... else just add the new halo to the end of the list and create a new ID for it (if this is not a strayed/sputtered halo).
             else{
@@ -137,6 +137,7 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
                halos_i[i_halo].type&=(~TREE_CASE_MAIN_PROGENITOR);
             }
          }
+
          // ... set last progenitor
          memcpy(&(halos_j[j_halo].last_progenitor),&new_progenitor,sizeof(match_info));
 

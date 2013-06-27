@@ -9,7 +9,7 @@ void apply_horizontal_tree_defaults(int                    n_halos_1_matches,
                                     int                    n_wrap,
                                     int                   *max_id){
    SID_log("Applying defaults to unprocessed halos...",SID_LOG_OPEN|SID_LOG_TIMER);
-   // ... first unprocessed matches to bridged halos (apply default behavior)
+   // ... first deal with unprocessed matches to bridged halos (apply default behavior)
    int i_halo;
    for(i_halo=0;i_halo<n_halos_1_matches;i_halo++){
       if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED)){
