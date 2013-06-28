@@ -645,6 +645,9 @@ int main(int argc, char *argv[]){
   int flag_manual_centre   =TRUE;
   //flag_manual_centre=FALSE;
 
+  if(!flag_manual_centre) 
+     flag_write_indices=FALSE;
+
   SID_init(&argc,&argv,NULL);
 
   // Fetch user inputs

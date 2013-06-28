@@ -1038,12 +1038,12 @@ void read_groups(char        *filename_groups_root,
                         }
                         break;
                   }
-                  size_t subgroup_index_max;
-                  size_t group_index_max;
+                  size_t subgroup_index_max=0;
+                  size_t group_index_max   =0;
                   // Sanity Check
                   for(i_subgroup=0;i_subgroup<n_subgroups_group[index_group];i_subgroup++){
-                     subgroup_index_max=subgroup_offset[index_subgroup+i_subgroup]+(size_t)subgroup_length[index_subgroup+i_subgroup];
-                     group_index_max   =group_offset[index_group]                 +(size_t)group_length[index_group];
+                     subgroup_index_max=(size_t)subgroup_offset[index_subgroup+i_subgroup]+(size_t)subgroup_length[index_subgroup+i_subgroup];
+                     group_index_max   =(size_t)group_offset[index_group]                 +(size_t)group_length[index_group];
                      if(subgroup_index_max>group_index_max && !flag_read_MBP_ids_only){
                         size_t over_run;
                         over_run=subgroup_index_max-group_index_max;

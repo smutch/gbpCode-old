@@ -248,7 +248,7 @@ int main(int argc, char *argv[]){
               ids_in_temp =(long long *)ids_in;
               ids_out_temp=(long long *)ids_out;
               for(j_particle=0;j_particle<n_particles_sub;j_particle++)
-                 ids_out_temp[offset_sub+indices_in[j_particle]]=ids_in_temp[offset_sub+j_particle];
+                 ids_out_temp[offset_sub+j_particle]=ids_in_temp[offset_sub+indices_in[j_particle]];
            }
            else{
               int *ids_in_temp;
@@ -256,7 +256,7 @@ int main(int argc, char *argv[]){
               ids_in_temp =(int *)ids_in;
               ids_out_temp=(int *)ids_out;
               for(j_particle=0;j_particle<n_particles_sub;j_particle++)
-                 ids_out_temp[offset_sub+indices_in[j_particle]]=ids_in_temp[offset_sub+j_particle];
+                 ids_out_temp[offset_sub+j_particle]=ids_in_temp[offset_sub+indices_in[j_particle]];
            }
         }
         // Write to the new file
