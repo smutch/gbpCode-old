@@ -3,20 +3,21 @@
 
 void process_ghosts(tree_horizontal_ghost_group_info    **groups_in,
                     tree_horizontal_ghost_subgroup_info **subgroups_in,
-                    int        *n_groups,    
-                    int        *n_subgroups, 
-                    int       **n_subgroups_group, 
-                    int        *n_group_ghosts,
-                    int        *n_subgroup_ghosts,
-                    int        *n_group_ghosts_used,
-                    int        *n_subgroup_ghosts_used,
-                    int         i_file,
-                    int         i_read,
-                    int         j_file,
-                    int         i_file_start,
-                    int         n_search,
-                    int         n_wrap,
-                    double     *a_list,
+                    int         *n_groups,    
+                    int         *n_subgroups, 
+                    int        **n_subgroups_group, 
+                    int         *n_group_ghosts,
+                    int         *n_subgroup_ghosts,
+                    int         *n_group_ghosts_used,
+                    int         *n_subgroup_ghosts_used,
+                    int          i_file,
+                    int          i_read,
+                    int          j_file,
+                    int          i_file_start,
+                    int          n_search,
+                    int          n_wrap,
+                    int          n_files,
+                    double      *a_list,
                     cosmo_info **cosmo){
    int file;
    int i_offset;
@@ -80,6 +81,7 @@ void process_ghosts(tree_horizontal_ghost_group_info    **groups_in,
 
          if(flag_create_ghosts){
             ghost_index=n_groups[j_file-i_offset]+n_group_ghosts_used[file];
+
             // If this is the first ghost for this ghost-chain, correct the information in the
             //    base halo so that it points properly to the ghost(s) we are creating ...
             if(i_offset==1){
@@ -184,6 +186,13 @@ void process_ghosts(tree_horizontal_ghost_group_info    **groups_in,
 
                // If this is the first ghost for this group, do some things ...
                if(i_offset==1){
+                  // ... set the descendant pointer of the base halo.  We weren't able to set this before when we
+                  //     read the halo in and called add_substructure_to_horizontal_tree_group(). 
+                  //     It was set to NULL at that time.
+                  if(subgroup_progenitor->descendant!=NULL)
+                     SID_trap_error("A substructure (i_group=%d,i_subgroup=%d) with file_offset>1 did not have it's descendant pointer initialized to NULL properly.",ERROR_LOGIC,i_group,i_subgroup);
+                  subgroup_progenitor->descendant=&(subgroups_in[(i_file+1)%n_wrap][ghost_index]);
+
                   // ... change the descendant info of the base halo
                   subgroup_final_file_index         = subgroup_progenitor->file_index;
                   subgroup_progenitor->file_offset  = 1;
@@ -283,5 +292,9 @@ void process_ghosts(tree_horizontal_ghost_group_info    **groups_in,
       } // j_subgroup
    }
    SID_free(SID_FARG group_descendants);
+//int i_test;
+//fprintf(stderr,"\n");
+//if(flag_create_ghosts) for(i_test=0;i_test<n_files;i_test++) fprintf(stderr,"%3d %6d %6d\n",i_test,n_group_ghosts_used[i_test],n_subgroup_ghosts_used[i_test]);
+//else                   for(i_test=0;i_test<n_files;i_test++) fprintf(stderr,"%3d %6d %6d\n",i_test,n_group_ghosts[i_test],     n_subgroup_ghosts[i_test]);
 }
 

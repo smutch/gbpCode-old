@@ -449,6 +449,7 @@ void process_ghosts(tree_horizontal_ghost_group_info    **groups,
                     int         i_file_start,
                     int         n_search,
                     int         n_wrap,
+                    int         n_files,
                     double     *a_list,
                     cosmo_info **cosmo);
 void add_substructure_to_horizontal_tree_group(tree_horizontal_ghost_group_info    *group,

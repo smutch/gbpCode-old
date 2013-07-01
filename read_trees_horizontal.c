@@ -204,8 +204,9 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
 
             // Add this substructure to it's group's link list of substructures.  This
             //   list is used to keep track of ghost halos and is needed when the trees
-            //   are written for computing halo indices.
-            if(subgroup_file_offset>0 && subgroup_index>=0)
+            //   are written for computing halo indices.  For subgroups that will form
+            //   the base of a chain of ghosts, the descendant pointer will have to be set later.
+            if(subgroup_file_offset==1 && subgroup_index>=0)
                add_substructure_to_horizontal_tree_group(&(groups_ghost[i_group]),
                                                          &(subgroups_ghost_all[(i_file+subgroup_file_offset)%n_wrap][subgroup_index]),
                                                          &(subgroups_ghost[i_subgroup]));

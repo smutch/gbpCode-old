@@ -113,6 +113,7 @@ void compute_trees_horizontal_ghosts(int         *n_groups,
                     i_file_start,
                     n_search,
                     n_wrap,
+                    n_files,
                     a_list,
                     cosmo);
      SID_log("Done.",SID_LOG_CLOSE);
@@ -236,6 +237,7 @@ void compute_trees_horizontal_ghosts(int         *n_groups,
                        i_file_start,
                        n_search,
                        n_wrap,
+                       n_files,
                        a_list,
                        cosmo);
         SID_log("Done.",SID_LOG_CLOSE);

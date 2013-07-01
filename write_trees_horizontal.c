@@ -192,7 +192,7 @@ void write_trees_horizontal(void  **groups_in,
          group_type         =groups[i_group].type;
          group_descendant_id=groups[i_group].descendant_id;
          group_tree_id      =groups[i_group].tree_id;
-         group_file_index   =groups[i_group].halo_index;
+         group_file_index   =groups[i_group].file_index;
 
          // Write group information to the horizontal tree files
          SID_fwrite(&group_id,           sizeof(int),1,&fp_matches_out);
@@ -218,7 +218,7 @@ void write_trees_horizontal(void  **groups_in,
             subgroup_type         =current->type;
             subgroup_descendant_id=current->descendant_id;
             subgroup_tree_id      =current->tree_id;
-            subgroup_file_index   =current->halo_index;
+            subgroup_file_index   =current->file_index;
 
             // Write subgroup information to the horizontal trees files
             SID_fwrite(&subgroup_id,           sizeof(int),1,&fp_matches_out);
@@ -232,12 +232,12 @@ void write_trees_horizontal(void  **groups_in,
             n_ghosts_i+=check_mode_for_flag(current->type,TREE_CASE_GHOST);
             current=current->next_substructure;
          }
-         n_subgroups_written+=n_subgroups_i;
          if(n_subgroups_i!=groups[i_group].n_subgroups)
             SID_trap_error("The number of substructures written for i_group=%d does not match the given count (ie. %d!=%d).",
                            ERROR_LOGIC,
                            i_group,n_subgroups_i,groups[i_group].n_subgroups);
-         n_ghosts_written+=n_ghosts_i;
+         n_subgroups_written+=n_subgroups_i;
+         n_ghosts_written   +=n_ghosts_i;
       }
       if(n_subgroups_written!=n_subgroups)
          SID_trap_error("The number of substructures written do not match the given substructure counts (ie. %d!=%d; n_ghosts_written=%d n_groups=%d).",
