@@ -77,9 +77,7 @@ float propagate_spins_recursive(tree_node_info *tree,RNG_info *RNG){
     current=current->progenitor_next;
   }
 
-  // Convert lambda -> j_specific here.
-  V_vir             =1e-3*sqrt((double)(G_NEWTON*(double)(tree->halo.M_vir)*M_SOL*1e10/((double)(tree->halo.R_vir)*M_PER_MPC)));
-  tree->halo.spin[0]=spin_propagate*sqrt(2.)*tree->halo.R_vir*V_vir;
+  tree->halo.spin[0]=spin_propagate;
   return(spin_propagate);
 }
 
@@ -534,7 +532,6 @@ int main(int argc, char *argv[]){
                 // Set the needed halo properties
                 properties.n_particles  =(int)(M_vir/m_p);
                 properties.M_vir        =M_vir/1e10;
-                properties.R_vir        =R_vir/1e3;
                 properties.pos[0]       =x;
                 properties.pos[1]       =y;
                 properties.pos[2]       =z;
@@ -549,8 +546,6 @@ int main(int argc, char *argv[]){
                 properties.most_bound_id=0;
                 properties.snap_num     =halo_snap;
                 properties.halo_index   =i_halo;
-                properties.halo_id      =halo_id;
-                properties.group_id     =group_id;
 
                 // Add this halo to its tree
                 add_node_to_tree(trees[j_tree],

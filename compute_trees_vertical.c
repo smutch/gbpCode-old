@@ -62,10 +62,6 @@ void add_node_to_tree(tree_info  *tree,
 
   // Copy halo properties into new node
   memcpy(&(new_node->halo),properties,sizeof(halo_info));
-  new_node->halo.match_type   =match_type;
-  new_node->halo.halo_id      =halo_id;
-  new_node->halo.group_id     =group_id;
-  new_node->halo.descendant_id=descendant_id;
   
   // Set ids and pointer defaults for the new node
   new_node->depth_first_index    =            -1; // Default; back-filled later
@@ -135,7 +131,7 @@ void add_node_to_tree(tree_info  *tree,
         // ... and set the group_halo_next of the last halo that was added to the group ...
         last_node=next_node->group_halo_first;
         next_node=last_node->group_halo_next;
-        while(next_node!=NULL){
+        while(next_node!=NULL){ // we exit the previous while automatically this way
           last_node=next_node;
           next_node=last_node->group_halo_next;
         }
@@ -531,12 +527,17 @@ void compute_trees_vertical(char *filename_root_out,
   sprintf(filename_output_dir_horizontal_subgroups_properties,"%s/properties",filename_output_dir_horizontal_subgroups);
   mkdir(filename_output_dir_vertical,          02755);
 
-  // Determining iso-tree id mappings (onto tree structures, ranks and files)
+  // Figure-out what the last-used snapshot is so we can read its header
+  int i_read_last;
+  for(i_read=i_read_stop;i_read>=i_read_start;i_read-=i_read_step) i_read_last=i_read;
+
+  // Determining iso-tree id mappings (onto tree structures, ranks and files).  Read header info
+  //    from the i_read_start'th file since that is where the final tree tally gets written.
   int n_step_in;
   int n_search_in;
   int n_groups_max_in;
   int n_subgroups_max_in;
-  sprintf(filename_in,"%s/horizontal_trees_%03d.dat",filename_output_dir_horizontal_trees,i_read_stop);
+  sprintf(filename_in,"%s/horizontal_trees_%03d.dat",filename_output_dir_horizontal_trees,i_read_last);
   SID_fopen(filename_in,"r",&fp_in);
   SID_fread_all(&n_step_in,         sizeof(int),1,&fp_in);
   SID_fread_all(&n_search_in,       sizeof(int),1,&fp_in);
@@ -546,6 +547,7 @@ void compute_trees_vertical(char *filename_root_out,
   SID_fread_all(&n_subgroups_max_in,sizeof(int),1,&fp_in);
   SID_fread_all(&n_trees_subgroup,  sizeof(int),1,&fp_in);
   SID_fread_all(&n_trees_group,     sizeof(int),1,&fp_in);
+  SID_fclose(&fp_in);
   n_progenitors_max=MAX(n_groups_max_in,n_subgroups_max_in);
   if(n_step_in!=i_read_step) SID_trap_error("Snapshot step sizes don't match (ie. %d!=%d)",ERROR_LOGIC,n_step_in,i_read_step);
 
@@ -576,8 +578,22 @@ void compute_trees_vertical(char *filename_root_out,
     n_halos_tree_subgroup[i_tree]=0;
   }
 
-  // Loop over each group, grouping together the trees of each's subgroups
-  //  (this is where isotrees get assigned to the forest they will be in)
+  // Determine the mapping between the horizontal tree IDs and the
+  //   forest IDs that indicate how the isotrees are packaged into
+  //   vertical trees.
+  // Use the group tree IDs in the lowest-z snapshot to initialize the values
+  int n_trees_group_i;
+  int n_trees_subgroup_i;
+  sprintf(filename_in,"%s/horizontal_trees_%03d.dat",filename_output_dir_horizontal_trees,i_read_stop);
+  SID_fopen(filename_in,"r",&fp_in);
+  SID_fread_all(&n_step_in,         sizeof(int),1,&fp_in);
+  SID_fread_all(&n_search_in,       sizeof(int),1,&fp_in);
+  SID_fread_all(&n_groups,          sizeof(int),1,&fp_in);
+  SID_fread_all(&n_subgroups,       sizeof(int),1,&fp_in);
+  SID_fread_all(&n_groups_max_in,   sizeof(int),1,&fp_in);
+  SID_fread_all(&n_subgroups_max_in,sizeof(int),1,&fp_in);
+  SID_fread_all(&n_trees_subgroup_i,sizeof(int),1,&fp_in);
+  SID_fread_all(&n_trees_group_i,   sizeof(int),1,&fp_in);
   for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
     SID_fread(&(group_id),           sizeof(int),1,&fp_in);
     SID_fread(&(group_type),         sizeof(int),1,&fp_in);
@@ -588,7 +604,8 @@ void compute_trees_vertical(char *filename_root_out,
     SID_fread(&(n_subgroups_group),  sizeof(int),1,&fp_in);
     if(group_id>=0 && group_tree_id>=0){
       if(group_tree_id>=n_trees_group)
-        SID_trap_error("group_tree_id (%d) exceeds the number of trees (%d) in the %dth file.",ERROR_LOGIC,group_tree_id,n_trees_group,i_read_stop);
+        SID_trap_error("group_tree_id (%d) exceeds the number of trees (%d) in the %dth file.",ERROR_LOGIC,
+                       group_tree_id,n_trees_group,i_read_stop);
       i_tree_group[group_tree_id]=i_group;
     }
     for(j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
@@ -600,12 +617,77 @@ void compute_trees_vertical(char *filename_root_out,
       SID_fread(&(subgroup_file_index),   sizeof(int),1,&fp_in);
       if(subgroup_id>=0 && subgroup_tree_id>=0){
         if(subgroup_tree_id>=n_trees_subgroup)
-          SID_trap_error("subgroup_tree_id (%d) exceeds the number of trees (%d) in the %dth file.",ERROR_LOGIC,subgroup_tree_id,n_trees_subgroup,i_read_stop);
+          SID_trap_error("subgroup_tree_id (%d) exceeds the number of trees (%d) in the %dth file.",ERROR_LOGIC,
+                         subgroup_tree_id,n_trees_subgroup,i_read_stop);
         i_tree_subgroup[subgroup_tree_id]=i_group;
       }
     }
   }
   SID_fclose(&fp_in);
+  SID_log("# of    group isotrees=%d",SID_LOG_COMMENT,n_trees_group);
+  SID_log("# of subgroup isotrees=%d",SID_LOG_COMMENT,n_trees_subgroup);
+
+  // Read-in all the horizontal tree halos and join trees into forests
+  //    when substructure tree IDs start mixing between their initial values.
+  int i_tree_group_i;
+  for(i_read=i_read_stop,n_halos_groups=0,n_halos_subgroups=0;i_read>=i_read_start;i_read-=i_read_step){
+    sprintf(filename_in,"%s/horizontal_trees_%03d.dat",filename_output_dir_horizontal_trees,i_read);
+    SID_fopen(filename_in,"r",&fp_in);
+    SID_fread_all(&n_step_in,         sizeof(int),1,&fp_in);
+    SID_fread_all(&n_search_in,       sizeof(int),1,&fp_in);
+    SID_fread_all(&n_groups,          sizeof(int),1,&fp_in);
+    SID_fread_all(&n_subgroups,       sizeof(int),1,&fp_in);
+    SID_fread_all(&n_groups_max_in,   sizeof(int),1,&fp_in);
+    SID_fread_all(&n_subgroups_max_in,sizeof(int),1,&fp_in);
+    SID_fread_all(&n_trees_subgroup_i,sizeof(int),1,&fp_in);
+    SID_fread_all(&n_trees_group_i,   sizeof(int),1,&fp_in);
+    n_progenitors_max=MAX(n_groups_max_in,n_subgroups_max_in);
+    if(n_step_in!=i_read_step) SID_trap_error("Snapshot step sizes don't match (ie. %d!=%d)",ERROR_LOGIC,n_step_in,i_read_step);
+    for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
+       SID_fread_all(&(group_id),           sizeof(int),1,&fp_in);
+       SID_fread_all(&(group_type),         sizeof(int),1,&fp_in);
+       SID_fread_all(&(group_descendant_id),sizeof(int),1,&fp_in);
+       SID_fread_all(&(group_tree_id),      sizeof(int),1,&fp_in);
+       SID_fread_all(&(group_file_offset),  sizeof(int),1,&fp_in);
+       SID_fread_all(&(group_file_index),   sizeof(int),1,&fp_in);
+       SID_fread_all(&(n_subgroups_group),  sizeof(int),1,&fp_in);
+       i_tree_group_i=i_tree_group[group_tree_id];
+       for(j_subgroup=0,i_tree_subgroup_min=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
+         SID_fread_all(&(subgroup_id),           sizeof(int),1,&fp_in);
+         SID_fread_all(&(subgroup_type),         sizeof(int),1,&fp_in);
+         SID_fread_all(&(subgroup_descendant_id),sizeof(int),1,&fp_in);
+         SID_fread_all(&(subgroup_tree_id),      sizeof(int),1,&fp_in);
+         SID_fread_all(&(subgroup_file_offset),  sizeof(int),1,&fp_in);
+         SID_fread_all(&(subgroup_file_index),   sizeof(int),1,&fp_in);
+         // Join forests if this subgroup demands it.  Use the lower value of the two options.
+         int i_tree_subgroup_i=i_tree_subgroup[subgroup_tree_id];
+         if(i_tree_subgroup_i<i_tree_group_i){
+            for(i_tree=0;i_tree<n_trees_subgroup;i_tree++){
+               if(i_tree_subgroup[i_tree]==i_tree_group_i)
+                  i_tree_subgroup[i_tree]=i_tree_subgroup_i;
+            }
+            for(i_tree=0;i_tree<n_trees_group;i_tree++){
+               if(i_tree_group[i_tree]==i_tree_group_i)
+                  i_tree_group[i_tree]=i_tree_subgroup_i;
+            }
+            i_tree_group_i=i_tree_subgroup_i;
+         }
+         else if(i_tree_subgroup_i>i_tree_group_i){
+            for(i_tree=0;i_tree<n_trees_subgroup;i_tree++){
+               if(i_tree_subgroup[i_tree]==i_tree_subgroup_i)
+                  i_tree_subgroup[i_tree]=i_tree_group_i;
+            }
+            for(i_tree=0;i_tree<n_trees_group;i_tree++){
+               if(i_tree_group[i_tree]==i_tree_subgroup_i)
+                  i_tree_group[i_tree]=i_tree_group_i;
+            }
+         }
+       }
+    }
+    SID_fclose(&fp_in);
+  }
+
+  // Determine the number of trees we are left with now (ie. how many forests we have)
   
   // Due to linking, there may be gaps in the i_tree arrays at this point. Compress them to fix this.
   //  ... do subgroups first ...
@@ -643,8 +725,8 @@ void compute_trees_vertical(char *filename_root_out,
     SID_fread_all(&n_subgroups,       sizeof(int),1,&fp_in);
     SID_fread_all(&n_groups_max_in,   sizeof(int),1,&fp_in);
     SID_fread_all(&n_subgroups_max_in,sizeof(int),1,&fp_in);
-    SID_fread_all(&n_trees_subgroup,  sizeof(int),1,&fp_in);
-    SID_fread_all(&n_trees_group,     sizeof(int),1,&fp_in);
+    SID_fread_all(&n_trees_subgroup_i,sizeof(int),1,&fp_in);
+    SID_fread_all(&n_trees_group_i,   sizeof(int),1,&fp_in);
     n_progenitors_max=MAX(n_groups_max_in,n_subgroups_max_in);
     if(n_step_in!=i_read_step) SID_trap_error("Snapshot step sizes don't match (ie. %d!=%d)",ERROR_LOGIC,n_step_in,i_read_step);
     for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
@@ -682,8 +764,8 @@ void compute_trees_vertical(char *filename_root_out,
     }
     SID_fclose(&fp_in);
   }
-  SID_log("# of    groups     =%d",SID_LOG_COMMENT,n_halos_groups);
-  SID_log("# of subgroups     =%d",SID_LOG_COMMENT,n_halos_subgroups);
+  SID_log("# of    groups        =%d",SID_LOG_COMMENT,n_halos_groups);
+  SID_log("# of subgroups        =%d",SID_LOG_COMMENT,n_halos_subgroups);
 
   // Determine the number of trees we are left with now
   for(i_tree=0;i_tree<n_trees_subgroup;i_tree++)
@@ -809,8 +891,8 @@ void compute_trees_vertical(char *filename_root_out,
       SID_log("Rank     #%4d will process %5d group    trees (%8d halos in total)",
               SID_LOG_COMMENT,i_bin+1,tree_hi_group_rank[i_bin]-tree_lo_group_rank[i_bin]+1,tree_count_group_rank[i_bin]);
   }
-  SID_log("# of    group trees=%d",SID_LOG_COMMENT,n_trees_group);
-  SID_log("# of subgroup trees=%d",SID_LOG_COMMENT,n_trees_subgroup);
+  SID_log("# of    group forests =%d",SID_LOG_COMMENT,n_trees_group);
+  SID_log("# of subgroup forests =%d",SID_LOG_COMMENT,n_trees_subgroup);
   SID_log("Done.",SID_LOG_CLOSE);
 
   // VERTICAL TREE CONSTRUCTION STARTS HERE

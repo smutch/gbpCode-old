@@ -56,7 +56,6 @@ BINFILES  = validate_ghost_trees       \
 	    make_trees_horizontal      \
 	    make_trees_grid            \
 	    convert_Bolshoi            \
-            find_halo_tree             \
             tree_groups                \
             view_tree                  \
             view_tree_mil

@@ -130,8 +130,8 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
   int  n_halos_max;
   int  n_halos_i;
   int  i_halo;
-  int      n_halos_1_matches;
-  int      n_halos_2_matches;
+  int     n_halos_1_matches;
+  int     n_halos_2_matches;
   int     j_halo;
   int     k_halo;
   int     l_halo;
@@ -262,6 +262,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
           n_halos             =n_subgroups;
           n_halos_max         =n_subgroups_max;
           max_id              =max_id_subgroup;
+          max_tree_id         =max_tree_id_subgroup;
           n_particles         =n_particles_subgroups;
           break;
           case 1:
@@ -271,6 +272,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
           n_halos             =n_groups;
           n_halos_max         =n_groups_max;
           max_id              =max_id_group;
+          max_tree_id         =max_tree_id_group;
           n_particles         =n_particles_groups;
           break;
        }
@@ -334,7 +336,8 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                                       halos_i,
                                       i_file,
                                       n_wrap,
-                                      &max_id);
+                                      &max_id,
+                                      &max_tree_id);
  
        // Now that we have assigned all the IDs for the halos in the active snapshot,
        //   we need to remove all descendants of bridged halos from the lists of candidate emerged halos 
@@ -359,10 +362,12 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
        // Update the max_id variables
        switch(k_match){
           case 0:
-            max_id_subgroup=max_id;
+            max_id_subgroup     =max_id;
+            max_tree_id_subgroup=max_tree_id;
             break;
           case 1:
-            max_id_group=max_id;
+            max_id_group     =max_id;
+            max_tree_id_group=max_tree_id;
             break;
        }
        SID_log("Done.",SID_LOG_CLOSE);

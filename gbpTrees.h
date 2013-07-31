@@ -366,7 +366,8 @@ void apply_horizontal_tree_defaults(int                    n_halos_1_matches,
                                     tree_horizontal_info  *halos_i,
                                     int                    i_file,
                                     int                    n_wrap,
-                                    int                   *max_id);
+                                    int                   *max_id,
+                                    int                   *max_tree_id);
 void init_trees_horizontal_stats(tree_horizontal_stats_info *stats,int n_halos);
 void change_horizontal_ID_recursive(tree_horizontal_info *halo,int id_1,int id_2);
 void write_trees_horizontal_log_file(char *filename_log,

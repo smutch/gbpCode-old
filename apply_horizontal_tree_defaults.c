@@ -7,7 +7,8 @@ void apply_horizontal_tree_defaults(int                    n_halos_1_matches,
                                     tree_horizontal_info  *halos_i,
                                     int                    i_file,
                                     int                    n_wrap,
-                                    int                   *max_id){
+                                    int                   *max_id,
+                                    int                   *max_tree_id){
    SID_log("Applying defaults to unprocessed halos...",SID_LOG_OPEN|SID_LOG_TIMER);
    // ... first deal with unprocessed matches to bridged halos (apply default behavior)
    int i_halo;
@@ -29,8 +30,9 @@ void apply_horizontal_tree_defaults(int                    n_halos_1_matches,
    // ... then assign flags for halos not successfully processed.  They must be strays.
    for(i_halo=0;i_halo<n_halos_i;i_halo++){
       if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_UNPROCESSED)){
-         halos_i[i_halo].type|=TREE_CASE_STRAYED;
-         halos_i[i_halo].type&=(~TREE_CASE_UNPROCESSED);
+         halos_i[i_halo].type   |=TREE_CASE_STRAYED;
+         halos_i[i_halo].type   &=(~TREE_CASE_UNPROCESSED);
+         halos_i[i_halo].tree_id =(*max_tree_id)++;
       }
    }
    SID_log("Done.",SID_LOG_CLOSE);
