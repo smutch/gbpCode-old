@@ -106,18 +106,19 @@ struct fp_catalog_info{
 // This is the format used as the SAGE structure
 typedef struct halo_info halo_info;
 struct halo_info{
+
   // merger tree pointers and match type
   int descendant;
   int progenitor_first;
   int progenitor_next;
   int group_halo_first;
   int group_halo_next;
-  int match_type;
 
   // properties of halo
   int       n_particles;
-  float     M_vir;  // This is the FoF mass for the most massive substructure
-  float     R_vir;
+  float     M_Mean200; // Mean 200 values (Mvir=M_Crit200)
+  float     M_vir;     // This is the FoF mass for the most massive substructure
+  float     M_TopHat;
   float     pos[3];
   float     vel[3];
   float     sigma_v;
@@ -127,10 +128,9 @@ struct halo_info{
 
   // original position in halo-finder output
   int   snap_num;
+  int   file_num;
   int   halo_index;
-  int   halo_id;
-  int   group_id;
-  int   descendant_id;
+  float half_mass;
 };
 
 typedef struct halo_MBP_info halo_MBP_info;
@@ -199,7 +199,6 @@ int  compute_group_analysis(halo_properties_info *properties,
                             size_t              **R_index,
                             int                   flag_manual_centre,
                             cosmo_info           *cosmo);
-void read_group_properties(FILE  *fp,halo_info            *properties_out,int   halo_index,int i_read);
 void write_group_properties(FILE *fp,halo_properties_info *properties,    double h_Hubble);
 void write_group_profiles(FILE   *fp,halo_profile_info    *profiles,      double h_Hubble,double redshift,cosmo_info *cosmo);
 void write_group_analysis(FILE                 *fp_properties,

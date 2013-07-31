@@ -9,7 +9,6 @@ OBJFILES  = fopen_catalog.o          \
 	    read_groups_AHF.o        \
 	    match_halos.o            \
 	    compute_group_analysis.o \
-	    read_group_properties.o  \
 	    write_group_analysis.o     
 LIBFILE   = libgbpHalos.a
 BINFILES  = reorder_halo_ids query_catalog_indices remove_duplicates update_halo_files_format make_group_PHKs query_group query_catalog make_catalog_ascii make_catalog_group_ascii make_group_analysis cat_group_analysis convert_AHF
