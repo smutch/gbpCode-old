@@ -9,6 +9,32 @@
 #include <gbpHalos.h>
 #include <gbpTrees.h>
 
+int check_for_input_files_local(const char *filename_root_in,int i_read);
+int check_for_input_files_local(const char *filename_root_in,int i_read){
+   int   flag_all_inputs_present=TRUE;
+   char  filename_test[MAX_FILENAME_LENGTH];
+   FILE *fp_test;
+   // Test from groups file
+   sprintf(filename_test,"%s_%03d.catalog_groups",   filename_root_in,i_read);
+   if((fp_test=fopen(filename_test,"r"))==NULL)
+      flag_all_inputs_present=FALSE;
+   else
+      fclose(fp_test);
+   // Test from subgroups file
+   sprintf(filename_test,"%s_%03d.catalog_subgroups",filename_root_in,i_read);
+   if((fp_test=fopen(filename_test,"r"))==NULL)
+      flag_all_inputs_present=FALSE;
+   else
+      fclose(fp_test);
+   // Test from particles file
+   sprintf(filename_test,"%s_%03d.catalog_particles",filename_root_in,i_read);
+   if((fp_test=fopen(filename_test,"r"))==NULL)
+      flag_all_inputs_present=FALSE;
+   else
+      fclose(fp_test);
+   return(flag_all_inputs_present);
+}
+
 void check_for_tree_matches_local(char *filename_root_out,int i_read_start,int i_read_stop,int i_read,int n_search_total,int *flag_go,int **flag_go_array);
 void check_for_tree_matches_local(char *filename_root_out,int i_read_start,int i_read_stop,int i_read,int n_search_total,int *flag_go,int **flag_go_array){
   int   j_read;
@@ -77,15 +103,15 @@ void check_for_tree_matches_local(char *filename_root_out,int i_read_start,int i
   SID_Bcast((*flag_go_array),sizeof(int)*n_search_total,MASTER_RANK,SID.COMM_WORLD);  
 }
 
-void compute_trees_matches(char   *filename_root_in,
-                           char   *filename_root_out,
-                           int     i_read_start,
-                           int     i_read_stop,
-                           int     i_read_step,
-                           int    *n_files_return,
-                           int   **n_subgroups_return,
-                           int   **n_groups_return,
-                           int     n_search){
+int compute_trees_matches(char   *filename_root_in,
+                          char   *filename_root_out,
+                          int     i_read_start,
+                          int     i_read_stop,
+                          int     i_read_step,
+                          int    *n_files_return,
+                          int   **n_subgroups_return,
+                          int   **n_groups_return,
+                          int     n_search){
   char        filename_out[256];
   char        filename_out_dir[256];
   char        filename_out_name[256];
@@ -144,6 +170,7 @@ void compute_trees_matches(char   *filename_root_in,
   int         flag_compute_header_subgroups;
   int         flag_compute_header_groups;
   int         flag_compute_header;
+  int         flag_sucessful_completion=TRUE;
 
   SID_log("Constructing merger tree matches...",SID_LOG_OPEN|SID_LOG_TIMER);
 
@@ -154,8 +181,19 @@ void compute_trees_matches(char   *filename_root_in,
   strcpy(filename_out_name,filename_root_out);
   strip_path(filename_out_name);
 
-  // Generate headers if needed
-  int flag_create_headers=TRUE;
+  // Check if all the needed files are present
+  int flag_all_inputs_present=TRUE;
+  for(i_read=i_read_stop;i_read>=i_read_start && flag_all_inputs_present;i_read--)
+     flag_all_inputs_present&=check_for_input_files_local(filename_root_in,i_read);
+
+  // Generate headers if needed and possible
+  int flag_create_headers;
+  if(flag_all_inputs_present)
+     flag_create_headers=TRUE;
+  else{
+     flag_create_headers      =FALSE;
+     flag_sucessful_completion=FALSE;
+  }
   if(flag_create_headers){
      SID_log("Checking if header files exist and are adequate...",SID_LOG_OPEN);
      for(k_match=0;k_match<2;k_match++){
@@ -320,19 +358,21 @@ void compute_trees_matches(char   *filename_root_in,
 
   // Check to see if there are any matches needing to be completed
   flag_go=FALSE;
-//  SID_log("Checking for matching files...",SID_LOG_OPEN);
-//  SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
-//  for(i_read=i_read_stop;i_read>i_read_start && !flag_go;i_read--)
-//     check_for_tree_matches_local(filename_out_dir,i_read_start,i_read_stop,i_read,n_search_total,&flag_go,&flag_go_array);
-//  if(flag_go)
-//     i_read++;
-//  if(!flag_go)
-//     SID_log("All matches present and complete.",SID_LOG_COMMENT);
-//  else if(i_read!=i_read_stop)
-//     SID_log("Matching only needs to start at snapshot #%03d.",SID_LOG_COMMENT,i_read);
-//  else
-//     SID_log("Matching starting with first snapshot.",SID_LOG_COMMENT);
-//  SID_log("Done.",SID_LOG_CLOSE);
+/**/
+  SID_log("Checking for matching files...",SID_LOG_OPEN);
+  SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
+  for(i_read=i_read_stop;i_read>i_read_start && !flag_go;i_read--)
+     check_for_tree_matches_local(filename_out_dir,i_read_start,i_read_stop,i_read,n_search_total,&flag_go,&flag_go_array);
+  if(flag_go)
+     i_read++;
+  if(!flag_go)
+     SID_log("All matches present and complete.",SID_LOG_COMMENT);
+  else if(i_read!=i_read_stop)
+     SID_log("Matching only needs to start at snapshot #%03d.",SID_LOG_COMMENT,i_read);
+  else
+     SID_log("Matching starting with first snapshot.",SID_LOG_COMMENT);
+  SID_log("Done.",SID_LOG_CLOSE);
+/**/
 
   // Generate matches (if needed).  Loop over base groups first...
   if(flag_go){
@@ -343,95 +383,107 @@ void compute_trees_matches(char   *filename_root_in,
         flag_go=FALSE;
         check_for_tree_matches_local(filename_out_dir,i_read_start,i_read_stop,i_read,n_search_total,&flag_go,&flag_go_array);
         if(flag_go){
-           SID_log("Processing matches for snapshot #%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_read);                 
+           if(check_for_input_files_local(filename_root_in,i_read)){
+              SID_log("Processing matches for snapshot #%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_read);                 
 
-           // Read base group
-           sprintf(filename_cat1,"%03d",i_read);
-           init_plist(&plist1,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-           //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
-           read_groups(filename_root_in,i_read,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES|READ_GROUPS_PEANOHILBERT,&plist1,filename_cat1,-1,-1);
-           //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+              // Read base group
+              sprintf(filename_cat1,"%03d",i_read);
+              init_plist(&plist1,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
+              //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
+              read_groups(filename_root_in,i_read,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES|READ_GROUPS_PEANOHILBERT,&plist1,filename_cat1,-1,-1);
+              //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
-           // Compute each matching combaination and write the results to the file
-           int         k_read;
-           int         i_read_order;
-           int         j_read_order;
-           plist_info *plist1_order;
-           plist_info *plist2_order;
-           for(j_read=i_read-1,k_read=0;j_read>=i_read-n_search_total;j_read--,k_read++){
-              if(j_read<=i_read_stop && j_read>=i_read_start && j_read!=i_read){
-                 int k_order;
-                 int flag_read;
-                 // Loop over forward/back matching
-                 SID_log("Processing matches between snaps %03d and %03d...",SID_LOG_OPEN|SID_LOG_TIMER,i_read,j_read);
-                 sprintf(filename_cat2,"%03d",j_read);
+              // Compute each matching combaination and write the results to the file
+              int         k_read;
+              int         i_read_order;
+              int         j_read_order;
+              plist_info *plist1_order;
+              plist_info *plist2_order;
+              for(j_read=i_read-1,k_read=0;j_read>=i_read-n_search_total;j_read--,k_read++){
+                 if(j_read<=i_read_stop && j_read>=i_read_start && j_read!=i_read){
+                    if(check_for_input_files_local(filename_root_in,j_read)){
+                       int k_order;
+                       int flag_read;
+                       // Loop over forward/back matching
+                       SID_log("Processing matches between snaps %03d and %03d...",SID_LOG_OPEN|SID_LOG_TIMER,i_read,j_read);
+                       sprintf(filename_cat2,"%03d",j_read);
 
-                 // If this snapshot combination is missing at least one file, proceed.
-                 flag_read=TRUE;
-                 if(flag_go_array[k_read]){
-                    for(k_order=0;k_order<2;k_order++){
-                       if(k_order==0){
-                          i_read_order=i_read;
-                          j_read_order=j_read;
-                          plist1_order=&plist1;
-                          plist2_order=&plist2;
-                       }
-                       else{
-                          i_read_order=j_read;
-                          j_read_order=i_read;
-                          plist1_order=&plist2;
-                          plist2_order=&plist1;
-                       }
-                       sprintf(filename_cat1_order,"%03d",i_read_order);
-                       sprintf(filename_cat2_order,"%03d",j_read_order);
+                       // If this snapshot combination is missing at least one file, proceed.
+                       flag_read=TRUE;
+                       if(flag_go_array[k_read]){
+                          for(k_order=0;k_order<2;k_order++){
+                             if(k_order==0){
+                                i_read_order=i_read;
+                                j_read_order=j_read;
+                                plist1_order=&plist1;
+                                plist2_order=&plist2;
+                             }
+                             else{
+                                i_read_order=j_read;
+                                j_read_order=i_read;
+                                plist1_order=&plist2;
+                                plist2_order=&plist1;
+                             }
+                             sprintf(filename_cat1_order,"%03d",i_read_order);
+                             sprintf(filename_cat2_order,"%03d",j_read_order);
 
-                       // Read catalog to match to
-                       if(flag_read){
-                          int PHK_min_local;
-                          int PHK_max_local;
-                          PHK_min_local=((int *)ADaPS_fetch(plist1.data,"PHK_min_local_%s",filename_cat1))[0];
-                          PHK_max_local=((int *)ADaPS_fetch(plist1.data,"PHK_max_local_%s",filename_cat1))[0];
-                          init_plist(&plist2,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-                          //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
-                          read_groups(filename_root_in,j_read,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES|READ_GROUPS_PEANOHILBERT,
-                                      &plist2,filename_cat2,PHK_min_local,PHK_max_local);
-                          //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
-                          flag_read=FALSE;
-                       }
+                             // Read catalog to match to
+                             if(flag_read){
+                                int PHK_min_local;
+                                int PHK_max_local;
+                                PHK_min_local=((int *)ADaPS_fetch(plist1.data,"PHK_min_local_%s",filename_cat1))[0];
+                                PHK_max_local=((int *)ADaPS_fetch(plist1.data,"PHK_max_local_%s",filename_cat1))[0];
+                                init_plist(&plist2,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
+                                //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
+                                read_groups(filename_root_in,j_read,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES|READ_GROUPS_PEANOHILBERT,
+                                            &plist2,filename_cat2,PHK_min_local,PHK_max_local);
+                                //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+                                flag_read=FALSE;
+                             }
 
-                       // Perform matching
-                       for(k_match=0;k_match<2;k_match++){
+                             // Perform matching
+                             for(k_match=0;k_match<2;k_match++){
 
-                          switch(k_match){
-                             case 0:
-                             flag_match_subgroups=MATCH_SUBGROUPS;
-                             sprintf(group_text_prefix,"sub");
-                             break;
-                             case 1:
-                             flag_match_subgroups=MATCH_GROUPS;
-                             sprintf(group_text_prefix,"");
-                             break;
-                          }
-                          //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
-                          match_halos(plist1_order,i_read_order,NULL,0,plist2_order,j_read_order,NULL,0,"match",flag_match_subgroups|MATCH_STORE_SCORE);
-                          //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+                                switch(k_match){
+                                   case 0:
+                                   flag_match_subgroups=MATCH_SUBGROUPS;
+                                   sprintf(group_text_prefix,"sub");
+                                   break;
+                                   case 1:
+                                   flag_match_subgroups=MATCH_GROUPS;
+                                   sprintf(group_text_prefix,"");
+                                   break;
+                                }
+                                //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
+                                match_halos(plist1_order,i_read_order,NULL,0,plist2_order,j_read_order,NULL,0,"match",flag_match_subgroups|MATCH_STORE_SCORE);
+                                //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
-                          // Writing results
-                          //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
-                          write_match_results(filename_out_dir,filename_out_name,i_read_order,j_read_order,plist1_order,plist2_order,k_match);
-                          //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
-                       }
-                    } // Loop over matching order
-                 } // If this match result didn't already exist
-                 else
-                    SID_log("Skipping %03d->%03d matching.",SID_LOG_COMMENT,i_read_order,j_read_order);                 
-                 if(!flag_read)
-                    free_plist(&plist2);
-                 SID_log("Done.",SID_LOG_CLOSE);
-              } // If this is a valid pair
-           } // Second loop over snapshots
-           free_plist(&plist1);
-           SID_log("Done.",SID_LOG_CLOSE);
+                                // Writing results
+                                //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
+                                write_match_results(filename_out_dir,filename_out_name,i_read_order,j_read_order,plist1_order,plist2_order,k_match);
+                                //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+                             }
+                          } // Loop over matching order
+                       } // If this match result didn't already exist
+                       else
+                          SID_log("Skipping %03d->%03d matching.",SID_LOG_COMMENT,i_read_order,j_read_order);
+                       if(!flag_read)
+                          free_plist(&plist2);
+                       SID_log("Done.",SID_LOG_CLOSE);
+                    }
+                    else{
+                       SID_log("Input for snapshot #%d absent...Skipping.",SID_LOG_COMMENT,j_read);
+                       flag_sucessful_completion=FALSE;
+                    }
+                 } // If this is a valid pair
+              } // Second loop over snapshots
+              free_plist(&plist1);
+              SID_log("Done.",SID_LOG_CLOSE);
+           }
+           else{
+              SID_log("Input for snapshot #%d absent...Skipping.",SID_LOG_COMMENT,i_read);                 
+              flag_sucessful_completion=FALSE;
+           } 
         } // If this snapshot needs to be processed
      } // Loop over base snapshots
      SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
@@ -501,5 +553,6 @@ void compute_trees_matches(char   *filename_root_in,
   SID_log("Done.",SID_LOG_CLOSE);
 
   SID_log("Done.",SID_LOG_CLOSE);
+  return(flag_sucessful_completion);
 }
 

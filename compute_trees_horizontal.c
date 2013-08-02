@@ -169,15 +169,16 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
     SID_log("Ghost-populated tree construction is turned off.",SID_LOG_COMMENT);
 
   // Validate existing matching files &/or perfrom matching
-  compute_trees_matches(filename_halo_root_in,
-                        filename_root_matches,
-                        i_read_start,
-                        i_read_stop,
-                        i_read_step,
-                        &n_files,
-                        &n_subgroups,
-                        &n_groups,
-                        n_search);
+  if(!compute_trees_matches(filename_halo_root_in,
+                            filename_root_matches,
+                            i_read_start,
+                            i_read_stop,
+                            i_read_step,
+                            &n_files,
+                            &n_subgroups,
+                            &n_groups,
+                            n_search))
+     SID_trap_error("Matching could not be completed.  Terminating.",ERROR_LOGIC);
 
   // We need these for allocating arrays
   calc_max(n_subgroups,&n_subgroups_max,n_files,SID_INT,CALC_MODE_DEFAULT);
