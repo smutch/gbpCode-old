@@ -78,7 +78,11 @@ void write_match_results(char       *filename_out_dir,
         break;
   }
 
-  // Set filename and open file
+  // Create output directory if need-be
+  if(filename_out_dir!=NULL)
+     mkdir(filename_out_dir,02755);
+
+  // Intialize filenames
   sprintf(filename_out_dir_snap,"%s/%s",filename_out_dir,filename_cat1);
   if(filename_out_dir!=NULL)
      sprintf(filename_out,"%s/%sgroup_matches_%s_%s.dat",filename_out_dir_snap,group_text_prefix,filename_cat1,filename_cat2);
