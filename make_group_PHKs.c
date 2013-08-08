@@ -115,7 +115,7 @@ int main(int argc, char *argv[]){
   }
 
   SID_log("Generating group PH keys for files #%d->#%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file_lo,i_file_hi);
-  for(i_file=i_file_hi;i_file>=i_file_lo;i_file-=i_file_skip){
+  for(i_file=i_file_lo;i_file<=i_file_hi;i_file+=i_file_skip){
     SID_log("Processing file #%03d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file);
     SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
 
