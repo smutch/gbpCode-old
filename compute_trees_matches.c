@@ -32,6 +32,12 @@ int check_for_input_files_local(const char *filename_root_in,int i_read){
       flag_all_inputs_present=FALSE;
    else
       fclose(fp_test);
+   // Test from particles file
+   sprintf(filename_test,"%s_%03d.catalog_PHKs",filename_root_in,i_read);
+   if((fp_test=fopen(filename_test,"r"))==NULL)
+      flag_all_inputs_present=FALSE;
+   else
+      fclose(fp_test);
    return(flag_all_inputs_present);
 }
 
