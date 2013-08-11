@@ -62,10 +62,10 @@ int main(int argc, char *argv[]){
   char filename_base[MAX_FILENAME_LENGTH];
   strcpy(filename_base,filename_root_in);
   strip_path(filename_base);
-  sprintf(filename_in,"%s/%s.%sgroup_matches_header",filename_root_in,filename_base,group_text_prefix);
 
   // Read header information
   SID_log("Reading header information...",SID_LOG_OPEN);
+  sprintf(filename_in,"%s/%sgroup_matches_header.dat",filename_root_in,group_text_prefix);
   SID_fopen(filename_in,"r",&fp_in);
   SID_fread(&i_read_start,sizeof(int),1,&fp_in);SID_log("snap start  =%d",SID_LOG_COMMENT,i_read_start);
   SID_fread(&i_read_stop, sizeof(int),1,&fp_in);SID_log("snap stop   =%d",SID_LOG_COMMENT,i_read_stop);
