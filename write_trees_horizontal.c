@@ -281,6 +281,9 @@ void write_trees_horizontal(void  **groups_in,
               }
               else
                  group_file_offset=-1;
+              // If the file offset is negative, so should the index be
+              if(group_file_offset<0)
+                 group_file_index=-1;
               group_n_particles       =groups[i_write%n_wrap][i_group].n_particles;
               group_n_particles_parent=groups[i_write%n_wrap][i_group].n_particles_parent;
               group_n_particles_desc  =set_match_n_particles(&(groups[i_write%n_wrap][i_group].descendant));
@@ -360,6 +363,9 @@ void write_trees_horizontal(void  **groups_in,
                  }
                  else
                     subgroup_file_offset=-1;
+                 // If the file offset is negative, so should the index be
+                 if(subgroup_file_offset<0)
+                    subgroup_file_index=-1;
                  subgroup_n_particles       =subgroups[i_write%n_wrap][i_subgroup].n_particles;
                  subgroup_n_particles_parent=subgroups[i_write%n_wrap][i_subgroup].n_particles_parent;
                  subgroup_n_particles_desc  =set_match_n_particles(&(subgroups[i_write%n_wrap][i_subgroup].descendant));
@@ -951,17 +957,17 @@ void write_trees_horizontal(void  **groups_in,
                int type_fragmented;
                type_fragmented=-1;
                if(check_mode_for_flag(halo_type,TREE_CASE_FRAGMENTED_LOST)){
-                  if(type_fragmented>0)
+                  if(type_fragmented>=0)
                      SID_trap_error("Multiple TREE_CASE_FRAGMENTED switches activated in mode (type=%d)",ERROR_LOGIC,halo_type);
                   type_fragmented=0;
                }
                if(check_mode_for_flag(halo_type,TREE_CASE_FRAGMENTED_RETURNED)){
-                  if(type_fragmented>0)
+                  if(type_fragmented>=0)
                      SID_trap_error("Multiple TREE_CASE_FRAGMENTED switches activated in mode (type=%d)",ERROR_LOGIC,halo_type);
                   type_fragmented=1;
                }
                if(check_mode_for_flag(halo_type,TREE_CASE_FRAGMENTED_EXCHANGED)){
-                  if(type_fragmented>0)
+                  if(type_fragmented>=0)
                      SID_trap_error("Multiple TREE_CASE_FRAGMENTED switches activated in mode (type=%d)",ERROR_LOGIC,halo_type);
                   type_fragmented=2;
                }
