@@ -497,66 +497,68 @@ int compute_trees_matches(char   *filename_root_in,
   }
 
   // Read the stuff that needs to be returned back to the calling function
-  SID_log("Reading header information...",SID_LOG_OPEN);
+  if(flag_sucessful_completion){
+     SID_log("Reading header information...",SID_LOG_OPEN);
 
-  // Count the number of snapshots we are going to use and
-  //    initialize the arrays that are to be returned
-  for(i_read=i_read_stop,(*n_files_return)=0;      
-      i_read>=i_read_start;
-      i_read-=i_read_step) (*n_files_return)++;  
-  (*n_subgroups_return)=(int *)SID_malloc(sizeof(int)*(*n_files_return));
-  (*n_groups_return)   =(int *)SID_malloc(sizeof(int)*(*n_files_return));
+     // Count the number of snapshots we are going to use and
+     //    initialize the arrays that are to be returned
+     for(i_read=i_read_stop,(*n_files_return)=0;      
+         i_read>=i_read_start;
+         i_read-=i_read_step) (*n_files_return)++;  
+     (*n_subgroups_return)=(int *)SID_malloc(sizeof(int)*(*n_files_return));
+     (*n_groups_return)   =(int *)SID_malloc(sizeof(int)*(*n_files_return));
 
-  if(SID.I_am_Master){
-     FILE *fp_read_header;
-     for(k_match=0;k_match<2;k_match++){
-        switch(k_match){
-           case 0:
-           sprintf(group_text_prefix,"sub");
-           flag_compute_header=flag_compute_header_subgroups;
-           break;
-           case 1:
-           sprintf(group_text_prefix,"");
-           flag_compute_header=flag_compute_header_groups;
-           break;
-        }
-        for(i_read=i_read_stop,j_read=0;i_read>=i_read_start;j_read++){
-           // Open file and skip header           
-           if(i_read==i_read_stop){
-              sprintf(filename_out,"%s/%sgroup_matches_header.dat",filename_out_dir,group_text_prefix);
-              if((fp_read_header=fopen(filename_out,"r"))==NULL)
-                 SID_trap_error("Could not open file {%s} when reading header information.",ERROR_IO_OPEN,filename_out);
-              fseek(fp_read_header,4*sizeof(int),SEEK_SET);
+     if(SID.I_am_Master){
+        FILE *fp_read_header;
+        for(k_match=0;k_match<2;k_match++){
+           switch(k_match){
+              case 0:
+              sprintf(group_text_prefix,"sub");
+              flag_compute_header=flag_compute_header_subgroups;
+              break;
+              case 1:
+              sprintf(group_text_prefix,"");
+              flag_compute_header=flag_compute_header_groups;
+              break;
            }
+           for(i_read=i_read_stop,j_read=0;i_read>=i_read_start;j_read++){
+              // Open file and skip header           
+              if(i_read==i_read_stop){
+                 sprintf(filename_out,"%s/%sgroup_matches_header.dat",filename_out_dir,group_text_prefix);
+                 if((fp_read_header=fopen(filename_out,"r"))==NULL)
+                    SID_trap_error("Could not open file {%s} when reading header information.",ERROR_IO_OPEN,filename_out);
+                 fseek(fp_read_header,4*sizeof(int),SEEK_SET);
+              }
 
-           // Read-forward for the appropriate number of snapshots
-           int k_read;
-           for(k_read=0;i_read>=i_read_start && k_read<i_read_step;i_read--,k_read++){
-              fseek(fp_read_header,1*sizeof(int),SEEK_CUR);
-              fread(&n_groups_1,sizeof(int),1,fp_read_header);
-              fseek(fp_read_header,n_groups_1*sizeof(int),SEEK_CUR);
-              if(k_match==1)
+              // Read-forward for the appropriate number of snapshots
+              int k_read;
+              for(k_read=0;i_read>=i_read_start && k_read<i_read_step;i_read--,k_read++){
+                 fseek(fp_read_header,1*sizeof(int),SEEK_CUR);
+                 fread(&n_groups_1,sizeof(int),1,fp_read_header);
                  fseek(fp_read_header,n_groups_1*sizeof(int),SEEK_CUR);
-              if(k_read==0){
-                 switch(k_match){
-                    case 0:
-                    (*n_subgroups_return)[j_read]=n_groups_1;
-                    break;
-                    case 1:
-                    (*n_groups_return)[j_read]   =n_groups_1;
-                    break;
+                 if(k_match==1)
+                    fseek(fp_read_header,n_groups_1*sizeof(int),SEEK_CUR);
+                 if(k_read==0){
+                    switch(k_match){
+                       case 0:
+                       (*n_subgroups_return)[j_read]=n_groups_1;
+                       break;
+                       case 1:
+                       (*n_groups_return)[j_read]   =n_groups_1;
+                       break;
+                    }
                  }
               }
            }
+           fclose(fp_read_header);
         }
-        fclose(fp_read_header);
      }
+     SID_Bcast((*n_subgroups_return),sizeof(int)*(*n_files_return),MASTER_RANK,SID.COMM_WORLD);
+     SID_Bcast((*n_groups_return),   sizeof(int)*(*n_files_return),MASTER_RANK,SID.COMM_WORLD);
+     if(flag_go_array!=NULL)
+        SID_free(SID_FARG flag_go_array);
+     SID_log("Done.",SID_LOG_CLOSE);
   }
-  SID_Bcast((*n_subgroups_return),sizeof(int)*(*n_files_return),MASTER_RANK,SID.COMM_WORLD);
-  SID_Bcast((*n_groups_return),   sizeof(int)*(*n_files_return),MASTER_RANK,SID.COMM_WORLD);
-  if(flag_go_array!=NULL)
-     SID_free(SID_FARG flag_go_array);
-  SID_log("Done.",SID_LOG_CLOSE);
 
   SID_log("Done.",SID_LOG_CLOSE);
   return(flag_sucessful_completion);
