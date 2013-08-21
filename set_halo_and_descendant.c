@@ -22,11 +22,8 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
    int                   file_offset;
    int                   k_file;
    int                   l_file;
-   int                   k_index;
    int                   k_file_temp;
-   int                   k_index_temp;
    int                   k_file_main;
-   int                   k_index_main;
    int                   k_size_main;
    int                   flag_process;
    int                   n_p_diff_old;

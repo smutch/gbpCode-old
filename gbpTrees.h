@@ -426,6 +426,7 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
                                 int          i_read, // tree snapshot index
                                 int          j_read,
                                 int          l_read,
+                                int          i_read_step,
                                 int          n_wrap);
 void set_halo_and_descendant(tree_horizontal_info **halos,
                              int                    i_file,

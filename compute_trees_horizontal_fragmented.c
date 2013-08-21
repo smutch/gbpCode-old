@@ -91,6 +91,7 @@ void compute_trees_horizontal_fragmented(int         *n_groups,
                                    i_write, // tree index
                                    j_write, // actual snapshot number
                                    l_write,
+                                   i_read_step,
                                    n_wrap);
         write_trees_horizontal((void **)groups_read,
                                (void **)subgroups_read,
