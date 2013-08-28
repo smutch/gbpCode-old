@@ -466,9 +466,9 @@ int compute_group_analysis(halo_properties_info  *properties,
           v_rad_mean+=v_rad;
         }
       }
-      profile->bins[i_bin].spin[0]=(float)(spin_x_accumulator);
-      profile->bins[i_bin].spin[1]=(float)(spin_y_accumulator);
-      profile->bins[i_bin].spin[2]=(float)(spin_z_accumulator);
+      profile->bins[i_bin].spin[0]=(float)(spin_x_accumulator)/n_cumulative;
+      profile->bins[i_bin].spin[1]=(float)(spin_y_accumulator)/n_cumulative;
+      profile->bins[i_bin].spin[2]=(float)(spin_z_accumulator)/n_cumulative;
       v_x_mean  /=(double)n_in_bin;
       v_y_mean  /=(double)n_in_bin;
       v_z_mean  /=(double)n_in_bin;
