@@ -122,6 +122,7 @@ int main(int argc, char *argv[]){
               sprintf(group_prefix_text,"");
               break;
         }
+        SID_log("Processing %sgroups...",SID_LOG_OPEN|SID_LOG_TIMER,group_prefix_text);
         sprintf(filename_properties_in, "%s_%03d.catalog_%sgroups_properties",filename_in_root, i_snap,group_prefix_text);
         sprintf(filename_properties_out,"%s_%03d.catalog_%sgroups_properties",filename_out_root,i_snap,group_prefix_text);
         sprintf(filename_profiles_in,   "%s_%03d.catalog_%sgroups_profiles",  filename_in_root, i_snap,group_prefix_text);
@@ -132,12 +133,17 @@ int main(int argc, char *argv[]){
         char filename_properties_out_base[MAX_FILENAME_LENGTH];
         char filename_profiles_in_base[MAX_FILENAME_LENGTH];
         char filename_profiles_out_base[MAX_FILENAME_LENGTH];
+        strcpy(filename_properties_in_base, filename_properties_in);
+        strcpy(filename_properties_out_base,filename_properties_out);
+        strcpy(filename_profiles_in_base,   filename_profiles_in);
+        strcpy(filename_profiles_out_base,  filename_profiles_out);
         strip_path(filename_properties_in_base);
         strip_path(filename_properties_out_base);
         strip_path(filename_profiles_in_base);
         strip_path(filename_profiles_out_base);
 
         // Figure out if the properties file(s) are multi-file format
+        int   i_file;
         int   n_files_props;
         int   n_props;
         int   n_props_all;
@@ -146,7 +152,6 @@ int main(int argc, char *argv[]){
         char  filename_test[MAX_FILENAME_LENGTH];
         sprintf(filename_test,"%s/%s.0",filename_properties_in,filename_properties_in_base);
         if((fp_test=fopen(filename_test,"r"))!=NULL){
-           int i_file;
            fread(&i_file,       sizeof(int),1,fp_test);
            fread(&n_files_props,sizeof(int),1,fp_test);
            fread(&n_props,      sizeof(int),1,fp_test);
@@ -166,7 +171,7 @@ int main(int argc, char *argv[]){
               if(n_props!=n_props_all)
                  SID_trap_error("Halo counts don't agree (ie. %d!=%d) in properties file.",ERROR_LOGIC,n_props,n_props_all);
               if(n_files_props!=1)
-                 SID_trap_error("Invalid file count (%d) in non-multifile properties file.",ERROR_LOGIC,n_files_props);
+                 SID_trap_error("Invalid file count (%d) in non-multifile properties file {%s}.",ERROR_LOGIC,n_files_props,filename_test);
            }
            else
               SID_trap_error("Could not open properties dataset.",ERROR_IO_OPEN);
@@ -230,8 +235,11 @@ int main(int argc, char *argv[]){
               char filename_read[MAX_FILENAME_LENGTH];
               char filename_write[MAX_FILENAME_LENGTH];
               if(flag_multifile_properties){
-                 sprintf(filename_read, "%s/%s.%d",filename_properties_in, filename_properties_in_base, i_file_props++);
-                 sprintf(filename_write,"%s/%s.%d",filename_properties_out,filename_properties_out_base,i_file_props++);
+                 if(i_file_props==0)
+                    mkdir(filename_properties_out,02755);
+                 sprintf(filename_read, "%s/%s.%d",filename_properties_in, filename_properties_in_base, i_file_props);
+                 sprintf(filename_write,"%s/%s.%d",filename_properties_out,filename_properties_out_base,i_file_props);
+                 i_file_props++;
               }
               else{
                  sprintf(filename_read, "%s",filename_properties_in);
@@ -268,8 +276,11 @@ int main(int argc, char *argv[]){
               char filename_read[MAX_FILENAME_LENGTH];
               char filename_write[MAX_FILENAME_LENGTH];
               if(flag_multifile_profiles){
-                 sprintf(filename_read, "%s/%s.%d",filename_profiles_in, filename_profiles_in_base, i_file_profs++);
-                 sprintf(filename_write,"%s/%s.%d",filename_profiles_out,filename_profiles_out_base,i_file_profs++);
+                 if(i_file_profs==0)
+                    mkdir(filename_profiles_out,02755);
+                 sprintf(filename_read, "%s/%s.%d",filename_profiles_in, filename_profiles_in_base, i_file_profs);
+                 sprintf(filename_write,"%s/%s.%d",filename_profiles_out,filename_profiles_out_base,i_file_profs);
+                 i_file_profs++;
               }
               else{
                  sprintf(filename_read, "%s",filename_profiles_in);
@@ -307,16 +318,14 @@ int main(int argc, char *argv[]){
            fread(&bins,  sizeof(halo_profile_bin_info),n_bins,fp_profiles_read);
 
            // Modify profiles
-/*
            int i_bin;
            int n_particles_cumulative;
            for(i_bin=0;i_bin<n_bins;i_bin++){
               n_particles_cumulative+=bins[i_bin].n_particles;
-              bins[i_bin].spin[0]          /=n_particles_cumulative;
-              bins[i_bin].spin[1]          /=n_particles_cumulative;
-              bins[i_bin].spin[2]          /=n_particles_cumulative;
+              bins[i_bin].spin[0]          /=(float)n_particles_cumulative;
+              bins[i_bin].spin[1]          /=(float)n_particles_cumulative;
+              bins[i_bin].spin[2]          /=(float)n_particles_cumulative;
            }
-*/
 
            // Write profiles
            fwrite(&n_bins,sizeof(int),                  1,     fp_profiles_write);
@@ -327,7 +336,6 @@ int main(int argc, char *argv[]){
            fread(&properties,sizeof(halo_properties_info),1,fp_properties_read);
 
            // Modify properties
-/*
            const gsl_interp_type *interp_type;
            interp_info *vir_interpolate;
            double       r_interp[MAX_PROFILE_BINS];
@@ -354,7 +362,6 @@ int main(int argc, char *argv[]){
            init_interpolate(r_interp,y_interp,n_bins,interp_type,&vir_interpolate);
            properties.spin[2]=(float)interpolate(vir_interpolate,properties.R_vir);
            free_interpolate(SID_FARG vir_interpolate);
-*/
 
            // Write properties
            fwrite(&properties,sizeof(halo_properties_info),1,fp_properties_write);
