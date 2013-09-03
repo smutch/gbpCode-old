@@ -9,6 +9,7 @@
 #include <gbpSPH.h>
 #include <gbpHalos.h>
 
+
 int main(int argc, char *argv[]){
   plist_info  plist;
   char        filename_PHKs_root[256];
@@ -89,10 +90,12 @@ int main(int argc, char *argv[]){
   SID_init(&argc,&argv,NULL);
 
   // Fetch user inputs
-  char filename_properties_in_root[MAX_FILENAME_LENGTH];
-  char filename_properties_out_root[MAX_FILENAME_LENGTH];
-  char filename_profiles_in_root[MAX_FILENAME_LENGTH];
-  char filename_profiles_out_root[MAX_FILENAME_LENGTH];
+  char filename_in_root[MAX_FILENAME_LENGTH];
+  char filename_out_root[MAX_FILENAME_LENGTH];
+  char filename_properties_in[MAX_FILENAME_LENGTH];
+  char filename_properties_out[MAX_FILENAME_LENGTH];
+  char filename_profiles_in[MAX_FILENAME_LENGTH];
+  char filename_profiles_out[MAX_FILENAME_LENGTH];
   int start_snap;
   int stop_snap;
   strcpy(filename_in_root, argv[1]);
@@ -123,40 +126,250 @@ int main(int argc, char *argv[]){
         sprintf(filename_properties_out,"%s_%03d.catalog_%sgroups_properties",filename_out_root,i_snap,group_prefix_text);
         sprintf(filename_profiles_in,   "%s_%03d.catalog_%sgroups_profiles",  filename_in_root, i_snap,group_prefix_text);
         sprintf(filename_profiles_out,  "%s_%03d.catalog_%sgroups_profiles",  filename_out_root,i_snap,group_prefix_text);
-        FILE *fp_properties_in;
-        FILE *fp_properties_out;
-        FILE *fp_profiles_in;
-        FILE *fp_profiles_out;
-        if((fp_properties_in=fopen(filename_properties_in,"r"))==NULL)
-           SID_trap_error("Could not open {%s}",ERROR_IO_OPEN,filename_properties_in);
-        fp_properties_out=fopen(filename_properties_out,"w");
-        if((fp_profiles_in=fopen(filename_profiles_in,"r"))==NULL)
-           SID_trap_error("Could not open {%s}",ERROR_IO_OPEN,filename_profiles_in);
-        fp_profiles_out=fopen(filename_profiles_out,"w");
 
-        // Process n_groups
-        int n_groups;
-        fread(&n_groups,    sizeof(int),1,fp_in);
-        fwrite(&n_groups,   sizeof(int),1,fp_out);
-        fwrite(&offset_size,sizeof(int),1,fp_out);
+        // Create filename bases for each dataset
+        char filename_properties_in_base[MAX_FILENAME_LENGTH];
+        char filename_properties_out_base[MAX_FILENAME_LENGTH];
+        char filename_profiles_in_base[MAX_FILENAME_LENGTH];
+        char filename_profiles_out_base[MAX_FILENAME_LENGTH];
+        strip_path(filename_properties_in_base);
+        strip_path(filename_properties_out_base);
+        strip_path(filename_profiles_in_base);
+        strip_path(filename_profiles_out_base);
 
-        SID_log("Processing %d %sgroups...",SID_LOG_OPEN,n_groups,group_prefix_text);
+        // Figure out if the properties file(s) are multi-file format
+        int   n_files_props;
+        int   n_props;
+        int   n_props_all;
+        int   flag_multifile_properties=FALSE;
+        FILE *fp_test;
+        char  filename_test[MAX_FILENAME_LENGTH];
+        sprintf(filename_test,"%s/%s.0",filename_properties_in,filename_properties_in_base);
+        if((fp_test=fopen(filename_test,"r"))!=NULL){
+           int i_file;
+           fread(&i_file,       sizeof(int),1,fp_test);
+           fread(&n_files_props,sizeof(int),1,fp_test);
+           fread(&n_props,      sizeof(int),1,fp_test);
+           fread(&n_props_all,  sizeof(int),1,fp_test);
+           fclose(fp_test);
+           flag_multifile_properties=TRUE;
+        }
+        else{
+           sprintf(filename_test,"%s",filename_properties_in);
+           if((fp_test=fopen(filename_test,"r"))!=NULL){
+              fread(&i_file,       sizeof(int),1,fp_test);
+              fread(&n_files_props,sizeof(int),1,fp_test);
+              fread(&n_props,      sizeof(int),1,fp_test);
+              fread(&n_props_all,  sizeof(int),1,fp_test);
+              fclose(fp_test);
+              flag_multifile_properties=FALSE;
+              if(n_props!=n_props_all)
+                 SID_trap_error("Halo counts don't agree (ie. %d!=%d) in properties file.",ERROR_LOGIC,n_props,n_props_all);
+              if(n_files_props!=1)
+                 SID_trap_error("Invalid file count (%d) in non-multifile properties file.",ERROR_LOGIC,n_files_props);
+           }
+           else
+              SID_trap_error("Could not open properties dataset.",ERROR_IO_OPEN);
+        }
+        if(i_file!=0)
+           SID_trap_error("Invalid starting file index (%d) in properties file.",ERROR_LOGIC,i_file);
 
-        // Process headers
-        int i_header;
-        for(i_header=0;i_header<4;i_header++){
-           int temp;
-           fread(&temp, sizeof(int),1,fp_properties_in);
-           fwrite(&temp,sizeof(int),1,fp_properties_out);
-           fread(&temp, sizeof(int),1,fp_profiles_in);
-           fwrite(&temp,sizeof(int),1,fp_profiles_out);
+        // Figure out if the profiles file(s) are multi-file format
+        int   n_files_profs;
+        int   n_profs;
+        int   n_profs_all;
+        int   flag_multifile_profiles=FALSE;
+        sprintf(filename_test,"%s/%s.0",filename_profiles_in,filename_profiles_in_base);
+        if((fp_test=fopen(filename_test,"r"))!=NULL){
+           int i_file;
+           fread(&i_file,       sizeof(int),1,fp_test);
+           fread(&n_files_profs,sizeof(int),1,fp_test);
+           fread(&n_profs,      sizeof(int),1,fp_test);
+           fread(&n_profs_all,  sizeof(int),1,fp_test);
+           fclose(fp_test);
+           flag_multifile_profiles=TRUE;
+        }
+        else{
+           sprintf(filename_test,"%s",filename_profiles_in);
+           if((fp_test=fopen(filename_test,"r"))!=NULL){
+              fread(&i_file,       sizeof(int),1,fp_test);
+              fread(&n_files_profs,sizeof(int),1,fp_test);
+              fread(&n_profs,      sizeof(int),1,fp_test);
+              fread(&n_profs_all,  sizeof(int),1,fp_test);
+              fclose(fp_test);
+              flag_multifile_profiles=FALSE;
+              if(n_profs!=n_profs_all)
+                 SID_trap_error("Halo counts don't agree (ie. %d!=%d) in profiles file.",ERROR_LOGIC,n_profs,n_profs_all);
+              if(n_files_profs!=1)
+                 SID_trap_error("Invalid file count (%d) in non-multifile profiles file.",ERROR_LOGIC,n_files_profs);
+           }  
+           else
+              SID_trap_error("Could not open profiles dataset.",ERROR_IO_OPEN);
+        }
+        if(i_file!=0)
+           SID_trap_error("Invalid starting file index (%d) in profiles file.",ERROR_LOGIC,i_file);
+
+        // Check that the halo counts in the properties and profiles datasets agree
+        if(n_profs_all!=n_props_all)
+           SID_trap_error("The properties and profiles halo counts don't agree (ie. %d!=%d)",ERROR_LOGIC,n_profs_all,n_props_all);
+
+        // Loop over all the halos
+        FILE *fp_properties_read =NULL;
+        FILE *fp_properties_write=NULL;
+        FILE *fp_profiles_read   =NULL;
+        FILE *fp_profiles_write  =NULL;
+        int   i_halo_props_last;
+        int   i_halo_profs_last;
+        int   i_halo;
+        int   i_file_props=0;
+        int   i_file_profs=0;
+        for(i_halo=0,i_halo_props_last=0,i_halo_profs_last=0,i_file_props=0,i_file_profs=0;i_halo<n_props_all;i_halo++){
+           // Open properties files and read/write their headers
+           if(i_halo>=i_halo_props_last){
+              // Open files
+              char filename_read[MAX_FILENAME_LENGTH];
+              char filename_write[MAX_FILENAME_LENGTH];
+              if(flag_multifile_properties){
+                 sprintf(filename_read, "%s/%s.%d",filename_properties_in, filename_properties_in_base, i_file_props++);
+                 sprintf(filename_write,"%s/%s.%d",filename_properties_out,filename_properties_out_base,i_file_props++);
+              }
+              else{
+                 sprintf(filename_read, "%s",filename_properties_in);
+                 sprintf(filename_write,"%s",filename_properties_out);
+              }
+              if(fp_properties_read!=NULL)
+                 fclose(fp_properties_read);
+              if(fp_properties_write!=NULL)
+                 fclose(fp_properties_write);
+              if((fp_properties_read =fopen(filename_read, "r"))==NULL)
+                 SID_trap_error("Could not open file {%s} for reading.",ERROR_IO_OPEN,filename_read);
+              if((fp_properties_write=fopen(filename_write,"w"))==NULL)
+                 SID_trap_error("Could not open file {%s} for writing.",ERROR_IO_OPEN,filename_write);
+
+              // Read header
+              fread(&i_file,       sizeof(int),1,fp_properties_read);
+              fread(&n_files_props,sizeof(int),1,fp_properties_read);
+              fread(&n_props,      sizeof(int),1,fp_properties_read);
+              fread(&n_props_all,  sizeof(int),1,fp_properties_read);
+
+              // Write header
+              fwrite(&i_file,       sizeof(int),1,fp_properties_write);
+              fwrite(&n_files_props,sizeof(int),1,fp_properties_write);
+              fwrite(&n_props,      sizeof(int),1,fp_properties_write);
+              fwrite(&n_props_all,  sizeof(int),1,fp_properties_write);
+
+              // Increment counter
+              i_halo_props_last+=n_props;
+           }
+
+           // Open profiles files and read/write their headers
+           if(i_halo>=i_halo_profs_last){
+              // Open files
+              char filename_read[MAX_FILENAME_LENGTH];
+              char filename_write[MAX_FILENAME_LENGTH];
+              if(flag_multifile_profiles){
+                 sprintf(filename_read, "%s/%s.%d",filename_profiles_in, filename_profiles_in_base, i_file_profs++);
+                 sprintf(filename_write,"%s/%s.%d",filename_profiles_out,filename_profiles_out_base,i_file_profs++);
+              }
+              else{
+                 sprintf(filename_read, "%s",filename_profiles_in);
+                 sprintf(filename_write,"%s",filename_profiles_out);
+              }
+              if(fp_profiles_read!=NULL)
+                 fclose(fp_profiles_read);
+              if(fp_profiles_write!=NULL)
+                 fclose(fp_profiles_write);
+              if((fp_profiles_read =fopen(filename_read, "r"))==NULL)
+                 SID_trap_error("Could not open file {%s} for reading.",ERROR_IO_OPEN,filename_read);
+              if((fp_profiles_write=fopen(filename_write,"w"))==NULL)
+                 SID_trap_error("Could not open file {%s} for writing.",ERROR_IO_OPEN,filename_write);
+
+              // Read header
+              fread(&i_file,       sizeof(int),1,fp_profiles_read);
+              fread(&n_files_profs,sizeof(int),1,fp_profiles_read);
+              fread(&n_profs,      sizeof(int),1,fp_profiles_read);
+              fread(&n_profs_all,  sizeof(int),1,fp_profiles_read);
+
+              // Write header
+              fwrite(&i_file,       sizeof(int),1,fp_profiles_write);
+              fwrite(&n_files_profs,sizeof(int),1,fp_profiles_write);
+              fwrite(&n_profs,      sizeof(int),1,fp_profiles_write);
+              fwrite(&n_profs_all,  sizeof(int),1,fp_profiles_write);
+
+              // Increment counter
+              i_halo_profs_last+=n_profs;
+           }
+
+           // Read profiles
+           int                   n_bins;
+           halo_profile_bin_info bins[MAX_PROFILE_BINS];
+           fread(&n_bins,sizeof(int),                  1,     fp_profiles_read);
+           fread(&bins,  sizeof(halo_profile_bin_info),n_bins,fp_profiles_read);
+
+           // Modify profiles
+/*
+           int i_bin;
+           int n_particles_cumulative;
+           for(i_bin=0;i_bin<n_bins;i_bin++){
+              n_particles_cumulative+=bins[i_bin].n_particles;
+              bins[i_bin].spin[0]          /=n_particles_cumulative;
+              bins[i_bin].spin[1]          /=n_particles_cumulative;
+              bins[i_bin].spin[2]          /=n_particles_cumulative;
+           }
+*/
+
+           // Write profiles
+           fwrite(&n_bins,sizeof(int),                  1,     fp_profiles_write);
+           fwrite(&bins,  sizeof(halo_profile_bin_info),n_bins,fp_profiles_write);
+
+           // Read profiles
+           halo_properties_info  properties;
+           fread(&properties,sizeof(halo_properties_info),1,fp_properties_read);
+
+           // Modify properties
+/*
+           const gsl_interp_type *interp_type;
+           interp_info *vir_interpolate;
+           double       r_interp[MAX_PROFILE_BINS];
+           double       y_interp[MAX_PROFILE_BINS];
+           if(n_bins>9)
+              interp_type=gsl_interp_cspline;
+           else
+              interp_type=gsl_interp_linear;
+           interp_type=gsl_interp_linear;
+           for(i_bin=0;i_bin<n_bins;i_bin++)
+              r_interp[i_bin]=(double)bins[i_bin].r_max;
+           for(i_bin=0;i_bin<n_bins;i_bin++)
+              y_interp[i_bin]=(double)bins[i_bin].spin[0];
+           init_interpolate(r_interp,y_interp,n_bins,interp_type,&vir_interpolate);
+           properties.spin[0]=(float)interpolate(vir_interpolate,properties.R_vir);
+           free_interpolate(SID_FARG vir_interpolate);
+           for(i_bin=0;i_bin<n_bins;i_bin++)
+              y_interp[i_bin]=(double)bins[i_bin].spin[1];
+           init_interpolate(r_interp,y_interp,n_bins,interp_type,&vir_interpolate);
+           properties.spin[1]=(float)interpolate(vir_interpolate,properties.R_vir);
+           free_interpolate(SID_FARG vir_interpolate);
+           for(i_bin=0;i_bin<n_bins;i_bin++)
+              y_interp[i_bin]=(double)bins[i_bin].spin[2];
+           init_interpolate(r_interp,y_interp,n_bins,interp_type,&vir_interpolate);
+           properties.spin[2]=(float)interpolate(vir_interpolate,properties.R_vir);
+           free_interpolate(SID_FARG vir_interpolate);
+*/
+
+           // Write properties
+           fwrite(&properties,sizeof(halo_properties_info),1,fp_properties_write);
         }
 
-        // Close files
-        fclose(fp_properties_in);
-        fclose(fp_properties_out);
-        fclose(fp_profiles_in);
-        fclose(fp_profiles_out);
+        // Perform final close
+        if(fp_properties_read!=NULL)
+           fclose(fp_properties_read);
+        if(fp_properties_write!=NULL)
+           fclose(fp_properties_write);
+        if(fp_profiles_read!=NULL)
+           fclose(fp_profiles_read);
+        if(fp_profiles_write!=NULL)
+           fclose(fp_profiles_write);
+
         SID_log("Done.",SID_LOG_CLOSE);
      }
      SID_log("Done.",SID_LOG_CLOSE);
