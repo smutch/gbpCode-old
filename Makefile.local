@@ -2,7 +2,10 @@
 # Library-specific settings #
 #############################
 INCFILES  = gbpTrees.h
-OBJFILES  = write_match_results.o                       \
+OBJFILES  = read_tree_run_parameters.o                  \
+            write_tree_run_parameters.o                 \
+	    write_a_list.o                              \
+	    write_match_results.o                       \
             compute_trees_matches.o                     \
 	    compute_trees_auxiliary.o                   \
 	    compute_trees_horizontal_stats.o            \
@@ -44,7 +47,8 @@ OBJFILES  = write_match_results.o                       \
 	    read_matches.o                              \
 	    read_trees.o               
 LIBFILE   = libgbpTrees.a
-BINFILES  = validate_ghost_trees       \
+BINFILES  = make_a_list                \
+	    validate_ghost_trees       \
 	    parse_match_type           \
 	    extract_trees_mergers      \
 	    tree_stats                 \

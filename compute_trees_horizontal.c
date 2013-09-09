@@ -159,7 +159,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
     SID_trap_error("n_search=%d but must be at least 1",ERROR_LOGIC,n_search);
 
   int flag_compute_fragmented=TRUE;
-  int flag_compute_ghosts    =TRUE;
+  int flag_compute_ghosts    =FALSE;
 
   if(!flag_fix_bridges)
     SID_log("Bridge-fixing is turned off.",SID_LOG_COMMENT);
@@ -167,6 +167,15 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
     SID_log("Fragmented-halo propagation is turned off.",SID_LOG_COMMENT);
   if(!flag_compute_ghosts)
     SID_log("Ghost-populated tree construction is turned off.",SID_LOG_COMMENT);
+
+  write_tree_run_parameters(filename_output_dir,
+                            i_read_start,
+                            i_read_stop,
+                            i_read_step,
+                            n_search,
+                            flag_fix_bridges,
+                            flag_compute_fragmented,
+                            flag_compute_ghosts);
 
   // Validate existing matching files &/or perfrom matching
   if(!compute_trees_matches(filename_halo_root_in,

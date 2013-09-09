@@ -380,9 +380,7 @@ void assign_unique_ids_recursive(tree_node_info *tree_node,int i_tree){
 
 void compute_trees_vertical(char *filename_root_out,
                             char *filename_cat_root_in,
-                            int   i_read_start,
-                            int   i_read_stop,
-                            int   i_read_step,
+                            char *filename_snap_list_in,
                             int   n_files_groups,
                             int   n_files_subgroups,
                             int  *flag_clean){
@@ -506,6 +504,28 @@ void compute_trees_vertical(char *filename_root_out,
   int max_id=0;
   int n_halos_written;
   int halo_snap,descendant_snap;
+
+  // Read the tree search/scan parameters
+  int i_read_start;
+  int i_read_stop;
+  int i_read_step;
+  int n_search;
+  int flag_fix_bridges;
+  int flag_compute_fragmented;
+  int flag_compute_ghosts;
+  read_tree_run_parameters(filename_root_out,
+                           &i_read_start,
+                           &i_read_stop,
+                           &i_read_step,
+                           &n_search,
+                           &flag_fix_bridges,
+                           &flag_compute_fragmented,
+                           &flag_compute_ghosts);
+  write_a_list(filename_snap_list_in,
+               filename_root_out,
+               i_read_start,
+               i_read_stop,
+               i_read_step);
 
   SID_log("Constructing vertical merger trees for snapshots #%d->#%d (step=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read_start,i_read_stop,i_read_step);
 
