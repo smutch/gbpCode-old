@@ -77,13 +77,14 @@ void write_trees_vertical(tree_info **trees,
         n_trees_file=tree_hi_file[i_write]-tree_lo_file[i_write]+1;
         SID_fwrite(&n_trees_file,           sizeof(int),1,&fp_out);
         SID_fwrite(&(n_halos_file[i_write]),sizeof(int),1,&fp_out);
+        flag_write_init=FALSE;
       }
       else
         SID_fopen(filename_out,"a",&fp_out);
       for(j_tree=0;j_tree<n_trees_local;i_tree++,j_tree++){
         // Write the number of halos per tree
-        SID_fwrite(&(n_halos_tree_local[i_tree]),sizeof(int),1,&fp_out);
-        n_halos_written+=n_halos_tree_local[i_tree];
+        SID_fwrite(&(n_halos_tree_local[j_tree]),sizeof(int),1,&fp_out);
+        n_halos_written+=n_halos_tree_local[j_tree];
         n_trees_written++;
         if(i_tree==tree_hi_file[i_write]){
           i_write++;
@@ -95,9 +96,10 @@ void write_trees_vertical(tree_info **trees,
             n_trees_file=tree_hi_file[i_write]-tree_lo_file[i_write]+1;
             SID_fwrite(&n_trees_file,           sizeof(int),1,&fp_out);
             SID_fwrite(&(n_halos_file[i_write]),sizeof(int),1,&fp_out);
+            flag_write_init=FALSE;
           }
           else if(n_halos_written!=n_halos || n_trees_written!=n_trees)
-            SID_trap_error("Not all halos (%d=?%d) and/or trees (%d=?%d) have been written.",ERROR_LOGIC,n_halos_written,n_halos,n_trees_written,n_trees);
+            SID_trap_error("An incorrect number of halos (%d=?%d) and/or trees (%d=?%d) have been written.",ERROR_LOGIC,n_halos_written,n_halos,n_trees_written,n_trees);
         }
       }
       SID_fclose(&fp_out);
@@ -118,14 +120,14 @@ void write_trees_vertical(tree_info **trees,
       SID_fopen(filename_out,"a",&fp_out);
       for(j_tree=0;j_tree<n_trees_local;i_tree++,j_tree++){
         n_halos_tree_written=0;
-        current=trees[i_tree]->root;
+        current=trees[j_tree]->root;
         while(current!=NULL){
           if(current->descendant==NULL)
             n_halos_tree_written+=write_tree_vertical_halos_recursive_local(current,&fp_out,NULL);
           current=current->next;
         }
-        if(n_halos_tree_written!=n_halos_tree_local[i_tree])
-          SID_trap_error("Number of halos written is not right (i.e. %d!=%d) for tree #%d",ERROR_LOGIC,n_halos_written,n_halos_tree_local[i_tree],i_tree);
+        if(n_halos_tree_written!=n_halos_tree_local[j_tree])
+          SID_trap_error("Number of halos written is not right (i.e. %d!=%d) for tree #%d",ERROR_LOGIC,n_halos_written,n_halos_tree_local[j_tree],j_tree);
         n_halos_written+=n_halos_tree_written;
         n_trees_written++;
         if(i_tree==tree_hi_file[i_write]){
@@ -138,7 +140,7 @@ void write_trees_vertical(tree_info **trees,
             n_trees_file=tree_hi_file[i_write]-tree_lo_file[i_write]+1;
           }
           else if(n_halos_written!=n_halos || n_trees_written!=n_trees)
-            SID_trap_error("Not all halos (%d=?%d) and/or trees (%d=?%d) have been written.",ERROR_LOGIC,n_halos_written,n_halos,n_trees_written,n_trees);
+            SID_trap_error("An incorrect number of halos (%d=?%d) and/or trees (%d=?%d) have been written.",ERROR_LOGIC,n_halos_written,n_halos,n_trees_written,n_trees);
         }
       }
       SID_fclose(&fp_out);

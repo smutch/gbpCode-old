@@ -47,7 +47,9 @@ OBJFILES  = read_tree_run_parameters.o                  \
 	    read_matches.o                              \
 	    read_trees.o               
 LIBFILE   = libgbpTrees.a
-BINFILES  = make_a_list                \
+BINFILES  = extract_tree_horizontal    \
+	    tree_stats_horizontal      \
+	    make_a_list                \
 	    validate_ghost_trees       \
 	    parse_match_type           \
 	    extract_trees_mergers      \

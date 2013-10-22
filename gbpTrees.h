@@ -549,7 +549,7 @@ void compute_trees_auxiliary(char *filename_root,
 
 void init_tree(int n_snaps,tree_info **tree);
 void free_tree(tree_info **tree);
-void add_node_to_tree(tree_info  *tree,
+int  add_node_to_tree(tree_info  *tree,
                       int         match_type,
                       int         halo_id,
                       int         group_id,
