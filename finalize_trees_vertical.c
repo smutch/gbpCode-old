@@ -6,7 +6,7 @@
 #include <gbpTrees.h>
 
 void finalize_trees_vertical(tree_info **trees,
-                             int        *n_halos_tree,
+                             int        *n_halos_tree_local,
                              int         n_trees,
                              int         n_snaps,
                              int         progenitor_mode){
@@ -50,8 +50,8 @@ void finalize_trees_vertical(tree_info **trees,
         assign_depth_first_index_recursive(current,&depth_first_index);
       current=current->next;
     }
-    if(depth_first_index!=n_halos_tree[i_tree])
-      SID_trap_error("DFI != n_halos (i.e. %d!=%d)",ERROR_LOGIC,depth_first_index,n_halos_tree[i_tree]);
+    if(depth_first_index!=n_halos_tree_local[i_tree])
+      SID_trap_error("DFI != n_halos (i.e. %d!=%d)",ERROR_LOGIC,depth_first_index,n_halos_tree_local[i_tree]);
   }
   SID_log("Done.",SID_LOG_CLOSE);
 

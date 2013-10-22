@@ -395,9 +395,9 @@ int compute_trees_matches(char   *filename_root_in,
               // Read base group
               sprintf(filename_cat1,"%03d",i_read);
               init_plist(&plist1,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-              //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
+              SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
               read_groups(filename_root_in,i_read,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES|READ_GROUPS_PEANOHILBERT,&plist1,filename_cat1,-1,-1);
-              //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+              SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
               // Compute each matching combaination and write the results to the file
               int         k_read;
@@ -440,10 +440,10 @@ int compute_trees_matches(char   *filename_root_in,
                                 PHK_min_local=((int *)ADaPS_fetch(plist1.data,"PHK_min_local_%s",filename_cat1))[0];
                                 PHK_max_local=((int *)ADaPS_fetch(plist1.data,"PHK_max_local_%s",filename_cat1))[0];
                                 init_plist(&plist2,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-                                //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
+                                SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
                                 read_groups(filename_root_in,j_read,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES|READ_GROUPS_PEANOHILBERT,
                                             &plist2,filename_cat2,PHK_min_local,PHK_max_local);
-                                //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+                                SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
                                 flag_read=FALSE;
                              }
 
@@ -460,14 +460,14 @@ int compute_trees_matches(char   *filename_root_in,
                                    sprintf(group_text_prefix,"");
                                    break;
                                 }
-                                //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
+                                SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
                                 match_halos(plist1_order,i_read_order,NULL,0,plist2_order,j_read_order,NULL,0,"match",flag_match_subgroups|MATCH_STORE_SCORE);
-                                //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+                                SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
                                 // Writing results
-                                //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
+                                SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
                                 write_match_results(filename_out_dir,filename_out_name,i_read_order,j_read_order,plist1_order,plist2_order,k_match);
-                                //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+                                SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
                              }
                           } // Loop over matching order
                        } // If this match result didn't already exist
