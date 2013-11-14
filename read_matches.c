@@ -10,13 +10,14 @@
 void read_matches(char    *filename_in_dir,
                   int      i_read_in,
                   int      j_read_in,
+                  int      n_halos_max,
                   int      mode,
                   int     *n_groups_i,
                   int     *n_groups_j,
                   int     *n_particles_i,
                   int     *n_particles_j,
-                  int     *n_sub_group_i,
-                  int     *n_sub_group_j,
+                  int     *n_sub_group_i_in,
+                  int     *n_sub_group_j_in,
                   int     *match_ids,
                   float   *match_score,
                   size_t  *match_index){
@@ -37,6 +38,10 @@ void read_matches(char    *filename_in_dir,
    int    n_groups;
    int    n_groups_i_file;
    int    n_groups_j_file;
+   int   *n_sub_group_i;
+   int   *n_sub_group_j;
+   int    flag_alloc_n_sub_i=FALSE;
+   int    flag_alloc_n_sub_j=FALSE;
    
    if(i_read_in==j_read_in)
      SID_trap_error("i_read=j_read in read_matches",ERROR_LOGIC);
@@ -47,6 +52,20 @@ void read_matches(char    *filename_in_dir,
       break;
       case MATCH_GROUPS:
       sprintf(group_text_prefix,"");
+      // We need n_subgroups arrays for removal of bad groups
+      //    if they have not been passed to us.
+      if(n_sub_group_i_in==NULL){
+         flag_alloc_n_sub_i=TRUE;
+         n_sub_group_i     =(int *)SID_malloc(sizeof(int)*n_halos_max);
+      }
+      else
+         n_sub_group_i=n_sub_group_i_in;
+      if(n_sub_group_j_in==NULL){
+         flag_alloc_n_sub_j=TRUE;
+         n_sub_group_j     =(int *)SID_malloc(sizeof(int)*n_halos_max);
+      }
+      else
+         n_sub_group_j=n_sub_group_j_in;
       break;
    }
 
@@ -135,5 +154,31 @@ void read_matches(char    *filename_in_dir,
    SID_fread(match_index,sizeof(size_t),(*n_groups_i),&fp_in);
    SID_fread(match_score,sizeof(float), (*n_groups_i),&fp_in);
    SID_fclose(&fp_in);
+
+   // If we are reading groups, nullify all matches
+   //    between halos with no substructures.
+   if(mode==MATCH_GROUPS){
+      int     i_halo;
+      size_t *match_index_temp;
+      for(i_halo=0;i_halo<(*n_groups_i);i_halo++){
+         if(n_sub_group_i[i_halo]<=0){
+            match_ids[i_halo]  =-1;
+            match_score[i_halo]= 0.;
+         }
+         else if(match_ids[i_halo]>=0){
+            if(n_sub_group_j[match_ids[i_halo]]<=0){
+               match_ids[i_halo]  =-1;
+               match_score[i_halo]= 0.;
+            }
+         }
+      }
+      merge_sort(match_ids,(size_t)(*n_groups_i),&match_index_temp,SID_INT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
+      memcpy(match_index,match_index_temp,(*n_groups_i)*sizeof(size_t));
+      SID_free(SID_FARG match_index_temp);
+      if(flag_alloc_n_sub_i)
+         SID_free(SID_FARG n_sub_group_i);
+      if(flag_alloc_n_sub_j)
+         SID_free(SID_FARG n_sub_group_j);
+   }
 }
 
