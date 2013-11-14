@@ -61,7 +61,7 @@ int main(int argc, char *argv[]){
     strcpy(filename_output_file_root,filename_root_out);
     strip_path(filename_output_file_root);
     mkdir(filename_root_out,02755);
-    sprintf(filename_snap_list_out,"%s/%s.a_list",filename_root_out,filename_output_file_root);
+    sprintf(filename_snap_list_out,"%s/a_list.txt",filename_root_out);
     SID_log("Creating snapshot list {%s}...",SID_LOG_OPEN,filename_snap_list_out);
 
     // Read the original list
