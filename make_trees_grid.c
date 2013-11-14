@@ -52,7 +52,7 @@ int main(int argc, char *argv[]){
      FILE *fp_test;
      int   n_trees_total=0;
      while(flag_exists){
-        sprintf(filename_in, "%s/vertical/%sgroups/%s.%sgroup_trees.%d",filename_root_in,group_text_prefix,filename_name_in,group_text_prefix,n_in);
+        sprintf(filename_in,"%s/vertical/%sgroup_trees_%03d.dat",filename_root_in,group_text_prefix,n_in);
         fp_test=fopen(filename_in,"r");
         if(fp_test==NULL)
            flag_exists=FALSE;
@@ -95,7 +95,7 @@ int main(int argc, char *argv[]){
         int  n_halos_file;
         int  i_tree;
         int *n_halos_tree;
-        sprintf(filename_in, "%s/vertical/%sgroups/%s.%sgroup_trees.%d",filename_root_in,group_text_prefix,filename_name_in,group_text_prefix,i_file);
+        sprintf(filename_in, "%s/vertical/%sgroup_trees_%03d.dat",filename_root_in,group_text_prefix,i_file);
         fp_in=fopen(filename_in,"r");
         // Read the input file's header
         fread(&n_trees_file,sizeof(int),1,fp_in);
@@ -150,7 +150,7 @@ int main(int argc, char *argv[]){
         int  n_halos_file;
         int  i_tree;
         int *n_halos_tree;
-        sprintf(filename_in,"%s/vertical/%sgroups/%s.%sgroup_trees.%d",filename_root_in,group_text_prefix,filename_name_in,group_text_prefix,i_file);
+        sprintf(filename_in, "%s/vertical/%sgroup_trees_%03d.dat",filename_root_in,group_text_prefix,i_file);
         fp_in=fopen(filename_in,"r");
         // Read the input file's header
         fread(&n_trees_file,sizeof(int),1,fp_in);
@@ -158,25 +158,27 @@ int main(int argc, char *argv[]){
         n_halos_tree=(int *)SID_malloc(sizeof(int)*n_trees_file);
         fread(n_halos_tree,sizeof(int),n_trees_file,fp_in);
         for(i_tree=0;i_tree<n_trees_file;i_tree++,k_tree++){
-           int i_x,i_y,i_z,i_g;
-           // Read the first halo and skip the rest
-           fread(halo,sizeof(halo_info),1,fp_in);
-           fseeko(fp_in,(size_t)(n_halos_tree[i_tree]-1)*sizeof(halo_info),SEEK_CUR);
-           // Decide which grid cell it belongs to
-           i_x=(int)((float)grid_size*(halo->pos[0]/box_size));i_x=MIN(i_x,grid_size-1);
-           i_y=(int)((float)grid_size*(halo->pos[1]/box_size));i_y=MIN(i_y,grid_size-1);
-           i_z=(int)((float)grid_size*(halo->pos[2]/box_size));i_z=MIN(i_z,grid_size-1);
-           i_g=(i_z*grid_size+i_y)*grid_size+i_x;
-           // Add this tree to the right grid cell's tree size list
-           tree_size[i_g][n_trees_file_out[i_g]++]=n_halos_tree[i_tree];
-           // Status message
-           if(k_tree==next_report){
-              SID_log("%3d%% complete.",SID_LOG_COMMENT|SID_LOG_TIMER,i_report*10);
-              i_report++;
-              if(i_report==10)
-                 next_report=n_trees_total-1;
-              else
-                 next_report=(int)((float)i_report*0.1*(float)n_trees_total);
+           if(n_halos_tree[i_tree]>0){
+              int i_x,i_y,i_z,i_g;
+              // Read the first halo and skip the rest
+              fread(halo,sizeof(halo_info),1,fp_in);
+              fseeko(fp_in,(size_t)(n_halos_tree[i_tree]-1)*sizeof(halo_info),SEEK_CUR);
+              // Decide which grid cell it belongs to
+              i_x=(int)((float)grid_size*(halo->pos[0]/box_size));i_x=MIN(i_x,grid_size-1);
+              i_y=(int)((float)grid_size*(halo->pos[1]/box_size));i_y=MIN(i_y,grid_size-1);
+              i_z=(int)((float)grid_size*(halo->pos[2]/box_size));i_z=MIN(i_z,grid_size-1);
+              i_g=(i_z*grid_size+i_y)*grid_size+i_x;
+              // Add this tree to the right grid cell's tree size list
+              tree_size[i_g][n_trees_file_out[i_g]++]=n_halos_tree[i_tree];
+              // Status message
+              if(k_tree==next_report){
+                 SID_log("%3d%% complete.",SID_LOG_COMMENT|SID_LOG_TIMER,i_report*10);
+                 i_report++;
+                 if(i_report==10)
+                    next_report=n_trees_total-1;
+                 else
+                    next_report=(int)((float)i_report*0.1*(float)n_trees_total);
+              }
            }
         }
         fclose(fp_in);
@@ -189,13 +191,12 @@ int main(int argc, char *argv[]){
      FILE  *fp_out;
      sprintf(filename_out,"%s/vertical_grid/",
              filename_root_in);
+     SID_log("Creating output directory {%s}...",SID_LOG_OPEN,filename_out);
      mkdir(filename_out,02755);
-     sprintf(filename_out,"%s/vertical_grid/%sgroups/",
-             filename_root_in,group_text_prefix);
-     mkdir(filename_out,02755);
+     SID_log("Done.",SID_LOG_CLOSE);
+     SID_log("Writing output file headers...",SID_LOG_OPEN,filename_out);
      for(i_file=0;i_file<n_files_out;i_file++){
-        sprintf(filename_out,"%s/vertical_grid/%sgroups/%s.%sgroup_trees.%d",
-                filename_root_in,group_text_prefix,filename_name_in,group_text_prefix,i_file);
+        sprintf(filename_out,"%s/vertical_grid/%sgroup_trees_%03d.dat",filename_root_in,group_text_prefix,i_file);
         fp_out=fopen(filename_out,"w");
         fwrite(&(n_trees_file_out[i_file]),sizeof(int),1,                       fp_out);
         fwrite(&(n_halos_file_out[i_file]),sizeof(int),1,                       fp_out);
@@ -203,6 +204,7 @@ int main(int argc, char *argv[]){
         fclose(fp_out);
         n_trees_file_out[i_file]=0; // re-set to zero so we can use it as a counter
      }
+     SID_log("Done.",SID_LOG_CLOSE);
 
      // Read each tree and write it to the appropriate file
      SID_log("Distributing input trees to the grid of output files...",SID_LOG_OPEN|SID_LOG_TIMER);
@@ -218,7 +220,7 @@ int main(int argc, char *argv[]){
         int  i_tree;
         int *n_halos_tree;
         // Open input file
-        sprintf(filename_in,"%s/vertical/%sgroups/%s.%sgroup_trees.%d",filename_root_in,group_text_prefix,filename_name_in,group_text_prefix,i_file);
+        sprintf(filename_in, "%s/vertical/%sgroup_trees_%03d.dat",filename_root_in,group_text_prefix,i_file);
         fp_in=fopen(filename_in,"r");
         // Read header
         fread(&n_trees_file,sizeof(int),1,fp_in);
@@ -226,37 +228,38 @@ int main(int argc, char *argv[]){
         n_halos_tree=(int *)SID_malloc(sizeof(int)*n_trees_file);
         fread(n_halos_tree,sizeof(int),n_trees_file,fp_in);
         for(i_tree=0;i_tree<n_trees_file;i_tree++,k_tree++){
-           int i_x,i_y,i_z,i_g;
-           // Read this tree
-           fread(tree,sizeof(halo_info),n_halos_tree[i_tree],fp_in);
-           // Decide which grid cell it belongs to
-           i_x=(int)((float)grid_size*(halo->pos[0]/box_size));i_x=MIN(i_x,grid_size-1);
-           i_y=(int)((float)grid_size*(halo->pos[1]/box_size));i_y=MIN(i_y,grid_size-1);
-           i_z=(int)((float)grid_size*(halo->pos[2]/box_size));i_z=MIN(i_z,grid_size-1);
-           i_g=(i_z*grid_size+i_y)*grid_size+i_x;
-           // Perform a sanity check
-           if(n_halos_tree[i_tree]!=tree_size[i_g][n_trees_file_out[i_g]])
-              SID_trap_error("Tree size doen't make sense (ie. %d!=%d)",ERROR_LOGIC,n_halos_tree[i_tree],tree_size[i_g][n_trees_file_out[i_g]++]);
-           n_trees_file_out[i_g]++;
-           // Open the output file
-           if(i_g_last!=i_g){
-              sprintf(filename_out,"%s/vertical_grid/%sgroups/%s.%sgroup_trees.%d",
-                      filename_root_in,group_text_prefix,filename_name_in,group_text_prefix,i_g);
-              i_g_last=i_g;
-              if(fp_out!=NULL)
-                fclose(fp_out);
-              fp_out=fopen(filename_out,"a");
-           }
-           // Write this tree
-           fwrite(tree,sizeof(halo_info),n_halos_tree[i_tree],fp_out);
-           // Status message
-           if(k_tree==next_report){
-              SID_log("%3d%% complete.",SID_LOG_COMMENT|SID_LOG_TIMER,i_report*10);
-              i_report++;
-              if(i_report==10)
-                 next_report=n_trees_total-1;
-              else
-                 next_report=(int)((float)i_report*0.1*(float)n_trees_total);
+           if(n_halos_tree[i_tree]>0){
+              int i_x,i_y,i_z,i_g;
+              // Read this tree
+              fread(tree,sizeof(halo_info),n_halos_tree[i_tree],fp_in);
+              // Decide which grid cell it belongs to
+              i_x=(int)((float)grid_size*(halo->pos[0]/box_size));i_x=MIN(i_x,grid_size-1);
+              i_y=(int)((float)grid_size*(halo->pos[1]/box_size));i_y=MIN(i_y,grid_size-1);
+              i_z=(int)((float)grid_size*(halo->pos[2]/box_size));i_z=MIN(i_z,grid_size-1);
+              i_g=(i_z*grid_size+i_y)*grid_size+i_x;
+              // Perform a sanity check
+              if(n_halos_tree[i_tree]!=tree_size[i_g][n_trees_file_out[i_g]])
+                 SID_trap_error("Tree size doen't make sense (ie. %d!=%d)",ERROR_LOGIC,n_halos_tree[i_tree],tree_size[i_g][n_trees_file_out[i_g]++]);
+              n_trees_file_out[i_g]++;
+              // Open the output file
+              if(i_g_last!=i_g){
+                 sprintf(filename_out,"%s/vertical_grid/%sgroup_trees_%03d.dat",filename_root_in,group_text_prefix,i_g);
+                 i_g_last=i_g;
+                 if(fp_out!=NULL)
+                   fclose(fp_out);
+                 fp_out=fopen(filename_out,"a");
+              }
+              // Write this tree
+              fwrite(tree,sizeof(halo_info),n_halos_tree[i_tree],fp_out);
+              // Status message
+              if(k_tree==next_report){
+                 SID_log("%3d%% complete.",SID_LOG_COMMENT|SID_LOG_TIMER,i_report*10);
+                 i_report++;
+                 if(i_report==10)
+                    next_report=n_trees_total-1;
+                 else
+                    next_report=(int)((float)i_report*0.1*(float)n_trees_total);
+              }
            }
         }
         fclose(fp_in);

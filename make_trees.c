@@ -24,6 +24,7 @@ int main(int argc, char *argv[]){
   int         i_read_stop;
   int         i_read_step;
   int         n_search;
+  int         n_search_forests;
   int         n_files_groups;
   int         n_files_subgroups;
   int         n_k_match=2;
@@ -55,9 +56,10 @@ int main(int argc, char *argv[]){
   i_read_stop      =atoi(argv[7]);
   i_read_step      =atoi(argv[8]);
   n_search         =atoi(argv[9]);
-  n_files_groups   =atoi(argv[10]);
-  n_files_subgroups=atoi(argv[11]);
-  flag_fix_bridges =atoi(argv[12]);
+  n_search_forests =atoi(argv[10]);
+  n_files_groups   =atoi(argv[11]);
+  n_files_subgroups=atoi(argv[12]);
+  flag_fix_bridges =atoi(argv[13]);
 
   SID_log("Constructing merger trees for snapshots #%d->#%d (step=%d, n_search=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read_start,i_read_stop,i_read_step,n_search);
 
@@ -79,6 +81,7 @@ int main(int argc, char *argv[]){
                          filename_snap_list_in,
                          n_files_groups,
                          n_files_subgroups,
+                         n_search_forests,
                          &flag_clean);
 
   SID_log("Done.",SID_LOG_CLOSE);

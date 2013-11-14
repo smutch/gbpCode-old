@@ -363,8 +363,9 @@ int compute_trees_matches(char   *filename_root_in,
   }
 
   // Check to see if there are any matches needing to be completed
+  flag_go=TRUE;
+/*
   flag_go=FALSE;
-/**/
   SID_log("Checking for matching files...",SID_LOG_OPEN);
   SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
   for(i_read=i_read_stop;i_read>i_read_start && !flag_go;i_read--)
@@ -378,7 +379,7 @@ int compute_trees_matches(char   *filename_root_in,
   else
      SID_log("Matching starting with first snapshot.",SID_LOG_COMMENT);
   SID_log("Done.",SID_LOG_CLOSE);
-/**/
+*/
 
   // Generate matches (if needed).  Loop over base groups first...
   if(flag_go){

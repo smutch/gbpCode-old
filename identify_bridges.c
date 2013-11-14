@@ -20,6 +20,7 @@ void identify_bridges(tree_horizontal_info **halos,
                       int     i_read_step,
                       int     n_search,
                       int     n_wrap,
+                      int     n_halos_max,
                       int     n_files,
                       char   *filename_root_matches,
                       int     flag_match_subgroups){
@@ -57,7 +58,7 @@ void identify_bridges(tree_horizontal_info **halos,
 
        // Read back-matching
        read_matches(filename_root_matches,
-                    j_read_1,j_read_2,
+                    j_read_1,j_read_2,n_halos_max,
                     flag_match_subgroups,
                     &n_halos_1_matches,
                     &n_halos_2_matches,
@@ -113,7 +114,7 @@ void identify_bridges(tree_horizontal_info **halos,
 
        // Read back-matching
        read_matches(filename_root_matches,
-                    j_read_1,j_read_2,
+                    j_read_1,j_read_2,n_halos_max,
                     flag_match_subgroups,
                     &n_halos_1_matches,
                     &n_halos_2_matches,

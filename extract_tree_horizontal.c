@@ -206,7 +206,8 @@ int main(int argc,char *argv[]){
                if(i_forest_list[i_tree]==i_forest_subgroups[subgroup_tree_id])
                   flag_found=TRUE;
             }
-            if(!flag_found && i_forest_subgroups_start[subgroup_tree_id]<(i_read+max_link_length)){
+            //if(!flag_found && i_forest_subgroups_start[subgroup_tree_id]<(i_read+max_link_length)){
+            if(!flag_found){
                i_forest_list[n_forest_list]     =i_forest_subgroups[subgroup_tree_id];
                i_forest_list_snap[n_forest_list]=i_read;
                i_forest_list_size[n_forest_list]=n_subgroups_group;
