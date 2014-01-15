@@ -44,40 +44,48 @@ int main(int argc, char *argv[]){
   snap_number_stop =atoi(argv[4]);
   snap_number_step =atoi(argv[5]);
 
+  int flag_use_profiles=FALSE;
+
   if(SID.I_am_Master){
     int i_type;
-    SID_log("Processing %sgroup catalogs for snaps %d->%d...",SID_LOG_OPEN|SID_LOG_TIMER,prefix_text,snap_number_start,snap_number_stop);
+    SID_log("Processing catalogs for snaps %d->%d...",SID_LOG_OPEN|SID_LOG_TIMER,snap_number_start,snap_number_stop);
+    SID_log("Properties structure size=%lld",SID_LOG_COMMENT,sizeof(halo_properties_info));
     for(snap_number=snap_number_start;snap_number<=snap_number_stop;snap_number++){
        for(i_type=0;i_type<2;i_type++){
-          switch(i_type){
-             case 0:
-                sprintf(prefix_text,"");
-                break;
-             case 1:
-                sprintf(prefix_text,"sub");
-                break;
-          }
+         switch(i_type){
+            case 0:
+               sprintf(prefix_text,"");
+               break;
+            case 1:
+               sprintf(prefix_text,"sub");
+               break;
+         }
+         int flag_multifile=FALSE;
+         int flag_notfound =TRUE;
          sprintf(filename_properties,"%s_%03d.catalog_%sgroups_properties",filename_root,snap_number,prefix_text);
-         sprintf(filename_profiles,  "%s_%03d.catalog_%sgroups_profiles",  filename_root,snap_number,prefix_text);
-         sprintf(filename_out,"%s.ascii",filename_properties);
+         sprintf(filename_out,       "%s.ascii",filename_properties);
+         if(flag_use_profiles)
+            sprintf(filename_profiles,  "%s_%03d.catalog_%sgroups_profiles",  filename_root,snap_number,prefix_text);
+         fp_properties=fopen(filename_properties,"r");
          SID_log("Writing snap #%03d %sgroup properties to file {%s}...",SID_LOG_OPEN,snap_number,prefix_text,filename_out);
 
-         fp_properties=fopen(filename_properties,"r");
          fread(&i_file,             sizeof(int),1,fp_properties);
          fread(&n_files,            sizeof(int),1,fp_properties);
          fread(&n_groups_properties,sizeof(int),1,fp_properties);
          fread(&n_groups_all,       sizeof(int),1,fp_properties);
          SID_log("(%d %sgroups)...",SID_LOG_CONTINUE,n_groups_properties,prefix_text);
 
-         fp_profiles=fopen(filename_profiles,"r");
-         fread(&i_file_profiles,       sizeof(int),1,fp_profiles);
-         fread(&n_files_profiles,      sizeof(int),1,fp_profiles);
-         fread(&n_groups_profiles,     sizeof(int),1,fp_profiles);
-         fread(&n_groups_profiles_all, sizeof(int),1,fp_profiles);
+         if(flag_use_profiles){
+            fp_profiles=fopen(filename_profiles,"r");
+            fread(&i_file_profiles,       sizeof(int),1,fp_profiles);
+            fread(&n_files_profiles,      sizeof(int),1,fp_profiles);
+            fread(&n_groups_profiles,     sizeof(int),1,fp_profiles);
+            fread(&n_groups_profiles_all, sizeof(int),1,fp_profiles);
+         }
 
          // Process halos
          fp_out=fopen(filename_out,"w");
-         fprintf(fp_out,"# Ascii %sgroup catalog of snap #%d of %s\n",prefix_text,snap_number,filename_root);
+         fprintf(fp_out,"# ASCII %sgroup catalog of snap #%d of %s\n",prefix_text,snap_number,filename_root);
          fprintf(fp_out,"# File columns: (1)     %sgroup number\n",prefix_text);
          fprintf(fp_out,"#               (2)     # of particles\n");
          fprintf(fp_out,"#               (3)     id_MBP\n");
@@ -96,21 +104,28 @@ int main(int argc, char *argv[]){
          fprintf(fp_out,"#               (16)    M_vir      [M_sol/h]\n");
          fprintf(fp_out,"#               (17)    R_vir      [Mpc/h]\n");
          fprintf(fp_out,"#               (18)    R_halo     [Mpc/h]\n");
-         fprintf(fp_out,"#               (19)    R_max      [kpc/h]\n");
+         fprintf(fp_out,"#               (19)    R_max      [Mpc/h]\n");
          fprintf(fp_out,"#               (20)    V_max      [km/s]\n");
          fprintf(fp_out,"#               (21)    V_vir      [km/s]\n");
          fprintf(fp_out,"#               (22)    sigma_v    [km/s]\n");
          fprintf(fp_out,"#               (23-25) spin       [Mpc/h km/s]\n");
-         fprintf(fp_out,"#               (26)    lambda\n");
+         fprintf(fp_out,"#               (26)    lambda (spin parameter)\n");
          fprintf(fp_out,"#               (27)    q_triaxial\n");
          fprintf(fp_out,"#               (28)    s_triaxial\n");
          fprintf(fp_out,"#               (29)    offset_COM [kpc/h]\n");
-         fprintf(fp_out,"#               (30)    overdensity(R_halo)\n");
+         if(flag_use_profiles)
+            fprintf(fp_out,"#               (30)    overdensity(R_halo)\n");
          for(i_group=0;i_group<n_groups_properties;i_group++){
            fread(&properties,sizeof(halo_properties_info),1,fp_properties);
 
-           fread(&(profile.n_bins),sizeof(int),                 1,              fp_profiles);
-           fread(&(profile.bins),  sizeof(halo_profile_bin_info),profile.n_bins,fp_profiles);
+           float overdensity;
+           if(flag_use_profiles){
+              fread(&(profile.n_bins),sizeof(int),                 1,              fp_profiles);
+              fread(&(profile.bins),  sizeof(halo_profile_bin_info),profile.n_bins,fp_profiles);
+              overdensity=profile.bins[profile.n_bins-1].overdensity;
+           }
+           else
+              overdensity=-1.;
 
            // Create a few properties
            double dx,dy,dz;
@@ -122,7 +137,7 @@ int main(int argc, char *argv[]){
            offset_COM=sqrt(dx*dx+dy*dy+dz*dz);
 
            // Perform write
-           fprintf(fp_out,"%9d %9d %9lld  %12.5e %12.5e %12.5e %11.5f %11.5f %11.5f  %12.5e %12.5e %12.5e %11.5f %11.5f %11.5f  %10.5le %11.5f %11.5f %11.5f  %11.5f %11.5f %11.5f  %12.5e %12.5e %12.5e %11.5f  %11.5f %11.5f  %11.5f  %11.5f\n",
+           fprintf(fp_out,"%9d %9d %9lld  %12.5e %12.5e %12.5e %11.5f %11.5f %11.5f  %12.5e %12.5e %12.5e %11.5f %11.5f %11.5f  %10.5le %11.5f %11.5f %11.5f  %11.5f %11.5f %11.5f  %12.5e %12.5e %12.5e %11.5f  %11.5f %11.5f  %11.5f",
                    i_group,properties.n_particles,properties.id_MBP,
                    properties.position_COM[0],properties.position_COM[1],properties.position_COM[2],
                    properties.velocity_COM[0],properties.velocity_COM[1],properties.velocity_COM[2],
@@ -131,7 +146,7 @@ int main(int argc, char *argv[]){
                    properties.M_vir,
                    properties.R_vir,
                    properties.R_halo,
-                   properties.R_max*1e3,
+                   properties.R_max,
                    properties.V_max,
                    v_c,
                    properties.sigma_v,
@@ -139,18 +154,21 @@ int main(int argc, char *argv[]){
                    lambda,
                    properties.q_triaxial,
                    properties.s_triaxial,
-                   offset_COM*1e3, // converts to kpc/h
-                   profile.bins[profile.n_bins-1].overdensity);
+                   offset_COM*1e3); // converts to kpc/h
+            if(flag_use_profiles)
+               fprintf(fp_out,"  %11.5f",overdensity);
+            fprintf(fp_out,"\n");
          }
 
          // Close files
-         fclose(fp_profiles);
+         if(flag_use_profiles)
+            fclose(fp_profiles);
          fclose(fp_properties);
          fclose(fp_out);
          SID_log("Done.",SID_LOG_CLOSE);
        }
-       SID_log("Done.",SID_LOG_CLOSE);
      }
+     SID_log("Done.",SID_LOG_CLOSE);
   }  
 
   SID_exit(ERROR_NONE);

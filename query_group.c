@@ -18,22 +18,26 @@ int main(int argc, char *argv[]){
   int     i_profile;
   int     flag_process_group;
   int     snap_number;
+  char   *group_type_in;
 
   SID_init(&argc,&argv,NULL);
 
   strcpy(filename_root, argv[1]);
   snap_number     =atoi(argv[2]);
-  i_group_selected=atoi(argv[3]);
+  group_type_in   =     argv[3];
+  i_group_selected=atoi(argv[4]);
 
-  if(i_group_selected<0){
-    flag_process_group=TRUE;
-    i_group_selected*=-1;
+  if(!strcmp(group_type_in,"sub")||
+     !strcmp(group_type_in,"subgroup")){
+     flag_process_group=FALSE;
+     sprintf(prefix_text,"sub");
+  }
+  else if(!strcmp(group_type_in,"group")){
+     flag_process_group=TRUE;
     sprintf(prefix_text,"");
   }
-  else{
-    flag_process_group=FALSE;
-    sprintf(prefix_text,"sub");
-  }
+  else
+     SID_trap_error("Incorrect syntax.",ERROR_SYNTAX);
 
   char   filename_subgroups[MAX_FILENAME_LENGTH];
   char   filename_groups[MAX_FILENAME_LENGTH];
@@ -41,7 +45,7 @@ int main(int argc, char *argv[]){
   FILE  *fp_groups;
   FILE  *fp_particles;
   int    n_particles_i;
-  int    particle_offset_i;
+  size_t particle_offset_i;
   int    id_byte_size;
   int    n_particles_int;
   size_t n_particles; 
@@ -60,23 +64,33 @@ int main(int argc, char *argv[]){
     SID_log("", SID_LOG_COMMENT);
 
     // Open file and read header
+    int n_bytes_groups;
     if(flag_process_group)
        fp_groups=fopen(filename_groups,"r");
     else
        fp_groups=fopen(filename_subgroups,"r");
-    fread(&n_groups_all,sizeof(int),1,fp_groups);
+    fread(&n_groups_all,  sizeof(int),1,fp_groups);
+    fread(&n_bytes_groups,sizeof(int),1,fp_groups);
+    if(n_bytes_groups!=4 && n_bytes_groups!=8)
+       SID_trap_error("Invalid group offset byte length (%d).",ERROR_LOGIC,n_bytes_groups);
 
     // Sanity check
-    if(i_group_selected<0 && i_group_selected>=n_groups_all)
+    if(i_group_selected<0 || i_group_selected>=n_groups_all)
        SID_trap_error("Invalid group selection {%d;n_groups=%d}.",ERROR_LOGIC,i_group_selected,n_groups_all);
 
     // Find the group we want and get the needed info
+    int particle_offset_i_int;
     fseeko(fp_groups,sizeof(int)*i_group_selected,SEEK_CUR);
     fread(&n_particles_i,sizeof(int),1,fp_groups);
     fseeko(fp_groups,sizeof(int)*(n_groups_all-i_group_selected-1),SEEK_CUR);
-    fseeko(fp_groups,sizeof(int)*i_group_selected,SEEK_CUR);
-    fread(&particle_offset_i,sizeof(int),1,fp_groups);
-    fseeko(fp_groups,sizeof(int)*(n_groups_all-i_group_selected-1),SEEK_CUR);
+    fseeko(fp_groups,n_bytes_groups*i_group_selected,SEEK_CUR);
+    if(n_bytes_groups==sizeof(int)){
+       fread(&particle_offset_i_int,sizeof(int),1,fp_groups);
+       particle_offset_i=(size_t)particle_offset_i_int;
+    }
+    else
+       fread(&particle_offset_i,sizeof(size_t),1,fp_groups);
+    fseeko(fp_groups,n_bytes_groups*(n_groups_all-i_group_selected-1),SEEK_CUR);
     if(flag_process_group){
        fseeko(fp_groups,sizeof(int)*i_group_selected,SEEK_CUR);
        fread(&n_sub_i,sizeof(int),1,fp_groups);
@@ -96,8 +110,8 @@ int main(int argc, char *argv[]){
     else
        fread(&n_particles,sizeof(size_t),1,fp_particles);
     if(((size_t)particle_offset_i)>=n_particles)
-       SID_trap_error("Invalid particle offset {%d;n_particles=%lld}.",ERROR_LOGIC,particle_offset_i,n_particles);
-    fseeko(fp_particles,id_byte_size*particle_offset,SEEK_CUR);
+       SID_trap_error("Invalid particle offset {%lld;n_particles=%lld}.",ERROR_LOGIC,particle_offset_i,n_particles);
+    fseeko(fp_particles,id_byte_size*particle_offset_i,SEEK_CUR);
     if(id_byte_size==sizeof(int)){
        fread(&MBP_ID_int,sizeof(int),1,fp_particles);
        MBP_ID=(size_t)MBP_ID_int;
@@ -109,7 +123,7 @@ int main(int argc, char *argv[]){
     SID_log("snapshot no.    = %d",SID_LOG_COMMENT,snap_number);
     SID_log("halo            = %d of %d",    SID_LOG_COMMENT,i_group_selected,n_groups_all);
     SID_log("id byte size    = %d",SID_LOG_COMMENT,id_byte_size);
-    SID_log("particle offset = %d",SID_LOG_COMMENT,particle_offset_i);
+    SID_log("particle offset = %lld",SID_LOG_COMMENT,particle_offset_i);
     SID_log("no. of particles= %lld of %lld",SID_LOG_COMMENT,n_particles_i,n_particles);
     SID_log("MBP ID          = %d",SID_LOG_COMMENT,MBP_ID);
     if(flag_process_group)
