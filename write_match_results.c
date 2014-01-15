@@ -15,7 +15,8 @@ void write_match_results(char       *filename_out_dir,
                          int         j_read,
                          plist_info *plist1,
                          plist_info *plist2,
-                         int         k_match){
+                         int         k_match,
+                         int         mode){
   char        filename_out[256];
   char        filename_out_dir_snap[256];
   FILE       *fp_out;
@@ -78,12 +79,17 @@ void write_match_results(char       *filename_out_dir,
         break;
   }
 
-  // Create output directory if need-be
-  if(filename_out_dir!=NULL)
-     mkdir(filename_out_dir,02755);
-
   // Intialize filenames
-  sprintf(filename_out_dir_snap,"%s/%s",filename_out_dir,filename_cat1);
+  if(check_mode_for_flag(mode,WRITE_MATCHES_MODE_TREES)){
+     sprintf(filename_out_dir_snap,"%s/%s",filename_out_dir,filename_cat1);
+     // Create output directory if need-be
+     if(filename_out_dir!=NULL)
+        mkdir(filename_out_dir,02755);
+  }
+  else if(check_mode_for_flag(mode,WRITE_MATCHES_MODE_SINGLE))
+     sprintf(filename_out_dir_snap,"%s/",filename_out_dir);
+  else
+     SID_trap_error("Invalid write mode flag (%d).",ERROR_LOGIC,mode);
   if(filename_out_dir!=NULL)
      sprintf(filename_out,"%s/%sgroup_matches_%s_%s.dat",filename_out_dir_snap,group_text_prefix,filename_cat1,filename_cat2);
   else
