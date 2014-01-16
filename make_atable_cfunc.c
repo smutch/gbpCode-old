@@ -36,7 +36,6 @@ int main(int argc, char *argv[]){
    int     i_file,n_files;
    int     n_1D,n_2D;
    int     grid_size;
-   int     F_randoms;
    int     x_column;
    int     y_column;
    int     z_column;
@@ -106,7 +105,7 @@ int main(int argc, char *argv[]){
  
    // Initialize the power spectrum
    cfunc_info cfunc;
-   init_cfunc(&cfunc,n_data,F_random,n_bits_PHK,
+   init_cfunc(&cfunc,n_data,F_random*n_data,n_bits_PHK,
               redshift,box_size,n_jack,
               r_min_l1D,r_max_1D,dr_1D,
               r_min_2D, r_max_2D,dr_2D);

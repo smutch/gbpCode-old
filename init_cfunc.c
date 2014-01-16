@@ -8,7 +8,7 @@
 #include <gbpHalos.h>
 #include <gbpClustering.h>
 
-void init_cfunc(cfunc_info *cfunc,int    n_data,  int    F_random,int    n_bits_PHK,
+void init_cfunc(cfunc_info *cfunc,int    n_data,  int    n_random,int    n_bits_PHK,
                 double redshift,  double box_size,int    n_jack,
                 double r_min_l1D, double r_max_1D,double dr_1D,
                 double r_min_2D,  double r_max_2D,double dr_2D){
@@ -20,8 +20,8 @@ void init_cfunc(cfunc_info *cfunc,int    n_data,  int    F_random,int    n_bits_
 
   // Initialize constants
   cfunc->n_data    =n_data;
-  cfunc->n_random  =n_data*F_random;
-  cfunc->F_random  =F_random;
+  cfunc->n_random  =n_random;
+  cfunc->F_random  =(double)n_random/(double)n_data;
   cfunc->redshift  =redshift;
   cfunc->box_size  =box_size;
   cfunc->n_jack    =n_jack;

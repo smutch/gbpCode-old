@@ -9,6 +9,9 @@
 #include <gbpHalos.h>
 #include <gbpClustering.h>
 
+#define MAKE_GROUPINGS_CENTRALS_ONLY  1
+#define MAKE_GROUPINGS_USE_BIAS_MODEL 2
+
 int main(int argc, char *argv[]){
   double  a_start;
   int     n_species;
@@ -127,7 +130,6 @@ int main(int argc, char *argv[]){
   double *CFUNC_2D=NULL;
   double *dCFUNC_2D=NULL;
   int     n_1D,n_2D;
-  int     F_random;
   size_t  n_random,n_random_local;
   int     i_random,j_random;
   RNG_info  RNG;
@@ -150,7 +152,8 @@ int main(int argc, char *argv[]){
   long long   n_random_ll;
   long long   n_data_ll;
   size_t      n_rank;
-  GBPREAL        V_grouping,V_max_lo,V_max_hi,delta_V_max;
+  GBPREAL     V_grouping,V_max_lo,V_max_hi,delta_V_max;
+  int         mode;
 
   // Initialization -- MPI etc.
   SID_init(&argc,&argv,NULL);
@@ -163,9 +166,27 @@ int main(int argc, char *argv[]){
   V_max_lo            =(GBPREAL)atof(argv[7]);
   V_max_hi            =(GBPREAL)atof(argv[8]);
   n_groupings         =(int) atoi(argv[9]);
+  mode                =(int) atoi(argv[10]);
   delta_V_max         =(V_max_hi-V_max_lo)/(double)(n_groupings-1);
 
-  SID_log("Producing %d groupings of halos...",SID_LOG_OPEN,n_groupings);
+  SID_log("Producing (up to) %d groupings of halos...",SID_LOG_OPEN,n_groupings);
+
+  // Parse mode flag and report results
+  double redshift;
+  double redshift_norm;
+  int    flag_centrals_only;
+  int    flag_use_bias_model;
+  flag_centrals_only =check_mode_for_flag(mode,MAKE_GROUPINGS_CENTRALS_ONLY);
+  flag_use_bias_model=check_mode_for_flag(mode,MAKE_GROUPINGS_USE_BIAS_MODEL);
+  if(flag_centrals_only)
+     SID_log("USING CENTRALS ONLY.",SID_LOG_COMMENT);
+  else
+     SID_log("USING SUBSTRUCTURE.",SID_LOG_COMMENT);
+  if(flag_use_bias_model){
+     redshift     =(double)atof(argv[11]);
+     redshift_norm=(double)atof(argv[12]);
+     SID_log("USING THK BIAS MODEL TO SET NUMBER DENSITIES.",SID_LOG_COMMENT);
+  }
 
   // Read group catalogs
   init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
@@ -200,24 +221,26 @@ int main(int argc, char *argv[]){
   SID_log("%d groups and %d subgroups...",SID_LOG_CONTINUE,n_groups_all,n_subgroups_all);
 
   //   ... allocate arrays ...
-  x_halos       =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  y_halos       =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  z_halos       =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  r_halos       =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  vx_halos_FoF  =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  vy_halos_FoF  =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  vz_halos_FoF  =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  vx_halos_sub  =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  vy_halos_sub  =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  vz_halos_sub  =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  M_halos       =(double  *)SID_malloc(sizeof(double)*n_subgroups_all);
-  M_FoF         =(double  *)SID_malloc(sizeof(double)*n_subgroups_all);
-  V_halos       =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  V_FoF         =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_subgroups_all);
-  i_FoF         =(int     *)SID_malloc(sizeof(int)*n_subgroups_all);
-  group_index   =(int     *)SID_malloc(sizeof(int)*n_subgroups_all);
-  subgroup_index=(int     *)SID_malloc(sizeof(int)*n_subgroups_all);
-  n_FoF         =(int     *)SID_malloc(sizeof(int)*n_subgroups_all);
+  int n_halos_max;
+  n_halos_max   =MAX(n_groups_all,n_subgroups_all);
+  x_halos       =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_max);
+  y_halos       =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_max);
+  z_halos       =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_max);
+  r_halos       =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_max);
+  vx_halos_FoF  =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_max);
+  vy_halos_FoF  =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_max);
+  vz_halos_FoF  =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_max);
+  vx_halos_sub  =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_max);
+  vy_halos_sub  =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_max);
+  vz_halos_sub  =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_max);
+  M_halos       =(double  *)SID_malloc(sizeof(double) *n_halos_max);
+  M_FoF         =(double  *)SID_malloc(sizeof(double) *n_halos_max);
+  V_halos       =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_max);
+  V_FoF         =(GBPREAL *)SID_malloc(sizeof(GBPREAL)*n_halos_max);
+  i_FoF         =(int     *)SID_malloc(sizeof(int)    *n_halos_max);
+  group_index   =(int     *)SID_malloc(sizeof(int)    *n_halos_max);
+  subgroup_index=(int     *)SID_malloc(sizeof(int)    *n_halos_max);
+  n_FoF         =(int     *)SID_malloc(sizeof(int)    *n_halos_max);
   x_min         =1e10;
   x_max         =0.;
   y_min         =1e10;
@@ -229,36 +252,73 @@ int main(int argc, char *argv[]){
   int k_subgroup=0;
   for(i_halo=0,n_halos=0;i_halo<n_groups_all;i_halo++){
     fread_catalog_raw(&fp_properties_groups,&group_properties,NULL,i_halo);
-    for(i_subhalo=0;i_subhalo<n_subgroups_group[i_halo];i_subhalo++,k_subgroup++){
-      fread_catalog_raw(&fp_properties_subgroups,&subgroup_properties,NULL,k_subgroup);
-      if(subgroup_properties.n_particles>=n_particles_min && subgroup_properties.M_vir>0.){
-        group_index[n_halos]   =i_halo;
-        subgroup_index[n_halos]=k_subgroup;
-        i_FoF[n_halos]         =i_subhalo;
-        n_FoF[n_halos]         =n_subgroups_group[i_halo];
-        x_halos[n_halos]       =(GBPREAL)subgroup_properties.position_MBP[0];
-        y_halos[n_halos]       =(GBPREAL)subgroup_properties.position_MBP[1];
-        z_halos[n_halos]       =(GBPREAL)subgroup_properties.position_MBP[2];
-        r_halos[n_halos]       =(GBPREAL)sqrt(pow(group_properties.position_MBP[0]-subgroup_properties.position_MBP[0],2.0)+
-                                              pow(group_properties.position_MBP[1]-subgroup_properties.position_MBP[1],2.0)+
-                                              pow(group_properties.position_MBP[2]-subgroup_properties.position_MBP[2],2.0));
-        vx_halos_FoF[n_halos]=(GBPREAL)group_properties.velocity_COM[0];
-        vy_halos_FoF[n_halos]=(GBPREAL)group_properties.velocity_COM[1];
-        vz_halos_FoF[n_halos]=(GBPREAL)group_properties.velocity_COM[2];
-        vx_halos_sub[n_halos]=(GBPREAL)subgroup_properties.velocity_COM[0];
-        vy_halos_sub[n_halos]=(GBPREAL)subgroup_properties.velocity_COM[1];
-        vz_halos_sub[n_halos]=(GBPREAL)subgroup_properties.velocity_COM[2];
-        M_halos[n_halos]     =(double)subgroup_properties.M_vir;
-        M_FoF[n_halos]       =(double)group_properties.M_vir;
-        V_halos[n_halos]     =(GBPREAL)subgroup_properties.V_max;
-        V_FoF[n_halos]       =(GBPREAL)group_properties.V_max;
-        x_min                =MIN(x_min,x_halos[n_halos]);
-        x_max                =MAX(x_max,x_halos[n_halos]);
-        y_min                =MIN(y_min,y_halos[n_halos]);
-        y_max                =MAX(y_max,y_halos[n_halos]);
-        z_min                =MIN(z_min,z_halos[n_halos]);
-        z_max                =MAX(z_max,z_halos[n_halos]);
-        n_halos++;
+    if(flag_centrals_only){
+      if(group_properties.n_particles>=n_particles_min && group_properties.M_vir>0.){
+        if(!flag_centrals_only || (flag_centrals_only && i_subhalo==0)){
+           group_index[n_halos]   =i_halo;
+           group_index[n_halos]   =i_halo;
+           i_FoF[n_halos]         =i_subhalo;
+           n_FoF[n_halos]         =n_subgroups_group[i_halo];
+           x_halos[n_halos]       =(GBPREAL)group_properties.position_MBP[0];
+           y_halos[n_halos]       =(GBPREAL)group_properties.position_MBP[1];
+           z_halos[n_halos]       =(GBPREAL)group_properties.position_MBP[2];
+           r_halos[n_halos]       =(GBPREAL)sqrt(pow(group_properties.position_MBP[0]-group_properties.position_MBP[0],2.0)+
+                                                 pow(group_properties.position_MBP[1]-group_properties.position_MBP[1],2.0)+
+                                                 pow(group_properties.position_MBP[2]-group_properties.position_MBP[2],2.0));
+           vx_halos_FoF[n_halos]=(GBPREAL)group_properties.velocity_COM[0];
+           vy_halos_FoF[n_halos]=(GBPREAL)group_properties.velocity_COM[1];
+           vz_halos_FoF[n_halos]=(GBPREAL)group_properties.velocity_COM[2];
+           vx_halos_sub[n_halos]=(GBPREAL)group_properties.velocity_COM[0];
+           vy_halos_sub[n_halos]=(GBPREAL)group_properties.velocity_COM[1];
+           vz_halos_sub[n_halos]=(GBPREAL)group_properties.velocity_COM[2];
+           M_halos[n_halos]     =(double)group_properties.M_vir;
+           M_FoF[n_halos]       =(double)group_properties.M_vir;
+           V_halos[n_halos]     =(GBPREAL)group_properties.V_max;
+           V_FoF[n_halos]       =(GBPREAL)group_properties.V_max;
+           x_min                =MIN(x_min,x_halos[n_halos]);
+           x_max                =MAX(x_max,x_halos[n_halos]);
+           y_min                =MIN(y_min,y_halos[n_halos]);
+           y_max                =MAX(y_max,y_halos[n_halos]);
+           z_min                =MIN(z_min,z_halos[n_halos]);
+           z_max                =MAX(z_max,z_halos[n_halos]);
+           n_halos++;
+        }
+      }
+    }
+    else{
+      for(i_subhalo=0;i_subhalo<n_subgroups_group[i_halo];i_subhalo++,k_subgroup++){
+        fread_catalog_raw(&fp_properties_subgroups,&subgroup_properties,NULL,k_subgroup);
+        if(subgroup_properties.n_particles>=n_particles_min && subgroup_properties.M_vir>0.){
+          if(!flag_centrals_only || (flag_centrals_only && i_subhalo==0)){
+             group_index[n_halos]   =i_halo;
+             subgroup_index[n_halos]=k_subgroup;
+             i_FoF[n_halos]         =i_subhalo;
+             n_FoF[n_halos]         =n_subgroups_group[i_halo];
+             x_halos[n_halos]       =(GBPREAL)subgroup_properties.position_MBP[0];
+             y_halos[n_halos]       =(GBPREAL)subgroup_properties.position_MBP[1];
+             z_halos[n_halos]       =(GBPREAL)subgroup_properties.position_MBP[2];
+             r_halos[n_halos]       =(GBPREAL)sqrt(pow(group_properties.position_MBP[0]-subgroup_properties.position_MBP[0],2.0)+
+                                                   pow(group_properties.position_MBP[1]-subgroup_properties.position_MBP[1],2.0)+
+                                                   pow(group_properties.position_MBP[2]-subgroup_properties.position_MBP[2],2.0));
+             vx_halos_FoF[n_halos]=(GBPREAL)group_properties.velocity_COM[0];
+             vy_halos_FoF[n_halos]=(GBPREAL)group_properties.velocity_COM[1];
+             vz_halos_FoF[n_halos]=(GBPREAL)group_properties.velocity_COM[2];
+             vx_halos_sub[n_halos]=(GBPREAL)subgroup_properties.velocity_COM[0];
+             vy_halos_sub[n_halos]=(GBPREAL)subgroup_properties.velocity_COM[1];
+             vz_halos_sub[n_halos]=(GBPREAL)subgroup_properties.velocity_COM[2];
+             M_halos[n_halos]     =(double)subgroup_properties.M_vir;
+             M_FoF[n_halos]       =(double)group_properties.M_vir;
+             V_halos[n_halos]     =(GBPREAL)subgroup_properties.V_max;
+             V_FoF[n_halos]       =(GBPREAL)group_properties.V_max;
+             x_min                =MIN(x_min,x_halos[n_halos]);
+             x_max                =MAX(x_max,x_halos[n_halos]);
+             y_min                =MIN(y_min,y_halos[n_halos]);
+             y_max                =MAX(y_max,y_halos[n_halos]);
+             z_min                =MIN(z_min,z_halos[n_halos]);
+             z_max                =MAX(z_max,z_halos[n_halos]);
+             n_halos++;
+          }
+        }
       }
     }
   }
@@ -272,6 +332,13 @@ int main(int argc, char *argv[]){
   fclose_catalog(&fp_properties_subgroups);
   SID_log("Done.",SID_LOG_CLOSE);
 
+  // Initialize cosmology if we're using the bias model to set number densities
+  cosmo_info *cosmo=NULL;
+  if(flag_use_bias_model){
+     init_cosmo_std(&cosmo);
+     init_sigma_M(&cosmo,redshift,PSPEC_LINEAR_TF,PSPEC_ALL_MATTER);
+  }
+
   // Write each halo grouping in turn ...
   int i_column;
   SID_log("Writing %d groupings of halos...",SID_LOG_OPEN|SID_LOG_TIMER,n_groupings);
@@ -279,29 +346,57 @@ int main(int argc, char *argv[]){
   fp_stats=fopen(filename_out,"w");
   for(i_grouping=0,V_grouping=V_max_lo;i_grouping<=n_groupings;i_grouping++,V_grouping+=delta_V_max){
 
-    //   ... set grouping.  If this is the last iteration, do all halos ...
-    int n_halos_this_grouping;
-    if(i_grouping==n_groupings){
-       SID_log("Generating catalog of all halos...",SID_LOG_OPEN|SID_LOG_TIMER,i_grouping+1,n_groupings);
-       sprintf(filename_out,"%s_all.dat",filename_out_root);
-       fp=fopen(filename_out,"w");
-       i_halo=0;
-       n_halos_this_grouping=n_halos;
+    // Set the number density for this grouping
+    int    n_halos_this_grouping;
+    double bias;
+    if(flag_use_bias_model){
+       double delta_c=1.686;
+       double b_z_norm;
+       b_z_norm=linear_growth_factor(redshift_norm,cosmo)/linear_growth_factor(redshift,cosmo);
+       bias    =bias_model(V_grouping*1e3,delta_c,redshift,&cosmo,BIAS_MODEL_TRK|BIAS_MODEL_VMAX_ORDINATE);
+       n_halos_this_grouping=(int)((b_z_norm*(double)n_halos_per_grouping)/(double)bias);
     }
-    else{
-       SID_log("Generating grouping %d of %d...",SID_LOG_OPEN|SID_LOG_TIMER,i_grouping+1,n_groupings);
-       sprintf(filename_out,"%s_grouping_%03d.dat",filename_out_root,i_grouping);
-       fp=fopen(filename_out,"w");
+    else
+       n_halos_this_grouping=n_halos_per_grouping;
+
+    //   ... set grouping.  If this is the last iteration, do all halos ...
+    fp=NULL;
+    if(i_grouping<n_groupings){
        i_halo=0;
        while(V_halos[V_halos_index[i_halo]]<V_grouping && i_halo<(n_halos-1)) i_halo++;
        if(i_halo>0){
           if((V_halos[V_halos_index[i_halo-1]]-V_grouping)<(V_halos[V_halos_index[i_halo]]-V_grouping)) i_halo--;
        }
-       i_halo=MAX(0,i_halo-n_halos_per_grouping/2);
-       n_halos_this_grouping=n_halos_per_grouping;
+       i_halo=MAX(0,i_halo-n_halos_this_grouping/2);
+
+       // If this grouping pushes past the end of the list, then 
+       //    skip this grouping and go ahead with the final 'all' list
+       if((i_halo+n_halos_this_grouping)>=n_halos){
+          SID_log("Out of halos.  Grouping %d not generated.",SID_LOG_COMMENT,i_grouping+1);
+          i_grouping=n_groupings;
+          i_halo=0;
+          n_halos_this_grouping=n_halos;
+       }
+    }
+    else{
+       i_halo=0;
+       n_halos_this_grouping=n_halos;
     }
 
-    //   ... write grouping to file.
+    if(i_grouping==n_groupings){
+       SID_log("Generating catalog of all halos...",SID_LOG_OPEN|SID_LOG_TIMER,i_grouping+1,n_groupings);
+       sprintf(filename_out,"%s_all.dat",filename_out_root);
+       fp=fopen(filename_out,"w");
+    }
+    else{
+       SID_log("Generating grouping %d of %d...",SID_LOG_OPEN|SID_LOG_TIMER,i_grouping+1,n_groupings);
+       if(flag_use_bias_model)
+          SID_log("Using bias=%.3lf for this grouping (V_max=%.3lf km/s).",SID_LOG_COMMENT,bias,V_grouping);
+       sprintf(filename_out,"%s_grouping_%03d.dat",filename_out_root,i_grouping);
+       fp=fopen(filename_out,"w");
+    }
+
+    //   ... write halos to file.
     SID_log("Halo index range=%d -> %d (out of %d)",SID_LOG_COMMENT,i_halo,i_halo+n_halos_this_grouping-1,n_halos);
     V_min=V_halos[V_halos_index[i_halo]];
     V_med=V_halos[V_halos_index[i_halo+n_halos_this_grouping/2]];
@@ -372,7 +467,7 @@ int main(int argc, char *argv[]){
     // ... write statistics to file ...
     if(i_grouping==0){
        i_column=0;
-       fprintf(fp_stats,"# Stats for %d halo groupings {%s*}\n",n_groupings,filename_out_root);
+       fprintf(fp_stats,"# Stats for groupings {%s*}\n",filename_out_root);
        fprintf(fp_stats,"# Column: (%d) grouping ID\n",   i_column++);
        fprintf(fp_stats,"#         (%d) n_halos\n",       i_column++);
        fprintf(fp_stats,"#         (%d) M_sub h^-1 [M_sol] (min)\n",   i_column++);
@@ -386,7 +481,6 @@ int main(int argc, char *argv[]){
        fprintf(fp_stats,"%03d %8d %le %le %le %le %le %le\n",i_grouping,n_halos_this_grouping,M_min,M_med,M_max,V_min,V_med,V_max);
     else
        fprintf(fp_stats,"all %8d %le %le %le %le %le %le\n",n_halos_this_grouping,M_min,M_med,M_max,V_min,V_med,V_max);
-
     SID_log("Done.",SID_LOG_CLOSE);
   }
   fclose(fp_stats);
@@ -413,6 +507,9 @@ int main(int argc, char *argv[]){
   SID_free(SID_FARG subgroup_index);
   SID_free(SID_FARG n_FoF);
   SID_free(SID_FARG V_halos_index);
+  if(cosmo!=NULL)
+     free_cosmo(&cosmo);
+
   SID_log("Done.",SID_LOG_CLOSE);
 
   SID_log("Done.",SID_LOG_CLOSE);

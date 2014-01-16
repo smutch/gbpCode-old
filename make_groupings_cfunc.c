@@ -37,22 +37,32 @@ int main(int argc, char *argv[]){
    int     i_file,n_files;
    int     n_1D,n_2D;
    int     grid_size;
-   int     F_randoms;
  
    // Initialization -- MPI etc.
    SID_init(&argc,&argv,NULL);
-   if(argc!=8)
+   if(argc!=7)
      SID_trap_error("Incorrect syntax.",ERROR_SYNTAX);
 
    // Parse arguments
    int n_jack;
+   int n_random;
    strcpy(filename_in_root, argv[1]);
    strcpy(filename_out_root,argv[2]);
    redshift         =(double)atof(argv[3]);
    n_jack           =(int)   atoi(argv[4]);
-   box_size         =(double)atof(argv[5]);
-   i_grouping_start =(int)   atoi(argv[6]);
-   i_grouping_stop  =(int)   atoi(argv[7]);
+   n_random         =(int)   atoi(argv[5]);
+   box_size         =(double)atof(argv[6]);
+
+   // Count the number of objects involved
+   int   n_groupings_in;
+   char  filename_count[MAX_FILENAME_LENGTH];
+   FILE *fp_count;
+   sprintf(filename_count,"%s_stats.dat",filename_in_root);
+   fp_count=fopen(filename_count,"r");
+   n_groupings_in=count_lines_data(fp_count)-1;
+   fclose(fp_count);
+   i_grouping_start=0;
+   i_grouping_stop =n_groupings_in-1;
 
    // Sanity check
    int n_groupings;
@@ -60,7 +70,7 @@ int main(int argc, char *argv[]){
    if(n_groupings<1)
        SID_trap_error("No groupings have been selected (you chose start=%d, stop=%d).",ERROR_LOGIC,i_grouping_start,i_grouping_stop);
  
-   SID_log("Producing correllation functions for halo grouping(s)...",SID_LOG_OPEN|SID_LOG_TIMER);
+   SID_log("Producing correllation functions for %d halo grouping(s)...",SID_LOG_OPEN|SID_LOG_TIMER,n_groupings);
  
    // Initialize the objects structure
    plist_info plist;
@@ -80,24 +90,19 @@ int main(int argc, char *argv[]){
    r_max_2D = 50.0;
    dr_2D    =  2.0;
 
-   // Set the factor by which the randoms will exceed the objects
-   int F_random=5;
-
    // Set the PHK boundary width (must be a power of 2)
    int n_bits_PHK=5; 
 
    // Count the number of objects involved
    int   n_data;
-   char  filename_count[MAX_FILENAME_LENGTH];
-   FILE *fp_count;
    sprintf(filename_count,"%s_grouping_%03d.dat",filename_in_root,i_grouping_start);
    fp_count=fopen(filename_count,"r");
    n_data=count_lines_data(fp_count);
    fclose(fp_count);
  
-   // Initialize the power spectrum
+   // Initialize the correlation function structure
    cfunc_info cfunc;
-   init_cfunc(&cfunc,n_data,F_random,n_bits_PHK,
+   init_cfunc(&cfunc,n_data,n_random,n_bits_PHK,
               redshift,box_size,n_jack,
               r_min_l1D,r_max_1D,dr_1D,
               r_min_2D, r_max_2D,dr_2D);
@@ -134,7 +139,7 @@ int main(int argc, char *argv[]){
                            cfunc.r_max,cfunc.box_size,cfunc.n_bits_PHK,cfunc.PHK_width,cfunc.redshift,cfunc.cosmo);
             break;
          }
-  
+
          // Generate randoms
          if(flag_compute_randoms){
             char filename_randoms[MAX_FILENAME_LENGTH];

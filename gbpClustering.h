@@ -77,9 +77,9 @@ struct cfunc_info {
    int          n_jack;
    int          n_2D_total;
    int          n_jack_total;
-   int          F_random;
    int          n_data;
    int          n_random;
+   double       F_random;
    double       r_max;
    double       dr_l1D;
    double       dr_1D;
@@ -139,7 +139,7 @@ void map_to_grid(size_t      n_particles_local,
                  int         mode);
 
 // Correlation function stuff
-void init_cfunc(cfunc_info *cfunc,int   n_data,  int   F_random,int PHK_width,
+void init_cfunc(cfunc_info *cfunc,int   n_data,  int   n_random,int PHK_width,
                 double redshift, double box_size,int n_jack,
                 double r_min_l1D,double r_max_1D,double dr_1D,
                 double r_min_2D, double r_max_2D,double dr_2D);

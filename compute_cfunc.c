@@ -511,6 +511,7 @@ void compute_cfunc(plist_info  *plist,
   COVMTX_2D   =cfunc->COVMTX_2D[i_run];
 
   // Fetch the positions and object counts
+  SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
   SID_log("Initializing...",SID_LOG_OPEN);
   n_data        =((size_t  *)ADaPS_fetch(plist->data,"n_all_%s",species_name))[0]; 
   n_data_local  =((size_t  *)ADaPS_fetch(plist->data,"n_%s",    species_name))[0]; 
@@ -523,6 +524,11 @@ void compute_cfunc(plist_info  *plist,
   x_random_local= (GBPREAL *)ADaPS_fetch(plist->data,"x_%s",    random_name);
   y_random_local= (GBPREAL *)ADaPS_fetch(plist->data,"y_%s",    random_name);
   z_random_local= (GBPREAL *)ADaPS_fetch(plist->data,"z_%s",    random_name);
+
+  // Set F_random
+  cfunc->n_data  =n_data;
+  cfunc->n_random=n_random;
+  cfunc->F_random=(double)n_random/(double)n_data;
 
   // Fetch PHK information
   size_t  n_data_boundary;
@@ -918,7 +924,7 @@ void compute_cfunc(plist_info  *plist,
   // Don't recompute the RR's unless otherwise instructed
   cfunc->flag_compute_RR=FALSE;  
 
+  SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
   SID_log("Done.",SID_LOG_CLOSE);
 }
-
 

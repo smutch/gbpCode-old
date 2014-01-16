@@ -10,7 +10,7 @@ void generate_randoms(cfunc_info *cfunc,plist_info *plist,char *species_name,cha
    size_t n_species_local;
    n_species      =((size_t *)ADaPS_fetch(plist->data,"n_all_%s",species_name))[0];
    n_species_local=((size_t *)ADaPS_fetch(plist->data,"n_%s",    species_name))[0];
-   n_random_target=(size_t)cfunc->F_random*n_species;
+   n_random_target= (size_t)cfunc->n_random;
 
    // Check if a randoms file has been given (and check if it has the right number of items)
    FILE *fp_randoms;
