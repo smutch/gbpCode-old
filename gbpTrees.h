@@ -51,10 +51,11 @@
 #define TREE_HORIZONTAL_WRITE_GHOSTS            8
 #define TREE_HORIZONTAL_WRITE_CHECK_FRAGMENTED 16
 
-#define WRITE_MATCHES_MODE_TREES    0
-#define WRITE_MATCHES_MODE_SINGLE   1
-#define WRITE_MATCHES_CHECK_HEADER  2
-#define WRITE_MATCHES_MODE_DEFAULT  WRITE_MATCHES_MODE_SINGLE
+#define WRITE_MATCHES_MODE_TREES     0
+#define WRITE_MATCHES_MODE_SINGLE    1
+#define WRITE_MATCHES_CHECK_HEADER   2
+#define WRITE_MATCHES_PERFORM_CHECK  4
+#define WRITE_MATCHES_MODE_DEFAULT   WRITE_MATCHES_MODE_SINGLE
 
 // Data structures for horizontal tree construction
 typedef struct tree_horizontal_stats_info tree_horizontal_stats_info;
@@ -422,15 +423,27 @@ void write_trees_horizontal_emerged_candidates(int                   i_read,
                                                char                 *group_text_prefix,
                                                char                 *filename_output_dir,
                                                int                   flag_start_new_file);
+void read_forests(char  *filename_root_in,
+                  int    n_trees_group,
+                  int    n_trees_subgroup,
+                  int   *n_forests_group,
+                  int   *n_forests_subgroup,
+                  int  **i_forest_group,
+                  int  **i_forest_subgroup,
+                  int  **n_halos_forest_group,
+                  int  **n_halos_forest_subgroup,
+                  int   *n_trees_forest_groups_max,
+                  int   *n_trees_forest_subgroups_max);
 int read_matches_header(char   *filename_root_in,
-                        char   *filename_root_out,
                         int     i_read_start,
                         int     i_read_stop,
                         int     i_read_step,
                         int    *n_files_return,
                         int   **n_subgroups_return,
                         int   **n_groups_return,
-                        int     n_search);
+                        int    *n_subgroups_max,
+                        int    *n_groups_max,
+                        int    *n_halos_max);
 void read_trees_horizontal(void **groups,   int *n_groups_in,
                            void **subgroups,int *n_subgroups_in,
                            int   *n_subgroups_group,
@@ -517,6 +530,7 @@ void compute_trees_horizontal(char   *filename_halos_root_in,
                               int     n_search,
                               int     flag_fix_bridges,
                               int    *flag_clean);
+void compute_forests(char *filename_root_out,int n_search_forests);
 void compute_trees_vertical(char *filename_root_out,
                             char *filename_cat_root_in,
                             char *filename_snap_list_in,

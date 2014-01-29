@@ -19,7 +19,7 @@ void read_tree_run_parameters(char *filename_root_in,
    char  filename_in[MAX_FILENAME_LENGTH];
    sprintf(filename_in,"%s/run_parameters.txt",filename_root_in);
    if((fp_in=fopen(filename_in,"r"))==NULL)
-      SID_trap_error("Could not open file {%s}",ERROR_IO_OPEN,filename_root_in);
+      SID_trap_error("Could not open file {%s}",ERROR_IO_OPEN,filename_in);
 
    // Read file
    char   *line=NULL;

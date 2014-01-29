@@ -184,18 +184,18 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                             i_read_stop,
                             i_read_step,
                             n_search,
-                            WRITE_MATCHES_MODE_TREES|WRITE_MATCHES_CHECK_HEADER))
+                            WRITE_MATCHES_MODE_TREES|WRITE_MATCHES_PERFORM_CHECK))
      SID_trap_error("Matching could not be completed.  Terminating.",ERROR_LOGIC);
-  read_matches_header(filename_halo_root_in,
-                      filename_root_matches,
+  read_matches_header(filename_root_matches,
                       i_read_start,
                       i_read_stop,
                       i_read_step,
                       &n_files,
                       &n_subgroups,
                       &n_groups,
-                      n_search);
-
+                      &n_subgroups_max,
+                      &n_groups_max,
+                      &n_halos_max);
 
   // We need these for allocating arrays
   calc_max(n_subgroups,&n_subgroups_max,n_files,SID_INT,CALC_MODE_DEFAULT);

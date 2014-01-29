@@ -109,6 +109,12 @@ int main(int argc, char *argv[]){
                            &flag_clean);
   SID_log("Done.",SID_LOG_CLOSE);
 
+  // Force the forest construction to use all snapshots
+  int n_search_forests=i_read_stop;
+
+  // Construct tree->forest mappings
+  compute_forests(filename_root_out,n_search_forests);
+
   if(SID.I_am_Master)
      SID_free(SID_FARG a_list_out);
   

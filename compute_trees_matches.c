@@ -144,7 +144,10 @@ int compute_trees_matches(char   *filename_root_in,
   int         flag_compute_header;
   int         flag_sucessful_completion=TRUE;
 
-  SID_log("Constructing merger tree matches...",SID_LOG_OPEN|SID_LOG_TIMER);
+  if(check_mode_for_flag(mode,WRITE_MATCHES_PERFORM_CHECK))
+     SID_log("Validating merger tree matches...",SID_LOG_OPEN|SID_LOG_TIMER);
+  else
+     SID_log("Constructing merger tree matches...",SID_LOG_OPEN|SID_LOG_TIMER);
 
   n_search_total=n_search*i_read_step;
 
@@ -161,7 +164,8 @@ int compute_trees_matches(char   *filename_root_in,
   // Generate headers if needed and possible
   int flag_create_headers;
   if(flag_all_inputs_present)
-     flag_create_headers=check_mode_for_flag(mode,WRITE_MATCHES_CHECK_HEADER);
+     flag_create_headers=check_mode_for_flag(mode,WRITE_MATCHES_CHECK_HEADER) ||
+                         check_mode_for_flag(mode,WRITE_MATCHES_PERFORM_CHECK);
   else{
      flag_create_headers      =FALSE;
      flag_sucessful_completion=FALSE;
@@ -350,7 +354,10 @@ int compute_trees_matches(char   *filename_root_in,
 
   // Generate matches (if needed).  Loop over base groups first...
   if(flag_go){
-     SID_log("Generating matches...",SID_LOG_OPEN|SID_LOG_TIMER);
+     if(check_mode_for_flag(mode,WRITE_MATCHES_PERFORM_CHECK))
+        SID_log("Checking that all needed matches are present...",SID_LOG_OPEN|SID_LOG_TIMER);
+     else
+        SID_log("Generating matches...",SID_LOG_OPEN|SID_LOG_TIMER);
      SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,1);
      // i_read gets initialized by the previous loop
      for(;i_read>i_read_start;i_read--){
@@ -455,8 +462,8 @@ int compute_trees_matches(char   *filename_root_in,
                              }
                           } // Loop over matching order
                        } // If this match result didn't already exist
-                       else
-                          SID_log("Skipping %03d->%03d matching.",SID_LOG_COMMENT,i_read,j_read);
+                       else if(!check_mode_for_flag(mode,WRITE_MATCHES_PERFORM_CHECK))
+                          SID_log("Matching for %03d->%03d present...Skipping.",SID_LOG_COMMENT,i_read,j_read);
                        if(!flag_read)
                           free_plist(&plist2);
                        SID_log("Done.",SID_LOG_CLOSE);
@@ -475,7 +482,7 @@ int compute_trees_matches(char   *filename_root_in,
               flag_sucessful_completion=FALSE;
            } 
         } // If this snapshot needs to be processed
-        else
+        else if(!check_mode_for_flag(mode,WRITE_MATCHES_PERFORM_CHECK))
            SID_log("Matching for snapshot #%d present...Skipping.",SID_LOG_COMMENT,i_read);
      } // Loop over base snapshots
      SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);

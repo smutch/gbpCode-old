@@ -10,14 +10,15 @@
 #include <gbpTrees.h>
 
 int read_matches_header(char   *filename_root_in,
-                        char   *filename_root_out,
                         int     i_read_start,
                         int     i_read_stop,
                         int     i_read_step,
                         int    *n_files_return,
                         int   **n_subgroups_return,
                         int   **n_groups_return,
-                        int     n_search){
+                        int    *n_subgroups_max,
+                        int    *n_groups_max,
+                        int    *n_halos_max){
   char        filename_out[256];
   char        filename_out_dir[256];
   char        filename_out_name[256];
@@ -25,15 +26,11 @@ int read_matches_header(char   *filename_root_in,
   FILE       *fp_out;
   SID_fp      fp_in;
   int         i_read,k_read,l_read;
-  int         flag_go;
   int         i_read_start_file;
   int         i_read_stop_file;
   int         i_read_step_file;
-  int         n_search_file;
   int         k_match;
-  int         n_search_total;
   int         n_k_match;
-  int         flag_match_subgroups;
   char        group_text_prefix[5];
   int         n_matches;
   int         n_files;
@@ -72,9 +69,6 @@ int read_matches_header(char   *filename_root_in,
   int         n_buffer;
   int         i_buffer;
   int         j_buffer;
-  int         flag_compute_header_subgroups;
-  int         flag_compute_header_groups;
-  int         flag_compute_header;
   int         flag_sucessful_completion=TRUE;
 
   SID_log("Reading header information...",SID_LOG_OPEN);
@@ -93,17 +87,15 @@ int read_matches_header(char   *filename_root_in,
         switch(k_match){
            case 0:
            sprintf(group_text_prefix,"sub");
-           flag_compute_header=flag_compute_header_subgroups;
            break;
            case 1:
            sprintf(group_text_prefix,"");
-           flag_compute_header=flag_compute_header_groups;
            break;
         }
         for(i_read=i_read_stop,j_read=0;i_read>=i_read_start;j_read++){
            // Open file and skip header           
            if(i_read==i_read_stop){
-              sprintf(filename_out,"%s/%sgroup_matches_header.dat",filename_out_dir,group_text_prefix);
+              sprintf(filename_out,"%s/%sgroup_matches_header.dat",filename_root_in,group_text_prefix);
               if((fp_read_header=fopen(filename_out,"r"))==NULL)
                  SID_trap_error("Could not open file {%s} when reading header information.",ERROR_IO_OPEN,filename_out);
               fseek(fp_read_header,4*sizeof(int),SEEK_SET);
@@ -134,6 +126,12 @@ int read_matches_header(char   *filename_root_in,
   }
   SID_Bcast((*n_subgroups_return),sizeof(int)*(*n_files_return),MASTER_RANK,SID.COMM_WORLD);
   SID_Bcast((*n_groups_return),   sizeof(int)*(*n_files_return),MASTER_RANK,SID.COMM_WORLD);
+
+  // Compute some maxs (useful for array allocation)
+  calc_max((*n_subgroups_return),n_subgroups_max,n_files,SID_INT,CALC_MODE_DEFAULT);
+  calc_max((*n_groups_return),   n_groups_max,   n_files,SID_INT,CALC_MODE_DEFAULT);
+  (*n_halos_max)=MAX((*n_subgroups_max),(*n_groups_max));
+
   SID_log("Done.",SID_LOG_CLOSE);
 
   return(flag_sucessful_completion);

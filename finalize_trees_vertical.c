@@ -16,7 +16,7 @@ void finalize_trees_vertical(tree_info **trees,
   int              progenitor_score;
   int              depth_first_index;
 
-  SID_log("Finalizing...",SID_LOG_OPEN);
+  SID_log("Finalizing...",SID_LOG_OPEN|SID_LOG_TIMER);
 
   // ... correct group halo ordering ...
   SID_log("Assigning group ordering...",SID_LOG_OPEN);

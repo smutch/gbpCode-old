@@ -10,6 +10,7 @@ OBJFILES  = read_tree_run_parameters.o                  \
             compute_single_matches.o                    \
             compute_trees_matches.o                     \
 	    compute_trees_auxiliary.o                   \
+	    compute_forests.o                           \
 	    compute_trees_horizontal_stats.o            \
 	    compute_trees_horizontal_fragmented.o       \
 	    compute_trees_horizontal_ghosts.o           \
@@ -48,6 +49,7 @@ OBJFILES  = read_tree_run_parameters.o                  \
 	    write_trees_vertical.o                      \
 	    read_AHF_for_trees.o                        \
 	    read_matches.o                              \
+	    read_forests.o                              \
 	    read_trees.o               
 LIBFILE   = libgbpTrees.a
 BINFILES  = extract_tree_horizontal    \
@@ -60,11 +62,13 @@ BINFILES  = extract_tree_horizontal    \
 	    matchfile2ascii            \
 	    query_match_file           \
 	    make_trees                 \
+	    make_forests               \
 	    make_single_matches        \
 	    make_trees_matches         \
 	    make_trees_vertical        \
 	    make_trees_horizontal      \
 	    make_trees_grid            \
+	    make_match_catalog         \
 	    convert_Bolshoi            \
             tree_groups                \
             view_tree                  \
