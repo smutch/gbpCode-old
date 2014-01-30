@@ -44,6 +44,15 @@ OBJFILES  = read_tree_run_parameters.o                  \
 	    set_halo_and_descendant.o                   \
 	    read_catalog_ghost_interpolation.o          \
 	    write_ghost_catalog.o                       \
+	    free_trees_vertical.o                       \
+	    init_trees_vertical.o                       \
+	    add_node_to_tree.o                          \
+	    construct_unique_vertical_tree_id.o         \
+	    compute_progenitor_score_recursive.o        \
+	    assign_progenitor_order_recursive.o         \
+	    assign_group_subgroup_order.o               \
+	    assign_depth_first_index_recursive.o        \
+	    assign_unique_vertical_tree_ids_recursive.o \
 	    compute_trees_vertical.o                    \
 	    finalize_trees_vertical.o                   \
 	    write_trees_vertical.o                      \

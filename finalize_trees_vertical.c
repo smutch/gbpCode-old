@@ -22,7 +22,7 @@ void finalize_trees_vertical(tree_info **trees,
   SID_log("Assigning group ordering...",SID_LOG_OPEN);
   for(i_tree=0;i_tree<n_trees;i_tree++){
     for(i_snap=0;i_snap<n_snaps;i_snap++)
-      assign_group_halo_order(trees[i_tree],i_snap,progenitor_mode);
+      assign_group_subgroup_order(trees[i_tree],i_snap,progenitor_mode);
   }
   SID_log("Done.",SID_LOG_CLOSE);
 
@@ -61,7 +61,7 @@ void finalize_trees_vertical(tree_info **trees,
     current=trees[i_tree]->root;
     while(current!=NULL){
       if(current->descendant==NULL)
-        assign_unique_ids_recursive(current,i_tree);
+        assign_unique_vertical_tree_ids_recursive(current,i_tree);
       current=current->next;
     }
   }

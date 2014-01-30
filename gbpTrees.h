@@ -3,6 +3,9 @@
 #include <gbpHalos.h>
 #include <gbpCosmo.h>
 
+#define K_MATCH_SUBGROUPS 0
+#define K_MATCH_GROUPS    1
+
 #define TREE_PROGENITOR_ORDER_DEFAULT 0
 #define TREE_PROGENITOR_ORDER_DELUCIA 2
 
@@ -584,8 +587,8 @@ void compute_trees_auxiliary(char *filename_root,
                              int   n_files_subgroups,
                              int  *flag_clean);
 
-void init_tree(int n_snaps,tree_info **tree);
-void free_tree(tree_info **tree);
+void init_trees_vertical(int n_snaps,tree_info **tree);
+void free_trees_vertical(tree_info **tree);
 int  add_node_to_tree(tree_info  *tree,
                       int         match_type,
                       int         halo_id,
@@ -594,12 +597,12 @@ int  add_node_to_tree(tree_info  *tree,
                       int         halo_snap,
                       int         descendant_snap,
                       halo_info  *properties);
-int  construct_unique_id(tree_node_info *tree_node,int tree_number);
-void compute_halo_score_recursive(tree_node_info *tree,int *M_i,int mode);
+int  construct_unique_vertical_tree_id(tree_node_info *tree_node,int tree_number);
+void compute_progenitor_score_recursive(tree_node_info *tree,int *M_i,int mode);
 void assign_progenitor_order_recursive(tree_node_info *tree,int *M_i,int mode);
-void assign_group_halo_order(tree_info *tree,int i_snap,int mode);
+void assign_group_subgroup_order(tree_info *tree,int i_snap,int mode);
 void assign_depth_first_index_recursive(tree_node_info *tree,int *depth_first_index);
-void assign_unique_ids_recursive(tree_node_info *tree_node,int i_tree);
+void assign_unique_vertical_tree_ids_recursive(tree_node_info *tree_node,int i_tree);
 
 #ifdef __cplusplus
 }

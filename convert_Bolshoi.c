@@ -416,7 +416,7 @@ int main(int argc, char *argv[]){
           n_trees_out =n_tree_ids;
           trees       =(tree_info **)SID_malloc(sizeof(tree_info *)*n_trees_out);
           for(i_tree=0;i_tree<n_trees_out;i_tree++)
-            init_tree(n_scales,&(trees[i_tree]));
+            init_trees_vertical(n_scales,&(trees[i_tree]));
           SID_log("Done.",SID_LOG_CLOSE);
 
           // Bolshoi trees have substructure masses included in parent masses.  We need to remove this!
@@ -628,7 +628,7 @@ int main(int argc, char *argv[]){
           // Free trees
           SID_log("Freeing trees...",SID_LOG_OPEN|SID_LOG_TIMER);
           for(i_tree=0;i_tree<n_trees_out;i_tree++)
-            free_tree(&(trees[i_tree]));
+            free_trees_vertical(&(trees[i_tree]));
           SID_free(SID_FARG trees);
           SID_free(SID_FARG n_halos_isotree);
           SID_free(SID_FARG n_halos_tree);
