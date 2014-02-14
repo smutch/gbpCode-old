@@ -5,9 +5,9 @@
 #include <gbpLib.h>
 #include <gbpInterpolate.h>
 
-void ADaPS_store_interp(ADaPS  **list,
-                        void    *data,
-                        char    *name,
+void ADaPS_store_interp(ADaPS        **list,
+                        void          *data,
+                        const char    *name,
                         ...){
   ADaPS   *new_item;
   size_t   n_subarray;

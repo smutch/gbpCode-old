@@ -19,9 +19,9 @@ void init_interpolate(double                 *x,
 	              size_t                  n,
                       const gsl_interp_type  *T,
 	              interp_info           **interp);
-void ADaPS_store_interp(ADaPS  **list,
-                        void    *data,
-                        char    *name,
+void ADaPS_store_interp(ADaPS        **list,
+                        void          *data,
+                        const char    *name,
                         ...);
 double interpolate(interp_info *interp, 
 		   double       x) ;
