@@ -9,8 +9,8 @@
 #include <gbpHalos.h>
 #include <gbpTrees.h>
 
-void assign_unique_vertical_tree_ids_recursive(tree_node_info *tree_node,int i_tree){
-  tree_node_info *current;
+void assign_unique_vertical_tree_ids_recursive(tree_vertical_node_info *tree_node,int i_tree){
+  tree_vertical_node_info *current;
   
   // Set descendant and progenitor ids
   tree_node->halo.descendant      =construct_unique_vertical_tree_id(tree_node->descendant,      i_tree);

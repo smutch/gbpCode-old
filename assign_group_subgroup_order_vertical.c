@@ -9,17 +9,17 @@
 #include <gbpHalos.h>
 #include <gbpTrees.h>
 
-void assign_group_subgroup_order(tree_info *tree,int i_snap,int mode){
+void assign_group_subgroup_order_vertical(tree_vertical_info *tree,int i_snap,int mode){
   int              n_neighbours;
   int              i_halo,j_halo,k_halo;
   int             *group_ids;
   int              largest_group;
   int              n_in_group;
-  tree_node_info **neighbours;
-  tree_node_info  *first_neighbour;
-  tree_node_info  *current;
-  tree_node_info  *new_first;
-  tree_node_info  *new_last;
+  tree_vertical_node_info **neighbours;
+  tree_vertical_node_info  *first_neighbour;
+  tree_vertical_node_info  *current;
+  tree_vertical_node_info  *new_first;
+  tree_vertical_node_info  *new_last;
   int             *halo_score;
   size_t          *group_ids_index;
   size_t          *halo_score_index;
@@ -28,8 +28,8 @@ void assign_group_subgroup_order(tree_info *tree,int i_snap,int mode){
   n_neighbours=tree->n_neighbours[i_snap];
   if(n_neighbours>0){
     // Initialize some temporary arrays
-    group_ids      =(int             *)SID_malloc(sizeof(int)*n_neighbours);
-    neighbours     =(tree_node_info **)SID_malloc(sizeof(tree_node_info)*n_neighbours);
+    group_ids      =(int                      *)SID_malloc(sizeof(int)*n_neighbours);
+    neighbours     =(tree_vertical_node_info **)SID_malloc(sizeof(tree_vertical_node_info)*n_neighbours);
     first_neighbour=tree->neighbour_halos[i_snap];
 
     // Sort halos by group_id
@@ -70,7 +70,7 @@ void assign_group_subgroup_order(tree_info *tree,int i_snap,int mode){
         n_in_group=0;
         while(group_ids[group_ids_index[i_halo+n_in_group]]==group_ids[group_ids_index[i_halo]]){
           halo_score[n_in_group]=0;
-          compute_progenitor_score_recursive(neighbours[group_ids_index[i_halo+n_in_group]],&(halo_score[n_in_group]),mode);
+          compute_progenitor_score_vertical_recursive(neighbours[group_ids_index[i_halo+n_in_group]],&(halo_score[n_in_group]),mode);
           n_in_group++;
           if((i_halo+n_in_group)>=n_neighbours)
             break;

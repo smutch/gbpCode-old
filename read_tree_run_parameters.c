@@ -77,7 +77,8 @@ void read_tree_run_parameters(char *filename_root_in,
       }
    }
 
-   // Close file
+   // Clean-up
    fclose(fp_in);
+   SID_free(SID_FARG line);
 }
 

@@ -9,15 +9,15 @@
 #include <gbpHalos.h>
 #include <gbpTrees.h>
 
-void compute_progenitor_score_recursive(tree_node_info *tree,int *M_i,int mode){
+void compute_progenitor_score_recursive(tree_node_info *node,int *M_i,int mode){
   tree_node_info  *current;
   int              i_progenitor;
   int              M_iN,N_i,max_M_iN; // Defined in Section 2 of De Lucia and Blaizot (2006)
 
-  N_i     =tree->halo.n_particles;
+  N_i     =node->n_particles;
   max_M_iN=0;
-  if(tree->n_progenitors>=1){
-    current=tree->progenitor_first;
+  if(node->n_progenitors>=1){
+    current=node->progenitor_first;
     i_progenitor=0;
     while(current!=NULL){
       M_iN=0;
@@ -27,8 +27,8 @@ void compute_progenitor_score_recursive(tree_node_info *tree,int *M_i,int mode){
       i_progenitor++;
       current=current->progenitor_next;
     }
-    if(i_progenitor!=tree->n_progenitors)
-      SID_trap_error("There is a progenitor problem in compute_progenitor_score_recursive! (%d!=%d)",ERROR_LOGIC,i_progenitor!=tree->n_progenitors);
+    if(i_progenitor!=node->n_progenitors)
+      SID_trap_error("There is a progenitor problem in compute_progenitor_score_recursive! (%d!=%d)",ERROR_LOGIC,i_progenitor!=node->n_progenitors);
   }
 
   // Add this progenitor's score to the descendant's sum (see De Lucia and Blaizot (2006))

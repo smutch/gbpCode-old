@@ -9,24 +9,24 @@
 #include <gbpHalos.h>
 #include <gbpTrees.h>
 
-int add_node_to_tree(tree_info  *tree,
-                     int         match_type,
-                     int         halo_id,
-                     int         group_id,
-                     int         descendant_id,
-                     int         halo_snap,
-                     int         descendant_snap,                      
-                     halo_info  *properties){
-  tree_node_info *new_node;
-  tree_node_info *last_node;
-  tree_node_info *next_node;
-  tree_node_info *last_progenitor;
-  tree_node_info *next_progenitor;
-  tree_node_info *descendant_halo_list;
-  tree_node_info *group_halo_list;
+int add_node_to_vertical_tree(tree_vertical_info  *tree,
+                              int                  match_type,
+                              int                  halo_id,
+                              int                  group_id,
+                              int                  descendant_id,
+                              int                  halo_snap,
+                              int                  descendant_snap,                      
+                              halo_info           *properties){
+  tree_vertical_node_info *new_node;
+  tree_vertical_node_info *last_node;
+  tree_vertical_node_info *next_node;
+  tree_vertical_node_info *last_progenitor;
+  tree_vertical_node_info *next_progenitor;
+  tree_vertical_node_info *descendant_halo_list;
+  tree_vertical_node_info *group_halo_list;
 
   // Create new node
-  new_node=(tree_node_info *)SID_malloc(sizeof(tree_node_info));
+  new_node=(tree_vertical_node_info *)SID_malloc(sizeof(tree_vertical_node_info));
 
   // Copy halo properties into new node
   memcpy(&(new_node->halo),properties,sizeof(halo_info));

@@ -2,63 +2,75 @@
 # Library-specific settings #
 #############################
 INCFILES  = gbpTrees.h
-OBJFILES  = read_tree_run_parameters.o                  \
-            write_tree_run_parameters.o                 \
-	    write_a_list.o                              \
-	    write_match_results.o                       \
-	    check_for_matching_input_files.o            \
-            compute_single_matches.o                    \
-            compute_trees_matches.o                     \
-	    compute_trees_auxiliary.o                   \
-	    compute_forests.o                           \
-	    compute_trees_horizontal_stats.o            \
-	    compute_trees_horizontal_fragmented.o       \
-	    compute_trees_horizontal_ghosts.o           \
-	    compute_trees_horizontal.o                  \
-	    set_match_id.o                              \
-	    set_match_file.o                            \
-	    set_match_snapshot.o                        \
-	    set_match_type.o                            \
-	    set_match_n_particles.o                     \
-	    set_match_index.o                           \
-	    set_match_score.o                           \
-	    process_ghosts.o                            \
-	    check_for_fragmented_halos.o                \
-	    add_to_trees_horizontal_stats.o             \
-	    init_trees_horizontal_roots.o               \
-	    init_trees_horizontal_snapshot.o            \
-	    identify_bridges.o                          \
-	    construct_progenitors.o                     \
-	    clean_emerged_halo_list.o                   \
-	    apply_horizontal_tree_defaults.o            \
-	    init_trees_horizontal_stats.o               \
-	    change_horizontal_ID_recursive.o            \
-	    write_trees_horizontal_emerged_candidates.o \
-	    write_trees_horizontal_log_file.o           \
-	    write_trees_horizontal_report.o             \
-	    write_trees_horizontal.o                    \
-	    add_substructure_to_horizontal_tree_group.o \
-	    read_matches_header.o                       \
-	    read_trees_horizontal.o                     \
-	    propagate_fragmented_halos.o                \
-	    set_halo_and_descendant.o                   \
-	    read_catalog_ghost_interpolation.o          \
-	    write_ghost_catalog.o                       \
-	    free_trees_vertical.o                       \
-	    init_trees_vertical.o                       \
-	    add_node_to_tree.o                          \
-	    construct_unique_vertical_tree_id.o         \
-	    compute_progenitor_score_recursive.o        \
-	    assign_progenitor_order_recursive.o         \
-	    assign_group_subgroup_order.o               \
-	    assign_depth_first_index_recursive.o        \
-	    assign_unique_vertical_tree_ids_recursive.o \
-	    compute_trees_vertical.o                    \
-	    finalize_trees_vertical.o                   \
-	    write_trees_vertical.o                      \
-	    read_AHF_for_trees.o                        \
-	    read_matches.o                              \
-	    read_forests.o                              \
+OBJFILES  = read_tree_run_parameters.o                    \
+	    finalize_trees.o                              \
+	    assign_group_subgroup_order_vertical.o        \
+	    assign_progenitor_order_vertical_recursive.o  \
+	    assign_depth_first_index_vertical_recursive.o \
+	    assign_unique_vertical_tree_ids_recursive.o   \
+	    generate_trees_analysis.o                     \
+	    change_horizontal_ID_recursive.o              \
+	    compute_substructure_order_recursive.o        \
+	    compute_progenitor_order_recursive.o          \
+	    compute_progenitor_score_vertical_recursive.o \
+	    assign_depth_first_index_recursive.o          \
+	    assign_depth_first_index_recursive.o          \
+	    free_trees.o                                  \
+	    init_trees.o                                  \
+	    add_node_to_trees.o                           \
+	    free_trees_vertical.o                         \
+	    init_trees_vertical.o                         \
+	    add_node_to_vertical_tree.o                   \
+	    construct_unique_vertical_tree_id.o           \
+	    compute_trees_vertical.o                      \
+	    finalize_trees_vertical.o                     \
+	    write_trees_vertical.o                        \
+            write_tree_run_parameters.o                   \
+	    split_forests_n_ways.o                        \
+	    read_tree_final_totals.o                      \
+	    write_a_list.o                                \
+	    write_match_results.o                         \
+	    check_for_matching_input_files.o              \
+            compute_single_matches.o                      \
+            compute_trees_matches.o                       \
+	    compute_trees_auxiliary.o                     \
+	    compute_forests.o                             \
+	    compute_trees_horizontal_stats.o              \
+	    compute_trees_horizontal_fragmented.o         \
+	    compute_trees_horizontal_ghosts.o             \
+	    compute_trees_horizontal.o                    \
+	    set_match_id.o                                \
+	    set_match_file.o                              \
+	    set_match_snapshot.o                          \
+	    set_match_type.o                              \
+	    set_match_n_particles.o                       \
+	    set_match_index.o                             \
+	    set_match_score.o                             \
+	    process_ghosts.o                              \
+	    check_for_fragmented_halos.o                  \
+	    add_to_trees_horizontal_stats.o               \
+	    init_trees_horizontal_roots.o                 \
+	    init_trees_horizontal_snapshot.o              \
+	    identify_bridges.o                            \
+	    construct_progenitors.o                       \
+	    clean_emerged_halo_list.o                     \
+	    apply_horizontal_tree_defaults.o              \
+	    init_trees_horizontal_stats.o                 \
+	    write_trees_horizontal_emerged_candidates.o   \
+	    write_trees_horizontal_log_file.o             \
+	    write_trees_horizontal_report.o               \
+	    write_trees_horizontal.o                      \
+	    add_substructure_to_horizontal_tree_group.o   \
+	    read_matches_header.o                         \
+	    read_trees_horizontal.o                       \
+	    propagate_fragmented_halos.o                  \
+	    set_halo_and_descendant.o                     \
+	    read_catalog_ghost_interpolation.o            \
+	    write_ghost_catalog.o                         \
+	    assign_group_subgroup_order_vertical.o        \
+	    read_AHF_for_trees.o                          \
+	    read_matches.o                                \
+	    read_forests.o                                \
 	    read_trees.o               
 LIBFILE   = libgbpTrees.a
 BINFILES  = extract_tree_horizontal    \
@@ -71,6 +83,7 @@ BINFILES  = extract_tree_horizontal    \
 	    matchfile2ascii            \
 	    query_match_file           \
 	    make_trees                 \
+	    make_trees_analysis        \
 	    make_forests               \
 	    make_single_matches        \
 	    make_trees_matches         \

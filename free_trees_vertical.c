@@ -9,9 +9,9 @@
 #include <gbpHalos.h>
 #include <gbpTrees.h>
 
-void free_trees_vertical(tree_info **tree){
-  tree_node_info *next_node;
-  tree_node_info *last_node;
+void free_trees_vertical(tree_vertical_info **tree){
+  tree_vertical_node_info *next_node;
+  tree_vertical_node_info *last_node;
   // Free nodes
   next_node=(*tree)->root;
   while(next_node!=NULL){

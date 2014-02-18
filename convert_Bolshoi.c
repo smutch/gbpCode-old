@@ -58,9 +58,9 @@ int scale_to_snap(float scale,float *scales,int n_scales){
   return(i_scale);
 }
 
-float propagate_spins_recursive(tree_node_info *tree,RNG_info *RNG);
-float propagate_spins_recursive(tree_node_info *tree,RNG_info *RNG){
-  tree_node_info *current;
+float propagate_spins_recursive(tree_vertical_node_info *tree,RNG_info *RNG);
+float propagate_spins_recursive(tree_vertical_node_info *tree,RNG_info *RNG){
+  tree_vertical_node_info *current;
   float           spin_propagate;
   float           spin;
   float           V_vir;
@@ -159,10 +159,10 @@ int main(int argc, char *argv[]){
   int   LMM_snap;
   int   progenitor_score;
 
-  tree_info      **trees;
+  tree_vertical_info      **trees;
   halo_info        properties;
-  tree_node_info  *current;
-  tree_node_info  *next;
+  tree_vertical_node_info  *current;
+  tree_vertical_node_info  *next;
 
   int               tree_mode;
   int               progenitor_mode;
@@ -414,7 +414,7 @@ int main(int argc, char *argv[]){
           // Allocate trees
           SID_log("Initializing trees...",SID_LOG_OPEN|SID_LOG_TIMER);
           n_trees_out =n_tree_ids;
-          trees       =(tree_info **)SID_malloc(sizeof(tree_info *)*n_trees_out);
+          trees       =(tree_vertical_info **)SID_malloc(sizeof(tree_vertical_info *)*n_trees_out);
           for(i_tree=0;i_tree<n_trees_out;i_tree++)
             init_trees_vertical(n_scales,&(trees[i_tree]));
           SID_log("Done.",SID_LOG_CLOSE);
@@ -548,14 +548,14 @@ int main(int argc, char *argv[]){
                 properties.halo_index   =i_halo;
 
                 // Add this halo to its tree
-                add_node_to_tree(trees[j_tree],
-                                 0,
-                                 halo_id,
-                                 group_id,
-                                 descendant_id,
-                                 halo_snap,
-                                 descendant_snap,
-                                 &properties);
+                add_node_to_vertical_tree(trees[j_tree],
+                                          0,
+                                          halo_id,
+                                          group_id,
+                                          descendant_id,
+                                          halo_snap,
+                                          descendant_snap,
+                                          &properties);
                 n_halos_tree[j_tree]++;
             };
 

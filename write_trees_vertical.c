@@ -5,12 +5,12 @@
 #include <gbpMath.h>
 #include <gbpTrees.h>
 
-int write_tree_vertical_halos_recursive_local(tree_node_info *tree_node,SID_fp *fp_out,SID_fp *fp_out_MBP){
-  tree_node_info *current;
-  halo_info      *halo;
-  halo_MBP_info   halo_MBP;
-  int             i_progenitor;
-  int             n_halos_written=0;
+int write_tree_vertical_halos_recursive_local(tree_vertical_node_info *tree_node,SID_fp *fp_out,SID_fp *fp_out_MBP){
+  tree_vertical_node_info *current;
+  halo_info               *halo;
+  halo_MBP_info            halo_MBP;
+  int                      i_progenitor;
+  int                      n_halos_written=0;
 
   // Write tree halos
   halo=&(tree_node->halo);
@@ -40,15 +40,15 @@ int write_tree_vertical_halos_recursive_local(tree_node_info *tree_node,SID_fp *
   return(n_halos_written);
 }
 
-void write_trees_vertical(tree_info **trees,
-                          int        *n_halos_tree_local,
-                          int         n_trees_local,
-                          int        *tree_lo_file,
-                          int        *tree_hi_file,
-                          int        *n_halos_file,
-                          int         n_files,
-                          const char *filename_root_out,
-                          const char *group_text_prefix){
+void write_trees_vertical(tree_vertical_info **trees,
+                          int                 *n_halos_tree_local,
+                          int                  n_trees_local,
+                          int                 *tree_lo_file,
+                          int                 *tree_hi_file,
+                          int                 *n_halos_file,
+                          int                  n_files,
+                          const char          *filename_root_out,
+                          const char          *group_text_prefix){
   int              i_rank;
   int              i_write;
   int              i_tree,j_tree;
@@ -59,8 +59,8 @@ void write_trees_vertical(tree_info **trees,
   int              n_halos_written;
   int              n_halos_tree_written;
   int              n_trees_written;
-  tree_node_info  *current;
-  tree_node_info  *next;
+  tree_vertical_node_info  *current;
+  tree_vertical_node_info  *next;
   char             filename_out[MAX_FILENAME_LENGTH];
   SID_fp           fp_out;
 
