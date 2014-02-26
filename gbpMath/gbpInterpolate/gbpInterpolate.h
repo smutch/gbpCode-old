@@ -13,7 +13,7 @@ struct interp_struct{
   double                *y;
 };
 
-void free_interpolate(void **interp);
+void free_interpolate(void **interp, void *params);
 void init_interpolate(double                 *x, 
 	              double                 *y, 
 	              size_t                  n,

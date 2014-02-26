@@ -16,11 +16,12 @@ void ADaPS_store_interp(ADaPS        **list,
   va_start(vargs,name);
 
   // Create the new item (and apply some defaults)
-  new_item               =(ADaPS *)SID_malloc(sizeof(ADaPS));
-  new_item->data         =data;
-  new_item->mode         =ADaPS_CUSTOM;
-  new_item->free_function=free_interpolate;
-  data_size              =sizeof(interp_info);
+  new_item                      =(ADaPS *)SID_malloc(sizeof(ADaPS));
+  new_item->data                =data;
+  new_item->mode                =ADaPS_CUSTOM;
+  new_item->free_function       =free_interpolate;
+  new_item->free_function_params=NULL;
+  data_size                     =sizeof(interp_info);
 
   // Give the new item its name
   vsprintf(new_item->name,name,vargs);

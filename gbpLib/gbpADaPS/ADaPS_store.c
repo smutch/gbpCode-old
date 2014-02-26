@@ -20,7 +20,7 @@ void ADaPS_store(ADaPS      **list,
   new_item               =(ADaPS *)SID_malloc(sizeof(ADaPS));
   new_item->data         =NULL;
   new_item->mode         =mode;
-  new_item->free_function=SID_free;
+  new_item->free_function=NULL;
 
   // Add data to the new item and interpret variable arguments
   if(check_mode_for_flag(mode,ADaPS_COPY)){

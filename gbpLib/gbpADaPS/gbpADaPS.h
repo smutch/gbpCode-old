@@ -44,7 +44,8 @@ struct ADaPS_struct{
   int     mode;
   ADaPS  *next;
   size_t  data_size;
-  void   (*free_function)(void **);
+  void   (*free_function)(void **,void *);
+  void   *free_function_params;
 };
 
 // Function declarations
