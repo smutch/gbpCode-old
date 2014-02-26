@@ -1,0 +1,26 @@
+#!/bin/bash
+
+if [ "$#" == "0" ];
+then
+  echo " Syntax: "$0" object [optional arguments]"
+  echo " ------"
+  echo
+  echo "   where object can be :"
+  echo
+  gbpCode_add_dtype --help_parent
+  exit 0
+elif [ "$1" == "--help" ];
+then
+  gbpCode_add_dtype --help
+  exit 0
+fi
+
+
+if [ "$1" == 'dtype' ];
+then
+   gbpCode_add_dtype ${@:2}
+else
+   echo "Unknown object {"$1"}".
+   exit 1
+fi
+

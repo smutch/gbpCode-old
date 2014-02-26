@@ -1,0 +1,85 @@
+#!/bin/bash
+
+if [ "$#" == "0" ];
+then
+  echo " Syntax: "$0" name"
+  echo " ------"
+  echo
+  echo "   where 'name' is the name of the datatype to be created."
+  echo
+  exit 0
+elif [ "$1" == "--help" ];
+then
+  echo "      add dtype [name] - Add a data type with name 'name'."
+  exit 0
+elif [ "$1" == "--help_parent" ];
+then
+  echo "      dtype [name] - Add a data type with name 'name'."
+  exit 0
+fi
+
+NAME="$1"
+FILE_DTYPE_INIT="init_"$NAME".c"
+FILE_DTYPE_FREE="free_"$NAME".c"
+
+if [ ! -f $FILE_DTYPE_INIT ];
+then
+   echo "#include <stdlib.h>"                                                                              > $FILE_DTYPE_INIT
+   echo "#include <string.h>"                                                                             >> $FILE_DTYPE_INIT
+   echo "#include <gbpLib.h>"                                                                             >> $FILE_DTYPE_INIT
+   echo "#include <"$FILE_HEADER">"                                                                       >> $FILE_DTYPE_INIT
+   echo ""                                                                                                >> $FILE_DTYPE_INIT
+   echo "void init_"$NAME$"(ADaPS           **ADaPS_store,"                                               >> $FILE_DTYPE_INIT
+   echo "                "$NAME"_info      **"$NAME"_return,"                                             >> $FILE_DTYPE_INIT
+   echo "                "$NAME"_free_info  *free_params,"                                                >> $FILE_DTYPE_INIT
+   echo "                int               mode){"                                                        >> $FILE_DTYPE_INIT
+   echo ""                                                                                                >> $FILE_DTYPE_INIT
+   echo "  // Create the new item (and apply some defaults)"                                              >> $FILE_DTYPE_INIT
+   echo "  ADaPS                         *new_item;"                                                      >> $FILE_DTYPE_INIT
+   echo "  new_item                      =(ADaPS *)SID_malloc(sizeof(ADaPS));"                            >> $FILE_DTYPE_INIT
+   echo "  new_item->mode                =ADaPS_CUSTOM;"                                                  >> $FILE_DTYPE_INIT
+   echo "  new_item->free_function       =NULL;"                                                          >> $FILE_DTYPE_INIT
+   echo "  new_item->free_function_params=NULL;"                                                          >> $FILE_DTYPE_INIT
+   echo ""                                                                                                >> $FILE_DTYPE_INIT
+   echo "  // Sample code for a flexible datatype"                                                        >> $FILE_DTYPE_INIT
+   echo "  // new_item->free_function       =free_"$NAME";"                                               >> $FILE_DTYPE_INIT
+   echo "  // new_item->free_function_params=("$NAME"_free_info *)SID_malloc(sizeof("$NAME"_free_info));" >> $FILE_DTYPE_INIT
+   echo ""                                                                                                >> $FILE_DTYPE_INIT
+   echo "  // Determine the size of the allocation"                                                       >> $FILE_DTYPE_INIT
+   echo "  new_item->data_size=sizeof("$NAME"_info);"                                                     >> $FILE_DTYPE_INIT
+   echo ""                                                                                                >> $FILE_DTYPE_INIT
+   echo "  // Place new item at the start of the list"                                                    >> $FILE_DTYPE_INIT
+   echo "  new_item->next=(*ADaPS_store);"                                                                >> $FILE_DTYPE_INIT
+   echo "  (*ADaPS_store)=new_item;"                                                                      >> $FILE_DTYPE_INIT
+   echo ""                                                                                                >> $FILE_DTYPE_INIT
+   echo "}"                                                                                               >> $FILE_DTYPE_INIT
+   echo "Created file {"$FILE_DTYPE_INIT"}."
+else
+   echo "Error.  File {"$FILE_DTYPE_INIT"} already exists."
+   exit 1
+fi
+
+if [ ! -f $FILE_DTYPE_FREE ];
+then
+   echo "#include <stdlib.h>"                                      > $FILE_DTYPE_FREE
+   echo "#include <string.h>"                                     >> $FILE_DTYPE_FREE
+   echo "#include <gbpLib.h>"                                     >> $FILE_DTYPE_FREE
+   echo "#include <gbpMath.h>"                                    >> $FILE_DTYPE_FREE
+   echo "#include <"$FILE_HEADER">"                               >> $FILE_DTYPE_FREE
+   echo ""                                                        >> $FILE_DTYPE_FREE
+   echo "void free_"$NAME"("$NAME"_info      **"$NAME"_free,"     >> $FILE_DTYPE_FREE
+   echo "                "$NAME"_free_info  *free_params){"       >> $FILE_DTYPE_FREE
+   echo "   if((*"$NAME"_free)!=NULL){"                           >> $FILE_DTYPE_FREE
+   echo "       void **"$NAME"_dealloc=(void **)(*"$NAME"_free);" >> $FILE_DTYPE_FREE
+   echo "       // Perform custom deallocation actions here"      >> $FILE_DTYPE_FREE
+   echo "       // ---> "                                         >> $FILE_DTYPE_FREE
+   echo "       // Always deallocate the passed pointer"          >> $FILE_DTYPE_FREE
+   echo "       SID_free(SID_FARG "$NAME"_dealloc);"              >> $FILE_DTYPE_FREE
+   echo "   }"                                                    >> $FILE_DTYPE_FREE
+   echo "}"                                                       >> $FILE_DTYPE_FREE
+   echo "Created file {"$FILE_DTYPE_FREE"}."
+else
+   echo "Error.  File {"$FILE_DTYPE_FREE"} already exists."
+   exit 1
+fi
+

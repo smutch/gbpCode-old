@@ -1,0 +1,77 @@
+#!/bin/bash
+
+if [ "$#" == "0" ];
+then
+  echo " Syntax: "$0" name"
+  echo " ------"
+  echo
+  echo "   where 'name' is the name of the library to be created (make sure it's unique!)"
+  echo
+  exit 0
+elif [ "$1" == "--help" ];
+then
+  echo "      new [name]       - Create a library with name 'name'."
+  exit 0
+fi
+
+FILE_MAKE="Makefile"
+FILE_MAKE_LOCAL="Makefile.local"
+LIB_NAME="gbp"$1
+FILE_HEADER=$LIB_NAME".h"
+
+if [ ! -f $FILE_MAKE ];
+then
+   ln -s $GBP_SRC"/"$FILE_MAKE
+   echo "Linking file {"$FILE_MAKE"}."
+else
+   echo "Error.  File {"$FILE_MAKE"} already exists."
+   exit 1
+fi
+
+if [ ! -f $FILE_MAKE_LOCAL ];
+then
+   echo "###########################"                   > ${FILE_MAKE_LOCAL}
+   echo "# Local Makefile settings #"                  >> ${FILE_MAKE_LOCAL}
+   echo "###########################"                  >> ${FILE_MAKE_LOCAL}
+   echo "INCFILES  = "$FILE_HEADER                     >> ${FILE_MAKE_LOCAL}
+   echo "OBJFILES  = "                                 >> ${FILE_MAKE_LOCAL}
+   echo "LIBFILE   = lib"$LIB_NAME".a"                 >> ${FILE_MAKE_LOCAL}
+   echo "BINFILES  = "                                 >> ${FILE_MAKE_LOCAL}
+   echo "SCRIPTS   = "                                 >> ${FILE_MAKE_LOCAL}
+   echo "DATAFILES = "                                 >> ${FILE_MAKE_LOCAL}
+   echo "LIBS      = -l"$LIB_NAME" -lgbpMath -lgbpLib" >> ${FILE_MAKE_LOCAL}
+   echo "SUBDIRS   = "                                 >> ${FILE_MAKE_LOCAL}
+   echo "###########################"                  >> ${FILE_MAKE_LOCAL}
+   echo "Created file {"$FILE_MAKE_LOCAL"}."
+else
+   echo "Error.  File {"$FILE_MAKE_LOCAL"} already exists."
+   exit 1
+fi
+
+if [ ! -f $FILE_HEADER ];
+then
+   echo "#ifndef "${1^^}"_AWAKE"                                                > $FILE_HEADER
+   echo "#define "${1^^}"_AWAKE"                                               >> $FILE_HEADER
+   echo ""                                                                     >> $FILE_HEADER
+   echo "// V Preprocessor definitions V"                                      >> $FILE_HEADER
+   echo "// A Preprocessor definitions A"                                      >> $FILE_HEADER
+   echo ""                                                                     >> $FILE_HEADER
+   echo "// V --- Datatype definitions --- V"                                  >> $FILE_HEADER
+   echo "// A --- Datatype definitions --- A"                                  >> $FILE_HEADER
+   echo ""                                                                     >> $FILE_HEADER
+   echo "#ifdef __cplusplus"                                                   >> $FILE_HEADER
+   echo 'extern "C" {'                                                         >> $FILE_HEADER
+   echo "#endif   "                                                            >> $FILE_HEADER
+   echo "// V --- ANSI-C function definitions --- V"                           >> $FILE_HEADER
+   echo "// A --- ANSI-C function definitions --- A"                           >> $FILE_HEADER
+   echo "#ifdef __cplusplus"                                                   >> $FILE_HEADER
+   echo "}"                                                                    >> $FILE_HEADER
+   echo "#endif"                                                               >> $FILE_HEADER
+   echo ""                                                                     >> $FILE_HEADER
+   echo "#endif"                                                               >> $FILE_HEADER
+   echo "Created file {"$FILE_HEADER"}."
+else
+   echo "Error.  File {"$FILE_HEADER"} already exists."
+   exit 1
+fi
+
