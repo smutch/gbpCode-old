@@ -7,6 +7,8 @@ void ADaPS_deallocate(ADaPS **remove){
      ((*remove)->free_function)(SID_FARG (*remove)->data,(*remove)->free_function_params);
   else
      SID_free(SID_FARG (*remove)->data);
+  if((*remove)->free_function_params!=NULL)
+     SID_free(SID_FARG (*remove)->free_function_params);
   SID_free(SID_FARG (*remove));
 }
 
