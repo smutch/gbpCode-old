@@ -34,6 +34,10 @@ int add_node_to_trees(tree_info        *trees,            // The tree datastruct
   (*new_node)->tree_case          =   tree_case;
   (*new_node)->snap_tree          =   halo_snap;
   (*new_node)->file_index         =  halo_index;
+  if(group_node==NULL)
+     (*new_node)->neighbour_index = trees->n_groups_snap_local[halo_snap];
+  else
+     (*new_node)->neighbour_index = trees->n_subgroups_snap_local[halo_snap];
   (*new_node)->parent             =  group_node;
   (*new_node)->substructure_first =        NULL; 
   (*new_node)->substructure_last  =        NULL; 
@@ -72,9 +76,9 @@ int add_node_to_trees(tree_info        *trees,            // The tree datastruct
         else
            n_halos=trees->n_subgroups_snap_local[descendant_snap];
         index_index=find_index_int(halo_indices[descendant_snap%n_wrap],descendant_index,n_halos,NULL);
-//while(halo_indices[descendant_snap%n_wrap][index_index]<descendant_index && (index_index<(n_halos-1))) index_index++;
+while(halo_indices[descendant_snap%n_wrap][index_index]<descendant_index && (index_index<(n_halos-1))) index_index++;
         if(halo_indices[descendant_snap%n_wrap][index_index]!=descendant_index){
-          for(int i_halo=0;i_halo<n_halos;i_halo++) fprintf(stderr,"%5d %5d\n",i_halo,halo_indices[descendant_snap%n_wrap][i_halo]);
+//          for(int i_halo=0;i_halo<n_halos;i_halo++) fprintf(stderr,"%5d %5d\n",i_halo,halo_indices[descendant_snap%n_wrap][i_halo]);
           if(flag_processing_group)
              SID_trap_error("Could not find descendant group (snap=%d->%d, index=%d->%d)",ERROR_LOGIC,
                             halo_snap,descendant_snap,halo_index,descendant_index);

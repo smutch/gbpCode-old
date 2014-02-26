@@ -64,6 +64,22 @@
 #define WRITE_MATCHES_PERFORM_CHECK  4
 #define WRITE_MATCHES_MODE_DEFAULT   WRITE_MATCHES_MODE_SINGLE
 
+#define INIT_TREE_DATA_SUBGROUPS  0
+#define INIT_TREE_DATA_GROUPS     1
+#define INIT_TREE_DATA_DEFAULT    INIT_TREE_DATA_SUBGROUPS
+
+#define READ_TREES_CATALOGS_SUBGROUPS   0
+#define READ_TREES_CATALOGS_GROUPS      1
+#define READ_TREES_CATALOGS_PROFILES    2
+#define READ_TREES_CATALOGS_SHORT       4
+#define READ_TREES_CATALOGS_ALL         READ_TREES_CATALOGS_GROUPS|READ_TREES_CATALOGS_SUBGROUPS|READ_TREES_CATALOGS_PROFILES
+#define READ_TREES_CATALOGS_DEFAULT     READ_TREES_CATALOGS_SUBGROUPS
+
+#define READ_TREES_MATCH_SCORES_SUBGROUPS   0
+#define READ_TREES_MATCH_SCORES_GROUPS      1
+#define READ_TREES_MATCH_SCORES_ALL         READ_TREES_MATCH_SCORES_GROUPS|READ_TREES_MATCH_SCORES_SUBGROUPS
+#define READ_TREES_MATCH_SCORES_DEFAULT     READ_TREES_MATCH_SCORES_SUBGROUPS
+
 // Data structures for horizontal tree construction
 typedef struct tree_horizontal_stats_info tree_horizontal_stats_info;
 struct tree_horizontal_stats_info {
@@ -214,10 +230,11 @@ typedef struct tree_node_info tree_node_info;
 struct tree_node_info{
   int             n_progenitors;
   int             n_substructures;
-  int             snap;
   int             snap_tree;
   int             file_index;
+  int             neighbour_index;
   int             n_particles;
+  float           match_score;
   int             tree_case;
   // Pointers for the substructure heirarchy
   tree_node_info *parent;
@@ -240,6 +257,7 @@ struct tree_info{
   int              i_read_start;
   int              i_read_stop;
   int              i_read_step;
+  int              n_search;
   int              n_snaps;
   int              n_forests;
   int              n_forests_local;
@@ -250,6 +268,10 @@ struct tree_info{
   int             *n_subgroups_snap_local;
   int             *n_groups_forest_local;
   int             *n_subgroups_forest_local;
+  int              max_n_groups_snap_local;
+  int              max_n_subgroups_snap_local;
+  int              max_n_groups_forest_local;
+  int              max_n_subgroups_forest_local;
   // Pointers
   tree_node_info **first_neighbour_groups;
   tree_node_info **first_neighbour_subgroups;
@@ -259,6 +281,14 @@ struct tree_info{
   tree_node_info **first_in_forest_subgroups;
   tree_node_info **last_in_forest_groups;
   tree_node_info **last_in_forest_subgroups;
+  // A place to add other data to
+  ADaPS           *data;
+};
+
+// Structure needed for passing parameters to the tree data ADaPS deallocation function
+typedef struct store_tree_data_free_parms_info store_tree_data_free_parms_info;
+struct store_tree_data_free_parms_info{
+  int n_snaps;
 };
 
 // Function definitions
@@ -267,9 +297,22 @@ extern "C" {
 #endif
 void read_trees(char       *filename_tree_root,
                 char       *filename_cat_root,
-                char       *filename_run_root,
                 int         mode_progenitor,
                 tree_info **trees);
+void init_tree_data(tree_info    *trees,
+                    void       ***rval,
+                    size_t        data_size,
+                    int           mode,
+                    const char   *name,
+                    ...);
+void free_tree_data(void **tree_data,void *params);
+void read_trees_match_scores(tree_info *trees,
+                             char      *filename_SSimPL_dir,
+                             int        mode);
+void read_trees_catalogs(tree_info              *trees,
+                         char                   *filename_SSimPL_dir,
+                         char                   *filename_catalog_name,
+                         int                     mode);
 void read_AHF_for_trees(char       *filename_root,
                         int         i_file,
                         plist_info *plist,
@@ -674,6 +717,7 @@ void compute_trees_auxiliary(char *filename_root,
 void init_trees(int         i_read_start,
                 int         i_read_stop,
                 int         i_read_step,
+                int         n_search,
                 int         n_forests,
                 int         n_forests_local,
                 tree_info **tree);
@@ -711,7 +755,7 @@ int  construct_unique_tree_id(tree_node_info *tree_node,int tree_number);
 void compute_progenitor_score_recursive(tree_node_info *tree,int *M_i,int mode);
 void compute_substructure_order_recursive(tree_node_info *parent,int *score_parent,int mode);
 void compute_progenitor_order_recursive(tree_node_info *descendant,int *score_descendant,int mode);
-void generate_trees_analysis(tree_info *trees,char *filename_out_root);
+void compute_trees_analysis(tree_info *trees,char *filename_out_root);
 
 void assign_group_subgroup_order_vertical(tree_vertical_info *tree,int i_snap,int mode);
 void assign_progenitor_order_vertical_recursive(tree_vertical_node_info *tree,int *M_i,int mode);

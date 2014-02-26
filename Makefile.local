@@ -8,7 +8,11 @@ OBJFILES  = read_tree_run_parameters.o                    \
 	    assign_progenitor_order_vertical_recursive.o  \
 	    assign_depth_first_index_vertical_recursive.o \
 	    assign_unique_vertical_tree_ids_recursive.o   \
-	    generate_trees_analysis.o                     \
+	    init_tree_data.o                              \
+	    free_tree_data.o                              \
+	    read_trees_match_scores.o                     \
+	    read_trees_catalogs.o                         \
+	    compute_trees_analysis.o                      \
 	    change_horizontal_ID_recursive.o              \
 	    compute_substructure_order_recursive.o        \
 	    compute_progenitor_order_recursive.o          \

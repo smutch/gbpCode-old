@@ -12,6 +12,7 @@
 void init_trees(int         i_read_start,
                 int         i_read_stop,
                 int         i_read_step,
+                int         n_search,
                 int         n_forests,
                 int         n_forests_local,
                 tree_info **tree){
@@ -33,6 +34,7 @@ void init_trees(int         i_read_start,
   (*tree)->i_read_start   =i_read_start;
   (*tree)->i_read_stop    =i_read_stop;
   (*tree)->i_read_step    =i_read_step;
+  (*tree)->n_search       =n_search;
   (*tree)->n_forests      =n_forests;
   (*tree)->n_forests_local=n_forests_local;
 
@@ -82,6 +84,8 @@ void init_trees(int         i_read_start,
     (*tree)->last_in_forest_groups[i_forest]    =NULL;
     (*tree)->last_in_forest_subgroups[i_forest] =NULL;
   }
+
+  ADaPS_init(&((*tree)->data));
 
   SID_log("Done.",SID_LOG_CLOSE);
 }

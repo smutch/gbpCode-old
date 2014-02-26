@@ -12,6 +12,10 @@
 void free_trees(tree_info **trees){
 
   SID_log("Freeing trees...",SID_LOG_OPEN);
+
+  // Free ADaPS structure
+  ADaPS_free(SID_FARG (*trees)->data);
+
   int i_snap;
   for(i_snap=0;i_snap<(*trees)->n_snaps;i_snap++){
      tree_node_info *current;

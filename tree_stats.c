@@ -402,12 +402,12 @@ int main(int argc, char *argv[]){
     SID_free(SID_FARG branch_desc);
     for(i_branch=0;i_branch<n_branches;i_branch++){
       if(branch_count[i_branch]>4){
-        free_interpolate(SID_FARG x_interp[i_branch]);
-        free_interpolate(SID_FARG y_interp[i_branch]);
-        free_interpolate(SID_FARG z_interp[i_branch]);
-        free_interpolate(SID_FARG vx_interp[i_branch]);
-        free_interpolate(SID_FARG vy_interp[i_branch]);
-        free_interpolate(SID_FARG vz_interp[i_branch]);
+        free_interpolate(SID_FARG x_interp[i_branch], NULL);
+        free_interpolate(SID_FARG y_interp[i_branch], NULL);
+        free_interpolate(SID_FARG z_interp[i_branch], NULL);
+        free_interpolate(SID_FARG vx_interp[i_branch],NULL);
+        free_interpolate(SID_FARG vy_interp[i_branch],NULL);
+        free_interpolate(SID_FARG vz_interp[i_branch],NULL);
       }
     }
     SID_free(SID_FARG x_interp);

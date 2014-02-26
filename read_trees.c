@@ -12,7 +12,6 @@
 
 void read_trees(char       *filename_tree_root,
                 char       *filename_halo_root,
-                char       *filename_run_root,
                 int         mode_progenitor,
                 tree_info **trees){
   SID_fp      fp_out;
@@ -192,6 +191,7 @@ void read_trees(char       *filename_tree_root,
   init_trees(i_read_start,
              i_read_stop,
              i_read_step,
+             n_search,
              n_forests,
              n_forests_local,
              trees);
@@ -338,19 +338,32 @@ void read_trees(char       *filename_tree_root,
         // Ignore negative ids
         int subgroup_forest_id;
         if(subgroup_tree_id>=0)
-          subgroup_forest_id=i_forest_subgroup[subgroup_forest_id];
+          subgroup_forest_id=i_forest_subgroup[subgroup_tree_id];
         else
           subgroup_forest_id=-1;
-
+group_forest_id=subgroup_forest_id=0;
         // Add nodes to trees
         if(subgroup_forest_id>=0){
           // If this subgroup belongs to a local forest ...
           i_forest=subgroup_forest_id-forest_lo_subgroup_local;
+i_forest=0;
           if(i_forest>=0 && i_forest<n_forests_subgroup_local){ 
             // ... add the group ...
             if(!flag_group_added){
+               int i_forest_group;
+i_forest_group=i_forest;
+/*
+               if(group_file_index<0){
+                  i_forest_group=i_forest;
+                  group_forests[i_file%n_wrap][n_groups_added]=
+               }
+               else{
+                  int index_forest=find_index_int(halo_indices[group_descendant_snap%n_wrap],descendant_index,n_halos,NULL);
+                  i_forest_group=array[
+               }
+*/
                add_node_to_trees((*trees),               // The tree datastructure
-                                 i_forest,               // Local forest index
+                                 i_forest_group,         // Local forest index
                                  group_tree_case,        // Halo's TREE_CASE BWS
                                  n_particles_group,      // Number of particles
                                  i_file,                 // Halo's tree snapshot number
@@ -433,6 +446,12 @@ void read_trees(char       *filename_tree_root,
 
   // Finalize trees
   finalize_trees((*trees),mode_progenitor);
+
+  // Compute some useful array size maxima
+  calc_max((*trees)->n_groups_snap_local,     &((*trees)->max_n_groups_snap_local),     (*trees)->n_snaps,        SID_INT,CALC_MODE_DEFAULT);
+  calc_max((*trees)->n_subgroups_snap_local,  &((*trees)->max_n_subgroups_snap_local),  (*trees)->n_snaps,        SID_INT,CALC_MODE_DEFAULT);
+  calc_max((*trees)->n_groups_forest_local,   &((*trees)->max_n_groups_forest_local),   (*trees)->n_forests_local,SID_INT,CALC_MODE_DEFAULT);
+  calc_max((*trees)->n_subgroups_forest_local,&((*trees)->max_n_subgroups_forest_local),(*trees)->n_forests_local,SID_INT,CALC_MODE_DEFAULT);
 
   // Clean-up
   for(i_wrap=0;i_wrap<n_wrap;i_wrap++){
