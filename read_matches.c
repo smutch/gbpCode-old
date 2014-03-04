@@ -77,17 +77,9 @@ void read_matches(char    *filename_in_dir,
    // Since we need the particle counts for the goodness of match criterion,
    //   create a temporary array for n_particles_i in case we weren't passed
    //   an array for it.
-   int  flag_allo_n_particles_i;
-   int *n_particles_i;
+   int  flag_alloc_n_particles_i;
+   int *n_particles_i=n_particles_i_in;
    int *n_particles_j=n_particles_j_in;
-   if(n_particles_i==NULL){
-      n_particles_i=(int *)SID_malloc(sizeof(int)*(*n_groups_i));
-      flag_allo_n_particles_i=TRUE;
-   }
-   else{
-      n_particles_i=n_particles_i_in;
-      flag_allo_n_particles_i=FALSE;
-   }
 
    // Read the needed info from the header file
    int  i_read;
@@ -111,10 +103,14 @@ void read_matches(char    *filename_in_dir,
       if(i_read_file==i_read_in){
          SID_fread(n_groups_i,sizeof(int),1,&fp_in);
          if((*n_groups_i)>0){
-            if(n_particles_i!=NULL)
-               SID_fread_ordered(n_particles_i,sizeof(int),(size_t)(*n_groups_i),&fp_in);
+            // Create a temporary array for n_particles_i if we were not passed one
+            if(n_particles_i==NULL){
+               n_particles_i=(int *)SID_malloc(sizeof(int)*(*n_groups_i));
+               flag_alloc_n_particles_i=TRUE;
+            }
             else
-               SID_fskip(sizeof(int),(*n_groups_i),&fp_in);
+               flag_alloc_n_particles_i=FALSE;
+            SID_fread_ordered(n_particles_i,sizeof(int),(size_t)(*n_groups_i),&fp_in);
             if(mode==MATCH_GROUPS){
                if(n_sub_group_i!=NULL)
                   SID_fread_ordered(n_sub_group_i,sizeof(int),(size_t)(*n_groups_i),&fp_in);
@@ -212,7 +208,7 @@ void read_matches(char    *filename_in_dir,
    }
 
    // If the n_particles_i array is a temporary array, free it
-   if(flag_allo_n_particles_i)
+   if(flag_alloc_n_particles_i)
       SID_free(SID_FARG n_particles_i);
 }
 

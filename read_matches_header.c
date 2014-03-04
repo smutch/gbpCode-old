@@ -33,7 +33,6 @@ int read_matches_header(char   *filename_root_in,
   int         n_k_match;
   char        group_text_prefix[5];
   int         n_matches;
-  int         n_files;
   int         j_read;
   char        filename_cat1[256];
   char        filename_cat2[256];
@@ -128,8 +127,8 @@ int read_matches_header(char   *filename_root_in,
   SID_Bcast((*n_groups_return),   sizeof(int)*(*n_files_return),MASTER_RANK,SID.COMM_WORLD);
 
   // Compute some maxs (useful for array allocation)
-  calc_max((*n_subgroups_return),n_subgroups_max,n_files,SID_INT,CALC_MODE_DEFAULT);
-  calc_max((*n_groups_return),   n_groups_max,   n_files,SID_INT,CALC_MODE_DEFAULT);
+  calc_max((*n_subgroups_return),n_subgroups_max,(*n_files_return),SID_INT,CALC_MODE_DEFAULT);
+  calc_max((*n_groups_return),   n_groups_max,   (*n_files_return),SID_INT,CALC_MODE_DEFAULT);
   (*n_halos_max)=MAX((*n_subgroups_max),(*n_groups_max));
 
   SID_log("Done.",SID_LOG_CLOSE);
