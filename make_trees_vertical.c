@@ -20,8 +20,7 @@ int main(int argc, char *argv[]){
   int         i_read_stop;
   int         i_read_step;
   int         n_search_forests;
-  int         n_files_groups;
-  int         n_files_subgroups;
+  int         n_dim_files;
   int         n_k_match=2;
   int         flag_clean=FALSE;
   FILE       *fp_in;
@@ -40,17 +39,15 @@ int main(int argc, char *argv[]){
   strcpy(filename_root_out,    argv[3]);
   strcpy(filename_snap_list_in,argv[4]);
   n_search_forests =atoi(argv[5]);
-  n_files_groups   =atoi(argv[6]);
-  n_files_subgroups=atoi(argv[7]);
+  n_dim_files      =atoi(argv[6]);
 
   SID_log("Constructing vertical merger trees...",SID_LOG_OPEN|SID_LOG_TIMER);
-  compute_trees_vertical(filename_root_out,
-                         filename_cat_root_in,
-                         filename_snap_list_in,
-                         n_files_groups,
-                         n_files_subgroups,
-                         n_search_forests,
-                         &flag_clean);
+  /*
+  compute_trees_vertical(filename_SSimPL_dir,
+                         filename_halo_version_root,
+                         filename_trees_name,
+                         n_dim_files);
+  */
   SID_log("Done.",SID_LOG_CLOSE);
 
   SID_exit(ERROR_NONE);

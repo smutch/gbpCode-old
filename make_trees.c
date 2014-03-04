@@ -25,8 +25,7 @@ int main(int argc, char *argv[]){
   int         i_read_step;
   int         n_search;
   int         n_search_forests;
-  int         n_files_groups;
-  int         n_files_subgroups;
+  int         n_dim_files;
   int         n_k_match=2;
   int         flag_clean=FALSE;
   FILE       *fp_in;
@@ -57,9 +56,8 @@ int main(int argc, char *argv[]){
   i_read_step      =atoi(argv[8]);
   n_search         =atoi(argv[9]);
   n_search_forests =atoi(argv[10]);
-  n_files_groups   =atoi(argv[11]);
-  n_files_subgroups=atoi(argv[12]);
-  flag_fix_bridges =atoi(argv[13]);
+  n_dim_files      =atoi(argv[11]);
+  flag_fix_bridges =atoi(argv[12]);
 
   SID_log("Constructing merger trees for snapshots #%d->#%d (step=%d, n_search=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read_start,i_read_stop,i_read_step,n_search);
 
@@ -75,15 +73,12 @@ int main(int argc, char *argv[]){
                            n_search,
                            flag_fix_bridges,
                            &flag_clean);
-  flag_clean=FALSE;
-  compute_trees_vertical(filename_root_out,
-                         filename_cat_root_in,
-                         filename_snap_list_in,
-                         n_files_groups,
-                         n_files_subgroups,
-                         n_search_forests,
-                         &flag_clean);
-
+  /*
+  compute_trees_vertical(filename_SSimPL_dir,
+                         filename_halo_version_root,
+                         filename_trees_name,
+                         n_dim_files);
+  */
   SID_log("Done.",SID_LOG_CLOSE);
 
   // Clean-up

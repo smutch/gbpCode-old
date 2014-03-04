@@ -9,12 +9,16 @@
 #include <gbpHalos.h>
 #include <gbpTrees.h>
 
-void compute_trees_vertical(char       *filename_root_out,
-                            int         n_dim_files){
-  SID_log("Constructing vertical merger trees for snapshots #%d->#%d (step=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,
-          trees->i_read_start,
-          trees->i_read_stop,
-          trees->i_read_step);
+void compute_trees_vertical(char *filename_SSimPL_dir,
+                            char *filename_halo_version_root,
+                            char *filename_trees_name,
+                            int   n_dim_files){
+  SID_log("Constructing vertical merger trees...",SID_LOG_OPEN|SID_LOG_TIMER);
+
+  char filename_trees_root[MAX_FILENAME_LENGTH];
+  char filename_halos_root[MAX_FILENAME_LENGTH];
+  sprintf(filename_trees_root,"%s/trees/%s",filename_SSimPL_dir,filename_trees_name);
+  sprintf(filename_halos_root,"%s/halos/%s",filename_SSimPL_dir,filename_halo_version_root);
 
   // Read the horizontal trees into RAM
   tree_info *trees;

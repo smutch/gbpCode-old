@@ -7,6 +7,11 @@
 #include <gbpHalos.h>
 #include <gbpTrees.h>
 
+#define READ_MATCHES_GOODNESS_A   1.4806123257012386E+01
+#define READ_MATCHES_GOODNESS_B   1.0840337997980678E+01
+#define READ_MATCHES_GOODNESS_C   ONE_THIRD
+#define READ_MATCHES_GOODNESS_D  -2.4577976443027350E+00
+
 void read_matches(char    *filename_in_dir,
                   int      i_read_in,
                   int      j_read_in,
@@ -14,8 +19,8 @@ void read_matches(char    *filename_in_dir,
                   int      mode,
                   int     *n_groups_i,
                   int     *n_groups_j,
-                  int     *n_particles_i,
-                  int     *n_particles_j,
+                  int     *n_particles_i_in,
+                  int     *n_particles_j_in,
                   int     *n_sub_group_i_in,
                   int     *n_sub_group_j_in,
                   int     *match_ids,
@@ -67,6 +72,21 @@ void read_matches(char    *filename_in_dir,
       else
          n_sub_group_j=n_sub_group_j_in;
       break;
+   }
+
+   // Since we need the particle counts for the goodness of match criterion,
+   //   create a temporary array for n_particles_i in case we weren't passed
+   //   an array for it.
+   int  flag_allo_n_particles_i;
+   int *n_particles_i;
+   int *n_particles_j=n_particles_j_in;
+   if(n_particles_i==NULL){
+      n_particles_i=(int *)SID_malloc(sizeof(int)*(*n_groups_i));
+      flag_allo_n_particles_i=TRUE;
+   }
+   else{
+      n_particles_i=n_particles_i_in;
+      flag_allo_n_particles_i=FALSE;
    }
 
    // Read the needed info from the header file
@@ -157,8 +177,8 @@ void read_matches(char    *filename_in_dir,
 
    // If we are reading groups, nullify all matches
    //    between halos with no substructures.
+   int i_halo;
    if(mode==MATCH_GROUPS){
-      int     i_halo;
       size_t *match_index_temp;
       for(i_halo=0;i_halo<(*n_groups_i);i_halo++){
          if(n_sub_group_i[i_halo]<=0){
@@ -180,5 +200,19 @@ void read_matches(char    *filename_in_dir,
       if(flag_alloc_n_sub_j)
          SID_free(SID_FARG n_sub_group_j);
    }
+
+   // Apply a goodness-of-fit criterion
+   for(i_halo=0;i_halo<(*n_groups_i);i_halo++){
+      if(match_ids[i_halo]>=0){
+         double n_particles=(double)n_particles_i[i_halo];
+         float  min_score  =(float)pow(READ_MATCHES_GOODNESS_A+READ_MATCHES_GOODNESS_B*n_particles,READ_MATCHES_GOODNESS_C)+READ_MATCHES_GOODNESS_D;
+         if(match_score[i_halo]<min_score)
+            match_ids[i_halo]=-1;
+      }
+   }
+
+   // If the n_particles_i array is a temporary array, free it
+   if(flag_allo_n_particles_i)
+      SID_free(SID_FARG n_particles_i);
 }
 
