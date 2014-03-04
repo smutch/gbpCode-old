@@ -16,7 +16,7 @@ void check_for_fragmented_halos(int k_match,
 
    // Finalize halos
    int i_group;
-   int n_lost     =0;
+   int n_strayed     =0;
    int n_returned =0;
    int n_exchanged=0;
    for(i_group=0;i_group<n_groups;i_group++){
@@ -37,9 +37,9 @@ void check_for_fragmented_halos(int k_match,
          group_id          =groups[i_write%n_wrap][i_group].id;
          descendant_id     =set_match_id(&(groups[i_write%n_wrap][i_group].descendant));
          main_progenitor_id=groups[i_write%n_wrap][i_group].main_progenitor_id;
-         if(group_id<0){
-            groups[i_write%n_wrap][i_group].type|=TREE_CASE_FRAGMENTED_LOST;
-            n_lost++;
+         if(group_id<0 || check_mode_for_flag(groups[i_write%n_wrap][i_group].type,TREE_CASE_STRAYED)){
+            groups[i_write%n_wrap][i_group].type|=TREE_CASE_FRAGMENTED_STRAYED;
+            n_strayed++;
          }
          else if(main_progenitor_id==bridge_id){
             groups[i_write%n_wrap][i_group].type|=TREE_CASE_FRAGMENTED_RETURNED;
@@ -51,8 +51,8 @@ void check_for_fragmented_halos(int k_match,
          }
       }
    }
-   if(n_lost!=0 || n_returned!=0 || n_exchanged!=0){
-      SID_log("# of new lost      fragmented halos = %-8d",SID_LOG_COMMENT,n_lost);
+   if(n_strayed!=0 || n_returned!=0 || n_exchanged!=0){
+      SID_log("# of new strayed   fragmented halos = %-8d",SID_LOG_COMMENT,n_strayed);
       SID_log("# of new returned  fragmented halos = %-8d",SID_LOG_COMMENT,n_returned);
       SID_log("# of new exchanged fragmented halos = %-8d",SID_LOG_COMMENT,n_exchanged);
    }

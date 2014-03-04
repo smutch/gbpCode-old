@@ -53,15 +53,15 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
       if(group_id==group_descendant_id){
          if(group_index>=0){ // Important for strayed cases
             // Add the propagated type
-            if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_LOST)      && !check_mode_for_flag(group_type,TREE_CASE_MERGER))
-               groups[(i_read+group_file_offset)%n_wrap][group_index].type|=TREE_CASE_FRAGMENTED_LOST;
+            if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_STRAYED)      && !check_mode_for_flag(group_type,TREE_CASE_MERGER))
+               groups[(i_read+group_file_offset)%n_wrap][group_index].type|=TREE_CASE_FRAGMENTED_STRAYED;
             if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_RETURNED)  && !check_mode_for_flag(group_type,TREE_CASE_MERGER))
                groups[(i_read+group_file_offset)%n_wrap][group_index].type|=TREE_CASE_FRAGMENTED_RETURNED;
             if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_EXCHANGED) && !check_mode_for_flag(group_type,TREE_CASE_MERGER))
                groups[(i_read+group_file_offset)%n_wrap][group_index].type|=TREE_CASE_FRAGMENTED_EXCHANGED;
             // Count the number of flags the descendant already has switched on
             int i_count=0;
-            if(check_mode_for_flag(groups[(i_read+group_file_offset)%n_wrap][group_index].type,TREE_CASE_FRAGMENTED_LOST))      i_count++;
+            if(check_mode_for_flag(groups[(i_read+group_file_offset)%n_wrap][group_index].type,TREE_CASE_FRAGMENTED_STRAYED))      i_count++;
             if(check_mode_for_flag(groups[(i_read+group_file_offset)%n_wrap][group_index].type,TREE_CASE_FRAGMENTED_RETURNED))  i_count++;
             if(check_mode_for_flag(groups[(i_read+group_file_offset)%n_wrap][group_index].type,TREE_CASE_FRAGMENTED_EXCHANGED)) i_count++;
             // Check that the affected halo does not have more than one fragmented halo flags turned on
@@ -80,7 +80,7 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
       }
       /*
       // Don't count fragmented halos as mergers when they're accreated
-      else if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_LOST)     ||
+      else if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_STRAYED)     ||
               check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_RETURNED) ||
               check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_EXCHANGED)){
          groups[i_read%n_wrap][i_group].type&=(~TREE_CASE_MERGER);
@@ -88,7 +88,7 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
       */
 
       // Propagate the information about the bridge as well
-      if((check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_LOST)     ||
+      if((check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_STRAYED)     ||
           check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_RETURNED) ||
           check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_EXCHANGED)) &&
          !check_mode_for_flag(group_type,TREE_CASE_MERGER)){
@@ -140,15 +140,15 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
          if(subgroup_id==subgroup_descendant_id){
             if(subgroup_index>=0){ // Important for strayed cases
                // Add the propagated type
-               if(check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_LOST)      && !check_mode_for_flag(subgroup_type,TREE_CASE_MERGER))
-                  subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type|=TREE_CASE_FRAGMENTED_LOST;
+               if(check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_STRAYED)      && !check_mode_for_flag(subgroup_type,TREE_CASE_MERGER))
+                  subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type|=TREE_CASE_FRAGMENTED_STRAYED;
                if(check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_RETURNED)  && !check_mode_for_flag(subgroup_type,TREE_CASE_MERGER))
                   subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type|=TREE_CASE_FRAGMENTED_RETURNED;
                if(check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_EXCHANGED) && !check_mode_for_flag(subgroup_type,TREE_CASE_MERGER))
                   subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type|=TREE_CASE_FRAGMENTED_EXCHANGED;
                // Count the number of flags the descendant already has switched on
                int i_count=0;
-               if(check_mode_for_flag(subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type,TREE_CASE_FRAGMENTED_LOST))      i_count++;
+               if(check_mode_for_flag(subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type,TREE_CASE_FRAGMENTED_STRAYED))      i_count++;
                if(check_mode_for_flag(subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type,TREE_CASE_FRAGMENTED_RETURNED))  i_count++;
                if(check_mode_for_flag(subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type,TREE_CASE_FRAGMENTED_EXCHANGED)) i_count++;
                // Check that the affected halo does not have more than one fragmented halo flags turned on
@@ -164,9 +164,10 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
                                  subgroup_type);
             }
          }
-         // Don't count fragmented halos as mergers when they're accreated
+
          /*
-         else if(check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_LOST)     ||
+         // Don't count fragmented halos as mergers when they're accreated
+         else if(check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_STRAYED)  ||
                  check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_RETURNED) ||
                  check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_EXCHANGED)){
             subgroups[i_read%n_wrap][i_subgroup].type&=(~TREE_CASE_MERGER);
@@ -174,7 +175,7 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
          */
 
          // Propagate the information about the bridge as well
-         if((check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_LOST)     ||
+         if((check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_STRAYED)     ||
              check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_RETURNED) ||
              check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_EXCHANGED)) &&
             !check_mode_for_flag(subgroup_type,TREE_CASE_MERGER)){

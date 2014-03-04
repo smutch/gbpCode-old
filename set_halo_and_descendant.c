@@ -26,6 +26,7 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
    int                   k_file_main;
    int                   k_size_main;
    int                   flag_process;
+   int                   flag_emerged;
    int                   n_p_diff_old;
    int                   n_p_diff_new;
 
@@ -47,6 +48,7 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
       // If we are processing a halo already identified as matched to a bridge, only accept
       //   this new match if it meets these criteria ...
       flag_process=TRUE;
+      flag_emerged=FALSE;
       if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED) &&
          !check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGE_FINALIZE)){
         // ... the score is at least half-as-good ...
@@ -73,6 +75,7 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
            if(current!=NULL)
               k_file =current->file;
         }
+        flag_emerged=flag_process;
       }
 
       // If the code above hasn't decided that we shouldn't process this match ...
@@ -114,13 +117,15 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
                // ... set new main progenitor type ...
                old_progenitor.halo->type|=  TREE_CASE_MERGER;
                old_progenitor.halo->type&=(~TREE_CASE_MAIN_PROGENITOR);
+               old_progenitor.halo->type&=(~TREE_CASE_SIMPLE);
                new_progenitor.halo->type&=(~TREE_CASE_MERGER);
                new_progenitor.halo->type|=  TREE_CASE_MAIN_PROGENITOR;
+               new_progenitor.halo->type&=(~TREE_CASE_SIMPLE);
                // ... set new main progenitor ...
                memcpy(&(halos_j[j_halo].first_progenitor),                      &new_progenitor,sizeof(match_info));
                memcpy(&(halos_j[j_halo].first_progenitor.halo->next_progenitor),&old_progenitor,sizeof(match_info));
             }
-            // ... else just add the new halo to the end of the list and create a new ID for it (if this is not a strayed/sputtered halo).
+            // ... else just add the new halo to the end of the list and create a new ID for it (if this is not a strayed halo).
             else{
                // ... set new non-main progenitor ...
                memcpy(&(halos_j[j_halo].last_progenitor.halo->next_progenitor),&new_progenitor,sizeof(match_info));
@@ -132,6 +137,7 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
                // ... set new non-main progenitor type ...
                halos_i[i_halo].type|=  TREE_CASE_MERGER;
                halos_i[i_halo].type&=(~TREE_CASE_MAIN_PROGENITOR);
+               halos_i[i_halo].type&=(~TREE_CASE_SIMPLE);
             }
          }
 
@@ -143,29 +149,22 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
          halos_i[i_halo].descendant.score=score;
 
          // Set match-type flags ...                   
-         //   If we've matched to a halo with a well-defined id then make sure it isn't marked as sputtering ...
-         if(halos_i[i_halo].id>=0)
-            halos_i[i_halo].type=halos_i[i_halo].type&=(~TREE_CASE_SPUTTERED);
-         // ... else we've matched to a halo which *does not* have a valid id.  Mark it as
-         //     a sputtering halo.
-         else
-            halos_i[i_halo].type|=TREE_CASE_SPUTTERED;
+         //   Propagate strayed halo flags ...
+         if(check_mode_for_flag(halos_j[j_halo].type,TREE_CASE_STRAYED))
+            halos_i[i_halo].type|=TREE_CASE_STRAYED;
 
          // ... turn off the TREE_CASE_NO_PROGENITORS flag for the descendant ...
          halos_j[j_halo].type&=(~TREE_CASE_NO_PROGENITORS);
 
-         // ... set flag for simple matches and dropped halos
+         // ... set the flags for simple and dropped halo matches
          if(file_offset==1)
             halos_i[i_halo].type|=TREE_CASE_SIMPLE;
-         else{
-            if(!check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_MATCHED_TO_BRIDGE))
-               halos_i[i_halo].type|=TREE_CASE_DROPPED;
-            halos_j[j_halo].type|=TREE_CASE_FOUND;
-         }
+         else if(!check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_MATCHED_TO_BRIDGE))
+            halos_i[i_halo].type|=TREE_CASE_DROPPED;
 
-         // Mark emerged halos as found
-         if(check_mode_for_flag(halos_j[j_halo].type,TREE_CASE_EMERGED_CANDIDATE))
-            halos_j[j_halo].type|=TREE_CASE_FOUND;
+         // ... set the flag for emerged halos
+         if(flag_emerged)
+            halos_j[j_halo].type|=TREE_CASE_EMERGED;
 
          // Mark the halo as processed
          halos_i[i_halo].type&=(~(TREE_CASE_UNPROCESSED|TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED|TREE_CASE_BRIDGE_FINALIZE));

@@ -32,6 +32,7 @@ void apply_horizontal_tree_defaults(int                    n_halos_1_matches,
       if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_UNPROCESSED)){
          halos_i[i_halo].type   |=TREE_CASE_STRAYED;
          halos_i[i_halo].type   &=(~TREE_CASE_UNPROCESSED);
+         halos_i[i_halo].id      =(*max_id)++;
          halos_i[i_halo].tree_id =(*max_tree_id)++;
       }
    }

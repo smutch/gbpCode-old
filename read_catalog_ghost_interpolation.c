@@ -23,7 +23,7 @@ void read_catalog_ghost_interpolation(tree_horizontal_ghost_group_info     *grou
    if(fp_properties.n_halos_total!=n_subgroups)
       SID_trap_error("Mismatched subgroup counts (ie. %d!=%d) in read_catalog_ghost_interpolation().",ERROR_LOGIC,fp_properties.n_halos_total,n_subgroups);
    for(i_subgroup=0;i_subgroup<n_subgroups;i_subgroup++){
-      if(subgroups[i_subgroup].file_offset>1 || check_mode_for_flag(subgroups[i_subgroup].type,TREE_CASE_FOUND)){
+      if(subgroups[i_subgroup].file_offset>1){
          if(subgroup_properties[i_subgroup]==NULL)
             subgroup_properties[i_subgroup]=(halo_properties_info *)SID_malloc(sizeof(halo_properties_info));
          fread_catalog_file(&fp_properties,NULL,subgroup_properties[i_subgroup],NULL,i_subgroup);
@@ -42,7 +42,7 @@ void read_catalog_ghost_interpolation(tree_horizontal_ghost_group_info     *grou
    if(fp_properties.n_halos_total!=n_groups)
       SID_trap_error("Mismatched group counts (ie. %d!=%d) in read_catalog_ghost_interpolation().",ERROR_LOGIC,fp_properties.n_halos_total,n_groups);
    for(i_group=0;i_group<n_groups;i_group++){
-      if(groups[i_group].file_offset>1 || check_mode_for_flag(groups[i_group].type,TREE_CASE_FOUND)){
+      if(groups[i_group].file_offset>1){
          if(group_properties[i_group]==NULL)
             group_properties[i_group]=(halo_properties_info *)SID_malloc(sizeof(halo_properties_info));
          fread_catalog_file(&fp_properties,NULL,group_properties[i_group],NULL,i_group);

@@ -178,14 +178,14 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                             flag_compute_ghosts);
 
   // Validate existing matching files &/or perfrom matching
-  if(!compute_trees_matches(filename_halo_root_in,
-                            filename_root_matches,
-                            i_read_start,
-                            i_read_stop,
-                            i_read_step,
-                            n_search,
-                            WRITE_MATCHES_MODE_TREES|WRITE_MATCHES_PERFORM_CHECK))
-     SID_trap_error("Matching could not be completed.  Terminating.",ERROR_LOGIC);
+  //if(!compute_trees_matches(filename_halo_root_in,
+  //                          filename_root_matches,
+  //                          i_read_start,
+  //                          i_read_stop,
+  //                          i_read_step,
+  //                          n_search,
+  //                          WRITE_MATCHES_MODE_TREES|WRITE_MATCHES_PERFORM_CHECK))
+  //   SID_trap_error("Matching could not be completed.  Terminating.",ERROR_LOGIC);
   read_matches_header(filename_root_matches,
                       i_read_start,
                       i_read_stop,

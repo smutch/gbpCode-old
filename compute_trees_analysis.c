@@ -111,7 +111,7 @@ void compute_trees_analysis(tree_info *trees,char *filename_out_root){
            if(i_np_0>=0 && i_np_0<n_np){
               // Check if the main progenitor is a fragmented halo
               int flag_fragmented=check_mode_for_flag(main_progenitor->tree_case,TREE_CASE_FRAGMENTED_RETURNED) ||
-                                  check_mode_for_flag(main_progenitor->tree_case,TREE_CASE_FRAGMENTED_LOST)||
+                                  check_mode_for_flag(main_progenitor->tree_case,TREE_CASE_FRAGMENTED_STRAYED)||
                                   check_mode_for_flag(main_progenitor->tree_case,TREE_CASE_FRAGMENTED_EXCHANGED);
 
               // Populate counters
@@ -143,7 +143,7 @@ void compute_trees_analysis(tree_info *trees,char *filename_out_root){
 
                     // Determine if this halo is actually a fragmented halo
                     int flag_fragmented=check_mode_for_flag(merging_progenitor->tree_case,TREE_CASE_FRAGMENTED_RETURNED) ||
-                                        check_mode_for_flag(merging_progenitor->tree_case,TREE_CASE_FRAGMENTED_LOST)||
+                                        check_mode_for_flag(merging_progenitor->tree_case,TREE_CASE_FRAGMENTED_STRAYED)||
                                         check_mode_for_flag(merging_progenitor->tree_case,TREE_CASE_FRAGMENTED_EXCHANGED);
 
                     // Populate counters

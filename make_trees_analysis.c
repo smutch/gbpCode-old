@@ -28,7 +28,7 @@ int main(int argc, char *argv[]){
 
   SID_log("Performing analysis of merger trees...",SID_LOG_OPEN|SID_LOG_TIMER);
 
-  // Perform analysis
+  // Read the trees
   tree_info *trees;
   read_trees(filename_trees_root,
              filename_halos_root,
@@ -36,10 +36,10 @@ int main(int argc, char *argv[]){
              &trees);
 
   // Read ancillary data
-  read_trees_catalogs(trees,
-                      filename_SSimPL_dir,
-                      filename_halo_version_root,
-                      READ_TREES_CATALOGS_GROUPS|READ_TREES_CATALOGS_SUBGROUPS);
+  //read_trees_catalogs(trees,
+  //                    filename_SSimPL_dir,
+  //                    filename_halo_version_root,
+  //                    READ_TREES_CATALOGS_GROUPS|READ_TREES_CATALOGS_SUBGROUPS);
   read_trees_match_scores(trees,
                           filename_SSimPL_dir,
                           READ_TREES_MATCH_SCORES_ALL);

@@ -21,12 +21,6 @@ void add_to_trees_horizontal_stats(tree_horizontal_stats_info *stats,int id,int 
       stats->n_strayed++;
    }
 
-   // Compute statistcs for sputtered halos
-   if(check_mode_for_flag(type,TREE_CASE_SPUTTERED)){
-      stats->max_sputtered_size=MAX(stats->max_sputtered_size,n_particles);
-      stats->n_sputtered++;
-   }
-
    // Compute statistcs for dropped halos
    if(check_mode_for_flag(type,TREE_CASE_DROPPED)){
       stats->max_dropped_size=MAX(stats->max_dropped_size,n_particles);
@@ -50,9 +44,9 @@ void add_to_trees_horizontal_stats(tree_horizontal_stats_info *stats,int id,int 
       stats->max_emerged_size=MAX(stats->max_emerged_size,n_particles);
       stats->n_emerged++;
    }
-   if(check_mode_for_flag(type,TREE_CASE_FRAGMENTED_LOST)){
-      stats->max_fragmented_lost_size=MAX(stats->max_fragmented_lost_size,n_particles);
-      stats->n_fragmented_lost++;
+   if(check_mode_for_flag(type,TREE_CASE_FRAGMENTED_STRAYED)){
+      stats->max_fragmented_strayed_size=MAX(stats->max_fragmented_strayed_size,n_particles);
+      stats->n_fragmented_strayed++;
    }
    if(check_mode_for_flag(type,TREE_CASE_FRAGMENTED_RETURNED)){
       stats->max_fragmented_returned_size=MAX(stats->max_fragmented_returned_size,n_particles);

@@ -82,7 +82,7 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
            groups[i_search][i_halo].id                    =(*max_id_group);
            groups[i_search][i_halo].main_progenitor_id    =(*max_id_group);
            groups[i_search][i_halo].tree_id               =(*max_tree_id_group);
-           groups[i_search][i_halo].type                  =TREE_CASE_SIMPLE|TREE_CASE_MAIN_PROGENITOR|TREE_CASE_NO_PROGENITORS;
+           groups[i_search][i_halo].type                  =TREE_CASE_MAIN_PROGENITOR|TREE_CASE_NO_PROGENITORS;
            groups[i_search][i_halo].n_particles           =n_particles_groups[i_halo];
            groups[i_search][i_halo].n_particles_parent    =n_particles_groups[i_halo];
            groups[i_search][i_halo].descendant.halo       =&(subgroups[(i_search+1)%n_wrap][i_halo]);
@@ -157,7 +157,7 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
            subgroups[i_search][i_halo].id                    =(*max_id_subgroup);
            subgroups[i_search][i_halo].main_progenitor_id    =(*max_id_subgroup);
            subgroups[i_search][i_halo].tree_id               =(*max_tree_id_subgroup);
-           subgroups[i_search][i_halo].type                  =TREE_CASE_SIMPLE|TREE_CASE_MAIN_PROGENITOR|TREE_CASE_NO_PROGENITORS;
+           subgroups[i_search][i_halo].type                  =TREE_CASE_MAIN_PROGENITOR|TREE_CASE_NO_PROGENITORS;
            subgroups[i_search][i_halo].n_particles           =n_particles_subgroups[i_halo];
            subgroups[i_search][i_halo].n_particles_parent    =n_particles_groups[k_halo];
            subgroups[i_search][i_halo].descendant.halo       =&(subgroups[(i_search+1)%n_wrap][i_halo]);

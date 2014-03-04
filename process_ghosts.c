@@ -63,14 +63,14 @@ void process_ghosts(tree_horizontal_ghost_group_info    **groups_in,
             group_final_file_index=group_descendant->file_index;
             group_ghost_base_type =TREE_CASE_GHOST;
             // Set the type for the ghost halos.  A merger flag may be added later for the last one.
-            if(check_mode_for_flag(group_descendant->type,TREE_CASE_FRAGMENTED_LOST))
-               group_ghost_base_type|=TREE_CASE_FRAGMENTED_LOST;
+            if(check_mode_for_flag(group_descendant->type,TREE_CASE_FRAGMENTED_STRAYED))
+               group_ghost_base_type|=TREE_CASE_FRAGMENTED_STRAYED;
             if(check_mode_for_flag(group_descendant->type,TREE_CASE_FRAGMENTED_RETURNED))
                group_ghost_base_type|=TREE_CASE_FRAGMENTED_RETURNED;
             if(check_mode_for_flag(group_descendant->type,TREE_CASE_FRAGMENTED_EXCHANGED))
                group_ghost_base_type|=TREE_CASE_FRAGMENTED_EXCHANGED;
-            if(check_mode_for_flag(group_descendant->type,TREE_CASE_SPUTTERED))
-               group_ghost_base_type|=TREE_CASE_SPUTTERED;
+            if(check_mode_for_flag(group_descendant->type,TREE_CASE_STRAYED))
+               group_ghost_base_type|=TREE_CASE_STRAYED;
             if(check_mode_for_flag(group_descendant->type,TREE_CASE_MAIN_PROGENITOR))
                group_ghost_base_type|=TREE_CASE_MAIN_PROGENITOR;
             if(check_mode_for_flag(group_descendant->type,TREE_CASE_MERGER)){
@@ -202,14 +202,14 @@ void process_ghosts(tree_horizontal_ghost_group_info    **groups_in,
 
                   // ... set the type for the ghost halos.  A merger flag may be added later for the last one.
                   subgroup_ghost_base_type=TREE_CASE_GHOST;
-                  if(check_mode_for_flag(subgroup_progenitor->type,TREE_CASE_FRAGMENTED_LOST))
-                     subgroup_ghost_base_type|=TREE_CASE_FRAGMENTED_LOST;
+                  if(check_mode_for_flag(subgroup_progenitor->type,TREE_CASE_FRAGMENTED_STRAYED))
+                     subgroup_ghost_base_type|=TREE_CASE_FRAGMENTED_STRAYED;
                   if(check_mode_for_flag(subgroup_progenitor->type,TREE_CASE_FRAGMENTED_RETURNED))
                      subgroup_ghost_base_type|=TREE_CASE_FRAGMENTED_RETURNED;
                   if(check_mode_for_flag(subgroup_progenitor->type,TREE_CASE_FRAGMENTED_EXCHANGED))
                      subgroup_ghost_base_type|=TREE_CASE_FRAGMENTED_EXCHANGED;
-                  if(check_mode_for_flag(subgroup_progenitor->type,TREE_CASE_SPUTTERED))
-                     subgroup_ghost_base_type|=TREE_CASE_SPUTTERED;
+                  if(check_mode_for_flag(subgroup_progenitor->type,TREE_CASE_STRAYED))
+                     subgroup_ghost_base_type|=TREE_CASE_STRAYED;
                   if(check_mode_for_flag(subgroup_progenitor->type,TREE_CASE_MAIN_PROGENITOR))
                      subgroup_ghost_base_type|=TREE_CASE_MAIN_PROGENITOR;
                   if(check_mode_for_flag(subgroup_progenitor->type,TREE_CASE_MERGER)){

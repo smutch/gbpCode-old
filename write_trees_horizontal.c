@@ -40,7 +40,6 @@ void write_trees_horizontal(void  **groups_in,
    char        filename_matching_out[MAX_FILENAME_LENGTH];
    char        filename_mergers_out[MAX_FILENAME_LENGTH];
    char        filename_strayed_out[MAX_FILENAME_LENGTH];
-   char        filename_sputtered_out[MAX_FILENAME_LENGTH];
    char        filename_dropped_out[MAX_FILENAME_LENGTH];
    char        filename_bridged_out[MAX_FILENAME_LENGTH];
    char        filename_emerged_out[MAX_FILENAME_LENGTH];
@@ -48,7 +47,6 @@ void write_trees_horizontal(void  **groups_in,
    FILE       *fp_matching_out;
    FILE       *fp_mergers_out;
    FILE       *fp_strayed_out;
-   FILE       *fp_sputtered_out;
    FILE       *fp_dropped_out;
    FILE       *fp_bridged_out;
    FILE       *fp_emerged_out;
@@ -59,8 +57,8 @@ void write_trees_horizontal(void  **groups_in,
    FILE       *fp;
    int         n_halos;
    int         n_emerged;
-   int         n_fragmented_lost;
-   int         n_fragmented_lost_main;
+   int         n_fragmented_strayed;
+   int         n_fragmented_strayed_main;
    int         n_fragmented_returned;
    int         n_fragmented_returned_main;
    int         n_fragmented_exchanged;
@@ -79,8 +77,8 @@ void write_trees_horizontal(void  **groups_in,
    int         i_column;
    int         n_particles_emerged;
    int         n_particles_emerged_main;
-   int         n_particles_fragmented_lost;
-   int         n_particles_fragmented_lost_main;
+   int         n_particles_fragmented_strayed;
+   int         n_particles_fragmented_strayed_main;
    int         n_particles_fragmented_returned;
    int         n_particles_fragmented_returned_main;
    int         n_particles_fragmented_exchanged;
@@ -466,7 +464,6 @@ void write_trees_horizontal(void  **groups_in,
          // Write matching and special case information
          sprintf(filename_matching_out,  "%s/%sgroup_progenitors.txt",   filename_output_dir_horizontal_cases,group_text_prefix);
          sprintf(filename_strayed_out,   "%s/%sgroup_strays.txt",        filename_output_dir_horizontal_cases,group_text_prefix);
-         sprintf(filename_sputtered_out, "%s/%sgroup_sputters.txt",      filename_output_dir_horizontal_cases,group_text_prefix);
          sprintf(filename_dropped_out,   "%s/%sgroup_drops.txt",         filename_output_dir_horizontal_cases,group_text_prefix);
          sprintf(filename_bridged_out,   "%s/%sgroup_bridges.txt",       filename_output_dir_horizontal_cases,group_text_prefix);
          sprintf(filename_emerged_out,   "%s/%sgroup_emerged.txt",       filename_output_dir_horizontal_cases,group_text_prefix);
@@ -475,7 +472,6 @@ void write_trees_horizontal(void  **groups_in,
          if(flag_init_write){
             fp_matching_out  =fopen(filename_matching_out,  "w");
             fp_strayed_out   =fopen(filename_strayed_out,   "w");
-            fp_sputtered_out =fopen(filename_sputtered_out, "w");
             fp_dropped_out   =fopen(filename_dropped_out,   "w");
             fp_bridged_out   =fopen(filename_bridged_out,   "w");
             fp_emerged_out   =fopen(filename_emerged_out,   "w");
@@ -483,7 +479,6 @@ void write_trees_horizontal(void  **groups_in,
          else{
             fp_matching_out  =fopen(filename_matching_out,  "a");
             fp_strayed_out   =fopen(filename_strayed_out,   "a");
-            fp_sputtered_out =fopen(filename_sputtered_out, "a");
             fp_dropped_out   =fopen(filename_dropped_out,   "a");
             fp_bridged_out   =fopen(filename_bridged_out,   "a");
             fp_emerged_out   =fopen(filename_emerged_out,   "a");
@@ -509,15 +504,6 @@ void write_trees_horizontal(void  **groups_in,
             fprintf(fp,"# (%02d): %sgroup snapshot index\n",                         i_column++,group_text_prefix);
             fprintf(fp,"# (%02d): number of particles in the %sgroup's FoF group\n", i_column++,group_text_prefix);
             fprintf(fp,"# (%02d): number of particles in the %sgroup\n",             i_column++,group_text_prefix);
-            fp=fp_sputtered_out;
-            i_column=1;
-            fprintf(fp,"# (%02d): %sgroup expansion factor\n",                       i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup snapshot number\n",                        i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup snapshot index\n",                         i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup descendant file offset\n",                 i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the %sgroup's FoF group\n", i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the %sgroup\n",             i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the %sgroup's descendant\n",i_column++,group_text_prefix);
             fp=fp_dropped_out;
             i_column=1;
             fprintf(fp,"# (%02d): %sgroup expansion factor\n",                            i_column++,group_text_prefix);
@@ -540,7 +526,7 @@ void write_trees_horizontal(void  **groups_in,
             fprintf(fp,"# (%02d): %sgroup id\n",                                                                              i_column++,group_text_prefix);
             fprintf(fp,"# (%02d): number of back-matched %sgroups identified with this bridge (excludes descendant)\n",       i_column++,group_text_prefix);
             fprintf(fp,"# (%02d): number of back-matched %sgroups identified as emerging halos\n",                            i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of back-matched %sgroups identified as lost      fragmented halos\n",                i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): number of back-matched %sgroups identified as strayed   fragmented halos\n",                i_column++,group_text_prefix);
             fprintf(fp,"# (%02d): number of back-matched %sgroups identified as returning fragmented halos\n",                i_column++,group_text_prefix);
             fprintf(fp,"# (%02d): number of back-matched %sgroups identified as exchanged fragmented halos\n",                i_column++,group_text_prefix);
             fprintf(fp,"# (%02d): number of particles in the %sgroup's FoF group\n",                                          i_column++,group_text_prefix);
@@ -554,7 +540,7 @@ void write_trees_horizontal(void  **groups_in,
             fprintf(fp,"# (%02d): number of particles in the returned  fragmented back-matched %sgroups's main progenitors\n",i_column++,group_text_prefix);
             fprintf(fp,"# (%02d): number of particles in the exchanged fragmented back-matched %sgroups\n",                   i_column++,group_text_prefix);
             fprintf(fp,"# (%02d): number of particles in the exchanged fragmented back-matched %sgroups's main progenitors\n",i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the lost      fragmented back-matched %sgroups\n",                   i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): number of particles in the strayed   fragmented back-matched %sgroups\n",                   i_column++,group_text_prefix);
             fp=fp_emerged_out;
             i_column=1;
             fprintf(fp,"# (%02d): %sgroup expansion factor\n",                                i_column++,group_text_prefix);
@@ -633,18 +619,6 @@ void write_trees_horizontal(void  **groups_in,
                   halos[i_halo].n_particles_parent,
                   halos[i_halo].n_particles);
 
-            // Write sputtered halos
-            fp=fp_sputtered_out;
-            if(check_mode_for_flag(halos[i_halo].type,TREE_CASE_SPUTTERED))
-               fprintf(fp,"%10.3le %8d %8d %8d %8d %8d %8d\n",
-                  a_list[l_write],
-                  j_write,
-                  i_halo,
-                  set_match_file(&(halos[i_halo].descendant))-i_write,
-                  halos[i_halo].n_particles_parent,
-                  halos[i_halo].n_particles,
-                  set_match_n_particles(&(halos[i_halo].descendant)));
-
             // Write dropped halos
             fp=fp_dropped_out;
             if(check_mode_for_flag(halos[i_halo].type,TREE_CASE_DROPPED))
@@ -684,16 +658,16 @@ void write_trees_horizontal(void  **groups_in,
                // Count the number of emerged/dropped halos and the number of particles
                //   in each set, as well as the number of particles in their main progenitors
                n_emerged                            =0;
-               n_fragmented_lost                    =0;
-               n_fragmented_lost_main               =0;
+               n_fragmented_strayed                 =0;
+               n_fragmented_strayed_main            =0;
                n_fragmented_returned                =0;
                n_fragmented_returned_main           =0;
                n_fragmented_exchanged               =0;
                n_fragmented_exchanged_main          =0;
                n_particles_emerged                  =0;
                n_particles_emerged_main             =0;
-               n_particles_fragmented_lost          =0;
-               n_particles_fragmented_lost_main     =0;
+               n_particles_fragmented_strayed       =0;
+               n_particles_fragmented_strayed_main  =0;
                n_particles_fragmented_returned      =0;
                n_particles_fragmented_returned_main =0;
                n_particles_fragmented_exchanged     =0;
@@ -705,11 +679,11 @@ void write_trees_horizontal(void  **groups_in,
                                                                                   [set_match_index(&(halos[i_halo].bridges[j_halo]))].first_progenitor));
                      n_emerged++;
                   }
-                  if(check_mode_for_flag(set_match_type(&(halos[i_halo].bridges[j_halo])),TREE_CASE_FRAGMENTED_LOST)){
-                     n_particles_fragmented_lost     +=set_match_n_particles(&(halos[i_halo].bridges[j_halo]));
-                     n_particles_fragmented_lost_main+=set_match_n_particles(&(halos_all[set_match_file(&(halos[i_halo].bridges[j_halo]))%n_wrap]
+                  if(check_mode_for_flag(set_match_type(&(halos[i_halo].bridges[j_halo])),TREE_CASE_FRAGMENTED_STRAYED)){
+                     n_particles_fragmented_strayed     +=set_match_n_particles(&(halos[i_halo].bridges[j_halo]));
+                     n_particles_fragmented_strayed_main+=set_match_n_particles(&(halos_all[set_match_file(&(halos[i_halo].bridges[j_halo]))%n_wrap]
                                                                                           [set_match_index(&(halos[i_halo].bridges[j_halo]))].first_progenitor));
-                     n_fragmented_lost++;
+                     n_fragmented_strayed++;
                   }
                   if(check_mode_for_flag(set_match_type(&(halos[i_halo].bridges[j_halo])),TREE_CASE_FRAGMENTED_RETURNED)){
                      n_particles_fragmented_returned     +=set_match_n_particles(&(halos[i_halo].bridges[j_halo]));
@@ -731,7 +705,7 @@ void write_trees_horizontal(void  **groups_in,
                        halos[i_halo].id,
                        halos[i_halo].n_bridges,
                        n_emerged,
-                       n_fragmented_lost,
+                       n_fragmented_strayed,
                        n_fragmented_returned,
                        n_fragmented_exchanged,
                        halos[i_halo].n_particles_parent,
@@ -745,7 +719,7 @@ void write_trees_horizontal(void  **groups_in,
                        n_particles_fragmented_returned_main,
                        n_particles_fragmented_exchanged,
                        n_particles_fragmented_exchanged_main,
-                       n_particles_fragmented_lost);
+                       n_particles_fragmented_strayed);
             }
 
             // Write emerged halos
@@ -778,7 +752,6 @@ void write_trees_horizontal(void  **groups_in,
          } // Loop over i_halo
          fclose(fp_matching_out);
          fclose(fp_strayed_out);
-         fclose(fp_sputtered_out);
          fclose(fp_dropped_out);
          fclose(fp_bridged_out);
          fclose(fp_emerged_out);
@@ -831,19 +804,19 @@ void write_trees_horizontal(void  **groups_in,
             fprintf(fp,"# (%02d): %sgroup's matching score to it's main progenitor\n",           i_column++,group_text_prefix);
             fp=fp_fragmented_out;
             i_column=1;
-            fprintf(fp,"# (%02d): %sgroup expansion factor\n",                               i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup snapshot number\n",                                i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup snapshot index\n",                                 i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup id\n",                                             i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup fragmented type (0=lost,1=returned,2=exchanged)\n",i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup descendant file offset\n",                         i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup bridge snapshot\n",                                i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup bridge index\n",                                   i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): %sgroup bridge id\n",                                      i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): match score for the %sgroup's descendant\n",               i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the %sgroup's FoF group\n",         i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the %sgroup\n",                     i_column++,group_text_prefix);
-            fprintf(fp,"# (%02d): number of particles in the %sgroup's descendant\n",        i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): %sgroup expansion factor\n",                                  i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): %sgroup snapshot number\n",                                   i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): %sgroup snapshot index\n",                                    i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): %sgroup id\n",                                                i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): %sgroup fragmented type (0=strayed,1=returned,2=exchanged)\n",i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): %sgroup descendant file offset\n",                            i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): %sgroup bridge snapshot\n",                                   i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): %sgroup bridge index\n",                                      i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): %sgroup bridge id\n",                                         i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): match score for the %sgroup's descendant\n",                  i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): number of particles in the %sgroup's FoF group\n",            i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): number of particles in the %sgroup\n",                        i_column++,group_text_prefix);
+            fprintf(fp,"# (%02d): number of particles in the %sgroup's descendant\n",           i_column++,group_text_prefix);
          }
 
          // Loop over each halo
@@ -931,7 +904,7 @@ void write_trees_horizontal(void  **groups_in,
 
             // Write mergers (don't include fragmented halos in the list)
             if(check_mode_for_flag(halo_type,TREE_CASE_MERGER)){
-               if(!(check_mode_for_flag(halo_type,TREE_CASE_FRAGMENTED_LOST)     ||
+               if(!(check_mode_for_flag(halo_type,TREE_CASE_FRAGMENTED_STRAYED)     ||
                     check_mode_for_flag(halo_type,TREE_CASE_FRAGMENTED_RETURNED) ||
                     check_mode_for_flag(halo_type,TREE_CASE_FRAGMENTED_EXCHANGED))){
                   fp=fp_mergers_out;
@@ -951,12 +924,12 @@ void write_trees_horizontal(void  **groups_in,
             }
 
             // Write fragmented halos
-            if(check_mode_for_flag(halo_type,TREE_CASE_FRAGMENTED_LOST)     ||
+            if(check_mode_for_flag(halo_type,TREE_CASE_FRAGMENTED_STRAYED)     ||
                check_mode_for_flag(halo_type,TREE_CASE_FRAGMENTED_RETURNED) ||
                check_mode_for_flag(halo_type,TREE_CASE_FRAGMENTED_EXCHANGED)){
                int type_fragmented;
                type_fragmented=-1;
-               if(check_mode_for_flag(halo_type,TREE_CASE_FRAGMENTED_LOST)){
+               if(check_mode_for_flag(halo_type,TREE_CASE_FRAGMENTED_STRAYED)){
                   if(type_fragmented>=0)
                      SID_trap_error("Multiple TREE_CASE_FRAGMENTED switches activated in mode (type=%d)",ERROR_LOGIC,halo_type);
                   type_fragmented=0;
