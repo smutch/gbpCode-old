@@ -110,23 +110,32 @@ int main(int argc, char *argv[]){
                      match_score,
                      match_index);
 
+        // Check for goodness of match
+        char goodness_of_match_text[5];
+        if(check_goodness_of_match(n_particles_i[i_halo],match_score[i_halo]))
+           sprintf(goodness_of_match_text,"good");
+        else
+           sprintf(goodness_of_match_text,"bad");
+
         // Write desired information
         match=match_ids[i_halo];
         if(match>=0)
-          printf("(%3d,%6d,%4d)->(%3d,%6d,%4d) score=%10.3f index=%zu\n",
+          printf("(%3d,%6d,%4d)->(%3d,%6d,%4d) score=%10.3f index=%zu (%s match)\n",
                  i_read,i_halo,
                  n_particles_i[i_halo],
                  j_read,match,
                  n_particles_j[match],
                  match_score[i_halo],
-                 match_index[i_halo]);
+                 match_index[i_halo],
+                 goodness_of_match_text);
         else
-          printf("(%3d,%6d,%4d)->(%3d,%6d,%4d) score=%10.3f index=%zu\n",
+          printf("(%3d,%6d,%4d)->(%3d,%6d,%4d) score=%10.3f index=%zu (%s match)\n",
                  i_read,i_halo,
                  n_particles_i[i_halo],
                  j_read,match,-1,
                  match_score[i_halo],
-                 match_index[i_halo]);
+                 match_index[i_halo],
+                 goodness_of_match_text);
      }    
   }
   SID_log("Done.",SID_LOG_CLOSE);
@@ -150,16 +159,24 @@ int main(int argc, char *argv[]){
                      match_score,
                      match_index);
 
+        // Check for goodness of match
+        char goodness_of_match_text[5];
+        if(check_goodness_of_match(n_particles_i[i_halo],match_score[i_halo]))
+           sprintf(goodness_of_match_text,"good");
+        else
+           sprintf(goodness_of_match_text,"bad");
+
         // Write desired information
         for(i_halo=0,match=-1;i_halo<n_groups_i && match<0;i_halo++){
           if(match_ids[i_halo]==j_halo){
-            printf("(%3d,%6d,%4d)->(%3d,%6d,%4d) score=%10.3f index=%zu\n",
+            printf("(%3d,%6d,%4d)->(%3d,%6d,%4d) score=%10.3f index=%zu (%s match)\n",
                     i_read,i_halo,
                     n_particles_i[i_halo],
                     j_read,j_halo,
                     n_particles_j[j_halo],
                     match_score[i_halo],
-                    match_index[i_halo]);
+                    match_index[i_halo],
+                    goodness_of_match_text);
           }
         }
      }    

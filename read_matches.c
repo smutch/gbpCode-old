@@ -198,14 +198,12 @@ void read_matches(char    *filename_in_dir,
    }
 
    // Apply a goodness-of-fit criterion
-   for(i_halo=0;i_halo<(*n_groups_i);i_halo++){
-      if(match_ids[i_halo]>=0){
-         double n_particles=(double)n_particles_i[i_halo];
-         float  min_score  =(float)pow(READ_MATCHES_GOODNESS_A+READ_MATCHES_GOODNESS_B*n_particles,READ_MATCHES_GOODNESS_C)+READ_MATCHES_GOODNESS_D;
-         if(match_score[i_halo]<min_score)
-            match_ids[i_halo]=-1;
-      }
-   }
+   //for(i_halo=0;i_halo<(*n_groups_i);i_halo++){
+   //   if(match_ids[i_halo]>=0){
+   //      if(!check_goodness_of_match(n_particles_i[i_halo],match_score[i_halo]))
+   //         match_ids[i_halo]=-1;
+   //   }
+   //}
 
    // If the n_particles_i array is a temporary array, free it
    if(flag_alloc_n_particles_i)

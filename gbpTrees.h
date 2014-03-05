@@ -329,6 +329,7 @@ void read_matches(char    *filename_root_matches,
                   float   *match_score,
                   size_t  *match_index);
 int check_for_matching_input_files(const char *filename_root_in,int i_read);
+int check_goodness_of_match(int n_particles_in,float match_score);
 int compute_single_matches(char   *filename_root_in,
                            char   *filename_root_out,
                            int     i_read_1,
