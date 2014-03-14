@@ -411,8 +411,8 @@ int compute_group_analysis(halo_properties_info  *properties,
       free_interpolate(SID_FARG vir_interpolate,NULL);
     }
     else{
-      if(flag_interpolated=FLAG_INTERP_MIN_BIN)      i_profile=0;
-      else if(flag_interpolated=FLAG_INTERP_MAX_BIN) i_profile=profile->n_bins-1;
+      if(flag_interpolated==FLAG_INTERP_MIN_BIN)      i_profile=0;
+      else if(flag_interpolated==FLAG_INTERP_MAX_BIN) i_profile=profile->n_bins-1;
       else SID_trap_error("Unrecognized value for flag_interpolated {%d}.",flag_interpolated);
       properties->velocity_COM[0]=(float)profile->bins[i_profile].velocity_COM[0];
       properties->velocity_COM[1]=(float)profile->bins[i_profile].velocity_COM[1];
@@ -632,8 +632,8 @@ int compute_group_analysis(halo_properties_info  *properties,
     }
     // ... else apply defaults to faulty cases.
     else{ 
-      if(flag_interpolated=FLAG_INTERP_MIN_BIN)      i_profile=0;
-      else if(flag_interpolated=FLAG_INTERP_MAX_BIN) i_profile=profile->n_bins-1;
+      if(flag_interpolated==FLAG_INTERP_MIN_BIN)      i_profile=0;
+      else if(flag_interpolated==FLAG_INTERP_MAX_BIN) i_profile=profile->n_bins-1;
       else SID_trap_error("Unrecognized value for flag_interpolated {%d}.",flag_interpolated);
 
       //  ... COM positions ...
