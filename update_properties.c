@@ -423,17 +423,17 @@ int main(int argc, char *argv[]){
                  y_interp[i_bin]=(double)bins[i_bin].spin[0];
               init_interpolate(r_interp,y_interp,n_bins,interp_type,&vir_interpolate);
               properties.spin[0]=(float)interpolate(vir_interpolate,properties.R_vir);
-              free_interpolate(SID_FARG vir_interpolate);
+              free_interpolate(SID_FARG vir_interpolate,NULL);
               for(i_bin=0;i_bin<n_bins;i_bin++)
                  y_interp[i_bin]=(double)bins[i_bin].spin[1];
               init_interpolate(r_interp,y_interp,n_bins,interp_type,&vir_interpolate);
               properties.spin[1]=(float)interpolate(vir_interpolate,properties.R_vir);
-              free_interpolate(SID_FARG vir_interpolate);
+              free_interpolate(SID_FARG vir_interpolate,NULL);
               for(i_bin=0;i_bin<n_bins;i_bin++)
                  y_interp[i_bin]=(double)bins[i_bin].spin[2];
               init_interpolate(r_interp,y_interp,n_bins,interp_type,&vir_interpolate);
               properties.spin[2]=(float)interpolate(vir_interpolate,properties.R_vir);
-              free_interpolate(SID_FARG vir_interpolate);
+              free_interpolate(SID_FARG vir_interpolate,NULL);
 
               // Write properties
               fwrite(&properties,sizeof(halo_properties_info),1,fp_properties_write);
