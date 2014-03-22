@@ -7,7 +7,7 @@
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpHalos.h>
-#include <gbpTrees.h>
+#include <gbpTrees_build.h>
 #include <gbpCosmo.h>
 
 void read_trees(char       *filename_tree_root,

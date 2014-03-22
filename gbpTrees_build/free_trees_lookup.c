@@ -7,7 +7,7 @@
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpHalos.h>
-#include <gbpTrees.h>
+#include <gbpTrees_build.h>
 
 void free_trees_lookup(tree_info *trees){
    int i_wrap;

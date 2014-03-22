@@ -7,7 +7,7 @@
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpHalos.h>
-#include <gbpTrees.h>
+#include <gbpTrees_build.h>
 
 void init_trees_lookup(tree_info *trees){
   trees->group_indices   =(int             **)SID_malloc(sizeof(int             *)*trees->n_wrap);

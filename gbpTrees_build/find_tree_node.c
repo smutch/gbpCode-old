@@ -7,7 +7,7 @@
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpHalos.h>
-#include <gbpTrees.h>
+#include <gbpTrees_build.h>
 
 int find_tree_node(tree_info *trees,int node_file,int node_index,int group_mode,tree_node_info **found_node){
 // group_mode==TRUE if we are looking for a group, FALSE for substructure

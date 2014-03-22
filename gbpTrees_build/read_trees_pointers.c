@@ -7,7 +7,7 @@
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpHalos.h>
-#include <gbpTrees.h>
+#include <gbpTrees_build.h>
 
 void read_trees_pointers(tree_info        *trees,
                          const char       *filename_input_dir_horizontal_trees,
