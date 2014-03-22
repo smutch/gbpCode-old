@@ -25,14 +25,14 @@ int main(int argc, char *argv[]){
   int flag_fix_bridges;
   int flag_compute_fragmented;
   int flag_compute_ghosts;
-  read_tree_run_parameters(filename_root_out,
-                           &i_read_start,
-                           &i_read_stop,
-                           &i_read_step,
-                           &n_search,
-                           &flag_fix_bridges,
-                           &flag_compute_fragmented,
-                           &flag_compute_ghosts);
+  read_trees_run_parameters(filename_root_out,
+                            &i_read_start,
+                            &i_read_stop,
+                            &i_read_step,
+                            &n_search,
+                            &flag_fix_bridges,
+                            &flag_compute_fragmented,
+                            &flag_compute_ghosts);
 
   // Default to scanning the whole range of snapshots when building forests
   int n_search_forests=i_read_stop;

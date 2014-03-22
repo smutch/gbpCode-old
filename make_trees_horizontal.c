@@ -115,9 +115,12 @@ int main(int argc, char *argv[]){
   // Construct tree->forest mappings
   compute_forests(filename_root_out,n_search_forests);
 
+  // Clean-up
   if(SID.I_am_Master)
      SID_free(SID_FARG a_list_out);
-  
+  free_cosmo(&cosmo);
+  SID_free(SID_FARG line); 
+
   SID_log("Done.",SID_LOG_CLOSE);
   SID_exit(ERROR_NONE);
 }

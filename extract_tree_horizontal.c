@@ -69,14 +69,14 @@ int main(int argc,char *argv[]){
   int flag_fix_bridges;
   int flag_compute_fragmented;
   int flag_compute_ghosts;
-  read_tree_run_parameters(filename_root,
-                           &i_read_start,
-                           &i_read_stop,
-                           &i_read_step,
-                           &n_search,
-                           &flag_fix_bridges,
-                           &flag_compute_fragmented,
-                           &flag_compute_ghosts);
+  read_trees_run_parameters(filename_root,
+                            &i_read_start,
+                            &i_read_stop,
+                            &i_read_step,
+                            &n_search,
+                            &flag_fix_bridges,
+                            &flag_compute_fragmented,
+                            &flag_compute_ghosts);
 
   // Fetch the final number of trees
   int i_read_last=i_read_stop;

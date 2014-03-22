@@ -54,14 +54,14 @@ int main(int argc, char *argv[]){
   int flag_compute_fragmented;
   int flag_compute_ghosts;
   SID_log("Fetching run parameters...",SID_LOG_OPEN);
-  read_tree_run_parameters(filename_root_out,
-                           &i_read_start,
-                           &i_read_stop,
-                           &i_read_step,
-                           &n_search,
-                           &flag_fix_bridges,
-                           &flag_compute_fragmented,
-                           &flag_compute_ghosts);
+  read_trees_run_parameters(filename_root_out,
+                            &i_read_start,
+                            &i_read_stop,
+                            &i_read_step,
+                            &n_search,
+                            &flag_fix_bridges,
+                            &flag_compute_fragmented,
+                            &flag_compute_ghosts);
   SID_log("i_read_start=%d",SID_LOG_COMMENT,i_read_start);
   SID_log("i_read_stop =%d",SID_LOG_COMMENT,i_read_stop);
   SID_log("i_read_step =%d",SID_LOG_COMMENT,i_read_step);
