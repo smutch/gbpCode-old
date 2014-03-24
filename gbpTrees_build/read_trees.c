@@ -223,7 +223,7 @@ void read_trees(char       *filename_tree_root,
                                  i_forest,               // Local forest index
                                  group_tree_case,        // Halo's TREE_CASE BWS
                                  n_particles_group,      // Number of particles
-                                 group_tree_id,          // Halo's tree ID
+                                 group_id,               // Halo's tree ID
                                  i_file,                 // Halo's tree snapshot number
                                  i_group,                // Halo's file index
                                  group_descendant_snap,  // Descendant's snap
@@ -237,7 +237,7 @@ void read_trees(char       *filename_tree_root,
                              i_forest,                 // Local forest index
                              subgroup_tree_case,       // Halo's TREE_CASE BWS
                              n_particles_subgroup,     // Number of particles
-                             subgroup_tree_id,         // Halo's tree ID
+                             subgroup_id,              // Halo's tree ID
                              i_file,                   // Halo's tree snapshot number
                              i_subgroup,               // Halo's file index
                              subgroup_descendant_snap, // Descendant's snap
