@@ -10,10 +10,10 @@
 #include <gbpTrees_analysis.h>
 
 int find_treenode_main_progenitor(tree_info *trees,tree_node_info *halo,tree_node_info **main_progenitor){
-   tree_node_info *last_descendant;
+   tree_node_info *last_instance;
    (*main_progenitor)=NULL;
-   if(find_treenode_last_descendant(trees,halo,&last_descendant)){
-      tree_node_info *track_halo =last_descendant->descendant;
+   if(find_treenode_last_instance(trees,halo,&last_instance)){
+      tree_node_info *track_halo =last_instance->descendant;
       int             target_snap=halo->snap_tree;
       while(track_halo!=NULL){
          if(track_halo->snap_tree==target_snap) break;

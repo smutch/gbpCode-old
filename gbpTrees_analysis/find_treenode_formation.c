@@ -11,13 +11,13 @@
 
 int find_treenode_formation(tree_info *trees,tree_node_info *halo,double f,tree_node_info **formation_progenitor){
    if(halo!=NULL){
-      halo_properties_info *properties=fetch_treenode_properties(trees,halo);
-      tree_node_info *current_halo=halo;
-      (*formation_progenitor)     =halo;
       double M_target;
       double M_vir;
       double M_peak=0.;
+      tree_node_info *current_halo=halo;
+      (*formation_progenitor)     =halo;
       while(current_halo!=NULL){
+         halo_properties_info *properties=fetch_treenode_properties(trees,current_halo);
          M_vir   =properties->M_vir;
          M_peak  =MAX(M_peak,M_vir);
          M_target=f*M_peak;

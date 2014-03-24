@@ -27,7 +27,7 @@ int find_treenode_accretion(tree_info       *trees,
             (*first_accretion_progenitor)=current_halo;
          current_halo  =current_halo->progenitor_first;
       }
-      // Find when the halo first became substructure of it's current parent
+      // Find when the halo first joined it's current parent
       current_halo  =halo->progenitor_first;
       current_parent=parent->progenitor_first;
       while(current_halo!=NULL && current_parent!=NULL){

@@ -8,6 +8,7 @@ LIBS      = -lgbpTrees -lgbpHalos -lgbpSPH -lgbpCosmo -lgbpMath -lgbpLib
 SUBDIRS   = gbpTrees_build gbpTrees_analysis
 BINFILES  = extract_tree_horizontal    \
             tree_stats_horizontal      \
+	    branch2ascii               \
             make_a_list                \
             validate_ghost_trees       \
             parse_match_type           \

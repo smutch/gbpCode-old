@@ -28,6 +28,7 @@ void read_a_list(const char  *filename_root_in,
          grab_next_line_data(fp_in,&line,&line_length);
          grab_double(line,1,&((*a_list_in)[i_read]));
       }
+      SID_free(SID_FARG line);
       fclose(fp_in);
    }
    SID_Bcast(a_list_in,sizeof(double)*(*n_a_list),MASTER_RANK,SID.COMM_WORLD);

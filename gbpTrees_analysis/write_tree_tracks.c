@@ -186,7 +186,7 @@ void write_tree_tracks(tree_info *trees,tree_node_info **list_in,int n_list_in,i
            tree_node_info *progenitor_formation;
            tree_node_info *progenitor_first_accretion;
            tree_node_info *progenitor_last_accretion;
-           find_treenode_last_descendant(trees,current_halo,&descendant_last);
+           find_treenode_last_instance(  trees,current_halo,&descendant_last);
            find_treenode_main_progenitor(trees,current_halo,&progenitor_main);
            find_treenode_accretion(      trees,current_halo,&progenitor_first_accretion,&progenitor_last_accretion);
            find_treenode_formation(      trees,current_halo,0.5,&progenitor_formation);

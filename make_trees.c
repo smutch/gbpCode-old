@@ -61,11 +61,10 @@ int main(int argc, char *argv[]){
   box_size            =(double)atof(argv[9]);
   n_dim_files                 =atoi(argv[10]);
 
-  sprintf(filename_SSimPL_base,"%s",filename_SSimPL_dir);
-  strip_path(filename_SSimPL_base);
-
   SID_log("Constructing merger trees for snapshots #%d->#%d (step=%d, n_search=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,
           i_read_start,i_read_stop,i_read_step,n_search);
+  sprintf(filename_SSimPL_base,"%s",filename_SSimPL_dir);
+  strip_path(filename_SSimPL_base);
   sprintf(filename_halo_root_in,"%s/halos/%s",     filename_SSimPL_dir,filename_halo_version_root);
   sprintf(filename_cat_root_in, "%s/catalogs/%s",  filename_SSimPL_dir,filename_halo_version_root);
   sprintf(filename_root_matches,"%s/trees/matches",filename_SSimPL_dir);

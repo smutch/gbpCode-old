@@ -11,6 +11,7 @@
 
 int main(int argc, char *argv[]){
   char        filename_SSimPL_dir[256];
+  char        filename_SSimPL_base[256];
   char        filename_halo_version_root[256];
   char        filename_trees_name[256];
   char        filename_halo_root_in[256];
@@ -52,6 +53,8 @@ int main(int argc, char *argv[]){
   n_search                    =atoi(argv[7]);
   flag_fix_bridges            =atoi(argv[8]);
 
+  sprintf(filename_SSimPL_base,"%s",filename_SSimPL_dir);
+  strip_path(filename_SSimPL_base);
   sprintf(filename_halo_root_in,"%s/halos/%s",     filename_SSimPL_dir,filename_halo_version_root);
   sprintf(filename_cat_root_in, "%s/catalogs/%s",  filename_SSimPL_dir,filename_halo_version_root);
   sprintf(filename_root_matches,"%s/trees/matches",filename_SSimPL_dir);

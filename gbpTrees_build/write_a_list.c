@@ -53,7 +53,8 @@ void write_a_list(const char *filename_snap_list_in,
       for(i_write=n_keep-1;i_write>=0;i_write--)
          fprintf(fp_out,"%le\n",a_list_out[i_write]);
       fclose(fp_out);
-  
+ 
+      SID_free(SID_FARG line); 
       SID_free(SID_FARG a_list_in);
       SID_free(SID_FARG a_list_out);
   

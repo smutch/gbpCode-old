@@ -237,6 +237,7 @@ struct tree_node_info{
   int             neighbour_index;
   int             n_particles;
   float           match_score;
+  int             halo_ID;
   int             tree_case;
   // Pointers for the substructure heirarchy
   tree_node_info *parent;
@@ -775,6 +776,7 @@ int add_node_to_trees(tree_info        *trees,
                       int               i_forest,
                       int               tree_case,
                       int               n_particles,
+                      int               halo_ID,
                       int               halo_snap,
                       int               halo_index,
                       int               descendant_snap,

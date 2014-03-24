@@ -13,6 +13,7 @@ int add_node_to_trees(tree_info        *trees,            // The tree datastruct
                       int               i_forest,         // Local forest index
                       int               tree_case,        // Halo's TREE_CASE BWS
                       int               n_particles,      // Number of particles in the halo
+                      int               halo_ID,          // Halo's tree ID
                       int               halo_snap,        // Halo's tree snapshot number
                       int               halo_index,       // Halo's file index
                       int               descendant_snap,  // Descendant's snap
@@ -29,6 +30,7 @@ int add_node_to_trees(tree_info        *trees,            // The tree datastruct
   (*new_node)->n_substructures    =           0;
   (*new_node)->n_particles        = n_particles;
   (*new_node)->tree_case          =   tree_case;
+  (*new_node)->halo_ID            =     halo_ID;
   (*new_node)->snap_tree          =   halo_snap;
   (*new_node)->file_index         =  halo_index;
   if(group_node==NULL)
