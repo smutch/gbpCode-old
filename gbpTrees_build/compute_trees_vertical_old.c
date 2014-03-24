@@ -274,10 +274,10 @@ void compute_trees_vertical(char *filename_root_out,
   //   If you want to change the order in which these are done, then reverse the preprocessor settings
   fp_catalog_info  fp_group_properties;
   fp_catalog_info  fp_subgroup_properties;
-  halo_info       *group_properties;
-  halo_info       *subgroup_properties;
-  group_properties   =(halo_info *)SID_calloc(sizeof(halo_info));
-  subgroup_properties=(halo_info *)SID_calloc(sizeof(halo_info));
+  halo_properties_SAGE_info       *group_properties;
+  halo_properties_SAGE_info       *subgroup_properties;
+  group_properties   =(halo_properties_SAGE_info *)SID_calloc(sizeof(halo_properties_SAGE_info));
+  subgroup_properties=(halo_properties_SAGE_info *)SID_calloc(sizeof(halo_properties_SAGE_info));
   // Process subgroups and then groups
   for(k_match=0;k_match<2;k_match++){
     switch(k_match){

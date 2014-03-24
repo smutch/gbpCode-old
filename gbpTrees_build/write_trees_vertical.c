@@ -1,159 +1,201 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpTrees_build.h>
 
-int write_tree_vertical_halos_recursive_local(tree_vertical_node_info *tree_node,SID_fp *fp_out,SID_fp *fp_out_MBP){
-  tree_vertical_node_info *current;
-  halo_info               *halo;
-  halo_MBP_info            halo_MBP;
-  int                      i_progenitor;
+int write_forest_vertical_halos_recursive_local(tree_info *trees,tree_node_info *node,SID_fp *fp_out);
+int write_forest_vertical_halos_recursive_local(tree_info *trees,tree_node_info *node,SID_fp *fp_out){
   int                      n_halos_written=0;
 
-  // Write tree halos
-  halo=&(tree_node->halo);
-  SID_fwrite(halo,sizeof(halo_info),1,fp_out);
+  // Fetch the halo properties 
+  halo_properties_SAGE_info *halo;
+  if(node->parent==NULL)
+     halo=&(trees->group_properties_SAGE[node->snap_tree][node->neighbour_index]);
+  else
+     halo=&(trees->subgroup_properties_SAGE[node->snap_tree][node->neighbour_index]);
 
-  // Write MBPs
-  if(fp_out_MBP!=NULL){
-    halo_MBP.most_bound_id   =halo->most_bound_id;
-    halo_MBP.snap_num        =halo->snap_num;
-    halo_MBP.halo_index      =halo->halo_index;
-    halo_MBP.group_halo_first=halo->group_halo_first;
-    halo_MBP.pos[0]          =halo->pos[0];
-    halo_MBP.pos[1]          =halo->pos[1];
-    halo_MBP.pos[2]          =halo->pos[2];
-    halo_MBP.vel[0]          =halo->vel[0];
-    halo_MBP.vel[1]          =halo->vel[1];
-    halo_MBP.vel[2]          =halo->vel[2];
-    SID_fwrite(&halo_MBP,sizeof(halo_MBP_info),1,fp_out_MBP);
-  }
+  // Perform write of halo properties
+  SID_fwrite(halo,sizeof(halo_properties_SAGE_info),1,fp_out);
 
+  // Increment the counter
   n_halos_written++;
-  current=tree_node->progenitor_first;
+
+  // Recurse over all progenitors.  Naturally leads
+  //    to depth-first ordering.
+  tree_node_info *current=node->progenitor_first;
   while(current!=NULL){
-    n_halos_written+=write_tree_vertical_halos_recursive_local(current,fp_out,fp_out_MBP);
+    n_halos_written+=write_forest_vertical_halos_recursive_local(trees,current,fp_out);
     current=current->progenitor_next;
   }
   return(n_halos_written);
 }
 
-void write_trees_vertical(tree_vertical_info **trees,
-                          int                 *n_halos_tree_local,
-                          int                  n_trees_local,
-                          int                 *tree_lo_file,
-                          int                 *tree_hi_file,
-                          int                 *n_halos_file,
-                          int                  n_files,
-                          const char          *filename_root_out,
-                          const char          *group_text_prefix){
-  int              i_rank;
-  int              i_write;
-  int              i_tree,j_tree;
-  int              flag_write_init;
-  int              n_trees_file;
-  int              n_halos;
-  int              n_trees;
-  int              n_halos_written;
-  int              n_halos_tree_written;
-  int              n_trees_written;
-  tree_vertical_node_info  *current;
-  tree_vertical_node_info  *next;
-  char             filename_out[MAX_FILENAME_LENGTH];
-  SID_fp           fp_out;
+void write_trees_vertical(tree_info     *trees,
+                          double         box_size,
+                          int            grid_size,
+                          const char    *filename_root_trees_out){
 
-  // Write headers first
-  calc_sum_global(n_halos_tree_local,&n_halos,n_trees_local,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-  calc_sum_global(&n_trees_local,    &n_trees,1,            SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-  SID_log("Writing %d %sgroup trees (structure size=%lld bytes)...",SID_LOG_OPEN|SID_LOG_TIMER,n_trees,group_text_prefix,sizeof(halo_info));
-  SID_log("Writing headers...",SID_LOG_OPEN);
-  for(i_rank=0,i_write=0,i_tree=0,n_halos_written=0,n_trees_written=0,flag_write_init=TRUE;i_rank<SID.n_proc;i_rank++){
-    if(SID.My_rank==i_rank){
-      sprintf(filename_out,"%s/%sgroup_trees_%03d.dat",filename_root_out,group_text_prefix,i_write);
-      if(flag_write_init){
-        SID_fopen(filename_out,"w",&fp_out);
-        n_trees_file=tree_hi_file[i_write]-tree_lo_file[i_write]+1;
-        SID_fwrite(&n_trees_file,           sizeof(int),1,&fp_out);
-        SID_fwrite(&(n_halos_file[i_write]),sizeof(int),1,&fp_out);
-        flag_write_init=FALSE;
-      }
-      else
-        SID_fopen(filename_out,"a",&fp_out);
-      for(j_tree=0;j_tree<n_trees_local;i_tree++,j_tree++){
-        // Write the number of halos per tree
-        SID_fwrite(&(n_halos_tree_local[j_tree]),sizeof(int),1,&fp_out);
-        n_halos_written+=n_halos_tree_local[j_tree];
-        n_trees_written++;
-        if(i_tree==tree_hi_file[i_write]){
-          i_write++;
-          if(i_write<n_files){
-            flag_write_init=TRUE;
-            SID_fclose(&fp_out);
-            sprintf(filename_out,  "%s/%sgroup_trees_%03d.dat",filename_root_out,group_text_prefix,i_write);
-            SID_fopen(filename_out,"w",&fp_out);
-            n_trees_file=tree_hi_file[i_write]-tree_lo_file[i_write]+1;
-            SID_fwrite(&n_trees_file,           sizeof(int),1,&fp_out);
-            SID_fwrite(&(n_halos_file[i_write]),sizeof(int),1,&fp_out);
-            flag_write_init=FALSE;
-          }
-          else if(n_halos_written!=n_halos || n_trees_written!=n_trees)
-            SID_trap_error("An incorrect number of halos (%d=?%d) and/or trees (%d=?%d) have been written.",ERROR_LOGIC,n_halos_written,n_halos,n_trees_written,n_trees);
-        }
-      }
-      SID_fclose(&fp_out);
-    }
-    // Update the other ranks 
-    SID_Bcast(&i_write,        sizeof(int),i_rank,SID.COMM_WORLD);
-    SID_Bcast(&i_tree,         sizeof(int),i_rank,SID.COMM_WORLD);
-    SID_Bcast(&n_halos_written,sizeof(int),i_rank,SID.COMM_WORLD);
-    SID_Bcast(&n_trees_written,sizeof(int),i_rank,SID.COMM_WORLD);
-    SID_Bcast(&flag_write_init,sizeof(int),i_rank,SID.COMM_WORLD);
-  }
-  SID_log("Done.",SID_LOG_CLOSE);
+  // Create a directory for the results
+  char filename_root_out[MAX_FILENAME_LENGTH];
+  sprintf(filename_root_out,"%s/vertical",filename_root_trees_out);
+  mkdir(filename_root_out,02755);
 
-  SID_log("Writing %d halos...",SID_LOG_OPEN,n_halos);
-  for(i_rank=0,i_write=0,i_tree=0,n_halos_written=0,n_trees_written=0,flag_write_init=TRUE;i_rank<SID.n_proc;i_rank++){
-    if(SID.My_rank==i_rank){
-      sprintf(filename_out,"%s/%sgroup_trees_%03d.dat",filename_root_out,group_text_prefix,i_write);
-      SID_fopen(filename_out,"a",&fp_out);
-      for(j_tree=0;j_tree<n_trees_local;i_tree++,j_tree++){
-        n_halos_tree_written=0;
-        current=trees[j_tree]->root;
-        while(current!=NULL){
-          if(current->descendant==NULL)
-            n_halos_tree_written+=write_tree_vertical_halos_recursive_local(current,&fp_out,NULL);
-          current=current->next;
+  // Calculatet he total number of files to be written
+  int n_files_write=grid_size*grid_size*grid_size;
+
+  // Do groups first, then subgroups
+  for(int i_type=0;i_type<2;i_type++){
+     halo_properties_SAGE_info **properties;
+     tree_node_info            **first_node_in_forest;
+     char                        group_text_prefix[5];
+     int                        *n_halos_forest_local;
+     int                         n_forests_local;
+     int                         n_forests;
+     int                         n_halos_local;
+     int                         n_halos;
+     switch(i_type){
+        case 0:
+           sprintf(group_text_prefix,"");
+           properties          =trees->group_properties_SAGE;
+           first_node_in_forest=trees->first_in_forest_groups;
+           n_halos_forest_local=trees->n_groups_forest_local;
+           n_forests_local     =trees->n_forests_local;
+           n_forests           =trees->n_forests;
+           n_halos_local       =trees->n_groups_trees_local;
+           n_halos             =trees->n_groups_trees;
+           break;
+        case 1:
+           sprintf(group_text_prefix,"sub");
+           properties          =trees->subgroup_properties_SAGE;
+           first_node_in_forest=trees->first_in_forest_subgroups;
+           n_halos_forest_local=trees->n_subgroups_forest_local;
+           n_forests_local     =trees->n_forests_local;
+           n_forests           =trees->n_forests;
+           n_halos_local       =trees->n_subgroups_trees_local;
+           n_halos             =trees->n_subgroups_trees;
+           break;
+     }
+     SID_log("Writing %d %sgroup forests (structure size=%lld bytes)...",SID_LOG_OPEN|SID_LOG_TIMER,
+                                                                         n_forests,group_text_prefix,sizeof(halo_properties_SAGE_info));
+
+     // Allocate some need3ed arrays
+     int *file_out    =(int *)SID_malloc(sizeof(int)*n_forests_local);
+     int *halo_count  =(int *)SID_calloc(sizeof(int)*n_files_write);
+     int *forest_count=(int *)SID_calloc(sizeof(int)*n_files_write);
+
+     // Perform forest/halo counts
+     SID_log("Performing forest and halo counts...",SID_LOG_OPEN);
+     for(int i_forest=0;i_forest<n_forests_local;i_forest++){
+        tree_node_info            *current_halo=first_node_in_forest[i_forest];
+        halo_properties_SAGE_info *halo_properties=&(properties[current_halo->snap_tree][current_halo->neighbour_index]);
+        // Decide which file this forest belongs to
+        int i_x=(int)((float)grid_size*(halo_properties->pos[0]/box_size));i_x=MIN(i_x,grid_size-1);
+        int i_y=(int)((float)grid_size*(halo_properties->pos[1]/box_size));i_y=MIN(i_y,grid_size-1);
+        int i_z=(int)((float)grid_size*(halo_properties->pos[2]/box_size));i_z=MIN(i_z,grid_size-1);
+        int i_g=(i_z*grid_size+i_y)*grid_size+i_x;
+        forest_count[i_g]++;
+        file_out[i_forest]=i_g;
+        halo_count[i_g]+=n_halos_forest_local[i_forest];
+     }
+     SID_Allreduce(SID_IN_PLACE,halo_count,  n_files_write,SID_INT,SID_SUM,SID.COMM_WORLD);
+     SID_Allreduce(SID_IN_PLACE,forest_count,n_files_write,SID_INT,SID_SUM,SID.COMM_WORLD);
+     // Sanity checks
+     int forest_count_total;
+     int halo_count_total;
+     calc_sum(forest_count,&forest_count_total,n_files_write,SID_INT,CALC_MODE_DEFAULT);
+     calc_sum(halo_count,  &halo_count_total,  n_files_write,SID_INT,CALC_MODE_DEFAULT);
+     if(forest_count_total!=n_forests)
+        SID_trap_error("Invalid forest count (ie. %d!=%d)",ERROR_LOGIC,forest_count_total,n_forests);
+     if(halo_count_total!=n_halos)
+        SID_trap_error("Invalid halo count (ie. %d!=%d)",ERROR_LOGIC,halo_count_total,n_halos);
+     SID_log("Done.",SID_LOG_CLOSE);
+
+     // Write the file headers
+     SID_log("Writing headers...",SID_LOG_OPEN);
+     for(int i_rank=0;i_rank<SID.n_proc;i_rank++){
+        // Each rank takes it's turn
+        if(SID.My_rank==i_rank){
+           // Open files
+           SID_fp *fp_out;
+           fp_out=(SID_fp *)SID_malloc(sizeof(SID_fp)*n_files_write);
+           for(int i_file=0;i_file<n_files_write;i_file++){
+              char   filename_out[MAX_FILENAME_LENGTH];
+              sprintf(filename_out,"%s/%sgroup_forests_%03d.dat",filename_root_out,group_text_prefix,i_file);
+              if(i_rank==0){
+                 SID_fopen(filename_out,"w",&(fp_out[i_file]));
+                 SID_fwrite(&(forest_count[i_file]),sizeof(int),1,&(fp_out[i_file]));
+                 SID_fwrite(&(halo_count[i_file]),  sizeof(int),1,&(fp_out[i_file]));
+              }
+              else
+                 SID_fopen(filename_out,"a",&(fp_out[i_file]));
+           }
+           // Write the number of halos per forest
+           for(int i_forest=0;i_forest<n_forests_local;i_forest++)
+              SID_fwrite(&(n_halos_forest_local[i_forest]),sizeof(int),1,&(fp_out[file_out[i_forest]]));
+           // Close files
+           for(int i_file=0;i_file<n_files_write;i_file++)
+              SID_fclose(&(fp_out[i_file]));
+           SID_free(SID_FARG fp_out);
         }
-        if(n_halos_tree_written!=n_halos_tree_local[j_tree])
-          SID_trap_error("Number of halos written is not right (i.e. %d!=%d) for tree #%d",ERROR_LOGIC,n_halos_written,n_halos_tree_local[j_tree],j_tree);
-        n_halos_written+=n_halos_tree_written;
-        n_trees_written++;
-        if(i_tree==tree_hi_file[i_write]){
-          i_write++;
-          if(i_write<n_files){
-            flag_write_init=TRUE;
-            SID_fclose(&fp_out);
-            sprintf(filename_out,  "%s/%sgroup_trees_%03d.dat",filename_root_out,group_text_prefix,i_write);
-            SID_fopen(filename_out,"a",&fp_out);
-            n_trees_file=tree_hi_file[i_write]-tree_lo_file[i_write]+1;
-          }
-          else if(n_halos_written!=n_halos || n_trees_written!=n_trees)
-            SID_trap_error("An incorrect number of halos (%d=?%d) and/or trees (%d=?%d) have been written.",ERROR_LOGIC,n_halos_written,n_halos,n_trees_written,n_trees);
+        SID_Barrier(SID.COMM_WORLD);
+     }
+     SID_log("Done.",SID_LOG_CLOSE);
+
+     // Write the halos
+     SID_log("Writing halos...",SID_LOG_OPEN);
+     int n_halos_written  =0;
+     int n_forests_written=0;
+     for(int i_rank=0;i_rank<SID.n_proc;i_rank++){
+        // Each rank takes it's turn
+        if(SID.My_rank==i_rank){
+           // Open files
+           SID_fp *fp_out;
+           fp_out=(SID_fp *)SID_malloc(sizeof(SID_fp)*n_files_write);
+           for(int i_file=0;i_file<n_files_write;i_file++){
+              char   filename_out[MAX_FILENAME_LENGTH];
+              sprintf(filename_out,"%s/%sgroup_forests_%03d.dat",filename_root_out,group_text_prefix,i_file);
+              SID_fopen(filename_out,"a",&(fp_out[i_file]));
+           }
+           // Write the halos
+           for(int i_forest=0;i_forest<n_forests_local;i_forest++){
+              int             n_halos_forest_written=0;
+              tree_node_info *current=first_node_in_forest[i_forest];
+              while(current!=NULL){
+                 if(current->descendant==NULL)
+                    n_halos_forest_written+=write_forest_vertical_halos_recursive_local(trees,current,&(fp_out[file_out[i_forest]]));
+                 current=current->next_in_forest;
+              }
+              if(n_halos_forest_written!=n_halos_forest_local[i_forest])
+                 SID_trap_error("Number of halos written is not right (i.e. %d!=%d) for forest #%d",ERROR_LOGIC,
+                                n_halos_written,
+                                n_halos_forest_local[i_forest],i_forest);
+              n_halos_written  +=n_halos_forest_written;
+              n_forests_written++;
+           }
+           // Close files
+           for(int i_file=0;i_file<n_files_write;i_file++)
+              SID_fclose(&(fp_out[i_file]));
+           SID_free(SID_FARG fp_out);
         }
-      }
-      SID_fclose(&fp_out);
-    }
-    // Update the other ranks 
-    SID_Bcast(&i_write,        sizeof(int),i_rank,SID.COMM_WORLD);
-    SID_Bcast(&i_tree,         sizeof(int),i_rank,SID.COMM_WORLD);
-    SID_Bcast(&n_halos_written,sizeof(int),i_rank,SID.COMM_WORLD);
-    SID_Bcast(&n_trees_written,sizeof(int),i_rank,SID.COMM_WORLD);
-  }
-  SID_log("Done.",SID_LOG_CLOSE);
-  SID_log("Halos written: %d",SID_LOG_COMMENT,n_halos_written);
-  SID_log("Trees written: %d",SID_LOG_COMMENT,n_trees_written);
-  SID_log("Done.",SID_LOG_CLOSE);
+        SID_Barrier(SID.COMM_WORLD);
+     }
+     calc_sum_global(&n_halos_written,  &n_halos_written,  1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+     calc_sum_global(&n_forests_written,&n_forests_written,1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+     SID_log("Done.",SID_LOG_CLOSE);
+
+     // Clean-up
+     SID_free(SID_FARG file_out);
+     SID_free(SID_FARG halo_count);
+     SID_free(SID_FARG forest_count);
+
+     // Write some information to the log
+     SID_log("Halos   written: %d",SID_LOG_COMMENT,n_halos_written);
+     SID_log("Forests written: %d",SID_LOG_COMMENT,n_forests_written);
+     SID_log("Done.",SID_LOG_CLOSE);
+  } // i_type
 }
 

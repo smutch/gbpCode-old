@@ -1,5 +1,5 @@
 #include <gbpLib.h>
-#include <gbpTrees.h>
+#include <gbpTrees_build.h>
 
 void write_trees_horizontal_report(int                   n_halos_i,
                                    int                   n_halos_max,

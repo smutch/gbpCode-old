@@ -103,7 +103,7 @@ void read_trees_pointers(tree_info        *trees,
        }
 
        // If this subgroup belongs to a local forest ...
-       if(i_forest>=0 && i_forest<trees->n_forests_subgroup_local){ 
+       if(i_forest>=0 && i_forest<trees->n_forests_local){ 
          // ... add the group ...
          tree_node_info *result_i;
          tree_node_info *result_j;

@@ -14,8 +14,8 @@ int main(int argc, char *argv[]){
   int        *n_halos;
   int         i_tree;
   FILE       *fp;
-  halo_info  *halos;
-  halo_info   halo;
+  halo_properties_SAGE_info  *halos;
+  halo_properties_SAGE_info   halo;
   int        *snap_num;
   size_t     *snap_num_index;
   int         i_snap,i_halo,j_halo,k_halo;
@@ -52,9 +52,9 @@ int main(int argc, char *argv[]){
   n_halos=(int *)SID_malloc(sizeof(int)*n_trees);
   fread(n_halos,sizeof(int),n_trees,fp);
   calc_max(n_halos,&n_halos_max,n_trees,SID_INT,CALC_MODE_DEFAULT);
-  halos      =(halo_info *)SID_malloc(sizeof(halo_info)*n_halos_max);
+  halos      =(halo_properties_SAGE_info *)SID_malloc(sizeof(halo_properties_SAGE_info)*n_halos_max);
   for(i_tree=0,flag_search=TRUE;i_tree<n_trees && flag_search;i_tree++){
-    fread(halos,sizeof(halo_info),n_halos[i_tree],fp);
+    fread(halos,sizeof(halo_properties_SAGE_info),n_halos[i_tree],fp);
     for(i_halo=0,n_subtrees=0;i_halo<n_halos[i_tree];i_halo++){
       if(halos[i_halo].halo_id==halo_search){
         flag_search=FALSE;

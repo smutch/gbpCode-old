@@ -160,7 +160,7 @@ int main(int argc, char *argv[]){
   int   progenitor_score;
 
   tree_vertical_info      **trees;
-  halo_info        properties;
+  halo_properties_SAGE_info        properties;
   tree_vertical_node_info  *current;
   tree_vertical_node_info  *next;
 
@@ -597,7 +597,11 @@ int main(int argc, char *argv[]){
           SID_log("Done.",SID_LOG_CLOSE);
 
           // Finalize trees
+// This code has been broken by recent changes.  Please update to reflect current function definitions
+SID_exit(1);
+/*
           finalize_trees_vertical(trees,n_halos_tree,n_trees_out,n_scales,progenitor_mode);
+*/
 
           // ... propagate spins (needs to be done after IDs are assigned)..
           /*.
@@ -617,7 +621,14 @@ int main(int argc, char *argv[]){
           tree_lo_file[0]=0;
           tree_hi_file[0]=n_trees_out-1;
           n_halos_file[0]=n_halos;
-          write_trees_vertical(trees,n_halos_tree,n_trees_out,tree_lo_file,tree_hi_file,n_halos_file,1,filename_root_out,"sub");
+/*
+          double box_size =250.;
+          int    grid_size=6;
+          write_trees_vertical(trees,
+                               box_size,
+                               grid_size,
+                               filename_root_out);
+*/
 
           // Print some stats for this input file
           merge_sort(n_trees_tree,(size_t)n_trees_out,NULL,SID_INT,SORT_INPLACE_ONLY,TRUE);

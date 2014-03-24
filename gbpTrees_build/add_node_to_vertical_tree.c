@@ -16,7 +16,7 @@ int add_node_to_vertical_tree(tree_vertical_info  *tree,
                               int                  descendant_id,
                               int                  halo_snap,
                               int                  descendant_snap,                      
-                              halo_info           *properties){
+                              halo_properties_SAGE_info           *properties){
   tree_vertical_node_info *new_node;
   tree_vertical_node_info *last_node;
   tree_vertical_node_info *next_node;
@@ -29,7 +29,7 @@ int add_node_to_vertical_tree(tree_vertical_info  *tree,
   new_node=(tree_vertical_node_info *)SID_malloc(sizeof(tree_vertical_node_info));
 
   // Copy halo properties into new node
-  memcpy(&(new_node->halo),properties,sizeof(halo_info));
+  memcpy(&(new_node->halo),properties,sizeof(halo_properties_SAGE_info));
   
   // Set ids and pointer defaults for the new node
   new_node->depth_first_index    =            -1; // Default; back-filled later

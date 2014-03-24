@@ -9,8 +9,8 @@
 #include <gbpCosmo.h>
 
 // millennium halo input structure 
-typedef struct mil_halo_info mil_halo_info;
-struct mil_halo_info {
+typedef struct mil_halo_properties_SAGE_info mil_halo_properties_SAGE_info;
+struct mil_halo_properties_SAGE_info {
   // merger tree pointers 
   int descendant;
   int progenitor_first;
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]){
   int         i_tree;
   FILE       *fp;
   void         *halos;
-  halo_info     halo;
+  halo_properties_SAGE_info     halo;
   size_t        halo_size;
   int        *snap_num;
   size_t     *snap_num_index;
@@ -146,12 +146,12 @@ int main(int argc, char *argv[]){
   strcpy(filename_snap_in,argv[2]);
   SID_log("Computing tree stats for {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_tree_in);
   if(argc>3){
-    halo_size=sizeof(mil_halo_info);
+    halo_size=sizeof(mil_halo_properties_SAGE_info);
     flag_mil=TRUE;
     SID_log("Using the Millennium data structure.",SID_LOG_COMMENT);
   }
   else{
-    halo_size=sizeof(halo_info);
+    halo_size=sizeof(halo_properties_SAGE_info);
     flag_mil=FALSE;
     SID_log("Using the GiggleZ data structure.",SID_LOG_COMMENT);
   }
@@ -224,14 +224,14 @@ int main(int argc, char *argv[]){
     n_branches       =0;
     if(flag_mil){
       while(depth_first_index<n_halos[i_tree]){
-        if(((mil_halo_info *)halos)[depth_first_index].progenitor_first<0)
+        if(((mil_halo_properties_SAGE_info *)halos)[depth_first_index].progenitor_first<0)
           n_branches++;
         depth_first_index++;
       }
     }
     else{
       while(depth_first_index<n_halos[i_tree]){
-        if(((halo_info *)halos)[depth_first_index].progenitor_first<0)
+        if(((halo_properties_SAGE_info *)halos)[depth_first_index].progenitor_first<0)
           n_branches++;
         depth_first_index++;
       }
@@ -247,7 +247,7 @@ int main(int argc, char *argv[]){
       while(depth_first_index<n_halos[i_tree]){
         branch[depth_first_index]=i_branch;
         branch_count[i_branch]++;
-        if(((mil_halo_info *)halos)[depth_first_index].progenitor_first<0)
+        if(((mil_halo_properties_SAGE_info *)halos)[depth_first_index].progenitor_first<0)
           i_branch++;
         depth_first_index++;
       }
@@ -256,7 +256,7 @@ int main(int argc, char *argv[]){
       while(depth_first_index<n_halos[i_tree]){
         branch[depth_first_index]=i_branch;
         branch_count[i_branch]++;
-        if(((halo_info *)halos)[depth_first_index].progenitor_first<0)
+        if(((halo_properties_SAGE_info *)halos)[depth_first_index].progenitor_first<0)
           i_branch++;
         depth_first_index++;
       }
@@ -293,34 +293,34 @@ int main(int argc, char *argv[]){
         if(i_tree==0)
           branch_desc[i_branch]=0;
         else
-          branch_desc[i_branch]=branch[((mil_halo_info *)halos)[depth_first_index].descendant];
+          branch_desc[i_branch]=branch[((mil_halo_properties_SAGE_info *)halos)[depth_first_index].descendant];
         for(j_branch=0;j_branch<branch_count[i_branch];j_branch++,depth_first_index++){
-          a_branch[i_branch][j_branch] =a_list[((mil_halo_info *)halos)[depth_first_index].snap_num];
-          t_branch[i_branch][j_branch] =t_a_list[((mil_halo_info *)halos)[depth_first_index].snap_num];
-          M_branch[i_branch][j_branch] =((mil_halo_info *)halos)[depth_first_index].M_vir;
-          x_branch[i_branch][j_branch] =((mil_halo_info *)halos)[depth_first_index].pos[0];
-          y_branch[i_branch][j_branch] =((mil_halo_info *)halos)[depth_first_index].pos[1];
-          z_branch[i_branch][j_branch] =((mil_halo_info *)halos)[depth_first_index].pos[2];
-          vx_branch[i_branch][j_branch]=((mil_halo_info *)halos)[depth_first_index].vel[0];
-          vy_branch[i_branch][j_branch]=((mil_halo_info *)halos)[depth_first_index].vel[1];
-          vz_branch[i_branch][j_branch]=((mil_halo_info *)halos)[depth_first_index].vel[2];
+          a_branch[i_branch][j_branch] =a_list[((mil_halo_properties_SAGE_info *)halos)[depth_first_index].snap_num];
+          t_branch[i_branch][j_branch] =t_a_list[((mil_halo_properties_SAGE_info *)halos)[depth_first_index].snap_num];
+          M_branch[i_branch][j_branch] =((mil_halo_properties_SAGE_info *)halos)[depth_first_index].M_vir;
+          x_branch[i_branch][j_branch] =((mil_halo_properties_SAGE_info *)halos)[depth_first_index].pos[0];
+          y_branch[i_branch][j_branch] =((mil_halo_properties_SAGE_info *)halos)[depth_first_index].pos[1];
+          z_branch[i_branch][j_branch] =((mil_halo_properties_SAGE_info *)halos)[depth_first_index].pos[2];
+          vx_branch[i_branch][j_branch]=((mil_halo_properties_SAGE_info *)halos)[depth_first_index].vel[0];
+          vy_branch[i_branch][j_branch]=((mil_halo_properties_SAGE_info *)halos)[depth_first_index].vel[1];
+          vz_branch[i_branch][j_branch]=((mil_halo_properties_SAGE_info *)halos)[depth_first_index].vel[2];
         }
       }
       else{
         if(i_tree==0)
           branch_desc[i_branch]=0;
         else
-          branch_desc[i_branch]=branch[((halo_info *)halos)[depth_first_index].descendant];
+          branch_desc[i_branch]=branch[((halo_properties_SAGE_info *)halos)[depth_first_index].descendant];
         for(j_branch=0;j_branch<branch_count[i_branch];j_branch++,depth_first_index++){
-          a_branch[i_branch][j_branch] =a_list[((halo_info *)halos)[depth_first_index].snap_num];
-          t_branch[i_branch][j_branch] =t_a_list[((halo_info *)halos)[depth_first_index].snap_num];
-          M_branch[i_branch][j_branch] =((halo_info *)halos)[depth_first_index].M_vir;
-          x_branch[i_branch][j_branch] =((halo_info *)halos)[depth_first_index].pos[0];
-          y_branch[i_branch][j_branch] =((halo_info *)halos)[depth_first_index].pos[1];
-          z_branch[i_branch][j_branch] =((halo_info *)halos)[depth_first_index].pos[2];
-          vx_branch[i_branch][j_branch]=((halo_info *)halos)[depth_first_index].vel[0];
-          vy_branch[i_branch][j_branch]=((halo_info *)halos)[depth_first_index].vel[1];
-          vz_branch[i_branch][j_branch]=((halo_info *)halos)[depth_first_index].vel[2];
+          a_branch[i_branch][j_branch] =a_list[((halo_properties_SAGE_info *)halos)[depth_first_index].snap_num];
+          t_branch[i_branch][j_branch] =t_a_list[((halo_properties_SAGE_info *)halos)[depth_first_index].snap_num];
+          M_branch[i_branch][j_branch] =((halo_properties_SAGE_info *)halos)[depth_first_index].M_vir;
+          x_branch[i_branch][j_branch] =((halo_properties_SAGE_info *)halos)[depth_first_index].pos[0];
+          y_branch[i_branch][j_branch] =((halo_properties_SAGE_info *)halos)[depth_first_index].pos[1];
+          z_branch[i_branch][j_branch] =((halo_properties_SAGE_info *)halos)[depth_first_index].pos[2];
+          vx_branch[i_branch][j_branch]=((halo_properties_SAGE_info *)halos)[depth_first_index].vel[0];
+          vy_branch[i_branch][j_branch]=((halo_properties_SAGE_info *)halos)[depth_first_index].vel[1];
+          vz_branch[i_branch][j_branch]=((halo_properties_SAGE_info *)halos)[depth_first_index].vel[2];
         }
       }
     }
@@ -353,10 +353,10 @@ int main(int argc, char *argv[]){
         for(i_branch=0;i_branch<n_branches;i_branch++){
           if(branch_count[branch_desc[i_branch]]>4){
             M_desc=interpolate(M_interp[branch_desc[i_branch]],a_branch[i_branch][0]);
-            printf("%le ",a_list[((mil_halo_info *)halos)[branch_root[i_branch]].snap_num]);
+            printf("%le ",a_list[((mil_halo_properties_SAGE_info *)halos)[branch_root[i_branch]].snap_num]);
             printf("%le ",t_branch[i_branch][0]);
             printf("%le ",M_desc);
-            printf("%le ",M_desc/((mil_halo_info *)halos)[branch_root[i_branch]].M_vir);
+            printf("%le ",M_desc/((mil_halo_properties_SAGE_info *)halos)[branch_root[i_branch]].M_vir);
             printf("\n");
           }
         }
@@ -367,10 +367,10 @@ int main(int argc, char *argv[]){
         for(i_branch=0;i_branch<n_branches;i_branch++){
           if(branch_count[branch_desc[i_branch]]>4){
             M_desc=interpolate(M_interp[branch_desc[i_branch]],a_branch[i_branch][0]);
-            printf("%le ",a_list[((halo_info *)halos)[branch_root[i_branch]].snap_num]);
+            printf("%le ",a_list[((halo_properties_SAGE_info *)halos)[branch_root[i_branch]].snap_num]);
             printf("%le ",t_branch[i_branch][0]);
             printf("%le ",M_desc);
-            printf("%le ",M_desc/((halo_info *)halos)[branch_root[i_branch]].M_vir);
+            printf("%le ",M_desc/((halo_properties_SAGE_info *)halos)[branch_root[i_branch]].M_vir);
             printf("\n");
           }
         }

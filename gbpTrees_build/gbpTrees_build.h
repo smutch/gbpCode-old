@@ -70,9 +70,10 @@
 #define READ_TREES_CATALOGS_SUBGROUPS   0
 #define READ_TREES_CATALOGS_GROUPS      1
 #define READ_TREES_CATALOGS_PROFILES    2
-#define READ_TREES_CATALOGS_SHORT       4
-#define READ_TREES_CATALOGS_ALL         READ_TREES_CATALOGS_GROUPS|READ_TREES_CATALOGS_SUBGROUPS|READ_TREES_CATALOGS_PROFILES
-#define READ_TREES_CATALOGS_DEFAULT     READ_TREES_CATALOGS_SUBGROUPS
+#define READ_TREES_CATALOGS_SAGE        4
+#define READ_TREES_CATALOGS_BOTH        (READ_TREES_CATALOGS_GROUPS|READ_TREES_CATALOGS_SUBGROUPS)
+#define READ_TREES_CATALOGS_ALL         (READ_TREES_CATALOGS_BOTH)|READ_TREES_CATALOGS_PROFILES
+#define READ_TREES_CATALOGS_DEFAULT     READ_TREES_CATALOGS_BOTH
 
 #define READ_TREES_MATCH_SCORES_SUBGROUPS   0
 #define READ_TREES_MATCH_SCORES_GROUPS      1
@@ -200,20 +201,20 @@ struct tree_horizontal_ghost_group_info{
 // Data structures for vertical tree construction
 typedef struct tree_vertical_node_info tree_vertical_node_info;
 struct tree_vertical_node_info{
-  halo_info                halo;
-  int                      depth_first_index;
-  int                      group_id;
-  int                      halo_id;
-  int                      descendant_id;
-  int                      n_progenitors;
-  tree_vertical_node_info *descendant;
-  tree_vertical_node_info *progenitor_first;
-  tree_vertical_node_info *progenitor_next;
-  tree_vertical_node_info *progenitor_last;
-  tree_vertical_node_info *group_halo_first;
-  tree_vertical_node_info *group_halo_next;
-  tree_vertical_node_info *neighbour_halo_next;
-  tree_vertical_node_info *next; // Points to the next halo, in the order they are added to the tree
+  halo_properties_SAGE_info  halo;
+  int                        depth_first_index;
+  int                        group_id;
+  int                        halo_id;
+  int                        descendant_id;
+  int                        n_progenitors;
+  tree_vertical_node_info   *descendant;
+  tree_vertical_node_info   *progenitor_first;
+  tree_vertical_node_info   *progenitor_next;
+  tree_vertical_node_info   *progenitor_last;
+  tree_vertical_node_info   *group_halo_first;
+  tree_vertical_node_info   *group_halo_next;
+  tree_vertical_node_info   *neighbour_halo_next;
+  tree_vertical_node_info   *next; // Points to the next halo, in the order they are added to the tree
 };
 
 typedef struct tree_vertical_info tree_vertical_info;
@@ -228,6 +229,7 @@ struct tree_vertical_info{
 // Data structures for tree analysis
 typedef struct tree_node_info tree_node_info;
 struct tree_node_info{
+  int             depth_first_index;
   int             n_progenitors;
   int             n_substructures;
   int             snap_tree;
@@ -265,8 +267,14 @@ struct tree_info{
   double          *z_list;
   double          *t_list;
   // Halo and tree counts etc
-  int              n_groups_local;
-  int              n_subgroups_local;
+  int              n_groups_trees;          // No. in the trees
+  int              n_groups_trees_local;    // No. in the trees
+  int              n_subgroups_trees;       // No. in the trees
+  int              n_subgroups_trees_local; // No. in the trees
+  int              n_groups_raw;            // No. in the input catalog files
+  int              n_groups_raw_local;      // No. in the input catalog files
+  int              n_subgroups_raw;         // No. in the input catalog files
+  int              n_subgroups_raw_local;   // No. in the input catalog files
   int              n_groups_max;
   int              n_subgroups_max;
   int              n_progenitors_max;
@@ -281,10 +289,6 @@ struct tree_info{
   // Forest info
   int              n_forests;
   int              n_forests_local;
-  int              n_forests_group;
-  int              n_forests_group_local;
-  int              n_forests_subgroup;
-  int              n_forests_subgroup_local;
   int              n_trees_forest_groups_max;
   int              n_trees_forest_subgroups_max;
   int              max_n_groups_forest_local;
@@ -319,8 +323,10 @@ struct tree_info{
   // An ADaPS structure for holding ancillary data
   ADaPS                 *data;
   // Short-cuts to some common stuff added to data
-  halo_properties_info **group_properties;
-  halo_properties_info **subgroup_properties;
+  halo_properties_info      **group_properties;
+  halo_properties_info      **subgroup_properties;
+  halo_properties_SAGE_info **group_properties_SAGE;
+  halo_properties_SAGE_info **subgroup_properties_SAGE;
 };
 
 // Structure needed for passing parameters to the tree data ADaPS deallocation function
@@ -699,9 +705,9 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
                          cosmo_info                           **cosmo);
 void compute_trees_horizontal(char   *filename_halos_root_in,
                               char   *filename_cat_root_in,
+                              char   *filename_snap_list_in,
                               char   *filename_root_matches,
                               char   *filename_root_out,
-                              double *a_list,
                               cosmo_info **cosmo,
                               int     i_read_start,
                               int     i_read_stop,
@@ -717,17 +723,14 @@ void compute_trees_vertical_old(char *filename_root_out,
                                 int   n_files_subgroups,
                                 int   n_search_forests,
                                 int  *flag_clean);
-void compute_trees_vertical(char *filename_SSimPL_dir,
-                            char *filename_halo_version_root,
-                            char *filename_trees_name,
-                            int   n_dim_files);
+void compute_trees_vertical(char   *filename_SSimPL_dir,
+                            char   *filename_halo_version_root,
+                            char   *filename_trees_name,
+                            double  box_size,
+                            int     n_dim_files);
 void finalize_trees(tree_info *trees,
                     int        progenitor_mode);
-void finalize_trees_vertical(tree_vertical_info **trees,
-                             int                 *n_halos_tree,
-                             int                  n_trees,
-                             int                  n_snaps,
-                             int                  progenitor_mode);
+void finalize_trees_vertical(tree_info *trees);
 void read_trees_run_parameters(const char *filename_root_out,
                                int  *i_read_start,
                                int  *i_read_stop,
@@ -744,20 +747,18 @@ void write_tree_run_parameters(char *filename_root_out,
                                int   flag_fix_bridges,
                                int   flag_compute_fragmented,
                                int   flag_compute_ghosts);
-void write_trees_vertical(tree_vertical_info **trees,
-                          int                 *n_halos_tree_local,
-                          int                  n_trees_local,
-                          int                 *tree_lo_file,
-                          int                 *tree_hi_file,
-                          int                 *n_halos_file,
-                          int                  n_files,
-			  const char          *filename_root_out,
-                          const char          *group_text_prefix);
+void write_trees_vertical(tree_info     *trees,
+                          double         box_size,
+                          int            grid_size,
+                          const char    *filename_root_out);
 void write_a_list(const char *filename_snap_list_in,
                   const char *filename_root_out,
                   int         i_read_start,
                   int         i_read_stop,
                   int         i_read_step);
+void read_a_list(const char  *filename_root_in,
+                 double     **a_list_in,
+                 int         *n_a_list);
 void compute_trees_auxiliary(char *filename_root,
                              char *filename_snapshot_root,
                              char *filename_root_out,
@@ -782,31 +783,31 @@ int add_node_to_trees(tree_info        *trees,
                       tree_node_info  **new_node);
 void init_trees_vertical(int n_snaps,tree_vertical_info **tree);
 void free_trees_vertical(tree_vertical_info **tree);
-int  add_node_to_vertical_tree(tree_vertical_info  *tree,
-                               int                  match_type,
-                               int                  halo_id,
-                               int                  group_id,
-                               int                  descendant_id,
-                               int                  halo_snap,
-                               int                  descendant_snap,
-                               halo_info           *properties);
+int  add_node_to_vertical_tree(tree_vertical_info        *tree,
+                               int                        match_type,
+                               int                        halo_id,
+                               int                        group_id,
+                               int                        descendant_id,
+                               int                        halo_snap,
+                               int                        descendant_snap,
+                               halo_properties_SAGE_info *properties);
 
 void assign_group_order(tree_info *tree,int mode);
 void assign_progenitor_order(tree_info *tree,int mode);
 void assign_progenitor_order_recursive(tree_node_info *tree,int *M_i,int mode);
-void assign_depth_first_index_recursive(tree_node_info *tree,int *depth_first_index);
-void assign_unique_tree_ids_recursive(tree_node_info *tree_node,int i_tree);
-int  construct_unique_tree_id(tree_node_info *tree_node,int tree_number);
+void assign_depth_first_index_vertical_recursive(tree_node_info *tree,int *depth_first_index);
+void assign_unique_vertical_tree_ids(tree_info *trees,tree_node_info *tree_node);
 void compute_progenitor_score_recursive(tree_node_info *tree,int *M_i,int mode);
 void compute_substructure_order_recursive(tree_node_info *parent,int *score_parent,int mode);
 void compute_progenitor_order_recursive(tree_node_info *descendant,int *score_descendant,int mode);
 void compute_trees_analysis(tree_info *trees,char *filename_out_root);
+int  construct_unique_vertical_tree_id(tree_node_info *tree_node);
 
+int  construct_unique_tree_id(tree_node_info *tree_node);
+void assign_depth_first_index_recursive(tree_node_info *tree,int *depth_first_index);
+void assign_unique_tree_ids_recursive(tree_node_info *tree_node,int i_tree);
 void assign_group_subgroup_order_vertical(tree_vertical_info *tree,int i_snap,int mode);
 void assign_progenitor_order_vertical_recursive(tree_vertical_node_info *tree,int *M_i,int mode);
-void assign_depth_first_index_vertical_recursive(tree_vertical_node_info *tree,int *depth_first_index);
-void assign_unique_vertical_tree_ids_recursive(tree_vertical_node_info *tree_node,int i_tree);
-int  construct_unique_vertical_tree_id(tree_vertical_node_info *tree_node,int tree_number);
 void compute_progenitor_score_vertical_recursive(tree_vertical_node_info *tree,int *M_i,int mode);
 
 #ifdef __cplusplus

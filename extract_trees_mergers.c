@@ -37,7 +37,7 @@ struct walk_trees_local_info{
    int    *mergers_array;
 };
 
-int walk_trees_recursive_local(halo_info *tree,int i_node,walk_trees_local_info *data){
+int walk_trees_recursive_local(halo_properties_SAGE_info *tree,int i_node,walk_trees_local_info *data){
   int        i_current;
   int        i_progenitor;
   int        n_halos_written=0;
@@ -203,14 +203,14 @@ int main(int argc, char *argv[]){
      int        n_halos;
      int       *n_halos_tree;
      int        n_halos_max;
-     halo_info *tree;
+     halo_properties_SAGE_info *tree;
 
      fread(&n_trees,sizeof(int),1,fp_in);
      fread(&n_halos,sizeof(int),1,fp_in);
      n_halos_tree=(int *)SID_malloc(sizeof(int)*n_trees);
      fread(n_halos_tree,sizeof(int),n_trees,fp_in);
      calc_max(n_halos_tree,&n_halos_max,n_trees,SID_INT,CALC_MODE_DEFAULT);
-     tree=(halo_info *)SID_malloc(sizeof(halo_info)*n_halos_max);
+     tree=(halo_properties_SAGE_info *)SID_malloc(sizeof(halo_properties_SAGE_info)*n_halos_max);
 
      // Loop over each tree
      int i_tree;
@@ -218,7 +218,7 @@ int main(int argc, char *argv[]){
      data.n_mergers=0;
      for(i_tree=0;i_tree<n_trees;i_tree++){
         // Read tree
-        fread(tree,sizeof(halo_info),n_halos_tree[i_tree],fp_in);
+        fread(tree,sizeof(halo_properties_SAGE_info),n_halos_tree[i_tree],fp_in);
 
         // Walk the tree and generate the desired output
         int i_halo=0;

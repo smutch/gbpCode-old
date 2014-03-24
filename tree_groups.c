@@ -14,8 +14,8 @@ int main(int argc, char *argv[]){
   int        *n_halos;
   int         i_tree;
   FILE       *fp;
-  halo_info  *halos;
-  halo_info   halo;
+  halo_properties_SAGE_info  *halos;
+  halo_properties_SAGE_info   halo;
   int        *snap_num;
   size_t     *snap_num_index;
   char       *flag_done;
@@ -51,18 +51,18 @@ int main(int argc, char *argv[]){
   fp=fopen(filename_tree_in,"r");
   fread(&n_trees,      sizeof(int),1,fp);
   fread(&n_halos_total,sizeof(int),1,fp);
-  SID_log("(%d trees and %d halos)...size_of(halo_info)=%uld...",SID_LOG_CONTINUE,n_trees,n_halos_total,sizeof(halo_info));
+  SID_log("(%d trees and %d halos)...size_of(halo_properties_SAGE_info)=%uld...",SID_LOG_CONTINUE,n_trees,n_halos_total,sizeof(halo_properties_SAGE_info));
   n_halos=(int *)SID_malloc(sizeof(int)*n_trees);
   fread(n_halos,sizeof(int),n_trees,fp);
   calc_max(n_halos,&n_halos_max,n_trees,SID_INT,CALC_MODE_DEFAULT);
   SID_log("max_size=%d...",SID_LOG_CONTINUE,n_halos_max);
-  halos               =(halo_info *)SID_malloc(sizeof(halo_info)*n_halos_max);
+  halos               =(halo_properties_SAGE_info *)SID_malloc(sizeof(halo_properties_SAGE_info)*n_halos_max);
   snap_num            =(int       *)SID_malloc(sizeof(int)*n_halos_max);
   snap_index          =(int       *)SID_malloc(sizeof(int)*n_halos_max);
   group_halo_first    =(int       *)SID_malloc(sizeof(int)*n_halos_max);
   flag_done           =(char      *)SID_malloc(sizeof(char)*n_halos_max);
   for(i_tree=0;i_tree<MIN(n_trees,tree_select);i_tree++){
-    fread(halos,sizeof(halo_info),n_halos[i_tree],fp);
+    fread(halos,sizeof(halo_properties_SAGE_info),n_halos[i_tree],fp);
     //if(i_tree==tree_select){
       for(i_halo=0;i_halo<n_halos[i_tree];i_halo++) flag_done[i_halo]=FALSE;
       for(i_halo=0;i_halo<n_halos[i_tree];i_halo++){

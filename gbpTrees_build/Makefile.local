@@ -20,7 +20,7 @@ OBJFILES  = read_trees_run_parameters.o                   \
 	    assign_group_subgroup_order_vertical.o        \
 	    assign_progenitor_order_vertical_recursive.o  \
 	    assign_depth_first_index_vertical_recursive.o \
-	    assign_unique_vertical_tree_ids_recursive.o   \
+	    assign_unique_vertical_tree_ids.o             \
 	    find_tree_node.o                              \
 	    init_trees_lookup.o                           \
 	    free_trees_lookup.o                           \
@@ -46,6 +46,7 @@ OBJFILES  = read_trees_run_parameters.o                   \
             write_tree_run_parameters.o                   \
 	    split_forests_n_ways.o                        \
 	    write_a_list.o                                \
+	    read_a_list.o                                 \
 	    write_match_results.o                         \
 	    check_for_matching_input_files.o              \
             compute_single_matches.o                      \

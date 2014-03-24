@@ -20,22 +20,23 @@ void read_trees_catalogs(tree_info *trees,
   SID_log("Reading tree properties...",SID_LOG_OPEN|SID_LOG_TIMER);
 
   // Create the data array(s) where stuff will be stored
-  halo_info            **short_properties_groups_local;
-  halo_properties_info **properties_groups_local;
-  halo_profile_info    **profiles_groups_local;
-  halo_info            **short_properties_subgroups_local;
-  halo_properties_info **properties_subgroups_local;
-  halo_profile_info    **profiles_subgroups_local;
+  halo_properties_SAGE_info **SAGE_properties_groups_local;
+  halo_properties_info      **properties_groups_local;
+  halo_profile_info         **profiles_groups_local;
+  halo_properties_SAGE_info **SAGE_properties_subgroups_local;
+  halo_properties_info      **properties_subgroups_local;
+  halo_profile_info         **profiles_subgroups_local;
   int                    read_catalog_mode=READ_CATALOG_PROPERTIES;
   if(check_mode_for_flag(mode,READ_TREES_CATALOGS_GROUPS)){
-     if(check_mode_for_flag(mode,READ_TREES_CATALOGS_SHORT)){
-        init_trees_data(trees,(void ***)&short_properties_groups_local,sizeof(halo_info),INIT_TREE_DATA_GROUPS,"short_properties_groups");
+     if(check_mode_for_flag(mode,READ_TREES_CATALOGS_SAGE)){
+        init_trees_data(trees,(void ***)&SAGE_properties_groups_local,sizeof(halo_properties_SAGE_info),INIT_TREE_DATA_GROUPS,"properties_groups_SAGE");
         properties_groups_local=NULL;
+        trees->group_properties_SAGE=SAGE_properties_groups_local;
      }
      else{
         init_trees_data(trees,(void ***)&properties_groups_local,sizeof(halo_properties_info),INIT_TREE_DATA_GROUPS,"properties_groups");
-        short_properties_groups_local=NULL;
-        trees->group_properties      =properties_groups_local;
+        SAGE_properties_groups_local=NULL;
+        trees->group_properties     =properties_groups_local;
      }
      if(check_mode_for_flag(mode,READ_TREES_CATALOGS_PROFILES)){
         init_trees_data(trees,(void ***)&profiles_groups_local,sizeof(halo_profile_info),INIT_TREE_DATA_GROUPS,"profiles_groups");
@@ -45,14 +46,15 @@ void read_trees_catalogs(tree_info *trees,
         profiles_groups_local=NULL;
   }
   if(check_mode_for_flag(mode,READ_TREES_CATALOGS_SUBGROUPS)){
-     if(check_mode_for_flag(mode,READ_TREES_CATALOGS_SHORT)){
-        init_trees_data(trees,(void ***)&short_properties_subgroups_local,sizeof(halo_info),INIT_TREE_DATA_SUBGROUPS,"short_properties_subgroups");
-        properties_subgroups_local=NULL;
+     if(check_mode_for_flag(mode,READ_TREES_CATALOGS_SAGE)){
+        init_trees_data(trees,(void ***)&SAGE_properties_subgroups_local,sizeof(halo_properties_SAGE_info),INIT_TREE_DATA_SUBGROUPS,"properties_subgroups_SAGE");
+        properties_subgroups_local     =NULL;
+        trees->subgroup_properties_SAGE=SAGE_properties_subgroups_local;
      }
      else{
         init_trees_data(trees,(void ***)&properties_subgroups_local,sizeof(halo_properties_info),INIT_TREE_DATA_SUBGROUPS,"properties_subgroups");
-        short_properties_subgroups_local=NULL;
-        trees->subgroup_properties      =properties_subgroups_local;
+        SAGE_properties_subgroups_local=NULL;
+        trees->subgroup_properties     =properties_subgroups_local;
      }
      if(check_mode_for_flag(mode,READ_TREES_CATALOGS_PROFILES)){
         init_trees_data(trees,(void ***)&profiles_subgroups_local,sizeof(halo_profile_info),INIT_TREE_DATA_SUBGROUPS,"profiles_subgroups");
@@ -83,7 +85,7 @@ void read_trees_catalogs(tree_info *trees,
         tree_node_info       *first_neighbour;
         char                  group_text_prefix[5];
         int                   open_catalog_mode;
-        halo_info            *short_properties_in;
+        halo_properties_SAGE_info            *SAGE_properties_in;
         halo_properties_info *properties_in;
         halo_profile_info    *profiles_in;
         int                   flag_proceed=TRUE;
@@ -95,10 +97,10 @@ void read_trees_catalogs(tree_info *trees,
                  open_catalog_mode  =READ_CATALOG_SUBGROUPS|read_catalog_mode;
                  n_halos            =trees->n_subgroups_snap_local[i_snap];
                  first_neighbour    =trees->first_neighbour_subgroups[i_snap];
-                 if(short_properties_subgroups_local!=NULL)
-                    short_properties_in=short_properties_subgroups_local[i_snap];
+                 if(SAGE_properties_subgroups_local!=NULL)
+                    SAGE_properties_in=SAGE_properties_subgroups_local[i_snap];
                  else
-                    short_properties_in=NULL;
+                    SAGE_properties_in=NULL;
                  if(properties_subgroups_local!=NULL)
                     properties_in=properties_subgroups_local[i_snap];
                  else
@@ -116,10 +118,10 @@ void read_trees_catalogs(tree_info *trees,
                  open_catalog_mode  =READ_CATALOG_GROUPS|read_catalog_mode;
                  n_halos            =trees->n_groups_snap_local[i_snap];
                  first_neighbour    =trees->first_neighbour_groups[i_snap];
-                 if(short_properties_groups_local!=NULL)
-                    short_properties_in=short_properties_groups_local[i_snap];
+                 if(SAGE_properties_groups_local!=NULL)
+                    SAGE_properties_in=SAGE_properties_groups_local[i_snap];
                  else
-                    short_properties_in=NULL;
+                    SAGE_properties_in=NULL;
                  if(properties_groups_local!=NULL)
                     properties_in=properties_groups_local[i_snap];
                  else
@@ -162,13 +164,13 @@ void read_trees_catalogs(tree_info *trees,
                          &fp_properties);
 
            // Create some read buffer structures
-           halo_info            *short_properties_buffer=NULL;
+           halo_properties_SAGE_info            *SAGE_properties_buffer=NULL;
            halo_properties_info *properties_buffer      =NULL;
            halo_profile_info    *profiles_buffer        =NULL;
-           if(short_properties_in!=NULL)
-              short_properties_buffer=(halo_info *)SID_malloc(sizeof(halo_info));
+           if(SAGE_properties_in!=NULL)
+              SAGE_properties_buffer=(halo_properties_SAGE_info *)SID_malloc(sizeof(halo_properties_SAGE_info));
            else
-              short_properties_buffer=NULL;
+              SAGE_properties_buffer=NULL;
            if(properties_in!=NULL)
               properties_buffer=(halo_properties_info *)SID_malloc(sizeof(halo_properties_info));
            else
@@ -182,11 +184,11 @@ void read_trees_catalogs(tree_info *trees,
            int k_read;
            int l_read;
            for(k_read=0,l_read=0;k_read<fp_properties.n_halos_total;k_read++){
-              fread_catalog_file(&fp_properties,short_properties_buffer,properties_buffer,profiles_buffer,k_read);
+              fread_catalog_file(&fp_properties,SAGE_properties_buffer,properties_buffer,profiles_buffer,k_read);
               if(l_read<n_list_local){
                  if(k_read==file_idx_list_local[file_idx_list_local_index[l_read]]){
-                    if(short_properties_buffer!=NULL)
-                       memcpy(&(short_properties_in[nebr_idx_list_local[file_idx_list_local_index[l_read]]]),short_properties_buffer,sizeof(halo_info));
+                    if(SAGE_properties_buffer!=NULL)
+                       memcpy(&(SAGE_properties_in[nebr_idx_list_local[file_idx_list_local_index[l_read]]]),SAGE_properties_buffer,sizeof(halo_properties_SAGE_info));
                     if(properties_buffer!=NULL)
                        memcpy(&(properties_in[nebr_idx_list_local[file_idx_list_local_index[l_read]]]),properties_buffer,sizeof(halo_properties_info));
                     if(profiles_buffer!=NULL)
@@ -196,7 +198,7 @@ void read_trees_catalogs(tree_info *trees,
                  }
               }
            }
-           SID_free(SID_FARG short_properties_buffer);
+           SID_free(SID_FARG SAGE_properties_buffer);
            SID_free(SID_FARG properties_buffer);
            SID_free(SID_FARG profiles_buffer);
 

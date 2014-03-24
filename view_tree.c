@@ -15,8 +15,8 @@ int main(int argc, char *argv[]){
   int        *n_halos;
   int         i_tree;
   FILE       *fp;
-  halo_info  *halos;
-  halo_info   halo;
+  halo_properties_SAGE_info  *halos;
+  halo_properties_SAGE_info   halo;
   int        *snap_num;
   size_t     *snap_num_index;
   int         i_snap,i_halo,j_halo,k_halo;
@@ -50,15 +50,15 @@ int main(int argc, char *argv[]){
   fread(n_halos,sizeof(int),n_trees,fp);
   for(i_tree=0;i_tree<select_tree;i_tree++){
     for(i_halo=0;i_halo<n_halos[i_tree];i_halo++){
-      fread(&halo,sizeof(halo_info),1,fp);
+      fread(&halo,sizeof(halo_properties_SAGE_info),1,fp);
       max_snap=MAX(max_snap,halo.snap_num);
     }
   }
-  halos               =(halo_info *)SID_malloc(sizeof(halo_info)*n_halos[i_tree]);
+  halos               =(halo_properties_SAGE_info *)SID_malloc(sizeof(halo_properties_SAGE_info)*n_halos[i_tree]);
   snap_num            =(int       *)SID_malloc(sizeof(int)*n_halos[i_tree]);
   snap_index          =(int       *)SID_malloc(sizeof(int)*n_halos[i_tree]);
   group_halo_first    =(int       *)SID_malloc(sizeof(int)*n_halos[i_tree]);
-  fread(halos,sizeof(halo_info),n_halos[i_tree],fp);
+  fread(halos,sizeof(halo_properties_SAGE_info),n_halos[i_tree],fp);
   descendant_min      =10000;
   descendant_max      =    0;
   progenitor_first_min=10000;
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]){
   i_tree++;
   for(;i_tree<n_trees;i_tree++){
     for(i_halo=0;i_halo<n_halos[i_tree];i_halo++){
-      fread(&halo,sizeof(halo_info),1,fp);
+      fread(&halo,sizeof(halo_properties_SAGE_info),1,fp);
       max_snap=MAX(max_snap,halo.snap_num);
     }
   }
@@ -114,7 +114,7 @@ int main(int argc, char *argv[]){
   fread(&n_halos_total,sizeof(int),1,fp); 
   for(i_tree=0,n_gal=0;i_tree<n_trees;i_tree++){
     for(i_halo=0;i_halo<n_halos[i_tree];i_halo++){
-      fread(&halo,sizeof(halo_info),1,fp);
+      fread(&halo,sizeof(halo_properties_SAGE_info),1,fp);
       if(halo.snap_num==max_snap) n_gal++;
     }
   }

@@ -11,9 +11,9 @@
 
 void compute_trees_horizontal(char        *filename_halo_root_in,
                               char        *filename_cat_root_in,
+                              char        *filename_snap_list_in,
                               char        *filename_root_matches,
                               char        *filename_output_dir,
-                              double      *a_list,
                               cosmo_info **cosmo,
                               int          i_read_start,
                               int          i_read_stop,
@@ -167,6 +167,21 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
     SID_log("Fragmented-halo propagation is turned off.",SID_LOG_COMMENT);
   if(!flag_compute_ghosts)
     SID_log("Ghost-populated tree construction is turned off.",SID_LOG_COMMENT);
+
+  // Create the output directory
+  mkdir(filename_output_dir,02755);
+
+  // Create snapshot expansion factor list
+  double *a_list=NULL;
+  int     n_a_list_in;
+  write_a_list(filename_snap_list_in,
+               filename_output_dir,
+               i_read_start,
+               i_read_stop,
+               i_read_step);
+  read_a_list(filename_output_dir,
+              &a_list,
+              &n_a_list_in);
 
   write_tree_run_parameters(filename_output_dir,
                             i_read_start,
@@ -560,10 +575,13 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
   for(i_search=0;i_search<n_wrap;i_search++)
      SID_free(SID_FARG n_subgroups_group[i_search]);
   SID_free(SID_FARG n_subgroups_group);
+  SID_free(SID_FARG a_list);
 
-  // Set flag_clean=TRUE so that the output files generated here
-  //  will be treated as temporary in the next step (if called)
-  //(*flag_clean)=TRUE;
+  // Force the forest construction to use all snapshots
+  int n_search_forests=i_read_stop;
+
+  // Construct tree->forest mappings
+  compute_forests(filename_output_dir,n_search_forests);
 
   SID_log("Done.",SID_LOG_CLOSE);
 }

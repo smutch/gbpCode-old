@@ -7,8 +7,8 @@
 #include <gbpHalos.h>
 #include <gbpTrees.h>
 
-typedef struct halo_info_mil halo_info_mil;
-struct halo_info_mil{
+typedef struct halo_properties_SAGE_info_mil halo_properties_SAGE_info_mil;
+struct halo_properties_SAGE_info_mil{
   // merger tree pointers
   int descendant;
   int progenitor_first;
@@ -41,8 +41,8 @@ int main(int argc, char *argv[]){
   int        *n_halos;
   int         i_tree;
   FILE       *fp;
-  halo_info_mil  *halos;
-  halo_info_mil   halo;
+  halo_properties_SAGE_info_mil  *halos;
+  halo_properties_SAGE_info_mil   halo;
   int        *snap_num;
   size_t     *snap_num_index;
   int         i_snap,i_halo,j_halo,k_halo;
@@ -74,13 +74,13 @@ int main(int argc, char *argv[]){
   fread(n_halos,sizeof(int),n_trees,fp);
   for(i_tree=0;i_tree<select_tree;i_tree++){
     for(i_halo=0;i_halo<n_halos[i_tree];i_halo++)
-      fread(&halo,sizeof(halo_info_mil),1,fp);
+      fread(&halo,sizeof(halo_properties_SAGE_info_mil),1,fp);
   }
-  halos               =(halo_info_mil *)SID_malloc(sizeof(halo_info_mil)*n_halos[i_tree]);
+  halos               =(halo_properties_SAGE_info_mil *)SID_malloc(sizeof(halo_properties_SAGE_info_mil)*n_halos[i_tree]);
   snap_num            =(int       *)SID_malloc(sizeof(int)*n_halos[i_tree]);
   snap_index          =(int       *)SID_malloc(sizeof(int)*n_halos[i_tree]);
   group_halo_first    =(int       *)SID_malloc(sizeof(int)*n_halos[i_tree]);
-  fread(halos,sizeof(halo_info_mil),n_halos[i_tree],fp);
+  fread(halos,sizeof(halo_properties_SAGE_info_mil),n_halos[i_tree],fp);
   descendant_min      =10000;
   descendant_max      =    0;
   progenitor_first_min=10000;

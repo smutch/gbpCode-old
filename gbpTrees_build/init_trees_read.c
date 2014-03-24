@@ -67,11 +67,15 @@ void init_trees_read(const char  *filename_tree_root,
                           &((*tree)->n_trees_group));
 
   // Compute/fetch the mapping between horizontal tree IDs and forest IDs ...
+  int n_forests_group_in;
+  int n_forests_subgroup_in;
+  int n_forests_group_local_in;
+  int n_forests_subgroup_local_in;
   read_forests(filename_tree_root,
-               &((*tree)->n_forests_group),
-               &((*tree)->n_forests_subgroup),
-               &((*tree)->n_forests_group_local),
-               &((*tree)->n_forests_subgroup_local),
+               &n_forests_group_in,
+               &n_forests_subgroup_in,
+               &n_forests_group_local_in,
+               &n_forests_subgroup_local_in,
                &((*tree)->tree2forest_mapping_group),
                &((*tree)->tree2forest_mapping_subgroup),
                &((*tree)->n_trees_forest_groups_max),
@@ -80,18 +84,24 @@ void init_trees_read(const char  *filename_tree_root,
                &((*tree)->forest_hi_group_local),
                &((*tree)->forest_lo_subgroup_local),
                &((*tree)->forest_hi_subgroup_local),
-               &((*tree)->n_groups_local),
-               &((*tree)->n_subgroups_local),
+               &((*tree)->n_groups_raw_local),
+               &((*tree)->n_subgroups_raw_local),
                &((*tree)->n_groups_snap_alloc_local),
                &((*tree)->n_subgroups_snap_alloc_local));
+  calc_sum_global(&((*tree)->n_groups_raw_local),   &((*tree)->n_groups_raw),   1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+  calc_sum_global(&((*tree)->n_subgroups_raw_local),&((*tree)->n_subgroups_raw),1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
 
   // Set counts etc.  We set the number of forests to be
   //    the number of subgroup forests, since this the
   //    most generic/natural constraint
-  int n_forests_local     =(*tree)->n_forests_subgroup_local;
-  (*tree)->n_forests      =(*tree)->n_forests_subgroup;
-  (*tree)->n_forests_local=n_forests_local;
-  (*tree)->n_wrap         =(*tree)->n_search+1;
+  int n_forests_local             =n_forests_subgroup_local_in;
+  (*tree)->n_forests              =n_forests_subgroup_in;
+  (*tree)->n_forests_local        =n_forests_local;
+  (*tree)->n_wrap                 =(*tree)->n_search+1;
+  (*tree)->n_groups_trees         =0.;
+  (*tree)->n_groups_trees_local   =0.;
+  (*tree)->n_subgroups_trees_local=0.;
+  (*tree)->n_subgroups_trees      =0.;
 
   // Create an array which maps the file numbers in the trees
   //   to the snapshot number (may differ from 1:1 if skipping snaps)

@@ -9,7 +9,7 @@
 #include <gbpHalos.h>
 #include <gbpTrees_build.h>
 
-int construct_unique_vertical_tree_id(tree_vertical_node_info *tree_node,int tree_number){
+int construct_unique_vertical_tree_id(tree_node_info *tree_node){
   if(tree_node!=NULL)
     return(tree_node->depth_first_index);
   else

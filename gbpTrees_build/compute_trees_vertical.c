@@ -9,10 +9,11 @@
 #include <gbpHalos.h>
 #include <gbpTrees_build.h>
 
-void compute_trees_vertical(char *filename_SSimPL_dir,
-                            char *filename_halo_version_root,
-                            char *filename_trees_name,
-                            int   n_dim_files){
+void compute_trees_vertical(char   *filename_SSimPL_dir,
+                            char   *filename_halo_version_root,
+                            char   *filename_trees_name,
+                            double  box_size,
+                            int     n_dim_files){
   SID_log("Constructing vertical merger trees...",SID_LOG_OPEN|SID_LOG_TIMER);
 
   char filename_trees_root[MAX_FILENAME_LENGTH];
@@ -31,9 +32,16 @@ void compute_trees_vertical(char *filename_SSimPL_dir,
   read_trees_catalogs(trees,
                       filename_SSimPL_dir,
                       filename_halo_version_root,
-                      READ_TREES_CATALOGS_GROUPS|READ_TREES_CATALOGS_SUBGROUPS);
+                      READ_TREES_CATALOGS_BOTH|READ_TREES_CATALOGS_SAGE);
+
+  // Build depth-first-index pointers
+  finalize_trees_vertical(trees);
 
   // Write vertical trees
+  write_trees_vertical(trees,
+                       box_size,
+                       n_dim_files,
+                       filename_trees_root);
 
   // Clean-up
   free_trees(&trees);

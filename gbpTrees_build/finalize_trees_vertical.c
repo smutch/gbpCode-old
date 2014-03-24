@@ -5,65 +5,41 @@
 #include <gbpMath.h>
 #include <gbpTrees_build.h>
 
-void finalize_trees_vertical(tree_vertical_info **trees,
-                             int                 *n_halos_tree_local,
-                             int                  n_trees,
-                             int                  n_snaps,
-                             int                  progenitor_mode){
-  int                      i_tree,i_snap;
-  tree_vertical_node_info *current;
-  tree_vertical_node_info *next;
-  int                      progenitor_score;
-  int                      depth_first_index;
+void finalize_trees_vertical(tree_info *trees){
 
   SID_log("Finalizing...",SID_LOG_OPEN|SID_LOG_TIMER);
 
-  // ... correct group halo ordering ...
-  SID_log("Assigning group ordering...",SID_LOG_OPEN|SID_LOG_TIMER);
-  for(i_tree=0;i_tree<n_trees;i_tree++){
-    for(i_snap=0;i_snap<n_snaps;i_snap++)
-      assign_group_subgroup_order_vertical(trees[i_tree],i_snap,progenitor_mode);
-  }
-  SID_log("Done.",SID_LOG_CLOSE);
-
   // ... correct progenitor ordering ...
-  SID_log("Correcting progenitor ordering...",SID_LOG_OPEN|SID_LOG_TIMER);
-  for(i_tree=0;i_tree<n_trees;i_tree++){
-    current=trees[i_tree]->root;
-    while(current!=NULL){
-      if(current->descendant==NULL){
-        progenitor_score=0;
-        assign_progenitor_order_vertical_recursive(current,&progenitor_score,progenitor_mode);
-      }
-      current=current->next;
-    }
-  }
-  SID_log("Done.",SID_LOG_CLOSE);
-
-  // ... assign depth-first-indices ...
-  SID_log("Assigning depth first indices...",SID_LOG_OPEN|SID_LOG_TIMER);
-  for(i_tree=0;i_tree<n_trees;i_tree++){
-    depth_first_index=0;
-    current=trees[i_tree]->root;
-    while(current!=NULL){
-      if(current->descendant==NULL)
-        assign_depth_first_index_vertical_recursive(current,&depth_first_index);
-      current=current->next;
-    }
-    if(depth_first_index!=n_halos_tree_local[i_tree])
-      SID_trap_error("DFI != n_halos (i.e. %d!=%d)",ERROR_LOGIC,depth_first_index,n_halos_tree_local[i_tree]);
+  SID_log("Correcting central halo masses...",SID_LOG_OPEN|SID_LOG_TIMER);
+  for(int i_snap=0;i_snap<trees->n_snaps;i_snap++){
+     tree_node_info *current_halo=trees->first_neighbour_subgroups[i_snap];
+     while(current_halo!=NULL){
+        tree_node_info *current_parent =current_halo->parent;
+        tree_node_info *current_central=current_parent->substructure_first;
+        if(current_halo==current_central){
+           halo_properties_SAGE_info *current_halo_properties  =&(trees->subgroup_properties_SAGE[current_halo->snap_tree][current_halo->neighbour_index]);
+           halo_properties_SAGE_info *current_parent_properties=&(trees->group_properties_SAGE[current_parent->snap_tree][current_parent->neighbour_index]);
+           current_halo_properties->M_vir=current_parent_properties->M_vir;
+        }
+        current_halo=current_halo->next_neighbour;
+     }
   }
   SID_log("Done.",SID_LOG_CLOSE);
 
   // ... assign ids ...
   SID_log("Assigning IDs...",SID_LOG_OPEN|SID_LOG_TIMER);
-  for(i_tree=0;i_tree<n_trees;i_tree++){
-    current=trees[i_tree]->root;
-    while(current!=NULL){
-      if(current->descendant==NULL)
-        assign_unique_vertical_tree_ids_recursive(current,i_tree);
-      current=current->next;
-    }
+  for(int i_snap=0;i_snap<trees->n_snaps;i_snap++){
+     tree_node_info *current_halo;
+     current_halo=trees->first_neighbour_groups[i_snap];
+     while(current_halo!=NULL){
+        assign_unique_vertical_tree_ids(trees,current_halo);
+        current_halo=current_halo->next_neighbour;
+     }
+     current_halo=trees->first_neighbour_subgroups[i_snap];
+     while(current_halo!=NULL){
+        assign_unique_vertical_tree_ids(trees,current_halo);
+        current_halo=current_halo->next_neighbour;
+     }
   }
   SID_log("Done.",SID_LOG_CLOSE);
 

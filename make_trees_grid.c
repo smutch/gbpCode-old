@@ -84,8 +84,8 @@ int main(int argc, char *argv[]){
      FILE      *fp_in;
      int        n_halos_biggest_tree;
      int        i_report,next_report;
-     halo_info *halo;
-     halo=(halo_info *)SID_calloc(sizeof(halo_info));
+     halo_properties_SAGE_info *halo;
+     halo=(halo_properties_SAGE_info *)SID_calloc(sizeof(halo_properties_SAGE_info));
      n_halos_biggest_tree=0;
      i_report            =1;
      next_report         =(int)((float)i_report*0.1*(float)n_trees_total);
@@ -106,8 +106,8 @@ int main(int argc, char *argv[]){
         for(i_tree=0;i_tree<n_trees_file;i_tree++,k_tree++){
            int i_x,i_y,i_z,i_g;
            // Read the first halo and skip the rest
-           fread(halo,sizeof(halo_info),1,fp_in);
-           fseeko(fp_in,(size_t)(n_halos_tree[i_tree]-1)*sizeof(halo_info),SEEK_CUR);
+           fread(halo,sizeof(halo_properties_SAGE_info),1,fp_in);
+           fseeko(fp_in,(size_t)(n_halos_tree[i_tree]-1)*sizeof(halo_properties_SAGE_info),SEEK_CUR);
            // Decide which grid cell it belongs to
            i_x=(int)((float)grid_size*(halo->pos[0]/box_size));i_x=MIN(i_x,grid_size-1);
            i_y=(int)((float)grid_size*(halo->pos[1]/box_size));i_y=MIN(i_y,grid_size-1);
@@ -161,8 +161,8 @@ int main(int argc, char *argv[]){
            if(n_halos_tree[i_tree]>0){
               int i_x,i_y,i_z,i_g;
               // Read the first halo and skip the rest
-              fread(halo,sizeof(halo_info),1,fp_in);
-              fseeko(fp_in,(size_t)(n_halos_tree[i_tree]-1)*sizeof(halo_info),SEEK_CUR);
+              fread(halo,sizeof(halo_properties_SAGE_info),1,fp_in);
+              fseeko(fp_in,(size_t)(n_halos_tree[i_tree]-1)*sizeof(halo_properties_SAGE_info),SEEK_CUR);
               // Decide which grid cell it belongs to
               i_x=(int)((float)grid_size*(halo->pos[0]/box_size));i_x=MIN(i_x,grid_size-1);
               i_y=(int)((float)grid_size*(halo->pos[1]/box_size));i_y=MIN(i_y,grid_size-1);
@@ -209,8 +209,8 @@ int main(int argc, char *argv[]){
      // Read each tree and write it to the appropriate file
      SID_log("Distributing input trees to the grid of output files...",SID_LOG_OPEN|SID_LOG_TIMER);
      int        i_g_last;
-     halo_info *tree;
-     tree=(halo_info *)SID_calloc(sizeof(halo_info)*n_halos_biggest_tree);
+     halo_properties_SAGE_info *tree;
+     tree=(halo_properties_SAGE_info *)SID_calloc(sizeof(halo_properties_SAGE_info)*n_halos_biggest_tree);
      halo=tree;
      i_report   =1;
      next_report=(int)((float)i_report*0.1*(float)n_trees_total);
@@ -231,7 +231,7 @@ int main(int argc, char *argv[]){
            if(n_halos_tree[i_tree]>0){
               int i_x,i_y,i_z,i_g;
               // Read this tree
-              fread(tree,sizeof(halo_info),n_halos_tree[i_tree],fp_in);
+              fread(tree,sizeof(halo_properties_SAGE_info),n_halos_tree[i_tree],fp_in);
               // Decide which grid cell it belongs to
               i_x=(int)((float)grid_size*(halo->pos[0]/box_size));i_x=MIN(i_x,grid_size-1);
               i_y=(int)((float)grid_size*(halo->pos[1]/box_size));i_y=MIN(i_y,grid_size-1);
@@ -250,7 +250,7 @@ int main(int argc, char *argv[]){
                  fp_out=fopen(filename_out,"a");
               }
               // Write this tree
-              fwrite(tree,sizeof(halo_info),n_halos_tree[i_tree],fp_out);
+              fwrite(tree,sizeof(halo_properties_SAGE_info),n_halos_tree[i_tree],fp_out);
               // Status message
               if(k_tree==next_report){
                  SID_log("%3d%% complete.",SID_LOG_COMMENT|SID_LOG_TIMER,i_report*10);

@@ -128,8 +128,8 @@ int main(int argc,char *argv[]){
      // Open catalog files and read headers
      fp_catalog_info  fp_group_properties;
      fp_catalog_info  fp_subgroup_properties;
-     halo_info        group_properties;
-     halo_info        subgroup_properties;
+     halo_properties_SAGE_info        group_properties;
+     halo_properties_SAGE_info        subgroup_properties;
      fopen_catalog(filename_catalog_root,
                    i_read,
                    READ_CATALOG_GROUPS|READ_CATALOG_PROPERTIES,

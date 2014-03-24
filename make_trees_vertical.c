@@ -10,44 +10,26 @@
 #include <gbpTrees.h>
 
 int main(int argc, char *argv[]){
-  char        filename_halo_root_in[256];
-  char        filename_cat_root_in[256];
-  char        filename_root_out[256];
-  char        filename_snap_list_in[256];
-  char        filename_snap_list_out[256];
-  char        filename_output_file_root[256];
-  int         i_read_start;
-  int         i_read_stop;
-  int         i_read_step;
-  int         n_search_forests;
-  int         n_dim_files;
-  int         n_k_match=2;
-  int         flag_clean=FALSE;
-  FILE       *fp_in;
-  FILE       *fp_out;
-  char       *line=NULL;
-  size_t      line_length=0;
-  int         n_snaps,i_read,i_next,i_write,n_keep;
-  double     *a_list_in;
-  double     *a_list_out;
 
   SID_init(&argc,&argv,NULL);
 
   // Fetch user inputs
-  strcpy(filename_halo_root_in,argv[1]);
-  strcpy(filename_cat_root_in, argv[2]);
-  strcpy(filename_root_out,    argv[3]);
-  strcpy(filename_snap_list_in,argv[4]);
-  n_search_forests =atoi(argv[5]);
-  n_dim_files      =atoi(argv[6]);
+  char filename_SSimPL_dir[MAX_FILENAME_LENGTH];
+  char filename_halo_version_root[MAX_FILENAME_LENGTH];
+  char filename_trees_name[MAX_FILENAME_LENGTH];
+  strcpy(filename_SSimPL_dir,       argv[1]);
+  strcpy(filename_halo_version_root,argv[2]);
+  strcpy(filename_trees_name,       argv[3]);
+  double box_size     =(double)atof(argv[4]);
+  int    n_dim_files  =        atoi(argv[5]);
 
   SID_log("Constructing vertical merger trees...",SID_LOG_OPEN|SID_LOG_TIMER);
-  /*
   compute_trees_vertical(filename_SSimPL_dir,
                          filename_halo_version_root,
                          filename_trees_name,
+                         box_size,
                          n_dim_files);
-  */
+
   SID_log("Done.",SID_LOG_CLOSE);
 
   SID_exit(ERROR_NONE);

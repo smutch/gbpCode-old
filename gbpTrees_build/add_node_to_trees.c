@@ -136,6 +136,12 @@ int add_node_to_trees(tree_info        *trees,            // The tree datastruct
     trees->last_in_forest_subgroups[i_forest]=(*new_node);
   }  
 
+  // Halo counts
+  if(group_node==NULL)
+     (trees->n_groups_trees_local)++;
+  else
+     (trees->n_subgroups_trees_local)++;
+
   return(rval);
 }
 

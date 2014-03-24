@@ -216,7 +216,7 @@ void read_trees(char       *filename_tree_root,
          }
 
          // Add node to trees if this subgroup belongs to a local forest ...
-         if(i_forest>=0 && i_forest<(*trees)->n_forests_subgroup_local){ 
+         if(i_forest>=0 && i_forest<(*trees)->n_forests_local){ 
             // ... add the group ...
             if(!flag_group_added){
                add_node_to_trees((*trees),               // The tree datastructure
@@ -308,6 +308,10 @@ void read_trees(char       *filename_tree_root,
      SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
   }
   SID_log("Done.",SID_LOG_CLOSE);
+
+  // Create halo sums
+  calc_sum_global(&((*trees)->n_groups_trees_local),   &((*trees)->n_groups_trees),   1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+  calc_sum_global(&((*trees)->n_subgroups_trees_local),&((*trees)->n_subgroups_trees),1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
 
   // Finalize trees
   finalize_trees((*trees),read_mode);
