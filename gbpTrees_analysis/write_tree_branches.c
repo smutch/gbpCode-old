@@ -9,7 +9,7 @@
 #include <gbpTrees_build.h>
 #include <gbpTrees_analysis.h>
 
-void write_tree_tracks(tree_info *trees,tree_node_info **list_in,int n_list_in,int mode,const char *catalog_name){
+void write_tree_branches(tree_info *trees,tree_node_info **list_in,int n_list_in,int mode,const char *catalog_name){
   SID_log("Processing %d halos in catalog {%s}...",SID_LOG_OPEN,n_list_in,catalog_name);
 
   // Fetch properties
@@ -34,7 +34,7 @@ void write_tree_tracks(tree_info *trees,tree_node_info **list_in,int n_list_in,i
   int             *track_index=(int             *)SID_malloc(sizeof(int)*n_list_in);
   for(int i_list=0;i_list<n_list;i_list++){
      track_index[i_list]=i_list; // default
-     find_treenode_leaf(trees,list_in[i_list],&(list[i_list]));
+     find_treenode_branch_leaf(trees,list_in[i_list],&(list[i_list]));
   }
 
   // Count fragmented halos
@@ -183,13 +183,14 @@ void write_tree_tracks(tree_info *trees,tree_node_info **list_in,int n_list_in,i
            // Find some special nodes for this listed halo
            tree_node_info *descendant_last;
            tree_node_info *progenitor_main;
+           tree_node_info *progenitor_peak_mass;
            tree_node_info *progenitor_formation;
            tree_node_info *progenitor_first_accretion;
            tree_node_info *progenitor_last_accretion;
-           find_treenode_last_instance(  trees,current_halo,&descendant_last);
+           find_treenode_branch_root    (trees,current_halo,&descendant_last);
            find_treenode_main_progenitor(trees,current_halo,&progenitor_main);
-           find_treenode_accretion(      trees,current_halo,&progenitor_first_accretion,&progenitor_last_accretion);
-           find_treenode_formation(      trees,current_halo,0.5,&progenitor_formation);
+           find_treenode_accretion      (trees,current_halo,&progenitor_first_accretion,&progenitor_last_accretion);
+           find_treenode_formation      (trees,current_halo,0.5,&progenitor_peak_mass,&progenitor_formation);
 
            if(descendant_last->snap_tree==(trees->n_snaps-1))
               descendant_last=NULL;
@@ -199,9 +200,9 @@ void write_tree_tracks(tree_info *trees,tree_node_info **list_in,int n_list_in,i
            if(i_rank==0)
               fprintf(fp_props_out,"%4d %4d",i_list,track_index[i_list]);
            if(!flag_processing_groups)
-              n_write=6;
+              n_write=7;
            else
-              n_write=4; // Don't write the halos at the end which pertain only to subgroups
+              n_write=5; // Don't write the halos at the end which pertain only to subgroups
            for(int i_write=0;i_write<n_write;i_write++){
               // Compute properties
               int    i_z_node;
@@ -225,18 +226,22 @@ void write_tree_tracks(tree_info *trees,tree_node_info **list_in,int n_list_in,i
                        node_write=progenitor_main;
                        break;
                     case 2:
+                       sprintf(write_name,"peak_mass");
+                       node_write=progenitor_peak_mass;
+                       break;
+                    case 3:
                        sprintf(write_name,"form");
                        node_write=progenitor_formation;
                        break;
-                    case 3:
+                    case 4:
                        sprintf(write_name,"last");
                        node_write=descendant_last;
                        break;
-                    case 4:
+                    case 5:
                        sprintf(write_name,"accrete_last");
                        node_write=progenitor_last_accretion;
                        break;
-                    case 5:
+                    case 6:
                        sprintf(write_name,"accrete_first");
                        node_write=progenitor_first_accretion;
                        break;

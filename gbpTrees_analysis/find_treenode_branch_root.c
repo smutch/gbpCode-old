@@ -9,10 +9,10 @@
 #include <gbpTrees_build.h>
 #include <gbpTrees_analysis.h>
 
-int find_treenode_last_instance(tree_info *trees,tree_node_info *halo,tree_node_info **last_instance){
-   (*last_instance)=halo;
-   while(check_treenode_if_main_progenitor((*last_instance)))
-      (*last_instance)=(*last_instance)->descendant;
+int find_treenode_branch_root(tree_info *trees,tree_node_info *halo,tree_node_info **branch_root){
+   (*branch_root)=halo;
+   while(check_treenode_if_main_progenitor((*branch_root)))
+      (*branch_root)=(*branch_root)->descendant;
    return(TRUE);
 }
 

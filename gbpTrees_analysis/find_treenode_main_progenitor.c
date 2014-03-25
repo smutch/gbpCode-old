@@ -10,21 +10,25 @@
 #include <gbpTrees_analysis.h>
 
 int find_treenode_main_progenitor(tree_info *trees,tree_node_info *halo,tree_node_info **main_progenitor){
-   tree_node_info *last_instance;
+   tree_node_info *branch_root;
    (*main_progenitor)=NULL;
-   if(find_treenode_last_instance(trees,halo,&last_instance)){
-      tree_node_info *track_halo =last_instance->descendant;
-      int             target_snap=halo->snap_tree;
-      while(track_halo!=NULL){
-         if(track_halo->snap_tree==target_snap) break;
-         track_halo=track_halo->progenitor_first;
-      }
-      if(track_halo!=NULL){
-         if(track_halo->snap_tree==target_snap){
-            // return NULL if the halo is it's own main progenitor
-            if(track_halo!=halo)
-               (*main_progenitor)=track_halo;
-            return(TRUE);
+   if(halo!=NULL){
+      if(find_treenode_branch_root(trees,halo,&branch_root)){
+         tree_node_info *track_halo =branch_root->descendant;
+         int             target_snap=halo->snap_tree;
+         while(track_halo!=NULL){
+            if(track_halo->snap_tree==target_snap) break;
+            track_halo=track_halo->progenitor_first;
+         }
+         if(track_halo!=NULL){
+            if(track_halo->snap_tree==target_snap){
+               // return NULL if the halo is it's own main progenitor
+               if(track_halo!=halo)
+                  (*main_progenitor)=track_halo;
+               return(TRUE);
+            }
+            else
+               return(FALSE);
          }
          else
             return(FALSE);
@@ -32,7 +36,6 @@ int find_treenode_main_progenitor(tree_info *trees,tree_node_info *halo,tree_nod
       else
          return(FALSE);
    }
-   else
-      return(FALSE);
+   return(FALSE);
 }
 

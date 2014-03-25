@@ -10,14 +10,18 @@
 #include <gbpTrees_analysis.h>
 
 int find_treenode_markers(tree_info *trees,tree_node_info *halo,tree_markers_info *markers){
-   find_treenode_leaf(           trees,halo,&(markers->leaf));
-   find_treenode_last_instance(  trees,halo,&(markers->last_instance));
-   find_treenode_main_progenitor(trees,halo,&(markers->progenitor_main));
-   find_treenode_accretion(      trees,halo,&(markers->progenitor_accretion_first),
-                                            &(markers->progenitor_accretion_last));
-   find_treenode_formation(      trees,halo,0.5,
-                                            &(markers->progenitor_formation));
-   find_treenode_main_progenitor(trees,halo,&(markers->progenitor_main));
+   find_treenode_branch_root    (trees,halo,&(markers->branch_root));
+   find_treenode_branch_leaf    (trees,halo,&(markers->branch_leaf));
+   find_treenode_main_progenitor(trees,halo,&(markers->main_progenitor));
+   find_treenode_accretion      (trees,halo,&(markers->first_became_satellite),
+                                            &(markers->joined_current_parent));
+   find_treenode_formation      (trees,halo,0.5,
+                                            &(markers->peak_mass),
+                                            &(markers->half_peak_mass));
+   if(markers->branch_root!=NULL)
+      markers->descendant=markers->branch_root->descendant;
+   else
+      markers->descendant=NULL;
    markers->flag_halo_is_main_progenitor=check_treenode_if_main_progenitor(halo);
 }
 

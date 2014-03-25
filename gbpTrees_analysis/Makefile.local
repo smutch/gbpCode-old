@@ -2,9 +2,12 @@
 # Local Makefile settings #
 ###########################
 INCFILES  = gbpTrees_analysis.h
-OBJFILES  = average_tree_tracks.o                 \
-	    write_tree_tracks.o                   \
+OBJFILES  = average_tree_branches.o               \
+	    write_tree_branches.o                 \
+	    write_tree_branch_ascii.o             \
 	    check_treenode_if_main_progenitor.o   \
+	    check_treenode_if_central.o           \
+	    check_treenode_if_satellite.o         \
 	    check_treenode_if_branch_start.o      \
 	    fetch_treenode_properties.o           \
 	    fetch_treenode_Mvir.o                 \
@@ -16,8 +19,8 @@ OBJFILES  = average_tree_tracks.o                 \
 	    fetch_treenode_delta_t.o              \
 	    find_treenode_markers.o               \
 	    find_treenode_main_progenitor.o       \
-	    find_treenode_leaf.o                  \
-	    find_treenode_last_instance.o         \
+	    find_treenode_branch_root.o           \
+	    find_treenode_branch_leaf.o           \
 	    find_treenode_formation.o             \
 	    find_treenode_accretion.o             \
 	    find_treesnap_z.o                  

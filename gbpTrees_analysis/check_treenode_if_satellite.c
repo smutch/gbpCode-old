@@ -9,13 +9,10 @@
 #include <gbpTrees_build.h>
 #include <gbpTrees_analysis.h>
 
-int check_treenode_if_main_progenitor(tree_node_info *halo){
+int check_treenode_if_satellite(tree_node_info *halo){
    if(halo!=NULL){
-      tree_node_info *descendant=halo->descendant;
-      if(descendant!=NULL){
-         tree_node_info *main_progenitor=descendant->progenitor_first;
-         return(halo==main_progenitor);
-      }
+      if(halo->parent!=NULL)
+         return(halo->parent->substructure_first!=halo);
       else
          return(FALSE);
    }

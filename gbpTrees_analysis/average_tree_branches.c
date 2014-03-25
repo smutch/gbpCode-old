@@ -9,7 +9,7 @@
 #include <gbpTrees_build.h>
 #include <gbpTrees_analysis.h>
 
-void average_tree_tracks(const char *catalog_name){
+void average_tree_branches(const char *catalog_name){
   SID_log("Processing tree tracks in catalog {%s}...",SID_LOG_OPEN,catalog_name);
 
   // Master Rank does all the work

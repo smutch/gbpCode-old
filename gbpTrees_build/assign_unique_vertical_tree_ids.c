@@ -23,6 +23,9 @@ void assign_unique_vertical_tree_ids(tree_info *trees,tree_node_info *halo){
      group_halo_next =halo->substructure_next;
   }  
 
+  // Set the snap_num to the sampled snapshot number
+  halo_properties->snap_num=halo->snap_tree;
+
   // Set descendant and progenitor ids
   halo_properties->descendant      =construct_unique_vertical_tree_id(halo->descendant);
   halo_properties->progenitor_first=construct_unique_vertical_tree_id(halo->progenitor_first);
