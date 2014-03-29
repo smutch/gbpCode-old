@@ -318,7 +318,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
        // Initialize tree pointer-arrays with dummy values
        init_trees_horizontal_snapshot(halos_i,n_halos_i,i_read,i_file,n_halos_max);
        
-       // Use back-matching to identify bridged halos ...
+       // Use back-matching to identify bridged and fragmented halos ...
        if(flag_fix_bridges)
           identify_bridges(halos,
                            halos_i,
@@ -365,7 +365,9 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                              group_text_prefix,
                              flag_match_subgroups);
       
-       // Finalize matches to unprocessed halos ...
+       // Finalize matches to unprocessed halos.  In particular,
+       //    resolve matches to bridged halos that were not matched
+       //    to any emerged candidates.
        apply_horizontal_tree_defaults(n_halos_1_matches,
                                       n_halos_i,
                                       halos,
@@ -375,10 +377,10 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                                       &max_id,
                                       &max_tree_id);
  
-       // Now that we have assigned all the IDs for the halos in the active snapshot,
-       //   we need to remove all descendants of bridged halos from the lists of candidate emerged halos 
-       //   to avoid incorrectly matching to the main progenitor's descendants later-on when when 
-       //   we are scaning emerged halo candidates.  Real matches to bridges are dealt-with
+       // Now that we have set the identities of all the halos in the active snapshot,
+       //   we need to remove all their main-progenitor descendants from lists of candidate emerged halos 
+       //   to avoid incorrectly matching to their descendants (instead of themselves) later-on when when 
+       //   we are scaning emerged halo candidates for subsequent snapshots.  Real matches to bridges are dealt-with
        //   when halos marked TREE_CASE_BRIDGE_DEFAULT are processed. 
        clean_emerged_halo_list(halos_i,
                                n_halos_i,

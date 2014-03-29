@@ -150,9 +150,6 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
          if(check_mode_for_flag(halos_j[j_halo].type,TREE_CASE_STRAYED))
             halos_i[i_halo].type|=TREE_CASE_STRAYED;
 
-         // ... turn off the TREE_CASE_NO_PROGENITORS flag for the descendant ...
-         halos_j[j_halo].type&=(~TREE_CASE_NO_PROGENITORS);
-
          // ... set the flags for simple and dropped halo matches
          if(file_offset==1)
             halos_i[i_halo].type|=TREE_CASE_SIMPLE;
@@ -162,6 +159,9 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
          // ... set the flag for emerged halos
          if(flag_emerged)
             halos_j[j_halo].type|=TREE_CASE_EMERGED;
+
+         // ... turn off the TREE_CASE_NO_PROGENITORS flag for the descendant ...
+         halos_j[j_halo].type&=(~TREE_CASE_NO_PROGENITORS);
 
          // Mark the halo as processed
          halos_i[i_halo].type&=(~(TREE_CASE_UNPROCESSED|TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED|TREE_CASE_BRIDGE_FINALIZE));

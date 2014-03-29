@@ -124,7 +124,7 @@ void write_trees_vertical(tree_info     *trees,
            fp_out=(SID_fp *)SID_malloc(sizeof(SID_fp)*n_files_write);
            for(int i_file=0;i_file<n_files_write;i_file++){
               char   filename_out[MAX_FILENAME_LENGTH];
-              sprintf(filename_out,"%s/%sgroup_forests_%03d.dat",filename_root_out,group_text_prefix,i_file);
+              sprintf(filename_out,"%s/%sgroup_trees_%03d.dat",filename_root_out,group_text_prefix,i_file);
               if(i_rank==0){
                  SID_fopen(filename_out,"w",&(fp_out[i_file]));
                  SID_fwrite(&(forest_count[i_file]),sizeof(int),1,&(fp_out[i_file]));
@@ -157,7 +157,7 @@ void write_trees_vertical(tree_info     *trees,
            fp_out=(SID_fp *)SID_malloc(sizeof(SID_fp)*n_files_write);
            for(int i_file=0;i_file<n_files_write;i_file++){
               char   filename_out[MAX_FILENAME_LENGTH];
-              sprintf(filename_out,"%s/%sgroup_forests_%03d.dat",filename_root_out,group_text_prefix,i_file);
+              sprintf(filename_out,"%s/%sgroup_trees_%03d.dat",filename_root_out,group_text_prefix,i_file);
               SID_fopen(filename_out,"a",&(fp_out[i_file]));
            }
            // Write the halos

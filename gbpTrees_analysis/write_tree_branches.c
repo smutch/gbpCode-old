@@ -99,9 +99,9 @@ void write_tree_branches(tree_info *trees,tree_node_info **list_in,int n_list_in
      int i_write;
      int i_column;
      if(!flag_processing_groups)
-        n_write=6;
+        n_write=7;
      else
-        n_write=4; // Don't write the halos at the end which pertain only to subgroups
+        n_write=5; // Don't write the halos at the end which pertain only to subgroups
      for(i_write=0,i_column=1;i_write<n_write;i_write++){
         char write_name[32];
         switch(i_write){
@@ -112,18 +112,22 @@ void write_tree_branches(tree_info *trees,tree_node_info **list_in,int n_list_in
               sprintf(write_name,"main_progenitor");
               break;
            case 2:
-              sprintf(write_name,"form");
+              sprintf(write_name,"peak_mass");
               break;
            case 3:
-              sprintf(write_name,"last");
+              sprintf(write_name,"form");
               break;
            case 4:
-              sprintf(write_name,"accrete_last");
+              sprintf(write_name,"last");
               break;
            case 5:
+              sprintf(write_name,"accrete_last");
+              break;
+           case 6:
               sprintf(write_name,"accrete_first");
               break;
         }
+
         if(i_write==0){
            if(flag_processing_groups)
               fprintf(fp_props_out,"# Properties for group catalog {%s}\n",catalog_name);

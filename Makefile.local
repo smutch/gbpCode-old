@@ -7,11 +7,12 @@ OBJFILES  =
 LIBS      = -lgbpTrees -lgbpHalos -lgbpSPH -lgbpCosmo -lgbpMath -lgbpLib
 SUBDIRS   = gbpTrees_build gbpTrees_analysis
 BINFILES  = extract_tree_horizontal    \
+	    most_massive_subgroup_analysis \
             tree_stats_horizontal      \
 	    branch2ascii_ID_select     \
             make_a_list                \
             validate_ghost_trees       \
-            parse_match_type           \
+            parse_tree_case            \
             extract_trees_mergers      \
             tree_stats                 \
             matchfile2ascii            \

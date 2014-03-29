@@ -113,7 +113,7 @@ void average_tree_branches(const char *catalog_name){
      // Write results
      char  filename_out[MAX_FILENAME_LENGTH];
      FILE *fp_out;
-     sprintf(filename_out,"%s_tracks.ascii",catalog_name);
+     sprintf(filename_out,"%s_tracks.txt",catalog_name);
      fp_out=fopen(filename_out,"w");
      for(int i_snap=0;i_snap<n_snaps;i_snap++)
         fprintf(fp_out,"%le %le %d %le %le %le\n",
