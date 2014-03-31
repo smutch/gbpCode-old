@@ -22,6 +22,7 @@ OBJFILES  = average_tree_branches.o                  \
 	    check_treenode_if_satellite.o            \
 	    check_treenode_if_branch_start.o         \
 	    check_treenode_if_fragmented.o           \
+	    fetch_treenode_delta_t.o                 \
 	    fetch_treenode_properties.o              \
 	    fetch_treenode_Mvir.o                    \
 	    fetch_treenode_x.o                       \

@@ -62,6 +62,7 @@ int    find_treenode_accretion(tree_info       *trees,
                                tree_node_info **first_satellite,
                                tree_node_info **join_current_group);
 int    find_treenode_markers(tree_info *trees,tree_node_info *halo,tree_markers_info *markers);
+double fetch_treenode_delta_t(tree_info *trees,tree_node_info *halo_1,tree_node_info *halo_2);
 int    fetch_treenode_snapshot(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_snap_tree(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_file_index(tree_info *trees,tree_node_info *halo);
