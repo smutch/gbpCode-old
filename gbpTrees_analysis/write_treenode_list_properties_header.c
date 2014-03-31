@@ -18,7 +18,7 @@ void write_treenode_list_properties_header(tree_info *trees,treenode_list_info *
   // Master Rank does all the writing
   if(SID.I_am_Master){
      // Write header for props file
-     int i_column=0;
+     int i_column=1;
      for(int i_write=0;i_write<WRITE_TREENODE_LIST_PROPERTIES_N;i_write++){
         char write_name[128];
         write_treenode_list_properties_set_ith(trees,

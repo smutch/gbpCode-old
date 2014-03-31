@@ -19,7 +19,7 @@ void write_treenode_list_data_header(tree_info *trees,treenode_list_info *list,F
   if(SID.I_am_Master){
      // Write header for props file
      int i_write =0;
-     int i_column=0;
+     int i_column=1;
      ADaPS *current=list->data;
      while(current!=NULL){
         if(i_write==0){
