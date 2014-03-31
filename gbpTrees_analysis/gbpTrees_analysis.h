@@ -20,7 +20,7 @@ struct tree_markers_info{
 };
 typedef struct treenode_list_info treenode_list_info;
 struct treenode_list_info{
-  char             catalog_name[32];
+  char             catalog_name[MAX_FILENAME_LENGTH];
   int              n_list;
   int              n_list_alloc;
   int              flag_groups_list;
