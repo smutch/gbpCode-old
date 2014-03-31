@@ -2,6 +2,7 @@
 #define GBPTREES_ANALYSIS_AWAKE
 
 // V Preprocessor definitions V
+#define WRITE_TREENODE_LIST_PROPERTIES_N 8
 // A Preprocessor definitions A
 
 // V --- Datatype definitions --- V
@@ -65,10 +66,21 @@ int    fetch_treenode_snapshot(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_snap_tree(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_file_index(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_Mvir(tree_info *trees,tree_node_info *halo);
+double fetch_treenode_x(tree_info *trees,tree_node_info *halo);
+double fetch_treenode_y(tree_info *trees,tree_node_info *halo);
+double fetch_treenode_z(tree_info *trees,tree_node_info *halo);
+double fetch_treenode_vx(tree_info *trees,tree_node_info *halo);
+double fetch_treenode_vy(tree_info *trees,tree_node_info *halo);
+double fetch_treenode_vz(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_n_particles(tree_info *trees,tree_node_info *halo);
 int    find_treesnap_z(tree_info *trees,double z_exact);
 void   write_treenode_list_markers(tree_info *trees,treenode_list_info *list);
 void   write_treenode_list_markers_header(tree_info *trees,treenode_list_info *list,FILE *fp_props_out);
+void   write_treenode_list_data(tree_info *trees,treenode_list_info *list);
+void   write_treenode_list_data_header(tree_info *trees,treenode_list_info *list,FILE *fp_props_out);
+void   write_treenode_list_properties(tree_info *trees,treenode_list_info *list);
+void   write_treenode_list_properties_header(tree_info *trees,treenode_list_info *list,FILE *fp_props_out);
+void   write_treenode_list_properties_set_ith(tree_info *trees,tree_node_info *current_halo,int i_write,char *data_name,SID_Datatype *data_type,int *data_i,double *data_d);
 void   write_tree_branches(tree_info *trees,tree_node_info **list_in,int n_list_in,int mode,const char *catalog_name);
 void   write_tree_branch_ascii(tree_info *trees,tree_node_info *halo,const char *filename_out,const char *trees_name);
 void   average_tree_branches(const char *catalog_name);

@@ -20,6 +20,8 @@ void write_treenode_list_markers(tree_info *trees,treenode_list_info *list){
   sprintf(filename_out,"%s_markers.txt",list->catalog_name);
   FILE *fp_props_out=fopen(filename_out,"w");
 
+  SID_log("Writing treenode_list markers to {%s}...",SID_LOG_OPEN,filename_out);
+
   // Write the header
   write_treenode_list_markers_header(trees,list,fp_props_out);
 
@@ -60,15 +62,18 @@ void write_treenode_list_markers(tree_info *trees,treenode_list_info *list){
         }
         for(int i_list=0;i_list<n_list_i;i_list++,j_list++){
            // Point to the halo to be processed 
-           tree_node_info *current_halo=list_in[i_list];
+           tree_markers_info  markers;
+           tree_node_info    *current_halo;
+           if(i_rank==SID.My_rank){
+              current_halo=list_in[i_list];
 
-           // Find some special nodes for this listed halo
-           tree_markers_info markers;
-           find_treenode_markers(trees,current_halo,&markers);
+              // Find some special nodes for this listed halo
+              find_treenode_markers(trees,current_halo,&markers);
+           }
 
            // Write properties
            int n_write;
-           if(i_rank==0)
+           if(SID.I_am_Master)
               fprintf(fp_props_out,"%4d %4d %4d",j_list,halo_ID_list[i_list],tree_case_list[i_list]);
            if(!flag_groups_list)
               n_write=9;
@@ -177,5 +182,6 @@ void write_treenode_list_markers(tree_info *trees,treenode_list_info *list){
   SID_free(SID_FARG halo_ID_list);
   SID_free(SID_FARG tree_case_list);
   fclose(fp_props_out);
+  SID_log("Done.",ERROR_LOGIC);
 }
 

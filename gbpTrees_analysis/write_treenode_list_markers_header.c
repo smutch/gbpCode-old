@@ -63,9 +63,9 @@ void write_treenode_list_markers_header(tree_info *trees,treenode_list_info *lis
            else
               fprintf(fp_props_out,"# Properties for subgroup catalog {%s}\n",catalog_name);
            fprintf(fp_props_out,"#\n");
-           fprintf(fp_props_out,"# Column (%02d): Catalog item number\n",      i_column,write_name);i_column++;
-           fprintf(fp_props_out,"#        (%02d): Halo ID\n",                  i_column,write_name);i_column++;
-           fprintf(fp_props_out,"#        (%02d): Tree case bit-wise-switch\n",i_column,write_name);i_column++;
+           fprintf(fp_props_out,"# Column (%02d): Catalog item number\n",      i_column);i_column++;
+           fprintf(fp_props_out,"#        (%02d): Halo ID\n",                  i_column);i_column++;
+           fprintf(fp_props_out,"#        (%02d): Tree case bit-wise-switch\n",i_column);i_column++;
         }
         fprintf(fp_props_out,"#        (%02d): Snapshot No. at t_%s\n",               i_column,write_name);i_column++;
         fprintf(fp_props_out,"#        (%02d): Index No.    at t_%s\n",               i_column,write_name);i_column++;

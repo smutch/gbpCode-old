@@ -27,6 +27,7 @@ void init_treenode_info_data(treenode_list_info  *list,
   new_item->free_function_params=NULL;
   new_item->data                =SID_malloc(alloc_size);
   new_item->data_size           =alloc_size;
+  new_item->data_type           =data_type;
 
   // Give the new item its name
   vsprintf(new_item->name,name,vargs);

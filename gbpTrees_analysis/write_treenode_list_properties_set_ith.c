@@ -1,0 +1,60 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <gbpLib.h>
+#include <gbpMath.h>
+#include <gbpHalos.h>
+#include <gbpTrees_build.h>
+#include <gbpTrees_analysis.h>
+
+// N.B.: DON'T FORGET TO ADJUST WRITE_TREENODE_LIST_PROPERTIES_N IF YOU ADD/REMOVE ITEMS FROM THIS LIST!
+
+void write_treenode_list_properties_set_ith(tree_info *trees,tree_node_info *current_halo,int i_write,char *data_name,SID_Datatype *data_type,int *data_i,double *data_d){
+   switch(i_write){
+      case 0:
+         if(data_name!=NULL) sprintf(data_name,"No. of particles");
+         if(data_type!=NULL) *data_type=SID_INT;
+         if(data_i!=NULL)    *data_i   =fetch_treenode_n_particles(trees,current_halo);
+         break;
+      case 1:
+         if(data_name!=NULL) sprintf(data_name,"M_vir [h^{-1} M_sol]");
+         if(data_type!=NULL) *data_type=SID_DOUBLE;
+         if(data_d!=NULL)    *data_d   =fetch_treenode_Mvir(trees,current_halo);
+         break;
+      case 2:
+         if(data_name!=NULL) sprintf(data_name,"x-position [h^{-1} Mpc]");
+         if(data_type!=NULL) *data_type=SID_DOUBLE;
+         if(data_d!=NULL)    *data_d   =fetch_treenode_x(trees,current_halo);
+         break;
+      case 3:
+         if(data_name!=NULL) sprintf(data_name,"y-position [h^{-1} Mpc]");
+         if(data_type!=NULL) *data_type=SID_DOUBLE;
+         if(data_d!=NULL)    *data_d   =fetch_treenode_y(trees,current_halo);
+         break;
+      case 4:
+         if(data_name!=NULL) sprintf(data_name,"z-position [h^{-1} Mpc]");
+         if(data_type!=NULL) *data_type=SID_DOUBLE;
+         if(data_d!=NULL)    *data_d   =fetch_treenode_z(trees,current_halo);
+         break;
+      case 5:
+         if(data_name!=NULL) sprintf(data_name,"x-velocity [km/s]");
+         if(data_type!=NULL) *data_type=SID_DOUBLE;
+         if(data_d!=NULL)    *data_d   =fetch_treenode_vx(trees,current_halo);
+         break;
+      case 6:
+         if(data_name!=NULL) sprintf(data_name,"y-velocity [km/s]");
+         if(data_type!=NULL) *data_type=SID_DOUBLE;
+         if(data_d!=NULL)    *data_d   =fetch_treenode_vy(trees,current_halo);
+         break;
+      case 7:
+         if(data_name!=NULL) sprintf(data_name,"z-velocity [km/s]");
+         if(data_type!=NULL) *data_type=SID_DOUBLE;
+         if(data_d!=NULL)    *data_d   =fetch_treenode_vz(trees,current_halo);
+         break;
+      default:
+         SID_trap_error("Invalid counter given in write_treenode_list_properties_set_ith()",ERROR_LOGIC);
+   }
+}
+

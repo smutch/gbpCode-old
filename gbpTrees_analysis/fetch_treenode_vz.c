@@ -9,7 +9,7 @@
 #include <gbpTrees_build.h>
 #include <gbpTrees_analysis.h>
 
-double fetch_treenode_z(tree_info *trees,tree_node_info *halo){
+double fetch_treenode_vz(tree_info *trees,tree_node_info *halo){
    if(halo!=NULL){
       halo_properties_info *properties;
       if(halo->parent==NULL){
@@ -24,7 +24,7 @@ double fetch_treenode_z(tree_info *trees,tree_node_info *halo){
          else
             SID_trap_error("Subgroup properties are not defined.  They probably have not been read.",ERROR_LOGIC);
       }
-      return(properties->position_MBP[2]);
+      return(properties->velocity_COM[2]);
    }
    return(-1.);
 }

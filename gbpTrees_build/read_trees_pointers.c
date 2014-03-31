@@ -120,11 +120,11 @@ void read_trees_pointers(tree_info        *trees,
             // Sanity check
             if(flag_bridge_forematch){
                if(check_mode_for_flag(result_i->tree_case,TREE_CASE_MATCHED_TO_BRIDGE) && result_j==NULL)
-                  SID_trap_error("Could not find the bridge forematch a group (%d,%d) marked TREE_CASE_MATCHED_TO_BRIDGE.",ERROR_LOGIC,i_file_ptrs,i_group);
+                  SID_trap_error("Could not find the bridge forematch for a group (%d,%d) marked TREE_CASE_MATCHED_TO_BRIDGE.",ERROR_LOGIC,i_file_ptrs,i_group);
             }
             else if(flag_bridge_backmatch){
                if(check_mode_for_flag(result_i->tree_case,TREE_CASE_EMERGED_CANDIDATE) && result_j==NULL)
-                  SID_trap_error("Could not find the bridge forematch a group (%d,%d) marked TREE_CASE_MATCHED_TO_BRIDGE.",ERROR_LOGIC,i_file_ptrs,i_group);
+                  SID_trap_error("Could not find the bridge backmatch for a group (%d,%d) marked TREE_CASE_EMERGED_CANDIDATE.",ERROR_LOGIC,i_file_ptrs,i_group);
             }
 
             // Create pointer
