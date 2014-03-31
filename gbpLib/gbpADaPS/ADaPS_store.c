@@ -19,6 +19,7 @@ void ADaPS_store(ADaPS      **list,
   // Create the new item (and apply some defaults)
   new_item                      =(ADaPS *)SID_malloc(sizeof(ADaPS));
   new_item->data                =NULL;
+  new_item->data_type           =SID_CHAR;
   new_item->mode                =mode;
   new_item->free_function       =NULL;
   new_item->free_function_params=NULL;

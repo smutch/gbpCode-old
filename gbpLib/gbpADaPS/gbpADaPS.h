@@ -39,13 +39,14 @@
 // Define the structure
 typedef struct ADaPS_struct ADaPS;
 struct ADaPS_struct{
-  char    name[ADaPS_NAME_LENGTH];
-  void   *data;
-  int     mode;
-  ADaPS  *next;
-  size_t  data_size;
-  void   (*free_function)(void **,void *);
-  void   *free_function_params;
+  SID_Datatype data_type;
+  char         name[ADaPS_NAME_LENGTH];
+  void        *data;
+  int          mode;
+  ADaPS       *next;
+  size_t       data_size;
+  void        (*free_function)(void **,void *);
+  void        *free_function_params;
 };
 
 // Function declarations
