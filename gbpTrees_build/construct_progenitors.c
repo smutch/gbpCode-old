@@ -120,6 +120,5 @@ void construct_progenitors(tree_horizontal_info **halos,
       }
    }
    SID_log("Done.",SID_LOG_CLOSE);
-
 }
 

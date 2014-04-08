@@ -10,9 +10,8 @@
 #include <gbpTrees_build.h>
 #include <gbpTrees_analysis.h>
 
-void free_treenode_list(treenode_list_info **list){
-  SID_free  (SID_FARG (*list)->list);
-  ADaPS_free(SID_FARG (*list)->data);
-  SID_free  (SID_FARG (*list));
+void free_treenode_hist(treenode_hist_info **hist){
+  SID_free  (SID_FARG (*hist)->array);
+  SID_free  (SID_FARG (*hist));
 }
 

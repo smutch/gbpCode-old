@@ -256,6 +256,9 @@ struct tree_node_info{
 
 typedef struct tree_info tree_info;
 struct tree_info{
+  // Filename info
+  char             filename_root[MAX_FILENAME_LENGTH];
+  char             name[MAX_FILENAME_LENGTH];
   // Snapshot info
   int              i_read_start;
   int              i_read_stop;

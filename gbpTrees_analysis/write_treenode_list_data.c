@@ -17,7 +17,7 @@ void write_treenode_list_data(tree_info *trees,treenode_list_info *list){
 
   // Open file
   char  filename_out[MAX_FILENAME_LENGTH];
-  sprintf(filename_out,"%s_data.txt",list->catalog_name);
+  sprintf(filename_out,"%s_%s_data.txt",trees->name,list->catalog_name);
   FILE *fp_props_out=fopen(filename_out,"w");
 
   SID_log("Writing treenode_list data to {%s}...",SID_LOG_OPEN,filename_out);

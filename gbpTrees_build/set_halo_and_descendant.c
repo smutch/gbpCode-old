@@ -52,10 +52,10 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
       if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED) &&
          !check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGE_FINALIZE)){
         // ... the difference in halo size (between the halo and the bridge we are considering) is less significant ...
-        n_p_diff_old=IABS(halos_i[i_halo].bridge_forematch.halo->n_particles-halos_i[i_halo].n_particles);
-        n_p_diff_new=IABS(halos_j[j_halo].n_particles-halos_i[i_halo].n_particles);
-        if(n_p_diff_new>=n_p_diff_old)
-          flag_process=FALSE;
+        //n_p_diff_old=IABS(halos_i[i_halo].bridge_forematch.halo->n_particles-halos_i[i_halo].n_particles);
+        //n_p_diff_new=IABS(halos_j[j_halo].n_particles-halos_i[i_halo].n_particles);
+        //if(n_p_diff_new>=n_p_diff_old)
+        //  flag_process=FALSE;
         // ... we are not matching to a descendant of the initial bridged match ...
         tree_horizontal_info *current;
         current=halos_i[i_halo].bridge_forematch.halo->descendant.halo;

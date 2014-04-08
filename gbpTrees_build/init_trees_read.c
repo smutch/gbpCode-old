@@ -42,6 +42,8 @@ void init_trees_read(const char  *filename_tree_root,
   strip_path(filename_input_file_root);
   sprintf(filename_input_dir_horizontal,      "%s/horizontal",filename_tree_root);
   sprintf(filename_input_dir_horizontal_trees,"%s/trees",     filename_input_dir_horizontal);
+  sprintf((*tree)->filename_root,"%s",filename_tree_root);
+  sprintf((*tree)->name,         "%s",filename_input_file_root);
 
   // Read the tree snap-range/search/scan parameters
   read_trees_run_parameters(filename_tree_root,

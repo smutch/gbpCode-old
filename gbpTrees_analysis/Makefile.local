@@ -4,6 +4,12 @@
 INCFILES  = gbpTrees_analysis.h
 OBJFILES  = average_tree_branches.o                  \
 	    analyze_halos_and_N_subhalos.o           \
+	    init_treenode_hist.o                     \
+	    add_to_treenode_hist.o                   \
+	    write_treenode_hist.o                    \
+	    write_treenode_list_hist.o               \
+	    write_treenode_all_hist.o                \
+	    free_treenode_hist.o                     \
 	    init_treenode_list.o                     \
 	    init_treenode_list_data.o                \
 	    free_treenode_list.o                     \
@@ -18,6 +24,7 @@ OBJFILES  = average_tree_branches.o                  \
 	    write_tree_branches.o                    \
 	    write_tree_branch_ascii.o                \
 	    check_treenode_if_main_progenitor.o      \
+	    check_treenode_if_merger.o               \
 	    check_treenode_if_central.o              \
 	    check_treenode_if_satellite.o            \
 	    check_treenode_if_branch_start.o         \

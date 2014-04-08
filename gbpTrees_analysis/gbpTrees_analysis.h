@@ -18,6 +18,7 @@ struct tree_markers_info{
   tree_node_info *peak_mass;
   tree_node_info *half_peak_mass;
 };
+
 typedef struct treenode_list_info treenode_list_info;
 struct treenode_list_info{
   char             catalog_name[MAX_FILENAME_LENGTH];
@@ -27,6 +28,48 @@ struct treenode_list_info{
   tree_node_info **list;
   ADaPS           *data;
 };
+
+#define TREENODE_HIST_LOG_X       1
+#define TREENODE_HIST_LOG_Y       2
+#define TREENODE_HIST_DEFAULT     0
+#define TREENODE_HIST_N_ARGS_MAX  3
+#define TREENODE_HIST_N_PROPS     3
+#define TREENODE_HIST_NAME_LENGTH 128
+typedef struct treenode_hist_info treenode_hist_info;
+struct treenode_hist_info{
+  char    name[TREENODE_HIST_NAME_LENGTH];
+  int     x_prop;
+  int     y_prop;
+  double  x_args_d[TREENODE_HIST_N_ARGS_MAX];
+  double  y_args_d[TREENODE_HIST_N_ARGS_MAX];
+  int     x_args_i[TREENODE_HIST_N_ARGS_MAX];
+  int     y_args_i[TREENODE_HIST_N_ARGS_MAX];
+  int     n_x;
+  int     n_y;
+  int     flag_log_x;
+  int     flag_log_y;
+  int    *array;
+};
+typedef struct treenode_hist_props_info treenode_hist_props_info;
+struct treenode_hist_props_info{
+   char         name[TREENODE_HIST_N_PROPS][TREENODE_HIST_NAME_LENGTH];
+   char         axis_text[TREENODE_HIST_N_PROPS][TREENODE_HIST_NAME_LENGTH];
+   char         log_axis_text[TREENODE_HIST_N_PROPS][TREENODE_HIST_NAME_LENGTH];
+   int          n_args[TREENODE_HIST_N_PROPS];
+   SID_Datatype arg_type[TREENODE_HIST_N_PROPS][TREENODE_HIST_N_ARGS_MAX];
+};
+#ifdef _MAIN
+treenode_hist_props_info treenode_hist_props={{"z","M","N"},
+                                              {"$z$","$M_{\\rm{vir}}[h^{-1} M_\\odot]$","$\\rm{n_p}$"},
+                                              {"$\\log_{10}{z}$","$\\log_{10}{\\rm{M}_{\\rm{vir}}[h^{-1} \\rm{M}_\\odot]}$","$\\log_{10}{\\rm{n_p}}$"},
+                                              {  1,  3,  3},
+                                              {{SID_INT,   SID_INT,   SID_INT},
+                                               {SID_DOUBLE,SID_DOUBLE,SID_INT},
+                                               {SID_DOUBLE,SID_DOUBLE,SID_INT}}};
+#else
+extern treenode_hist_props_info treenode_hist_props;
+#endif
+
 // A --- Datatype definitions --- A
 
 #ifdef __cplusplus
@@ -34,6 +77,21 @@ extern "C" {
 #endif   
 // V --- ANSI-C function definitions --- V
 halo_properties_info *fetch_treenode_properties(tree_info *trees,tree_node_info *halo);
+void   init_treenode_hist(tree_info           *trees,
+                          const char          *hist_name,
+                          const char          *x_name_in,
+                          const char          *y_name_in,
+                          int                  mode,
+                          treenode_hist_info **hist, ...);
+void   add_to_treenode_hist(tree_info           *trees,
+                            treenode_hist_info  *hist,
+                            tree_node_info      *current_halo);
+void   write_treenode_hist(tree_info          *trees,
+                           treenode_hist_info *hist);
+void   write_treenode_list_hist(tree_info          *trees,
+                                treenode_list_info *list);
+void   write_treenode_all_hist(tree_info *trees);
+void   free_treenode_hist  (treenode_hist_info **hist);
 void   init_treenode_list(const char          *catalog_name,
                           int                  n_list_alloc,
                           treenode_list_info **list);
@@ -45,7 +103,8 @@ void   init_treenode_info_data(treenode_list_info  *list,
 void   free_treenode_list(treenode_list_info **list);
 void   add_to_treenode_list(treenode_list_info *list,tree_node_info *node);
 int    check_treenode_if_main_progenitor(tree_node_info *halo);
-int    check_treenode_if_branch_start(tree_node_info *halo);
+int    check_treenode_if_merger(tree_node_info *halo);
+int    check_treenode_if_branch_start(tree_info *trees,tree_node_info *halo);
 int    check_treenode_if_satellite(tree_node_info *halo);
 int    check_treenode_if_central(tree_node_info *halo);
 int    check_treenode_if_fragmented(tree_node_info *halo);

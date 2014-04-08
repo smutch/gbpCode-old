@@ -13,9 +13,6 @@
 void init_treenode_list(const char          *catalog_name,
                         int                  n_list_alloc,
                         treenode_list_info **list){
-
-  SID_log("Initializing treenode list...",SID_LOG_OPEN);
-
   // Allocate the data structure
   (*list)=(treenode_list_info *)SID_malloc(sizeof(treenode_list_info));
   sprintf((*list)->catalog_name,"%s",catalog_name);
@@ -24,7 +21,5 @@ void init_treenode_list(const char          *catalog_name,
   (*list)->list            =(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_list_alloc);
   (*list)->flag_groups_list=-1;
   (*list)->data            =NULL;
-
-  SID_log("Done.",SID_LOG_CLOSE);
 }
 
