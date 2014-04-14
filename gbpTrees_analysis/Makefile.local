@@ -3,6 +3,7 @@
 ###########################
 INCFILES  = gbpTrees_analysis.h
 OBJFILES  = average_tree_branches.o                  \
+	    compute_treenode_list_marker_stats.o     \
 	    analyze_halos_and_N_subhalos.o           \
 	    init_treenode_hist.o                     \
 	    add_to_treenode_hist.o                   \

@@ -19,6 +19,12 @@ struct tree_markers_info{
   tree_node_info *half_peak_mass;
 };
 
+typedef struct tree_markers_stats_info tree_markers_stats_info;
+struct tree_markers_stats_info{
+  double t_half_peak_mass_ranges[2][2];
+  double t_half_peak_mass_peak;
+};
+
 typedef struct treenode_list_info treenode_list_info;
 struct treenode_list_info{
   char             catalog_name[MAX_FILENAME_LENGTH];
@@ -121,6 +127,7 @@ int    find_treenode_accretion(tree_info       *trees,
                                tree_node_info **first_satellite,
                                tree_node_info **join_current_group);
 int    find_treenode_markers(tree_info *trees,tree_node_info *halo,tree_markers_info *markers);
+void   compute_treenode_list_marker_stats(tree_info *trees,treenode_list_info *list,tree_markers_stats_info *stats);
 double fetch_treenode_delta_t(tree_info *trees,tree_node_info *halo_1,tree_node_info *halo_2);
 int    fetch_treenode_snapshot(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_snap_tree(tree_info *trees,tree_node_info *halo);

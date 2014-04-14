@@ -37,7 +37,7 @@ void add_to_treenode_hist(tree_info *trees,treenode_hist_info *hist,tree_node_in
            flag_log=hist->flag_log_y;
            break;
       }
-      // DEFINE THE BEHAVIOUR OF EACH PROPERTY HERE (don't gorget to specify
+      // DEFINE THE BEHAVIOUR OF EACH PROPERTY HERE (don't forget to specify
       //   the elements of the treenode_hist_props structure, define the
       //   axis dimensions in init_treenode_hist() and describe the file
       //   writing in write_treenode_hist() as well)

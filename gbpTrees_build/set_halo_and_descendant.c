@@ -106,7 +106,9 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
             //   beginning of the list and swap IDs with the main progenitor so that
             //   the correct halo gets the main progenitor ID and all others get a new one ...
             memcpy(&old_progenitor,&(halos_j[j_halo].first_progenitor),sizeof(match_info));
-            if(score>old_progenitor.score){
+            // Progenitor order needs to be set by particle number to ensure correct emerged and fragmented halo processing
+            //if(score>old_progenitor.score){ 
+            if((new_progenitor.halo->n_particles)>(old_progenitor.halo->n_particles)){
                // ... let the new main progenitor inherit the descendant's id ...
                halos_i[i_halo].id=halos_j[j_halo].id;
                // ... and give the old main progenitor the new id ...

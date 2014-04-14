@@ -7,11 +7,6 @@
 #include <gbpHalos.h>
 #include <gbpTrees_build.h>
 
-#define READ_MATCHES_GOODNESS_A   1.4806123257012386E+01
-#define READ_MATCHES_GOODNESS_B   1.0840337997980678E+01
-#define READ_MATCHES_GOODNESS_C   ONE_THIRD
-#define READ_MATCHES_GOODNESS_D  -2.4577976443027350E+00
-
 void read_matches(char    *filename_in_dir,
                   int      i_read_in,
                   int      j_read_in,
