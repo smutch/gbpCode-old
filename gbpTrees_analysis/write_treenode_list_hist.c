@@ -10,7 +10,7 @@
 #include <gbpTrees_analysis.h>
 #include <assert.h>
 
-void write_treenode_list_hist(tree_info *trees,treenode_list_info *list){
+void write_treenode_list_hist(tree_info *trees,const char *filename_out_root,treenode_list_info *list){
   int     n_z_bin  = MAX(1,trees->n_snaps/25);
   double  logM_min = 9.00;
 //  double  logM_min = 6.50;
@@ -28,8 +28,8 @@ void write_treenode_list_hist(tree_info *trees,treenode_list_info *list){
      add_to_treenode_hist(trees,hist_list_N,current_halo);
      add_to_treenode_hist(trees,hist_list_M,current_halo);
   }
-  write_treenode_hist(trees,hist_list_N);
-  write_treenode_hist(trees,hist_list_M);
+  write_treenode_hist(trees,filename_out_root,hist_list_N);
+  write_treenode_hist(trees,filename_out_root,hist_list_M);
   free_treenode_hist (&hist_list_N);
   free_treenode_hist (&hist_list_M);
 }

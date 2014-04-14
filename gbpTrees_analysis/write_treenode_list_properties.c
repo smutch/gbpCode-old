@@ -9,7 +9,7 @@
 #include <gbpTrees_build.h>
 #include <gbpTrees_analysis.h>
 
-void write_treenode_list_properties(tree_info *trees,treenode_list_info *list){
+void write_treenode_list_properties(tree_info *trees,const char *filename_out_root,treenode_list_info *list){
   tree_node_info **list_in         =list->list;
   int              n_list_in       =list->n_list;
   int              flag_groups_list=list->flag_groups_list;
@@ -17,7 +17,7 @@ void write_treenode_list_properties(tree_info *trees,treenode_list_info *list){
 
   // Open file
   char  filename_out[MAX_FILENAME_LENGTH];
-  sprintf(filename_out,"%s_%s_properties.txt",trees->name,list->catalog_name);
+  sprintf(filename_out,"%s_%s_properties.txt",filename_out_root,list->catalog_name);
   FILE *fp_props_out=fopen(filename_out,"w");
 
   SID_log("Writing treenode_list properties to {%s}...",SID_LOG_OPEN,filename_out);

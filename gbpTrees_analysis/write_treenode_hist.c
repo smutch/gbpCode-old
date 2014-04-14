@@ -10,7 +10,7 @@
 #include <gbpTrees_analysis.h>
 #include <assert.h>
 
-void write_treenode_hist(tree_info *trees,treenode_hist_info *hist){
+void write_treenode_hist(tree_info *trees,const char *filename_out_root,treenode_hist_info *hist){
 
   SID_log("Writing treenode histograms to",SID_LOG_OPEN);
 
@@ -20,7 +20,7 @@ void write_treenode_hist(tree_info *trees,treenode_hist_info *hist){
   char y_name[TREENODE_HIST_NAME_LENGTH];
   sprintf(x_name,"%s",treenode_hist_props.name[hist->x_prop]);
   sprintf(y_name,"%s",treenode_hist_props.name[hist->y_prop]);
-  sprintf(filename_out,"%s_%s_hist_%s_%s.txt",trees->name,hist->name,x_name,y_name);
+  sprintf(filename_out,"%s_%s_hist_%s_%s.txt",filename_out_root,hist->name,x_name,y_name);
 
   SID_log(" {%s}...",SID_LOG_CONTINUE,filename_out);
 

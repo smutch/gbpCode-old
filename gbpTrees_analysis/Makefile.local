@@ -3,6 +3,12 @@
 ###########################
 INCFILES  = gbpTrees_analysis.h
 OBJFILES  = average_tree_branches.o                  \
+	    compute_trees_analysis.o                 \
+	    compute_trees_strayed_halo_analysis.o    \
+	    compute_trees_dropped_halo_analysis.o    \
+	    compute_trees_merger_analysis.o          \
+	    compute_trees_emerged_halo_analysis.o    \
+	    compute_trees_fragmented_halo_analysis.o \
 	    compute_treenode_list_marker_stats.o     \
 	    analyze_halos_and_N_subhalos.o           \
 	    init_treenode_hist.o                     \

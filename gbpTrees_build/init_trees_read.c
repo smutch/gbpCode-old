@@ -35,15 +35,14 @@ void init_trees_read(const char  *filename_tree_root,
   (*tree)->tree2forest_mapping_subgroup=NULL;
 
   // Initialize filename paths
-  char filename_input_file_root[MAX_FILENAME_LENGTH];
-  char filename_input_dir_horizontal[MAX_FILENAME_LENGTH];
-  char filename_input_dir_horizontal_trees[MAX_FILENAME_LENGTH];
-  strcpy(filename_input_file_root,filename_tree_root);
-  strip_path(filename_input_file_root);
-  sprintf(filename_input_dir_horizontal,      "%s/horizontal",filename_tree_root);
-  sprintf(filename_input_dir_horizontal_trees,"%s/trees",     filename_input_dir_horizontal);
+  char tree_name[MAX_FILENAME_LENGTH];
+  strcpy(tree_name,filename_tree_root);
+  strip_path(tree_name);
   sprintf((*tree)->filename_root,"%s",filename_tree_root);
-  sprintf((*tree)->name,         "%s",filename_input_file_root);
+  sprintf((*tree)->name,         "%s",tree_name);
+  sprintf((*tree)->filename_root_analysis,        "%s/analysis",  (*tree)->filename_root);
+  sprintf((*tree)->filename_root_horizontal,      "%s/horizontal",(*tree)->filename_root);
+  sprintf((*tree)->filename_root_horizontal_trees,"%s/trees",     (*tree)->filename_root_horizontal);
 
   // Read the tree snap-range/search/scan parameters
   read_trees_run_parameters(filename_tree_root,
@@ -56,7 +55,7 @@ void init_trees_read(const char  *filename_tree_root,
                             &((*tree)->flag_compute_ghosts));
 
   // Read the final halo and tree totals from the header of the last tree file
-  read_trees_final_totals(filename_input_dir_horizontal_trees,
+  read_trees_final_totals((*tree)->filename_root_horizontal_trees,
                           (*tree)->i_read_start,
                           (*tree)->i_read_stop,
                           (*tree)->i_read_step,

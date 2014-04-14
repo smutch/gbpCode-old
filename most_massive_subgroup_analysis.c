@@ -6,7 +6,6 @@
 #include <gbpMath.h>
 #include <gbpHalos.h>
 #include <gbpTrees.h>
-#include <gbpZFIRE.h>
 
 int main(int argc, char *argv[]){
 
@@ -48,6 +47,7 @@ int main(int argc, char *argv[]){
 
   // Generate catalogs and analyze
   analyze_halos_and_N_subhalos(trees,
+                               "./",
                                catalog_name,
                                z_obs,
                                M_cut_lo,

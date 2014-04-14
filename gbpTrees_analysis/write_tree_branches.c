@@ -9,7 +9,7 @@
 #include <gbpTrees_build.h>
 #include <gbpTrees_analysis.h>
 
-void write_tree_branches(tree_info *trees,tree_node_info **list_in,int n_list_in,int mode,const char *catalog_name){
+void write_tree_branches(tree_info *trees,tree_node_info **list_in,int n_list_in,int mode,const char *filename_out_dir,const char *catalog_name){
   SID_log("Processing %d halos in catalog {%s}...",SID_LOG_OPEN,n_list_in,catalog_name);
 
   // Fetch properties
@@ -82,8 +82,8 @@ void write_tree_branches(tree_info *trees,tree_node_info **list_in,int n_list_in
      // Create and open the output files
      char   filename_tracks_out[MAX_FILENAME_LENGTH];
      char   filename_props_out[MAX_FILENAME_LENGTH];
-     sprintf(filename_tracks_out,"%s_tracks.dat",catalog_name);
-     sprintf(filename_props_out, "%s_props.txt", catalog_name);
+     sprintf(filename_tracks_out,"%s/%s_tracks.dat",filename_out_dir,catalog_name);
+     sprintf(filename_props_out, "%s/%s_props.txt", filename_out_dir,catalog_name);
      fp_tracks_out=fopen(filename_tracks_out,"w");
      fp_props_out =fopen(filename_props_out, "w");
 

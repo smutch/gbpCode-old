@@ -10,7 +10,7 @@
 #include <gbpTrees_analysis.h>
 #include <assert.h>
 
-void write_treenode_all_hist(tree_info *trees){
+void write_treenode_all_hist(tree_info *trees,const char *filename_out_root){
   SID_log("Writing treenode histograms...",SID_LOG_OPEN|SID_LOG_TIMER);
   int     n_z_bin  = MAX(1,trees->n_snaps/25);
   double  logM_min = 9.00;
@@ -48,12 +48,12 @@ void write_treenode_all_hist(tree_info *trees){
         current_halo=current_halo->next_neighbour;
      }
   }
-  write_treenode_hist(trees,hist_all_N);
-  write_treenode_hist(trees,hist_all_M);
-  write_treenode_hist(trees,hist_centrals_N);
-  write_treenode_hist(trees,hist_centrals_M);
-  write_treenode_hist(trees,hist_substructure_N);
-  write_treenode_hist(trees,hist_substructure_M);
+  write_treenode_hist(trees,filename_out_root,hist_all_N);
+  write_treenode_hist(trees,filename_out_root,hist_all_M);
+  write_treenode_hist(trees,filename_out_root,hist_centrals_N);
+  write_treenode_hist(trees,filename_out_root,hist_centrals_M);
+  write_treenode_hist(trees,filename_out_root,hist_substructure_N);
+  write_treenode_hist(trees,filename_out_root,hist_substructure_M);
   free_treenode_hist (&hist_all_N);
   free_treenode_hist (&hist_all_M);
   free_treenode_hist (&hist_centrals_N);

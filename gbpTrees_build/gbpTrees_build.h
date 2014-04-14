@@ -258,6 +258,9 @@ typedef struct tree_info tree_info;
 struct tree_info{
   // Filename info
   char             filename_root[MAX_FILENAME_LENGTH];
+  char             filename_root_horizontal[MAX_FILENAME_LENGTH];
+  char             filename_root_horizontal_trees[MAX_FILENAME_LENGTH];
+  char             filename_root_analysis[MAX_FILENAME_LENGTH];
   char             name[MAX_FILENAME_LENGTH];
   // Snapshot info
   int              i_read_start;
@@ -805,7 +808,6 @@ void assign_unique_vertical_tree_ids(tree_info *trees,tree_node_info *tree_node)
 void compute_progenitor_score_recursive(tree_node_info *tree,int *M_i,int mode);
 void compute_substructure_order_recursive(tree_node_info *parent,int *score_parent,int mode);
 void compute_progenitor_order_recursive(tree_node_info *descendant,int *score_descendant,int mode);
-void compute_trees_analysis(tree_info *trees,char *filename_out_root);
 int  construct_unique_vertical_tree_id(tree_node_info *tree_node);
 
 int  construct_unique_tree_id(tree_node_info *tree_node);

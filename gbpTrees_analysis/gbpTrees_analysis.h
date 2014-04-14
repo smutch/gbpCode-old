@@ -92,11 +92,6 @@ void   init_treenode_hist(tree_info           *trees,
 void   add_to_treenode_hist(tree_info           *trees,
                             treenode_hist_info  *hist,
                             tree_node_info      *current_halo);
-void   write_treenode_hist(tree_info          *trees,
-                           treenode_hist_info *hist);
-void   write_treenode_list_hist(tree_info          *trees,
-                                treenode_list_info *list);
-void   write_treenode_all_hist(tree_info *trees);
 void   free_treenode_hist  (treenode_hist_info **hist);
 void   init_treenode_list(const char          *catalog_name,
                           int                  n_list_alloc,
@@ -128,6 +123,13 @@ int    find_treenode_accretion(tree_info       *trees,
                                tree_node_info **join_current_group);
 int    find_treenode_markers(tree_info *trees,tree_node_info *halo,tree_markers_info *markers);
 void   compute_treenode_list_marker_stats(tree_info *trees,treenode_list_info *list,tree_markers_stats_info *stats);
+void   compute_trees_analysis                (tree_info *trees);
+void   compute_trees_emerged_halo_analysis   (tree_info *trees,char *filename_out_root);
+void   compute_trees_fragmented_halo_analysis(tree_info *trees,char *filename_out_root);
+void   compute_trees_merger_analysis         (tree_info *trees,char *filename_out_root);
+void   compute_trees_dropped_halo_analysis   (tree_info *trees,char *filename_out_root);
+void   compute_trees_strayed_halo_analysis   (tree_info *trees,char *filename_out_root);
+
 double fetch_treenode_delta_t(tree_info *trees,tree_node_info *halo_1,tree_node_info *halo_2);
 int    fetch_treenode_snapshot(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_snap_tree(tree_info *trees,tree_node_info *halo);
@@ -141,19 +143,27 @@ double fetch_treenode_vy(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_vz(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_n_particles(tree_info *trees,tree_node_info *halo);
 int    find_treesnap_z(tree_info *trees,double z_exact);
-void   write_treenode_list_markers(tree_info *trees,treenode_list_info *list);
-void   write_treenode_list_markers_header(tree_info *trees,treenode_list_info *list,FILE *fp_props_out);
-void   write_treenode_list_data(tree_info *trees,treenode_list_info *list);
-void   write_treenode_list_data_header(tree_info *trees,treenode_list_info *list,FILE *fp_props_out);
-void   write_treenode_list_properties(tree_info *trees,treenode_list_info *list);
-void   write_treenode_list_properties_header(tree_info *trees,treenode_list_info *list,FILE *fp_props_out);
+void   write_treenode_list_markers           (tree_info *trees,const char *filename_out_root,treenode_list_info *list);
+void   write_treenode_list_markers_header    (tree_info *trees,treenode_list_info *list,FILE *fp_props_out);
+void   write_treenode_list_data              (tree_info *trees,const char *filename_out_root,treenode_list_info *list);
+void   write_treenode_list_data_header       (tree_info *trees,treenode_list_info *list,FILE *fp_props_out);
+void   write_treenode_list_properties        (tree_info *trees,const char *filename_out_root,treenode_list_info *list);
+void   write_treenode_list_properties_header (tree_info *trees,treenode_list_info *list,FILE *fp_props_out);
 void   write_treenode_list_properties_set_ith(tree_info *trees,tree_node_info *current_halo,int i_write,char *data_name,SID_Datatype *data_type,int *data_i,double *data_d);
-void   write_tree_branches(tree_info *trees,tree_node_info **list_in,int n_list_in,int mode,const char *catalog_name);
-void   write_tree_branch_ascii(tree_info *trees,tree_node_info *halo,const char *filename_out,const char *trees_name);
+void   write_tree_branches                   (tree_info *trees,tree_node_info **list_in,int n_list_in,int mode,const char *filename_out_dir,const char *catalog_name);
+void   write_tree_branch_ascii               (tree_info *trees,tree_node_info *halo,const char *filename_out,const char *trees_name);
+void   write_treenode_all_hist               (tree_info *trees,const char *filename_root_out);
+void   write_treenode_hist(tree_info          *trees,
+                           const char         *filename_out_root,
+                           treenode_hist_info *hist);
+void   write_treenode_list_hist(tree_info          *trees,
+                                const char         *filename_root_out,
+                                treenode_list_info *list);
 void   average_tree_branches(const char *catalog_name);
 void   analyze_halos_and_N_subhalos(tree_info  *trees,
+                                    const char *filename_out_root,
                                     const char *catalog_root,
-                                    double      z_obs,
+                                    double      z_obs_exact,
                                     double      M_cut_lo,
                                     double      M_cut_hi,
                                     int         n_subgroups_track_max);
