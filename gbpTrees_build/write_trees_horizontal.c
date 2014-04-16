@@ -126,11 +126,9 @@ void write_trees_horizontal(void  **groups_in,
    int flag_write_pointers=FALSE;
    sprintf(filename_output_dir_horizontal,      "%s/horizontal",   filename_output_dir);
    sprintf(filename_output_dir_horizontal_trees,"%s/trees",        filename_output_dir_horizontal);
-   sprintf(filename_output_dir_horizontal_cases,"%s/special_cases",filename_output_dir_horizontal);
    mkdir(filename_output_dir,                 02755);
    mkdir(filename_output_dir_horizontal,      02755);
    mkdir(filename_output_dir_horizontal_trees,02755);
-   mkdir(filename_output_dir_horizontal_cases,02755);
    strcpy(filename_output_file_root,filename_output_dir);
    strip_path(filename_output_file_root);
    if(flag_write_extended){
@@ -525,6 +523,9 @@ void write_trees_horizontal(void  **groups_in,
       }
    }
 
+/*
+   sprintf(filename_output_dir_horizontal_cases,"%s/special_cases",filename_output_dir_horizontal);
+   mkdir(filename_output_dir_horizontal_cases,02755);
    if(flag_write_allcases){
       tree_horizontal_info  *halos;
       tree_horizontal_info **halos_all;
@@ -1050,6 +1051,7 @@ void write_trees_horizontal(void  **groups_in,
          fclose(fp_fragmented_out);
       } // Loop over i_k_match
    }
+*/
    SID_log("Done.",SID_LOG_CLOSE);
    SID_log("Done.",SID_LOG_CLOSE);
 }

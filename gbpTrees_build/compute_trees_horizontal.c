@@ -390,7 +390,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
 
        // This has to be written right after a snapshot is read and processed (because it needs all forward scan information), 
        //    so it is separate from the rest of the log output code.
-       write_trees_horizontal_emerged_candidates(i_read,n_halos_i,halos_i,group_text_prefix,filename_output_dir,j_file==1);
+       //write_trees_horizontal_emerged_candidates(i_read,n_halos_i,halos_i,group_text_prefix,filename_output_dir,j_file==1);
 
        // Report some statistics
        //   n.b.: This is only an estimate in some cases, since subsequent snapshots may alter this snapshot.  
