@@ -34,7 +34,6 @@ int main(int argc, char *argv[]){
   size_t      line_length=0;
   int         n_snaps,i_read,i_next,i_write,n_keep;
   double     *a_list_in;
-  double     *a_list_out;
   cosmo_info *cosmo;
   int         flag_fix_bridges=TRUE;
 
@@ -76,8 +75,6 @@ int main(int argc, char *argv[]){
                            &flag_clean);
 
   // Clean-up
-  if(SID.I_am_Master)
-     SID_free(SID_FARG a_list_out);
   free_cosmo(&cosmo);
   SID_free(SID_FARG line); 
 
