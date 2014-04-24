@@ -18,25 +18,30 @@ double k_of_R(double R){
 double M_of_R(double R,double z,cosmo_info *cosmo){
   double Omega_M;
   double M;
+  double rho_bar;
   Omega_M=((double *)ADaPS_fetch((ADaPS *)(cosmo),"Omega_M"))[0];
-  M      =Omega_M*FOUR_THIRDS_PI*pow(R,3.)*rho_crit_z(z,cosmo);
+  rho_bar=Omega_M*rho_crit_z(0.,cosmo);
+  M      =FOUR_THIRDS_PI*pow(R,3.)*rho_bar;
   return(M);
 }
 double M_of_k(double k,double z,cosmo_info *cosmo){
   double R;
   double Omega_M;
   double M;
+  double rho_bar;
   R      =R_of_k(k);
   Omega_M=((double *)ADaPS_fetch((ADaPS *)(cosmo),"Omega_M"))[0];
-  M      =Omega_M*FOUR_THIRDS_PI*pow(R,3.)*rho_crit_z(z,cosmo);
+  rho_bar=Omega_M*rho_crit_z(0.,cosmo);
+  M      =FOUR_THIRDS_PI*pow(R,3.)*rho_bar;
   return(M);
 }
 double R_of_M(double M,double z,cosmo_info *cosmo){
   double Omega_M;
-  double R3,R;
+  double R;
+  double rho_bar;
   Omega_M=((double *)ADaPS_fetch((ADaPS *)(cosmo),"Omega_M"))[0];
-  R3     =M/(Omega_M*FOUR_THIRDS_PI*rho_crit_z(z,cosmo));
-  R      =pow(R3,ONE_THIRD);
+  rho_bar=Omega_M*rho_crit_z(0.,cosmo);
+  R      =pow(M/(FOUR_THIRDS_PI*rho_bar),ONE_THIRD);
   return(R);
 }
 double k_of_M(double M,double z,cosmo_info *cosmo){
@@ -171,7 +176,7 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
     lP_k_nl[i]=interpolate(interp,lk_P[i]);
   SID_free(SID_FARG lk_P_tmp);
   SID_free(SID_FARG lP_k_tmp);
-  free_interpolate(SID_FARG interp);
+  free_interpolate(SID_FARG interp,NULL);
 
   // Take the log of lk_P
   for(i=0;i<n_k;i++)
@@ -616,11 +621,11 @@ double power_spectrum_normalization(cosmo_info *cosmo,
   return(norm);
 }
 
-double power_spectrum_variance(double      k_interp,
-			       double      redshift,
-			       cosmo_info *cosmo,
-			       int         mode,
-			       int         component){
+double power_spectrum_variance(double       k_interp,
+			       double       redshift,
+			       cosmo_info **cosmo,
+			       int          mode,
+			       int          component){
   int     n_k;
   double *lk_P;
   double *sigma2;
@@ -637,19 +642,217 @@ double power_spectrum_variance(double      k_interp,
   sprintf(sigma2_name,  "sigma2_k_%s_%s",       mode_name,component_name);
   sprintf(d2sigma2_name,"sigma2_k_%s_%s_interp",mode_name,component_name);
 
-  if(!ADaPS_exist(cosmo,sigma2_name))
-    init_power_spectrum_variance(&cosmo,redshift,mode,component);
+  if(!ADaPS_exist(*cosmo,sigma2_name))
+    init_power_spectrum_variance(cosmo,redshift,mode,component);
 
-  n_k     =((int   *)ADaPS_fetch(cosmo,"n_k"))[0];
-  lk_P    =(double *)ADaPS_fetch(cosmo,"lk_P");
-  sigma2  =(double *)ADaPS_fetch(cosmo,sigma2_name);
-  interp  =(interp_info *)ADaPS_fetch(cosmo,d2sigma2_name);
+  n_k     =((int   *)ADaPS_fetch(*cosmo,"n_k"))[0];
+  lk_P    =(double *)ADaPS_fetch(*cosmo,"lk_P");
+  sigma2  =(double *)ADaPS_fetch(*cosmo,sigma2_name);
+  interp  =(interp_info *)ADaPS_fetch(*cosmo,d2sigma2_name);
 
-  norm=pow(linear_growth_factor(redshift,cosmo),2.);
+  norm=pow(linear_growth_factor(redshift,*cosmo),2.);
 
   rval=norm*interpolate(interp,take_log10(k_interp));
 
   return(rval);
+}
+
+void init_sigma_M(cosmo_info **cosmo,
+                  double       z,
+                  int          mode,
+                  int          component){
+
+  char         mode_name[ADaPS_NAME_LENGTH];
+  char         component_name[ADaPS_NAME_LENGTH];
+  char         d2ln_sigma_name[ADaPS_NAME_LENGTH];
+  char         d2ln_Inv_sigma_name[ADaPS_NAME_LENGTH];
+  char         sigma_lnM_name[ADaPS_NAME_LENGTH];
+  interp_info *interp_ln_sigma;
+  interp_info *interp_ln_Inv_sigma;
+  interp_info *interp_sigma_lnM;
+  pspec_names(mode,component,mode_name,component_name);
+  sprintf(d2ln_sigma_name,    "ln_sigma_lnM_%s_%s_interp",    mode_name,component_name);
+  sprintf(d2ln_Inv_sigma_name,"ln_Inv_sigma_lnM_%s_%s_interp",mode_name,component_name);
+  sprintf(sigma_lnM_name,     "sigma_lnM_%s_%s_interp",       mode_name,component_name);
+  if(!ADaPS_exist((*cosmo),d2ln_sigma_name)){
+    SID_log("Generating sigma(R) arrays...",SID_LOG_OPEN);
+    if(!ADaPS_exist((*cosmo),"lk_P"))
+       init_power_spectrum_TF(cosmo);
+    int     n_k;
+    int     n_k_dim;
+    int     i_k;
+    double *lk_P;
+    double *lM_k;
+    double *sigma_lnM;
+    double *ln_sigma;
+    double *ln_Inv_sigma;
+    n_k    =((int   *)ADaPS_fetch((*cosmo),"n_k"))[0];
+    lk_P   =(double *)ADaPS_fetch((*cosmo),"lk_P");
+    n_k_dim=(size_t)n_k;
+    lM_k        =(double *)SID_malloc(sizeof(double)*n_k);
+    sigma_lnM   =(double *)SID_malloc(sizeof(double)*n_k);
+    ln_sigma    =(double *)SID_malloc(sizeof(double)*n_k);
+    ln_Inv_sigma=(double *)SID_malloc(sizeof(double)*n_k);
+
+    SID_log("Computing variances...",SID_LOG_OPEN);
+    n_k_dim =(size_t)n_k;
+    for(i_k=0;i_k<n_k;i_k++){
+      lM_k[i_k]     =take_ln(M_of_k(take_alog10(lk_P[i_k]),z,(*cosmo)));
+      sigma_lnM[i_k]=sqrt(power_spectrum_variance(take_alog10(lk_P[i_k]),
+                                                  0.,
+                                                  cosmo,
+                                                  mode,
+                                                  component));
+      ln_sigma[i_k]    =take_ln(sigma_lnM[i_k]);
+      ln_Inv_sigma[i_k]=take_ln(1./sigma_lnM[i_k]);
+    }
+    SID_log("Done.",SID_LOG_CLOSE);
+    SID_log("Initializing interpolation information...",SID_LOG_OPEN);
+    init_interpolate(lM_k,
+                     ln_sigma,
+                     n_k_dim,
+                     gsl_interp_cspline,
+                     &interp_ln_sigma);
+    ADaPS_store_interp(cosmo,
+                       (void *)(interp_ln_sigma),
+                       d2ln_sigma_name);
+    init_interpolate(lM_k,
+                     ln_Inv_sigma,
+                     (size_t)n_k,
+                     gsl_interp_cspline,
+                     &interp_ln_Inv_sigma);
+    ADaPS_store_interp(cosmo,
+                       (void *)(interp_ln_Inv_sigma),
+                       d2ln_Inv_sigma_name);
+    init_interpolate(lM_k,
+                     sigma_lnM,
+                     (size_t)n_k,
+                     gsl_interp_cspline,
+                     &interp_sigma_lnM);
+    ADaPS_store_interp(cosmo,
+                       (void *)(interp_sigma_lnM),
+                       sigma_lnM_name);
+    SID_free(SID_FARG sigma_lnM);
+    SID_free(SID_FARG ln_sigma);
+    SID_free(SID_FARG ln_Inv_sigma);
+    SID_log("Done.",SID_LOG_CLOSE);
+    SID_log("Done.",SID_LOG_CLOSE);
+  }
+
+}
+
+double ln_sigma_M(cosmo_info *cosmo,
+                  double      M_interp,
+                  double      z,
+                  int         mode,
+                  int         component){
+  char         mode_name[ADaPS_NAME_LENGTH];
+  char         component_name[ADaPS_NAME_LENGTH];
+  char         sigma_lnM_name[ADaPS_NAME_LENGTH];
+  interp_info *interp_sigma_lnM;
+  double       r_val;
+
+  // Initialize
+  pspec_names(mode,component,mode_name,component_name);
+  sprintf(sigma_lnM_name,"sigma_lnM_%s_%s_interp",mode_name,component_name);
+  if(!ADaPS_exist(cosmo,sigma_lnM_name))
+     init_sigma_M(&cosmo,
+                  z,
+                  mode,
+                  component);
+  interp_sigma_lnM=(interp_info *)ADaPS_fetch(cosmo,sigma_lnM_name);
+
+  // Perform interpolation
+  double norm;
+  norm =linear_growth_factor(z,cosmo);
+  r_val=take_ln(norm*interpolate(interp_sigma_lnM,take_ln(M_interp)));
+  return(r_val);
+}
+
+double sigma_M(cosmo_info *cosmo,
+               double      M_interp,
+               double      z,
+               int         mode,
+               int         component){
+  char         mode_name[ADaPS_NAME_LENGTH];
+  char         component_name[ADaPS_NAME_LENGTH];
+  char         sigma_lnM_name[ADaPS_NAME_LENGTH];
+  interp_info *interp_sigma_lnM;
+  double       r_val;
+
+  // Initialize
+  pspec_names(mode,component,mode_name,component_name);
+  sprintf(sigma_lnM_name,"sigma_lnM_%s_%s_interp",mode_name,component_name);
+  if(!ADaPS_exist(cosmo,sigma_lnM_name))
+     init_sigma_M(&cosmo,
+                  z,
+                  mode,
+                  component);
+  interp_sigma_lnM=(interp_info *)ADaPS_fetch(cosmo,sigma_lnM_name);
+
+  // Perform interpolation
+  double norm;
+  norm =linear_growth_factor(z,cosmo);
+  r_val=norm*interpolate(interp_sigma_lnM,take_ln(M_interp));
+  return(r_val);
+}
+
+double ln_Inv_sigma_M(cosmo_info *cosmo,
+                      double      M_interp,
+                      double      z,
+                      int         mode,    
+                      int         component){
+  char         mode_name[ADaPS_NAME_LENGTH];
+  char         component_name[ADaPS_NAME_LENGTH];
+  char         d2ln_Inv_sigma_name[ADaPS_NAME_LENGTH];
+  interp_info *interp_ln_Inv_sigma;
+  double       r_val;
+
+  // Initialize
+  pspec_names(mode,component,mode_name,component_name);
+  sprintf(d2ln_Inv_sigma_name,"ln_Inv_sigma_lnM_%s_%s_interp",mode_name,component_name);
+  if(!ADaPS_exist(cosmo,d2ln_Inv_sigma_name))
+     init_sigma_M(&cosmo,
+                  z,
+                  mode,
+                  component);
+  interp_ln_Inv_sigma=(interp_info *)ADaPS_fetch(cosmo,d2ln_Inv_sigma_name);
+
+  // Perform interpolation
+  double norm;
+  norm =linear_growth_factor(z,cosmo);
+  r_val=interpolate(interp_ln_Inv_sigma,take_ln(M_interp))/norm;
+  return(r_val);
+}
+
+double dln_sigma_dlnM(cosmo_info *cosmo,
+		      double      M_interp,
+		      double      z,
+		      int         mode,
+		      int         component){
+  char         mode_name[ADaPS_NAME_LENGTH];
+  char         component_name[ADaPS_NAME_LENGTH];
+  char         d2ln_sigma_name[ADaPS_NAME_LENGTH];
+  interp_info *interp_ln_sigma;
+  double       r_val;
+
+  // Initialize
+  pspec_names(mode,component,mode_name,component_name);
+  sprintf(d2ln_sigma_name,"ln_sigma_lnM_%s_%s_interp",mode_name,component_name);
+  if(!ADaPS_exist(cosmo,d2ln_sigma_name))
+     init_sigma_M(&cosmo,
+                  z,
+                  mode,
+                  component);
+  interp_ln_sigma=(interp_info *)ADaPS_fetch(cosmo,d2ln_sigma_name);
+
+  // Perform interpolation
+  double norm;
+  norm =linear_growth_factor(z,cosmo);
+  r_val=norm*
+    interpolate_derivative(interp_ln_sigma,
+		           take_ln(M_interp));
+  return(r_val);
 }
 
 double dln_Inv_sigma_dlogM(cosmo_info *cosmo,
@@ -670,113 +873,32 @@ double dln_Inv_sigma_dlogM(cosmo_info *cosmo,
   char         component_name[ADaPS_NAME_LENGTH];
   char         d2ln_Inv_sigma_name[ADaPS_NAME_LENGTH];
 
-  // Fetch/initialize ln(sigma^-1) and its derivative wrt log M
+  // Initialize
   pspec_names(mode,component,mode_name,component_name);
   sprintf(d2ln_Inv_sigma_name,"ln_Inv_sigma_M_%s_%s_interp",mode_name,component_name);
-  if(!ADaPS_exist(cosmo,d2ln_Inv_sigma_name)){
-    n_k         =((int   *)ADaPS_fetch(cosmo,"n_k"))[0];
-    lk_P        =(double *)ADaPS_fetch(cosmo,"lk_P");
-    // Fetch/initialize M(k)
-    if(!ADaPS_exist(cosmo,"lM_k")){
-      lM_k   =(double *)SID_malloc(sizeof(double)*n_k);
-      n_k_dim=(size_t)n_k;
-      for(i=0;i<n_k;i++)
-         lM_k[i]=take_log10(M_of_k(take_alog10(lk_P[i]),z,cosmo));
-      ADaPS_store((&cosmo),
-		 (void *)(lM_k),
-		 "lM_k",
-		 ADaPS_DEFAULT);
-      SID_free(SID_FARG lM_k);
-    }
-    lM_k        =(double  *)ADaPS_fetch(cosmo,"lM_k");
-    ln_Inv_sigma=(double *)SID_malloc(sizeof(double)*n_k);
-    n_k_dim     =(size_t)n_k;
-    for(i=0;i<n_k;i++)
-      ln_Inv_sigma[i]=take_ln(1./sqrt(power_spectrum_variance(take_alog10(lk_P[i]),
-                                                              0.,
-                                                              cosmo,
-                                                              mode,
-                                                              component)));
-    init_interpolate(lM_k,
-                     ln_Inv_sigma,
-                     (size_t)n_k,
-                     gsl_interp_cspline,
-                     &interp_ln_Inv_sigma);
-    ADaPS_store_interp((&cosmo),
-                       (void *)(interp_ln_Inv_sigma),
-                       d2ln_Inv_sigma_name);
-    SID_free(SID_FARG ln_Inv_sigma);
-  }
+  if(!ADaPS_exist(cosmo,d2ln_Inv_sigma_name))
+     init_sigma_M(&cosmo,
+                  z,
+                  mode,
+                  component);
+
+  double norm;
+  norm =linear_growth_factor(z,cosmo);
   interp_ln_Inv_sigma=(interp_info *)ADaPS_fetch(cosmo,d2ln_Inv_sigma_name);
   r_val=
     interpolate_derivative(interp_ln_Inv_sigma,
-		           take_log10(M_interp));
+		           take_log10(M_interp))/norm;
   return(r_val);
 }
 
-double dln_sigma_dlnM(cosmo_info *cosmo,
-		      double      M_interp,
-		      double      z,
-		      int         mode,
-		      int         component){
-  double       r_val;
-  double      *ln_sigma;
-  double       derr;
-  int          i;
-  int          n_k;
-  size_t       n_k_dim;
-  double      *lk_P;
-  double      *lM_k;
-  interp_info *interp_ln_sigma;
-  char         mode_name[ADaPS_NAME_LENGTH];
-  char         component_name[ADaPS_NAME_LENGTH];
-  char         d2ln_sigma_name[ADaPS_NAME_LENGTH];
-
-  // Fetch/initialize ln(sigma^-1) and its derivative wrt log M
-  pspec_names(mode,component,mode_name,component_name);
-  sprintf(d2ln_sigma_name,"ln_sigma_lnM_%s_%s_interp",mode_name,component_name);
-  if(!ADaPS_exist(cosmo,d2ln_sigma_name)){
-    n_k    =((int   *)ADaPS_fetch(cosmo,"n_k"))[0];
-    lk_P   =(double *)ADaPS_fetch(cosmo,"lk_P");
-    lM_k   =(double *)SID_malloc(sizeof(double)*n_k);
-    n_k_dim=(size_t)n_k;
-    for(i=0;i<n_k;i++)
-      lM_k[i]=take_ln(M_of_k(take_alog10(lk_P[i]),z,cosmo));
-
-    ln_sigma=(double *)SID_malloc(sizeof(double)*n_k);
-    n_k_dim =(size_t)n_k;
-    for(i=0;i<n_k;i++)
-      ln_sigma[i]=take_ln(sqrt(power_spectrum_variance(take_alog10(lk_P[i]),
-						       0.,
-						       cosmo,
-						       mode,
-						       component)));
-    init_interpolate(lM_k,
-                     ln_sigma,
-                     n_k_dim,
-                     gsl_interp_cspline,
-                     &interp_ln_sigma);
-    ADaPS_store_interp((&cosmo),
-                       (void *)(interp_ln_sigma),
-                       d2ln_sigma_name);
-    free_interpolate(SID_FARG interp_ln_sigma);
-    SID_free(SID_FARG lM_k);
-    SID_free(SID_FARG ln_sigma);
-  }
-  interp_ln_sigma=(interp_info *)ADaPS_fetch(cosmo,d2ln_sigma_name);
-  r_val=
-    interpolate_derivative(interp_ln_sigma,
-		           take_ln(M_interp));
-  return(r_val);
-}
 
 /***************************************/
 /* Stuff related to spherical collapse */
 /***************************************/
-double M_sc(double      z,
-	    cosmo_info *cosmo,
-	    int         mode,
-	    int         component){
+double M_sc(double       z,
+	    cosmo_info **cosmo,
+	    int          mode,
+	    int          component){
   int     i;
   int     n_k;
   size_t  n_k_dim;
@@ -790,39 +912,29 @@ double M_sc(double      z,
   char    mode_name[ADaPS_NAME_LENGTH];
   char    component_name[ADaPS_NAME_LENGTH];
   char    sigma2_name[ADaPS_NAME_LENGTH];
-  char    d2sigma2_name[ADaPS_NAME_LENGTH];
   static double M_sc_last;
   static double z_last=-42.;
 
   if(z!=z_last){
-    
     // Set/initialize variance
     pspec_names(mode,component,mode_name,component_name);
-    sprintf(sigma2_name,  "sigma2_k_%s_%s",       mode_name,component_name);
-    sprintf(d2sigma2_name,"sigma2_k_%s_%s_interp",mode_name,component_name);
-    if(!ADaPS_exist(cosmo,sigma2_name))
-      init_power_spectrum_variance(&cosmo,z,mode,component);
-    sigma2=(double      *)ADaPS_fetch(cosmo,sigma2_name);
-    interp=(interp_info *)ADaPS_fetch(cosmo,d2sigma2_name);
-    
-    b_z=linear_growth_factor(z,cosmo);
-
-    /*
-    r_val=bisect_array(interp,
-		       delta_sc*delta_sc/(b_z*b_z),
-		       1e-4);
-    */
-    r_val=-1;
-    SID_trap_error("Need to implement bisect_array here.",ERROR_LOGIC);
-    M_sc_last=M_of_k(take_alog10(r_val),z,cosmo);
+    sprintf(sigma2_name,"sigma2_k_%s_%s_interp",mode_name,component_name);
+    if(!ADaPS_exist(*cosmo,sigma2_name))
+      init_power_spectrum_variance(cosmo,z,mode,component);
+    interp   =(interp_info *)ADaPS_fetch(*cosmo,sigma2_name);
+    b_z      =linear_growth_factor(z,*cosmo);
+    r_val    =bisect_array(interp,delta_sc*delta_sc/(b_z*b_z),1e-4);
+    M_sc_last=M_of_k(take_alog10(r_val),z,*cosmo);
     z_last   =z;
   }
 
   return(M_sc_last);
 }
-double lk_sc(double      z,
-	     cosmo_info *cosmo,
-	     int         mode,
-	     int         component){
-  return(take_log10(k_of_M(M_sc(z,cosmo,mode,component),z,cosmo)));
+double lk_sc(double       z,
+	     cosmo_info **cosmo,
+	     int          mode,
+	     int          component){
+  double M_sc_val=M_sc(z,cosmo,mode,component);
+  return(take_log10(k_of_M(M_sc_val,z,*cosmo)));
 }
+

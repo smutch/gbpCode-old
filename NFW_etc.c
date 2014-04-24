@@ -6,79 +6,76 @@
 #include <gbpCosmo.h>
 #include <gsl/gsl_sf_expint.h>
 
-double Delta_vir_z(double z, cosmo_info *cosmo,int select){
-  double Omega_M;
-  double x;
-  double Delta;
-  switch(select){
-    case DELTA_BRYAN_NORMAN: // Bryan & Norman '98
-      Omega_M =((double *)ADaPS_fetch(cosmo,"Omega_M"))[0];
-      x       =Omega_M-1.;
-      Delta   =(18.*PI*PI+82.*x-39.*x*x)/Omega_M;
-      break;
-    case DELTA_LINEAR:
-      Delta=1.686;
-      break;
-  }
-  return(Delta);
-}
-
-void set_NFW_params(double      M,
-		    double      z,
-		    int         mode,
-		    cosmo_info *cosmo,
-		    double     *c_vir,
-		    double     *R_vir){
+void set_NFW_params(double       M,
+		    double       z,
+		    int          mode,
+		    cosmo_info **cosmo,
+		    double      *c_vir,
+		    double      *R_vir){
   double M_o;
-  double Delta,x;
+  double Delta;
   double h_Hubble;
   double Omega_M;
-  switch(ADaPS_exist(cosmo,"M_WDM")){
-  case FALSE:
-    Omega_M =((double *)ADaPS_fetch(cosmo,"Omega_M"))[0];
-    h_Hubble=((double *)ADaPS_fetch(cosmo,"h_Hubble"))[0];
-    M_o     =M_sc(z,cosmo,PSPEC_LINEAR_TF,PSPEC_ALL_MATTER);
-M_o=4.364e12*M_SOL/h_Hubble;
-    (*c_vir)=(11./(1.+z))*pow(M/M_o,-0.13);     // Bullock et al '01 & Zehavi et al '04
-    x       =Omega_M-1.;
-    Delta   =Delta_vir_z(z,cosmo,DELTA_BRYAN_NORMAN);
-Delta=200.;
-    (*R_vir)=R_Delta_z(M,Delta,z,cosmo);        // Bullock et al '01
-(*R_vir)=R_Delta_z(M,Delta,0.,cosmo);        // Bullock et al '01
 
+  if(mode!=NFW_MODE_DEFAULT)
+     SID_trap_error("Unknown mode (%d) in set_NFW_params()",ERROR_LOGIC,mode);
+
+  switch(ADaPS_exist(*cosmo,"M_WDM")){
+  case FALSE:
+    {
+    Omega_M =((double *)ADaPS_fetch(*cosmo,"Omega_M"))[0];
+    h_Hubble=((double *)ADaPS_fetch(*cosmo,"h_Hubble"))[0];
+    M_o     =M_sc(z,cosmo,PSPEC_LINEAR_TF,PSPEC_ALL_MATTER);
+
+    // Mass-concentration from Munoz-Cuartas et al 2010
+    //(*c_vir)=(11./(1.+z))*pow(M/M_o,-0.13);     // Bullock et al '01 & Zehavi et al '04
+    double w    =   0.029;
+    double m    =   0.097;
+    double alpha=-110.001;
+    double beta =2469.720;
+    double gamma=  16.885;
+    double a_z  =w*z-m;
+    double b_z  =alpha/(z+gamma)+beta/pow(z+gamma,2.);
+    (*c_vir)    =take_alog10(a_z*take_log10(M/(M_SOL/h_Hubble))+b_z);
+
+    Delta   =Delta_vir(z,*cosmo);
+    Delta=200.;
+    (*R_vir)=R_Delta_z(M,Delta,z,*cosmo);       // Bullock et al '01
+    }
     break;
   case TRUE:
-    (*c_vir)=c_ENS(M,z,cosmo);          // Eke, Navarro and Steinmetz
-    (*R_vir)=R_Delta_z(M,200.,z,cosmo); // R_200
+    SID_trap_error("ENS not working.",ERROR_LOGIC);
+    //(*c_vir)=c_ENS(M,z,*cosmo);          // Eke, Navarro and Steinmetz
+    //(*R_vir)=R_Delta_z(M,200.,z,*cosmo); // R_200
     break;
   }
 }
 
-double R_vir_NFW(double      M_vir,
-		 double      z,
-		 int         mode,
-		 cosmo_info *cosmo){
+double R_vir_NFW(double       M_vir,
+		 double       z,
+		 int          mode,
+		 cosmo_info **cosmo){
   double c_vir;
   double R_vir;
   set_NFW_params(M_vir,z,mode,cosmo,&c_vir,&R_vir);
   return(R_vir);
 }
 
-double c_vir_NFW(double      M_vir,
-		 double      z,
-		 int         mode,
-		 cosmo_info *cosmo){
+double c_vir_NFW(double       M_vir,
+		 double       z,
+		 int          mode,
+		 cosmo_info **cosmo){
   double c_vir;
   double R_vir;
   set_NFW_params(M_vir,z,mode,cosmo,&c_vir,&R_vir);
   return(c_vir);
 }
 
-double rho_NFW(double      r,
-	       double      M_vir,
-	       double      z,
-	       int         mode,
-	       cosmo_info *cosmo){
+double rho_NFW(double       r,
+	       double       M_vir,
+	       double       z,
+	       int          mode,
+	       cosmo_info **cosmo){
   double c_vir;
   double R_vir;
   double g_c;
@@ -92,11 +89,11 @@ double rho_NFW(double      r,
 }
 
 /* FFT of NFW profile from White '01 */
-double rho_NFW_fft(double      k,
-		   double      M_vir,
-		   double      z,
-		   int         mode,
-		   cosmo_info *cosmo){
+double rho_NFW_fft(double       k,
+		   double       M_vir,
+		   double       z,
+		   int          mode,
+		   cosmo_info **cosmo){
   double c_vir;
   double R_vir;
   double r_s;
@@ -130,11 +127,11 @@ double rho_NFW_fft(double      k,
 /**************************************/
 /* Cole and Lacey (1996) M(r) profile */
 /**************************************/
-double M_r_NFW(double      r,
-	       double      M_vir,
-	       double      z,
-	       int         mode,
-	       cosmo_info *cosmo){
+double M_r_NFW(double       r,
+	       double       M_vir,
+	       double       z,
+	       int          mode,
+	       cosmo_info **cosmo){
   double r_o;
   double x;
   double g_c;
@@ -155,11 +152,11 @@ double M_r_NFW(double      r,
 /****************************************/
 /* Cole and Lacey (1996) V_c(r) profile */
 /****************************************/
-double V_circ_NFW(double      r,
-		  double      M_vir,
-		  double      z,
-		  int         mode,
-		  cosmo_info *cosmo){
+double V_circ_NFW(double       r,
+		  double       M_vir,
+		  double       z,
+		  int          mode,
+		  cosmo_info **cosmo){
   double c_vir;
   double R_vir;
   double V2_c_characteristic;
@@ -180,10 +177,10 @@ double V_circ_NFW(double      r,
   return(r_val);
 }
 
-double V_circ_vir_NFW(double      M_vir,
-		      double      z,
-		      int         mode,
-		      cosmo_info *cosmo){
+double V_circ_vir_NFW(double       M_vir,
+		      double       z,
+		      int          mode,
+		      cosmo_info **cosmo){
   double c_vir;
   double R_vir;
   double r;
@@ -201,10 +198,10 @@ double V_circ_vir_NFW(double      M_vir,
 }
 
 /* From Alam et al '02 */
-double V_max_NFW(double      M_vir,
-		 double      z,
-		 int         mode,
-		 cosmo_info *cosmo){
+double V_max_NFW(double       M_vir,
+		 double       z,
+		 int          mode,
+		 cosmo_info **cosmo){
   double c_vir;
   double R_vir;
   double V2_vir;
@@ -222,11 +219,68 @@ double V_max_NFW(double      M_vir,
   return(r_val);
 }
 
+void init_Vmax_to_Mvir_NFW(cosmo_info **cosmo,
+                           int          mode,
+                           double       z){
+  interp_info *interp;
+  if(!ADaPS_exist((*cosmo),"lVmax_to_lMvir_%.5f_interp",z)){
+    SID_log("Initializing Vmax->M_vir interpolation...",SID_LOG_OPEN);
+    int     n_k;
+    double *lk_P;
+    double *lM;
+    double *lVmax;
+    int     n_M  =201;
+    double  lM_lo= 0.;
+    double  lM_hi=20.;
+    double  dlM  =(lM_hi-lM_lo)/(double)(n_M-1);
+    lM     =(double *)SID_malloc(sizeof(double)*n_M);
+    lVmax  =(double *)SID_malloc(sizeof(double)*n_M);
+    int i_M;
+    for(i_M=0;i_M<n_M;i_M++){
+      if(i_M==0)            lM[i_M]=lM_lo;
+      else if(i_M==(n_M-1)) lM[i_M]=lM_hi;
+      else                  lM[i_M]=lM[i_M-1]+dlM;
+    }
+    for(i_M=0;i_M<n_M;i_M++){
+      lM[i_M]+=take_log10(M_SOL);
+      lVmax[i_M]=take_log10(V_max_NFW(take_alog10(lM[i_M]),z,mode,cosmo));
+    }
+    init_interpolate(lVmax,
+                     lM,
+                     (size_t)n_M,
+                     gsl_interp_cspline,
+                     &interp);
+    ADaPS_store_interp(cosmo,
+                       (void *)(interp),
+                       "lVmax_to_lMvir_%.5f_interp",z);
+    SID_free(SID_FARG lM);
+    SID_free(SID_FARG lVmax);
+    SID_log("Done.",SID_LOG_CLOSE);
+  }
+}
+double Vmax_to_Mvir_NFW(double       V_max,
+                        double       z,
+                        int          mode,
+                        cosmo_info **cosmo){
+  double c_vir;
+  double R_vir;
+  double V2_vir;
+  double g_c;
+  double r_val=0.;
+  if(V_max>0.){
+    interp_info *interp;
+    init_Vmax_to_Mvir_NFW(cosmo,mode,z);
+    interp=(interp_info *)ADaPS_fetch(*cosmo,"lVmax_to_lMvir_%.5f_interp",z);
+    r_val =take_alog10(interpolate(interp,take_log10(V_max)));
+  }
+  return(r_val);
+}
+
 /* From Alam et al '02 */
-double R_half_V_max_NFW(double      M_vir,
-			double      z,
-			int         mode,
-			cosmo_info *cosmo){
+double R_half_V_max_NFW(double       M_vir,
+			double       z,
+			int          mode,
+			cosmo_info **cosmo){
   double c_vir;
   double R_vir;
   double r_o;
@@ -241,10 +295,10 @@ double R_half_V_max_NFW(double      M_vir,
 }
 
 // Approximate R(V=V_max) from NFW '97
-double R_V_max_NFW(double      M_vir,
-                   double      z,
-                   int         mode,
-                   cosmo_info *cosmo){
+double R_V_max_NFW(double       M_vir,
+                   double       z,
+                   int          mode,
+                   cosmo_info **cosmo){
   double c_vir;
   double R_vir;
   double r_o;
@@ -258,12 +312,11 @@ double R_V_max_NFW(double      M_vir,
   return(r_val);
 }
 
-
 /* From Alam et al '02 */
-double Delta_half_V_max_NFW(double      M_vir,
-			    double      z,
-			    int         mode,
-			    cosmo_info *cosmo){
+double Delta_half_V_max_NFW(double       M_vir,
+			    double       z,
+			    int          mode,
+			    cosmo_info **cosmo){
   double c_vir;
   double R_vir;
   double g_c;

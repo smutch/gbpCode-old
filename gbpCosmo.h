@@ -64,6 +64,23 @@ void init_cosmo(cosmo_info **cosmo,
 		  double       n_spectral);
 void free_cosmo(cosmo_info **cosmo);
 
+// Bias model stuff
+#define BIAS_MODEL_TRK                  2
+#define BIAS_MODEL_BPR                  4
+#define BIAS_MODEL_POOLE_SUBSTRUCTURE   8
+#define BIAS_MODEL_POOLE_HALO          16
+#define BIAS_MODEL_POOLE_ZSPACE        32
+#define BIAS_MODEL_POOLE_TOTAL         64
+#define BIAS_MODEL_VMAX_ORDINATE      128
+#define BIAS_MODEL_KAISER_BOOST       256
+#define BIAS_MODEL_KAISER             512
+
+double bias_model(double       x_in,
+                  double       delta_c,
+                  double       z,
+                  cosmo_info **cosmo,
+                  int          mode);
+
 /**************************/
 /* Linear theory routines */
 /**************************/
@@ -85,16 +102,35 @@ void   init_power_spectrum_variance(cosmo_info **cosmo,double z,int mode,int com
 double power_spectrum_normalization(cosmo_info *cosmo,
 				    int         mode,
 				    int         component);
-double power_spectrum_variance(double      k_interp,
-			       double      redshift,
-			       cosmo_info *cosmo,
-			       int         mode,
-			       int         component);
+double power_spectrum_variance(double       k_interp,
+			       double       redshift,
+			       cosmo_info **cosmo,
+			       int          mode,
+			       int          component);
 double dln_Inv_sigma_dlogM(cosmo_info *cosmo,
 			   double      M_interp,
 			   double      z,
 			   int         mode,
 			   int         component);
+void init_sigma_M(cosmo_info **cosmo,
+                  double       z,
+                  int          mode,
+                  int          component);
+double sigma_M(cosmo_info *cosmo,
+               double      M_interp,
+               double      z,
+               int         mode,
+               int         component);
+double ln_sigma_M(cosmo_info *cosmo,
+                  double      M_interp,
+                  double      z,
+                  int         mode,
+                  int         component);
+double ln_Inv_sigma_M(cosmo_info *cosmo,
+                  double      M_interp,
+                  double      z,
+                  int         mode,
+                  int         component);
 double dln_sigma_dlnM(cosmo_info *cosmo,
 		      double      M_interp,
 		      double      z,
@@ -114,14 +150,14 @@ double sigma2_linear(double      M,
                      double      redshift,
                      cosmo_info *cosmo);
 double W_k_tophat(double kR);
-double M_sc(double      z,
-	    cosmo_info *cosmo,
-	    int         mode,
-	    int         component);
-double lk_sc(double      z,
-	     cosmo_info *cosmo,
-	     int         mode,
-	     int         component);
+double M_sc(double       z,
+	    cosmo_info **cosmo,
+	    int          mode,
+	    int          component);
+double lk_sc(double       z,
+	     cosmo_info **cosmo,
+	     int          mode,
+	     int          component);
 
 /********************************/
 /* Nonlinear theory routines    */
@@ -274,65 +310,74 @@ double mass_function_cumulative(double      M_interp,
 /************************/
 /* Routines for NFW etc */
 /************************/
-double Delta_vir_z(double z, cosmo_info *cosmo,int select);
-void set_NFW_params(double      M,
-		    double      z,
-		    int         mode,
-		    cosmo_info *cosmo,
-		    double     *c_vir,
-		    double     *R_vir);
-double R_vir_NFW(double      M_vir,
-		 double      z,
-		 int         mode,
-		 cosmo_info *cosmo);
-double c_vir_NFW(double      M_vir,
-		 double      z,
-		 int         mode,
-		 cosmo_info *cosmo);
-double rho_NFW(double      r,
-	       double      M_vir,
-	       double      z,
-	       int         mode,
-	       cosmo_info *cosmo);
-double rho_NFW_fft(double      k,
-		   double      M_vir,
-		   double      z,
-		   int         mode,
-		   cosmo_info *cosmo);
-double M_r_NFW(double      r,
-	       double      M_vir,
-	       double      z,
-	       int         mode,
-	       cosmo_info *cosmo);
-double V_circ_NFW(double      r,
-		  double      M_vir,
-		  double      z,
-		  int         mode,
-		  cosmo_info *cosmo);
-double V_circ_vir_NFW(double      M_vir,
-		      double      z,
-		      int         mode,
-		      cosmo_info *cosmo);
-double V_max_NFW(double      M_vir,
-		 double      z,
-		 int         mode,
-		 cosmo_info *cosmo);
-double R_half_V_max_NFW(double      M_vir,
-			double      z,
-			int         mode,
-			cosmo_info *cosmo);
-double R_V_max_NFW(double      M_vir,
-                   double      z,
-                   int         mode,
-                   cosmo_info *cosmo);
-double Delta_half_V_max_NFW(double      M_vir,
-			    double      z,
-			    int         mode,
-			    cosmo_info *cosmo);
-double Delta_half_V_max_NFW(double      M_vir,
-			    double      z,
-			    int         mode,
-			    cosmo_info *cosmo);
+
+#define NFW_MODE_DEFAULT 0
+
+void set_NFW_params(double       M,
+		    double       z,
+		    int          mode,
+		    cosmo_info **cosmo,
+		    double      *c_vir,
+		    double      *R_vir);
+double R_vir_NFW(double       M_vir,
+		 double       z,
+		 int          mode,
+		 cosmo_info **cosmo);
+double c_vir_NFW(double       M_vir,
+		 double       z,
+		 int          mode,
+		 cosmo_info **cosmo);
+double rho_NFW(double       r,
+	       double       M_vir,
+	       double       z,
+	       int          mode,
+	       cosmo_info **cosmo);
+double rho_NFW_fft(double       k,
+		   double       M_vir,
+		   double       z,
+		   int          mode,
+		   cosmo_info **cosmo);
+double M_r_NFW(double       r,
+	       double       M_vir,
+	       double       z,
+	       int          mode,
+	       cosmo_info **cosmo);
+double V_circ_NFW(double       r,
+		  double       M_vir,
+		  double       z,
+		  int          mode,
+		  cosmo_info **cosmo);
+double V_circ_vir_NFW(double       M_vir,
+		      double       z,
+		      int          mode,
+		      cosmo_info **cosmo);
+double V_max_NFW(double       M_vir,
+		 double       z,
+		 int          mode,
+		 cosmo_info **cosmo);
+void init_Vmax_to_Mvir_NFW(cosmo_info **cosmo,
+                           int          mode,
+                           double       z);
+double Vmax_to_Mvir_NFW(double       V_max,
+                        double       z,
+                        int          mode,
+                        cosmo_info **cosmo);
+double R_half_V_max_NFW(double       M_vir,
+			double       z,
+			int          mode,
+			cosmo_info **cosmo);
+double R_V_max_NFW(double       M_vir,
+                   double       z,
+                   int          mode,
+                   cosmo_info **cosmo);
+double Delta_half_V_max_NFW(double       M_vir,
+			    double       z,
+			    int          mode,
+			    cosmo_info **cosmo);
+double Delta_half_V_max_NFW(double       M_vir,
+			    double       z,
+			    int          mode,
+			    cosmo_info **cosmo);
 double V2_circ(double M, 
 	       double r);
 
