@@ -7,7 +7,7 @@ OBJFILES  = gbpCosmo.o               \
 	    NFW_etc.o                \
 	    bias_model.o             
 LIBFILE   = libgbpCosmo.a
-BINFILES  = plot_clustering D_angular D_angular_1to2 D_luminosity plot_cosmo plot_cosmo_evolution
+BINFILES  = make_snap_list plot_clustering D_angular D_angular_1to2 D_luminosity plot_cosmo plot_cosmo_evolution
 SCRIPTS   =
 DATAFILES = nonlinear_power_spectrum.dat transfer_function.dat
 LIBS      = -lgbpCosmo -lgbpMath -lgbpLib
