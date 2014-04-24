@@ -408,7 +408,7 @@ void map_to_grid(size_t      n_particles_local,
   }
 
   if(W_r_Daub_interp!=NULL)
-    free_interpolate(SID_FARG W_r_Daub_interp);
+    free_interpolate(SID_FARG W_r_Daub_interp,NULL);
 
   SID_log("Done.",SID_LOG_CLOSE);
   
