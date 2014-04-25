@@ -52,13 +52,13 @@ int main(int argc, char *argv[]){
    for(int i=0;i<n_data;i++){
      grab_next_line_data(fp_in,&line,&line_length);
      grab_double(line,M_column,&(data[i]));
-     if(!flag_log)
+     if(flag_log)
         data[i]=take_alog10(data[i]);
    }
    fclose(fp_in);
 
    // Perform sort
-   merge_sort(data,n_data,NULL,SID_INT,SORT_INPLACE_ONLY,SORT_COMPUTE_INPLACE);
+   merge_sort(data,n_data,NULL,SID_DOUBLE,SORT_INPLACE_ONLY,SORT_COMPUTE_INPLACE);
 
    // Compile histogram
    double *bin       =(double *)malloc(sizeof(double)*(n_bins+1));
@@ -97,6 +97,14 @@ int main(int argc, char *argv[]){
      return(1);
    }
    double box_volume=box_size*box_size*box_size;
+   fprintf(fp_out,"# Mass function for column %d in {%s}\n",M_column,filename_in);
+   fprintf(fp_out,"# Column (1): M_lo     [source units]\n");
+   fprintf(fp_out,"#        (2): M_median [source units]\n");
+   fprintf(fp_out,"#        (3): M_hi     [source units]\n");
+   fprintf(fp_out,"#        (4): No. in bin\n");
+   fprintf(fp_out,"#        (5): MFn (per unit volume, per dlogM)\n");
+   fprintf(fp_out,"#        (6): +/- MFn\n");
+   fprintf(fp_out,"#        (7): Sheth & Tormen MFn\n");
    for(int i=0;i<n_bins;i++){
      double dlogM=take_log10(bin[i+1])-take_log10(bin[i]);
      double dn_dlogM_theory=mass_function(bin_median[i]*M_SOL/h_Hubble,
