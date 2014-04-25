@@ -143,15 +143,15 @@ int add_pair_CFUNC_local(double x_i,double y_i,double z_i,
    return(flag_used);
 }
 
-void calc_pairs_local(char       *species_name1,
-                      char       *species_name2,
+void calc_pairs_local(const char *species_name1,
+                      const char *species_name2,
                       int         i_rank,
                       int         i_run,
                       int         mode,
                       plist_info *plist,
                       cfunc_info *cfunc);
-void calc_pairs_local(char       *species_name1,
-                      char       *species_name2,
+void calc_pairs_local(const char *species_name1,
+                      const char *species_name2,
                       int         i_rank,
                       int         i_run,
                       int         mode,
@@ -353,8 +353,8 @@ void calc_pairs_local(char       *species_name1,
 }
 
 void compute_cfunc(plist_info  *plist,
-                   char        *species_name,
-                   char        *random_name,
+                   const char  *species_name,
+                   const char  *random_name,
                    cfunc_info  *cfunc,
                    int          i_run){
   int         i_bin,j_bin;

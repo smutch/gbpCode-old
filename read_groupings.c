@@ -12,7 +12,7 @@
 
 #define N_BITS_MIN 1
 
-void read_groupings(char *filename_root,int grouping_number,plist_info *plist,int mode,...){
+void read_groupings(const char *filename_root,int grouping_number,plist_info *plist,int mode,...){
    // Interpret variable arguments
    double      box_size;
    double      redshift;

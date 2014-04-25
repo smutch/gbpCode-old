@@ -8,7 +8,7 @@
 #include <gbpHalos.h>
 #include <gbpClustering.h>
 
-void write_grid(field_info *field,char *filename_out_root,int i_grid,int n_grids,int mass_assignment_scheme,char *grid_identifier,double box_size){
+void write_grid(field_info *field,const char *filename_out_root,int i_grid,int n_grids,int mass_assignment_scheme,const char *grid_identifier,double box_size){
    // Now that all 4 runs are done, let's write the results
    SID_log("Writing {%s} grid...",SID_LOG_OPEN,grid_identifier);
 

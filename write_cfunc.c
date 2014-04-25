@@ -8,7 +8,7 @@
 #include <gbpHalos.h>
 #include <gbpClustering.h>
 
-void write_cfunc(cfunc_info *cfunc,char *filename_out_root,plist_info *plist,char *species_name,char *randoms_name,int i_run){
+void write_cfunc(cfunc_info *cfunc,const char *filename_out_root,plist_info *plist,const char *species_name,const char *randoms_name,int i_run){
    // Now that all 4 runs are done, let's write the results
    SID_log("Writing correlation functions...",SID_LOG_OPEN|SID_LOG_TIMER);
    if(SID.I_am_Master){

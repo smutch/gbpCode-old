@@ -6,7 +6,7 @@
 #include <gbpClustering.h>
 
 void compute_pspec(plist_info  *plist,
-                   char        *species_name,
+                   const char  *species_name,
                    pspec_info  *pspec,
                    int          i_run){
   int         i_k;

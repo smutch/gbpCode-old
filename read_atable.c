@@ -12,7 +12,7 @@
 
 #define N_BITS_MIN 1
 
-void read_atable(char *filename_in,plist_info *plist,int x_column,int y_column,int z_column,int vx_column,int vy_column,int vz_column,char *species_name,int mode,...){
+void read_atable(const char *filename_in,plist_info *plist,int x_column,int y_column,int z_column,int vx_column,int vy_column,int vz_column,const char *species_name,int mode,...){
    // Interpret variable arguments
    double      box_size;
    double      redshift;

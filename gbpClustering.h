@@ -119,11 +119,11 @@ struct cfunc_info {
 extern "C" {
 #endif
 
-void read_groupings(char *filename_root,int grouping_number,plist_info *plist,int mode,...);
-void read_atable(char *filename_in,plist_info *plist,
+void read_groupings(const char *filename_root,int grouping_number,plist_info *plist,int mode,...);
+void read_atable(const char *filename_in,plist_info *plist,
                  int x_column,int y_column,int z_column,int vx_column,int vy_column,int vz_column,
-                 char *species_name,int mode,...);
-void generate_randoms(cfunc_info *cfunc,plist_info *plist,char *species_name,char *random_name,char *filename_out_randoms);
+                 const char *species_name,int mode,...);
+void generate_randoms(cfunc_info *cfunc,plist_info *plist,const char *species_name,const char *random_name,const char *filename_out_randoms);
 void map_to_grid(size_t      n_particles_local,
                  GBPREAL    *x_particles_local,
                  GBPREAL    *y_particles_local,
@@ -145,12 +145,12 @@ void init_cfunc(cfunc_info *cfunc,int   n_data,  int   n_random,int PHK_width,
                 double r_min_2D, double r_max_2D,double dr_2D);
 void free_cfunc(cfunc_info *cfunc);
 void compute_cfunc(plist_info  *plist,
-                   char        *species_name,
-                   char        *random_name,
+                   const char  *species_name,
+                   const char  *random_name,
                    cfunc_info  *cfunc,
                    int          i_run);
-void write_cfunc(cfunc_info *cfunc,char *filename_out_root,plist_info *plist,char *species_name,char *randoms_name,int i_run);
-void read_cfunc( cfunc_info *cfunc,char *filename_out_root,int i_run);
+void write_cfunc(cfunc_info *cfunc,const char *filename_out_root,plist_info *plist,const char *species_name,const char *randoms_name,int i_run);
+void read_cfunc( cfunc_info *cfunc,const char *filename_out_root,int i_run);
 
 // Power spectrum stuff
 void init_pspec(pspec_info *pspec,
@@ -160,17 +160,17 @@ void init_pspec(pspec_info *pspec,
                 double k_min_2D,double k_max_2D,double dk_2D);
 void free_pspec(pspec_info *pspec);
 void compute_pspec(plist_info  *plist,
-                   char        *species_name,
+                   const char  *species_name,
                    pspec_info  *pspec,
                    int          i_run);
 void write_grid(field_info *field,
-                char       *filename_out_root,
+                const char *filename_out_root,
                 int         i_run,
                 int         n_run,
                 int         mass_assignment_scheme,
-                char       *grid_identifier,
+                const char *grid_identifier,
                 double      box_size);
-void write_pspec(pspec_info *pspec,char *filename_out_root,plist_info *plist,char *species_name);
+void write_pspec(pspec_info *pspec,const char *filename_out_root,plist_info *plist,const char *species_name);
 
 #ifdef __cplusplus
 }
