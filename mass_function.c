@@ -38,7 +38,7 @@ double mass_function(double        M_interp,
   b_z    =linear_growth_factor(z,*cosmo);
 
   // Compute mass function
-  dlnInvs_dlogM=dln_Inv_sigma_dlogM(*cosmo,M_interp,z,mode,component);
+  dlnInvs_dlogM=dln_Inv_sigma_dlogM(cosmo,M_interp,z,mode,component);
   rval         =scaled_mass_function(sigma_interp,
 				     select_flag)*dlnInvs_dlogM*rho_o/M_interp;
   return(rval);

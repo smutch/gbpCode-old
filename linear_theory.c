@@ -797,11 +797,11 @@ double sigma_M(cosmo_info *cosmo,
   return(r_val);
 }
 
-double ln_Inv_sigma_M(cosmo_info *cosmo,
-                      double      M_interp,
-                      double      z,
-                      int         mode,    
-                      int         component){
+double ln_Inv_sigma_M(cosmo_info **cosmo,
+                      double       M_interp,
+                      double       z,
+                      int          mode,    
+                      int          component){
   char         mode_name[ADaPS_NAME_LENGTH];
   char         component_name[ADaPS_NAME_LENGTH];
   char         d2ln_Inv_sigma_name[ADaPS_NAME_LENGTH];
@@ -811,16 +811,16 @@ double ln_Inv_sigma_M(cosmo_info *cosmo,
   // Initialize
   pspec_names(mode,component,mode_name,component_name);
   sprintf(d2ln_Inv_sigma_name,"ln_Inv_sigma_lnM_%s_%s_interp",mode_name,component_name);
-  if(!ADaPS_exist(cosmo,d2ln_Inv_sigma_name))
-     init_sigma_M(&cosmo,
+  if(!ADaPS_exist(*cosmo,d2ln_Inv_sigma_name))
+     init_sigma_M(cosmo,
                   z,
                   mode,
                   component);
-  interp_ln_Inv_sigma=(interp_info *)ADaPS_fetch(cosmo,d2ln_Inv_sigma_name);
+  interp_ln_Inv_sigma=(interp_info *)ADaPS_fetch(*cosmo,d2ln_Inv_sigma_name);
 
   // Perform interpolation
   double norm;
-  norm =linear_growth_factor(z,cosmo);
+  norm =linear_growth_factor(z,*cosmo);
   r_val=interpolate(interp_ln_Inv_sigma,take_ln(M_interp))/norm;
   return(r_val);
 }
@@ -855,11 +855,11 @@ double dln_sigma_dlnM(cosmo_info *cosmo,
   return(r_val);
 }
 
-double dln_Inv_sigma_dlogM(cosmo_info *cosmo,
-			   double      M_interp,
-			   double      z,
-			   int         mode,
-			   int         component){
+double dln_Inv_sigma_dlogM(cosmo_info **cosmo,
+			   double       M_interp,
+			   double       z,
+			   int          mode,
+			   int          component){
   double       r_val;
   double      *ln_Inv_sigma;
   double       derr;
@@ -876,15 +876,15 @@ double dln_Inv_sigma_dlogM(cosmo_info *cosmo,
   // Initialize
   pspec_names(mode,component,mode_name,component_name);
   sprintf(d2ln_Inv_sigma_name,"ln_Inv_sigma_M_%s_%s_interp",mode_name,component_name);
-  if(!ADaPS_exist(cosmo,d2ln_Inv_sigma_name))
-     init_sigma_M(&cosmo,
+  if(!ADaPS_exist(*cosmo,d2ln_Inv_sigma_name))
+     init_sigma_M(cosmo,
                   z,
                   mode,
                   component);
 
   double norm;
-  norm =linear_growth_factor(z,cosmo);
-  interp_ln_Inv_sigma=(interp_info *)ADaPS_fetch(cosmo,d2ln_Inv_sigma_name);
+  norm =linear_growth_factor(z,*cosmo);
+  interp_ln_Inv_sigma=(interp_info *)ADaPS_fetch(*cosmo,d2ln_Inv_sigma_name);
   r_val=
     interpolate_derivative(interp_ln_Inv_sigma,
 		           take_log10(M_interp))/norm;
