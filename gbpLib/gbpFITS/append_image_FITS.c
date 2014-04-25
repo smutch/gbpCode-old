@@ -85,7 +85,7 @@ int append_image_FITS(void *image,SID_Datatype dtype,int n_D,int *D_in,const cha
 
   // Set extension name
   if(ext_name!=NULL)
-    fits_write_key(fp,TSTRING,"EXTNAME",ext_name,NULL,&status);
+    fits_write_key(fp,TSTRING,"EXTNAME",(void *)ext_name,NULL,&status);
 
   // Close the file
   fits_close_file(fp,&status);
