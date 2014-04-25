@@ -159,6 +159,21 @@ double lk_sc(double       z,
 	     int          mode,
 	     int          component);
 
+// Mass functions
+double scaled_mass_function(double sigma,int select_flag);
+double mass_function(double        M_interp,
+                     double        z,
+                     cosmo_info  **cosmo,
+                     int           mode,
+                     int           component,
+                     int           select_flag);
+double mass_function_cumulative(double       M_interp,
+                                double       z,
+                                cosmo_info  *cosmo,
+                                int          mode,
+                                int          component,
+                                int          select_flag);
+
 /********************************/
 /* Nonlinear theory routines    */
 /* (Mostly taken from smith2.h) */
@@ -289,23 +304,6 @@ double midpnt_smith(double (*func)(double,
 		    cosmo_info *cosmo, 
 		    int    nonlinear,
 		    double glob);
-
-/**************************/
-/* Mass function routines */
-/**************************/
-double scaled_mass_function(double sigma,int select_flag);
-double mass_function(double       M_interp,
-		     double       z,
-		     cosmo_info  *cosmo,
-		     int          mode,
-		     int          component,
-		     int          select_flag);
-double mass_function_cumulative(double      M_interp,
-                                double      z,
-                                cosmo_info *cosmo,
-                                int         mode,
-                                int         component,
-                                int         select_flag);
 
 /************************/
 /* Routines for NFW etc */

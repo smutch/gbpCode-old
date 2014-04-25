@@ -4,6 +4,8 @@
 INCFILES  = gbpCosmo.h
 OBJFILES  = gbpCosmo.o               \
 	    linear_theory.o          \
+	    mass_function.o          \
+	    mass_functions.o         \
 	    NFW_etc.o                \
 	    bias_model.o             
 LIBFILE   = libgbpCosmo.a

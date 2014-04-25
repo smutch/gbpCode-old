@@ -75,7 +75,7 @@ int main(int argc, char *argv[]){
 
   SID_free(SID_FARG a_list);
   SID_free(SID_FARG t_list);
-  free_interpolate(SID_FARG interp);
+  free_interpolate(SID_FARG interp,NULL);
 
   SID_log("Done.",SID_LOG_CLOSE);
 
