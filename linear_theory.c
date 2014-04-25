@@ -871,23 +871,22 @@ double dln_Inv_sigma_dlogM(cosmo_info **cosmo,
   interp_info *interp_ln_Inv_sigma;
   char         mode_name[ADaPS_NAME_LENGTH];
   char         component_name[ADaPS_NAME_LENGTH];
-  char         d2ln_Inv_sigma_name[ADaPS_NAME_LENGTH];
+  char         interp_name[ADaPS_NAME_LENGTH];
 
   // Initialize
   pspec_names(mode,component,mode_name,component_name);
-  sprintf(d2ln_Inv_sigma_name,"ln_Inv_sigma_M_%s_%s_interp",mode_name,component_name);
-  if(!ADaPS_exist(*cosmo,d2ln_Inv_sigma_name))
+  sprintf(interp_name,"ln_Inv_sigma_lnM_%s_%s_interp",mode_name,component_name);
+  if(!ADaPS_exist(*cosmo,interp_name))
      init_sigma_M(cosmo,
                   z,
                   mode,
                   component);
+  interp_ln_Inv_sigma=(interp_info *)ADaPS_fetch(*cosmo,interp_name);
 
-  double norm;
-  norm =linear_growth_factor(z,*cosmo);
-  interp_ln_Inv_sigma=(interp_info *)ADaPS_fetch(*cosmo,d2ln_Inv_sigma_name);
-  r_val=
+  double norm =linear_growth_factor(z,*cosmo);
+  r_val=take_ln(10.)*
     interpolate_derivative(interp_ln_Inv_sigma,
-		           take_log10(M_interp))/norm;
+		           take_ln(M_interp))/norm;
   return(r_val);
 }
 
