@@ -10,7 +10,7 @@ void read_groups(char        *filename_groups_root,
                   int          i_file,
                   int          mode,
                   plist_info  *plist,
-                  char        *catalog_name, ...){
+                  const char  *catalog_name, ...){
    char    filename_cat[5];
    char    filename_groups[256];
    char    filename_subgroups[256];

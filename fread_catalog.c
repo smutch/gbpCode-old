@@ -4,7 +4,7 @@
 
 #define _FILE_OFFSET_BITS 64
 
-int fread_catalog_file(fp_catalog_info *fp_in,halo_info *properties_out,halo_properties_info *properties_all_out,halo_profile_info *profiles_out,int halo_index){
+int fread_catalog_file(fp_catalog_info *fp_in,halo_properties_SAGE_info *properties_out,halo_properties_info *properties_all_out,halo_profile_info *profiles_out,int halo_index){
   int n_skip;
   int r_val=0;
 

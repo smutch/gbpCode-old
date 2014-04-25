@@ -92,6 +92,7 @@ int main(int argc, char *argv[]){
   // Fetch user inputs
   char filename_in_root[MAX_FILENAME_LENGTH];
   char filename_out_root[MAX_FILENAME_LENGTH];
+  char filename_a_list[MAX_FILENAME_LENGTH];
   char filename_properties_in[MAX_FILENAME_LENGTH];
   char filename_properties_out[MAX_FILENAME_LENGTH];
   char filename_profiles_in[MAX_FILENAME_LENGTH];
@@ -100,15 +101,42 @@ int main(int argc, char *argv[]){
   int stop_snap;
   strcpy(filename_in_root, argv[1]);
   strcpy(filename_out_root,argv[2]);
-  start_snap=atoi(argv[3]);
-  stop_snap =atoi(argv[4]);
+  strcpy(filename_a_list,  argv[3]);
+  box_size   =(double)atof(argv[4]);
+  start_snap =        atoi(argv[5]);
+  stop_snap  =        atoi(argv[6]);
 
   int offset_size=sizeof(unsigned int);
 
   SID_log("Converting from root {%s} to root {%s}",SID_LOG_OPEN,filename_in_root,filename_out_root);
+
+  // Read a-list
+  double *a_list;
+  int     n_a_list;
+  FILE   *fp_a_list;
+  size_t  line_length=0;
+  char   *line=NULL;
+  fp_a_list=fopen(filename_a_list,"r");
+  n_a_list =count_lines_data(fp_a_list);
+  a_list   =(double *)SID_malloc(sizeof(double)*n_a_list);
+  for(int i_a_list=0;i_a_list<n_a_list;i_a_list++){
+     grab_next_line_data(fp_a_list,&line,&line_length);
+     grab_double(line,1,&(a_list[i_a_list]));
+  }
+  SID_free(SID_FARG line);
+  for(int i_a_list=0;i_a_list<n_a_list;i_a_list++)
+     fprintf(stderr,"%lf\n",a_list[i_a_list]);
+  fclose(fp_a_list);
+
   int i_snap;
   for(i_snap=start_snap;i_snap<=stop_snap;i_snap++){
      SID_log("Processing snapshot No. %d...",SID_LOG_OPEN|SID_LOG_TIMER,i_snap);
+     double expansion_factor;
+     if(i_snap<n_a_list)
+        expansion_factor=a_list[i_snap];
+     else
+        SID_trap_error("Not enough entries in the expansion factor list (ie %d>=%d).",ERROR_LOGIC,i_snap,n_a_list);
+
      int i_run;
      for (i_run=0;i_run<2;i_run++){
         char filename_in[MAX_FILENAME_LENGTH];
@@ -390,6 +418,7 @@ int main(int argc, char *argv[]){
               fread(&bins,  sizeof(halo_profile_bin_info),n_bins,fp_profiles_read);
 
               // Modify profiles
+              /*
               int i_bin;
               int n_particles_cumulative=0;
               for(i_bin=0;i_bin<n_bins;i_bin++){
@@ -398,6 +427,7 @@ int main(int argc, char *argv[]){
                  bins[i_bin].spin[1]   /=(float)n_particles_cumulative;
                  bins[i_bin].spin[2]   /=(float)n_particles_cumulative;
               }
+              */
 
               // Write profiles
               fwrite(&n_bins,sizeof(int),                  1,     fp_profiles_write);
@@ -408,6 +438,7 @@ int main(int argc, char *argv[]){
               fread(&properties,sizeof(halo_properties_info),1,fp_properties_read);
 
               // Modify properties
+              /*
               const gsl_interp_type *interp_type;
               interp_info *vir_interpolate;
               double       r_interp[MAX_PROFILE_BINS];
@@ -434,6 +465,47 @@ int main(int argc, char *argv[]){
               init_interpolate(r_interp,y_interp,n_bins,interp_type,&vir_interpolate);
               properties.spin[2]=(float)interpolate(vir_interpolate,properties.R_vir);
               free_interpolate(SID_FARG vir_interpolate,NULL);
+              */
+              if(properties.R_halo==properties.R_vir){
+                 int i_profile=n_bins-1;
+                 //  ... COM positions ...
+                 properties.position_COM[0]=(double)(bins[i_profile].position_COM[0])/expansion_factor;
+                 properties.position_COM[1]=(double)(bins[i_profile].position_COM[1])/expansion_factor;
+                 properties.position_COM[2]=(double)(bins[i_profile].position_COM[2])/expansion_factor;
+                 //  ... M_vir ...
+                 properties.M_vir=(double)bins[i_profile].M_r;
+                 //  ... sigma_v ...
+                 properties.sigma_v=(float)bins[i_profile].sigma_tot;
+                 //   ... spin ...
+                 properties.spin[0]=(float)bins[i_profile].spin[0];
+                 properties.spin[1]=(float)bins[i_profile].spin[1];
+                 properties.spin[2]=(float)bins[i_profile].spin[2];
+                 //  ... triaxial axes ratios ...
+                 properties.q_triaxial=(float)bins[i_profile].q_triaxial;
+                 properties.s_triaxial=(float)bins[i_profile].s_triaxial;
+                 // ... shape eigen vectors ...
+                 for(int i=0;i<3;i++){
+                   double norm;
+                   for(int j=0;j<3;j++)
+                     properties.shape_eigen_vectors[i][j]=(float)bins[i_profile].shape_eigen_vectors[i][j];
+                   norm=sqrt(properties.shape_eigen_vectors[i][0]*properties.shape_eigen_vectors[i][0]+
+                             properties.shape_eigen_vectors[i][1]*properties.shape_eigen_vectors[i][1]+
+                             properties.shape_eigen_vectors[i][2]*properties.shape_eigen_vectors[i][2]);
+                   for(int j=0;j<3;j++)
+                     properties.shape_eigen_vectors[i][j]/=norm;
+                 }
+              }
+
+              // Enforce periodic box on COM position
+              properties.position_COM[0]+=properties.position_MBP[0];
+              properties.position_COM[1]+=properties.position_MBP[1];
+              properties.position_COM[2]+=properties.position_MBP[2];
+              if(properties.position_COM[0]< box_size) properties.position_COM[0]+=box_size;
+              if(properties.position_COM[1]< box_size) properties.position_COM[1]+=box_size;
+              if(properties.position_COM[2]< box_size) properties.position_COM[2]+=box_size;
+              if(properties.position_COM[0]>=box_size) properties.position_COM[0]-=box_size;
+              if(properties.position_COM[1]>=box_size) properties.position_COM[1]-=box_size;
+              if(properties.position_COM[2]>=box_size) properties.position_COM[2]-=box_size;
 
               // Write properties
               fwrite(&properties,sizeof(halo_properties_info),1,fp_properties_write);
@@ -456,6 +528,7 @@ int main(int argc, char *argv[]){
   }
   SID_log("Done.",SID_LOG_CLOSE);
 
+  SID_free(SID_FARG a_list);
   SID_exit(ERROR_NONE);
 }
 
