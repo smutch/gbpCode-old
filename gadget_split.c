@@ -80,8 +80,9 @@ int main(int argc, char *argv[]){
      int   record_length_out;
      int   record_length_header;
      int   i_type;
-     set_gadget_filename(filename_in_root,snapshot,i_file,TRUE,0,filename_in);
-     fp_in=fopen(filename_in,"r");
+     set_gadget_filename(filename_in_root,snapshot,i_file,flag_multifile,flag_file_type,filename_in);
+     if((fp_in=fopen(filename_in,"r"))==NULL)
+        SID_trap_error("Could not open {%s}.",ERROR_IO_OPEN,filename_in);
      fread(&record_length_in,sizeof(int),1,fp_in);
      fread(&header,sizeof(gadget_header_info),1,fp_in);
      fread(&record_length_out,sizeof(int),1,fp_in);

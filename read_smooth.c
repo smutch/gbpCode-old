@@ -264,19 +264,19 @@ void read_smooth(plist_info *plist,
        switch(i_quantity){
        case 0:
          SID_log("Lengths:   ",SID_LOG_OPEN);
-         sprintf(unit_name,"Mpc",species_name);
+         sprintf(unit_name,"Mpc");
          unit_factor=1./M_PER_MPC;
          local_array=r_smooth_array;
          break;
        case 1:
          SID_log("Densities: ",SID_LOG_OPEN);
-         sprintf(unit_name,"Msol/Mpc^3",species_name);
+         sprintf(unit_name,"Msol/Mpc^3");
          unit_factor=M_PER_MPC*M_PER_MPC*M_PER_MPC/M_SOL;
          local_array=rho_array;
          break;
        case 2:
          SID_log("sigmas_v's:",SID_LOG_OPEN);
-         sprintf(unit_name,"km/s",species_name);
+         sprintf(unit_name,"km/s");
          unit_factor=1e-3;
          local_array=sigma_v_array;
          break;
