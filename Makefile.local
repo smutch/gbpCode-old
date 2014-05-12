@@ -5,7 +5,7 @@ INCFILES  = gbpTrees.h
 LIBFILE   = libgbpTrees.a
 OBJFILES  =
 LIBS      = -lgbpTrees -lgbpHalos -lgbpSPH -lgbpCosmo -lgbpMath -lgbpLib
-SUBDIRS   = gbpTrees_build gbpTrees_analysis
+SUBDIRS   = core analysis
 BINFILES  = extract_tree_horizontal        \
 	    query_trees                    \
 	    query_bridge_matches           \
