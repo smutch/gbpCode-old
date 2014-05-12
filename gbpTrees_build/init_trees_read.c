@@ -10,6 +10,7 @@
 #include <gbpTrees_build.h>
 
 void init_trees_read(const char  *filename_tree_root,
+                     int          mode,
                      tree_info  **tree){
 
   SID_log("Initializing trees...",SID_LOG_OPEN);
@@ -66,43 +67,7 @@ void init_trees_read(const char  *filename_tree_root,
                           &((*tree)->n_progenitors_max),
                           &((*tree)->n_trees_subgroup),
                           &((*tree)->n_trees_group));
-
-  // Compute/fetch the mapping between horizontal tree IDs and forest IDs ...
-  int n_forests_group_in;
-  int n_forests_subgroup_in;
-  int n_forests_group_local_in;
-  int n_forests_subgroup_local_in;
-  read_forests(filename_tree_root,
-               &n_forests_group_in,
-               &n_forests_subgroup_in,
-               &n_forests_group_local_in,
-               &n_forests_subgroup_local_in,
-               &((*tree)->tree2forest_mapping_group),
-               &((*tree)->tree2forest_mapping_subgroup),
-               &((*tree)->n_trees_forest_groups_max),
-               &((*tree)->n_trees_forest_subgroups_max),
-               &((*tree)->forest_lo_group_local),
-               &((*tree)->forest_hi_group_local),
-               &((*tree)->forest_lo_subgroup_local),
-               &((*tree)->forest_hi_subgroup_local),
-               &((*tree)->n_groups_raw_local),
-               &((*tree)->n_subgroups_raw_local),
-               &((*tree)->n_groups_snap_alloc_local),
-               &((*tree)->n_subgroups_snap_alloc_local));
-  calc_sum_global(&((*tree)->n_groups_raw_local),   &((*tree)->n_groups_raw),   1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-  calc_sum_global(&((*tree)->n_subgroups_raw_local),&((*tree)->n_subgroups_raw),1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
-
-  // Set counts etc.  We set the number of forests to be
-  //    the number of subgroup forests, since this the
-  //    most generic/natural constraint
-  int n_forests_local             =n_forests_subgroup_local_in;
-  (*tree)->n_forests              =n_forests_subgroup_in;
-  (*tree)->n_forests_local        =n_forests_local;
-  (*tree)->n_wrap                 =(*tree)->n_search+1;
-  (*tree)->n_groups_trees         =0.;
-  (*tree)->n_groups_trees_local   =0.;
-  (*tree)->n_subgroups_trees_local=0.;
-  (*tree)->n_subgroups_trees      =0.;
+  (*tree)->n_wrap=(*tree)->n_search+1;
 
   // Create an array which maps the file numbers in the trees
   //   to the snapshot number (may differ from 1:1 if skipping snaps)
@@ -120,51 +85,6 @@ void init_trees_read(const char  *filename_tree_root,
      (*tree)->z_list[i_file]   =0.;
      (*tree)->t_list[i_file]   =0.;
   }
-
-  // Allocate counters
-  (*tree)->n_groups_snap_local   =(int *)SID_calloc(sizeof(int)*n_snaps);
-  (*tree)->n_subgroups_snap_local=(int *)SID_calloc(sizeof(int)*n_snaps);
-
-  // Allocate pointers
-  (*tree)->first_neighbour_groups   =(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_snaps);
-  (*tree)->first_neighbour_subgroups=(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_snaps);
-  (*tree)->last_neighbour_groups    =(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_snaps);
-  (*tree)->last_neighbour_subgroups =(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_snaps);
-  (*tree)->first_in_forest_groups   =(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_forests_local);
-  (*tree)->first_in_forest_subgroups=(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_forests_local);
-  (*tree)->last_in_forest_groups    =(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_forests_local);
-  (*tree)->last_in_forest_subgroups =(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_forests_local);
-  (*tree)->n_groups_forest_local    =(int             *)SID_malloc(sizeof(int)             *n_forests_local);
-  (*tree)->n_subgroups_forest_local =(int             *)SID_malloc(sizeof(int)             *n_forests_local);
-
-  // Initialize look-up information
-  (*tree)->group_indices          =NULL;
-  (*tree)->group_array            =NULL;
-  (*tree)->subgroup_indices       =NULL;
-  (*tree)->subgroup_array         =NULL;
-
-  // Initialize arrays
-  int i_snap;
-  int i_forest;
-  for(i_snap=0;i_snap<n_snaps;i_snap++){
-    (*tree)->n_groups_snap_local[i_snap]      =0;
-    (*tree)->n_subgroups_snap_local[i_snap]   =0;
-    (*tree)->first_neighbour_groups[i_snap]   =NULL;
-    (*tree)->first_neighbour_subgroups[i_snap]=NULL;
-    (*tree)->last_neighbour_groups[i_snap]    =NULL;
-    (*tree)->last_neighbour_subgroups[i_snap] =NULL;
-  }
-  for(i_forest=0;i_forest<n_forests_local;i_forest++){
-    (*tree)->n_groups_forest_local[i_forest]    =0;
-    (*tree)->n_subgroups_forest_local[i_forest] =0;
-    (*tree)->first_in_forest_groups[i_forest]   =NULL;
-    (*tree)->first_in_forest_subgroups[i_forest]=NULL;
-    (*tree)->last_in_forest_groups[i_forest]    =NULL;
-    (*tree)->last_in_forest_subgroups[i_forest] =NULL;
-  }
-  ADaPS_init(&((*tree)->data));
-  (*tree)->group_properties   =NULL;
-  (*tree)->subgroup_properties=NULL;
 
   // Read snapshot expansion factor list
   char        filename_alist_in[MAX_FILENAME_LENGTH];
@@ -190,6 +110,108 @@ void init_trees_read(const char  *filename_tree_root,
   fclose(fp_alist_in);
   SID_free(SID_FARG line);
   free_cosmo(&cosmo);
+
+  // Initialize a bunch of stuff
+  (*tree)->n_forests                =0;
+  (*tree)->n_forests_local          =0;
+  (*tree)->n_groups_trees           =0;
+  (*tree)->n_groups_trees_local     =0;
+  (*tree)->n_subgroups_trees_local  =0;
+  (*tree)->n_subgroups_trees        =0;
+  (*tree)->group_indices            =NULL;
+  (*tree)->group_array              =NULL;
+  (*tree)->subgroup_indices         =NULL;
+  (*tree)->subgroup_array           =NULL;
+  (*tree)->group_properties         =NULL;
+  (*tree)->subgroup_properties      =NULL;
+  (*tree)->n_groups_snap_local      =NULL;
+  (*tree)->n_subgroups_snap_local   =NULL;
+  (*tree)->first_neighbour_groups   =NULL;
+  (*tree)->first_neighbour_subgroups=NULL;
+  (*tree)->last_neighbour_groups    =NULL;
+  (*tree)->last_neighbour_subgroups =NULL;
+  (*tree)->first_in_forest_groups   =NULL;
+  (*tree)->first_in_forest_subgroups=NULL;
+  (*tree)->last_in_forest_groups    =NULL;
+  (*tree)->last_in_forest_subgroups =NULL;
+  (*tree)->n_groups_forest_local    =NULL;
+  (*tree)->n_subgroups_forest_local =NULL;
+  ADaPS_init(&((*tree)->data));
+
+  // If we only want the header information, then don't do the rest
+  if(!check_mode_for_flag(mode,TREE_READ_HEADER_ONLY)){
+     // Compute/fetch the mapping between horizontal tree IDs and forest IDs ...
+     int n_forests_group_in;
+     int n_forests_subgroup_in;
+     int n_forests_group_local_in;
+     int n_forests_subgroup_local_in;
+     read_forests(filename_tree_root,
+                  &n_forests_group_in,
+                  &n_forests_subgroup_in,
+                  &n_forests_group_local_in,
+                  &n_forests_subgroup_local_in,
+                  &((*tree)->tree2forest_mapping_group),
+                  &((*tree)->tree2forest_mapping_subgroup),
+                  &((*tree)->n_trees_forest_groups_max),
+                  &((*tree)->n_trees_forest_subgroups_max),
+                  &((*tree)->forest_lo_group_local),
+                  &((*tree)->forest_hi_group_local),
+                  &((*tree)->forest_lo_subgroup_local),
+                  &((*tree)->forest_hi_subgroup_local),
+                  &((*tree)->n_groups_raw_local),
+                  &((*tree)->n_subgroups_raw_local),
+                  &((*tree)->n_groups_snap_alloc_local),
+                  &((*tree)->n_subgroups_snap_alloc_local));
+     calc_sum_global(&((*tree)->n_groups_raw_local),   &((*tree)->n_groups_raw),   1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+     calc_sum_global(&((*tree)->n_subgroups_raw_local),&((*tree)->n_subgroups_raw),1,SID_INT,CALC_MODE_DEFAULT,SID.COMM_WORLD);
+
+     // Set counts etc.  We set the number of forests to be
+     //    the number of subgroup forests, since this is the
+     //    most generic/natural constraint
+     int n_forests_local             =n_forests_subgroup_local_in;
+     (*tree)->n_forests              =n_forests_subgroup_in;
+     (*tree)->n_forests_local        =n_forests_local;
+     (*tree)->n_groups_trees         =0;
+     (*tree)->n_groups_trees_local   =0;
+     (*tree)->n_subgroups_trees_local=0;
+     (*tree)->n_subgroups_trees      =0;
+
+     // Allocate counters
+     (*tree)->n_groups_snap_local   =(int *)SID_calloc(sizeof(int)*n_snaps);
+     (*tree)->n_subgroups_snap_local=(int *)SID_calloc(sizeof(int)*n_snaps);
+
+     // Allocate pointers
+     (*tree)->first_neighbour_groups   =(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_snaps);
+     (*tree)->first_neighbour_subgroups=(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_snaps);
+     (*tree)->last_neighbour_groups    =(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_snaps);
+     (*tree)->last_neighbour_subgroups =(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_snaps);
+     (*tree)->first_in_forest_groups   =(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_forests_local);
+     (*tree)->first_in_forest_subgroups=(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_forests_local);
+     (*tree)->last_in_forest_groups    =(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_forests_local);
+     (*tree)->last_in_forest_subgroups =(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_forests_local);
+     (*tree)->n_groups_forest_local    =(int             *)SID_malloc(sizeof(int)             *n_forests_local);
+     (*tree)->n_subgroups_forest_local =(int             *)SID_malloc(sizeof(int)             *n_forests_local);
+
+     // Initialize arrays
+     int i_snap;
+     int i_forest;
+     for(i_snap=0;i_snap<n_snaps;i_snap++){
+       (*tree)->n_groups_snap_local[i_snap]      =0;
+       (*tree)->n_subgroups_snap_local[i_snap]   =0;
+       (*tree)->first_neighbour_groups[i_snap]   =NULL;
+       (*tree)->first_neighbour_subgroups[i_snap]=NULL;
+       (*tree)->last_neighbour_groups[i_snap]    =NULL;
+       (*tree)->last_neighbour_subgroups[i_snap] =NULL;
+     }
+     for(i_forest=0;i_forest<n_forests_local;i_forest++){
+       (*tree)->n_groups_forest_local[i_forest]    =0;
+       (*tree)->n_subgroups_forest_local[i_forest] =0;
+       (*tree)->first_in_forest_groups[i_forest]   =NULL;
+       (*tree)->first_in_forest_subgroups[i_forest]=NULL;
+       (*tree)->last_in_forest_groups[i_forest]    =NULL;
+       (*tree)->last_in_forest_subgroups[i_forest] =NULL;
+     }
+  }
 
   SID_log("Done.",SID_LOG_CLOSE);
 }

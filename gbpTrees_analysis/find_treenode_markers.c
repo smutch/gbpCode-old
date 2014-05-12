@@ -18,6 +18,14 @@ int find_treenode_markers(tree_info *trees,tree_node_info *halo,tree_markers_inf
    find_treenode_formation      (trees,halo,0.5,
                                             &(markers->peak_mass),
                                             &(markers->half_peak_mass));
+   find_treenode_last_merger    (trees,halo,0.33,
+                                            &(markers->merger_33pc_remnant),
+                                            &(markers->merger_33pc_host),
+                                            &(markers->merger_33pc_merger));
+   find_treenode_last_merger    (trees,halo,0.1,
+                                            &(markers->merger_10pc_remnant),
+                                            &(markers->merger_10pc_host),
+                                            &(markers->merger_10pc_merger));
    if(markers->branch_root!=NULL)
       markers->descendant=markers->branch_root->descendant;
    else

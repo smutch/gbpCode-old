@@ -362,6 +362,7 @@ void write_trees_horizontal(void  **groups_in,
               SID_fwrite(&group_score_desc,        sizeof(float),1,&fp_trees_out);
               SID_fwrite(&group_score_prog,        sizeof(float),1,&fp_trees_out);
               SID_fwrite(&group_snap_backmatch,    sizeof(int),  1,&fp_trees_out);
+              SID_fwrite(&group_file_backmatch,    sizeof(int),  1,&fp_trees_out);
               SID_fwrite(&group_index_backmatch,   sizeof(int),  1,&fp_trees_out);
               SID_fwrite(&group_id_backmatch,      sizeof(int),  1,&fp_trees_out);
            }
@@ -470,6 +471,7 @@ void write_trees_horizontal(void  **groups_in,
                  SID_fwrite(&subgroup_score_desc,        sizeof(float),1,&fp_trees_out);
                  SID_fwrite(&subgroup_score_prog,        sizeof(float),1,&fp_trees_out);
                  SID_fwrite(&subgroup_snap_backmatch,    sizeof(int),  1,&fp_trees_out);
+                 SID_fwrite(&subgroup_file_backmatch,    sizeof(int),  1,&fp_trees_out);
                  SID_fwrite(&subgroup_index_backmatch,   sizeof(int),  1,&fp_trees_out);
                  SID_fwrite(&subgroup_id_backmatch,      sizeof(int),  1,&fp_trees_out);
               }

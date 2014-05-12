@@ -318,7 +318,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
        // Initialize tree pointer-arrays with dummy values
        init_trees_horizontal_snapshot(halos_i,n_halos_i,i_read,i_file,n_halos_max);
        
-       // Use back-matching to identify bridged and fragmented halos ...
+       // Use back-matching to identify bridged and fragmented halos (alos, read current snapshot halo sizes here)...
        if(flag_fix_bridges)
           identify_bridges(halos,
                            halos_i,
@@ -338,6 +338,13 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                            n_files,
                            filename_root_matches,
                            flag_match_subgroups);
+       // Just read the halo sizes if we aren't
+       else{
+          SID_exit(1); // This code isn't working yet
+          // Store halo sizes for the current snapshot's halos
+          for(int i_halo=0;i_halo<n_halos_i;i_halo++)
+             halos[i_file%n_wrap][i_halo].n_particles=n_particles[i_halo];
+       }
 
        // Perform forward-matching
        construct_progenitors(halos,
@@ -387,6 +394,10 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                                i_file,
                                n_search,
                                n_files);
+
+       // Now that we know which halos are main progenitors, we can set the n_partices_largest_descendant values.
+       set_largest_descendants(halos_i,
+                               n_halos_i);
 
        // This has to be written right after a snapshot is read and processed (because it needs all forward scan information), 
        //    so it is separate from the rest of the log output code.

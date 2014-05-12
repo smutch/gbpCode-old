@@ -29,7 +29,9 @@ void init_trees_horizontal_snapshot(tree_horizontal_info *halos_i,int n_halos_i,
       halos_i[i_halo].main_progenitor_id=-1;
       halos_i[i_halo].tree_id           =-1;
       halos_i[i_halo].n_particles       = 0;
-      halos_i[i_halo].n_progenitors     = 0;
+      halos_i[i_halo].n_particles_parent= 0;
+      halos_i[i_halo].n_particles_largest_descendant= 0;
+      halos_i[i_halo].n_progenitors                 = 0;
    }
 }
 

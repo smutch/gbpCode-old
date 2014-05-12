@@ -3,15 +3,23 @@
 #include <gbpHalos.h>
 #include <gbpCosmo.h>
 
+// This defines the minimum effective fraction of
+//    mass needed to be considered a good match
+#define READ_MATCHES_GOODNESS_FS  0.2
+
 #define K_MATCH_SUBGROUPS 0
 #define K_MATCH_GROUPS    1
 
+#define MAX_TREE_MATCH_SCORE 1e9
+
 // Tree finalization and reading modes
+#define TREE_READ_DEFAULT                 0
 #define TREE_SUBSTRUCTURE_ORDER_DEFAULT   1
 #define TREE_PROGENITOR_ORDER_DELUCIA     2
 #define TREE_PROGENITOR_ORDER_N_PARTICLES 4
 #define TREE_PROGENITOR_ORDER_DEFAULT     TREE_PROGENITOR_ORDER_N_PARTICLES
 #define TREE_READ_EXTENDED_POINTERS       8
+#define TREE_READ_HEADER_ONLY             16
 #define TREE_MODE_DEFAULT                 (TREE_SUBSTRUCTURE_ORDER_DEFAULT|TREE_PROGENITOR_ORDER_DEFAULT)
 
 // If any of these are changed, don't forget to modify parse_match_type.c
@@ -44,6 +52,56 @@
 #define TREE_CASE_UNPROCESSED                   262144  // For internal use.  This should never be seen in the output.
 #define TREE_CASE_INVALID                       524288  // For internal use.  This should never be seen in the output.
 #define TREE_CASE_FRAGMENTED_NEW                (TREE_CASE_EMERGED_CANDIDATE+TREE_CASE_NO_PROGENITORS)
+
+#ifdef _MAIN
+   int   n_tree_case_flag_list=20;
+   int   tree_case_flag_list[]={
+                  TREE_CASE_SIMPLE,
+                  TREE_CASE_MAIN_PROGENITOR,
+                  TREE_CASE_MERGER,
+                  TREE_CASE_DROPPED,
+                  TREE_CASE_STRAYED,
+                  TREE_CASE_BRIDGED,
+                  TREE_CASE_EMERGED_CANDIDATE,
+                  TREE_CASE_EMERGED,
+                  TREE_CASE_NO_PROGENITORS,
+                  TREE_CASE_FRAGMENTED_STRAYED,
+                  TREE_CASE_FRAGMENTED_RETURNED,
+                  TREE_CASE_FRAGMENTED_EXCHANGED,
+                  TREE_CASE_MATCHED_TO_BRIDGE,
+                  TREE_CASE_BRIDGE_DEFAULT,
+                  TREE_CASE_GHOST,
+                  TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED,
+                  TREE_CASE_BRIDGE_FINALIZE,
+                  TREE_CASE_UNPROCESSED,
+                  TREE_CASE_INVALID,
+                  TREE_CASE_FRAGMENTED_NEW};
+   const char *tree_case_flag_list_text[]={
+                        "SIMPLE",
+                        "MAIN_PROGENITOR",
+                        "MERGER",
+                        "DROPPED",
+                        "STRAYED",
+                        "BRIDGED",
+                        "EMERGED_CANDIDATE",
+                        "EMERGED",
+                        "NO_PROGENITORS",
+                        "FRAGMENTED_STRAYED",
+                        "FRAGMENTED_RETURNED",
+                        "FRAGMENTED_EXCHANGED",
+                        "MATCHED_TO_BRIDGE",
+                        "BRIDGE_DEFAULT",
+                        "GHOST",
+                        "MATCHED_TO_BRIDGE_UNPROCESSED",
+                        "BRIDGE_FINALIZE",
+                        "UNPROCESSED",
+                        "INVALID",
+                        "FRAGMENTED_NEW"};
+#else
+   extern int n_tree_case_flag_list;
+   extern int tree_case_flag_list[];
+   extern const char *tree_case_flag_list_text[];
+#endif
 
 #define TREE_HORIZONTAL_READ_DEFAULT   0
 #define TREE_HORIZONTAL_READ_EXTENDED  1
@@ -120,24 +178,25 @@ struct match_info{
   float                 score;
 };
 struct tree_horizontal_info{
-  int          id;                 // This halo's id
-  int          main_progenitor_id; // This halo's main progenitor id
-  int          tree_id;            // This halo's tree id
-  int          type;               // A bit-wise switch characterising this halo's matching
-  int          file;               // This halo's snapshot index (ie. 0->n_snaps_used_in_trees-1)
-  int          snap;               // This halo's snapshot number
-  int          n_particles;        // Number of particles in this halo
-  int          n_particles_parent; // Number of particles in this halo's parent halo
-  int          n_bridges;          // The number of cnadidate emerged halos back-matched to this halo
-  int          n_progenitors;      // The number of progenitors pointing to this halo
-  int          index;              // This halo's index in the halo catalog
-  match_info   first_progenitor;   // Pointer to this halo's first progenitor
-  match_info   last_progenitor;    // Pointer to this halo's last  progenitor
-  match_info   next_progenitor;    // Pointer to this halo's next  progenitor
-  bridge_info *bridges;            // Contains the pointer information for all of the back-matches to this halo
-  match_info   bridge_forematch;   // Pointer to a possible initial match to a bridged halo
-  match_info   bridge_backmatch;   // Pointer to a possible back-matched bridged halo
-  match_info   descendant;         // Contains all the needed pointers to the descendant
+  int          id;                             // This halo's id
+  int          main_progenitor_id;             // This halo's main progenitor id
+  int          tree_id;                        // This halo's tree id
+  int          type;                           // A bit-wise switch characterising this halo's matching
+  int          file;                           // This halo's snapshot index (ie. 0->n_snaps_used_in_trees-1)
+  int          snap;                           // This halo's snapshot number
+  int          n_particles;                    // Number of particles in this halo
+  int          n_particles_parent;             // Number of particles in this halo's parent halo
+  int          n_particles_largest_descendant; // Number of particles in this halo's largest-ever descendant
+  int          n_bridges;                      // The number of cnadidate emerged halos back-matched to this halo
+  int          n_progenitors;                  // The number of progenitors pointing to this halo
+  int          index;                          // This halo's index in the halo catalog
+  match_info   first_progenitor;               // Pointer to this halo's first progenitor
+  match_info   last_progenitor;                // Pointer to this halo's last  progenitor
+  match_info   next_progenitor;                // Pointer to this halo's next  progenitor
+  bridge_info *bridges;                        // Contains the pointer information for all of the back-matches to this halo
+  match_info   bridge_forematch;               // Pointer to a possible initial match to a bridged halo
+  match_info   bridge_backmatch;               // Pointer to a possible back-matched bridged halo
+  match_info   descendant;                     // Contains all the needed pointers to the descendant
 };
 
 typedef struct tree_horizontal_extended_info tree_horizontal_extended_info;
@@ -153,9 +212,10 @@ struct tree_horizontal_extended_info{
   int          n_particles_proj;   // Number of particles in this halo's progenitor
   int          score_desc;         // Matching score of this halo to it's descendant
   int          score_prog;         // Matching score of this halo to it's descendant
-  int          snap_bridge;        // File index of any halo that this halo may be matched to
-  int          index_bridge;       // Index of any bridge this halo may be matched to
-  int          id_bridge;          // ID of any bridge this halo may be matched to
+  int          snap_bridge;        // Snapshot of any halo that this halo may be back-matched to
+  int          file_bridge;        // File index of any halo that this halo may be back-matched to
+  int          index_bridge;       // Index of any bridge this halo may be back-matched to
+  int          id_bridge;          // ID of any bridge this halo may be back-matched to
   int          index;              // This halo's index in the halo catalog
 };
 
@@ -346,6 +406,7 @@ struct store_tree_data_free_parms_info{
 #ifdef __cplusplus
 extern "C" {
 #endif
+int tree_case_flags_text(int match_type,const char *separator_string,char **return_string);
 void read_trees(char       *filename_tree_root,
                 char       *filename_cat_root,
                 int         mode_progenitor,
@@ -543,6 +604,8 @@ void clean_emerged_halo_list(tree_horizontal_info *halos_i,
                              int                   i_file,
                              int                   n_search,
                              int                   n_files);
+void set_largest_descendants(tree_horizontal_info *halos_i,
+                             int                   n_halos_i);
 void apply_horizontal_tree_defaults(int                    n_halos_1_matches,
                                     int                    n_halos_i,
                                     tree_horizontal_info **halos,
@@ -776,7 +839,7 @@ void compute_trees_auxiliary(char *filename_root,
                              int   n_files_groups,
                              int   n_files_subgroups,
                              int  *flag_clean);
-void init_trees_read(const char *filename_trees_root,tree_info **tree);
+void init_trees_read(const char *filename_trees_root,int mode,tree_info **tree);
 void free_trees(tree_info **tree);
 int add_node_to_trees(tree_info        *trees,
                       int               i_forest,

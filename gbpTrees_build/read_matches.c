@@ -192,12 +192,14 @@ void read_matches(char    *filename_in_dir,
          SID_free(SID_FARG n_sub_group_j);
    }
 
-   // Apply a goodness-of-fit criterion
+   // Apply a goodness-of-fit criterion and check that the maximum allowed score has not been exceeded
    for(i_halo=0;i_halo<(*n_groups_i);i_halo++){
       if(match_ids[i_halo]>=0){
          if(!check_goodness_of_match(n_particles_i[i_halo],match_score[i_halo]))
             match_ids[i_halo]=-1;
       }
+      if(match_score[i_halo]>MAX_TREE_MATCH_SCORE)
+         SID_trap_error("The maximum allowed match score has been exceeded (ie. %le>%le).",ERROR_LOGIC,match_score[i_halo],MAX_TREE_MATCH_SCORE);
    }
 
    // If the n_particles_i array is a temporary array, free it

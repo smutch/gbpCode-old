@@ -39,64 +39,22 @@ int main(int argc, char *argv[]){
   // Fetch user input
   int match_type;
   match_type=atoi(argv[1]);
-  SID_log("Parsing flags for match_type=%d...",SID_LOG_OPEN,match_type);
-
-  int   n_flags=22;
-  int   flags[]={TREE_CASE_SIMPLE,                      
-                 TREE_CASE_MAIN_PROGENITOR,
-                 TREE_CASE_MERGER,
-                 TREE_CASE_DROPPED,
-                 TREE_CASE_STRAYED,
-                 TREE_CASE_BRIDGED,
-                 TREE_CASE_EMERGED_CANDIDATE,
-                 TREE_CASE_EMERGED,
-                 TREE_CASE_NO_PROGENITORS,
-                 TREE_CASE_FRAGMENTED_STRAYED,
-                 TREE_CASE_FRAGMENTED_RETURNED,
-                 TREE_CASE_FRAGMENTED_EXCHANGED,
-                 TREE_CASE_MATCHED_TO_BRIDGE,
-                 TREE_CASE_BRIDGE_DEFAULT,
-                 TREE_CASE_GHOST,
-                 TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED,
-                 TREE_CASE_BRIDGE_FINALIZE,
-                 TREE_CASE_UNPROCESSED,
-                 TREE_CASE_INVALID,
-                 TREE_CASE_FRAGMENTED_NEW};
-  const char *names[]={"TREE_CASE_SIMPLE",
-                       "TREE_CASE_MAIN_PROGENITOR",
-                       "TREE_CASE_MERGER",
-                       "TREE_CASE_DROPPED",
-                       "TREE_CASE_STRAYED",
-                       "TREE_CASE_BRIDGED",
-                       "TREE_CASE_EMERGED_CANDIDATE",
-                       "TREE_CASE_EMERGED",
-                       "TREE_CASE_NO_PROGENITORS",
-                       "TREE_CASE_FRAGMENTED_STRAYED",
-                       "TREE_CASE_FRAGMENTED_RETURNED",
-                       "TREE_CASE_FRAGMENTED_EXCHANGED",
-                       "TREE_CASE_MATCHED_TO_BRIDGE",
-                       "TREE_CASE_BRIDGE_DEFAULT",
-                       "TREE_CASE_GHOST",
-                       "TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED",
-                       "TREE_CASE_BRIDGE_FINALIZE",
-                       "TREE_CASE_UNPROCESSED",
-                       "TREE_CASE_INVALID",
-                       "TREE_CASE_FRAGMENTED_NEW"};
+  SID_log("Parsing tree_case_flag_list for match_type=%d...",SID_LOG_OPEN,match_type);
 
   // Perform parsing
   int i_parse=0;
   int count  =0;
   int test_restult;
-  for(i_parse=0;i_parse<n_flags;i_parse++){
-     if(check_mode_for_flag(match_type,flags[i_parse])){
+  for(i_parse=0;i_parse<n_tree_case_flag_list;i_parse++){
+     if(check_mode_for_flag(match_type,tree_case_flag_list[i_parse])){
         count++;
         if(count==1)
-           SID_log("The following flags are switched ON:",SID_LOG_OPEN);
-        SID_log("%s",SID_LOG_COMMENT,names[i_parse]);
+           SID_log("The following tree_case_flag_list are switched ON:",SID_LOG_OPEN);
+        SID_log("%s",SID_LOG_COMMENT,tree_case_flag_list_text[i_parse]);
      }
   }
   if(count==0)
-     SID_log("No flags are switched ON",SID_LOG_OPEN);
+     SID_log("No tree_case_flag_list are switched ON",SID_LOG_OPEN);
   SID_log("",SID_LOG_SILENT_CLOSE);
   
   SID_log("Done.",SID_LOG_CLOSE);

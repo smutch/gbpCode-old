@@ -17,6 +17,12 @@ struct tree_markers_info{
   tree_node_info *joined_current_parent;
   tree_node_info *peak_mass;
   tree_node_info *half_peak_mass;
+  tree_node_info *merger_33pc_remnant;
+  tree_node_info *merger_33pc_host;
+  tree_node_info *merger_33pc_merger;
+  tree_node_info *merger_10pc_remnant;
+  tree_node_info *merger_10pc_host;
+  tree_node_info *merger_10pc_merger;
 };
 
 typedef struct tree_markers_stats_info tree_markers_stats_info;
@@ -117,6 +123,12 @@ int    find_treenode_formation(tree_info       *trees,
                                double           f,
                                tree_node_info **peak_mass,
                                tree_node_info **fraction_of_peak_mass);
+int find_treenode_last_merger(tree_info       *trees,
+                              tree_node_info  *halo,
+                              double           fraction,
+                              tree_node_info **remnant,
+                              tree_node_info **merger_host,
+                              tree_node_info **merged_halo);
 int    find_treenode_accretion(tree_info       *trees,
                                tree_node_info  *halo,
                                tree_node_info **first_satellite,

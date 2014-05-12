@@ -37,7 +37,7 @@ void read_trees(char       *filename_tree_root,
 
   // Initialize tree data structure and populate it
   //   with various pieces of header information
-  init_trees_read(filename_tree_root,trees);
+  init_trees_read(filename_tree_root,TREE_READ_DEFAULT,trees);
 
   // To make the code look a little cleaner, create some aliases
   int i_read_start=(*trees)->i_read_start;

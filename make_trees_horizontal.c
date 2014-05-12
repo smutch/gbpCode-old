@@ -60,7 +60,7 @@ int main(int argc, char *argv[]){
   sprintf(filename_snap_list_in,"%s/run/%s.a_list",filename_SSimPL_dir,filename_SSimPL_base);
   sprintf(filename_root_out,    "%s/trees/%s",     filename_SSimPL_dir,filename_trees_name);
 
-  SID_log("Constructing horizontal merger trees for snapshots #%d->#%d (step=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read_start,i_read_stop,i_read_step);
+  SID_log("Constructing horizontal merger trees for snapshots #%d->#%d (step=%d, n_search=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read_start,i_read_stop,i_read_step,n_search);
   compute_trees_horizontal(filename_halo_root_in,
                            filename_cat_root_in,
                            filename_snap_list_in,

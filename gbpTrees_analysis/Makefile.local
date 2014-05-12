@@ -56,6 +56,7 @@ OBJFILES  = average_tree_branches.o                  \
 	    find_treenode_branch_root.o              \
 	    find_treenode_branch_leaf.o              \
 	    find_treenode_formation.o                \
+	    find_treenode_last_merger.o              \
 	    find_treenode_accretion.o                \
 	    find_treesnap_z.o                  
 LIBFILE   = 

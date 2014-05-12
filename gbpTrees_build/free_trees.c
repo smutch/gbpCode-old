@@ -23,17 +23,21 @@ void free_trees(tree_info **trees){
   for(i_snap=0;i_snap<(*trees)->n_snaps;i_snap++){
      tree_node_info *current;
      tree_node_info *next;
-     next=(*trees)->first_neighbour_groups[i_snap];
-     while(next!=NULL){
-        current=next;
-        next   =current->next_neighbour;
-        SID_free(SID_FARG current);
+     if((*trees)->first_neighbour_groups!=NULL){
+        next=(*trees)->first_neighbour_groups[i_snap];
+        while(next!=NULL){
+           current=next;
+           next   =current->next_neighbour;
+           SID_free(SID_FARG current);
+        }
      }
-     next=(*trees)->first_neighbour_subgroups[i_snap];
-     while(next!=NULL){
-        current=next;
-        next   =current->next_neighbour;
-        SID_free(SID_FARG current);
+     if((*trees)->first_neighbour_subgroups!=NULL){
+        next=(*trees)->first_neighbour_subgroups[i_snap];
+        while(next!=NULL){
+           current=next;
+           next   =current->next_neighbour;
+           SID_free(SID_FARG current);
+        }
      }
   }
   SID_free(SID_FARG (*trees)->snap_list);

@@ -15,6 +15,7 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
    int i_group;
    int i_subgroup;
    int j_subgroup;
+   int flag_returned;
    for(i_group=0,i_subgroup=0;i_group<n_groups[l_read];i_group++){
       int group_id;
       int group_n_particles;
@@ -29,6 +30,7 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
       int group_score_desc;
       int group_score_prog;
       int group_snap_bridge;
+      int group_file_bridge;
       int group_index_bridge;
       int group_id_bridge;
       int group_index;
@@ -44,13 +46,23 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
       group_score_desc        =groups[i_read%n_wrap][i_group].score_desc;
       group_score_prog        =groups[i_read%n_wrap][i_group].score_prog;
       group_snap_bridge       =groups[i_read%n_wrap][i_group].snap_bridge;
+      group_file_bridge       =groups[i_read%n_wrap][i_group].file_bridge;
       group_index_bridge      =groups[i_read%n_wrap][i_group].index_bridge;
       group_id_bridge         =groups[i_read%n_wrap][i_group].id_bridge;
       group_index             =groups[i_read%n_wrap][i_group].index;
 
-      // Propagate type.  This check is needed so that we don't
-      //   propagate this type into any halos this one merges with.
-      if(group_id==group_descendant_id){
+      // Advance the bridge to it's current-time descendant. Note that n_wrap needs to be
+      //   at least 2*n_search+2 so that we are sure to have the bridged halo as well
+      while(group_file_bridge<i_read && group_index_bridge>=0){
+         tree_horizontal_extended_info *bridge_descendant=&(groups[group_file_bridge%n_wrap][group_index_bridge]);
+         group_snap_bridge+=bridge_descendant->file_offset*i_read_step;
+         group_file_bridge+=bridge_descendant->file_offset;
+         group_index_bridge=bridge_descendant->index;
+      }
+      flag_returned=(group_file_bridge==i_read && group_index_bridge==i_group);
+
+      // Propagate type.  Stop when the fragmented halo merges with something or returns to it's bridge.
+      if(group_id==group_descendant_id && !flag_returned){
          if(group_index>=0){ // Important for strayed cases
             // Add the propagated type.  The check against TREE_CASE_MERGER is also
             //    needed so that we don't propagate this type into any halos this one merges with.
@@ -98,6 +110,7 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
             desc_file=i_read+group_file_offset;
             groups[desc_file%n_wrap][group_index].id_bridge   =group_id_bridge;
             groups[desc_file%n_wrap][group_index].snap_bridge =group_snap_bridge;
+            groups[desc_file%n_wrap][group_index].file_bridge =group_file_bridge;
             groups[desc_file%n_wrap][group_index].index_bridge=group_index_bridge;
          }
       }
@@ -116,6 +129,7 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
          int subgroup_score_desc;
          int subgroup_score_prog;
          int subgroup_snap_bridge;
+         int subgroup_file_bridge;
          int subgroup_index_bridge;
          int subgroup_id_bridge;
          int subgroup_index;
@@ -132,13 +146,23 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
          subgroup_score_desc        =subgroups[i_read%n_wrap][i_subgroup].score_desc;
          subgroup_score_prog        =subgroups[i_read%n_wrap][i_subgroup].score_prog;
          subgroup_snap_bridge       =subgroups[i_read%n_wrap][i_subgroup].snap_bridge;
+         subgroup_file_bridge       =subgroups[i_read%n_wrap][i_subgroup].file_bridge;
          subgroup_index_bridge      =subgroups[i_read%n_wrap][i_subgroup].index_bridge;
          subgroup_id_bridge         =subgroups[i_read%n_wrap][i_subgroup].id_bridge;
          subgroup_index             =subgroups[i_read%n_wrap][i_subgroup].index;
 
-         // Propagate type.  This check is needed so that we don't
-         //   propagate this type into any halos this one merges with.
-         if(subgroup_id==subgroup_descendant_id){
+         // Advance the bridge to it's current-time descendant. Note that n_wrap needs to be
+         //   at least 2*n_search+2 so that we are sure to have the bridged halo as well
+         while(subgroup_file_bridge<i_read && subgroup_index_bridge>=0){
+            tree_horizontal_extended_info *bridge_descendant=&(subgroups[subgroup_file_bridge%n_wrap][subgroup_index_bridge]);
+            subgroup_snap_bridge+=bridge_descendant->file_offset*i_read_step;
+            subgroup_file_bridge+=bridge_descendant->file_offset;
+            subgroup_index_bridge=bridge_descendant->index;
+         }
+         flag_returned=(subgroup_file_bridge==i_read && subgroup_index_bridge==i_subgroup);
+
+         // Propagate type.  Stop when the fragmented halo merges with something or returns to it's bridge.
+         if(subgroup_id==subgroup_descendant_id && !flag_returned){
             if(subgroup_index>=0){ // Important for strayed cases
                // Add the propagated type.  The check against TREE_CASE_MERGER is also
                //    needed so that we don't propagate this type into any halos this one merges with.
@@ -186,6 +210,7 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
                desc_file=i_read+group_file_offset;
                subgroups[desc_file%n_wrap][subgroup_index].id_bridge   =subgroup_id_bridge;
                subgroups[desc_file%n_wrap][subgroup_index].snap_bridge =subgroup_snap_bridge;
+               subgroups[desc_file%n_wrap][subgroup_index].file_bridge =subgroup_file_bridge;
                subgroups[desc_file%n_wrap][subgroup_index].index_bridge=subgroup_index_bridge;
             }
          }

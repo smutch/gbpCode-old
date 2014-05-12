@@ -6,7 +6,9 @@ LIBFILE   = libgbpTrees.a
 OBJFILES  =
 LIBS      = -lgbpTrees -lgbpHalos -lgbpSPH -lgbpCosmo -lgbpMath -lgbpLib
 SUBDIRS   = gbpTrees_build gbpTrees_analysis
-BINFILES  = extract_tree_horizontal    \
+BINFILES  = extract_tree_horizontal        \
+	    query_trees                    \
+	    query_bridge_matches           \
 	    most_massive_subgroup_analysis \
             tree_stats_horizontal      \
 	    branch2ascii_ID_select     \
@@ -16,7 +18,7 @@ BINFILES  = extract_tree_horizontal    \
             extract_trees_mergers      \
             tree_stats                 \
             matchfile2ascii            \
-            query_match_file           \
+            query_matches              \
             make_trees                 \
             make_trees_analysis        \
             make_forests               \

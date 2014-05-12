@@ -25,7 +25,35 @@ void construct_progenitors(tree_horizontal_info **halos,
                            char   *filename_root_matches,
                            char   *group_text_prefix,
                            int     flag_match_subgroups){
-   SID_log("Constructing progenitors from forward-matching...",SID_LOG_OPEN|SID_LOG_TIMER);
+   SID_log("Constructing progenitors...",SID_LOG_OPEN|SID_LOG_TIMER);
+
+   // Generate the matches for bridged halos separately.  Instead of using matching scores,
+   //   make descisions based on the maximum size that the backmatched halos reach.
+   for(int i_halo=0;i_halo<n_halos_i;i_halo++){
+      // If this halo hasn't been processed during earlier searches ...
+      if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_UNPROCESSED) &&
+         check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGED)){
+         bridge_info *bridges     =halos_i[i_halo].bridges;
+         int          n_bridges   =halos_i[i_halo].n_bridges;
+         int          i_descendant=0;
+         for(int i_bridge=1;i_bridge<n_bridges;i_bridge++){
+            if((bridges[i_bridge].halo->n_particles_largest_descendant)>
+               (bridges[i_descendant].halo->n_particles_largest_descendant))
+               i_descendant=i_bridge;
+         }
+         set_halo_and_descendant(halos,
+                                 i_file,
+                                 i_halo,
+                                 bridges[i_descendant].halo->file,
+                                 bridges[i_descendant].halo->index,
+                                 10*MAX_TREE_MATCH_SCORE, // We don't necesarily have a score in this case.  This artificially high value 
+                                                          //   will force this match if any other decisions on score are made.
+                                 max_id,
+                                 n_wrap);
+      }
+   }
+
+   // Now perform the rest of the matches
    int j_file_1;
    int j_file_2;
    int j_read_1;

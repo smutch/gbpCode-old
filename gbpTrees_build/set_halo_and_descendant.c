@@ -40,22 +40,23 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
    if(file_offset==0)
       SID_trap_error("A zero file offset has been requested.  It should be -ve for roots and +ve otherwise.",ERROR_LOGIC);
 
+   // If the score exceeds the allowed match score, this must be a forced match.  Make it so.
+   int flag_forced=(score>MAX_TREE_MATCH_SCORE);
+
    // Set non-bridged halos or finalize bridge matches (ie. apply defaults for bridge progenitors not matched to emerged halos)
    if(!check_mode_for_flag(halos_j[j_halo].type,TREE_CASE_BRIDGED)                       ||
        check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED) ||
-       check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGE_FINALIZE)){
+       check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGE_FINALIZE)               ||
+       flag_forced){
 
-      // If we are processing a halo already identified as matched to a bridge, only accept
-      //   this new match if it meets these criteria ...
+      // If we are processing a halo already identified as matched to a bridge and we are not
+      //    finalizing or forcing this match, only accept this new match if it meets these criteria ...
       flag_process=TRUE;
       flag_emerged=FALSE;
-      if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED) &&
-         !check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGE_FINALIZE)){
-        // ... the difference in halo size (between the halo and the bridge we are considering) is less significant ...
-        //n_p_diff_old=IABS(halos_i[i_halo].bridge_forematch.halo->n_particles-halos_i[i_halo].n_particles);
-        //n_p_diff_new=IABS(halos_j[j_halo].n_particles-halos_i[i_halo].n_particles);
-        //if(n_p_diff_new>=n_p_diff_old)
-        //  flag_process=FALSE;
+      if(!check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGE_FINALIZE)               &&
+         !flag_forced                                                                       &&
+          check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED)){
+
         // ... we are not matching to a descendant of the initial bridged match ...
         tree_horizontal_info *current;
         current=halos_i[i_halo].bridge_forematch.halo->descendant.halo;
@@ -102,11 +103,11 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
          }
          // ... else add a next progenitor ...
          else{
-            // If we have a higher-score (ie a new main) progenitor, insert it at the 
+            // If we have a better main-progenitor, insert it at the 
             //   beginning of the list and swap IDs with the main progenitor so that
             //   the correct halo gets the main progenitor ID and all others get a new one ...
             memcpy(&old_progenitor,&(halos_j[j_halo].first_progenitor),sizeof(match_info));
-            // Progenitor order needs to be set by particle number to ensure correct emerged and fragmented halo processing
+            // Progenitor order needs to be set in a way that ensures correct emerged and fragmented halo processing
             //if(score>old_progenitor.score){ 
             if((new_progenitor.halo->n_particles)>(old_progenitor.halo->n_particles)){
                // ... let the new main progenitor inherit the descendant's id ...

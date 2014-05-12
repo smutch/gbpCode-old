@@ -16,7 +16,7 @@ void check_for_fragmented_halos(int k_match,
 
    // Finalize halos
    int i_group;
-   int n_strayed     =0;
+   int n_strayed  =0;
    int n_returned =0;
    int n_exchanged=0;
    for(i_group=0;i_group<n_groups;i_group++){
@@ -41,7 +41,7 @@ void check_for_fragmented_halos(int k_match,
             groups[i_write%n_wrap][i_group].type|=TREE_CASE_FRAGMENTED_STRAYED;
             n_strayed++;
          }
-         else if(main_progenitor_id==bridge_id){
+         else if(bridge_id==main_progenitor_id){
             groups[i_write%n_wrap][i_group].type|=TREE_CASE_FRAGMENTED_RETURNED;
             n_returned++;
          }

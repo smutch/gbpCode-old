@@ -111,21 +111,28 @@ void compute_trees_fragmented_halo_analysis(tree_info *trees,char *filename_out_
   }
   SID_log("Done.",SID_LOG_CLOSE);
 
-  // Write the files
+  // Write data files
   write_treenode_list_properties(trees,filename_out_root,list_halos);
   write_treenode_list_markers   (trees,filename_out_root,list_halos);
   write_treenode_list_data      (trees,filename_out_root,list_halos);
-  write_treenode_list_hist      (trees,filename_out_root,list_halos);
-  write_treenode_list_hist      (trees,filename_out_root,list_halos_central);
-  write_treenode_list_hist      (trees,filename_out_root,list_halos_substructure);
-  write_treenode_list_hist      (trees,filename_out_root,list_halos_new);
-  write_treenode_list_hist      (trees,filename_out_root,list_halos_new_central);
-  write_treenode_list_hist      (trees,filename_out_root,list_halos_new_substructure);
+  write_treenode_list_properties(trees,filename_out_root,list_halos_new);
+  write_treenode_list_markers   (trees,filename_out_root,list_halos_new);
+
+  // Write histograms
+  write_treenode_list_hist(trees,filename_out_root,list_halos);
+  write_treenode_list_hist(trees,filename_out_root,list_halos_central);
+  write_treenode_list_hist(trees,filename_out_root,list_halos_substructure);
+  write_treenode_list_hist(trees,filename_out_root,list_halos_new);
+  write_treenode_list_hist(trees,filename_out_root,list_halos_new_central);
+  write_treenode_list_hist(trees,filename_out_root,list_halos_new_substructure);
 
   // Clean-up
   free_treenode_list(&list_halos);
   free_treenode_list(&list_halos_central);
   free_treenode_list(&list_halos_substructure);
+  free_treenode_list(&list_halos_new);
+  free_treenode_list(&list_halos_new_central);
+  free_treenode_list(&list_halos_new_substructure);
 
   SID_log("Done.",SID_LOG_CLOSE);
 }

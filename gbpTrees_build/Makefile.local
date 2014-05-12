@@ -3,6 +3,7 @@
 #############################
 INCFILES  = gbpTrees_build.h
 OBJFILES  = read_trees_run_parameters.o                   \
+	    tree_case_flags_text.o                        \
 	    read_trees_match_scores.o                     \
 	    read_trees_horizontal.o                       \
 	    read_trees.o                                  \
@@ -71,6 +72,7 @@ OBJFILES  = read_trees_run_parameters.o                   \
 	    identify_bridges.o                            \
 	    construct_progenitors.o                       \
 	    clean_emerged_halo_list.o                     \
+	    set_largest_descendants.o                     \
 	    apply_horizontal_tree_defaults.o              \
 	    init_trees_horizontal_stats.o                 \
 	    write_trees_horizontal_emerged_candidates.o   \

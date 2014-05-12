@@ -10,7 +10,7 @@
 int main(int argc, char *argv[]){
   int     n_search;
   int     i_halo;
-  char    filename_root_in[MAX_FILENAME_LENGTH];
+  char    filename_SSimPL_root[MAX_FILENAME_LENGTH];
   char    filename_in[MAX_FILENAME_LENGTH];
   char    group_text_prefix[4];
   int     n_files;
@@ -37,7 +37,7 @@ int main(int argc, char *argv[]){
   SID_init(&argc,&argv,NULL);
 
   // Fetch user inputs
-  strcpy(filename_root_in,argv[1]);
+  strcpy(filename_SSimPL_root,argv[1]);
   if(!strcmp(argv[2],"groups") || !strcmp(argv[2],"group"))
      mode=MATCH_GROUPS;
   else if(!strcmp(argv[2],"subgroups") || !strcmp(argv[2],"subgroup"))
@@ -48,7 +48,7 @@ int main(int argc, char *argv[]){
   }
   i_read=atoi(argv[3]);
   i_halo=atoi(argv[4]);
-  SID_log("Searching match information for halo #%d in file #%d from {%s}...",SID_LOG_OPEN,i_halo,i_read,filename_root_in);
+  SID_log("Searching match information for halo #%d in file #%d of {%s}...",SID_LOG_OPEN,i_halo,i_read,filename_SSimPL_root);
 
   // Convert filename_root to filename
   switch(mode){
@@ -59,9 +59,10 @@ int main(int argc, char *argv[]){
      sprintf(group_text_prefix,"");
      break;
   }
-  char filename_base[MAX_FILENAME_LENGTH];
-  strcpy(filename_base,filename_root_in);
-  strip_path(filename_base);
+
+  // Set the standard SSiMPL match file path
+  char filename_root_in[MAX_FILENAME_LENGTH];
+  sprintf(filename_root_in,"%s/trees/matches/",filename_SSimPL_root);
 
   // Read header information
   SID_log("Reading header information...",SID_LOG_OPEN);

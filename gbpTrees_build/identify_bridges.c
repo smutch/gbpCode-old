@@ -70,7 +70,7 @@ void identify_bridges(tree_horizontal_info **halos,
                     match_score,
                     match_index);
 
-       // Store halo sizes
+       // Store halo sizes for the current snapshot's halos
        if(i_search==0){
           for(i_halo=0;i_halo<n_halos_2_matches;i_halo++)
              halos[i_file%n_wrap][i_halo].n_particles=n_particles[i_halo];
@@ -132,15 +132,15 @@ void identify_bridges(tree_horizontal_info **halos,
           if((halos_i[i_halo].bridges)!=NULL){
              // Scan over the list of halos from snapshot=j_read_1 
              //   that match this halo in j_read_2 ...
-             
              bridges=halos_i[i_halo].bridges;
              j_halo =find_index_int(match_id,i_halo,n_halos_1_matches,match_index);
              // Loop over all but the last halo in the list ...
              while(match_id[match_index[j_halo]]==i_halo && j_halo<(n_halos_1_matches-1)){
-                // Check to see if this halo is already in the bridge list (keep all strayed halos as well) ...
+                // Check to see if this halo ID is already in the bridge list (keep all -ve ID halos as well;
+                //   a tree-walk descendant cull will be done below as well) ...
                 flag_continue=TRUE;
                 if(halos[j_file_1%n_wrap][match_index[j_halo]].id>=0){
-                   for(k_halo=0,flag_continue=TRUE;k_halo<halos_i[i_halo].n_bridges && flag_continue;k_halo++){
+                   for(k_halo=0;k_halo<halos_i[i_halo].n_bridges && flag_continue;k_halo++){
                       if(bridges[k_halo].halo->id==halos[j_file_1%n_wrap][match_index[j_halo]].id)
                          flag_continue=FALSE;
                    }
@@ -155,7 +155,8 @@ void identify_bridges(tree_horizontal_info **halos,
              }
              // ... then do the last halo in the list ...
              if(match_id[match_index[j_halo]]==i_halo && j_halo==(n_halos_1_matches-1)){
-                // Check to see if this halo is already in the list (keep all strayed halos as well) ...
+                // Check to see if this halo ID is already in the bridge list (keep all -ve ID halos as well;
+                //   a tree-walk descendant cull will be done below as well) ...
                 flag_continue=TRUE;
                 if(halos[j_file_1%n_wrap][match_index[j_halo]].id>=0){
                    for(k_halo=0;k_halo<halos_i[i_halo].n_bridges && flag_continue;k_halo++){
@@ -176,7 +177,7 @@ void identify_bridges(tree_horizontal_info **halos,
        SID_log("Done.",SID_LOG_CLOSE);
     }
 
-    // ... lastly, reorder the emerged halos by score, keep only the most immediate bridge descendants and finalize the list ...
+    // ... lastly, reorder the back-matched halos by score, keep only the most immediate bridge descendants and finalize the list ...
     SID_log("Re-ordering bridges...",SID_LOG_OPEN);
     for(i_halo=0;i_halo<n_halos_i;i_halo++){
        if((halos_i[i_halo].n_bridges)>1){
@@ -193,26 +194,27 @@ void identify_bridges(tree_horizontal_info **halos,
              match_score[j_halo]=bridge->score;
              bridge_keep[j_halo]=TRUE;
           }
-          merge_sort((void *)match_score,(size_t)(halos_i[i_halo].n_bridges),&bridge_index,SID_INT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
+          merge_sort((void *)match_score,(size_t)(halos_i[i_halo].n_bridges),&bridge_index,SID_FLOAT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
 
           // Remove any mutual descendants from the list
-          //   (since they have their own IDs, this is 
-          //    needed to avoid calling them emerged halos)
+          //   (since they may have different IDs and passed the test above)
           for(j_halo=0;j_halo<halos_i[i_halo].n_bridges;j_halo++){
-             bridge = &(bridges[bridge_index[j_halo]]);
-             tree_horizontal_info *current;
-             // ... walk the tree upwards ...
              int k_file;
              int l_file;
+             // ... walk the tree upwards for each bridged halo...
+             tree_horizontal_info *current;
+             bridge = &(bridges[bridge_index[j_halo]]);
              current=bridge->halo->descendant.halo;
              if(current!=NULL)
                 k_file=current->file;
              l_file=k_file;
              while(current!=NULL && k_file>=l_file && k_file<MIN(n_files,i_file+(n_search+1))){
                 for(k_halo=0;k_halo<halos_i[i_halo].n_bridges;k_halo++){
-                   bridge = &(bridges[bridge_index[k_halo]]);
-                   if(bridge->halo==current)
-                      bridge_keep[k_halo]=FALSE;
+                   if(j_halo!=k_halo){ // Don't waste time checking a halo against itself
+                      bridge = &(bridges[bridge_index[k_halo]]);
+                      if(bridge->halo==current)
+                         bridge_keep[k_halo]=FALSE;
+                   }
                 }
                 current=current->descendant.halo;
                 l_file=k_file;
@@ -222,15 +224,14 @@ void identify_bridges(tree_horizontal_info **halos,
           }
 
           // Since we may have trimmed the list, recount the number remaining
-          int n_list;
-          n_list=halos_i[i_halo].n_bridges;
+          int n_list=halos_i[i_halo].n_bridges;
           for(j_halo=n_list-1,halos_i[i_halo].n_bridges=0;j_halo>=0;j_halo--){
             if(bridge_keep[j_halo])
                halos_i[i_halo].n_bridges++;
           }
 
-          // We've removed some halos and may not actually be a bridged halo anymore.  Clean-up if so.
-          if(halos_i[i_halo].n_bridges<1){
+          // We may have removed some halos and may not actually be a bridged halo anymore.  Clean-up if so.
+          if(halos_i[i_halo].n_bridges<=1){
              halos_i[i_halo].type&=(~TREE_CASE_BRIDGED);
              SID_free(SID_FARG halos_i[i_halo].bridges);
              halos_i[i_halo].n_bridges=0;
@@ -238,17 +239,21 @@ void identify_bridges(tree_horizontal_info **halos,
           else{
              halos_i[i_halo].type|=TREE_CASE_BRIDGED;
 
-             // Because we've overallocated previously, reallocate the bridge list here to save RAM.
+             // Because we've overallocated previously, reallocate the bridge list here to save RAM ...
              SID_free(SID_FARG halos_i[i_halo].bridges);
              (halos_i[i_halo].bridges)=(bridge_info *)SID_calloc(sizeof(bridge_info)*(halos_i[i_halo].n_bridges));
 
-             // Copy the sorted temporary list to the permanent list.
+             // ... and copy the sorted temporary list to the permanent list.
              for(j_halo=n_list-1,l_halo=0;j_halo>=0;j_halo--){
                 if(bridge_keep[j_halo]){
                    memcpy(&(halos_i[i_halo].bridges[l_halo]),&(bridges[bridge_index[j_halo]]),sizeof(bridge_info));
+                   // This check on NULL is needed to make sure that once a backmatch is set, it isn't changed in subsequent snapshots.
+                   //    This makes sure that the backmatch is set to the most immediate backmatched halo.
                    if(halos[(bridges[bridge_index[j_halo]].halo->file)%n_wrap][bridges[bridge_index[j_halo]].halo->index].bridge_backmatch.halo==NULL){
-                      halos[(bridges[bridge_index[j_halo]].halo->file)%n_wrap][bridges[bridge_index[j_halo]].halo->index].bridge_backmatch.halo =&(halos_i[i_halo]);
-                      halos[(bridges[bridge_index[j_halo]].halo->file)%n_wrap][bridges[bridge_index[j_halo]].halo->index].bridge_backmatch.score=match_score[bridge_index[j_halo]];
+                      halos[(bridges[bridge_index[j_halo]].halo->file)%n_wrap][bridges[bridge_index[j_halo]].halo->index].bridge_backmatch.halo =
+                         &(halos_i[i_halo]);
+                      halos[(bridges[bridge_index[j_halo]].halo->file)%n_wrap][bridges[bridge_index[j_halo]].halo->index].bridge_backmatch.score=
+                         match_score[bridge_index[j_halo]];
                    }
                    l_halo++;
                 }

@@ -76,9 +76,9 @@ void write_treenode_list_markers(tree_info *trees,const char *filename_out_root,
            if(SID.I_am_Master)
               fprintf(fp_props_out,"%4d %4d %4d",j_list,halo_ID_list[i_list],tree_case_list[i_list]);
            if(!flag_groups_list)
-              n_write=9;
+              n_write=13;
            else
-              n_write=6; // Don't write the halos at the end which pertain only to subgroups
+              n_write=10; // Don't write the halos at the end which pertain only to subgroups
            for(int i_write=0;i_write<n_write;i_write++){
               // Compute properties
               int    i_z_node;
@@ -97,34 +97,50 @@ void write_treenode_list_markers(tree_info *trees,const char *filename_out_root,
                        node_write=current_halo;
                        break;
                     case 1:
+                       sprintf(write_name,"descendant");
+                       node_write=current_halo->descendant;
+                       break;
+                    case 2:
+                       sprintf(write_name,"progenitor");
+                       node_write=current_halo->progenitor_first;
+                       break;
+                    case 3:
                        sprintf(write_name,"main_progenitor");
                        node_write=markers.main_progenitor;
                        break;
-                    case 2:
+                    case 4:
                        sprintf(write_name,"peak_mass");
                        node_write=markers.peak_mass;
                        break;
-                    case 3:
+                    case 5:
                        sprintf(write_name,"half_peak_mass");
                        node_write=markers.half_peak_mass;
                        break;
-                    case 4:
+                    case 6:
                        sprintf(write_name,"root");
                        node_write=markers.branch_root;
                        break;
-                    case 5:
+                    case 7:
                        sprintf(write_name,"leaf");
                        node_write=markers.branch_leaf;
                        break;
-                    case 6:
+                    case 8:
+                       sprintf(write_name,"merger_remnant_33pc");
+                       node_write=markers.merger_33pc_remnant;
+                       break;
+                    case 9:
+                       sprintf(write_name,"merger_remnant_10pc");
+                       node_write=markers.merger_10pc_remnant;
+                       break;
+                    case 10:
                        sprintf(write_name,"parent");
                        node_write=current_halo->parent;
                        break;
-                    case 7:
+                    case 11:
                        sprintf(write_name,"first_became_satellite");
                        node_write=markers.first_became_satellite;
                        break;
-                    case 8:
+                    case 12:
                        sprintf(write_name,"joined_current_parent");
                        node_write=markers.joined_current_parent;
                        break;
