@@ -64,6 +64,15 @@ int main(int argc, char *argv[]){
   char filename_root_in[MAX_FILENAME_LENGTH];
   sprintf(filename_root_in,"%s/trees/matches/",filename_SSimPL_root);
 
+  // Set the output file
+  char filename_base[MAX_FILENAME_LENGTH];
+  char filename_out[MAX_FILENAME_LENGTH];
+  sprintf(filename_base,filename_SSimPL_root);
+  if(!strcmp(&(filename_base[strlen(filename_base)-1]),"/"))
+     strcpy(&(filename_base[strlen(filename_base)-1]),"\0");
+  strip_path(filename_base);
+  sprintf(filename_out,"%s_%d_%d_matches.txt",filename_base,i_read,i_halo);
+
   // Read header information
   SID_log("Reading header information...",SID_LOG_OPEN);
   sprintf(filename_in,"%s/%sgroup_matches_header.dat",filename_root_in,group_text_prefix);
@@ -91,8 +100,23 @@ int main(int argc, char *argv[]){
   match_index  =(size_t *)SID_malloc(sizeof(size_t)*max_n_groups);
   match_score  =(float  *)SID_malloc(sizeof(float) *max_n_groups);
 
+  // Open output file
+  FILE *fp_out;
+  fp_out=fopen(filename_out,"w");
+  int i_column=1;
+  SID_log("Writing to file {%s}",SID_LOG_COMMENT,filename_out);
+  fprintf(fp_out,"# Column (%02d): Snapshot\n",                i_column++);
+  fprintf(fp_out,"#        (%02d): Halo index\n",              i_column++);
+  fprintf(fp_out,"#        (%02d): No. particles\n",           i_column++);
+  fprintf(fp_out,"#        (%02d): Matched to snapshot\n",     i_column++);
+  fprintf(fp_out,"#        (%02d): Matched to index\n",        i_column++);
+  fprintf(fp_out,"#        (%02d): Matched to No. particles\n",i_column++);
+  fprintf(fp_out,"#        (%02d): Match score\n",             i_column++);
+  fprintf(fp_out,"#        (%02d): Match sort index\n",        i_column++);
+  fprintf(fp_out,"#        (%02d): Good or bad match?\n",      i_column++);
+
   // Loop over all matching combinations
-  SID_log("Processing forward matches...",SID_LOG_COMMENT);
+  SID_log("Processing forward matches...",SID_LOG_OPEN);
   SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
   for(j_read=MIN(i_read_stop,i_read+n_search);j_read>=MAX(0,i_read-n_search);j_read--){
      if(i_read!=j_read){
@@ -121,26 +145,26 @@ int main(int argc, char *argv[]){
         // Write desired information
         match=match_ids[i_halo];
         if(match>=0)
-          printf("(%3d,%6d,%4d)->(%3d,%6d,%4d) score=%10.3f index=%zu (%s match)\n",
-                 i_read,i_halo,
-                 n_particles_i[i_halo],
-                 j_read,match,
-                 n_particles_j[match],
-                 match_score[i_halo],
-                 match_index[i_halo],
-                 goodness_of_match_text);
+          fprintf(fp_out,"%3d %7d %6d %3d %7d %6d %10.3le %7zu %s\n",
+                         i_read,i_halo,
+                         n_particles_i[i_halo],
+                         j_read,match,
+                         n_particles_j[match],
+                         match_score[i_halo],
+                         match_index[i_halo],
+                         goodness_of_match_text);
         else
-          printf("(%3d,%6d,%4d)->(%3d,%6d,%4d) score=%10.3f index=%zu (%s match)\n",
-                 i_read,i_halo,
-                 n_particles_i[i_halo],
-                 j_read,match,-1,
-                 match_score[i_halo],
-                 match_index[i_halo],
-                 goodness_of_match_text);
+          fprintf(fp_out,"%3d %7d %6d %3d %7d %6d %10.3le %7zu %s\n",
+                         i_read,i_halo,
+                         n_particles_i[i_halo],
+                         j_read,match,-1,
+                         match_score[i_halo],
+                         match_index[i_halo],
+                         goodness_of_match_text);
      }    
   }
   SID_log("Done.",SID_LOG_CLOSE);
-  SID_log("Processing backwards matches...",SID_LOG_COMMENT);
+  SID_log("Processing backwards matches...",SID_LOG_OPEN);
   j_read=i_read;
   j_halo=i_halo;
   for(i_read=MIN(i_read_stop,j_read+n_search);i_read>=MAX(0,j_read-n_search);i_read--){
@@ -170,19 +194,21 @@ int main(int argc, char *argv[]){
         // Write desired information
         for(i_halo=0,match=-1;i_halo<n_groups_i && match<0;i_halo++){
           if(match_ids[i_halo]==j_halo){
-            printf("(%3d,%6d,%4d)->(%3d,%6d,%4d) score=%10.3f index=%zu (%s match)\n",
-                    i_read,i_halo,
-                    n_particles_i[i_halo],
-                    j_read,j_halo,
-                    n_particles_j[j_halo],
-                    match_score[i_halo],
-                    match_index[i_halo],
-                    goodness_of_match_text);
+            fprintf(fp_out,"%3d %7d %6d %3d %7d %6d %10.3le %7zu %s\n",
+                           i_read,i_halo,
+                           n_particles_i[i_halo],
+                           j_read,j_halo,
+                           n_particles_j[j_halo],
+                           match_score[i_halo],
+                           match_index[i_halo],
+                           goodness_of_match_text);
           }
         }
      }    
   }
   SID_log("Done.",SID_LOG_CLOSE);
+
+  fclose(fp_out);
 
   // Clean-up
   SID_free(SID_FARG n_particles_i);

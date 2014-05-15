@@ -36,7 +36,6 @@ void apply_horizontal_tree_defaults(int                    n_halos_1_matches,
          halos_i[i_halo].type   &=(~TREE_CASE_UNPROCESSED);
          halos_i[i_halo].id      =(*max_id)++;
          halos_i[i_halo].tree_id =(*max_tree_id)++;
-         halos_i[i_halo].n_particles_largest_descendant=halos_i[i_halo].n_particles;
       }
    }
    SID_log("Done.",SID_LOG_CLOSE);

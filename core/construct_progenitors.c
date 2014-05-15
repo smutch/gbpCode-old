@@ -25,7 +25,7 @@ void construct_progenitors(tree_horizontal_info **halos,
                            char   *filename_root_matches,
                            char   *group_text_prefix,
                            int     flag_match_subgroups){
-   SID_log("Constructing progenitors...",SID_LOG_OPEN|SID_LOG_TIMER);
+   SID_log("Constructing progenitors...\n",SID_LOG_OPEN|SID_LOG_TIMER);
 
    // Generate the matches for bridged halos separately.  Instead of using matching scores,
    //   make descisions based on the maximum size that the backmatched halos reach.
@@ -37,10 +37,15 @@ void construct_progenitors(tree_horizontal_info **halos,
          int          n_bridges   =halos_i[i_halo].n_bridges;
          int          i_descendant=0;
          for(int i_bridge=1;i_bridge<n_bridges;i_bridge++){
-            if((bridges[i_bridge].halo->n_particles_largest_descendant)>
-               (bridges[i_descendant].halo->n_particles_largest_descendant))
+            if(((bridges[i_bridge].halo->n_particles_largest_descendant)>
+                (bridges[i_descendant].halo->n_particles_largest_descendant)) ||
+               ((bridges[i_bridge].halo->file)<(bridges[i_descendant].halo->file)))
                i_descendant=i_bridge;
          }
+if(i_read==866 && i_halo==0){
+for(int i_bridge=0;i_bridge<n_bridges;i_bridge++)
+fprintf(stderr,"%sgroup bridges: %d/%d %d/%d %d %d %d\n",group_text_prefix,i_bridge,i_descendant,bridges[i_bridge].halo->snap,i_read,bridges[i_bridge].halo->index,bridges[i_bridge].halo->n_particles,bridges[i_bridge].halo->n_particles_largest_descendant);
+}
          set_halo_and_descendant(halos,
                                  i_file,
                                  i_halo,
@@ -122,15 +127,19 @@ void construct_progenitors(tree_horizontal_info **halos,
       // Try to match halos-matched-to-bridges to the candidate emergent halos identified in the bridge-lists
       for(i_halo=0;i_halo<(*n_halos_1_matches);i_halo++){
          if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED)){
-            // Loop over all the emergent halos identified with the bridge that i_halo has been matched to
             int          n_list;
             bridge_info *bridges;
+
+            // ... sanity check ...
             if(halos_i[i_halo].bridge_forematch.halo==NULL)
               SID_trap_error("Bridge match not defined during emerged halo search.",ERROR_LOGIC);
             bridges=halos[(halos_i[i_halo].bridge_forematch.halo->file)%n_wrap][halos_i[i_halo].bridge_forematch.halo->index].bridges;
             if(bridges==NULL)
               SID_trap_error("Bridges not defined during emerged halo search.",ERROR_LOGIC);
             n_list=halos[(halos_i[i_halo].bridge_forematch.halo->file)%n_wrap][halos_i[i_halo].bridge_forematch.halo->index].n_bridges;
+
+            // Loop over all the emergent halos identified with the bridge that i_halo has been matched to
+            //   Perform decision making inside the set_halo_and_descendant() routine.
             int k_halo;
             for(k_halo=0;k_halo<n_list;k_halo++){
                if(bridges[k_halo].halo->file==j_file_2 && match_id[i_halo]==bridges[k_halo].halo->index){

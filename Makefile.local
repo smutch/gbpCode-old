@@ -6,31 +6,32 @@ LIBFILE   = libgbpTrees.a
 OBJFILES  =
 LIBS      = -lgbpTrees -lgbpHalos -lgbpSPH -lgbpCosmo -lgbpMath -lgbpLib
 SUBDIRS   = core analysis
-BINFILES  = extract_tree_horizontal        \
+BINFILES  = query_matches                  \
+	    query_progenitors              \
 	    query_trees                    \
-	    query_bridge_matches           \
+	    query_bridge                   \
+	    extract_tree_horizontal        \
 	    most_massive_subgroup_analysis \
-            tree_stats_horizontal      \
-	    branch2ascii_ID_select     \
-            make_a_list                \
-            validate_ghost_trees       \
-            parse_tree_case            \
-            extract_trees_mergers      \
-            tree_stats                 \
-            matchfile2ascii            \
-            query_matches              \
-            make_trees                 \
-            make_trees_analysis        \
-            make_forests               \
-            make_single_matches        \
-            make_trees_matches         \
-            make_trees_vertical        \
-            make_trees_horizontal      \
-            make_trees_grid            \
-            make_match_catalog         \
-            convert_Bolshoi            \
-            tree_groups                \
-            view_tree                  \
+            tree_stats_horizontal          \
+	    branch2ascii_ID_select         \
+            make_a_list                    \
+            validate_ghost_trees           \
+            parse_tree_case                \
+            extract_trees_mergers          \
+            tree_stats                     \
+            matchfile2ascii                \
+            make_trees                     \
+            make_trees_analysis            \
+            make_forests                   \
+            make_single_matches            \
+            make_trees_matches             \
+            make_trees_vertical            \
+            make_trees_horizontal          \
+            make_trees_grid                \
+            make_match_catalog             \
+            convert_Bolshoi                \
+            tree_groups                    \
+            view_tree                      \
             view_tree_mil
 SCRIPTS   = view_tree.py
 #############################

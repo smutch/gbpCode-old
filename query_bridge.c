@@ -8,7 +8,6 @@
 #include <gbpTrees.h>
 
 int main(int argc, char *argv[]){
-  int     n_search;
   int     i_halo;
   char    group_text_prefix[4];
   int     n_files;
@@ -67,7 +66,9 @@ int main(int argc, char *argv[]){
   tree_info *trees;
   char       filename_file_root[MAX_FILENAME_LENGTH];
   sprintf(filename_file_root,"%s/trees/%s",filename_SSimPL_root,filename_trees_root);
+  SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
   init_trees_read(filename_file_root,TREE_READ_HEADER_ONLY,&trees);
+  SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
   // Check that the given snapshot is valid
   int i_file=0;
@@ -86,22 +87,23 @@ int main(int argc, char *argv[]){
 
   // Write header
   int i_column=1;
-  fprintf(fp_out,"# Column (%02d): Halo snapshot\n",           i_column++);
-  fprintf(fp_out,"#        (%02d): Halo index\n",              i_column++);
-  fprintf(fp_out,"#        (%02d): Halo ID\n",                 i_column++);
-  fprintf(fp_out,"#        (%02d): Halo type\n",               i_column++);
-  fprintf(fp_out,"#        (%02d): Halo descendant ID\n",      i_column++);
-  fprintf(fp_out,"#        (%02d): Halo tree ID\n",            i_column++);
-  fprintf(fp_out,"#        (%02d): Halo file offset\n",        i_column++);
-  fprintf(fp_out,"#        (%02d): Halo index\n",              i_column++);
-  fprintf(fp_out,"#        (%02d): Bridge match ID\n",         i_column++);
-  fprintf(fp_out,"#        (%02d): Bridge match file offset\n",i_column++);
-  fprintf(fp_out,"#        (%02d): Bridge match index\n",      i_column++);
-  fprintf(fp_out,"#        (%02d): log10(M_vir [M_sol/h])\n",  i_column++);
-  fprintf(fp_out,"#        (%02d): Halo type string\n",        i_column++);
+  fprintf(fp_out,"# Column (%02d): Halo snapshot\n",              i_column++);
+  fprintf(fp_out,"#        (%02d): Halo index\n",                 i_column++);
+  fprintf(fp_out,"#        (%02d): Halo ID\n",                    i_column++);
+  fprintf(fp_out,"#        (%02d): Halo log10(M_vir [M_sol/h])\n",i_column++);
+  fprintf(fp_out,"#        (%02d): Halo tree ID\n",               i_column++);
+  fprintf(fp_out,"#        (%02d): Descendant file offset\n",     i_column++);
+  fprintf(fp_out,"#        (%02d): Descendant snapshot\n",        i_column++);
+  fprintf(fp_out,"#        (%02d): Descendant index\n",           i_column++);
+  fprintf(fp_out,"#        (%02d): Descendant ID\n",              i_column++);
+  fprintf(fp_out,"#        (%02d): Bridge match snapshot\n",      i_column++);
+  fprintf(fp_out,"#        (%02d): Bridge match index\n",         i_column++);
+  fprintf(fp_out,"#        (%02d): Halo type\n",                  i_column++);
+  fprintf(fp_out,"#        (%02d): Halo type string\n",           i_column++);
+
   int halo_file_offset =1;
   int flag_write_header=TRUE;
-  for(i_read=MAX(0,i_read_in-trees->n_search*trees->i_read_step);
+  for(i_read=MAX(0,i_read_in-trees->n_search*trees->i_read_step),i_file=MAX(0,i_file-trees->n_search);
       i_read<=MIN(trees->i_read_stop,i_read_in+trees->n_search*trees->i_read_step);
       i_read+=(trees->i_read_step),i_file++){
     if(i_read!=i_read_in){
@@ -159,8 +161,10 @@ int main(int argc, char *argv[]){
        SID_fread_all(&n_subgroups_max_in, sizeof(int),1,&fp_in_trees);
        SID_fread_all(&n_trees_subgroup_in,sizeof(int),1,&fp_in_trees);
        SID_fread_all(&n_trees_group_in,   sizeof(int),1,&fp_in_trees);
-       if(mode==MATCH_GROUPS         && i_halo>=n_groups)    SID_trap_error("Invalid group halo index (ie. %d>=%d).",   ERROR_LOGIC,i_halo,n_groups);
-       else if(mode==MATCH_SUBGROUPS && i_halo>=n_subgroups) SID_trap_error("Invalid subgroup halo index (ie. %d>=%d).",ERROR_LOGIC,i_halo,n_subgroups);
+       if(i_read==i_read_in){
+          if(mode==MATCH_GROUPS         && i_halo>=n_groups)    SID_trap_error("Invalid group halo index (ie. %d>=%d).",   ERROR_LOGIC,i_halo,n_groups);
+          else if(mode==MATCH_SUBGROUPS && i_halo>=n_subgroups) SID_trap_error("Invalid subgroup halo index (ie. %d>=%d).",ERROR_LOGIC,i_halo,n_subgroups);
+       }
        SID_fskip(sizeof(int),8,&fp_in_bridge_match);
        int i_group;
        int i_subgroup;
@@ -180,21 +184,31 @@ int main(int argc, char *argv[]){
              // Write match
              if(trees->snap_list[bridge_match_file]==i_read_in && bridge_match_index==i_halo){
                 char *halo_type_string=NULL;
-                tree_case_flags_text(halo_type,":",&halo_type_string);
+                tree_case_flags_text(halo_type,"+",&halo_type_string);
                 fread_catalog_file(&fp_properties,NULL,&properties,NULL,i_subgroup);
-                fprintf(fp_out,"%7d %7d %7d %7d %7d %7d %7d %7d %7d %7d %7d %5.2lf %s\n",
+                int descendant_snap;
+                int bridge_match_snap;
+                if(halo_file_offset>0)
+                   descendant_snap=trees->snap_list[i_file+halo_file_offset];
+                else
+                   descendant_snap=-1;
+                if(bridge_match_file>=0)
+                   bridge_match_snap=trees->snap_list[bridge_match_file];
+                else
+                   bridge_match_snap=-1;
+                fprintf(fp_out,"%3d %7d %7d %5.2lf %7d %3d %3d %7d %7d %3d %7d %7d %s\n",
                                i_read,
                                i_group,
                                halo_id,
-                               halo_type,
-                               halo_descendant_id,
+                               take_log10(properties.M_vir),
                                halo_tree_id,
                                halo_file_offset,
+                               descendant_snap,
                                halo_index,
-                               bridge_match_id,
-                               bridge_match_file,
+                               halo_descendant_id,
+                               bridge_match_snap,
                                bridge_match_index,
-                               take_log10(properties.M_vir),
+                               halo_type,
                                halo_type_string);
                 SID_free(SID_FARG halo_type_string);
              }
@@ -218,23 +232,35 @@ int main(int argc, char *argv[]){
                 SID_fread_all(&bridge_match_file, sizeof(int),1,&fp_in_bridge_match);
                 SID_fread_all(&bridge_match_index,sizeof(int),1,&fp_in_bridge_match);
                 // Write match
+if(i_read==754 && i_subgroup==36) fprintf(stderr,"test1 [%d %d] -> %d %d\n",i_read,i_subgroup,trees->snap_list[bridge_match_file],bridge_match_index);
+if(i_read==802 && i_subgroup==38) fprintf(stderr,"test2 [%d %d] -> %d %d\n",i_read,i_subgroup,trees->snap_list[bridge_match_file],bridge_match_index);
                 if(trees->snap_list[bridge_match_file]==i_read_in && bridge_match_index==i_halo){
                    char *halo_type_string=NULL;
-                   tree_case_flags_text(halo_type,":",&halo_type_string);
+                   tree_case_flags_text(halo_type,"+",&halo_type_string);
                    fread_catalog_file(&fp_properties,NULL,&properties,NULL,i_subgroup);
-                   fprintf(fp_out,"%7d %7d %7d %7d %7d %7d %7d %7d %7d %7d %7d %5.2lf %s\n",
+                   int descendant_snap;
+                   int bridge_match_snap;
+                   if(halo_file_offset>0)
+                      descendant_snap=trees->snap_list[i_file+halo_file_offset];
+                   else
+                      descendant_snap=-1;
+                   if(bridge_match_file>=0)
+                      bridge_match_snap=trees->snap_list[bridge_match_file];
+                   else
+                      bridge_match_snap=-1;
+                   fprintf(fp_out,"%3d %7d %7d %5.2lf %7d %3d %3d %7d %7d %3d %7d %7d %s\n",
                                   i_read,
                                   i_subgroup,
                                   halo_id,
-                                  halo_type,
-                                  halo_descendant_id,
+                                  take_log10(properties.M_vir),
                                   halo_tree_id,
                                   halo_file_offset,
+                                  descendant_snap,
                                   halo_index,
-                                  bridge_match_id,
-                                  bridge_match_file,
+                                  halo_descendant_id,
+                                  bridge_match_snap,
                                   bridge_match_index,
-                                  take_log10(properties.M_vir),
+                                  halo_type,
                                   halo_type_string);
                    SID_free(SID_FARG halo_type_string);
                 }
@@ -254,6 +280,8 @@ int main(int argc, char *argv[]){
   }
   if(fp_out!=stderr)
     fclose(fp_out);
+
+  SID_log("Output written to {%s}",SID_LOG_COMMENT,filename_out);
 
   // Clean-up
   free_trees(&trees);

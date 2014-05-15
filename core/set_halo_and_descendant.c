@@ -43,6 +43,13 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
    // If the score exceeds the allowed match score, this must be a forced match.  Make it so.
    int flag_forced=(score>MAX_TREE_MATCH_SCORE);
 
+if(halos_i[i_halo].id==0 || halos_j[j_halo].id==0){
+char *halo_type_string=NULL;
+tree_case_flags_text(halos_i[i_halo].type,"+",&halo_type_string);
+fprintf(stderr,"A:%05d/%05d %05d/%05d %le %s\n",halos_i[i_halo].snap,halos_i[i_halo].index,halos_j[j_halo].snap,halos_j[j_halo].index,score,halo_type_string);
+SID_free(SID_FARG halo_type_string);
+}
+
    // Set non-bridged halos or finalize bridge matches (ie. apply defaults for bridge progenitors not matched to emerged halos)
    if(!check_mode_for_flag(halos_j[j_halo].type,TREE_CASE_BRIDGED)                       ||
        check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED) ||
@@ -68,6 +75,7 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
               flag_process){
            if(current==&(halos_j[j_halo]))
              flag_process=FALSE;
+if(halos_i[i_halo].id==0 || halos_j[j_halo].id==0 && !flag_process) fprintf(stderr,"   Denied - Descendant of bridge\n");
            current=current->descendant.halo;
            l_file=k_file;
            if(current!=NULL)
@@ -181,5 +189,11 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
       halos_i[i_halo].bridge_forematch.score =score;
       halos_i[i_halo].type                  |=(TREE_CASE_MATCHED_TO_BRIDGE|TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED);
    }
+if(halos_i[i_halo].id==0 || halos_j[j_halo].id==0){
+char *halo_type_string=NULL;
+tree_case_flags_text(halos_i[i_halo].type,"+",&halo_type_string);
+fprintf(stderr,"B:%05d/%05d %05d/%05d %le %s\n",halos_i[i_halo].snap,halos_i[i_halo].index,halos_j[j_halo].snap,halos_j[j_halo].index,score,halo_type_string);
+SID_free(SID_FARG halo_type_string);
+}
 }
 

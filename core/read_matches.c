@@ -202,6 +202,13 @@ void read_matches(char    *filename_in_dir,
          SID_trap_error("The maximum allowed match score has been exceeded (ie. %le>%le).",ERROR_LOGIC,match_score[i_halo],MAX_TREE_MATCH_SCORE);
    }
 
+   // Since we may have changed some matches with the goodness 
+   //    of fit criterion, we need to re-perform the sort
+   size_t *match_index_temp;
+   merge_sort(match_ids,(size_t)(*n_groups_i),&match_index_temp,SID_INT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
+   memcpy(match_index,match_index_temp,(*n_groups_i)*sizeof(size_t));
+   SID_free(SID_FARG match_index_temp);
+
    // If the n_particles_i array is a temporary array, free it
    if(flag_alloc_n_particles_i)
       SID_free(SID_FARG n_particles_i);

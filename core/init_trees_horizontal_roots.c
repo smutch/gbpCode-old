@@ -163,7 +163,7 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
            subgroups[i_search][i_halo].type                          =TREE_CASE_MAIN_PROGENITOR|TREE_CASE_NO_PROGENITORS;
            subgroups[i_search][i_halo].n_particles                   =n_particles_subgroups[i_halo];
            subgroups[i_search][i_halo].n_particles_parent            =n_particles_groups[k_halo];
-           subgroups[i_search][i_halo].n_particles_largest_descendant=n_particles_groups[k_halo];
+           subgroups[i_search][i_halo].n_particles_largest_descendant=n_particles_subgroups[i_halo];
            subgroups[i_search][i_halo].descendant.halo               =&(subgroups[(i_search+1)%n_wrap][i_halo]);
            subgroups[i_search][i_halo].descendant.score              =1.;
            if(i_search!=(i_file_start%n_wrap)){
