@@ -7,10 +7,6 @@ void add_to_trees_horizontal_stats(tree_horizontal_stats_info *stats,int id,int 
    // Find maximum id
    stats->max_id=MAX(stats->max_id,id);
 
-   // Compute statistcs for strays
-   if(check_mode_for_flag(type,TREE_CASE_SIMPLE))
-      stats->n_simple++;
-
    // Compute statistcs for mergers
    if(check_mode_for_flag(type,TREE_CASE_MERGER))
       stats->n_mergers++;

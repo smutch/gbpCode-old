@@ -22,7 +22,6 @@ void write_trees_horizontal_log_file(char *filename_log,int l_write,int j_write,
          }
          fprintf(fp,"# (%02d): Maximum %sgroup ID\n",                       i_column++,group_text_prefix);
          fprintf(fp,"# (%02d): # of %sgroups\n",                            i_column++,group_text_prefix);
-         fprintf(fp,"# (%02d): # of simple        %sgroups\n",              i_column++,group_text_prefix);
          fprintf(fp,"# (%02d): # of merging       %sgroups\n",              i_column++,group_text_prefix);
          fprintf(fp,"# (%02d): # of strayed       %sgroups\n",              i_column++,group_text_prefix);
          fprintf(fp,"# (%02d): # of dropped       %sgroups\n",              i_column++,group_text_prefix);
@@ -61,10 +60,9 @@ void write_trees_horizontal_log_file(char *filename_log,int l_write,int j_write,
       else
         fprintf(fp,"%le %4d %10.4lf",a_list[l_write],j_write,deltat_a(cosmo,a_list[l_write+1],a_list[l_write])/S_PER_YEAR);
    }
-   fprintf(fp," %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d",
+   fprintf(fp," %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d %08d",
            stats->max_id,
            stats->n_halos,
-           stats->n_simple,
            stats->n_mergers,
            stats->n_strayed,
            stats->n_dropped,

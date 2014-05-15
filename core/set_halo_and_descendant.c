@@ -125,10 +125,8 @@ if(halos_i[i_halo].id==0 || halos_j[j_halo].id==0 && !flag_process) fprintf(stde
                // ... set new main progenitor type ...
                old_progenitor.halo->type|=  TREE_CASE_MERGER;
                old_progenitor.halo->type&=(~TREE_CASE_MAIN_PROGENITOR);
-               old_progenitor.halo->type&=(~TREE_CASE_SIMPLE);
                new_progenitor.halo->type&=(~TREE_CASE_MERGER);
                new_progenitor.halo->type|=  TREE_CASE_MAIN_PROGENITOR;
-               new_progenitor.halo->type&=(~TREE_CASE_SIMPLE);
                // ... set new main progenitor ...
                memcpy(&(halos_j[j_halo].first_progenitor),                      &new_progenitor,sizeof(match_info));
                memcpy(&(halos_j[j_halo].first_progenitor.halo->next_progenitor),&old_progenitor,sizeof(match_info));
@@ -145,7 +143,6 @@ if(halos_i[i_halo].id==0 || halos_j[j_halo].id==0 && !flag_process) fprintf(stde
                // ... set new non-main progenitor type ...
                halos_i[i_halo].type|=  TREE_CASE_MERGER;
                halos_i[i_halo].type&=(~TREE_CASE_MAIN_PROGENITOR);
-               halos_i[i_halo].type&=(~TREE_CASE_SIMPLE);
             }
          }
 
@@ -162,9 +159,7 @@ if(halos_i[i_halo].id==0 || halos_j[j_halo].id==0 && !flag_process) fprintf(stde
             halos_i[i_halo].type|=TREE_CASE_STRAYED;
 
          // ... set the flags for simple and dropped halo matches
-         if(file_offset==1)
-            halos_i[i_halo].type|=TREE_CASE_SIMPLE;
-         else if(!check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_MATCHED_TO_BRIDGE))
+         if(file_offset!=1 && !check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_MATCHED_TO_BRIDGE))
             halos_i[i_halo].type|=TREE_CASE_DROPPED;
 
          // ... set the flag for emerged halos

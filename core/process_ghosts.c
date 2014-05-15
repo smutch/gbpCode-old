@@ -215,7 +215,6 @@ void process_ghosts(tree_horizontal_ghost_group_info    **groups_in,
                   if(check_mode_for_flag(subgroup_progenitor->type,TREE_CASE_MERGER)){
                      flag_ghost_merger=TRUE;
                      subgroup_progenitor->type&=(~TREE_CASE_MERGER); // We want the last ghost in this chain to be tagged a merger, not it's base halo
-                     subgroup_progenitor->type|=TREE_CASE_SIMPLE;
                   }
                }
 

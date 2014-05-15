@@ -8,7 +8,6 @@ void write_trees_horizontal_report(int                   n_halos_i,
    compute_trees_horizontal_stats(halos_i,n_halos_i,n_halos_max,&stats,TRUE);
    SID_log("Results (estimates which may change with continued processing):",SID_LOG_OPEN);
    SID_log("# of halos               = %d",SID_LOG_COMMENT,stats.n_halos);
-   SID_log("# of simple matches      = %d",SID_LOG_COMMENT,stats.n_simple);
    SID_log("# of mergers             = %d",SID_LOG_COMMENT,stats.n_mergers);
    SID_log("# of strayed halos       = %d",SID_LOG_COMMENT,stats.n_strayed);
    SID_log("# of dropped halos       = %d",SID_LOG_COMMENT,stats.n_dropped);

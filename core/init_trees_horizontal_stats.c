@@ -2,7 +2,6 @@
 
 void init_trees_horizontal_stats(tree_horizontal_stats_info *stats,int n_halos){
    stats->n_halos                      =n_halos;
-   stats->n_simple                     =0;
    stats->n_mergers                    =0;
    stats->n_strayed                    =0;
    stats->n_dropped                    =0;

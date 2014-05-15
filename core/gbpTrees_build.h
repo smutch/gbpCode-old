@@ -23,7 +23,6 @@
 #define TREE_MODE_DEFAULT                 (TREE_SUBSTRUCTURE_ORDER_DEFAULT|TREE_PROGENITOR_ORDER_DEFAULT)
 
 // If any of these are changed, don't forget to modify parse_match_type.c
-#define TREE_CASE_SIMPLE                        1       // Set when a halo has a file_offset=1 
 #define TREE_CASE_MAIN_PROGENITOR               2       // Set for the progenitor with the highest match score. (propagated for ghosts)
 #define TREE_CASE_MERGER                        4       // Set when new IDs are created (ie. last point the halo was seen).
                                                         //    Set only for the last ghost in ghost-populated trees for mergers w/ offset>1.
@@ -54,9 +53,8 @@
 #define TREE_CASE_FRAGMENTED_NEW                (TREE_CASE_EMERGED_CANDIDATE+TREE_CASE_NO_PROGENITORS)
 
 #ifdef _MAIN
-   int   n_tree_case_flag_list=20;
+   int   n_tree_case_flag_list=19;
    int   tree_case_flag_list[]={
-                  TREE_CASE_SIMPLE,
                   TREE_CASE_MAIN_PROGENITOR,
                   TREE_CASE_MERGER,
                   TREE_CASE_DROPPED,
@@ -77,7 +75,6 @@
                   TREE_CASE_INVALID,
                   TREE_CASE_FRAGMENTED_NEW};
    const char *tree_case_flag_list_text[]={
-                        "SIMPLE",
                         "MAIN_PROGENITOR",
                         "MERGER",
                         "DROPPED",
@@ -145,7 +142,6 @@
 typedef struct tree_horizontal_stats_info tree_horizontal_stats_info;
 struct tree_horizontal_stats_info {
    int n_halos;
-   int n_simple;
    int n_mergers;
    int n_strayed;
    int n_dropped;
