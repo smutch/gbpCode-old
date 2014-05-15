@@ -23,6 +23,7 @@
 #define TREE_MODE_DEFAULT                 (TREE_SUBSTRUCTURE_ORDER_DEFAULT|TREE_PROGENITOR_ORDER_DEFAULT)
 
 // If any of these are changed, don't forget to modify parse_match_type.c
+#define TREE_CASE_REMNANT                       1       // Set for halos with more than one progenitor.
 #define TREE_CASE_MAIN_PROGENITOR               2       // Set for the progenitor with the highest match score. (propagated for ghosts)
 #define TREE_CASE_MERGER                        4       // Set when new IDs are created (ie. last point the halo was seen).
                                                         //    Set only for the last ghost in ghost-populated trees for mergers w/ offset>1.
@@ -53,47 +54,49 @@
 #define TREE_CASE_FRAGMENTED_NEW                (TREE_CASE_EMERGED_CANDIDATE+TREE_CASE_NO_PROGENITORS)
 
 #ifdef _MAIN
-   int   n_tree_case_flag_list=19;
+   int   n_tree_case_flag_list=20;
    int   tree_case_flag_list[]={
+                  TREE_CASE_NO_PROGENITORS,
                   TREE_CASE_MAIN_PROGENITOR,
+                  TREE_CASE_BRIDGED,
+                  TREE_CASE_REMNANT,
                   TREE_CASE_MERGER,
                   TREE_CASE_DROPPED,
-                  TREE_CASE_STRAYED,
-                  TREE_CASE_BRIDGED,
-                  TREE_CASE_EMERGED_CANDIDATE,
                   TREE_CASE_EMERGED,
-                  TREE_CASE_NO_PROGENITORS,
+                  TREE_CASE_FRAGMENTED_NEW,
                   TREE_CASE_FRAGMENTED_STRAYED,
                   TREE_CASE_FRAGMENTED_RETURNED,
                   TREE_CASE_FRAGMENTED_EXCHANGED,
+                  TREE_CASE_EMERGED_CANDIDATE,
                   TREE_CASE_MATCHED_TO_BRIDGE,
                   TREE_CASE_BRIDGE_DEFAULT,
                   TREE_CASE_GHOST,
                   TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED,
                   TREE_CASE_BRIDGE_FINALIZE,
                   TREE_CASE_UNPROCESSED,
-                  TREE_CASE_INVALID,
-                  TREE_CASE_FRAGMENTED_NEW};
+                  TREE_CASE_STRAYED,
+                  TREE_CASE_INVALID};
    const char *tree_case_flag_list_text[]={
+                        "NO_PROGENITORS",
                         "MAIN_PROGENITOR",
+                        "BRIDGED",
+                        "REMNANT",
                         "MERGER",
                         "DROPPED",
-                        "STRAYED",
-                        "BRIDGED",
-                        "EMERGED_CANDIDATE",
                         "EMERGED",
-                        "NO_PROGENITORS",
+                        "FRAGMENTED_NEW",
                         "FRAGMENTED_STRAYED",
                         "FRAGMENTED_RETURNED",
                         "FRAGMENTED_EXCHANGED",
+                        "EMERGED_CANDIDATE",
                         "MATCHED_TO_BRIDGE",
                         "BRIDGE_DEFAULT",
                         "GHOST",
                         "MATCHED_TO_BRIDGE_UNPROCESSED",
                         "BRIDGE_FINALIZE",
                         "UNPROCESSED",
-                        "INVALID",
-                        "FRAGMENTED_NEW"};
+                        "STRAYED",
+                        "INVALID"};
 #else
    extern int n_tree_case_flag_list;
    extern int tree_case_flag_list[];
@@ -456,6 +459,7 @@ void read_matches(char    *filename_root_matches,
                   float   *match_score,
                   size_t  *match_index);
 int check_for_matching_input_files(const char *filename_root_in,int i_read);
+float maximum_match_score(double n_particles);
 int check_goodness_of_match(int n_particles_in,float match_score);
 int compute_single_matches(char   *filename_root_in,
                            char   *filename_root_out,

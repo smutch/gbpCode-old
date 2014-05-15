@@ -111,6 +111,8 @@ if(halos_i[i_halo].id==0 || halos_j[j_halo].id==0 && !flag_process) fprintf(stde
          }
          // ... else add a next progenitor ...
          else{
+            // Set remnant flag
+            halos_j[j_halo].type|=TREE_CASE_REMNANT;
             // If we have a better main-progenitor, insert it at the 
             //   beginning of the list and swap IDs with the main progenitor so that
             //   the correct halo gets the main progenitor ID and all others get a new one ...

@@ -51,8 +51,7 @@ fprintf(stderr,"%sgroup bridges: %d/%d %d/%d %d %d %d\n",group_text_prefix,i_bri
                                  i_halo,
                                  bridges[i_descendant].halo->file,
                                  bridges[i_descendant].halo->index,
-                                 10*MAX_TREE_MATCH_SCORE, // We don't necesarily have a score in this case.  This artificially high value 
-                                                          //   will force this match if any other decisions on score are made.
+                                 maximum_match_score((double)(bridges[i_descendant].halo->n_particles)),
                                  max_id,
                                  n_wrap);
       }
