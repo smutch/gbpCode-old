@@ -10,8 +10,6 @@
 #define K_MATCH_SUBGROUPS 0
 #define K_MATCH_GROUPS    1
 
-#define MAX_TREE_MATCH_SCORE 1e9
-
 // Tree finalization and reading modes
 #define TREE_READ_DEFAULT                 0
 #define TREE_SUBSTRUCTURE_ORDER_DEFAULT   1

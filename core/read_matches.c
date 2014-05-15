@@ -198,8 +198,6 @@ void read_matches(char    *filename_in_dir,
          if(!check_goodness_of_match(n_particles_i[i_halo],match_score[i_halo]))
             match_ids[i_halo]=-1;
       }
-      if(match_score[i_halo]>MAX_TREE_MATCH_SCORE)
-         SID_trap_error("The maximum allowed match score has been exceeded (ie. %le>%le).",ERROR_LOGIC,match_score[i_halo],MAX_TREE_MATCH_SCORE);
    }
 
    // Since we may have changed some matches with the goodness 

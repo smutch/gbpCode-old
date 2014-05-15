@@ -40,9 +40,6 @@ void set_halo_and_descendant(tree_horizontal_info **halos,
    if(file_offset==0)
       SID_trap_error("A zero file offset has been requested.  It should be -ve for roots and +ve otherwise.",ERROR_LOGIC);
 
-   // If the score exceeds the allowed match score, this must be a forced match.  Make it so.
-   int flag_forced=(score>MAX_TREE_MATCH_SCORE);
-
 if(halos_i[i_halo].id==0 || halos_j[j_halo].id==0){
 char *halo_type_string=NULL;
 tree_case_flags_text(halos_i[i_halo].type,"+",&halo_type_string);
@@ -53,15 +50,13 @@ SID_free(SID_FARG halo_type_string);
    // Set non-bridged halos or finalize bridge matches (ie. apply defaults for bridge progenitors not matched to emerged halos)
    if(!check_mode_for_flag(halos_j[j_halo].type,TREE_CASE_BRIDGED)                       ||
        check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED) ||
-       check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGE_FINALIZE)               ||
-       flag_forced){
+       check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGE_FINALIZE)){
 
       // If we are processing a halo already identified as matched to a bridge and we are not
       //    finalizing or forcing this match, only accept this new match if it meets these criteria ...
       flag_process=TRUE;
       flag_emerged=FALSE;
       if(!check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGE_FINALIZE)               &&
-         !flag_forced                                                                       &&
           check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED)){
 
         // ... we are not matching to a descendant of the initial bridged match ...
@@ -70,6 +65,7 @@ SID_free(SID_FARG halo_type_string);
         if(current!=NULL)
            k_file =current->file;
         l_file=k_file;
+        // Loop over the main progenitor line of the original bridge match
         while(current!=NULL &&
               k_file>=l_file && k_file<=j_file && // not true when we reach past the rolling array bounds
               flag_process){
