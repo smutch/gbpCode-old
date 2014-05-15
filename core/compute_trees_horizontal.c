@@ -217,7 +217,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
   calc_max(n_groups,   &n_groups_max,   n_files,SID_INT,CALC_MODE_DEFAULT);
   n_halos_max=MAX(n_subgroups_max,n_groups_max);
 
-  // We need enough indices to allow us to hold-on to descendants until outputting
+  // We need enough indices to allow us to hold-on to descendants until outputing
   //   and for the current and last i_file as well
   n_wrap      =2*n_search+2;
   i_file_start=n_files-1;
@@ -317,7 +317,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
 
        // Initialize tree pointer-arrays with dummy values
        init_trees_horizontal_snapshot(halos_i,n_halos_i,i_read,i_file,n_halos_max);
-       
+
        // Use back-matching to identify bridged and fragmented halos (alos, read current snapshot halo sizes here)...
        if(flag_fix_bridges)
           identify_bridges(halos,
@@ -339,12 +339,20 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                            filename_root_matches,
                            flag_match_subgroups);
        // Just read the halo sizes if we aren't
-       else{
-          SID_exit(1); // This code isn't working yet
-          // Store halo sizes for the current snapshot's halos
-          for(int i_halo=0;i_halo<n_halos_i;i_halo++)
-             halos[i_file%n_wrap][i_halo].n_particles=n_particles[i_halo];
-       }
+       else
+          read_halo_sizes(halos,
+                          n_halos_i,
+                          match_id,
+                          match_score,
+                          match_index,
+                          n_particles,
+                          i_file,
+                          i_read,
+                          i_read_step,
+                          n_wrap,
+                          n_halos_max,
+                          filename_root_matches,
+                          flag_match_subgroups);
 
        // Perform forward-matching
        construct_progenitors(halos,

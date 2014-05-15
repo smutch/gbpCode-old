@@ -273,12 +273,6 @@ void identify_bridges(tree_horizontal_info **halos,
           halos_i[i_halo].n_bridges=0;
        }
     }
-if(i_read==706){
-  fprintf(stderr,"n_bridge[%d]=%d\n",31,halos_i[31].n_bridges);
-  for(int k_bridge=0;k_bridge<halos_i[31].n_bridges;k_bridge++)
-     fprintf(stderr,"bridge[%d][%d][%d]=%d/%d\n",i_read,31,k_bridge,halos_i[31].bridges[k_bridge].halo->snap,halos_i[31].bridges[k_bridge].halo->index);
-//  SID_exit(ERROR_NONE);
-}
     SID_log("Done.",SID_LOG_CLOSE);
     SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
     SID_log("Done.",SID_LOG_CLOSE);

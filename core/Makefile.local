@@ -70,6 +70,7 @@ OBJFILES  = read_trees_run_parameters.o                   \
 	    add_to_trees_horizontal_stats.o               \
 	    init_trees_horizontal_roots.o                 \
 	    init_trees_horizontal_snapshot.o              \
+	    read_halo_sizes.o                             \
 	    identify_bridges.o                            \
 	    construct_progenitors.o                       \
 	    clean_emerged_halo_list.o                     \

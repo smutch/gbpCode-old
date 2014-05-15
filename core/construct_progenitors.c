@@ -42,10 +42,6 @@ void construct_progenitors(tree_horizontal_info **halos,
                ((bridges[i_bridge].halo->file)<(bridges[i_descendant].halo->file)))
                i_descendant=i_bridge;
          }
-if(i_read==866 && i_halo==0){
-for(int i_bridge=0;i_bridge<n_bridges;i_bridge++)
-fprintf(stderr,"%sgroup bridges: %d/%d %d/%d %d %d %d\n",group_text_prefix,i_bridge,i_descendant,bridges[i_bridge].halo->snap,i_read,bridges[i_bridge].halo->index,bridges[i_bridge].halo->n_particles,bridges[i_bridge].halo->n_particles_largest_descendant);
-}
          set_halo_and_descendant(halos,
                                  i_file,
                                  i_halo,
