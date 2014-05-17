@@ -67,6 +67,32 @@
 #define J_PER_KEV      1.60217646E-16
 #define SI_TO_MJY      1E29
 
+// TTPXX=Two-to-the-power-XX
+#define TTTP00 1       
+#define TTTP01 2       
+#define TTTP02 4       
+#define TTTP03 8       
+#define TTTP04 16      
+#define TTTP05 32      
+#define TTTP06 64      
+#define TTTP07 128     
+#define TTTP08 256     
+#define TTTP09 512     
+#define TTTP10 1024    
+#define TTTP11 2048    
+#define TTTP12 4096    
+#define TTTP13 8192    
+#define TTTP14 16384   
+#define TTTP15 32768   
+#define TTTP16 65536   
+#define TTTP17 131072  
+#define TTTP18 262144  
+#define TTTP19 524288  
+#define TTTP20 1048576 
+#define TTTP21 2097152
+#define TTTP22 4194304
+#define TTTP23 8388608
+
 #define MU_MMW         0.597  /* Mean molecular weight      */
 #define XI             1.0878 /* Xi=1+Y/(4*(1-Y)) w/ Y=0.26 */
 #define XE             1.1756 /* Xe=1+Y/(2*(1-Y)) w/ Y=0.26 */
