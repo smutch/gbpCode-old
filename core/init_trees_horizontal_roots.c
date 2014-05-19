@@ -44,7 +44,8 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
                n_subgroups_group[1],
                match_id,
                match_score,
-               match_index);
+               match_index,
+               F_GOODNESS_OF_MATCH);
   int i_search;
   for(i_search=1;i_search<n_wrap;i_search++)
     memcpy(n_subgroups_group[i_search],n_subgroups_group[0],n_halos_1_matches*sizeof(int));
@@ -57,7 +58,7 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
         groups[i_search][i_halo].file                  =   i_file_start; // The resulting file offset must be -ve for tree roots
         groups[i_search][i_halo].snap                  =   i_read_stop;
         groups[i_search][i_halo].index                 =(size_t)i_halo;
-        groups[i_search][i_halo].n_bridges             =   0;
+        groups[i_search][i_halo].n_back_matches        =   0;
         groups[i_search][i_halo].descendant.halo       =NULL;
         groups[i_search][i_halo].descendant.score      =  0.;
         groups[i_search][i_halo].first_progenitor.halo =NULL;
@@ -70,7 +71,7 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
         groups[i_search][i_halo].bridge_forematch.score=  0.;
         groups[i_search][i_halo].bridge_backmatch.halo =NULL;
         groups[i_search][i_halo].bridge_backmatch.score=  0.;
-        groups[i_search][i_halo].bridges               =NULL;
+        groups[i_search][i_halo].back_matches          =NULL;
         groups[i_search][i_halo].type                  =TREE_CASE_INVALID;
         groups[i_search][i_halo].id                    =-1;
         groups[i_search][i_halo].main_progenitor_id    =-1;
@@ -123,7 +124,8 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
                NULL,
                match_id,
                match_score,
-               match_index);
+               match_index,
+               F_GOODNESS_OF_MATCH);
 
   for(i_halo=0,j_halo=0,k_halo=0,(*max_id_subgroup)=0,(*max_tree_id_subgroup)=0;i_halo<n_subgroups_max;i_halo++,j_halo++){
      if(j_halo>n_subgroups_group[0][k_halo] && i_halo<n_halos_1_matches){
@@ -134,7 +136,7 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
         subgroups[i_search][i_halo].file                  =   i_file_start; // The resulting file offset must be -ve for tree roots
         subgroups[i_search][i_halo].snap                  =   i_read_stop;
         subgroups[i_search][i_halo].index                 =(size_t)i_halo;
-        subgroups[i_search][i_halo].n_bridges             =   0;
+        subgroups[i_search][i_halo].n_back_matches        =   0;
         subgroups[i_search][i_halo].descendant.halo       =NULL;
         subgroups[i_search][i_halo].descendant.score      =  0.;
         subgroups[i_search][i_halo].first_progenitor.halo =NULL;
@@ -147,7 +149,7 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
         subgroups[i_search][i_halo].bridge_forematch.score=  0.;
         subgroups[i_search][i_halo].bridge_backmatch.halo =NULL;
         subgroups[i_search][i_halo].bridge_backmatch.score=  0.;
-        subgroups[i_search][i_halo].bridges               =NULL;
+        subgroups[i_search][i_halo].back_matches          =NULL;
         subgroups[i_search][i_halo].type                  =TREE_CASE_INVALID;
         subgroups[i_search][i_halo].id                    =-1;
         subgroups[i_search][i_halo].main_progenitor_id    =-1;

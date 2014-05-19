@@ -65,6 +65,13 @@ OBJFILES  = read_trees_run_parameters.o                   \
 	    set_match_n_particles.o                       \
 	    set_match_index.o                             \
 	    set_match_score.o                             \
+	    set_back_match_id.o                           \
+	    set_back_match_file.o                         \
+	    set_back_match_snapshot.o                     \
+	    set_back_match_type.o                         \
+	    set_back_match_n_particles.o                  \
+	    set_back_match_index.o                        \
+	    set_back_match_score.o                        \
 	    process_ghosts.o                              \
 	    check_for_fragmented_halos.o                  \
 	    add_to_trees_horizontal_stats.o               \
@@ -73,7 +80,7 @@ OBJFILES  = read_trees_run_parameters.o                   \
 	    read_halo_sizes.o                             \
 	    identify_bridges.o                            \
 	    construct_progenitors.o                       \
-	    clean_emerged_halo_list.o                     \
+	    finalize_bridged_halo_list.o                  \
 	    set_largest_descendants.o                     \
 	    apply_horizontal_tree_defaults.o              \
 	    init_trees_horizontal_stats.o                 \
@@ -84,6 +91,7 @@ OBJFILES  = read_trees_run_parameters.o                   \
 	    add_substructure_to_horizontal_tree_group.o   \
 	    propagate_fragmented_halos.o                  \
 	    set_halo_and_descendant.o                     \
+	    add_progenitor_to_halo.o                      \
 	    write_ghost_catalog.o                         \
 	    assign_group_subgroup_order_vertical.o 
 LIBFILE   = 

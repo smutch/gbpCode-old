@@ -20,7 +20,8 @@ void read_matches(char    *filename_in_dir,
                   int     *n_sub_group_j_in,
                   int     *match_ids,
                   float   *match_score,
-                  size_t  *match_index){
+                  size_t  *match_index,
+                  double   f_goodness_of_match){
    char   group_text_prefix[5];
    char   filename_in[MAX_FILENAME_LENGTH];
    SID_fp fp_in;
@@ -195,7 +196,7 @@ void read_matches(char    *filename_in_dir,
    // Apply a goodness-of-fit criterion and check that the maximum allowed score has not been exceeded
    for(i_halo=0;i_halo<(*n_groups_i);i_halo++){
       if(match_ids[i_halo]>=0){
-         if(!check_goodness_of_match(n_particles_i[i_halo],match_score[i_halo]))
+         if(!check_goodness_of_match(n_particles_i[i_halo],match_score[i_halo],f_goodness_of_match))
             match_ids[i_halo]=-1;
       }
    }

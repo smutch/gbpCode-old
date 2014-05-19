@@ -38,7 +38,8 @@ void read_halo_sizes(tree_horizontal_info **halos,
                  NULL,
                  match_id,
                  match_score,
-                 match_index);
+                 match_index,
+                 F_GOODNESS_OF_MATCH);
 
     // Sanity check
     if(n_halos_i!=n_halos_1_matches)

@@ -120,8 +120,6 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
   tree_horizontal_info **groups;
   tree_horizontal_info **halos;
   tree_horizontal_info  *halos_i;
-  bridge_info           *bridges;
-  bridge_info           *bridge;
 
   int  n_files;
   int  n_subgroups_max;
@@ -388,6 +386,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                                       halos,
                                       halos_i,
                                       i_file,
+                                      n_search,
                                       n_wrap,
                                       &max_id,
                                       &max_tree_id);
@@ -397,15 +396,14 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
        //   to avoid incorrectly matching to their descendants (instead of themselves) later-on when when 
        //   we are scaning emerged halo candidates for subsequent snapshots.  Real matches to bridges are dealt-with
        //   when halos marked TREE_CASE_BRIDGE_DEFAULT are processed. 
-       clean_emerged_halo_list(halos_i,
-                               n_halos_i,
-                               i_file,
-                               n_search,
-                               n_files);
+       finalize_bridged_halo_list(halos_i,
+                                  n_halos_i,
+                                  i_file,
+                                  n_search,
+                                  n_files);
 
        // Now that we know which halos are main progenitors, we can set the n_partices_largest_descendant values.
-       set_largest_descendants(halos_i,
-                               n_halos_i);
+       set_largest_descendants(halos_i,n_halos_i);
 
        // This has to be written right after a snapshot is read and processed (because it needs all forward scan information), 
        //    so it is separate from the rest of the log output code.
@@ -508,12 +506,12 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
   for(i_search=0;i_search<n_wrap;i_search++){
      // Free subgroup information
      for(i_halo=0;i_halo<n_subgroups_max;i_halo++)
-        SID_free(SID_FARG subgroups[i_search][i_halo].bridges);
+        SID_free(SID_FARG subgroups[i_search][i_halo].back_matches);
      SID_free(SID_FARG subgroups[i_search]);
 
      // Free group information
      for(i_halo=0;i_halo<n_groups_max;i_halo++)
-        SID_free(SID_FARG groups[i_search][i_halo].bridges);
+        SID_free(SID_FARG groups[i_search][i_halo].back_matches);
      SID_free(SID_FARG groups[i_search]);
   }
   SID_free(SID_FARG subgroups);

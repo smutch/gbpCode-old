@@ -28,7 +28,7 @@ void compute_trees_merger_analysis(tree_info *trees,char *filename_out_root){
      while(current_halo!=NULL){
         // Process each new merger
         if(check_treenode_if_merger(current_halo)){
-           if(check_treenode_if_fragmented(current_halo)){
+           if(!check_treenode_if_fragmented(current_halo)){
              if(check_treenode_if_central(current_halo))
                 n_mergers_nofrags_central++;
              else

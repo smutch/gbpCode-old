@@ -24,6 +24,7 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
       int group_type;
       int group_type_descendant;
       int group_file_offset;
+      int group_index;
       int group_n_particles_parent;
       int group_n_particles_desc;
       int group_n_particles_proj;
@@ -33,13 +34,13 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
       int group_file_bridge;
       int group_index_bridge;
       int group_id_bridge;
-      int group_index;
       group_id                =groups[i_read%n_wrap][i_group].id;
       group_n_particles       =groups[i_read%n_wrap][i_group].n_particles;
       group_tree_id           =groups[i_read%n_wrap][i_group].tree_id;
       group_descendant_id     =groups[i_read%n_wrap][i_group].descendant_id;
       group_type              =groups[i_read%n_wrap][i_group].type;
       group_file_offset       =groups[i_read%n_wrap][i_group].file_offset;
+      group_index             =groups[i_read%n_wrap][i_group].index;
       group_n_particles_parent=groups[i_read%n_wrap][i_group].n_particles_parent;
       group_n_particles_desc  =groups[i_read%n_wrap][i_group].n_particles_desc;
       group_n_particles_proj  =groups[i_read%n_wrap][i_group].n_particles_proj;
@@ -49,17 +50,16 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
       group_file_bridge       =groups[i_read%n_wrap][i_group].file_bridge;
       group_index_bridge      =groups[i_read%n_wrap][i_group].index_bridge;
       group_id_bridge         =groups[i_read%n_wrap][i_group].id_bridge;
-      group_index             =groups[i_read%n_wrap][i_group].index;
 
       // Advance the bridge to it's current-time descendant. Note that n_wrap needs to be
       //   at least 2*n_search+2 so that we are sure to have the bridged halo as well
-      while(group_file_bridge<i_read && group_index_bridge>=0){
+      while(group_file_bridge<=i_read && group_index_bridge>=0){
          tree_horizontal_extended_info *bridge_descendant=&(groups[group_file_bridge%n_wrap][group_index_bridge]);
          group_snap_bridge+=bridge_descendant->file_offset*i_read_step;
          group_file_bridge+=bridge_descendant->file_offset;
          group_index_bridge=bridge_descendant->index;
       }
-      flag_returned=(group_file_bridge==i_read && group_index_bridge==i_group);
+      flag_returned=(group_file_bridge==(i_read+group_file_offset*i_read_step) && group_index_bridge==group_index);
 
       // Propagate type.  Stop when the fragmented halo merges with something or returns to it's bridge.
       if(group_id==group_descendant_id && !flag_returned){

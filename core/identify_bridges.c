@@ -40,10 +40,10 @@ void identify_bridges(tree_horizontal_info **halos,
     int l_halo;
     int n_halos_1_matches;
     int n_halos_2_matches;
-    bridge_info *bridges;
-    bridge_info *bridge;
-    int         *bridge_keep=NULL;
-    size_t      *bridge_index=NULL;
+    back_match_info *back_matches;
+    back_match_info *back_match;
+    int         *backmatch_keep=NULL;
+    size_t      *back_match_index=NULL;
     for(j_file_1  =i_file+1,
           j_file_2=i_file,
           j_read_1=i_read+i_read_step,
@@ -68,7 +68,8 @@ void identify_bridges(tree_horizontal_info **halos,
                     NULL,
                     match_id,
                     match_score,
-                    match_index);
+                    match_index,
+                    F_GOODNESS_OF_MATCH);
 
        // Store halo sizes for the current snapshot's halos
        if(i_search==0){
@@ -80,24 +81,25 @@ void identify_bridges(tree_horizontal_info **halos,
        for(i_halo=0;i_halo<n_halos_i;i_halo++){
           j_halo=find_index_int(match_id,i_halo,n_halos_1_matches,match_index);
           while(match_id[match_index[j_halo]]==i_halo && j_halo<(n_halos_1_matches-1)){
-             halos_i[i_halo].n_bridges++;
+             halos_i[i_halo].n_back_matches++;
              j_halo++;
           }
           if(match_id[match_index[j_halo]]==i_halo && j_halo==(n_halos_1_matches-1)){
-             halos_i[i_halo].n_bridges++;
+             halos_i[i_halo].n_back_matches++;
              j_halo++;
           }
        }
        SID_log("Done.",SID_LOG_CLOSE);
     }
+//if(i_read==722) fprintf(stderr,"n_b_1[%d]=%d\n",877,halos_i[877].n_back_matches);
 
     //    ... second, do a conservative allocation using the non-unique counts and reset the counter.
     for(i_halo=0;i_halo<n_halos_i;i_halo++){
-       if((halos_i[i_halo].n_bridges)>0)
-          (halos_i[i_halo].bridges)=(bridge_info *)SID_calloc(sizeof(bridge_info)*(halos_i[i_halo].n_bridges));
+       if((halos_i[i_halo].n_back_matches)>0)
+          (halos_i[i_halo].back_matches)=(back_match_info *)SID_calloc(sizeof(back_match_info)*(halos_i[i_halo].n_back_matches));
        else
-          (halos_i[i_halo].bridges)=NULL;
-       halos_i[i_halo].n_bridges =0;
+          (halos_i[i_halo].back_matches)=NULL;
+       halos_i[i_halo].n_back_matches =0;
     }
 
     //    ... third, assemble the list of unique back-matched halos.
@@ -125,51 +127,54 @@ void identify_bridges(tree_horizontal_info **halos,
                     NULL,
                     match_id,
                     match_score,
-                    match_index);
+                    match_index,
+                    F_GOODNESS_OF_MATCH);
 
        // For all the halos in i_file_1 with back-matches ...
        int flag_continue;
        for(i_halo=0;i_halo<n_halos_i;i_halo++){
-          if((halos_i[i_halo].bridges)!=NULL){
+          if((halos_i[i_halo].back_matches)!=NULL){
              // Scan over the list of halos from snapshot=j_read_1 
              //   that match this halo in j_read_2 ...
-             bridges=halos_i[i_halo].bridges;
+             back_matches=halos_i[i_halo].back_matches;
              j_halo =find_index_int(match_id,i_halo,n_halos_1_matches,match_index);
              // Loop over all but the last halo in the list ...
              while(match_id[match_index[j_halo]]==i_halo && j_halo<(n_halos_1_matches-1)){
-                // Check to see if this halo ID is already in the bridge list (keep all -ve ID halos as well;
+                // Check to see if this halo ID is already in the back match list (keep all -ve ID halos as well;
                 //   a tree-walk descendant cull will be done below as well) ...
                 flag_continue=TRUE;
                 if(halos[j_file_1%n_wrap][match_index[j_halo]].id>=0){
-                   for(k_halo=0;k_halo<halos_i[i_halo].n_bridges && flag_continue;k_halo++){
-                      if(bridges[k_halo].halo->id==halos[j_file_1%n_wrap][match_index[j_halo]].id)
+                   for(k_halo=0;k_halo<halos_i[i_halo].n_back_matches && flag_continue;k_halo++){
+                      if(back_matches[k_halo].halo->id==halos[j_file_1%n_wrap][match_index[j_halo]].id)
                          flag_continue=FALSE;
                    }
                 }
                 // ... if not, add it
                 if(flag_continue){
-                   bridges[halos_i[i_halo].n_bridges].score=match_score[match_index[j_halo]];
-                   bridges[halos_i[i_halo].n_bridges].halo =&(halos[j_file_1%n_wrap][match_index[j_halo]]);
-                   (halos_i[i_halo].n_bridges)++;
+                   back_matches[halos_i[i_halo].n_back_matches].score=match_score[match_index[j_halo]];
+                   back_matches[halos_i[i_halo].n_back_matches].file =j_file_1;
+                   back_matches[halos_i[i_halo].n_back_matches].halo =&(halos[j_file_1%n_wrap][match_index[j_halo]]);
+                   (halos_i[i_halo].n_back_matches)++;
                 }
                 j_halo++;
              }
              // ... then do the last halo in the list ...
              if(match_id[match_index[j_halo]]==i_halo && j_halo==(n_halos_1_matches-1)){
-                // Check to see if this halo ID is already in the bridge list (keep all -ve ID halos as well;
+                // Check to see if this halo ID is already in the back match list (keep all -ve ID halos as well;
                 //   a tree-walk descendant cull will be done below as well) ...
                 flag_continue=TRUE;
                 if(halos[j_file_1%n_wrap][match_index[j_halo]].id>=0){
-                   for(k_halo=0;k_halo<halos_i[i_halo].n_bridges && flag_continue;k_halo++){
-                      if(bridges[k_halo].halo->id==halos[j_file_1%n_wrap][match_index[j_halo]].id)
+                   for(k_halo=0;k_halo<halos_i[i_halo].n_back_matches && flag_continue;k_halo++){
+                      if(back_matches[k_halo].halo->id==halos[j_file_1%n_wrap][match_index[j_halo]].id)
                          flag_continue=FALSE;
                    }
                 }
                 // ... if not, add it
                 if(flag_continue){
-                   bridges[halos_i[i_halo].n_bridges].score=match_score[match_index[j_halo]];
-                   bridges[halos_i[i_halo].n_bridges].halo =&(halos[j_file_1%n_wrap][match_index[j_halo]]);
-                   (halos_i[i_halo].n_bridges)++;
+                   back_matches[halos_i[i_halo].n_back_matches].score=match_score[match_index[j_halo]];
+                   back_matches[halos_i[i_halo].n_back_matches].file =j_file_1;
+                   back_matches[halos_i[i_halo].n_back_matches].halo =&(halos[j_file_1%n_wrap][match_index[j_halo]]);
+                   (halos_i[i_halo].n_back_matches)++;
                 }
                 j_halo++;
              }
@@ -178,43 +183,44 @@ void identify_bridges(tree_horizontal_info **halos,
        SID_log("Done.",SID_LOG_CLOSE);
     }
 
-    // ... lastly, reorder the back-matched halos by score, keep only the most immediate bridge descendants and finalize the list ...
-    SID_log("Re-ordering bridges...",SID_LOG_OPEN);
+    // ... lastly, reorder the back-matched halos by the sizes of their most massive descendants.  Keep only 
+    //        the most immediate bridge descendants and finalize the list ...
+    SID_log("Re-ordering back_matches...",SID_LOG_OPEN);
     for(i_halo=0;i_halo<n_halos_i;i_halo++){
-       if((halos_i[i_halo].n_bridges)>1){
+       if((halos_i[i_halo].n_back_matches)>1){
 
           // We may need to remove several halos from the list.  This array will keep track of this.
-          bridge_keep=(int *)SID_malloc(sizeof(int)*halos_i[i_halo].n_bridges);
+          backmatch_keep=(int *)SID_malloc(sizeof(int)*halos_i[i_halo].n_back_matches);
 
-          // Reorder the bridges by their score.  We make a temporary copy of the list 
-          //   to do this and initially set all bridges as halos to keep..
-          bridges=(bridge_info *)SID_calloc(sizeof(bridge_info)*(halos_i[i_halo].n_bridges));
-          for(j_halo=0;j_halo<halos_i[i_halo].n_bridges;j_halo++){
-             bridge=&(halos_i[i_halo].bridges[j_halo]);
-             memcpy(&(bridges[j_halo]),bridge,sizeof(bridge_info));
-             match_score[j_halo]=bridge->score;
-             bridge_keep[j_halo]=TRUE;
+          // Reorder the back_matches by the size of their most massive descendant.  We make a temporary copy of the list 
+          //   to do this and initially set all back_matches as halos to keep..
+          back_matches=(back_match_info *)SID_calloc(sizeof(back_match_info)*(halos_i[i_halo].n_back_matches));
+          for(j_halo=0;j_halo<halos_i[i_halo].n_back_matches;j_halo++){
+             back_match=&(halos_i[i_halo].back_matches[j_halo]);
+             memcpy(&(back_matches[j_halo]),back_match,sizeof(back_match_info));
+             match_score[j_halo]=(float)(back_match->halo->n_particles_largest_descendant);
+             backmatch_keep[j_halo]=TRUE;
           }
-          merge_sort((void *)match_score,(size_t)(halos_i[i_halo].n_bridges),&bridge_index,SID_FLOAT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
+          merge_sort((void *)match_score,(size_t)(halos_i[i_halo].n_back_matches),&back_match_index,SID_FLOAT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
 
           // Remove any mutual descendants from the list
           //   (since they may have different IDs and passed the test above)
-          for(j_halo=0;j_halo<halos_i[i_halo].n_bridges;j_halo++){
+          for(j_halo=0;j_halo<halos_i[i_halo].n_back_matches;j_halo++){
              int k_file;
              int l_file;
-             // ... walk the tree upwards for each bridged halo...
+             // ... walk the tree upwards for each back matched halo...
              tree_horizontal_info *current;
-             bridge = &(bridges[bridge_index[j_halo]]);
-             current=bridge->halo->descendant.halo;
+             back_match = &(back_matches[back_match_index[j_halo]]);
+             current=back_match->halo->descendant.halo;
              if(current!=NULL)
                 k_file=current->file;
              l_file=k_file;
              while(current!=NULL && k_file>=l_file && k_file<MIN(n_files,i_file+(n_search+1))){
-                for(k_halo=0;k_halo<halos_i[i_halo].n_bridges;k_halo++){
+                for(k_halo=0;k_halo<halos_i[i_halo].n_back_matches;k_halo++){
                    if(j_halo!=k_halo){ // Don't waste time checking a halo against itself
-                      bridge = &(bridges[bridge_index[k_halo]]);
-                      if(bridge->halo==current)
-                         bridge_keep[k_halo]=FALSE;
+                      back_match = &(back_matches[back_match_index[k_halo]]);
+                      if(back_match->halo==current)
+                         backmatch_keep[k_halo]=FALSE;
                    }
                 }
                 current=current->descendant.halo;
@@ -224,56 +230,66 @@ void identify_bridges(tree_horizontal_info **halos,
              }
           }
 
+          // Remove any back matches which have already been assigned to a halo.  This makes
+          //    sure that the backmatch is set to the most immediate backmatched halo.
+          for(j_halo=0;j_halo<halos_i[i_halo].n_back_matches;j_halo++){
+             if(backmatch_keep[j_halo])
+                backmatch_keep[j_halo]=((halos[(back_matches[j_halo].halo->file)%n_wrap][back_matches[j_halo].halo->index].bridge_backmatch.halo)==NULL);
+          }
+
           // Since we may have trimmed the list, recount the number remaining
-          int n_list=halos_i[i_halo].n_bridges;
-          for(j_halo=n_list-1,halos_i[i_halo].n_bridges=0;j_halo>=0;j_halo--){
-            if(bridge_keep[j_halo])
-               halos_i[i_halo].n_bridges++;
+          int n_list=halos_i[i_halo].n_back_matches;
+          for(j_halo=n_list-1,halos_i[i_halo].n_back_matches=0;j_halo>=0;j_halo--){
+            if(backmatch_keep[j_halo])
+               halos_i[i_halo].n_back_matches++;
           }
 
           // We may have removed some halos and may not actually be a bridged halo anymore.  Clean-up if so.
-          if(halos_i[i_halo].n_bridges<=1){
+          if(halos_i[i_halo].n_back_matches<=1){
              halos_i[i_halo].type&=(~TREE_CASE_BRIDGED);
-             SID_free(SID_FARG halos_i[i_halo].bridges);
-             halos_i[i_halo].n_bridges=0;
+             SID_free(SID_FARG halos_i[i_halo].back_matches);
+             halos_i[i_halo].n_back_matches=0;
           }
           else{
              halos_i[i_halo].type|=TREE_CASE_BRIDGED;
 
-             // Because we've overallocated previously, reallocate the bridge list here to save RAM ...
-             SID_free(SID_FARG halos_i[i_halo].bridges);
-             (halos_i[i_halo].bridges)=(bridge_info *)SID_calloc(sizeof(bridge_info)*(halos_i[i_halo].n_bridges));
+             // Because we've overallocated previously, reallocate the back matched list here to save RAM ...
+             SID_free(SID_FARG halos_i[i_halo].back_matches);
+             (halos_i[i_halo].back_matches)=(back_match_info *)SID_calloc(sizeof(back_match_info)*(halos_i[i_halo].n_back_matches));
 
              // ... and copy the sorted temporary list to the permanent list.
              for(j_halo=n_list-1,l_halo=0;j_halo>=0;j_halo--){
-                if(bridge_keep[j_halo]){
-                   memcpy(&(halos_i[i_halo].bridges[l_halo]),&(bridges[bridge_index[j_halo]]),sizeof(bridge_info));
-                   // This check on NULL is needed to make sure that once a backmatch is set, it isn't changed in subsequent snapshots.
-                   //    This makes sure that the backmatch is set to the most immediate backmatched halo.
-                   if(halos[(bridges[bridge_index[j_halo]].halo->file)%n_wrap][bridges[bridge_index[j_halo]].halo->index].bridge_backmatch.halo==NULL){
-                      halos[(bridges[bridge_index[j_halo]].halo->file)%n_wrap][bridges[bridge_index[j_halo]].halo->index].bridge_backmatch.halo =
-                         &(halos_i[i_halo]);
-                      halos[(bridges[bridge_index[j_halo]].halo->file)%n_wrap][bridges[bridge_index[j_halo]].halo->index].bridge_backmatch.score=
-                         match_score[bridge_index[j_halo]];
-                   }
+                if(backmatch_keep[j_halo]){
+                   memcpy(&(halos_i[i_halo].back_matches[l_halo]),&(back_matches[back_match_index[j_halo]]),sizeof(back_match_info));
+                   halos[(back_matches[back_match_index[j_halo]].halo->file)%n_wrap][back_matches[back_match_index[j_halo]].halo->index].bridge_backmatch.halo =
+                      &(halos_i[i_halo]);
+                   halos[(back_matches[back_match_index[j_halo]].halo->file)%n_wrap][back_matches[back_match_index[j_halo]].halo->index].bridge_backmatch.score=
+                      match_score[back_match_index[j_halo]];
                    l_halo++;
                 }
              }
           }
 
           // Clean-up
-          SID_free(SID_FARG bridge_keep);
-          SID_free(SID_FARG bridge_index);
-          SID_free(SID_FARG bridges);
+          SID_free(SID_FARG backmatch_keep);
+          SID_free(SID_FARG back_match_index);
+          SID_free(SID_FARG back_matches);
        }
        // This halo is not a bridge.  Perform cleaning.
        else{
           halos_i[i_halo].type&=(~TREE_CASE_BRIDGED);
-          SID_free(SID_FARG halos_i[i_halo].bridges);
-          halos_i[i_halo].n_bridges=0;
+          SID_free(SID_FARG halos_i[i_halo].back_matches);
+          halos_i[i_halo].n_back_matches=0;
        }
     }
     SID_log("Done.",SID_LOG_CLOSE);
+//int i_read_report=738;
+//int i_report     =265;
+//if(i_read==i_read_report) {
+// fprintf(stderr,"\nn_b_3[%d][%d]=%d\n",i_read_report,i_report,halos_i[i_report].n_back_matches);
+// for(int i_bridge=0;i_bridge<halos_i[i_report].n_back_matches;i_bridge++)
+//  fprintf(stderr,"  -> %d/%d\n",halos_i[i_report].back_matches[i_bridge].halo->snap,halos_i[i_report].back_matches[i_bridge].halo->index);
+//}
     SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
     SID_log("Done.",SID_LOG_CLOSE);
 }

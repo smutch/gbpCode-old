@@ -133,11 +133,12 @@ int main(int argc, char *argv[]){
                      NULL,
                      match_ids,
                      match_score,
-                     match_index);
+                     match_index,
+                     0.);
 
         // Check for goodness of match
         char goodness_of_match_text[5];
-        if(check_goodness_of_match(n_particles_i[i_halo],match_score[i_halo]))
+        if(check_goodness_of_match(n_particles_i[i_halo],match_score[i_halo],F_GOODNESS_OF_MATCH))
            sprintf(goodness_of_match_text,"good");
         else
            sprintf(goodness_of_match_text,"bad");
@@ -182,11 +183,12 @@ int main(int argc, char *argv[]){
                      NULL,
                      match_ids,
                      match_score,
-                     match_index);
+                     match_index,
+                     0.);
 
         // Check for goodness of match
         char goodness_of_match_text[5];
-        if(check_goodness_of_match(n_particles_i[i_halo],match_score[i_halo]))
+        if(check_goodness_of_match(n_particles_i[i_halo],match_score[i_halo],F_GOODNESS_OF_MATCH))
            sprintf(goodness_of_match_text,"good");
         else
            sprintf(goodness_of_match_text,"bad");

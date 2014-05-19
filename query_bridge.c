@@ -232,8 +232,7 @@ int main(int argc, char *argv[]){
                 SID_fread_all(&bridge_match_file, sizeof(int),1,&fp_in_bridge_match);
                 SID_fread_all(&bridge_match_index,sizeof(int),1,&fp_in_bridge_match);
                 // Write match
-if(i_read==754 && i_subgroup==36) fprintf(stderr,"test1 [%d %d] -> %d %d\n",i_read,i_subgroup,trees->snap_list[bridge_match_file],bridge_match_index);
-if(i_read==802 && i_subgroup==38) fprintf(stderr,"test2 [%d %d] -> %d %d\n",i_read,i_subgroup,trees->snap_list[bridge_match_file],bridge_match_index);
+if(i_read==794 && i_subgroup==290) fprintf(stderr,"%d %d\n",trees->snap_list[bridge_match_file],bridge_match_index);
                 if(trees->snap_list[bridge_match_file]==i_read_in && bridge_match_index==i_halo){
                    char *halo_type_string=NULL;
                    tree_case_flags_text(halo_type,"+",&halo_type_string);
