@@ -91,7 +91,6 @@ void identify_bridges(tree_horizontal_info **halos,
        }
        SID_log("Done.",SID_LOG_CLOSE);
     }
-//if(i_read==722) fprintf(stderr,"n_b_1[%d]=%d\n",877,halos_i[877].n_back_matches);
 
     //    ... second, do a conservative allocation using the non-unique counts and reset the counter.
     for(i_halo=0;i_halo<n_halos_i;i_halo++){
@@ -198,7 +197,7 @@ void identify_bridges(tree_horizontal_info **halos,
           for(j_halo=0;j_halo<halos_i[i_halo].n_back_matches;j_halo++){
              back_match=&(halos_i[i_halo].back_matches[j_halo]);
              memcpy(&(back_matches[j_halo]),back_match,sizeof(back_match_info));
-             match_score[j_halo]=(float)(back_match->halo->n_particles_largest_descendant);
+             match_score[j_halo]   =(float)(back_match->halo->n_particles_largest_descendant);
              backmatch_keep[j_halo]=TRUE;
           }
           merge_sort((void *)match_score,(size_t)(halos_i[i_halo].n_back_matches),&back_match_index,SID_FLOAT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
@@ -210,7 +209,7 @@ void identify_bridges(tree_horizontal_info **halos,
              int l_file;
              // ... walk the tree upwards for each back matched halo...
              tree_horizontal_info *current;
-             back_match = &(back_matches[back_match_index[j_halo]]);
+             back_match = &(back_matches[j_halo]);
              current=back_match->halo->descendant.halo;
              if(current!=NULL)
                 k_file=current->file;
@@ -218,7 +217,7 @@ void identify_bridges(tree_horizontal_info **halos,
              while(current!=NULL && k_file>=l_file && k_file<MIN(n_files,i_file+(n_search+1))){
                 for(k_halo=0;k_halo<halos_i[i_halo].n_back_matches;k_halo++){
                    if(j_halo!=k_halo){ // Don't waste time checking a halo against itself
-                      back_match = &(back_matches[back_match_index[k_halo]]);
+                      back_match = &(back_matches[k_halo]);
                       if(back_match->halo==current)
                          backmatch_keep[k_halo]=FALSE;
                    }
@@ -231,17 +230,20 @@ void identify_bridges(tree_horizontal_info **halos,
           }
 
           // Remove any back matches which have already been assigned to a halo.  This makes
-          //    sure that the backmatch is set to the most immediate backmatched halo.
+          //    sure that the backmatch is uniquely set to the most immediate backmatched halo.
           for(j_halo=0;j_halo<halos_i[i_halo].n_back_matches;j_halo++){
-             if(backmatch_keep[j_halo])
-                backmatch_keep[j_halo]=((halos[(back_matches[j_halo].halo->file)%n_wrap][back_matches[j_halo].halo->index].bridge_backmatch.halo)==NULL);
+             if(backmatch_keep[j_halo]){
+                int backmatch_file =back_matches[j_halo].halo->file;
+                int backmatch_index=back_matches[j_halo].halo->index;
+                backmatch_keep[j_halo]=((halos[backmatch_file%n_wrap][backmatch_index].bridge_backmatch.halo)==NULL); 
+             }
           }
 
           // Since we may have trimmed the list, recount the number remaining
           int n_list=halos_i[i_halo].n_back_matches;
           for(j_halo=n_list-1,halos_i[i_halo].n_back_matches=0;j_halo>=0;j_halo--){
-            if(backmatch_keep[j_halo])
-               halos_i[i_halo].n_back_matches++;
+             if(backmatch_keep[j_halo])
+                halos_i[i_halo].n_back_matches++;
           }
 
           // We may have removed some halos and may not actually be a bridged halo anymore.  Clean-up if so.
@@ -257,14 +259,16 @@ void identify_bridges(tree_horizontal_info **halos,
              SID_free(SID_FARG halos_i[i_halo].back_matches);
              (halos_i[i_halo].back_matches)=(back_match_info *)SID_calloc(sizeof(back_match_info)*(halos_i[i_halo].n_back_matches));
 
-             // ... and copy the sorted temporary list to the permanent list.
+             // ... and copy the sorted temporary list to the permanent list (DESCENDING ORDER!)
              for(j_halo=n_list-1,l_halo=0;j_halo>=0;j_halo--){
-                if(backmatch_keep[j_halo]){
-                   memcpy(&(halos_i[i_halo].back_matches[l_halo]),&(back_matches[back_match_index[j_halo]]),sizeof(back_match_info));
-                   halos[(back_matches[back_match_index[j_halo]].halo->file)%n_wrap][back_matches[back_match_index[j_halo]].halo->index].bridge_backmatch.halo =
+                int j_halo_sorted=back_match_index[j_halo];
+                if(backmatch_keep[j_halo_sorted]){
+                   memcpy(&(halos_i[i_halo].back_matches[l_halo]),&(back_matches[j_halo_sorted]),sizeof(back_match_info));
+                   halos[(back_matches[j_halo_sorted].halo->file)%n_wrap][back_matches[j_halo_sorted].halo->index].bridge_backmatch.halo =
                       &(halos_i[i_halo]);
-                   halos[(back_matches[back_match_index[j_halo]].halo->file)%n_wrap][back_matches[back_match_index[j_halo]].halo->index].bridge_backmatch.score=
-                      match_score[back_match_index[j_halo]];
+                   halos[(back_matches[j_halo_sorted].halo->file)%n_wrap][back_matches[j_halo_sorted].halo->index].bridge_backmatch.score=
+                      match_score[j_halo_sorted];
+                   halos[(back_matches[j_halo_sorted].halo->file)%n_wrap][back_matches[j_halo_sorted].halo->index].type|=TREE_CASE_EMERGED_CANDIDATE;
                    l_halo++;
                 }
              }

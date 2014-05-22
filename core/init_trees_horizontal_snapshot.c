@@ -18,6 +18,10 @@ void init_trees_horizontal_snapshot(tree_horizontal_info *halos_i,int n_halos_i,
       halos_i[i_halo].next_progenitor.score =  0.;
       halos_i[i_halo].bridge_forematch.halo =NULL;
       halos_i[i_halo].bridge_forematch.score=  0.;
+      halos_i[i_halo].bridge_forematch_first.halo =NULL;
+      halos_i[i_halo].bridge_forematch_first.score=  0.;
+      halos_i[i_halo].bridge_forematch_default.halo =NULL;
+      halos_i[i_halo].bridge_forematch_default.score=  0.;
       halos_i[i_halo].bridge_backmatch.halo =NULL;
       halos_i[i_halo].bridge_backmatch.score=  0.;
       SID_free(SID_FARG halos_i[i_halo].back_matches);

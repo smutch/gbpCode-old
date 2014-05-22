@@ -69,6 +69,10 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
         groups[i_search][i_halo].next_progenitor.score =  0.;
         groups[i_search][i_halo].bridge_forematch.halo =NULL;
         groups[i_search][i_halo].bridge_forematch.score=  0.;
+        groups[i_search][i_halo].bridge_forematch_first.halo =NULL;
+        groups[i_search][i_halo].bridge_forematch_first.score=  0.;
+        groups[i_search][i_halo].bridge_forematch_default.halo =NULL;
+        groups[i_search][i_halo].bridge_forematch_default.score=  0.;
         groups[i_search][i_halo].bridge_backmatch.halo =NULL;
         groups[i_search][i_halo].bridge_backmatch.score=  0.;
         groups[i_search][i_halo].back_matches          =NULL;
@@ -147,6 +151,10 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
         subgroups[i_search][i_halo].next_progenitor.score =  0.;
         subgroups[i_search][i_halo].bridge_forematch.halo =NULL;
         subgroups[i_search][i_halo].bridge_forematch.score=  0.;
+        subgroups[i_search][i_halo].bridge_forematch_first.halo =NULL;
+        subgroups[i_search][i_halo].bridge_forematch_first.score=  0.;
+        subgroups[i_search][i_halo].bridge_forematch_default.halo =NULL;
+        subgroups[i_search][i_halo].bridge_forematch_default.score=  0.;
         subgroups[i_search][i_halo].bridge_backmatch.halo =NULL;
         subgroups[i_search][i_halo].bridge_backmatch.score=  0.;
         subgroups[i_search][i_halo].back_matches          =NULL;

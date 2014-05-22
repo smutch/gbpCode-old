@@ -59,11 +59,9 @@ void construct_progenitors(tree_horizontal_info **halos,
                    F_GOODNESS_OF_MATCH);
 
       // Store halo sizes
-      if(!flag_fix_bridges){
-         if(i_search==0){
-            for(i_halo=0;i_halo<(*n_halos_1_matches);i_halo++)
-               halos[i_file%n_wrap][i_halo].n_particles=n_particles[i_halo];
-         }
+      if(!flag_fix_bridges && i_search==0){
+         for(i_halo=0;i_halo<(*n_halos_1_matches);i_halo++)
+            halos[i_file%n_wrap][i_halo].n_particles=n_particles[i_halo];
       }
 
       // Perform matching for all the halos in i_file_1.  This loop should deal completely with
@@ -72,22 +70,23 @@ void construct_progenitors(tree_horizontal_info **halos,
       //   and at the end of the loop over j_read/i_search to finalize those not matched to emerged halos.
       for(i_halo=0;i_halo<(*n_halos_1_matches);i_halo++){
          // If this halo hasn't been processed during earlier searches ...
-         if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_UNPROCESSED)){
+         if( check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_UNPROCESSED) &&
+            !check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED)){
             int my_descendant_index;
             my_descendant_index=match_id[i_halo];
             // If this halo has been matched to something in i_file_2 ...
             if(my_descendant_index>=0){
                if(my_descendant_index<(*n_halos_2_matches))
-                  set_halo_and_descendant(halos,
-                                          i_file,
-                                          i_halo,
-                                          j_file_2,
-                                          my_descendant_index,
-                                          match_score[i_halo],
-                                          max_id,
-                                          n_search,
-                                          n_wrap,
-                                          NULL);
+                  apply_tree_logic(halos,
+                                   i_file,
+                                   i_halo,
+                                   j_file_2,
+                                   my_descendant_index,
+                                   match_score[i_halo],
+                                   max_id,
+                                   n_search,
+                                   n_wrap,
+                                   NULL);
                else
                   SID_log_warning("descendant ID out of bounds (ie. %d>%d) in snapshot %03d -> snapshot %03d %sgroup matching for i_halo=%d.",
                                   SID_WARNING_DEFAULT,my_descendant_index,(*n_halos_2_matches)-1,j_read_1,j_read_2,group_text_prefix,i_halo);
@@ -103,27 +102,28 @@ void construct_progenitors(tree_horizontal_info **halos,
 
             // ... sanity check ...
             if(halos_i[i_halo].bridge_forematch.halo==NULL)
-              SID_trap_error("Bridge match not defined during emerged halo search.",ERROR_LOGIC);
+               SID_trap_error("Bridge match not defined during emerged halo search.",ERROR_LOGIC);
             back_matches=halos[(halos_i[i_halo].bridge_forematch.halo->file)%n_wrap][halos_i[i_halo].bridge_forematch.halo->index].back_matches;
             if(back_matches==NULL)
-              SID_trap_error("Bridges not defined during emerged halo search.",ERROR_LOGIC);
+               SID_trap_error("Bridges not defined during emerged halo search.",ERROR_LOGIC);
             n_list=halos[(halos_i[i_halo].bridge_forematch.halo->file)%n_wrap][halos_i[i_halo].bridge_forematch.halo->index].n_back_matches;
 
             // Loop over all the emergent halos identified with the bridge that i_halo has been matched to
-            //   Perform decision making inside the set_halo_and_descendant() routine.
+            //   Perform decision making inside the apply_tree_logic() routine.
             int k_halo;
             for(k_halo=0;k_halo<n_list;k_halo++){
                if(back_matches[k_halo].halo->file==j_file_2 && match_id[i_halo]==back_matches[k_halo].halo->index){
-                  set_halo_and_descendant(halos,
-                                          i_file,
-                                          i_halo,
-                                          back_matches[k_halo].halo->file,
-                                          back_matches[k_halo].halo->index,
-                                          match_score[i_halo],
-                                          max_id,
-                                          n_search,
-                                          n_wrap,
-                                          &(back_matches[k_halo]));
+                  if(check_validity_of_emerged_match(&(halos_i[i_halo]),&(back_matches[k_halo]),n_search))
+                     apply_tree_logic(halos,
+                                      i_file,
+                                      i_halo,
+                                      back_matches[k_halo].halo->file,
+                                      back_matches[k_halo].halo->index,
+                                      match_score[i_halo],
+                                      max_id,
+                                      n_search,
+                                      n_wrap,
+                                      &(back_matches[k_halo]));
                }
             }
          }

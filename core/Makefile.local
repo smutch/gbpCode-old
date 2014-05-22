@@ -28,6 +28,8 @@ OBJFILES  = read_trees_run_parameters.o                   \
 	    update_trees_lookup.o                         \
 	    maximum_match_score.o                         \
 	    check_goodness_of_match.o                     \
+	    check_validity_of_emerged_match.o             \
+	    check_if_halo_is_descendant.o                 \
 	    init_trees_data.o                             \
 	    free_trees_data.o                             \
 	    change_horizontal_ID_recursive.o              \
@@ -77,10 +79,8 @@ OBJFILES  = read_trees_run_parameters.o                   \
 	    add_to_trees_horizontal_stats.o               \
 	    init_trees_horizontal_roots.o                 \
 	    init_trees_horizontal_snapshot.o              \
-	    read_halo_sizes.o                             \
 	    identify_bridges.o                            \
 	    construct_progenitors.o                       \
-	    finalize_bridged_halo_list.o                  \
 	    set_largest_descendants.o                     \
 	    apply_horizontal_tree_defaults.o              \
 	    init_trees_horizontal_stats.o                 \
@@ -90,7 +90,7 @@ OBJFILES  = read_trees_run_parameters.o                   \
 	    write_trees_horizontal.o                      \
 	    add_substructure_to_horizontal_tree_group.o   \
 	    propagate_fragmented_halos.o                  \
-	    set_halo_and_descendant.o                     \
+	    apply_tree_logic.o                            \
 	    add_progenitor_to_halo.o                      \
 	    write_ghost_catalog.o                         \
 	    assign_group_subgroup_order_vertical.o 

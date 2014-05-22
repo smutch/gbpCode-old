@@ -104,7 +104,6 @@ int main(int argc, char *argv[]){
   FILE *fp_out;
   fp_out=fopen(filename_out,"w");
   int i_column=1;
-  SID_log("Writing to file {%s}",SID_LOG_COMMENT,filename_out);
   fprintf(fp_out,"# Column (%02d): Snapshot\n",                i_column++);
   fprintf(fp_out,"#        (%02d): Halo index\n",              i_column++);
   fprintf(fp_out,"#        (%02d): No. particles\n",           i_column++);
@@ -209,6 +208,7 @@ int main(int argc, char *argv[]){
      }    
   }
   SID_log("Done.",SID_LOG_CLOSE);
+  SID_log("Output written to {%s}",SID_LOG_COMMENT,filename_out);
 
   fclose(fp_out);
 

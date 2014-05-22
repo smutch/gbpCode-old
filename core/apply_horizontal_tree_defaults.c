@@ -16,16 +16,16 @@ void apply_horizontal_tree_defaults(int                    n_halos_1_matches,
    for(i_halo=0;i_halo<n_halos_1_matches;i_halo++){
       if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED)){
          halos_i[i_halo].type|=(TREE_CASE_BRIDGE_FINALIZE|TREE_CASE_BRIDGE_DEFAULT);
-         set_halo_and_descendant(halos,
-                                 i_file,
-                                 i_halo,
-                                 halos_i[i_halo].bridge_forematch.halo->file,
-                                 halos_i[i_halo].bridge_forematch.halo->index,
-                                 halos_i[i_halo].bridge_forematch.score,
-                                 max_id,
-                                 n_search,
-                                 n_wrap,
-                                 NULL);
+         apply_tree_logic(halos,
+                          i_file,
+                          i_halo,
+                          halos_i[i_halo].bridge_forematch_default.halo->file,
+                          halos_i[i_halo].bridge_forematch_default.halo->index,
+                          halos_i[i_halo].bridge_forematch_default.score,
+                          max_id,
+                          n_search,
+                          n_wrap,
+                          NULL);
       }
    }
    // ... then assign flags for halos not successfully processed.  Call them strays.

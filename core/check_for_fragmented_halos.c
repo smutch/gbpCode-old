@@ -35,7 +35,7 @@ void check_for_fragmented_halos(int k_match,
          // Decide if this is a fragmented halo or a fragmented halo source
          int                   n_bridge_back_matches=groups[i_write%n_wrap][i_group].bridge_backmatch.halo->n_back_matches;
          match_info           *back_match =&(groups[i_write%n_wrap][i_group].bridge_backmatch);
-         tree_horizontal_info *frag_source=back_match->halo->back_matches[n_bridge_back_matches-1].halo; // Sorted by largest descendant size
+         tree_horizontal_info *frag_source=back_match->halo->back_matches[0].halo; // Sorted by largest descendant size (DESCENDAING ORDER)
          int flag_fragment_source=((&(groups[i_write%n_wrap][i_group]))==frag_source);
 
          if(!flag_fragment_source){ 

@@ -106,7 +106,8 @@ int main(int argc, char *argv[]){
   for(i_read=MAX(0,i_read_in-trees->n_search*trees->i_read_step),i_file=MAX(0,i_file-trees->n_search);
       i_read<=MIN(trees->i_read_stop,i_read_in+trees->n_search*trees->i_read_step);
       i_read+=(trees->i_read_step),i_file++){
-    if(i_read!=i_read_in){
+    //if(i_read!=i_read_in){
+    if(TRUE){
        SID_log("Processing snapshot %03d (%03d of %03d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read,i_file+1,trees->n_snaps);
        int halo_id            =0;
        int halo_type          =0;
@@ -182,7 +183,8 @@ int main(int argc, char *argv[]){
              SID_fread_all(&bridge_match_file, sizeof(int),1,&fp_in_bridge_match);
              SID_fread_all(&bridge_match_index,sizeof(int),1,&fp_in_bridge_match);
              // Write match
-             if(trees->snap_list[bridge_match_file]==i_read_in && bridge_match_index==i_halo){
+             int flag_is_halo=(i_read==i_read_in && i_halo==i_group);
+             if(trees->snap_list[bridge_match_file]==i_read_in && bridge_match_index==i_halo || flag_is_halo){
                 char *halo_type_string=NULL;
                 tree_case_flags_text(halo_type,"+",&halo_type_string);
                 fread_catalog_file(&fp_properties,NULL,&properties,NULL,i_subgroup);
@@ -232,8 +234,8 @@ int main(int argc, char *argv[]){
                 SID_fread_all(&bridge_match_file, sizeof(int),1,&fp_in_bridge_match);
                 SID_fread_all(&bridge_match_index,sizeof(int),1,&fp_in_bridge_match);
                 // Write match
-if(i_read==794 && i_subgroup==290) fprintf(stderr,"%d %d\n",trees->snap_list[bridge_match_file],bridge_match_index);
-                if(trees->snap_list[bridge_match_file]==i_read_in && bridge_match_index==i_halo){
+                int flag_is_halo=(i_read==i_read_in && i_halo==i_subgroup);
+                if(trees->snap_list[bridge_match_file]==i_read_in && bridge_match_index==i_halo || flag_is_halo){
                    char *halo_type_string=NULL;
                    tree_case_flags_text(halo_type,"+",&halo_type_string);
                    fread_catalog_file(&fp_properties,NULL,&properties,NULL,i_subgroup);

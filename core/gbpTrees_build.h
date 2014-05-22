@@ -55,7 +55,7 @@
 #define TREE_CASE_INVALID                       TTTP21  // For internal use.  This should never be seen in the output.
 
 #ifdef _MAIN
-   int   n_tree_case_flag_list=20;
+   int   n_tree_case_flag_list=21;
    int   tree_case_flag_list[]={
                   TREE_CASE_NO_PROGENITORS,
                   TREE_CASE_FRAGMENTED_NEW,
@@ -66,6 +66,7 @@
                   TREE_CASE_MERGER,
                   TREE_CASE_BRIDGED,
                   TREE_CASE_MATCHED_TO_BRIDGE,
+                  TREE_CASE_MATCHED_TO_EMERGED,
                   TREE_CASE_BRIDGE_DEFAULT,
                   TREE_CASE_REMNANT,
                   TREE_CASE_DROPPED,
@@ -87,6 +88,7 @@
                         "MERGER",
                         "BRIDGED",
                         "MATCHED_TO_BRIDGE",
+                        "MATCHED_TO_EMERGED",
                         "BRIDGE_DEFAULT",
                         "REMNANT",
                         "DROPPED",
@@ -200,7 +202,11 @@ struct tree_horizontal_info{
   match_info       last_progenitor;                // Pointer to this halo's last  progenitor
   match_info       next_progenitor;                // Pointer to this halo's next  progenitor
   back_match_info *back_matches;                   // Contains the pointer information for all of the back-matches to this halo
-  match_info       bridge_forematch;               // Pointer to a possible initial match to a bridged halo
+  match_info       bridge_forematch_first;         // Pointer to the first bridged halo matched to.  Default starts with this value but may change.
+  match_info       bridge_forematch_default;       // Pointer to the default bridged halo matched to.  Starts with this value but may change,
+                                                   //    if, in the act of matching to emerged halos, we match to a bridge which is not a descendant.
+                                                   //    If no unbridged emerged halo is ultimately matched to, then this will become the final match. 
+  match_info       bridge_forematch;               // Pointer to the last bridged halo we've matched to.  This is the one scanned for emerged halos.
   match_info       bridge_backmatch;               // Pointer to a possible back-matched bridged halo
   match_info       descendant;                     // Contains all the needed pointers to the descendant
 };
@@ -469,6 +475,12 @@ void read_matches(char    *filename_root_matches,
 int check_for_matching_input_files(const char *filename_root_in,int i_read);
 float maximum_match_score(double n_particles);
 int check_goodness_of_match(int n_particles_in,float match_score,double f_goodness_of_match);
+int check_if_halo_is_descendant(tree_horizontal_info *possible_progenitor,
+                                tree_horizontal_info *possible_descendant,
+                                int n_search);
+int check_validity_of_emerged_match(tree_horizontal_info *halo_i,
+                                    back_match_info      *back_match,
+                                    int n_search);
 int compute_single_matches(char   *filename_root_in,
                            char   *filename_root_out,
                            int     i_read_1,
@@ -749,16 +761,16 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
                                 int          l_read,
                                 int          i_read_step,
                                 int          n_wrap);
-void set_halo_and_descendant(tree_horizontal_info **halos,
-                             int                    i_file,
-                             int                    i_halo,
-                             int                    j_file,
-                             int                    j_halo,
-                             float                  score,
-                             int                   *max_id,
-                             int                    n_search,
-                             int                    n_wrap,
-                             back_match_info       *back_match);
+void apply_tree_logic(tree_horizontal_info **halos,
+                      int                    i_file,
+                      int                    i_halo,
+                      int                    j_file,
+                      int                    j_halo,
+                      float                  score,
+                      int                   *max_id,
+                      int                    n_search,
+                      int                    n_wrap,
+                      back_match_info       *back_match);
 void add_progenitor_to_halo(tree_horizontal_info **halos,
                             int                    i_file,
                             int                    i_halo,

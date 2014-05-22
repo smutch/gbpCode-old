@@ -18,7 +18,7 @@ void add_progenitor_to_halo(tree_horizontal_info **halos,
                             int                    n_wrap,
                             int                    flag_emerged){
    tree_horizontal_info *halos_i=halos[i_file%n_wrap];
-   tree_horizontal_info *halos_j=halos[j_file%n_wrap];;
+   tree_horizontal_info *halos_j=halos[j_file%n_wrap];
    int                   file_offset=j_file-i_file;
 
    // Set progenitor IDs and pointers ...
@@ -108,6 +108,5 @@ void add_progenitor_to_halo(tree_horizontal_info **halos,
 
    // Mark the halo as processed
    halos_i[i_halo].type&=(~(TREE_CASE_UNPROCESSED|TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED|TREE_CASE_BRIDGE_FINALIZE));
-
 }
 

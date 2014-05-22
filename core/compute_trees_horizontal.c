@@ -336,21 +336,6 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                            n_files,
                            filename_root_matches,
                            flag_match_subgroups);
-       // Just read the halo sizes if we aren't
-       else
-          read_halo_sizes(halos,
-                          n_halos_i,
-                          match_id,
-                          match_score,
-                          match_index,
-                          n_particles,
-                          i_file,
-                          i_read,
-                          i_read_step,
-                          n_wrap,
-                          n_halos_max,
-                          filename_root_matches,
-                          flag_match_subgroups);
 
        // Perform forward-matching
        construct_progenitors(halos,
@@ -391,17 +376,6 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                                       &max_id,
                                       &max_tree_id);
  
-       // Now that we have set the identities of all the halos in the active snapshot,
-       //   we need to remove all their main-progenitor descendants from lists of candidate emerged halos 
-       //   to avoid incorrectly matching to their descendants (instead of themselves) later-on when when 
-       //   we are scaning emerged halo candidates for subsequent snapshots.  Real matches to bridges are dealt-with
-       //   when halos marked TREE_CASE_BRIDGE_DEFAULT are processed. 
-       finalize_bridged_halo_list(halos_i,
-                                  n_halos_i,
-                                  i_file,
-                                  n_search,
-                                  n_files);
-
        // Now that we know which halos are main progenitors, we can set the n_partices_largest_descendant values.
        set_largest_descendants(halos_i,n_halos_i);
 
