@@ -1,8 +1,0 @@
-*.o
-*.a
-.install*
-.printed_status
-todo
-wip
-*.my*
-gbp*

@@ -42,9 +42,11 @@ int main(int argc, char *argv[]){
     int    *data_bin;
     size_t *data_bin_index;
     int     i_data,j_data,i_bin;
-    int     cumulator;
+    int     cumulator_up;
+    int     cumulator_dn;
     double  temp_value;
     size_t  n_data;
+    size_t  n_data_used;
     int     i,j,k,l;
     int     j_bin;
     int     flag;
@@ -157,12 +159,13 @@ int main(int argc, char *argv[]){
     merge_sort(data_bin,(size_t)n_data,&data_bin_index,SID_INT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
     SID_log("Done.",SID_LOG_CLOSE);
     SID_log("Counting...",SID_LOG_OPEN|SID_LOG_TIMER);
-    for(i_data=0,i_bin=0;i_data<n_data && i_bin<n_bins;i_bin++){
+    for(i_data=0,i_bin=0,n_data_used=0;i_data<n_data && i_bin<n_bins;i_bin++){
       while(data_bin[data_bin_index[i_data]] <i_bin && i_data<(n_data-1)) i_data++;
       j_data=i_data;
       while(data_bin[data_bin_index[i_data]]==i_bin && i_data<(n_data-1)){
         hist[i_bin]++;
         i_data++;
+        n_data_used++;
       }
       if(hist[i_bin]==0)
         bin_median[i_bin]=0.5*(bin[i_bin]+bin[i_bin+1]);
@@ -211,11 +214,12 @@ int main(int argc, char *argv[]){
     fprintf(unit_out,"#   max_bin  = %11.4e\n",max_bin);
     fprintf(unit_out,"#   bin_size = %11.4e\n",bin_size);
     fprintf(unit_out,"#\n");
-    fprintf(unit_out,"# Column 1) Histogram bin lo\n");
-    fprintf(unit_out,"#        2) Histogram bin median\n");
-    fprintf(unit_out,"#        3) Histogram bin hi\n");
-    fprintf(unit_out,"#        4) Bin counts\n");
-    fprintf(unit_out,"#        5) Cumulative bin counts\n");
+    fprintf(unit_out,"# Column: (1) Histogram bin lo\n");
+    fprintf(unit_out,"#         (2) Histogram bin median\n");
+    fprintf(unit_out,"#         (3) Histogram bin hi\n");
+    fprintf(unit_out,"#         (4) Bin counts\n");
+    fprintf(unit_out,"#         (5) Cumulative bin counts (>lo bin)\n");
+    fprintf(unit_out,"#         (6) Cumulative bin counts (<hi bin)\n");
     fprintf(unit_out,"#\n");
 
     /*******************/
@@ -223,10 +227,11 @@ int main(int argc, char *argv[]){
     /*******************/
     SID_log("Writing to {%s}...",SID_LOG_OPEN,filename_out);
     bin_start=0;
-    for(i=0,cumulator=0;i<n_bins;i++){
-      cumulator+=hist[i];
-      fprintf(unit_out,"%11.4f %11.4f %11.4f %d %d\n",
-              bin[i],bin_median[i],bin[i+1],hist[i],cumulator);
+    for(i=0,cumulator_up=0,cumulator_dn=n_data_used;i<n_bins;i++){
+      cumulator_up+=hist[i];
+      fprintf(unit_out,"%11.4f %11.4f %11.4f %d %d %d\n",
+              bin[i],bin_median[i],bin[i+1],hist[i],cumulator_dn,cumulator_up);
+      cumulator_dn-=hist[i];
     }
     fclose(unit_out);
     SID_log("Done.",SID_LOG_CLOSE);
