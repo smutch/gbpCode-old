@@ -11,4 +11,5 @@
 #if USE_FFTW
   #include <gbpFFT.h>
 #endif
+#include <gbpMCMC.h>
 #endif
