@@ -1,0 +1,17 @@
+###########################
+# Local Makefile settings #
+###########################
+INCFILES  = gbpCosmo.h
+OBJFILES  = gbpCosmo.o               \
+	    linear_theory.o          \
+	    mass_function.o          \
+	    mass_functions.o         \
+	    NFW_etc.o                \
+	    bias_model.o             
+LIBFILE   = libgbpCosmo.a
+BINFILES  = make_snap_list plot_clustering D_angular D_angular_1to2 D_luminosity plot_cosmo plot_cosmo_evolution
+SCRIPTS   =
+DATAFILES = nonlinear_power_spectrum.dat transfer_function.dat
+LIBS      = -lgbpCosmo -lgbpMath -lgbpLib
+SUBDIRS   = 
+#############################
