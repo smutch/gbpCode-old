@@ -6,7 +6,7 @@
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpHalos.h>
-#include <gbpTrees.h>
+#include <gbpTrees_build.h>
 #include <gbpTrees_analysis.h>
 #include <assert.h>
 

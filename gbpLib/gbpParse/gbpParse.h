@@ -50,7 +50,7 @@ int grab_size_t(char   *line,
 		size_t *return_value);
 int parse_line(char *line,
 	       int   n_return, ...);
-int search_and_replace(char *string,char *search,char *replace);
+int search_and_replace(char *string,const char *search,const char *replace);
 
 void strip_path(char *string);
 void strip_file_root(char *string);

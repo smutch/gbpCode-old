@@ -7,7 +7,7 @@
 size_t mark_particles(plist_info *plist,
                       int         run_mode,
                       double     *input_vals,
-                      char       *mark_name){
+                      const char *mark_name){
   size_t  n_particles;
   size_t  n_particles_local;
   size_t  i_particle;

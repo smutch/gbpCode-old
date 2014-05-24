@@ -5,7 +5,6 @@
 #include <math.h>
 #include <gbpLib.h>  // Always needed by gbpMCMC
 #include <gbpMath.h> // Always needed by gbpMCMC
-#include <gbpMCMC.h> // Always needed by gbpMCMC
 
 // This structure holds any information that you want to pass to the model function 
 typedef struct model_params model_params;

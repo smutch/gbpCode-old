@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <gbpLib.h>
-#include <gbpTrees.h>
+#include <gbpTrees_build.h>
 
 int tree_case_flags_text(int match_type,const char *separator_string,char **return_string){
   // Allocate the string if necessary

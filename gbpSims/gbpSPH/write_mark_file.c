@@ -7,8 +7,8 @@
 /* In the future ... receive a list of variables to make this adaptive */
 
 void write_mark_file(plist_info *plist,
-                     char       *mark_name,
-                     char       *filename_out){
+                     const char *mark_name,
+                     const char *filename_out){
   int     i_species;
   size_t  i_particle;
   int     i_rank;

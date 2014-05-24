@@ -2,7 +2,7 @@
 # Library-specific settings #
 #############################
 INCFILES = gbpMCMC.h
-LIBFILE  = libgbpMCMC.a
+LIBFILE  = 
 OBJFILES = add_MCMC_DS.o                        \
 	   start_loop_MCMC.o                    \
            end_loop_MCMC.o                      \

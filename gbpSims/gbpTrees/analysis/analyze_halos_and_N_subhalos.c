@@ -6,8 +6,8 @@
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpHalos.h>
-#include <gbpTrees.h>
-#include <gbpZFIRE.h>
+#include <gbpTrees_build.h>
+#include <gbpTrees_analysis.h>
 
 void analyze_halos_and_N_subhalos(tree_info  *trees,
                                   const char *filename_out_root,

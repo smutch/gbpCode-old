@@ -7,7 +7,7 @@
 
 // TODO: Need to deal with replace_length!=search_length properly.
 
-int search_and_replace(char *string,char *search,char *replace){
+int search_and_replace(char *string,const char *search,const char *replace){
   int string_length;
   int search_length;
   int replace_length;

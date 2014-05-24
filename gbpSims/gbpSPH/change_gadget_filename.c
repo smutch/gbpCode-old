@@ -3,7 +3,7 @@
 #include <gbpSPH.h>
 #include <string.h>
 
-void change_gadget_filename(char *filename_root_in,char *filename_root,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename){
+void change_gadget_filename(const char *filename_root_in,const char *filename_root,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename){
 
   // Determine/set the filename root and path
   char filename_path[MAX_FILENAME_LENGTH];

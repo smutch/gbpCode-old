@@ -178,7 +178,7 @@ int  init_gadget_read(char *filename_root_in,int snapshot_number,int *flag_multi
 int  init_smooth_read(char *filename_root_in,int snapshot_number,int *flag_multifile,int *flag_file_type,smooth_header_info *header);
 void set_gadget_filename(char *filename_root_in,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename);
 void set_smooth_filename(char *filename_root_in,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename);
-void change_gadget_filename(char *filename_root_in,char *filename_root,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename);
+void change_gadget_filename(const char *filename_root_in,const char *filename_root,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename);
 
 void init_plist(plist_info *plist, slab_info *slab,double length_unit,double mass_unit, double velocity_unit); 
 void free_plist(plist_info *plist);
@@ -200,7 +200,7 @@ void fetch_particles(plist_info *plist,
 size_t mark_particles(plist_info *plist,
                       int         run_mode,
                       double     *input_vars,
-                      char       *mark_name);
+                      const char *mark_name);
 void compute_particle_quantity(plist_info *plist,
                                char       *var_text,
                                char       *ptype_in_text);
@@ -222,8 +222,8 @@ void write_ascii(char       *filename,
 void write_csv(char       *filename_out,
                plist_info *plist);
 void write_mark_file(plist_info *plist,
-                     char       *mark_name,
-                     char       *filename_out);
+                     const char *mark_name,
+                     const char *filename_out);
 void read_tipsy_ids(char       *filename,
                     plist_info *plist);
 void read_smooth(plist_info *plist,
