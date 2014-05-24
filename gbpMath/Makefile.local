@@ -4,7 +4,8 @@
 INCFILES  = gbpMath.h 
 LIBFILE   = libgbpMath.a
 OBJFILES  =
-BINFILES  = 
+SCRIPTS   = allresults_MCMC.py allresults_MCMC_pyramid.py
+BINFILES  = example_line_fit covariance2ascii reanalyze_MCMC 
 LIBS      = 
 SUBDIRS   = gbpDomain gbpSort gbpStats gbpInterpolate gbpMisc gbpRNG gbpPHKs gbpMCMC
 ifeq ($(USE_FFTW),1)
