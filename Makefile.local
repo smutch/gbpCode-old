@@ -9,7 +9,7 @@ SUBDIRS   = core analysis
 BINFILES  = query_matches                  \
 	    query_progenitors              \
 	    query_trees                    \
-	    query_bridge                   \
+	    query_tree_halo                \
 	    extract_tree_horizontal        \
 	    most_massive_subgroup_analysis \
             tree_stats_horizontal          \

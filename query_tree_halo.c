@@ -50,7 +50,7 @@ int main(int argc, char *argv[]){
   }
   i_read_in=atoi(argv[5]);
   i_halo   =atoi(argv[6]);
-  SID_log("Querying bridge matches for halo #%d in file #%d from {%s}...",SID_LOG_OPEN,i_halo,i_read_in,filename_trees_root);
+  SID_log("Querying tree information for halo #%d in file #%d from {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,i_halo,i_read_in,filename_trees_root);
 
   // Convert filename_root to filename
   switch(mode){
@@ -198,20 +198,36 @@ int main(int argc, char *argv[]){
                    bridge_match_snap=trees->snap_list[bridge_match_file];
                 else
                    bridge_match_snap=-1;
-                fprintf(fp_out,"%3d %7d %7d %5.2lf %7d %3d %3d %7d %7d %3d %7d %7d %s\n",
-                               i_read,
-                               i_group,
-                               halo_id,
-                               take_log10(properties.M_vir),
-                               halo_tree_id,
-                               halo_file_offset,
-                               descendant_snap,
-                               halo_index,
-                               halo_descendant_id,
-                               bridge_match_snap,
-                               bridge_match_index,
-                               halo_type,
-                               halo_type_string);
+                if(flag_is_halo)
+                   fprintf(fp_out,"%3d %7d %7d %5.2lf %7d %3d %3d %7d %7d %3s %7s %7d %s\n",
+                                  i_read,
+                                  i_group,
+                                  halo_id,
+                                  take_log10(properties.M_vir),
+                                  halo_tree_id,
+                                  halo_file_offset,
+                                  descendant_snap,
+                                  halo_index,
+                                  halo_descendant_id,
+                                  "---",
+                                  "-------",
+                                  halo_type,
+                                  halo_type_string);
+                else
+                   fprintf(fp_out,"%3d %7d %7d %5.2lf %7d %3d %3d %7d %7d %3d %7d %7d %s\n",
+                                  i_read,
+                                  i_group,
+                                  halo_id,
+                                  take_log10(properties.M_vir),
+                                  halo_tree_id,
+                                  halo_file_offset,
+                                  descendant_snap,
+                                  halo_index,
+                                  halo_descendant_id,
+                                  bridge_match_snap,
+                                  bridge_match_index,
+                                  halo_type,
+                                  halo_type_string);
                 SID_free(SID_FARG halo_type_string);
              }
           }
@@ -249,20 +265,36 @@ int main(int argc, char *argv[]){
                       bridge_match_snap=trees->snap_list[bridge_match_file];
                    else
                       bridge_match_snap=-1;
-                   fprintf(fp_out,"%3d %7d %7d %5.2lf %7d %3d %3d %7d %7d %3d %7d %7d %s\n",
-                                  i_read,
-                                  i_subgroup,
-                                  halo_id,
-                                  take_log10(properties.M_vir),
-                                  halo_tree_id,
-                                  halo_file_offset,
-                                  descendant_snap,
-                                  halo_index,
-                                  halo_descendant_id,
-                                  bridge_match_snap,
-                                  bridge_match_index,
-                                  halo_type,
-                                  halo_type_string);
+                   if(flag_is_halo)
+                      fprintf(fp_out,"%3d %7d %7d %5.2lf %7d %3d %3d %7d %7d %3s %7s %7d %s\n",
+                                     i_read,
+                                     i_subgroup,
+                                     halo_id,
+                                     take_log10(properties.M_vir),
+                                     halo_tree_id,
+                                     halo_file_offset,
+                                     descendant_snap,
+                                     halo_index,
+                                     halo_descendant_id,
+                                     "---",
+                                     "-------",
+                                     halo_type,
+                                     halo_type_string);
+                   else
+                      fprintf(fp_out,"%3d %7d %7d %5.2lf %7d %3d %3d %7d %7d %3d %7d %7d %s\n",
+                                     i_read,
+                                     i_subgroup,
+                                     halo_id,
+                                     take_log10(properties.M_vir),
+                                     halo_tree_id,
+                                     halo_file_offset,
+                                     descendant_snap,
+                                     halo_index,
+                                     halo_descendant_id,
+                                     bridge_match_snap,
+                                     bridge_match_index,
+                                     halo_type,
+                                     halo_type_string);
                    SID_free(SID_FARG halo_type_string);
                 }
              }

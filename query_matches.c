@@ -48,7 +48,7 @@ int main(int argc, char *argv[]){
   }
   i_read=atoi(argv[3]);
   i_halo=atoi(argv[4]);
-  SID_log("Searching match information for halo #%d in file #%d of {%s}...",SID_LOG_OPEN,i_halo,i_read,filename_SSimPL_root);
+  SID_log("Searching match information for halo #%d in file #%d of {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,i_halo,i_read,filename_SSimPL_root);
 
   // Convert filename_root to filename
   switch(mode){
@@ -115,7 +115,7 @@ int main(int argc, char *argv[]){
   fprintf(fp_out,"#        (%02d): Good or bad match?\n",      i_column++);
 
   // Loop over all matching combinations
-  SID_log("Processing forward matches...",SID_LOG_OPEN);
+  SID_log("Processing forward matches...",SID_LOG_OPEN|SID_LOG_TIMER);
   SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
   for(j_read=MIN(i_read_stop,i_read+n_search);j_read>=MAX(0,i_read-n_search);j_read--){
      if(i_read!=j_read){
@@ -164,7 +164,7 @@ int main(int argc, char *argv[]){
      }    
   }
   SID_log("Done.",SID_LOG_CLOSE);
-  SID_log("Processing backwards matches...",SID_LOG_OPEN);
+  SID_log("Processing backwards matches...",SID_LOG_OPEN|SID_LOG_TIMER);
   j_read=i_read;
   j_halo=i_halo;
   for(i_read=MIN(i_read_stop,j_read+n_search);i_read>=MAX(0,j_read-n_search);i_read--){

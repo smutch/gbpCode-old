@@ -57,14 +57,14 @@ int main(int argc, char *argv[]){
      i_read      =0;
      i_halo      =0;
      find_mode   =0;
-     SID_log("Querying trees for halo ID #%d from {%s}...",SID_LOG_OPEN,halo_id_find,filename_trees_root);
+     SID_log("Querying trees for halo ID #%d from {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,halo_id_find,filename_trees_root);
      sprintf(filename_out,"%s_%d.txt",filename_trees_root,halo_id_find);
   }
   else{
      i_read   =atoi(argv[5]);
      i_halo   =atoi(argv[6]);
      find_mode=1;
-     SID_log("Querying trees for halo #%d in file #%d from {%s}...",SID_LOG_OPEN,i_halo,i_read,filename_trees_root);
+     SID_log("Querying trees for halo #%d in file #%d from {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,i_halo,i_read,filename_trees_root);
      sprintf(filename_out,"%s_%d_%d.txt",filename_trees_root,i_read,i_halo);
   }
 
