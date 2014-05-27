@@ -366,18 +366,24 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
        // Finalize matches to unprocessed halos.  In particular,
        //    resolve matches to bridged halos that were not matched
        //    to any emerged candidates.
-       apply_horizontal_tree_defaults(n_halos_1_matches,
-                                      n_halos_i,
-                                      halos,
-                                      halos_i,
-                                      i_file,
-                                      n_search,
-                                      n_wrap,
-                                      &max_id,
-                                      &max_tree_id);
+       finalize_trees_horizontal(n_halos_1_matches,
+                                 n_halos_i,
+                                 halos,
+                                 halos_i,
+                                 i_file,
+                                 n_search,
+                                 n_wrap,
+                                 &max_id,
+                                 &max_tree_id);
  
        // Now that we know which halos are main progenitors, we can set the n_partices_largest_descendant values.
        set_largest_descendants(halos_i,n_halos_i);
+
+       // Now that we know which halos are the main progenitors of this
+       //    snapshot's bridged halos, we can mark the other back matches
+       //    as candidate emerged halos
+       if(flag_fix_bridges)
+          identify_emerged_halo_candidates(halos_i,n_halos_i,n_search);
 
        // This has to be written right after a snapshot is read and processed (because it needs all forward scan information), 
        //    so it is separate from the rest of the log output code.

@@ -63,18 +63,24 @@ void compute_trees_fragmented_halo_analysis(tree_info *trees,char *filename_out_
   treenode_list_info *list_halos_new;
   treenode_list_info *list_halos_new_central;
   treenode_list_info *list_halos_new_substructure;
-  int                *branch_number;
+  int                *frag_snapshot;
+  int                *frag_index;
+  int                *frag_length;
   double             *delta_fragmented;
   double             *Mvir_parent;
+  double             *Mvir;
   init_treenode_list("fragmented_all",             n_fragmented,                 &list_halos);
   init_treenode_list("fragmented_centrals",        n_fragmented_central,         &list_halos_central);
   init_treenode_list("fragmented_substructure",    n_fragmented_substructure,    &list_halos_substructure);
   init_treenode_list("fragmented_new_all",         n_fragmented_new,             &list_halos_new);
   init_treenode_list("fragmented_new_centrals",    n_fragmented_new_central,     &list_halos_new_central);
   init_treenode_list("fragmented_new_substructure",n_fragmented_new_substructure,&list_halos_new_substructure);
-  init_treenode_info_data(list_halos,SID_FARG branch_number,   SID_INT,   "branch_number");
-  init_treenode_info_data(list_halos,SID_FARG delta_fragmented,SID_DOUBLE,"delta_fragmented [Gyrs]");
-  init_treenode_info_data(list_halos,SID_FARG Mvir_parent,     SID_DOUBLE,"M_parent [h^{-1] M_sol]");
+  init_treenode_info_data(list_halos_new,SID_FARG frag_length,     SID_INT,   "fragment length (in subsampled snapshots)");
+  init_treenode_info_data(list_halos_new,SID_FARG delta_fragmented,SID_DOUBLE,"delta_fragmented [Gyrs]");
+  init_treenode_info_data(list_halos_new,SID_FARG Mvir_parent,     SID_DOUBLE,"M_parent [h^{-1] M_sol]");
+  init_treenode_info_data(list_halos_new,SID_FARG Mvir,            SID_DOUBLE,"M_vir    [h^{-1] M_sol]");
+  init_treenode_info_data(list_halos_new,SID_FARG frag_index,      SID_INT,   "Fragment's starting index");
+  init_treenode_info_data(list_halos_new,SID_FARG frag_snapshot,   SID_INT,   "Fragment's starting snapshot");
 
   // Create the list
   SID_log("Creating lists...",SID_LOG_OPEN|SID_LOG_TIMER);
@@ -100,11 +106,16 @@ void compute_trees_fragmented_halo_analysis(tree_info *trees,char *filename_out_
                  add_to_treenode_list(list_halos_new_substructure,current_halo);
            }
            add_to_treenode_list(list_halos,current_halo);
-           if(flag_new)
+           if(flag_new){
               add_to_treenode_list(list_halos_new,current_halo);
-           delta_fragmented[i_list]=fetch_treenode_delta_t(trees,current_halo,markers.branch_leaf)/S_PER_GYR;
-           Mvir_parent[i_list]     =fetch_treenode_Mvir   (trees,current_halo->parent);
-           i_list++;
+              frag_snapshot[i_list]   =trees->snap_list[current_halo->snap_tree];
+              frag_index[i_list]      =current_halo->file_index;
+              frag_length[i_list]     =markers.branch_root->snap_tree-current_halo->snap_tree+1;
+              delta_fragmented[i_list]=fetch_treenode_delta_t(trees,markers.branch_root,current_halo)/S_PER_GYR;
+              Mvir[i_list]            =fetch_treenode_Mvir   (trees,current_halo);
+              Mvir_parent[i_list]     =fetch_treenode_Mvir   (trees,current_halo->parent);
+              i_list++;
+           }
         }
         current_halo=current_halo->next_neighbour;
      }
@@ -114,9 +125,9 @@ void compute_trees_fragmented_halo_analysis(tree_info *trees,char *filename_out_
   // Write data files
   write_treenode_list_properties(trees,filename_out_root,list_halos);
   write_treenode_list_markers   (trees,filename_out_root,list_halos);
-  write_treenode_list_data      (trees,filename_out_root,list_halos);
   write_treenode_list_properties(trees,filename_out_root,list_halos_new);
   write_treenode_list_markers   (trees,filename_out_root,list_halos_new);
+  write_treenode_list_data      (trees,filename_out_root,list_halos_new);
 
   // Write histograms
   write_treenode_list_hist(trees,filename_out_root,list_halos);

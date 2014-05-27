@@ -332,9 +332,9 @@ void write_trees_horizontal(void  **groups_in,
               group_file_backmatch =set_match_file(    &(groups[i_write%n_wrap][i_group].bridge_backmatch));
               group_index_backmatch=set_match_index(   &(groups[i_write%n_wrap][i_group].bridge_backmatch));
               group_id_backmatch   =set_match_id(      &(groups[i_write%n_wrap][i_group].bridge_backmatch));
-              group_snap_forematch =set_match_snapshot(&(groups[i_write%n_wrap][i_group].bridge_forematch_first));
-              group_file_forematch =set_match_file(    &(groups[i_write%n_wrap][i_group].bridge_forematch_first));
-              group_index_forematch=set_match_index(   &(groups[i_write%n_wrap][i_group].bridge_forematch_first));
+              group_snap_forematch =set_match_snapshot(&(groups[i_write%n_wrap][i_group].forematch_first));
+              group_file_forematch =set_match_file(    &(groups[i_write%n_wrap][i_group].forematch_first));
+              group_index_forematch=set_match_index(   &(groups[i_write%n_wrap][i_group].forematch_first));
            }
            else{
               tree_horizontal_extended_info **groups;
@@ -441,9 +441,9 @@ void write_trees_horizontal(void  **groups_in,
                  subgroup_file_backmatch =set_match_file(    &(subgroups[i_write%n_wrap][i_subgroup].bridge_backmatch));
                  subgroup_index_backmatch=set_match_index(   &(subgroups[i_write%n_wrap][i_subgroup].bridge_backmatch));
                  subgroup_id_backmatch   =set_match_id(      &(subgroups[i_write%n_wrap][i_subgroup].bridge_backmatch));
-                 subgroup_snap_forematch =set_match_snapshot(&(subgroups[i_write%n_wrap][i_subgroup].bridge_forematch_first));
-                 subgroup_file_forematch =set_match_file(    &(subgroups[i_write%n_wrap][i_subgroup].bridge_forematch_first));
-                 subgroup_index_forematch=set_match_index(   &(subgroups[i_write%n_wrap][i_subgroup].bridge_forematch_first));
+                 subgroup_snap_forematch =set_match_snapshot(&(subgroups[i_write%n_wrap][i_subgroup].forematch_first));
+                 subgroup_file_forematch =set_match_file(    &(subgroups[i_write%n_wrap][i_subgroup].forematch_first));
+                 subgroup_index_forematch=set_match_index(   &(subgroups[i_write%n_wrap][i_subgroup].forematch_first));
               }
               else{
                  tree_horizontal_extended_info **subgroups;

@@ -8,16 +8,18 @@ int check_validity_of_emerged_match(tree_horizontal_info *halo_i,
    // Perform some checks to see if we want to make a match to this emerged halo
    int flag_valid=TRUE;
 
-   // 1) Because we may be recursively finding emerged halos, make sure we haven't
+   // 1) The TREE_CASE_EMERGED_CANDIDATE flag must be set.  This
+   //    isn't the case if this back match is in the main progenitor
+   //    line of it's bridge.
+   flag_valid=check_mode_for_flag(back_match->halo->type,TREE_CASE_EMERGED_CANDIDATE);
+
+   // 2) Because we may be recursively finding emerged halos, make sure we haven't
    //    exceeded the search interval.  If so, invalidate the match.
    int total_offset=back_match->file-halo_i->file;
    if(total_offset<=0)
       SID_trap_error("Invalid emerged halo snapshot offset (ie. %d<=0).",ERROR_LOGIC,total_offset);
    if(total_offset>n_search)
       flag_valid=FALSE;
-
-   // 2) Check that we are not matching to a descendant of the initial bridged match ...
-   //check_if_halo_is_descendant(halo_i,back_match->halo,n_search);
 
    return(flag_valid);
 }

@@ -117,18 +117,6 @@ void read_trees_pointers(tree_info        *trees,
             result_i    =current_group_local;
             flag_found_j=find_tree_node(trees,group_snap,group_index,TRUE,&result_j);
 
-            // Sanity check
-            int flag_emerged_candidate=(check_mode_for_flag(result_i->tree_case,TREE_CASE_EMERGED)||
-                                        check_mode_for_flag(result_i->tree_case,TREE_CASE_FRAGMENTED_NEW));
-            if(flag_bridge_forematch){
-               if(check_mode_for_flag(result_i->tree_case,TREE_CASE_MATCHED_TO_BRIDGE) && result_j==NULL)
-                  SID_trap_error("Could not find the bridge forematch for a group (%d,%d) marked TREE_CASE_MATCHED_TO_BRIDGE.",ERROR_LOGIC,i_file_ptrs,i_group);
-            }
-            else if(flag_bridge_backmatch){
-               if(flag_emerged_candidate && result_j==NULL)
-                  SID_trap_error("Could not find the bridge backmatch for a group (%d,%d) marked TREE_CASE_EMERGED_CANDIDATE.",ERROR_LOGIC,i_file_ptrs,i_group);
-            }
-
             // Create pointer
             pointers_groups_local[result_i->snap_tree][result_i->neighbour_index]=result_j;
 
@@ -145,18 +133,6 @@ void read_trees_pointers(tree_info        *trees,
          // Find the halo pointed to and the halo pointed from (which-is-which depends on the mode)
          result_i    =current_subgroup_local;
          flag_found_j=find_tree_node(trees,subgroup_snap,subgroup_index,FALSE,&result_j);
-
-         // Sanity check
-         int flag_emerged_candidate=(check_mode_for_flag(result_i->tree_case,TREE_CASE_EMERGED)      ||
-                                     check_mode_for_flag(result_i->tree_case,TREE_CASE_FRAGMENTED_NEW));
-         if(flag_bridge_forematch){
-            if(check_mode_for_flag(result_i->tree_case,TREE_CASE_MATCHED_TO_BRIDGE) && result_j==NULL)
-              SID_trap_error("Could not find a subgroup bridge forematch (%d,%d).",ERROR_LOGIC,i_file_ptrs,i_subgroup);
-         }
-         else if(flag_bridge_backmatch){
-            if(flag_emerged_candidate && result_j==NULL)
-              SID_trap_error("Could not find a subgroup bridge backmatch (%d,%d).",ERROR_LOGIC,i_file_ptrs,i_subgroup);
-         }
 
          // Create pointer
          pointers_subgroups_local[result_i->snap_tree][result_i->neighbour_index]=result_j;

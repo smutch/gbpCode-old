@@ -28,13 +28,9 @@ void add_to_trees_horizontal_stats(tree_horizontal_stats_info *stats,int id,int 
       stats->max_bridged_size=MAX(stats->max_bridged_size,n_particles);
       stats->n_bridged++;
    }
-   if(check_mode_for_flag(type,TREE_CASE_MATCHED_TO_BRIDGE)){
-      stats->max_bridge_progenitor_size=MAX(stats->max_bridge_progenitor_size,n_particles);
-      stats->n_bridge_progenitors++;
-      if(!check_mode_for_flag(type,TREE_CASE_BRIDGE_DEFAULT)){
-         stats->max_emerged_progenitor_size=MAX(stats->max_emerged_progenitor_size,n_particles);
-         stats->n_emerged_progenitors++;
-      }
+   if(check_mode_for_flag(type,TREE_CASE_MATCHED_TO_EMERGED)){
+      stats->max_emerged_progenitor_size=MAX(stats->max_emerged_progenitor_size,n_particles);
+      stats->n_emerged_progenitors++;
    }
    if(check_mode_for_flag(type,TREE_CASE_EMERGED)){
       stats->max_emerged_size=MAX(stats->max_emerged_size,n_particles);

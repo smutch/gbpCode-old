@@ -15,8 +15,7 @@ void add_progenitor_to_halo(tree_horizontal_info **halos,
                             int                    j_halo,
                             float                  score,
                             int                   *max_id,
-                            int                    n_wrap,
-                            int                    flag_emerged){
+                            int                    n_wrap){
    tree_horizontal_info *halos_i=halos[i_file%n_wrap];
    tree_horizontal_info *halos_j=halos[j_file%n_wrap];
    int                   file_offset=j_file-i_file;
@@ -92,21 +91,20 @@ void add_progenitor_to_halo(tree_horizontal_info **halos,
    if(check_mode_for_flag(halos_j[j_halo].type,TREE_CASE_STRAYED))
       halos_i[i_halo].type|=TREE_CASE_STRAYED;
 
-   // ... set the flags for simple and dropped halo matches
-   if(file_offset!=1 && !check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_MATCHED_TO_BRIDGE))
-      halos_i[i_halo].type|=TREE_CASE_DROPPED;
-
-   // ... set the flag for emerged halos
-   if(flag_emerged){
-      halos_i[i_halo].type|=  TREE_CASE_MATCHED_TO_EMERGED;
-      halos_j[j_halo].type|=  TREE_CASE_EMERGED;
-      halos_j[j_halo].type&=(~TREE_CASE_EMERGED_CANDIDATE);
+   // ... set the flags for emerged halo matches
+   if(check_mode_for_flag(halos_j[j_halo].type,TREE_CASE_EMERGED_CANDIDATE)){
+      halos_i[i_halo].type|=TREE_CASE_MATCHED_TO_EMERGED;
+      halos_j[j_halo].type|=TREE_CASE_EMERGED;
    }
+
+   // ... set the flags for dropped halo matches
+   else if(file_offset!=1)
+      halos_i[i_halo].type|=TREE_CASE_DROPPED;
 
    // ... turn off the TREE_CASE_NO_PROGENITORS flag for the descendant ...
    halos_j[j_halo].type&=(~TREE_CASE_NO_PROGENITORS);
 
    // Mark the halo as processed
-   halos_i[i_halo].type&=(~(TREE_CASE_UNPROCESSED|TREE_CASE_MATCHED_TO_BRIDGE_UNPROCESSED|TREE_CASE_BRIDGE_FINALIZE));
+   halos_i[i_halo].type&=(~(TREE_CASE_UNPROCESSED));
 }
 
