@@ -70,7 +70,7 @@ ifndef GBP_SRC
 endif
 export GBP_SRC
 ifndef GBP_DAT
-  GBP_INC=$(GBP_DAT)/myData/
+  GBP_DAT=$(GBP_SRC)/myData/
 endif
 export GBP_DAT
 ifndef GBP_INC
