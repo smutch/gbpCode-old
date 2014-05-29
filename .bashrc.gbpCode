@@ -24,9 +24,9 @@ export GBP_QUEUE_TYPE=NONE
 # If any of the following 'USE' flags are set to 1, you must
 #   then set the corresponding GBP_XXX_DIR variable below
 export USE_GSL=1
+export USE_FFTW=1
 export USE_MPI=0
 export USE_VALGRIND=0
-export USE_FFTW=0
 export USE_CFITSIO=0
 export USE_SPRNG=0
 export USE_HDF5=0
