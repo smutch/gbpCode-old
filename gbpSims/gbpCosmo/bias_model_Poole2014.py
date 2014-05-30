@@ -11,7 +11,8 @@ __date__ = "2014-05-30"
 
 def set_b_s_Poole_params(V_max, z, halo_type, bias_type):
 
-    """ DESCRIPTION HERE
+    """ This function expresses Equations (3), and (4)
+        and the values of Table 2 in Poole et al (2014a)
 
     Args:
         V_max (float) :  halo maximum circular velocity
@@ -68,7 +69,8 @@ def set_b_s_Poole_params(V_max, z, halo_type, bias_type):
 
 def b_s_Poole(s, V_max, z, halo_type, bias_type):
 
-    """ DESCRIPTION HERE
+    """ This function expresses Equation (2) of Poole et al (2014)
+        and fetches the parameters needed to compute it.
 
     Args:
         s (numpy.ndarray) : scale values
