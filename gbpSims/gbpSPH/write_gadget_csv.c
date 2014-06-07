@@ -4,8 +4,8 @@
 #include <gbpLib.h>
 #include <gbpSPH.h>
 
-void write_csv(char       *filename_out,
-               plist_info *plist){
+void write_gadget_csv(char       *filename_out,
+                      plist_info *plist){
   double  time;
   int     n_dim;
   int     n_gas;

@@ -4,11 +4,10 @@
 #include <gbpSPH.h>
 #include <string.h>
 
-int init_gadget_read(char *filename_root_in,int snapshot_number,int *flag_multifile,int *flag_file_type,gadget_header_info *header){
+int init_gadget_read(char *filename_root_in,int snapshot_number,gadget_read_info *fp_gadget){
   char  filename[MAX_FILENAME_LENGTH];
   char  filename_root[MAX_FILENAME_LENGTH];
   char  filename_path[MAX_FILENAME_LENGTH];
-  int   i_file;
   int   flag_filefound=FALSE;
   int   record_length_in;
   FILE *fp;
@@ -22,40 +21,46 @@ int init_gadget_read(char *filename_root_in,int snapshot_number,int *flag_multif
   strip_file_root(filename_path);
 
   // Determine file format
-  for(i_file=0;i_file<5 && !flag_filefound;i_file++){  
-     if(i_file==0)
+  for(int i_type=0;i_type<5 && !flag_filefound;i_type++){  
+     if(i_type==0)
         sprintf(filename,"%s/%s_%03d/%s_%03d",filename_path,filename_root,snapshot_number,filename_root,snapshot_number);
-     else if(i_file==1)
+     else if(i_type==1)
         sprintf(filename,"%s/%s_%03d",filename_path,filename_root,snapshot_number);
-     else if(i_file==2)
+     else if(i_type==2)
         sprintf(filename,"%s/%s",filename_path,filename_root);
-     else if(i_file==3)
+     else if(i_type==3)
         sprintf(filename,"%s_%03d",filename_root_in,snapshot_number);
-     else if(i_file==4)
+     else if(i_type==4)
         sprintf(filename,"%s",filename_root_in);
      fp=fopen(filename,"r");
      if(fp!=NULL){
-        flag_filefound   =TRUE;
-        (*flag_multifile)=FALSE;
-        (*flag_file_type)=i_file;
+        flag_filefound             =TRUE;
+        (fp_gadget->flag_multifile)=FALSE;
+        (fp_gadget->flag_file_type)=i_type;
      }
      // ... if that doesn't work, check for multi-file
      else{
         strcat(filename,".0");
         fp=fopen(filename,"r");
         if(fp!=NULL){
-           flag_filefound   =TRUE;
-           (*flag_multifile)=TRUE;
-           (*flag_file_type)=i_file;
+           flag_filefound             =TRUE;
+           (fp_gadget->flag_multifile)=TRUE;
+           (fp_gadget->flag_file_type)=i_type;
         }
      }
   }
 
+  // Initialize some flags
+  fp_gadget->first_select_call=TRUE;
+  fp_gadget->first_action_call=TRUE;
+
+  // Read the first header if we've found a file ok
   if(flag_filefound){
-     fread(&record_length_in,sizeof(int),1,fp);
-     fread(header,sizeof(gadget_header_info),1,fp);
+     fread(&record_length_in,   sizeof(int),               1,fp);
+     fread(&(fp_gadget->header),sizeof(gadget_header_info),1,fp);
      fclose(fp);
   }
+
   return(flag_filefound);
 }
 

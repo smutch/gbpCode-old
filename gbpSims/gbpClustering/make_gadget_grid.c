@@ -43,11 +43,11 @@ void read_gadget_binary_local(char       *filename_root_in,
   int        i_type;
 
   // Determine file format and read the header
-  gadget_header_info header;
-  int                flag_filefound;
-  int                flag_multifile;
-  int                flag_file_type;
-  flag_filefound=init_gadget_read(filename_root_in,snapshot_number,&flag_multifile,&flag_file_type,&header);
+  gadget_read_info   fp_gadget;
+  int                flag_filefound=init_gadget_read(filename_root_in,snapshot_number,&fp_gadget);
+  int                flag_multifile=fp_gadget.flag_multifile;
+  int                flag_file_type=fp_gadget.flag_file_type;
+  gadget_header_info header        =fp_gadget.header;
 
   // A file was found ... 
   if(flag_filefound){
@@ -464,13 +464,13 @@ int main(int argc, char *argv[]){
   init_cosmo_std(&cosmo);
 
   // Initialization -- fetch header info
-  double box_size;
-  gadget_header_info header;
-  int    flag_filefound;
-  int    flag_multifile;
-  int    flag_file_type;
   SID_log("Reading Gadget header...",SID_LOG_OPEN);
-  flag_filefound=init_gadget_read(filename_in_root,snapshot_number,&flag_multifile,&flag_file_type,&header);
+  gadget_read_info   fp_gadget;
+  int                flag_filefound=init_gadget_read(filename_in_root,snapshot_number,&fp_gadget);
+  int                flag_multifile=fp_gadget.flag_multifile;
+  int                flag_file_type=fp_gadget.flag_file_type;
+  gadget_header_info header        =fp_gadget.header;
+  double             box_size      =(double)(header.box_size);
   if(flag_filefound){
      if(SID.I_am_Master){
         FILE *fp_in;

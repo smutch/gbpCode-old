@@ -614,10 +614,7 @@ void read_gadget_binary_local(char       *filename_root_in,
   size_t    s_load;
   char     *keep;
   int       flag_keep_IDs      =TRUE;
-  int       flag_multifile     =FALSE;
   int       flag_multimass     =FALSE;
-  int       flag_file_type     =0;
-  int       flag_filefound     =FALSE;
   int       flag_initpositions =FALSE;
   int       flag_LONGIDS       =FALSE;
   int       flag_read_marked   =FALSE;
@@ -668,9 +665,14 @@ void read_gadget_binary_local(char       *filename_root_in,
   double    y_max_bcast;
   double    z_min_bcast;
   double    z_max_bcast;
-  gadget_header_info header;
 
-  flag_filefound=init_gadget_read(filename_root_in,snapshot_number,&flag_multifile,&flag_file_type,&header);
+  gadget_read_info   fp_gadget;
+  int                flag_filefound=init_gadget_read(filename_root_in,snapshot_number,&fp_gadget);
+  int                flag_multifile=fp_gadget.flag_multifile;
+  int                flag_file_type=fp_gadget.flag_file_type;
+  gadget_header_info header        =fp_gadget.header;
+  if(!flag_filefound)
+     SID_trap_error("File not found.",ERROR_LOGIC);
 
   // A file was found ... 
   SID_log("Reading GADGET binary file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_root_in);

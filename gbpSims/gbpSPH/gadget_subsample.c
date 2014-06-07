@@ -31,7 +31,6 @@ int main(int argc, char *argv[]){
   int        seed_init=10463743;
   int        seed;
   GBPREAL       RNG_max;
-  gadget_header_info header;
   long long n_all_keep[N_GADGET_TYPE];
   long long n_all_init[N_GADGET_TYPE];
   unsigned int n_all_high_word[N_GADGET_TYPE];
@@ -44,9 +43,6 @@ int main(int argc, char *argv[]){
   int       id_in_int;
   long long id_in_long;
   int       n_groups;
-  int       flag_filefound;
-  int       flag_multifile;
-  int       flag_file_type;
 
   SID_init(&argc,&argv,NULL);
 
@@ -68,7 +64,14 @@ int main(int argc, char *argv[]){
   SID_log("Subsampling GADGET file by a factor of %d...",SID_LOG_OPEN,subsample_factor);
 
   // Grab info from first header
-  flag_filefound=init_gadget_read(filename_in_root,i_snap,&flag_multifile,&flag_file_type,&header);
+  // Read the header and determine the input file-format
+  gadget_read_info   fp_gadget;
+  int                flag_filefound=init_gadget_read(filename_in_root,i_snap,&fp_gadget);
+  int                flag_multifile=fp_gadget.flag_multifile;
+  int                flag_file_type=fp_gadget.flag_file_type;
+  gadget_header_info header        =fp_gadget.header;
+  if(!flag_filefound)
+     SID_trap_error("File not found.",ERROR_LOGIC);
   if(flag_filefound)
     n_files =header.n_files;
   else

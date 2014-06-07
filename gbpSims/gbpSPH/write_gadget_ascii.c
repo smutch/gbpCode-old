@@ -6,8 +6,8 @@
 
 // In the future ... receive a list of variables to make this adaptive
 
-void write_ascii(char       *filename_out,
-	         plist_info *plist){
+void write_gadget_ascii(char       *filename_out,
+	                    plist_info *plist){
   FILE   *fp;
   double  h_Hubble;
   GBPREAL   *x;

@@ -223,11 +223,15 @@ void read_gadget_binary(char       *filename_root_in,
   int       flag_multifile     =FALSE;
   int       flag_file_type     =0;
   int       flag_filefound     =FALSE;
-  gadget_header_info header;
 
   char filename_in[MAX_FILENAME_LENGTH];
 
-  flag_filefound=init_gadget_read(filename_root_in,snapshot_number,&flag_multifile,&flag_file_type,&header);
+  // Read the header and determine the snapshot type
+  gadget_read_info fp_gadget;
+  flag_filefound=init_gadget_read(filename_root_in,snapshot_number,&fp_gadget);
+  flag_multifile=fp_gadget.flag_multifile;
+  flag_file_type=fp_gadget.flag_file_type;
+
   set_gadget_filename(filename_root_in,snapshot_number,0,flag_multifile,flag_file_type,filename);
   SID_fopen(filename,"r",&fp);
 

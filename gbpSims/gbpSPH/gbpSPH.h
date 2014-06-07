@@ -25,44 +25,45 @@
 #define GADGET_MASS         1.989e40
 
 #define SMOOTH_N_QUANTITIES 3
-#define SMOOTH_DEFAULT      0
-#define SMOOTH_DENSITY      2
-#define SMOOTH_SIGMA_V      4
-#define SMOOTH_NOT_PERIODIC 8
-#define SMOOTH_LONGIDS      16
+#define SMOOTH_DEFAULT           0
+#define SMOOTH_DENSITY      TTTP01
+#define SMOOTH_SIGMA_V      TTTP02
+#define SMOOTH_NOT_PERIODIC TTTP03
+#define SMOOTH_LONGIDS      TTTP04
 
-#define READ_SMOOTH_LOG_SIGMA 2
-#define READ_SMOOTH_LOG_RHO   4
+#define READ_SMOOTH_LOG_SIGMA TTTP01
+#define READ_SMOOTH_LOG_RHO   TTTP02
 
 #define N_KERNEL_TABLE      20000
-#define SPH_KERNEL_2D       2
-#define SPH_KERNEL_GADGET   4
-#define SPH_KERNEL_GASOLINE 8
+#define SPH_KERNEL_2D       TTTP01
+#define SPH_KERNEL_GADGET   TTTP02
+#define SPH_KERNEL_GASOLINE TTTP03
 
-#define READ_GADGET_DEFAULT      0
-#define READ_GADGET_NO_HUBBLE    1
-#define READ_GADGET_NONE         2
-#define READ_GADGET_RANDOM       8
-#define READ_GADGET_MARKED      16
-#define READ_GADGET_X_MIN       32
-#define READ_GADGET_X_MAX       64
-#define READ_GADGET_Y_MIN      128
-#define READ_GADGET_Y_MAX      256
-#define READ_GADGET_Z_MIN      512
-#define READ_GADGET_Z_MAX     1024
+#define READ_GADGET_DEFAULT        0
+#define READ_GADGET_NO_HUBBLE TTTP00
+#define READ_GADGET_NONE      TTTP01 
+#define READ_GADGET_RANDOM    TTTP02
+#define READ_GADGET_MARKED    TTTP03
+#define READ_GADGET_X_MIN     TTTP04
+#define READ_GADGET_X_MAX     TTTP05
+#define READ_GADGET_Y_MIN     TTTP06
+#define READ_GADGET_Y_MAX     TTTP07
+#define READ_GADGET_Z_MIN     TTTP08
+#define READ_GADGET_Z_MAX     TTTP09
 
-/*******************************/
-/* Stuff for marking particles */
-/*******************************/
-#define MARK_DEFAULT    0
-#define MARK_READ_ALL   1
-#define MARK_LIST_ONLY  2
-#define VOLUME_BOX      4
-#define VOLUME_SPHERE   8
-#define MARK_PROPERTY  16
-#define MARK_INIT      32
-#define MARK_AND       64
-#define MARK_OR       128
+// Stuff for marking particles 
+#define MARK_DEFAULT         0
+#define MARK_READ_ALL   TTTP00
+#define MARK_LIST_ONLY  TTTP01
+#define VOLUME_BOX      TTTP02
+#define VOLUME_SPHERE   TTTP03
+#define MARK_PROPERTY   TTTP04
+#define MARK_INIT       TTTP05
+#define MARK_AND        TTTP06
+#define MARK_OR         TTTP07
+
+#define PROCESS_GADGET_BINARY_DEFAULT         0
+#define PROCESS_GADGET_BINARY_ALL_TO_ALL TTTP00
 
 typedef struct gadget_header_info gadget_header_info;
 struct gadget_header_info{
@@ -86,6 +87,15 @@ struct gadget_header_info{
   char         unused[60];
 };
 
+typedef struct gadget_read_info gadget_read_info;
+struct gadget_read_info{
+   gadget_header_info header;
+   int flag_multifile;
+   int flag_file_type;
+   int first_select_call;
+   int first_action_call;
+};
+
 typedef struct smooth_header_info smooth_header_info;
 struct smooth_header_info{
    int       n_particles_file;
@@ -94,9 +104,7 @@ struct smooth_header_info{
    int       n_files;
 };
 
-/**************************************************/
-/* Structure to store Abstract Item Lists (AbILs) */
-/**************************************************/
+// Structure to store Abstract Item Lists (AbILs) 
 typedef struct AbIL_info AbIL_info;
 struct AbIL_info{
   int          n_species;
@@ -115,9 +123,7 @@ struct AbIL_info{
   double       velocity_unit;
 };
 
-/************************************/
-/* Structure to store particle info */
-/************************************/
+// Structure to store particle info 
 typedef struct plist_info plist_info;
 struct plist_info{
   char      **species;
@@ -174,7 +180,7 @@ void open_gadget_file(char      *filename_root_in,
                       int        snapshot_number,
                       fp_gadget *fp);
 
-int  init_gadget_read(char *filename_root_in,int snapshot_number,int *flag_multifile,int *flag_file_type,gadget_header_info *header);
+int  init_gadget_read(char *filename_root_in,int snapshot_number,gadget_read_info *fp);
 int  init_smooth_read(char *filename_root_in,int snapshot_number,int *flag_multifile,int *flag_file_type,smooth_header_info *header);
 void set_gadget_filename(char *filename_root_in,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename);
 void set_smooth_filename(char *filename_root_in,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename);
@@ -217,10 +223,10 @@ void read_tipsy_ascii(char       *filename,
                       plist_info *plist);
 void write_tipsy_binary(char       *filename,
                         plist_info *plist);
-void write_ascii(char       *filename,
-                 plist_info *plist);
-void write_csv(char       *filename_out,
-               plist_info *plist);
+void write_gadget_ascii(char       *filename,
+                        plist_info *plist);
+void write_gadget_csv(char       *filename_out,
+                      plist_info *plist);
 void write_mark_file(plist_info *plist,
                      const char *mark_name,
                      const char *filename_out);

@@ -34,12 +34,11 @@ int main(int argc, char *argv[]){
   init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
 
   // Read the header and determine the input file-format
-  gadget_header_info header;
-  int                i_file;
-  int                flag_filefound;
-  int                flag_multifile;
-  int                flag_file_type;
-  flag_filefound=init_gadget_read(filename_in_root,snapshot,&flag_multifile,&flag_file_type,&header);
+  gadget_read_info   fp_gadget;
+  int                flag_filefound=init_gadget_read(filename_in_root,snapshot,&fp_gadget);
+  int                flag_multifile=fp_gadget.flag_multifile;
+  int                flag_file_type=fp_gadget.flag_file_type;
+  gadget_header_info header        =fp_gadget.header;
   if(!flag_filefound)
      SID_trap_error("File not found.",ERROR_LOGIC);
 
@@ -57,7 +56,7 @@ int main(int argc, char *argv[]){
   char *buffer;
   n_alloc=32*1024*1024;
   buffer =(char *)SID_malloc(3*sizeof(GBPREAL)*n_alloc);
-  for(i_file=0;i_file<n_files;i_file++){
+  for(int i_file=0;i_file<n_files;i_file++){
      if(n_files>1)
         SID_log("Processing file(s) %d->%d...",SID_LOG_OPEN,i_file,MIN(i_file+SID.n_proc-1,n_files-1));
 

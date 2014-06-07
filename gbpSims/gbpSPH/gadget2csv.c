@@ -42,7 +42,7 @@ int main(int argc, char *argv[]){
   /* Write ascii file */
   /********************/
   SID_log("Writing .csv file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_out);
-  write_csv(filename_out,&plist);
+  write_gadget_csv(filename_out,&plist);
   SID_log("Done.",SID_LOG_CLOSE);
 
   /************/
