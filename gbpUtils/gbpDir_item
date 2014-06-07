@@ -1,0 +1,22 @@
+#!/bin/bash
+
+if [ "$1" == "--help" ];
+then
+  echo "      item - List the stack and query an item number"
+  exit 0
+fi
+
+FILENAME=$HOME"/.gbpDir.txt"
+
+# List items
+gbpDir_list
+echo
+
+# Ask for item
+N_ITEM=(`wc -l $FILENAME`)
+echo -n "Select item [1 to "$N_ITEM"]: "
+read ITEM
+
+# Print item
+echo `head -n$ITEM $FILENAME|tail -n1`
+

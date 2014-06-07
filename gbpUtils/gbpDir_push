@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [ "$1" == "--help" ];
+then
+  echo "      push - Push current directory to the stack."
+  exit 0
+fi
+
+FILENAME=$HOME"/.gbpDir.txt"
+
+echo $PWD >> $FILENAME
+

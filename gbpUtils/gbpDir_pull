@@ -1,0 +1,18 @@
+#!/bin/bash
+
+if [ "$1" == "--help" ];
+then
+  echo "      pull - Pull last directory"
+  exit 0
+fi
+
+FILENAME=$HOME"/.gbpDir.txt"
+
+if [[ -f $FILENAME ]];
+  then
+  dir=`tail -n1 $FILENAME`
+  echo $dir
+else
+  echo 'Stack file is empty'
+fi
+
