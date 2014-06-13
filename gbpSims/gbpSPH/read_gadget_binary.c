@@ -232,7 +232,7 @@ void read_gadget_binary(char       *filename_root_in,
   flag_multifile=fp_gadget.flag_multifile;
   flag_file_type=fp_gadget.flag_file_type;
 
-  set_gadget_filename(filename_root_in,snapshot_number,0,flag_multifile,flag_file_type,filename);
+  set_gadget_filename(&fp_gadget,0,filename);
   SID_fopen(filename,"r",&fp);
 
   // A file was found ... 
@@ -612,7 +612,7 @@ void read_gadget_binary(char       *filename_root_in,
     n_particles_rank=0;
     for(i_file=0,i_p_temp=0;i_file<n_files;i_file++){
       // Open file
-      set_gadget_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
+      set_gadget_filename(&fp_gadget,i_file,filename);
       SID_fopen(filename,"r",&fp);
       if(flag_multifile)
         SID_log("Processing file #%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file);
@@ -964,7 +964,7 @@ void read_gadget_binary(char       *filename_root_in,
     for(i_file=0;i_file<n_files;i_file++){
 
       // Open file
-      set_gadget_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
+      set_gadget_filename(&fp_gadget,i_file,filename);
       SID_fopen(filename,"r",&fp);
       if(flag_multifile)
         SID_log("Processing file #%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file);

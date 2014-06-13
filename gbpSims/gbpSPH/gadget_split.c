@@ -61,7 +61,12 @@ int main(int argc, char *argv[]){
         SID_log("Processing file(s) %d->%d...",SID_LOG_OPEN,i_file,MIN(i_file+SID.n_proc-1,n_files-1));
 
      // Create the directory needed for the snapshot
-     set_gadget_filename(filename_out_root,snapshot,0,TRUE,0,filename_out);
+     gadget_read_info   fp_gadget_temp;
+     memcpy(&fp_gadget_temp,&fp_gadget,sizeof(gadget_read_info));
+     fp_gadget_temp.flag_multifile=TRUE;
+     fp_gadget_temp.flag_file_type=0;
+     sprintf(fp_gadget_temp.filename_root,"%s",filename_out_root);
+     set_gadget_filename(&fp_gadget_temp,0,filename_out);
      if(i_file==0){
         FILE *fp_test;
         char  filename_out_directory[MAX_FILENAME_LENGTH];
@@ -83,7 +88,7 @@ int main(int argc, char *argv[]){
      int   record_length_out;
      int   record_length_header;
      int   i_type;
-     set_gadget_filename(filename_in_root,snapshot,i_file,flag_multifile,flag_file_type,filename_in);
+     set_gadget_filename(&fp_gadget,i_file,filename_in);
      if((fp_in=fopen(filename_in,"r"))==NULL)
         SID_trap_error("Could not open {%s}.",ERROR_IO_OPEN,filename_in);
      fread(&record_length_in,sizeof(int),1,fp_in);
@@ -107,7 +112,12 @@ int main(int argc, char *argv[]){
 
         // Open new file for writing
         char filename_in[MAX_FILENAME_LENGTH];
-        set_gadget_filename(filename_out_root,snapshot,i_split,TRUE,0,filename_out);
+        gadget_read_info   fp_gadget_temp;
+        memcpy(&fp_gadget_temp,&fp_gadget,sizeof(gadget_read_info));
+        fp_gadget_temp.flag_multifile=TRUE;
+        fp_gadget_temp.flag_file_type=0;
+        sprintf(fp_gadget_temp.filename_root,"%s",filename_out_root);
+        set_gadget_filename(&fp_gadget_temp,i_split,filename_out);
         fp_out=fopen(filename_out,"w");
 
         // Set the particle counts for this file

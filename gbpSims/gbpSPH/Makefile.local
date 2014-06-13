@@ -25,6 +25,7 @@ OBJFILES  = display_gadget_header.o         \
             write_mark_file.o               \
             write_gadget_ascii.o            \
             write_gadget_csv.o              \
+            write_gadget_binary_new.o       \
             write_gadget_binary.o           
 LIBFILE   = libgbpSPH.a
 BINFILES  = gadget2ascii               \

@@ -30,7 +30,7 @@ int main(int argc, char *argv[]){
   SID_log("Rewriting GADGET binary file {%s} in %d parts...",SID_LOG_OPEN|SID_LOG_TIMER,filename_in,n_files);
 
   // Read GADGET file into data structure
-  init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
+  init_plist(&plist,NULL,1.,1.,1.);
   read_gadget_binary(filename_in,snapshot,&plist,READ_GADGET_DEFAULT);
 
   // Rewrite file

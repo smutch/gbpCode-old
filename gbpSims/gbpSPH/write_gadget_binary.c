@@ -430,20 +430,22 @@ void write_gadget_binary(char        *filename_in,
             for(k=0,j_file=0;j_file<i_file;j_file++) k+=n_of_type_file_rank[j_file][i];
             for(j=0;j<n_of_type_file_rank[i_file][i];j+=n_buffer,k+=n_buffer){
               n_buffer=MIN(GADGET_BUFFER_SIZE,n_of_type_file_rank[i_file][i]-j);
-              for(i_x_replicate=0;i_x_replicate<n_x_replicate;i_x_replicate++){
-                x_offset=((GBPREAL)i_x_replicate)*(GBPREAL)box_size_offset;
-                for(jj=0;jj<n_buffer;jj++)
-                  ((float *)buffer)[3*jj+0]=((float)(R1_array[k+jj]+x_offset))/((GBPREAL)(plist->length_unit/h_Hubble));
-                for(i_y_replicate=0;i_y_replicate<n_y_replicate;i_y_replicate++){
-                  y_offset=((GBPREAL)i_y_replicate)*(GBPREAL)box_size_offset;
+              if(n_buffer>0){
+                for(i_x_replicate=0;i_x_replicate<n_x_replicate;i_x_replicate++){
+                  x_offset=((GBPREAL)i_x_replicate)*(GBPREAL)box_size_offset;
                   for(jj=0;jj<n_buffer;jj++)
-                    ((float *)buffer)[3*jj+1]=((float)(R2_array[k+jj]+y_offset))/((GBPREAL)(plist->length_unit/h_Hubble));
-                  for(i_z_replicate=0;i_z_replicate<n_z_replicate;i_z_replicate++){
-                    z_offset=((GBPREAL)i_z_replicate)*(GBPREAL)box_size_offset;
+                    ((float *)buffer)[3*jj+0]=((float)(R1_array[k+jj]+x_offset))/((GBPREAL)(plist->length_unit/h_Hubble));
+                  for(i_y_replicate=0;i_y_replicate<n_y_replicate;i_y_replicate++){
+                    y_offset=((GBPREAL)i_y_replicate)*(GBPREAL)box_size_offset;
                     for(jj=0;jj<n_buffer;jj++)
-                      ((float *)buffer)[3*jj+2]=((float)(R3_array[k+jj]+z_offset))/((GBPREAL)(plist->length_unit/h_Hubble));
-                    fwrite(buffer,sizeof(float),3*n_buffer,fp);
-                    i_p+=n_buffer;
+                      ((float *)buffer)[3*jj+1]=((float)(R2_array[k+jj]+y_offset))/((GBPREAL)(plist->length_unit/h_Hubble));
+                    for(i_z_replicate=0;i_z_replicate<n_z_replicate;i_z_replicate++){
+                      z_offset=((GBPREAL)i_z_replicate)*(GBPREAL)box_size_offset;
+                      for(jj=0;jj<n_buffer;jj++)
+                        ((float *)buffer)[3*jj+2]=((float)(R3_array[k+jj]+z_offset))/((GBPREAL)(plist->length_unit/h_Hubble));
+                      fwrite(buffer,sizeof(float),3*n_buffer,fp);
+                      i_p+=n_buffer;
+                    }
                   }
                 }
               }

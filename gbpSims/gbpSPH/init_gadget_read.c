@@ -20,6 +20,10 @@ int init_gadget_read(char *filename_root_in,int snapshot_number,gadget_read_info
   strcpy(filename_path,filename_root_in);
   strip_file_root(filename_path);
 
+  // Store inputs
+  sprintf(fp_gadget->filename_root,"%s",filename_root_in);
+  fp_gadget->snapshot_number=snapshot_number;
+
   // Determine file format
   for(int i_type=0;i_type<5 && !flag_filefound;i_type++){  
      if(i_type==0)

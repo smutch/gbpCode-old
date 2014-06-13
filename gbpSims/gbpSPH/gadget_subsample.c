@@ -87,7 +87,7 @@ int main(int argc, char *argv[]){
        if(n_files>1)
           SID_log("Processing file(s) %d->%d...",SID_LOG_OPEN,j_file,MIN(j_file+SID.n_proc-1,n_files-1));
        if(i_file<n_files){
-         set_gadget_filename(filename_in_root,i_snap,i_file,flag_multifile,flag_file_type,filename_in);
+         set_gadget_filename(&fp_gadget,i_file,filename_in);
          fp=fopen(filename_in,"r");
          fread(&record_length_in,sizeof(int),1,fp);
          fread(&header,sizeof(gadget_header_info),1,fp);
@@ -130,7 +130,7 @@ int main(int argc, char *argv[]){
        if(n_files>1)
           SID_log("Processing file(s) %d->%d...",SID_LOG_OPEN,j_file,MIN(j_file+SID.n_proc-1,n_files-1));
        if(i_file<n_files){
-         set_gadget_filename(filename_in_root, i_snap,i_file,flag_multifile,flag_file_type,filename_in);
+         set_gadget_filename(&fp_gadget,i_file,filename_in);
          change_gadget_filename(filename_in_root,"snapshot_subsample",i_snap,i_file,flag_multifile,flag_file_type,filename_out);
          if(i_file==0){
             FILE *fp_test;

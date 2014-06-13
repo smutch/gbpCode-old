@@ -90,10 +90,12 @@ struct gadget_header_info{
 typedef struct gadget_read_info gadget_read_info;
 struct gadget_read_info{
    gadget_header_info header;
-   int flag_multifile;
-   int flag_file_type;
-   int first_select_call;
-   int first_action_call;
+   char filename_root[MAX_FILENAME_LENGTH];
+   int  snapshot_number;
+   int  flag_multifile;
+   int  flag_file_type;
+   int  first_select_call;
+   int  first_action_call;
 };
 
 typedef struct smooth_header_info smooth_header_info;
@@ -182,7 +184,7 @@ void open_gadget_file(char      *filename_root_in,
 
 int  init_gadget_read(char *filename_root_in,int snapshot_number,gadget_read_info *fp);
 int  init_smooth_read(char *filename_root_in,int snapshot_number,int *flag_multifile,int *flag_file_type,smooth_header_info *header);
-void set_gadget_filename(char *filename_root_in,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename);
+void set_gadget_filename(gadget_read_info *fp,int i_file,char *filename);
 void set_smooth_filename(char *filename_root_in,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename);
 void change_gadget_filename(const char *filename_root_in,const char *filename_root,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename);
 
@@ -221,6 +223,10 @@ void read_tipsy_binary(char       *filename,
                        plist_info *plist);
 void read_tipsy_ascii(char       *filename,
                       plist_info *plist);
+void write_gadget_binary_new(plist_info  *plist,
+                             char        *filename_out_root,
+                             int          n_files,
+                             int          mode);
 void write_tipsy_binary(char       *filename,
                         plist_info *plist);
 void write_gadget_ascii(char       *filename,
