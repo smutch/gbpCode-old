@@ -10,22 +10,22 @@
 #include <gbpTrees_build.h>
 
 void read_forests(const char  *filename_root_in,
-                  int   *n_forests_group,
-                  int   *n_forests_subgroup,
-                  int   *n_forests_group_local,
-                  int   *n_forests_subgroup_local,
-                  int  **tree2forest_mapping_group,
-                  int  **tree2forest_mapping_subgroup,
-                  int   *n_trees_forest_groups_max,
-                  int   *n_trees_forest_subgroups_max,
-                  int   *forest_lo_group_local,
-                  int   *forest_hi_group_local,
-                  int   *forest_lo_subgroup_local,
-                  int   *forest_hi_subgroup_local,
-                  int   *n_groups_local,
-                  int   *n_subgroups_local,
-                  int   *n_groups_max_snap_local,
-                  int   *n_subgroups_max_snap_local){
+                  int         *n_forests_group,
+                  int         *n_forests_subgroup,
+                  int         *n_forests_group_local,
+                  int         *n_forests_subgroup_local,
+                  int        **tree2forest_mapping_group,
+                  int        **tree2forest_mapping_subgroup,
+                  int         *n_trees_forest_groups_max,
+                  int         *n_trees_forest_subgroups_max,
+                  int         *forest_lo_group_local,
+                  int         *forest_hi_group_local,
+                  int         *forest_lo_subgroup_local,
+                  int         *forest_hi_subgroup_local,
+                  int         *n_groups_local,
+                  int         *n_subgroups_local,
+                  int         *n_groups_max_snap_local,
+                  int         *n_subgroups_max_snap_local){
 
   int    *n_halos_tree_group;
   int    *n_halos_tree_subgroup;
@@ -39,15 +39,17 @@ void read_forests(const char  *filename_root_in,
   // Read mapping for groups
   int i_tree;
   int n_trees_group;
+  int n_groups_total=0;
   sprintf(filename_in,"%s/tree2forest_mapping_groups.txt",filename_root_in);
-  fp_in=fopen(filename_in,"r");
-  n_trees_group=count_lines_data(fp_in);
-  n_halos_tree_group=(int *)SID_malloc(sizeof(int)*n_trees_group);
-  (*tree2forest_mapping_group) =(int *)SID_malloc(sizeof(int)*n_trees_group);
+  fp_in                       =fopen(filename_in,"r");
+  n_trees_group               =count_lines_data(fp_in);
+  n_halos_tree_group          =(int *)SID_malloc(sizeof(int)*n_trees_group);
+  (*tree2forest_mapping_group)=(int *)SID_malloc(sizeof(int)*n_trees_group);
   for(i_tree=0;i_tree<n_trees_group;i_tree++){
      grab_next_line_data(fp_in,&line,&line_length);
      grab_int(line,2,&((*tree2forest_mapping_group)[i_tree]));
      grab_int(line,3,&(n_halos_tree_group[i_tree]));
+     n_groups_total+=n_halos_tree_group[i_tree];
   }
   fclose(fp_in);
 
@@ -81,19 +83,21 @@ void read_forests(const char  *filename_root_in,
   }
   (*n_forests_group)=i_forest;
   SID_free(SID_FARG tree2forest_mapping_group_index);
-  SID_log("No. of    group forests                 = %d",SID_LOG_COMMENT,(*n_forests_group));
+  SID_log("No. of    group forests                 = %d (%d halos)",SID_LOG_COMMENT,(*n_forests_group),n_groups_total);
 
   // Read mapping for subgroups
   int n_trees_subgroup;
+  int n_subgroups_total=0;
   sprintf(filename_in,"%s/tree2forest_mapping_subgroups.txt",filename_root_in);
-  fp_in=fopen(filename_in,"r");
-  n_trees_subgroup     =count_lines_data(fp_in);
-  n_halos_tree_subgroup=(int *)SID_malloc(sizeof(int)*n_trees_subgroup);
-  (*tree2forest_mapping_subgroup) =(int *)SID_malloc(sizeof(int)*n_trees_subgroup);
+  fp_in                          =fopen(filename_in,"r");
+  n_trees_subgroup               =count_lines_data(fp_in);
+  n_halos_tree_subgroup          =(int *)SID_malloc(sizeof(int)*n_trees_subgroup);
+  (*tree2forest_mapping_subgroup)=(int *)SID_malloc(sizeof(int)*n_trees_subgroup);
   for(i_tree=0;i_tree<n_trees_subgroup;i_tree++){
      grab_next_line_data(fp_in,&line,&line_length);
      grab_int(line,2,&((*tree2forest_mapping_subgroup)[i_tree]));
      grab_int(line,3,&(n_halos_tree_subgroup[i_tree]));
+     n_subgroups_total+=n_halos_tree_subgroup[i_tree];
   }
   fclose(fp_in);
 
@@ -124,7 +128,7 @@ void read_forests(const char  *filename_root_in,
   }
   (*n_forests_subgroup)=i_forest;
   SID_free(SID_FARG tree2forest_mapping_subgroup_index);
-  SID_log("No. of subgroup forests                 = %d",SID_LOG_COMMENT,(*n_forests_subgroup));
+  SID_log("No. of subgroup forests                 = %d (%d halos)",SID_LOG_COMMENT,(*n_forests_subgroup),n_subgroups_total);
 
   // Turn the tree halo counts into forest halo counts
   int *n_halos_forest_group   =(int *)SID_calloc(sizeof(int)*(*n_forests_group));

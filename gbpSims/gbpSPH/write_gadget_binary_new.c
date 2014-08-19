@@ -251,11 +251,11 @@ void write_gadget_binary_new(plist_info  *plist,
      int    lo_word=(unsigned int)(((size_t)(n_all[i_type])<<32)>>32);
      int    hi_word=(unsigned int) ((size_t)(n_all[i_type])>>32);
      if(ADaPS_exist(plist->data,"mass_array_%s",plist->species[i_type]))
-        header->mass_array[i_type]  =((double *)ADaPS_fetch(plist->data,"mass_array_%s",plist->species[i_type]))[0];
+        header->mass_array[i_type]=((double *)ADaPS_fetch(plist->data,"mass_array_%s",plist->species[i_type]))[0];
      else
-        header->mass_array[i_type]  =0.;
-     header->n_all[i_type]          =lo_word;
-     header->n_all_high_word[i_type]=hi_word;
+        header->mass_array[i_type]=0.;
+     header->n_all_lo_word[i_type]=lo_word;
+     header->n_all_hi_word[i_type]=hi_word;
   }
   header->n_files        =n_files;
   header->time           =((double *)ADaPS_fetch(plist->data,"time"))[0];

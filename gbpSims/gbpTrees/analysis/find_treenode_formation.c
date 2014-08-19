@@ -19,8 +19,8 @@ int find_treenode_formation(tree_info       *trees,
       double M_peak  =0.;
       double M_target=0.;
       tree_node_info *current_halo=halo;
-      (*peak_mass)     =current_halo;
-      (*fraction_of_peak_mass)     =current_halo;
+      (*peak_mass)                =current_halo;
+      (*fraction_of_peak_mass)    =current_halo;
       while(current_halo!=NULL){
          halo_properties_info *properties=fetch_treenode_properties(trees,current_halo);
          M_vir   =properties->M_vir;

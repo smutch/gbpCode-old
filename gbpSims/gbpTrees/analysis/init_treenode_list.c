@@ -17,6 +17,7 @@ void init_treenode_list(const char          *catalog_name,
   (*list)=(treenode_list_info *)SID_malloc(sizeof(treenode_list_info));
   sprintf((*list)->catalog_name,"%s",catalog_name);
   (*list)->n_list          =0;
+  (*list)->n_list_local    =0;
   (*list)->n_list_alloc    =n_list_alloc;
   (*list)->list            =(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*n_list_alloc);
   (*list)->flag_groups_list=-1;

@@ -68,21 +68,24 @@ int select_gadget_cube(gadget_read_info *fp_gadget,
                        size_t            ID_i){
    static GBPREAL  half_cube_size;
    static GBPREAL  half_box_size;
+   static GBPREAL  box_size;
    static GBPREAL *cen;
    if(fp_gadget->first_select_call){
       cen           =    ((select_gadget_volume_params_info *)params)->cen;
       half_cube_size=0.5*((select_gadget_volume_params_info *)params)->size;
       half_box_size =0.5*((select_gadget_volume_params_info *)params)->box_size;
+      box_size      =    ((select_gadget_volume_params_info *)params)->box_size;
    }
    int flag_select=TRUE;
    for(int i_coord=0;i_coord<3 && flag_select;i_coord++){
       GBPREAL coord=pos[i_coord]-cen[i_coord];
-      force_periodic(&coord,-half_box_size,half_box_size);
+      force_periodic(&coord,-half_box_size,box_size);
       if(coord<(-half_cube_size) || coord>half_cube_size)
          flag_select=FALSE;
    }
    return(flag_select);
 }
+
 void count_gadget_particles(gadget_read_info *fp_gadget,
                             void             *params,
                             size_t            i_particle,
@@ -246,9 +249,7 @@ void process_gadget_file(char   *filename_read_root,
       SID_trap_error("File not found.",ERROR_LOGIC);
 
    // Create a count of all the particles in the snapshot
-   size_t  n_particles_snap =0;
-   for(int i_type=0;i_type<N_GADGET_TYPE;i_type++)
-      n_particles_snap+=fp_gadget.header.n_all[i_type];
+   size_t  n_particles_snap=fp_gadget.n_particles;
  
    // Decide which files each rank will process
    int i_file;
@@ -273,11 +274,11 @@ void process_gadget_file(char   *filename_read_root,
    }
 
    // Allocate buffers
-   GBPREAL *pos_buffer=(GBPREAL *)SID_malloc(3*sizeof(GBPREAL)*READ_BUFFER_SIZE_LOCAL);
-   GBPREAL *vel_buffer=(GBPREAL *)SID_malloc(3*sizeof(GBPREAL)*READ_BUFFER_SIZE_LOCAL);
-   size_t  *ids_buffer=(size_t  *)SID_malloc(  sizeof(size_t) *READ_BUFFER_SIZE_LOCAL);
-   size_t  *ids_buffer_long=ids_buffer;
-   int     *ids_buffer_int =(int *)ids_buffer;
+   GBPREAL   *pos_buffer=(GBPREAL *)SID_malloc(3*sizeof(GBPREAL)*READ_BUFFER_SIZE_LOCAL);
+   GBPREAL   *vel_buffer=(GBPREAL *)SID_malloc(3*sizeof(GBPREAL)*READ_BUFFER_SIZE_LOCAL);
+   char      *ids_buffer=(char    *)SID_malloc(  sizeof(size_t) *READ_BUFFER_SIZE_LOCAL);
+   uint64_t  *ids_buffer_long=(uint64_t *)ids_buffer;
+   uint32_t  *ids_buffer_int =(uint32_t *)ids_buffer;
  
    // Loop over the files
    pcounter_info pcounter;
@@ -286,9 +287,10 @@ void process_gadget_file(char   *filename_read_root,
    size_t        n_particles_processed_local=0;
    size_t        n_particles_processed      =0;
    SID_init_pcounter(&pcounter,n_particles_snap,10);
-   for(;i_file<fp_gadget.header.n_files;i_file+=i_file_skip){
+   for(int j_file=0;i_file<fp_gadget.header.n_files;i_file+=i_file_skip,j_file++){
  
       // Open file pointers
+      int  record_length;
       int  record_length_open;
       int  record_length_close;
       char filename[MAX_FILENAME_LENGTH];
@@ -298,53 +300,62 @@ void process_gadget_file(char   *filename_read_root,
       FILE *fp_ids=fopen(filename,"r");
  
       // Initialize positions pointer and read header
+      record_length=sizeof(gadget_header_info);
       fread(&record_length_open,4,1,fp_pos);
       fread(&header,sizeof(gadget_header_info),1,fp_pos);
       fread(&record_length_close,4,1,fp_pos);
-      if(record_length_open!=record_length_close)
-        SID_log_warning("Problem with GADGET record size (close of header)",ERROR_LOGIC);
-      if(record_length_open!=sizeof(gadget_header_info))
-        SID_log_warning("Problem with GADGET header size",ERROR_LOGIC);
+      //if(record_length_open!=record_length_close)
+      //  SID_log_warning("Problem with GADGET record size (close of header)",ERROR_LOGIC);
+      //if(record_length_open!=sizeof(gadget_header_info))
+      //  SID_log_warning("Problem with GADGET header size",ERROR_LOGIC);
       fseeko(fp_pos,(off_t)(4),SEEK_CUR);
+      fseeko(fp_vel,(off_t)(2*4+sizeof(gadget_header_info)),SEEK_SET);
+      fseeko(fp_ids,(off_t)(2*4+sizeof(gadget_header_info)),SEEK_SET);
 
       // Count the number of particles in the file
       size_t n_particles_file=0;
       for(int i_type=0;i_type<N_GADGET_TYPE;i_type++)
-         n_particles_file+=header.n_file[i_type];
+         n_particles_file+=(size_t)(header.n_file[i_type]);
 
       // Initialize velocities pointer
-      fseeko(fp_ids,(off_t)(2*4+record_length_open),SEEK_SET);
-      fseeko(fp_vel,(off_t)(2*4+record_length_open),SEEK_SET);
+      record_length=3*(int)(n_particles_file*sizeof(GBPREAL));
       fread(&record_length_open,4,1,fp_vel);
-      fseeko(fp_vel,(off_t)(record_length_open),SEEK_CUR);
+      fseeko(fp_vel,(off_t)(record_length),SEEK_CUR);
       fread(&record_length_close,4,1,fp_vel);
-      if(record_length_open!=record_length_close)
-        SID_log_warning("Problem with GADGET record size (close of positions)",ERROR_LOGIC);
+      //if(record_length_open!=record_length_close)
+      //  SID_log_warning("Problem with GADGET record size (close of positions)",ERROR_LOGIC);
       fseeko(fp_vel,(off_t)(4),SEEK_CUR);
+      fseeko(fp_ids,(off_t)(2*4+record_length),SEEK_CUR);
 
       // Initialize IDs pointer
-      fseeko(fp_ids,(off_t)(2*4+record_length_open),SEEK_CUR);
+      record_length=3*(int)(n_particles_file*sizeof(GBPREAL));
       fread(&record_length_open,4,1,fp_ids);
-      fseeko(fp_ids,(off_t)(record_length_open),SEEK_CUR);
+      fseeko(fp_ids,(off_t)(record_length),SEEK_CUR);
       fread(&record_length_close,4,1,fp_ids);
-      if(record_length_open!=record_length_close)
-        SID_log_warning("Problem with GADGET record size (close of velocities)",ERROR_LOGIC);
+      //if(record_length_open!=record_length_close)
+      //  SID_log_warning("Problem with GADGET record size (close of velocities)",ERROR_LOGIC);
       fread(&record_length_open,4,1,fp_ids);
 
       // Determine what kind of IDs we have
       size_t ID_byte_size;
-      if(record_length_open/(int)n_particles_file==sizeof(int)){
-         (*flag_long_IDs)=FALSE;
-         ID_byte_size    =sizeof(int);
-      }
-      else if(record_length_open/(int)n_particles_file==sizeof(int)){
-         (*flag_long_IDs)=TRUE;
-         ID_byte_size    =sizeof(long int);
-      }
-      else{
-         (*flag_long_IDs)=FALSE;
-         ID_byte_size    =sizeof(int);
-         SID_log_warning("Could not determine the IDs size.  Assuming integer IDs.",ERROR_LOGIC);
+      int    flag_force_long_IDs;
+      flag_force_long_IDs=FALSE;
+      if(j_file==0){
+         if(record_length_open==((int)n_particles_file*(int)(sizeof(uint64_t))) || flag_force_long_IDs){
+            (*flag_long_IDs)=TRUE;
+            ID_byte_size    =sizeof(uint64_t);
+            SID_log("Assuming long IDs.",SID_LOG_COMMENT);
+         }
+         else if(record_length_open==((int)n_particles_file*(int)(sizeof(int)))){
+            (*flag_long_IDs)=FALSE;
+            ID_byte_size    =sizeof(int);
+            SID_log("Assuming integer IDs.",SID_LOG_COMMENT);
+         }
+         else{
+            (*flag_long_IDs)=FALSE;
+            ID_byte_size    =sizeof(int);
+            SID_log_warning("Could not determine the IDs size.  Assuming integer IDs.",ERROR_LOGIC);
+         }
       }
  
       // Process the file in buffered chunks

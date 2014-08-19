@@ -11,7 +11,6 @@
 
 void write_treenode_list_markers_header(tree_info *trees,treenode_list_info *list,FILE *fp_props_out){
   tree_node_info **list_in         =list->list;
-  int              n_list_in       =list->n_list;
   int              flag_groups_list=list->flag_groups_list;
   char            *catalog_name    =list->catalog_name;
 

@@ -48,6 +48,12 @@ void write_treenode_all_hist(tree_info *trees,const char *filename_out_root){
         current_halo=current_halo->next_neighbour;
      }
   }
+  SID_Allreduce(SID_IN_PLACE,(hist_all_N->array),         (hist_all_N->n_x*hist_all_N->n_y),                  SID_INT,SID_SUM,SID.COMM_WORLD);
+  SID_Allreduce(SID_IN_PLACE,(hist_all_M->array),         (hist_all_M->n_x*hist_all_M->n_y),                  SID_INT,SID_SUM,SID.COMM_WORLD);
+  SID_Allreduce(SID_IN_PLACE,(hist_centrals_N->array),    (hist_centrals_N->n_x*hist_centrals_N->n_y),        SID_INT,SID_SUM,SID.COMM_WORLD);
+  SID_Allreduce(SID_IN_PLACE,(hist_centrals_M->array),    (hist_centrals_M->n_x*hist_centrals_M->n_y),        SID_INT,SID_SUM,SID.COMM_WORLD);
+  SID_Allreduce(SID_IN_PLACE,(hist_substructure_N->array),(hist_substructure_N->n_x*hist_substructure_N->n_y),SID_INT,SID_SUM,SID.COMM_WORLD);
+  SID_Allreduce(SID_IN_PLACE,(hist_substructure_M->array),(hist_substructure_M->n_x*hist_substructure_M->n_y),SID_INT,SID_SUM,SID.COMM_WORLD);
   write_treenode_hist(trees,filename_out_root,hist_all_N);
   write_treenode_hist(trees,filename_out_root,hist_all_M);
   write_treenode_hist(trees,filename_out_root,hist_centrals_N);

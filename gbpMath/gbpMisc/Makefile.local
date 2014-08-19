@@ -3,22 +3,24 @@
 #############################
 INCFILES = gbpMisc.h 
 OBJFILES = init_array_linear.o                 \
-	   init_array_log.o                    \
-	   compute_centroid3D.o                \
-	   take_log10.o                        \
+	       init_array_log.o                    \
+	       apply_rotation.o                    \
+	       compute_centroid3D.o                \
+	       take_log10.o                        \
            take_alog10.o                       \
-	   take_ln.o                           \
-	   take_aln.o                          \
-	   invert_matrix.o                     \
-	   add_quad.o                          \
-	   force_periodic.o                    \
-	   is_a_member.o                       \
-	   find_index.o                        \
-	   find_index_int.o                    \
-	   d_periodic.o                        \
-	   compute_triaxiality.o               \
+	       take_ln.o                           \
+	       take_aln.o                          \
+	       invert_matrix.o                     \
+	       add_quad.o                          \
+	       force_periodic.o                    \
+	       force_periodic_double.o             \
+	       is_a_member.o                       \
+	       find_index.o                        \
+	       find_index_int.o                    \
+	       d_periodic.o                        \
+	       compute_triaxiality.o               \
            bisect_array.o                      \
-	   compute_Daubechies_scaling_fctns.o                  
+	       compute_Daubechies_scaling_fctns.o                  
 LIBFILE  = 
 BINFILES = 
 LIBS     = 

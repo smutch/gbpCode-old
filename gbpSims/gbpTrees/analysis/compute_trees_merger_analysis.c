@@ -85,6 +85,12 @@ void compute_trees_merger_analysis(tree_info *trees,char *filename_out_root){
         current_halo=current_halo->next_neighbour;
      }
   }
+  finalize_treenode_list(trees,list_halos_central);
+  finalize_treenode_list(trees,list_halos_substructure);
+  finalize_treenode_list(trees,list_halos);
+  finalize_treenode_list(trees,list_halos_nofrags_central);
+  finalize_treenode_list(trees,list_halos_nofrags_substructure);
+  finalize_treenode_list(trees,list_halos_nofrags);
   SID_log("Done.",SID_LOG_CLOSE);
 
   // Write the files

@@ -189,7 +189,7 @@ void read_gadget_binary_local(char       *filename_root_in,
 
     // Number of particles for each species in all files
     for(i=0;i<N_GADGET_TYPE;i++)
-      n_all[i]=(size_t)header.n_all[i];
+      n_all[i]=(size_t)header.n_all_lo_word[i];
 
     // Number of files in this snapshot 
     ADaPS_store(&(plist->data),(void *)(&(header.n_files)),"n_files",ADaPS_SCALAR_INT);
@@ -215,8 +215,8 @@ void read_gadget_binary_local(char       *filename_root_in,
 
     for(i=0;i<N_GADGET_TYPE;i++){
       mass_array[i]=header.mass_array[i];
-      if(header.n_all_high_word[i]>0)
-        n_all[i]+=(((size_t)(header.n_all_high_word[i])) << 32);
+      if(header.n_all_hi_word[i]>0)
+        n_all[i]+=(((size_t)(header.n_all_hi_word[i])) << 32);
     }
 
     // Count the total number of particles

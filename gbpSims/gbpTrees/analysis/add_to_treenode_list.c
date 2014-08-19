@@ -25,17 +25,17 @@ void add_to_treenode_list(treenode_list_info *list,tree_node_info *node){
         SID_trap_error("You are attempting to mix groups and subgroups in a treenode_list structure.  Not allowed.",ERROR_LOGIC);
 
      // Increment the counter
-     list->n_list++;
+     list->n_list_local++;
 
      // Reallocate the array if the list has grown too big
-     if(list->n_list>list->n_list_alloc){
+     if(list->n_list_local>list->n_list_alloc){
        if(list->data!=NULL)
          SID_trap_error("You are attempting to grow a treenode list structure with added data past it's allocated size.  Not allowed.",ERROR_LOGIC); 
        list->n_list_alloc*=2;
        list->list=(tree_node_info **)SID_realloc(list->list,(sizeof(tree_node_info *)*list->n_list_alloc));
      }
 
-     list->list[list->n_list-1]=node;
+     list->list[list->n_list_local-1]=node;
   }
 }
 

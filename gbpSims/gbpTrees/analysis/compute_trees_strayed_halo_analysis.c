@@ -71,6 +71,9 @@ void compute_trees_strayed_halo_analysis(tree_info *trees,char *filename_out_roo
         current_halo=current_halo->next_neighbour;
      }
   }
+  finalize_treenode_list(trees,list_halos_central);
+  finalize_treenode_list(trees,list_halos_substructure);
+  finalize_treenode_list(trees,list_halos);
   SID_log("Done.",SID_LOG_CLOSE);
 
   // Write the files

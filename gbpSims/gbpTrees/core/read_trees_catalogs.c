@@ -20,23 +20,21 @@ void read_trees_catalogs(tree_info *trees,
   SID_log("Reading tree properties...",SID_LOG_OPEN|SID_LOG_TIMER);
 
   // Create the data array(s) where stuff will be stored
-  halo_properties_SAGE_info **SAGE_properties_groups_local;
-  halo_properties_info      **properties_groups_local;
-  halo_profile_info         **profiles_groups_local;
-  halo_properties_SAGE_info **SAGE_properties_subgroups_local;
-  halo_properties_info      **properties_subgroups_local;
-  halo_profile_info         **profiles_subgroups_local;
-  int                    read_catalog_mode=READ_CATALOG_PROPERTIES;
+  halo_properties_SAGE_info **SAGE_properties_groups_local   =NULL;
+  halo_properties_info      **properties_groups_local        =NULL;
+  halo_profile_info         **profiles_groups_local          =NULL;
+  halo_properties_SAGE_info **SAGE_properties_subgroups_local=NULL;
+  halo_properties_info      **properties_subgroups_local     =NULL;
+  halo_profile_info         **profiles_subgroups_local       =NULL;
+  int                         read_catalog_mode              =READ_CATALOG_PROPERTIES;
   if(check_mode_for_flag(mode,READ_TREES_CATALOGS_GROUPS)){
      if(check_mode_for_flag(mode,READ_TREES_CATALOGS_SAGE)){
         init_trees_data(trees,(void ***)&SAGE_properties_groups_local,sizeof(halo_properties_SAGE_info),INIT_TREE_DATA_GROUPS,"properties_groups_SAGE");
-        properties_groups_local=NULL;
-        trees->group_properties_SAGE=SAGE_properties_groups_local;
+        properties_groups_local     =NULL;
      }
      else{
         init_trees_data(trees,(void ***)&properties_groups_local,sizeof(halo_properties_info),INIT_TREE_DATA_GROUPS,"properties_groups");
         SAGE_properties_groups_local=NULL;
-        trees->group_properties     =properties_groups_local;
      }
      if(check_mode_for_flag(mode,READ_TREES_CATALOGS_PROFILES)){
         init_trees_data(trees,(void ***)&profiles_groups_local,sizeof(halo_profile_info),INIT_TREE_DATA_GROUPS,"profiles_groups");
@@ -45,16 +43,16 @@ void read_trees_catalogs(tree_info *trees,
      else
         profiles_groups_local=NULL;
   }
+  trees->group_properties_SAGE=SAGE_properties_groups_local;
+  trees->group_properties     =properties_groups_local;
   if(check_mode_for_flag(mode,READ_TREES_CATALOGS_SUBGROUPS)){
      if(check_mode_for_flag(mode,READ_TREES_CATALOGS_SAGE)){
         init_trees_data(trees,(void ***)&SAGE_properties_subgroups_local,sizeof(halo_properties_SAGE_info),INIT_TREE_DATA_SUBGROUPS,"properties_subgroups_SAGE");
         properties_subgroups_local     =NULL;
-        trees->subgroup_properties_SAGE=SAGE_properties_subgroups_local;
      }
      else{
         init_trees_data(trees,(void ***)&properties_subgroups_local,sizeof(halo_properties_info),INIT_TREE_DATA_SUBGROUPS,"properties_subgroups");
         SAGE_properties_subgroups_local=NULL;
-        trees->subgroup_properties     =properties_subgroups_local;
      }
      if(check_mode_for_flag(mode,READ_TREES_CATALOGS_PROFILES)){
         init_trees_data(trees,(void ***)&profiles_subgroups_local,sizeof(halo_profile_info),INIT_TREE_DATA_SUBGROUPS,"profiles_subgroups");
@@ -63,6 +61,8 @@ void read_trees_catalogs(tree_info *trees,
      else
         profiles_subgroups_local=NULL;
   }
+  trees->subgroup_properties_SAGE=SAGE_properties_subgroups_local;
+  trees->subgroup_properties     =properties_subgroups_local;
 
   // Process each snapshot in turn
   int    *nebr_idx_list_local;
@@ -164,9 +164,9 @@ void read_trees_catalogs(tree_info *trees,
                          &fp_properties);
 
            // Create some read buffer structures
-           halo_properties_SAGE_info            *SAGE_properties_buffer=NULL;
-           halo_properties_info *properties_buffer      =NULL;
-           halo_profile_info    *profiles_buffer        =NULL;
+           halo_properties_SAGE_info *SAGE_properties_buffer=NULL;
+           halo_properties_info      *properties_buffer     =NULL;
+           halo_profile_info         *profiles_buffer       =NULL;
            if(SAGE_properties_in!=NULL)
               SAGE_properties_buffer=(halo_properties_SAGE_info *)SID_malloc(sizeof(halo_properties_SAGE_info));
            else

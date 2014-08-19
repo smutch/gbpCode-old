@@ -13,7 +13,7 @@ void init_trees_read(const char  *filename_tree_root,
                      int          mode,
                      tree_info  **tree){
 
-  SID_log("Initializing trees...",SID_LOG_OPEN);
+  SID_log("Initializing trees...",SID_LOG_OPEN|SID_LOG_TIMER);
 
   // Allocate the data structure
   (*tree)=(tree_info *)SID_malloc(sizeof(tree_info));

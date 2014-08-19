@@ -10,6 +10,20 @@
 #include <gbpTrees_build.h>
 #include <gbpCosmo.h>
 
+int return_next_buffer_int_local(char *buffer,SID_fp *fp_buffer,size_t *n_bytes_processed,size_t *n_bytes_unread,size_t *n_bytes_buffer,size_t n_bytes_buffer_max);
+int return_next_buffer_int_local(char *buffer,SID_fp *fp_buffer,size_t *n_bytes_processed,size_t *n_bytes_unread,size_t *n_bytes_buffer,size_t n_bytes_buffer_max){
+    // Read the next buffered chunck if need-be
+    if((*n_bytes_processed)==(*n_bytes_buffer)){
+       (*n_bytes_buffer)=MIN((*n_bytes_unread),n_bytes_buffer_max);
+       SID_fread_all(buffer,(*n_bytes_buffer),1,fp_buffer);
+       (*n_bytes_unread)   -=(*n_bytes_buffer);
+       (*n_bytes_processed) =0;
+    }
+    int r_val=((int *)(&(buffer[(*n_bytes_processed)])))[0];
+    (*n_bytes_processed)+=sizeof(int);
+    return(r_val);
+}
+
 void read_trees(char       *filename_tree_root,
                 char       *filename_halo_root,
                 int         read_mode,
@@ -153,24 +167,37 @@ void read_trees(char       *filename_tree_root,
        SID_trap_error("Subgroup counts don't match between datasets (ie. %d!=%d)",ERROR_LOGIC,n_subgroups_cat,n_subgroups);
 
     // Read each group in turn
-    int tree_read_buffer[7];
-    int n_groups_unused        =0;
-    int n_groups_added_multiply=0;
-    int i_group;
-    int i_subgroup;
+    size_t n_bytes_buffer_max =sizeof(int)*1024*1024;
+    //size_t n_bytes_buffer_max =sizeof(int)*1024;
+    //int    tree_read_buffer[7];
+    char  *tree_read_buffer=(char *)SID_malloc(n_bytes_buffer_max);
+    size_t n_bytes_processed  =0; // This way we will perform a read right away
+    size_t n_bytes_buffer     =0; // This way we will perform a read right away
+    size_t n_bytes_unread     =sizeof(int)*((7*(size_t)n_groups)+(6*(size_t)n_subgroups));
+    int    n_groups_unused        =0;
+    int    n_groups_added_multiply=0;
+    int    i_group;
+    int    i_subgroup;
     for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
 
       // Read horizontal trees for groups
       int n_particles_group;
       SID_fread_all(&n_particles_group, sizeof(int),1,&fp_groups_in);
-      SID_fread_all(tree_read_buffer, 7*sizeof(int),1,&fp_trees_in);
-      int group_id           =tree_read_buffer[0];
-      int group_tree_case    =tree_read_buffer[1];
-      int group_descendant_id=tree_read_buffer[2];
-      int group_tree_id      =tree_read_buffer[3];
-      int group_file_offset  =tree_read_buffer[4];
-      int group_file_index   =tree_read_buffer[5];
-      int n_subgroups_group  =tree_read_buffer[6];
+      //SID_fread_all(tree_read_buffer, 7*sizeof(int),1,&fp_trees_in);
+      //int group_id           =tree_read_buffer[0];
+      //int group_tree_case    =tree_read_buffer[1];
+      //int group_descendant_id=tree_read_buffer[2];
+      //int group_tree_id      =tree_read_buffer[3];
+      //int group_file_offset  =tree_read_buffer[4];
+      //int group_file_index   =tree_read_buffer[5];
+      //int n_subgroups_group  =tree_read_buffer[6];
+      int group_id           =return_next_buffer_int_local(tree_read_buffer,&fp_trees_in,&n_bytes_processed,&n_bytes_unread,&n_bytes_buffer,n_bytes_buffer_max);
+      int group_tree_case    =return_next_buffer_int_local(tree_read_buffer,&fp_trees_in,&n_bytes_processed,&n_bytes_unread,&n_bytes_buffer,n_bytes_buffer_max);
+      int group_descendant_id=return_next_buffer_int_local(tree_read_buffer,&fp_trees_in,&n_bytes_processed,&n_bytes_unread,&n_bytes_buffer,n_bytes_buffer_max);
+      int group_tree_id      =return_next_buffer_int_local(tree_read_buffer,&fp_trees_in,&n_bytes_processed,&n_bytes_unread,&n_bytes_buffer,n_bytes_buffer_max);
+      int group_file_offset  =return_next_buffer_int_local(tree_read_buffer,&fp_trees_in,&n_bytes_processed,&n_bytes_unread,&n_bytes_buffer,n_bytes_buffer_max);
+      int group_file_index   =return_next_buffer_int_local(tree_read_buffer,&fp_trees_in,&n_bytes_processed,&n_bytes_unread,&n_bytes_buffer,n_bytes_buffer_max);
+      int n_subgroups_group  =return_next_buffer_int_local(tree_read_buffer,&fp_trees_in,&n_bytes_processed,&n_bytes_unread,&n_bytes_buffer,n_bytes_buffer_max);
 
       // Add offset to snap
       int group_descendant_snap;
@@ -188,13 +215,19 @@ void read_trees(char       *filename_tree_root,
       for(j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
          int n_particles_subgroup;
          SID_fread_all(&n_particles_subgroup,  sizeof(int),1,&fp_subgroups_in);
-         SID_fread_all(tree_read_buffer,     6*sizeof(int),1,&fp_trees_in);
-         int subgroup_id           =tree_read_buffer[0];
-         int subgroup_tree_case    =tree_read_buffer[1];
-         int subgroup_descendant_id=tree_read_buffer[2];
-         int subgroup_tree_id      =tree_read_buffer[3];
-         int subgroup_file_offset  =tree_read_buffer[4];
-         int subgroup_file_index   =tree_read_buffer[5];
+         //SID_fread_all(tree_read_buffer,     6*sizeof(int),1,&fp_trees_in);
+         //int subgroup_id           =tree_read_buffer[0];
+         //int subgroup_tree_case    =tree_read_buffer[1];
+         //int subgroup_descendant_id=tree_read_buffer[2];
+         //int subgroup_tree_id      =tree_read_buffer[3];
+         //int subgroup_file_offset  =tree_read_buffer[4];
+         //int subgroup_file_index   =tree_read_buffer[5];
+         int subgroup_id           =return_next_buffer_int_local(tree_read_buffer,&fp_trees_in,&n_bytes_processed,&n_bytes_unread,&n_bytes_buffer,n_bytes_buffer_max);
+         int subgroup_tree_case    =return_next_buffer_int_local(tree_read_buffer,&fp_trees_in,&n_bytes_processed,&n_bytes_unread,&n_bytes_buffer,n_bytes_buffer_max);
+         int subgroup_descendant_id=return_next_buffer_int_local(tree_read_buffer,&fp_trees_in,&n_bytes_processed,&n_bytes_unread,&n_bytes_buffer,n_bytes_buffer_max);
+         int subgroup_tree_id      =return_next_buffer_int_local(tree_read_buffer,&fp_trees_in,&n_bytes_processed,&n_bytes_unread,&n_bytes_buffer,n_bytes_buffer_max);
+         int subgroup_file_offset  =return_next_buffer_int_local(tree_read_buffer,&fp_trees_in,&n_bytes_processed,&n_bytes_unread,&n_bytes_buffer,n_bytes_buffer_max);
+         int subgroup_file_index   =return_next_buffer_int_local(tree_read_buffer,&fp_trees_in,&n_bytes_processed,&n_bytes_unread,&n_bytes_buffer,n_bytes_buffer_max);
 
          // Add offset to snap
          int subgroup_descendant_snap;
@@ -247,8 +280,7 @@ void read_trees(char       *filename_tree_root,
          }
       }
 
-      // Check how many ranks have used this group.  Should be
-      //   just one in all but the most pathological cases.
+      // Check how many ranks have used this group.  Should be just one.
       SID_Allreduce(SID_IN_PLACE,&flag_group_added,1,SID_INT,SID_SUM,SID.COMM_WORLD);
       if(flag_group_added==0)
          n_groups_unused++;
@@ -259,6 +291,13 @@ void read_trees(char       *filename_tree_root,
     SID_fclose(&fp_trees_in);
     SID_fclose(&fp_groups_in);
     SID_fclose(&fp_subgroups_in);
+    SID_free(SID_FARG tree_read_buffer);
+
+    // Sanity checks
+    if(n_bytes_unread!=0)
+       SID_trap_error("The tree file was not entirely processed.  %zd bytes left.",ERROR_LOGIC,n_bytes_unread);
+    if(n_bytes_processed!=n_bytes_buffer)
+       SID_trap_error("The tree file buffer was not entirely processed.  %zd of %zd bytes left.",ERROR_LOGIC,n_bytes_buffer-n_bytes_processed,n_bytes_buffer);
 
     // Update the temporary look-up arrays
     update_trees_lookup((*trees),i_file);

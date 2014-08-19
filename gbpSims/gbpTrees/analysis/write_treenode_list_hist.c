@@ -23,11 +23,13 @@ void write_treenode_list_hist(tree_info *trees,const char *filename_out_root,tre
   treenode_hist_info *hist_list_N;
   init_treenode_hist(trees,list->catalog_name,"z","N",TREENODE_HIST_LOG_Y,&hist_list_N,n_z_bin,logN_min,dlogN,n_logN);
   init_treenode_hist(trees,list->catalog_name,"z","M",TREENODE_HIST_LOG_Y,&hist_list_M,n_z_bin,logM_min,dlogM,n_logM);
-  for(int i_list=0;i_list<list->n_list;i_list++){
+  for(int i_list=0;i_list<list->n_list_local;i_list++){
      tree_node_info *current_halo=list->list[i_list];
      add_to_treenode_hist(trees,hist_list_N,current_halo);
      add_to_treenode_hist(trees,hist_list_M,current_halo);
   }
+  SID_Allreduce(SID_IN_PLACE,(hist_list_N->array),(hist_list_N->n_x*hist_list_N->n_y),SID_INT,SID_SUM,SID.COMM_WORLD);
+  SID_Allreduce(SID_IN_PLACE,(hist_list_M->array),(hist_list_M->n_x*hist_list_M->n_y),SID_INT,SID_SUM,SID.COMM_WORLD);
   write_treenode_hist(trees,filename_out_root,hist_list_N);
   write_treenode_hist(trees,filename_out_root,hist_list_M);
   free_treenode_hist (&hist_list_N);

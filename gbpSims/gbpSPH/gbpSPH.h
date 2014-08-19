@@ -73,7 +73,7 @@ struct gadget_header_info{
   double       redshift;
   int          flag_SFr;
   int          flag_feedback;
-  unsigned int n_all[N_GADGET_TYPE];
+  unsigned int n_all_lo_word[N_GADGET_TYPE];
   int          flag_cooling;
   int          n_files;
   double       box_size;
@@ -82,7 +82,7 @@ struct gadget_header_info{
   double       h_Hubble;
   int          flag_ages;
   int          flag_metals;
-  unsigned int n_all_high_word[N_GADGET_TYPE];
+  unsigned int n_all_hi_word[N_GADGET_TYPE];
   int          flag_entropyICs;
   char         unused[60];
 };
@@ -90,6 +90,8 @@ struct gadget_header_info{
 typedef struct gadget_read_info gadget_read_info;
 struct gadget_read_info{
    gadget_header_info header;
+   size_t             n_all[N_GADGET_TYPE];
+   size_t             n_particles;
    char filename_root[MAX_FILENAME_LENGTH];
    int  snapshot_number;
    int  flag_multifile;

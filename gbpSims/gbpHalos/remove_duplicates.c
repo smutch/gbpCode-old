@@ -695,7 +695,7 @@ void read_gadget_binary_local(char       *filename_root_in,
 
     // Number of particles for each species in all files
     for(i=0;i<N_GADGET_TYPE;i++)
-      n_all[i]=(size_t)header.n_all[i];
+      n_all[i]=(size_t)header.n_all_lo_word[i];
 
     // Number of files in this snapshot 
     ADaPS_store(&(plist->data),(void *)(&(header.n_files)),"n_files",ADaPS_SCALAR_INT);
@@ -718,8 +718,8 @@ void read_gadget_binary_local(char       *filename_root_in,
     // Species total particle counts and mass array
     for(i=0;i<N_GADGET_TYPE;i++){
       mass_array[i]=header.mass_array[i];
-      if(header.n_all_high_word[i]>0)
-        n_all[i]+=(((size_t)(header.n_all_high_word[i])) << 32);
+      if(header.n_all_hi_word[i]>0)
+        n_all[i]+=(((size_t)(header.n_all_hi_word[i])) << 32);
     }
 
     // Count the total number of particles
@@ -790,7 +790,9 @@ void read_gadget_binary_local(char       *filename_root_in,
         SID_log("Performing read...",SID_LOG_OPEN|SID_LOG_TIMER);
 
       // Set filename
-      set_gadget_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
+      set_gadget_filename(&fp_gadget,i_file,filename);
+      flag_multifile=fp_gadget.flag_multifile;
+      flag_file_type=fp_gadget.flag_file_type;
 
       // Read header and set positions pointer
       FILE *fp_positions;

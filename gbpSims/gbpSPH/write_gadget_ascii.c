@@ -59,7 +59,7 @@ void write_gadget_ascii(char       *filename_out,
              vz=(GBPREAL *)ADaPS_fetch(plist->data,"vz_%s",plist->species[i_species]);
              id=(size_t  *)ADaPS_fetch(plist->data,"id_%s",plist->species[i_species]);
              for(i_p=0;i_p<n_p;i_p++){
-               fprintf(fp,"%1d %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %7lld\n",
+               fprintf(fp,"%1d %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %7zd\n",
                        i_species,
                        (double)(x[i_p]/(M_PER_MPC/h_Hubble)),
                        (double)(y[i_p]/(M_PER_MPC/h_Hubble)),

@@ -11,7 +11,7 @@
 
 void write_treenode_list_properties(tree_info *trees,const char *filename_out_root,treenode_list_info *list){
   tree_node_info **list_in         =list->list;
-  int              n_list_in       =list->n_list;
+  int              n_list_in       =list->n_list_local;
   int              flag_groups_list=list->flag_groups_list;
   char            *catalog_name    =list->catalog_name;
 

@@ -19,6 +19,7 @@ OBJFILES  = average_tree_branches.o                  \
 	    free_treenode_hist.o                     \
 	    init_treenode_list.o                     \
 	    init_treenode_list_data.o                \
+	    finalize_treenode_list.o                 \
 	    free_treenode_list.o                     \
 	    add_to_treenode_list.o                   \
 	    write_treenode_list_markers.o            \
@@ -30,6 +31,7 @@ OBJFILES  = average_tree_branches.o                  \
 	    write_treenode_list_properties_set_ith.o \
 	    write_tree_branches.o                    \
 	    write_tree_branch_ascii.o                \
+	    check_treenode_if_snap_equals_given.o    \
 	    check_treenode_if_main_progenitor.o      \
 	    check_treenode_if_merger.o               \
 	    check_treenode_if_central.o              \
@@ -52,6 +54,10 @@ OBJFILES  = average_tree_branches.o                  \
 	    fetch_treenode_file_index.o              \
 	    fetch_treenode_delta_t.o                 \
 	    find_treenode_markers.o                  \
+	    find_treenode_markers_all.o              \
+	    write_treenode_markers_all.o             \
+	    find_treenode_markers_recursive.o        \
+	    find_treenode_snap_equals_given.o        \
 	    find_treenode_main_progenitor.o          \
 	    find_treenode_branch_root.o              \
 	    find_treenode_branch_leaf.o              \

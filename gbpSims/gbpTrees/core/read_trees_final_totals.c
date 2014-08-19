@@ -21,7 +21,7 @@ void read_trees_final_totals(char *filename_output_dir_horizontal_trees,
                              int  *n_trees_subgroup,
                              int  *n_trees_group){
 
-  SID_log("Getting final halo/tree/snapshot totals...",SID_LOG_OPEN);
+  SID_log("Getting final halo/tree/snapshot totals...",SID_LOG_OPEN|SID_LOG_TIMER);
 
   // Count the number of snaps used by these trees
   int i_read;
@@ -52,6 +52,9 @@ void read_trees_final_totals(char *filename_output_dir_horizontal_trees,
   SID_fclose(&fp_in);
   (*n_progenitors_max)=MAX((*n_groups_max_in),(*n_subgroups_max_in));
   if(n_step_in!=i_read_step) SID_trap_error("Snapshot step sizes don't match (ie. %d!=%d)",ERROR_LOGIC,n_step_in,i_read_step);
-
+  SID_log("No. of    group trees (total)=%d", SID_LOG_COMMENT,n_trees_group);
+  SID_log("No. of subgroup trees (total)=%d", SID_LOG_COMMENT,n_trees_subgroup);
+  SID_log("tree_node structure size     =%zd bytes",SID_LOG_COMMENT,sizeof(tree_node_info));
+  SID_log("halo_propeties structure size=%zd bytes",SID_LOG_COMMENT,sizeof(halo_properties_info));
   SID_log("Done.",SID_LOG_CLOSE);
 }

@@ -23,18 +23,28 @@ struct tree_markers_info{
   tree_node_info *merger_10pc_remnant;
   tree_node_info *merger_10pc_host;
   tree_node_info *merger_10pc_merger;
+  double          M_peak;
 };
 
 typedef struct tree_markers_stats_info tree_markers_stats_info;
 struct tree_markers_stats_info{
   double t_half_peak_mass_ranges[2][2];
   double t_half_peak_mass_peak;
+  double t_merger_33pc_ranges[2][2];
+  double t_merger_33pc_peak;
+  double t_merger_10pc_ranges[2][2];
+  double t_merger_10pc_peak;
+  double M_peak_ranges[2][2];
+  double M_peak_peak;
+  double M_vir_ranges[2][2];
+  double M_vir_peak;
 };
 
 typedef struct treenode_list_info treenode_list_info;
 struct treenode_list_info{
   char             catalog_name[MAX_FILENAME_LENGTH];
   int              n_list;
+  int              n_list_local;
   int              n_list_alloc;
   int              flag_groups_list;
   tree_node_info **list;
@@ -107,14 +117,17 @@ void   init_treenode_info_data(treenode_list_info  *list,
                                SID_Datatype         data_type,
                                const char          *name,
                                ...);
+void finalize_treenode_list(tree_info *trees,treenode_list_info *list);
 void   free_treenode_list(treenode_list_info **list);
 void   add_to_treenode_list(treenode_list_info *list,tree_node_info *node);
+int    check_treenode_if_snap_equals_given(tree_node_info *halo,int snap_tree_given);
 int    check_treenode_if_main_progenitor(tree_node_info *halo);
 int    check_treenode_if_merger(tree_node_info *halo);
 int    check_treenode_if_branch_start(tree_info *trees,tree_node_info *halo);
 int    check_treenode_if_satellite(tree_node_info *halo);
 int    check_treenode_if_central(tree_node_info *halo);
 int    check_treenode_if_fragmented(tree_node_info *halo);
+int    find_treenode_snap_equals_given(tree_info *trees,tree_node_info *halo,int snap_tree_given,tree_node_info **treenode_return);
 int    find_treenode_main_progenitor(tree_info *trees,tree_node_info *halo,tree_node_info **main_progenitor);
 int    find_treenode_branch_root(tree_info *trees,tree_node_info *halo,tree_node_info **branch_root);
 int    find_treenode_branch_leaf(tree_info *trees,tree_node_info *halo,tree_node_info **branch_leaf);
@@ -134,7 +147,20 @@ int    find_treenode_accretion(tree_info       *trees,
                                tree_node_info **first_satellite,
                                tree_node_info **join_current_group);
 int    find_treenode_markers(tree_info *trees,tree_node_info *halo,tree_markers_info *markers);
-void   compute_treenode_list_marker_stats(tree_info *trees,treenode_list_info *list,tree_markers_stats_info *stats);
+int    find_treenode_markers_all(tree_info *trees,tree_markers_info ***markers);
+void   write_treenode_markers_all(tree_info *trees,tree_markers_info **markers,char *filename_output_root);
+int    find_treenode_markers_recursive(tree_info          *trees,
+                                       tree_markers_info **markers_array,
+                                       tree_node_info     *halo,
+                                       int                 flag_is_main_progenitor,
+                                       double             *M_return,
+                                       tree_markers_info **markers_descendant);
+void compute_treenode_list_marker_stats(tree_info                *trees,
+                                        treenode_list_info       *list,
+                                        tree_markers_info       **markers_all,
+                                        tree_markers_stats_info  *stats,
+                                        int                     **n_hist_count,
+                                        int                      *n_hist);
 void   compute_trees_analysis                (tree_info *trees);
 void   compute_trees_emerged_halo_analysis   (tree_info *trees,char *filename_out_root);
 void   compute_trees_fragmented_halo_analysis(tree_info *trees,char *filename_out_root);

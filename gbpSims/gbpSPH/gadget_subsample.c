@@ -112,7 +112,7 @@ int main(int argc, char *argv[]){
      for(i_type=0;i_type<N_GADGET_TYPE;i_type++){
        n_all_high_word[i_type]=(unsigned int)(((long long)n_all_keep[i_type])>>32);
        n_all[i_type]          =(unsigned int)(((long long)n_all_keep[i_type])-(((long long)(n_all_high_word[i_type]))<<32));
-       n_all_init[i_type]     =((long long)(header.n_all[i_type]))+(((long long)(header.n_all_high_word[i_type]))<<32);
+       n_all_init[i_type]     =((long long)(header.n_all_lo_word[i_type]))+(((long long)(header.n_all_hi_word[i_type]))<<32);
        if(n_all_keep[i_type]>0)
          mass_array[i_type]=header.mass_array[i_type]*((double)n_all_init[i_type]/(double)n_all_keep[i_type]);
        else
@@ -121,9 +121,9 @@ int main(int argc, char *argv[]){
      for(i_type=0;i_type<N_GADGET_TYPE;i_type++)
        SID_log("mass_array[%d]=%le (was %le)", SID_LOG_COMMENT,i_type,mass_array[i_type],header.mass_array[i_type]);
      for(i_type=0;i_type<N_GADGET_TYPE;i_type++)
-       SID_log("n_all[%d]     =%d (was %d)",SID_LOG_COMMENT,i_type,n_all[i_type],header.n_all[i_type]);
+       SID_log("n_all[%d]     =%d (was %d)",SID_LOG_COMMENT,i_type,n_all[i_type],header.n_all_lo_word[i_type]);
      for(i_type=0;i_type<N_GADGET_TYPE;i_type++)
-       SID_log("high_word[%d] =%d (was %d)",SID_LOG_COMMENT,i_type,n_all_high_word[i_type],header.n_all_high_word[i_type]);
+       SID_log("high_word[%d] =%d (was %d)",SID_LOG_COMMENT,i_type,n_all_high_word[i_type],header.n_all_hi_word[i_type]);
      SID_log("Done.",SID_LOG_CLOSE);
      SID_log("Writing subsampled snapshot...",SID_LOG_OPEN|SID_LOG_TIMER);
      for(i_file=SID.My_rank,j_file=0;j_file<n_files;i_file+=SID.n_proc,j_file+=SID.n_proc){
@@ -153,8 +153,8 @@ int main(int argc, char *argv[]){
            n_local[i_type]               =header.n_file[i_type];
            header.n_file[i_type]         =0;
            header.mass_array[i_type]     =mass_array[i_type];
-           header.n_all[i_type]          =n_all[i_type];
-           header.n_all_high_word[i_type]=n_all_high_word[i_type];
+           header.n_all_lo_word[i_type]  =n_all[i_type];
+           header.n_all_hi_word[i_type]  =n_all_high_word[i_type];
          }
          seed=seed_init+1387*i_file;
          init_RNG(&seed,&RNG,RNG_DEFAULT);
