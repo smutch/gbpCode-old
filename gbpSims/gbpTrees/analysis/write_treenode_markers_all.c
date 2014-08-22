@@ -9,9 +9,16 @@
 #include <gbpTrees_build.h>
 #include <gbpTrees_analysis.h>
 
-void write_treenode_markers_all(tree_info *trees,tree_markers_info **markers,char *filename_output_root){
+void write_treenode_markers_all(tree_info *trees,tree_markers_info **markers,char *filename_output_root,int mode){
 
    // Generate the markers starting recursively from each tree root
+   char filename_output_group_text[16];
+   if(mode==COMPUTE_ACCRETION_ANALYSIS_GROUPS)
+      sprintf(filename_output_group_text,"group");
+   else if(mode==COMPUTE_ACCRETION_ANALYSIS_SUBGROUPS)
+      sprintf(filename_output_group_text,"subgroup");
+   else
+      SID_trap_error("group/subgroup mode has not been properly specified in write_treenode_markers_all.",ERROR_LOGIC);
    SID_log("Writing markers...",SID_LOG_OPEN|SID_LOG_TIMER);
    char filename_out_dir[MAX_FILENAME_LENGTH];
    sprintf(filename_out_dir,"%s_markers",filename_output_root);
@@ -24,14 +31,13 @@ void write_treenode_markers_all(tree_info *trees,tree_markers_info **markers,cha
       SID_log("(%d halos)...",SID_LOG_CONTINUE,n_halos_total);
       // Open file for writing and write header
       char filename_out[MAX_FILENAME_LENGTH];
-      sprintf(filename_out,"%s/markers_%03d.dat",filename_out_dir,trees->snap_list[i_snap]);
+      sprintf(filename_out,"%s/%s_%03d.dat",filename_out_dir,filename_output_group_text,trees->snap_list[i_snap]);
       FILE *fp_out;
       if(SID.I_am_Master){
          fp_out=fopen(filename_out,"w");
          fwrite(&i_snap,       sizeof(int),1,fp_out);
          fwrite(&n_halos_total,sizeof(int),1,fp_out);
       }
-
       // Write in catalog order
       int i_halo;
       int j_halo;

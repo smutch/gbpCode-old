@@ -3,6 +3,10 @@
 
 // V Preprocessor definitions V
 #define WRITE_TREENODE_LIST_PROPERTIES_N 8
+
+#define COMPUTE_ACCRETION_ANALYSIS_GROUPS    0
+#define COMPUTE_ACCRETION_ANALYSIS_SUBGROUPS 1
+#define COMPUTE_ACCRETION_ANALYSIS_DEFAULT   COMPUTE_ACCRETION_ANALYSIS_GROUPS
 // A Preprocessor definitions A
 
 // V --- Datatype definitions --- V
@@ -148,7 +152,7 @@ int    find_treenode_accretion(tree_info       *trees,
                                tree_node_info **join_current_group);
 int    find_treenode_markers(tree_info *trees,tree_node_info *halo,tree_markers_info *markers);
 int    find_treenode_markers_all(tree_info *trees,tree_markers_info ***markers);
-void   write_treenode_markers_all(tree_info *trees,tree_markers_info **markers,char *filename_output_root);
+void   write_treenode_markers_all(tree_info *trees,tree_markers_info **markers,char *filename_output_root,int mode);
 int    find_treenode_markers_recursive(tree_info          *trees,
                                        tree_markers_info **markers_array,
                                        tree_node_info     *halo,
@@ -167,6 +171,7 @@ void   compute_trees_fragmented_halo_analysis(tree_info *trees,char *filename_ou
 void   compute_trees_merger_analysis         (tree_info *trees,char *filename_out_root);
 void   compute_trees_dropped_halo_analysis   (tree_info *trees,char *filename_out_root);
 void   compute_trees_strayed_halo_analysis   (tree_info *trees,char *filename_out_root);
+void   compute_accretion_analysis(tree_info *trees,tree_markers_info **markers,const char *catalog_root,const char *filename_out_root,int mode);
 
 double fetch_treenode_delta_t(tree_info *trees,tree_node_info *halo_1,tree_node_info *halo_2);
 int    fetch_treenode_snapshot(tree_info *trees,tree_node_info *halo);

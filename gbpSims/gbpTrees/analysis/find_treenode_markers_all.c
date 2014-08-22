@@ -32,6 +32,7 @@ int find_treenode_markers_all(tree_info *trees,tree_markers_info ***markers){
          halo_current=halo_current->next_neighbour;
       }
    }
+   SID_Barrier(SID.COMM_WORLD);
    SID_log("Done.",SID_LOG_CLOSE);
 
 }
