@@ -14,9 +14,9 @@ void write_treenode_markers_all(tree_info *trees,tree_markers_info **markers,cha
    // Generate the markers starting recursively from each tree root
    char filename_output_group_text[16];
    if(mode==COMPUTE_ACCRETION_ANALYSIS_GROUPS)
-      sprintf(filename_output_group_text,"group");
+      sprintf(filename_output_group_text,"groups");
    else if(mode==COMPUTE_ACCRETION_ANALYSIS_SUBGROUPS)
-      sprintf(filename_output_group_text,"subgroup");
+      sprintf(filename_output_group_text,"subgroups");
    else
       SID_trap_error("group/subgroup mode has not been properly specified in write_treenode_markers_all.",ERROR_LOGIC);
    SID_log("Writing markers...",SID_LOG_OPEN|SID_LOG_TIMER);

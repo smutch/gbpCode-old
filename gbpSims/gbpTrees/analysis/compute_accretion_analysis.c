@@ -12,7 +12,17 @@
 void compute_accretion_analysis(tree_info *trees,tree_markers_info **markers,const char *catalog_root,const char *filename_out_root,int mode){
 
   // Compute merger rates ...
-  SID_log("Performing mass accretion analysis...",SID_LOG_OPEN|SID_LOG_TIMER);
+  char filename_out_root_group[MAX_FILENAME_LENGTH];
+  if(check_mode_for_flag(mode,COMPUTE_ACCRETION_ANALYSIS_GROUPS)){
+     SID_log("Performing GROUP mass accretion analysis...",SID_LOG_OPEN|SID_LOG_TIMER);
+     sprintf(filename_out_root_group,"%s_groups",filename_out_root);
+  }
+  else if(check_mode_for_flag(mode,COMPUTE_ACCRETION_ANALYSIS_SUBGROUPS)){
+     SID_log("Performing SUBGROUP mass accretion analysis...",SID_LOG_OPEN|SID_LOG_TIMER);
+     sprintf(filename_out_root_group,"%s_subgroups",filename_out_root);
+  }
+  else
+     SID_trap_error("group/subgroup mode has not been properly specified in compute_accretion_analysis().",ERROR_LOGIC);
 
   double  logM_min= 7.0;
   double  dlogM   = 0.5;
@@ -22,7 +32,7 @@ void compute_accretion_analysis(tree_info *trees,tree_markers_info **markers,con
 
   SID_log("Writing mass binning file ...",SID_LOG_OPEN);
   FILE *fp_out=NULL;
-  sprintf(filename_out,"%s_M_bins.txt",filename_out_root);
+  sprintf(filename_out,"%s_M_bins.txt",filename_out_root_group);
   if(SID.I_am_Master){
      fp_out=fopen(filename_out,"w");
      int i_column=1;
@@ -39,7 +49,7 @@ void compute_accretion_analysis(tree_info *trees,tree_markers_info **markers,con
   }
   SID_log("Done.",SID_LOG_CLOSE);
 
-  sprintf(filename_out,"%s.txt",filename_out_root);
+  sprintf(filename_out,"%s.txt",filename_out_root_group);
   treenode_list_info **lists=(treenode_list_info **)SID_malloc(sizeof(treenode_list_info *)*n_bins);
 
   int i_bin;
@@ -52,8 +62,6 @@ void compute_accretion_analysis(tree_info *trees,tree_markers_info **markers,con
         current_halo=trees->first_neighbour_groups[i_snap];
      else if(check_mode_for_flag(mode,COMPUTE_ACCRETION_ANALYSIS_SUBGROUPS))
         current_halo=trees->first_neighbour_subgroups[i_snap];
-     else
-        SID_log("subgroup/group selection has not been specified in mode (%d).",ERROR_LOGIC,mode);
      for(i_bin=0;i_bin<n_bins;i_bin++)
         n_bin[i_bin]=0;
      while(current_halo!=NULL){
@@ -74,8 +82,6 @@ void compute_accretion_analysis(tree_info *trees,tree_markers_info **markers,con
         current_halo=trees->first_neighbour_groups[i_snap];
      else if(check_mode_for_flag(mode,COMPUTE_ACCRETION_ANALYSIS_SUBGROUPS))
         current_halo=trees->first_neighbour_subgroups[i_snap];
-     else
-        SID_log("subgroup/group selection has not been specified in mode (%d).",ERROR_LOGIC,mode);
      while(current_halo!=NULL){
         double logM_i=take_log10(fetch_treenode_Mvir(trees,current_halo));
         int    bin   =(int)((logM_i-logM_min)/dlogM);
