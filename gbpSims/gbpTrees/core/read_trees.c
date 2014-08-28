@@ -125,6 +125,8 @@ void read_trees(char       *filename_tree_root,
     SID_fread_all(&offset_size,    sizeof(int),1,&fp_groups_in);
     SID_fread_all(&n_subgroups_cat,sizeof(int),1,&fp_subgroups_in);
     SID_fread_all(&offset_size,    sizeof(int),1,&fp_subgroups_in);
+    (*trees)->n_groups_catalog[i_file]   =n_groups_cat;
+    (*trees)->n_subgroups_catalog[i_file]=n_subgroups_cat;
 
     // Read tree file header
     int n_step_in;

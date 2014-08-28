@@ -173,6 +173,7 @@ int main(int argc, char *argv[]){
                  current_j=current_group->substructure_first;
                  current_group_sigma_v=0.;
                  if(n_sub_hi>1){
+                    v_mean/=(double)n_sub_hi;
                     while(current_j!=NULL){
                        double M_i=subgroup_properties[current_j->snap_tree][current_j->neighbour_index].M_vir;
                        if(M_i>M_cut_min){
@@ -200,6 +201,7 @@ int main(int argc, char *argv[]){
                  current_j=matched_group->substructure_first;
                  matched_group_sigma_v=0.;
                  if(n_sub_lo>1){
+                    v_mean/=(double)n_sub_lo;
                     while(current_j!=NULL){
                        double M_i=subgroup_properties[current_j->snap_tree][current_j->neighbour_index].M_vir;
                        if(M_i>M_cut_min){

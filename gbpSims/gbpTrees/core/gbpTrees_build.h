@@ -352,6 +352,8 @@ struct tree_info{
   int              n_subgroups_snap_alloc_local;
   int             *n_groups_snap_local;
   int             *n_subgroups_snap_local;
+  int             *n_groups_catalog;
+  int             *n_subgroups_catalog;
   // Forest info
   int              n_forests;
   int              n_forests_local;

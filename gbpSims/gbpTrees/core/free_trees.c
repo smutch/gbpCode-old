@@ -43,6 +43,8 @@ void free_trees(tree_info **trees){
   SID_free(SID_FARG (*trees)->snap_list);
   SID_free(SID_FARG (*trees)->z_list);
   SID_free(SID_FARG (*trees)->t_list);
+  SID_free(SID_FARG (*trees)->n_groups_catalog);
+  SID_free(SID_FARG (*trees)->n_subgroups_catalog);
   SID_free(SID_FARG (*trees)->n_groups_snap_local);
   SID_free(SID_FARG (*trees)->n_subgroups_snap_local);
   SID_free(SID_FARG (*trees)->n_groups_forest_local);

@@ -13,10 +13,14 @@ void write_treenode_markers_all(tree_info *trees,tree_markers_info **markers,cha
 
    // Generate the markers starting recursively from each tree root
    char filename_output_group_text[16];
-   if(mode==COMPUTE_ACCRETION_ANALYSIS_GROUPS)
+   int  flag_process_groups=FALSE;
+   if(check_mode_for_flag(mode,COMPUTE_ACCRETION_ANALYSIS_GROUPS)){
       sprintf(filename_output_group_text,"groups");
-   else if(mode==COMPUTE_ACCRETION_ANALYSIS_SUBGROUPS)
+      flag_process_groups=TRUE;
+   }
+   else if(check_mode_for_flag(mode,COMPUTE_ACCRETION_ANALYSIS_SUBGROUPS)){
       sprintf(filename_output_group_text,"subgroups");
+   }
    else
       SID_trap_error("group/subgroup mode has not been properly specified in write_treenode_markers_all.",ERROR_LOGIC);
    SID_log("Writing markers...",SID_LOG_OPEN|SID_LOG_TIMER);
@@ -24,10 +28,17 @@ void write_treenode_markers_all(tree_info *trees,tree_markers_info **markers,cha
    sprintf(filename_out_dir,"%s_markers",filename_output_root);
    mkdir(filename_out_dir,02755);
    for(int i_snap=0;i_snap<trees->n_snaps;i_snap++){
-      int n_halos_local=trees->n_subgroups_snap_local[i_snap];
+      int n_halos_local;
       int n_halos_total;
+      if(flag_process_groups){
+         n_halos_total=trees->n_groups_catalog[i_snap];
+         n_halos_local=trees->n_groups_snap_local[i_snap];
+      }
+      else{
+         n_halos_total=trees->n_subgroups_catalog[i_snap];
+         n_halos_local=trees->n_subgroups_snap_local[i_snap];
+      }
       SID_log("Processing snapshot #%03d...",SID_LOG_OPEN|SID_LOG_TIMER,trees->snap_list[i_snap]);
-      SID_Allreduce(&n_halos_local,&n_halos_total,1,SID_INT,SID_SUM,SID.COMM_WORLD);
       SID_log("(%d halos)...",SID_LOG_CONTINUE,n_halos_total);
       // Open file for writing and write header
       char filename_out[MAX_FILENAME_LENGTH];
@@ -58,7 +69,11 @@ void write_treenode_markers_all(tree_info *trees,tree_markers_info **markers,cha
          for(i_buffer=0;i_buffer<n_buffer;i_buffer++)
             buffer[i_buffer]=invalid_entry; // Min value of match_score is 0.
          // Determine if any of the local data is being used for this buffer
-         tree_node_info *current_halo=trees->first_neighbour_subgroups[i_snap];
+         tree_node_info *current_halo;
+         if(flag_process_groups)
+            current_halo=trees->first_neighbour_groups[i_snap];
+         else
+            current_halo=trees->first_neighbour_subgroups[i_snap];
          while(current_halo!=NULL){
             j_halo=current_halo->neighbour_index;
             // ... if so, set the appropriate buffer value
@@ -130,8 +145,10 @@ void write_treenode_markers_all(tree_info *trees,tree_markers_info **markers,cha
          if(SID.I_am_Master){
             // Sanity check
             for(i_buffer=0;i_buffer<n_buffer;i_buffer++){
-               if(buffer[i_buffer]==invalid_entry)
-                  SID_trap_error("Illegal buffer value (%d).",ERROR_LOGIC,buffer[i_buffer]);
+               if(buffer[i_buffer]==invalid_entry){
+                  buffer[i_buffer]=-1; //because we skip some groups, this can actually happen
+                  //SID_trap_error("Illegal buffer value (%d).",ERROR_LOGIC,buffer[i_buffer]);
+               }
             }
             // Write the buffer
             fwrite(buffer,sizeof(int),(size_t)n_buffer,fp_out);

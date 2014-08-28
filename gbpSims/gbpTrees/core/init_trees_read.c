@@ -124,6 +124,8 @@ void init_trees_read(const char  *filename_tree_root,
   (*tree)->subgroup_array           =NULL;
   (*tree)->group_properties         =NULL;
   (*tree)->subgroup_properties      =NULL;
+  (*tree)->n_groups_catalog         =NULL;
+  (*tree)->n_subgroups_catalog      =NULL;
   (*tree)->n_groups_snap_local      =NULL;
   (*tree)->n_subgroups_snap_local   =NULL;
   (*tree)->first_neighbour_groups   =NULL;
@@ -177,6 +179,8 @@ void init_trees_read(const char  *filename_tree_root,
      (*tree)->n_subgroups_trees      =0;
 
      // Allocate counters
+     (*tree)->n_groups_catalog      =(int *)SID_calloc(sizeof(int)*n_snaps);
+     (*tree)->n_subgroups_catalog   =(int *)SID_calloc(sizeof(int)*n_snaps);
      (*tree)->n_groups_snap_local   =(int *)SID_calloc(sizeof(int)*n_snaps);
      (*tree)->n_subgroups_snap_local=(int *)SID_calloc(sizeof(int)*n_snaps);
 
