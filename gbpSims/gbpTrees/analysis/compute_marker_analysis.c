@@ -9,7 +9,7 @@
 #include <gbpTrees.h>
 #include <gbpHighZ.h>
 
-void compute_accretion_analysis(tree_info *trees,tree_markers_info **markers,const char *catalog_root,const char *filename_out_root,int mode){
+void compute_marker_analysis(tree_info *trees,tree_markers_info **markers,const char *catalog_root,const char *filename_out_root,int mode){
 
   // Compute merger rates ...
   char filename_out_root_group[MAX_FILENAME_LENGTH];
@@ -202,9 +202,6 @@ void compute_accretion_analysis(tree_info *trees,tree_markers_info **markers,con
   // Clean-up
   SID_free(SID_FARG n_bin);
   SID_free(SID_FARG lists);
-  for(int i_snap=0;i_snap<trees->n_snaps;i_snap++)
-     SID_free(SID_FARG markers[i_snap]);
-  SID_free(SID_FARG markers);
 
   SID_log("Done.",SID_LOG_CLOSE);
 }

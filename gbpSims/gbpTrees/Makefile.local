@@ -22,6 +22,7 @@ BINFILES  = query_matches                  \
             tree_stats                     \
             matchfile2ascii                \
             make_trees                     \
+	        make_trees_markers             \
             make_trees_analysis            \
             make_forests                   \
             make_single_matches            \
