@@ -13,7 +13,7 @@ void write_tree_branch_ascii(tree_info *trees,tree_node_info *halo,const char *f
   if(halo!=NULL){
      // Find branch markers
      tree_markers_info markers;
-     find_treenode_markers(trees,halo,&markers);
+     find_treenode_markers(trees,halo,NULL,&markers);
 
      // Perform write
      int   i_column=1;

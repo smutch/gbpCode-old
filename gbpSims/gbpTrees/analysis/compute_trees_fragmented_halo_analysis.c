@@ -94,7 +94,7 @@ void compute_trees_fragmented_halo_analysis(tree_info *trees,char *filename_out_
            if(current_halo->n_progenitors==0)
               flag_new=TRUE;
            tree_markers_info markers;
-           find_treenode_markers(trees,current_halo,&markers);
+           find_treenode_markers(trees,current_halo,NULL,&markers);
            if(check_treenode_if_central(current_halo)){
               add_to_treenode_list(list_halos_central,current_halo);
               if(flag_new)

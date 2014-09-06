@@ -24,11 +24,12 @@ int find_treenode_markers_recursive(tree_info *trees,tree_markers_info **markers
       M_halo=(trees->subgroup_properties[halo->snap_tree][halo->neighbour_index]).M_vir;
 
       // This is the structure we want to populate:
+      //   typedef struct tree_markers_info tree_markers_info;
       //   struct tree_markers_info{
       //     int             flag_halo_is_main_progenitor;
-      //     tree_node_info *branch_leaf; 
-      //     tree_node_info *branch_root; 
-      //     tree_node_info *descendant;  
+      //     tree_node_info *branch_leaf;
+      //     tree_node_info *branch_root;
+      //     tree_node_info *descendant;
       //     tree_node_info *main_progenitor;
       //     tree_node_info *first_became_satellite;
       //     tree_node_info *joined_current_parent;
@@ -42,8 +43,9 @@ int find_treenode_markers_recursive(tree_info *trees,tree_markers_info **markers
       //     tree_node_info *merger_10pc_merger;
       //     double          M_peak;
       //   };
+
          
-      // Stuff that gets set here will be available to this halo's progenitors
+      // Set defaults (also: stuff that gets set here will be available to this halo's progenitors)
       markers_halo->flag_halo_is_main_progenitor=flag_is_main_progenitor;
       markers_halo->descendant                  =halo->descendant;
       markers_halo->main_progenitor             =halo->progenitor_first;
@@ -51,6 +53,18 @@ int find_treenode_markers_recursive(tree_info *trees,tree_markers_info **markers
          markers_halo->branch_root=halo;
       else
          markers_halo->branch_root=(*markers_descendant)->branch_root;
+      markers_halo->branch_leaf                 =NULL;
+      markers_halo->first_became_satellite      =NULL;
+      markers_halo->joined_current_parent       =NULL;
+      markers_halo->peak_mass                   =NULL;
+      markers_halo->half_peak_mass              =NULL;
+      markers_halo->merger_33pc_remnant         =NULL;
+      markers_halo->merger_33pc_host            =NULL;
+      markers_halo->merger_33pc_merger          =NULL;
+      markers_halo->merger_10pc_remnant         =NULL;
+      markers_halo->merger_10pc_host            =NULL;
+      markers_halo->merger_10pc_merger          =NULL;
+      markers_halo->M_peak                      =0.;
 
       // Inititialize some things if this is a leaf
       tree_node_info *first_progenitor=halo->progenitor_first;

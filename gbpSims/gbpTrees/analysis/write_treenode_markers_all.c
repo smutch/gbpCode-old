@@ -9,17 +9,23 @@
 #include <gbpTrees_build.h>
 #include <gbpTrees_analysis.h>
 
-void write_treenode_markers_all(tree_info *trees,tree_markers_info **markers,char *filename_output_root,int mode){
+void write_treenode_markers_all(tree_info *trees,char *filename_output_root,int mode){
 
    // Generate the markers starting recursively from each tree root
    char filename_output_group_text[16];
    int  flag_process_groups=FALSE;
-   if(check_mode_for_flag(mode,COMPUTE_ACCRETION_ANALYSIS_GROUPS)){
+   tree_markers_info **markers;
+   int                *n_halos_array;
+   if(check_mode_for_flag(mode,PRECOMPUTE_TREENODE_MARKER_GROUPS)){
       sprintf(filename_output_group_text,"groups");
       flag_process_groups=TRUE;
+      markers      =trees->group_markers;
+      n_halos_array=trees->n_groups_snap_local;
    }
-   else if(check_mode_for_flag(mode,COMPUTE_ACCRETION_ANALYSIS_SUBGROUPS)){
+   else if(check_mode_for_flag(mode,PRECOMPUTE_TREENODE_MARKER_SUBGROUPS)){
       sprintf(filename_output_group_text,"subgroups");
+      markers      =trees->subgroup_markers;
+      n_halos_array=trees->n_subgroups_snap_local;
    }
    else
       SID_trap_error("group/subgroup mode has not been properly specified in write_treenode_markers_all.",ERROR_LOGIC);

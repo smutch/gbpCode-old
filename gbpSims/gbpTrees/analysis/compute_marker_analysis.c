@@ -9,46 +9,23 @@
 #include <gbpTrees.h>
 #include <gbpHighZ.h>
 
-void compute_marker_analysis(tree_info *trees,tree_markers_info **markers,const char *catalog_root,const char *filename_out_root,int mode){
+void compute_marker_analysis(tree_info *trees,tree_markers_info **markers,hist_info *M_hist,hist_info *xoff_hist,hist_info *SSFctn_hist,const char *catalog_root,const char *filename_out_root,int mode){
 
   // Compute merger rates ...
   char filename_out_root_group[MAX_FILENAME_LENGTH];
   if(check_mode_for_flag(mode,COMPUTE_ACCRETION_ANALYSIS_GROUPS)){
-     SID_log("Performing GROUP mass accretion analysis...",SID_LOG_OPEN|SID_LOG_TIMER);
+     SID_log("Performing GROUP marker analysis...",SID_LOG_OPEN|SID_LOG_TIMER);
      sprintf(filename_out_root_group,"%s_groups",filename_out_root);
   }
   else if(check_mode_for_flag(mode,COMPUTE_ACCRETION_ANALYSIS_SUBGROUPS)){
-     SID_log("Performing SUBGROUP mass accretion analysis...",SID_LOG_OPEN|SID_LOG_TIMER);
+     SID_log("Performing SUBGROUP marker analysis...",SID_LOG_OPEN|SID_LOG_TIMER);
      sprintf(filename_out_root_group,"%s_subgroups",filename_out_root);
   }
   else
-     SID_trap_error("group/subgroup mode has not been properly specified in compute_accretion_analysis().",ERROR_LOGIC);
+     SID_trap_error("group/subgroup mode has not been properly specified in compute_marker_analysis().",ERROR_LOGIC);
 
-  double  logM_min= 7.0;
-  double  dlogM   = 0.5;
-  int     n_bins  =  14;
-  int    *n_bin   = (int *)SID_malloc(sizeof(int)*n_bins);
-  char    filename_out[MAX_FILENAME_LENGTH];
 
-  SID_log("Writing mass binning file ...",SID_LOG_OPEN);
-  FILE *fp_out=NULL;
-  sprintf(filename_out,"%s_M_bins.txt",filename_out_root_group);
-  if(SID.I_am_Master){
-     fp_out=fopen(filename_out,"w");
-     int i_column=1;
-     fprintf(fp_out,"#  Mass accretion mass-binning for {%s}\n",catalog_root);
-     fprintf(fp_out,"#  Column (%03d): sample index\n",        i_column++);
-     fprintf(fp_out,"#         (%03d): log_10(M_min [h^{-1} M_sol])\n",i_column++);
-     fprintf(fp_out,"#         (%03d): log_10(M_max [h^{-1} M_sol])\n",i_column++);
-     for(int i_bin=0;i_bin<n_bins;i_bin++){
-        double logM_lo=logM_min+dlogM*(double)(i_bin);
-        double logM_hi=logM_min+dlogM*(double)(i_bin+1);
-        fprintf(fp_out,"%03d %lf %lf\n",i_bin,logM_lo,logM_hi);
-     }
-     fclose(fp_out);
-  }
-  SID_log("Done.",SID_LOG_CLOSE);
-
+  char  filename_out[MAX_FILENAME_LENGTH];
   sprintf(filename_out,"%s.txt",filename_out_root_group);
   treenode_list_info **lists=(treenode_list_info **)SID_malloc(sizeof(treenode_list_info *)*n_bins);
 

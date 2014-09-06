@@ -313,6 +313,26 @@ struct tree_node_info{
   tree_node_info *next_in_forest;  // This halo's forest
 };
 
+typedef struct tree_markers_info tree_markers_info;
+struct tree_markers_info{
+  int             flag_halo_is_main_progenitor;
+  tree_node_info *branch_leaf;
+  tree_node_info *branch_root;
+  tree_node_info *descendant;
+  tree_node_info *main_progenitor;
+  tree_node_info *first_became_satellite;
+  tree_node_info *joined_current_parent;
+  tree_node_info *peak_mass;
+  tree_node_info *half_peak_mass;
+  tree_node_info *merger_33pc_remnant;
+  tree_node_info *merger_33pc_host;
+  tree_node_info *merger_33pc_merger;
+  tree_node_info *merger_10pc_remnant;
+  tree_node_info *merger_10pc_host;
+  tree_node_info *merger_10pc_merger;
+  double          M_peak;
+};
+
 typedef struct tree_info tree_info;
 struct tree_info{
   // Filename info
@@ -389,8 +409,10 @@ struct tree_info{
   int              *tree2forest_mapping_group;
   int              *tree2forest_mapping_subgroup;
   // An ADaPS structure for holding ancillary data
-  ADaPS                 *data;
+  ADaPS            *data;
   // Short-cuts to some common stuff added to data
+  tree_markers_info         **group_markers;
+  tree_markers_info         **subgroup_markers;
   halo_properties_info      **group_properties;
   halo_properties_info      **subgroup_properties;
   halo_properties_SAGE_info **group_properties_SAGE;

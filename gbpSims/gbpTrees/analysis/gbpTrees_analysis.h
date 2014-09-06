@@ -1,35 +1,21 @@
 #ifndef GBPTREES_ANALYSIS_AWAKE
 #define GBPTREES_ANALYSIS_AWAKE
+#include <gbpTrees_build.h>
 
 // V Preprocessor definitions V
 #define WRITE_TREENODE_LIST_PROPERTIES_N 8
 
-#define COMPUTE_ACCRETION_ANALYSIS_GROUPS    TTTP01
-#define COMPUTE_ACCRETION_ANALYSIS_SUBGROUPS TTTP02
-#define COMPUTE_ACCRETION_ANALYSIS_DEFAULT   COMPUTE_ACCRETION_ANALYSIS_GROUPS
+#define SELECT_AND_ANALYZE_GROUPS    TTTP01
+#define SELECT_AND_ANALYZE_SUBGROUPS TTTP02
+#define SELECT_AND_ANALYZE_BOTH      SELECT_AND_ANALYZE_GROUPS|SELECT_AND_ANALYZE_SUBGROUPS
+#define SELECT_AND_ANALYZE_DEFAULT   SELECT_AND_ANALYZE_BOTH
+
+#define PRECOMPUTE_TREENODE_MARKER_GROUPS    TTTP01
+#define PRECOMPUTE_TREENODE_MARKER_SUBGROUPS TTTP02
+
 // A Preprocessor definitions A
 
 // V --- Datatype definitions --- V
-typedef struct tree_markers_info tree_markers_info;
-struct tree_markers_info{
-  int             flag_halo_is_main_progenitor;
-  tree_node_info *branch_leaf;
-  tree_node_info *branch_root;
-  tree_node_info *descendant;
-  tree_node_info *main_progenitor;
-  tree_node_info *first_became_satellite;
-  tree_node_info *joined_current_parent;
-  tree_node_info *peak_mass;
-  tree_node_info *half_peak_mass;
-  tree_node_info *merger_33pc_remnant;
-  tree_node_info *merger_33pc_host;
-  tree_node_info *merger_33pc_merger;
-  tree_node_info *merger_10pc_remnant;
-  tree_node_info *merger_10pc_host;
-  tree_node_info *merger_10pc_merger;
-  double          M_peak;
-};
-
 typedef struct tree_markers_stats_info tree_markers_stats_info;
 struct tree_markers_stats_info{
   double t_half_peak_mass_ranges[2][2];
@@ -150,11 +136,11 @@ int    find_treenode_accretion(tree_info       *trees,
                                tree_node_info  *halo,
                                tree_node_info **first_satellite,
                                tree_node_info **join_current_group);
-int    find_treenode_markers(tree_info *trees,tree_node_info *halo,tree_markers_info *markers);
-int    find_treenode_markers_all(tree_info *trees,tree_markers_info ***markers,int mode);
-int    init_treenode_markers_all(tree_info *trees,tree_markers_info ***markers,int mode);
-int    free_treenode_markers_all(tree_info *trees,tree_markers_info ***markers);
-void   write_treenode_markers_all(tree_info *trees,tree_markers_info **markers,char *filename_output_root,int mode);
+int    precompute_treenode_markers(tree_info *trees,int mode);
+int    find_treenode_markers(tree_info *trees,tree_node_info *halo,tree_markers_info **markers_all,tree_markers_info *markers);
+int    init_precompute_treenode_markers(tree_info *trees,int mode);
+int    free_precompute_treenode_markers(tree_info *trees,int mode);
+void   write_treenode_markers_all(tree_info *trees,char *filename_output_root,int mode);
 int    find_treenode_markers_recursive(tree_info          *trees,
                                        tree_markers_info **markers_array,
                                        tree_node_info     *halo,
@@ -173,13 +159,34 @@ void   compute_trees_fragmented_halo_analysis(tree_info *trees,char *filename_ou
 void   compute_trees_merger_analysis         (tree_info *trees,char *filename_out_root);
 void   compute_trees_dropped_halo_analysis   (tree_info *trees,char *filename_out_root);
 void   compute_trees_strayed_halo_analysis   (tree_info *trees,char *filename_out_root);
-void   compute_marker_analysis(tree_info *trees,tree_markers_info **markers,const char *catalog_root,const char *filename_out_root,int mode);
+void   compute_marker_analysis(tree_info *trees,tree_markers_info **markers,hist_info *M_hist,hist_info *xoff_hist,hist_info *SSFctn_hist,const char *catalog_root,const char *filename_out_root,int mode);
 
+void select_and_analyze_treenodes_by_snap(tree_info  *trees,
+                                          void       *params,
+                                          int         mode,
+                                          int         i_snap_lo,
+                                          int         n_snap_process,
+                                          void      (*init_function)         (tree_info *trees,void *params,int mode,int i_type),
+                                          void      (*init_snap_function)    (tree_info *trees,void *params,int mode,int i_type,int flag_init,int i_snap),
+                                          int       (*select_function)       (tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo),
+                                          void      (*analyze_function)      (tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo),
+                                          void      (*finalize_snap_function)(tree_info *trees,void *params,int mode,int i_type,int flag_init,int i_snap),
+                                          void      (*finalize_function)     (tree_info *trees,void *params,int mode,int i_type));
+void select_and_analyze_treenodes_fctn_init_null     (tree_info *trees,void *params,int mode,int i_type);
+void select_and_analyze_treenodes_fctn_init_snap_null(tree_info *trees,void *params,int mode,int i_type,int flag_init,int i_snap);
+int  select_and_analyze_treenodes_fctn_select_null   (tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo);
+void select_and_analyze_treenodes_fctn_analyze_null  (tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo);
+void select_and_analyze_treenodes_fctn_fin_snap_null (tree_info *trees,void *params,int mode,int i_type,int flag_init,int i_snap);
+void select_and_analyze_treenodes_fctn_fin_null      (tree_info *trees,void *params,int mode,int i_type);
+
+tree_markers_info *fetch_treenode_precomputed_markers(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_delta_t(tree_info *trees,tree_node_info *halo_1,tree_node_info *halo_2);
 int    fetch_treenode_snapshot(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_snap_tree(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_file_index(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_Mvir(tree_info *trees,tree_node_info *halo);
+double fetch_treenode_x_off(tree_info *trees,tree_node_info *halo);
+double fetch_treenode_SSFctn(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_x(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_y(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_z(tree_info *trees,tree_node_info *halo);

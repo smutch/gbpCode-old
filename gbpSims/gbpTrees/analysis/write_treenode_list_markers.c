@@ -68,7 +68,7 @@ void write_treenode_list_markers(tree_info *trees,const char *filename_out_root,
               current_halo=list_in[i_list];
 
               // Find some special nodes for this listed halo
-              find_treenode_markers(trees,current_halo,&markers);
+              find_treenode_markers(trees,current_halo,NULL,&markers);
            }
 
            // Write properties

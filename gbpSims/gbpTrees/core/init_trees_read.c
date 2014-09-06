@@ -122,6 +122,8 @@ void init_trees_read(const char  *filename_tree_root,
   (*tree)->group_array              =NULL;
   (*tree)->subgroup_indices         =NULL;
   (*tree)->subgroup_array           =NULL;
+  (*tree)->group_markers            =NULL;
+  (*tree)->subgroup_markers         =NULL;
   (*tree)->group_properties         =NULL;
   (*tree)->subgroup_properties      =NULL;
   (*tree)->n_groups_catalog         =NULL;

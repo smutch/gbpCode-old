@@ -49,10 +49,7 @@ void compute_treenode_list_marker_stats(tree_info *trees,treenode_list_info *lis
 
    // Create histograms
    for(int i_list=0;i_list<list->n_list_local;i_list++){
-      if(markers_all==NULL)
-         find_treenode_markers(trees,list->list[i_list],markers);
-      else
-         markers=&(markers_all[list->list[i_list]->snap_tree][list->list[i_list]->neighbour_index]);
+      find_treenode_markers(trees,list->list[i_list],markers_all,markers);
       // Build histogram
       int i_bin;
       for(int i_hist=0;i_hist<(*n_hist);i_hist++){

@@ -3,8 +3,9 @@
 ###########################
 INCFILES  = gbpTrees_analysis.h
 OBJFILES  = average_tree_branches.o              \
-	    init_treenode_markers_all.o              \
-	    free_treenode_markers_all.o              \
+	    init_precompute_treenode_markers.o       \
+	    free_precompute_treenode_markers.o       \
+	    select_and_analyze_treenodes_by_snap.o   \
 	    compute_trees_analysis.o                 \
 	    compute_trees_strayed_halo_analysis.o    \
 	    compute_trees_dropped_halo_analysis.o    \
@@ -12,7 +13,6 @@ OBJFILES  = average_tree_branches.o              \
 	    compute_trees_emerged_halo_analysis.o    \
 	    compute_trees_fragmented_halo_analysis.o \
 	    compute_treenode_list_marker_stats.o     \
-	    compute_marker_analysis.o                \
 	    analyze_halos_and_N_subhalos.o           \
 	    init_treenode_hist.o                     \
 	    add_to_treenode_hist.o                   \
@@ -41,9 +41,12 @@ OBJFILES  = average_tree_branches.o              \
 	    check_treenode_if_satellite.o            \
 	    check_treenode_if_branch_start.o         \
 	    check_treenode_if_fragmented.o           \
+	    fetch_treenode_precomputed_markers.o     \
 	    fetch_treenode_delta_t.o                 \
 	    fetch_treenode_properties.o              \
 	    fetch_treenode_Mvir.o                    \
+	    fetch_treenode_x_off.o                   \
+	    fetch_treenode_SSFctn.o                  \
 	    fetch_treenode_x.o                       \
 	    fetch_treenode_y.o                       \
 	    fetch_treenode_z.o                       \
@@ -57,7 +60,7 @@ OBJFILES  = average_tree_branches.o              \
 	    fetch_treenode_file_index.o              \
 	    fetch_treenode_delta_t.o                 \
 	    find_treenode_markers.o                  \
-	    find_treenode_markers_all.o              \
+	    precompute_treenode_markers.o            \
 	    write_treenode_markers_all.o             \
 	    find_treenode_markers_recursive.o        \
 	    find_treenode_snap_equals_given.o        \
