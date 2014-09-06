@@ -7,6 +7,7 @@
 #include <gbpStats.h> 
 #include <gbpInterpolate.h> 
 #include <gbpMisc.h> 
+#include <gbpHist.h>
 #include <gbpRNG.h>
 #if USE_FFTW
   #include <gbpFFT.h>

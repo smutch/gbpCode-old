@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <gbpLib.h>
-#include <gbpMisc.h>
+#include <gbpHist.h>
 
 void add_to_histogram_index(hist_info *hist,int index){
   if(is_histogram_index_in_range(hist,index)){

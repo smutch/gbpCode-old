@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <gbpLib.h>
-#include <gbpMisc.h>
+#include <gbpHist.h>
 #include <gbpSort.h>
 
 void compute_histogram_range(hist_info *hist,double confidence_percent,int mode,double *x_peak,double *x_lo,double *x_hi){

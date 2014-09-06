@@ -4,7 +4,7 @@
 #include <string.h>
 #include <math.h>
 #include <gbpLib.h>
-#include <gbpMisc.h>
+#include <gbpHist.h>
 
 void init_histogram(hist_info *hist,int mode,...){
   va_list  vargs;

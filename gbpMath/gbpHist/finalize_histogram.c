@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <gbpLib.h>
-#include <gbpMisc.h>
+#include <gbpHist.h>
 
 void finalize_histogram(hist_info *hist){
   SID_Allreduce(SID_IN_PLACE, (hist->bin_count), hist->n_bins,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);

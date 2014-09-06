@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <gbpLib.h>
-#include <gbpMisc.h>
+#include <gbpHist.h>
 
 int calc_histogram_index(hist_info *hist,double x){
   int r_val=-1;

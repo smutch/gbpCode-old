@@ -3,7 +3,7 @@
 #include <math.h>
 #include <limits.h>
 #include <gbpLib.h>
-#include <gbpMisc.h>
+#include <gbpHist.h>
 
 double histogram_bin_x_hi(hist_info *hist,int bin){
   double r_val;

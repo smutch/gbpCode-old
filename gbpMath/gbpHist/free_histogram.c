@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <gbpLib.h>
-#include <gbpMisc.h>
+#include <gbpHist.h>
 
 void free_histogram(hist_info *hist){
   if(check_mode_for_flag(hist->mode,GBP_HISTOGRAM_FIXED)){
