@@ -10,21 +10,43 @@ void init_histogram(hist_info *hist,int mode,...){
   va_list  vargs;
   va_start(vargs,mode);
 
+  // Determine what type of vargs we have been passed  
+  int flag_use_gbp_vargs=FALSE;
+  gbp_va_list *vargs_gbp=NULL;
+  if(check_mode_for_flag(mode,GBP_HISTOGRAM_GBP_VARGS)){
+     vargs_gbp=(gbp_va_list *)va_arg(vargs,gbp_va_list *);
+     gbp_va_start(vargs_gbp);
+     flag_use_gbp_vargs=TRUE;
+  }
+
   // Set some initial defaults
   hist->flag_bin_order_inverted=FALSE;
 
   // Set things dependant on mode
   if(check_mode_for_flag(mode,GBP_HISTOGRAM_FIXED)){
-     hist->x_min =(double)va_arg(vargs,double);
-     hist->dx    =(double)va_arg(vargs,double);
-     hist->n_bins=(int   )va_arg(vargs,int);
+     if(flag_use_gbp_vargs){
+        gbp_fetch_va_arg(vargs_gbp,sizeof(double),&(hist->x_min));
+        gbp_fetch_va_arg(vargs_gbp,sizeof(double),&(hist->dx));
+        gbp_fetch_va_arg(vargs_gbp,sizeof(int),   &(hist->n_bins));
+     }
+     else{
+        hist->x_min =(double)va_arg(vargs,double);
+        hist->dx    =(double)va_arg(vargs,double);
+        hist->n_bins=(int   )va_arg(vargs,int);
+     }
      hist->x_lo  =NULL;
      hist->x_hi  =NULL;
   }
   else if(check_mode_for_flag(mode,GBP_HISTOGRAM_IRREGULAR_XLO_DEFINED)){
      double *x_lo_in;
-     x_lo_in     =(double *)va_arg(vargs,double *);
-     hist->n_bins=(int     )va_arg(vargs,int);
+     if(flag_use_gbp_vargs){
+        gbp_fetch_va_arg(vargs_gbp,sizeof(double *),&x_lo_in);
+        gbp_fetch_va_arg(vargs_gbp,sizeof(int),     &(hist->n_bins));
+     }
+     else{
+        x_lo_in     =(double *)va_arg(vargs,double *);
+        hist->n_bins=(int     )va_arg(vargs,int);
+     }
      hist->x_lo  =(double *)SID_malloc(sizeof(double)*hist->n_bins);
      hist->x_hi  =NULL;
      memcpy(hist->x_lo,x_lo_in,sizeof(double)*hist->n_bins);

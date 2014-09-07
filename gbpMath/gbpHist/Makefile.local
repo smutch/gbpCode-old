@@ -2,18 +2,27 @@
 # Library-specific settings #
 #############################
 INCFILES = gbpHist.h 
-OBJFILES = init_histogram.o                    \
-	       free_histogram.o                    \
-	       clear_histogram.o                   \
-	       calc_histogram_index.o              \
-	       is_histogram_index_in_range.o       \
-	       add_to_histogram.o                  \
-	       add_to_histogram_index.o            \
-	       finalize_histogram.o                \
-	       histogram_bin_x_lo.o                \
-	       histogram_bin_x_hi.o                \
-	       histogram_bin_x_mid.o               \
-	       compute_histogram_range.o           
+OBJFILES = init_histogram.o                     \
+	       free_histogram.o                     \
+	       clear_histogram.o                    \
+	       calc_histogram_index.o               \
+	       is_histogram_index_in_range.o        \
+	       add_to_histogram.o                   \
+	       add_to_histogram_index.o             \
+	       finalize_histogram.o                 \
+	       histogram_bin_x_lo.o                 \
+	       histogram_bin_x_hi.o                 \
+	       histogram_bin_x_mid.o                \
+	       compute_histogram_range.o            \
+	       init_trend.o                         \
+	       init_trend_ordinate.o                \
+	       init_trend_coordinate.o              \
+	       free_trend.o                         \
+	       init_trend_property.o                \
+	       free_trend_property.o                \
+	       add_item_to_trend.o                  \
+	       write_trend_ascii.o                  \
+	       write_trend_property_binning_file.o  
 LIBFILE  = 
 BINFILES = 
 LIBS     = 

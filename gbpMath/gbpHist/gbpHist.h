@@ -2,13 +2,13 @@
 #define GBPHIST_AWAKE
 #include <gbpLib.h>
 
-#define GBP_HISTOGRAM_FIXED                 TTTP01
-#define GBP_HISTOGRAM_IRREGULAR_XLO_DEFINED TTTP02
-#define GBP_HISTOGRAM_IRREGULAR_REVERSED    TTTP03
-#define GBP_HISTOGRAM_RANGE_ALL             TTTP04
-#define GBP_HISTOGRAM_RANGE_HIST            TTTP05
+#define GBP_HISTOGRAM_GBP_VARGS             TTTP01
+#define GBP_HISTOGRAM_FIXED                 TTTP02
+#define GBP_HISTOGRAM_IRREGULAR_XLO_DEFINED TTTP03
+#define GBP_HISTOGRAM_IRREGULAR_REVERSED    TTTP04
+#define GBP_HISTOGRAM_RANGE_ALL             TTTP05
+#define GBP_HISTOGRAM_RANGE_HIST            TTTP06
 #define GBP_HISTOGRAM_DEFAULT               GBP_HISTOGRAM_FIXED|GBP_HISTOGRAM_RANGE_HIST
-
 typedef struct hist_info hist_info;
 struct hist_info{
    int     mode;
@@ -21,6 +21,25 @@ struct hist_info{
    size_t *bin_count;
    size_t  count_hist;
    size_t  count_all;
+};
+
+typedef struct trend_property_info trend_property_info;
+struct trend_property_info{
+   char   name[128];
+   void  *params;
+   void (*init_function)(trend_property_info *property,void *params_init,int i_hist,int *mode,gbp_va_list *vargs_gbp);
+   void (*free_function)(trend_property_info *property,void *params_init,int i_hist,int *mode,gbp_va_list *vargs_gbp);
+   int  (*calc_function)(trend_property_info *property,hist_info *hist,void *params_calc);
+   int    n_hist;
+   hist_info           *hist;
+   trend_property_info *next;
+};
+
+typedef struct trend_info trend_info;
+struct trend_info{
+   trend_property_info *ordinate;
+   trend_property_info *coordinate_first;
+   trend_property_info *coordinate_last;
 };
 
 // Function definitions
@@ -40,6 +59,32 @@ void   compute_histogram_range(hist_info *hist,double confidence_percent,int mod
 double histogram_bin_x_lo(hist_info *hist,int bin);
 double histogram_bin_x_hi(hist_info *hist,int bin);
 double histogram_bin_x_mid(hist_info *hist,int bin);
+
+void init_trend(trend_info **trend);
+void free_trend(trend_info **trend);
+void init_trend_property(trend_property_info **property,
+                         const char           *name,
+                         int                   n_hist,
+                         void                 *params,
+                         void (*init_function)(trend_property_info *property,void *params_init,int i_hist,int *mode,gbp_va_list *vargs_gbp),
+                         void (*free_function)(trend_property_info *property,void *params_init,int i_hist,int *mode,gbp_va_list *vargs_gbp),
+                         int  (*calc_function)(trend_property_info *property,hist_info *hist,void *params_calc));
+void init_trend_ordinate(trend_info  *trend,
+                         const char  *name,
+                         void        *params, 
+                         void (*init_function)(trend_property_info *property,void *params_init,int i_hist,int *mode,gbp_va_list *vargs_gbp),
+                         void (*free_function)(trend_property_info *property,void *params_init,int i_hist,int *mode,gbp_va_list *vargs_gbp),
+                         int  (*calc_function)(trend_property_info *property,hist_info *hist,void *params_calc));
+void init_trend_coordinate(trend_info  *trend,
+                           const char  *name,
+                           void        *params, 
+                           void (*init_function)(trend_property_info *property,void *params_init,int i_hist,int *mode,gbp_va_list *vargs_gbp),
+                           void (*free_function)(trend_property_info *property,void *params_init,int i_hist,int *mode,gbp_va_list *vargs_gbp),
+                           int  (*calc_function)(trend_property_info *property,hist_info *hist,void *params_calc));
+void free_trend_property(trend_property_info **property);
+void add_item_to_trend(trend_info *trend,void *item);
+void write_trend_ascii(trend_info *trend,const char *filename_root);
+void write_trend_property_binning_file(trend_property_info *property,const char *filename_output_root);
 
 #ifdef __cplusplus
 }

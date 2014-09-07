@@ -8,260 +8,6 @@
 #include <gbpHalos.h>
 #include <gbpTrees.h>
 
-typedef struct trend_property_info trend_property_info;
-struct trend_property_info{
-   char       name[128];
-   int        n_ordinate;
-   hist_info *hist;
-   int      (*calc_index_function)(tree_info *trees,hist_info *hist,tree_node_info *halo);
-};
-
-#define INIT_TREENODE_TREND_DEFAULT 0
-typedef struct trend_info trend_info;
-struct trend_info{
-   int                            mode;
-   int                            n_properties;
-   char                           filename_output_root[MAX_FILENAME_LENGTH];
-   trend_property_info  *ordinate;
-   trend_property_info **property;
-};
-
-int calc_z_hist_index(tree_info *trees,hist_info *hist,tree_node_info *halo);
-int calc_z_hist_index(tree_info *trees,hist_info *hist,tree_node_info *halo){
-   return(halo->snap_tree);
-}
-
-int calc_logM_hist_index(tree_info *trees,hist_info *hist,tree_node_info *halo);
-int calc_logM_hist_index(tree_info *trees,hist_info *hist,tree_node_info *halo){
-   return(calc_histogram_index(hist,take_log10(fetch_treenode_Mvir(trees,halo))));
-}
-
-int calc_x_off_hist_index(tree_info *trees,hist_info *hist,tree_node_info *halo);
-int calc_x_off_hist_index(tree_info *trees,hist_info *hist,tree_node_info *halo){
-   return(calc_histogram_index(hist,fetch_treenode_x_off(trees,halo)));
-}
-
-int calc_SSFctn_hist_index(tree_info *trees,hist_info *hist,tree_node_info *halo);
-int calc_SSFctn_hist_index(tree_info *trees,hist_info *hist,tree_node_info *halo){
-   return(calc_histogram_index(hist,fetch_treenode_SSFctn(trees,halo)));
-}
-
-int calc_tau_form_hist_index(tree_info *trees,hist_info *hist,tree_node_info *halo);
-int calc_tau_form_hist_index(tree_info *trees,hist_info *hist,tree_node_info *halo){
-   tree_markers_info *markers=fetch_treenode_precomputed_markers(trees,halo);
-   return(fetch_treenode_snap_tree(trees,markers->half_peak_mass));
-}
-
-int calc_tau_3to1_hist_index(tree_info *trees,hist_info *hist,tree_node_info *halo);
-int calc_tau_3to1_hist_index(tree_info *trees,hist_info *hist,tree_node_info *halo){
-   tree_markers_info *markers=fetch_treenode_precomputed_markers(trees,halo);
-   return(fetch_treenode_snap_tree(trees,markers->merger_33pc_remnant));
-}
-
-int calc_tau_10to1_hist_index(tree_info *trees,hist_info *hist,tree_node_info *halo);
-int calc_tau_10to1_hist_index(tree_info *trees,hist_info *hist,tree_node_info *halo){
-   tree_markers_info *markers=fetch_treenode_precomputed_markers(trees,halo);
-   return(fetch_treenode_snap_tree(trees,markers->merger_10pc_remnant));
-}
-
-void add_treenode_to_trend(tree_info *trees,trend_info *trend,tree_node_info *halo);
-void add_treenode_to_trend(tree_info *trees,trend_info *trend,tree_node_info *halo){
-   int i_ordinate=trend->ordinate->calc_index_function(trees,trend->ordinate->hist,halo);
-   if(is_histogram_index_in_range(trend->ordinate->hist,i_ordinate)){
-      add_to_histogram_index(trend->ordinate->hist,i_ordinate);
-      for(int i_property=0;i_property<trend->n_properties;i_property++){
-         trend_property_info *property_i  =trend->property[i_property];
-         hist_info                    *hist_i      =&(property_i->hist[i_ordinate]);
-         int                           i_coordinate=property_i->calc_index_function(trees,hist_i,halo);
-         add_to_histogram_index(hist_i,i_coordinate);
-      }
-   }
-}
-
-void init_trend_property(tree_info *trees,trend_property_info **property,const char *name,int n_ordinate);
-void init_trend_property(tree_info *trees,trend_property_info **property,const char *name,int n_ordinate){
-   (*property)=(trend_property_info *)SID_malloc(sizeof(trend_property_info));
-   strcpy((*property)->name,name);
-   (*property)->n_ordinate=n_ordinate;
- 
-   if(!strcmp(name,"z")){
-      (*property)->hist=(hist_info *)SID_malloc(sizeof(hist_info)*((*property)->n_ordinate));
-      for(int i_hist=0;i_hist<(*property)->n_ordinate;i_hist++)
-         init_histogram(&((*property)->hist[i_hist]),GBP_HISTOGRAM_IRREGULAR_XLO_DEFINED,trees->z_list,trees->n_snaps);
-      (*property)->calc_index_function=calc_z_hist_index;
-   }
-   else if(!strcmp(name,"tau_form") ||
-           !strcmp(name,"tau_3to1") ||
-           !strcmp(name,"tau_10to1")){
-      (*property)->hist       =(hist_info *)SID_malloc(sizeof(hist_info)*((*property)->n_ordinate));
-      double *tau_array=(double *)SID_malloc(sizeof(double)*trees->n_snaps);
-      for(int i_hist=0;i_hist<(*property)->n_ordinate;i_hist++){
-         for(int i_tau=0;i_tau<trees->n_snaps;i_tau++)
-            tau_array[i_tau]=10.*((trees->t_list[i_hist]-trees->t_list[i_tau])/trees->t_list[i_hist]);
-         init_histogram(&((*property)->hist[i_hist]),GBP_HISTOGRAM_IRREGULAR_XLO_DEFINED,tau_array,trees->n_snaps);
-      }
-      SID_free(SID_FARG tau_array);
-      if(!strcmp(name,"tau_form"))
-         (*property)->calc_index_function=calc_tau_form_hist_index;
-      else if(!strcmp(name,"tau_3to1"))
-         (*property)->calc_index_function=calc_tau_3to1_hist_index;
-      else if(!strcmp(name,"tau_10to1"))
-         (*property)->calc_index_function=calc_tau_10to1_hist_index;
-   }
-   else if(!strcmp(name,"logM")){
-      double x_min = 7.0;
-      double dx    = 0.5;
-      int    n_x   =  14;
-      (*property)->hist=(hist_info *)SID_malloc(sizeof(hist_info)*((*property)->n_ordinate));
-      for(int i_hist=0;i_hist<(*property)->n_ordinate;i_hist++)
-         init_histogram(&((*property)->hist[i_hist]),GBP_HISTOGRAM_FIXED,x_min,dx,n_x);
-      (*property)->calc_index_function=calc_logM_hist_index;
-   }
-   else if(!strcmp(name,"x_off")){
-      double x_min = 0.0;
-      double dx    =0.01;
-      int    n_x   =  50;
-      (*property)->hist=(hist_info *)SID_malloc(sizeof(hist_info)*((*property)->n_ordinate));
-      for(int i_hist=0;i_hist<(*property)->n_ordinate;i_hist++)
-         init_histogram(&((*property)->hist[i_hist]),GBP_HISTOGRAM_FIXED,x_min,dx,n_x);
-      (*property)->calc_index_function=calc_x_off_hist_index;
-   }
-   else if(!strcmp(name,"SSFctn")){
-      double x_min = 0.0;
-      double dx    =0.05;
-      int    n_x   =  20;
-      (*property)->hist=(hist_info *)SID_malloc(sizeof(hist_info)*((*property)->n_ordinate));
-      for(int i_hist=0;i_hist<(*property)->n_ordinate;i_hist++)
-         init_histogram(&((*property)->hist[i_hist]),GBP_HISTOGRAM_FIXED,x_min,dx,n_x);
-      (*property)->calc_index_function=calc_SSFctn_hist_index;
-   }
-   else
-      SID_trap_error("Invalid property {%s} requested in init_trend_property().",ERROR_LOGIC,name);
-}
-
-void free_trend_property(trend_property_info **property);
-void free_trend_property(trend_property_info **property){
-   if((*property)->hist!=NULL){
-      for(int i_hist=0;i_hist<(*property)->n_ordinate;i_hist++)
-         free_histogram(&((*property)->hist[i_hist]));
-      SID_free(SID_FARG (*property)->hist);
-   }
-   SID_free(SID_FARG (*property));
-}
-
-void init_trend(tree_info *trees,trend_info **trend,int mode,const char *filename_out_root,const char *ordinate,int n_properties,...);
-void init_trend(tree_info *trees,trend_info **trend,int mode,const char *filename_out_root,const char *ordinate,int n_properties,...){
-   va_list  vargs;
-   va_start(vargs,n_properties);
-
-   (*trend)              =(trend_info *)SID_malloc(sizeof(trend_info));
-   (*trend)->mode        =mode;
-   (*trend)->n_properties=n_properties;
-   (*trend)->property    =(trend_property_info **)SID_malloc(sizeof(trend_property_info *)*((*trend)->n_properties));
-   init_trend_property(trees,&((*trend)->ordinate),ordinate,1);
-   for(int i_property=0;i_property<((*trend)->n_properties);i_property++){
-      const char *property=(const char *)va_arg(vargs,const char *);
-      init_trend_property(trees,&((*trend)->property[i_property]),property,((*trend)->ordinate)->hist->n_bins);
-   }
-   strcpy((*trend)->filename_output_root,filename_out_root);
-
-   va_end(vargs);
-}
-
-void free_trend(trend_info **trend);
-void free_trend(trend_info **trend){
-   free_trend_property(&((*trend)->ordinate));
-   for(int i_property=0;i_property<((*trend)->n_properties);i_property++)
-      free_trend_property(&((*trend)->property[i_property]));
-   SID_free(SID_FARG (*trend)->property);
-   SID_free(SID_FARG (*trend));
-}
-
-void write_trend_binning_file(trend_info *trend);
-void write_trend_binning_file(trend_info *trend){
-   SID_log("Writing binning description file...",SID_LOG_OPEN);
-   if(SID.I_am_Master){
-      char  filename_out[MAX_FILENAME_LENGTH];
-      sprintf(filename_out,"%s_%s_bins.txt",trend->filename_output_root,trend->ordinate->name);
-      FILE *fp_out=fopen(filename_out,"w");
-      int i_column=1;
-      fprintf(fp_out,"#  Ordinate %s-binning for {%s}\n",trend->ordinate->name,trend->filename_output_root);
-      fprintf(fp_out,"#  Column (%03d): Bin index\n",i_column++);
-      fprintf(fp_out,"#         (%03d): %s - lo\n",  i_column++,trend->ordinate->name);
-      fprintf(fp_out,"#         (%03d): %s - hi\n",  i_column++,trend->ordinate->name);
-      hist_info *hist=trend->ordinate->hist;
-      for(int i_bin=0;i_bin<hist->n_bins;i_bin++)
-         fprintf(fp_out,"%03d %le %le\n",i_bin,histogram_bin_x_lo(hist,i_bin),histogram_bin_x_hi(hist,i_bin));
-      fclose(fp_out);
-   }
-   SID_log("Done.",SID_LOG_CLOSE);
-}
-
-void write_trend_ascii(trend_info *trend);
-void write_trend_ascii(trend_info *trend){
-
-   SID_log("Writing trend to output file...",SID_LOG_OPEN);
-
-   // Write binning description file
-   write_trend_binning_file(trend);
-
-   // Open files and write file headers
-   SID_log("Opening trend output files and writing headers...",SID_LOG_OPEN);
-
-   // Set filename and open file
-   char filename[MAX_FILENAME_LENGTH];
-   sprintf(filename,"%s_%s.txt",trend->filename_output_root,trend->ordinate->name);
-   FILE *fp_out=fopen(filename,"w");
-
-   // Write header
-   int i_column=1;
-   fprintf(fp_out,"#  Column (%03d): Snapshot\n",   i_column++);
-   fprintf(fp_out,"#         (%03d): %s bin - lo\n",i_column++,trend->ordinate->name);
-   fprintf(fp_out,"#         (%03d): %s bin - hi\n",i_column++,trend->ordinate->name);
-   fprintf(fp_out,"#         (%03d): n_halos_all\n",i_column++);
-   for(int i_property=0;i_property<trend->n_properties;i_property++){
-      fprintf(fp_out,"#         (%03d): n_halos_hist (%s)\n",      i_column++,trend->property[i_property]->name);
-      fprintf(fp_out,"#         (%03d): %s\n",                     i_column++,trend->property[i_property]->name);
-      fprintf(fp_out,"#         (%03d): %s - 68%% confidence lo\n",i_column++,trend->property[i_property]->name);
-      fprintf(fp_out,"#         (%03d): %s - 68%% confidence hi\n",i_column++,trend->property[i_property]->name);
-      fprintf(fp_out,"#         (%03d): %s - 95%% confidence lo\n",i_column++,trend->property[i_property]->name);
-      fprintf(fp_out,"#         (%03d): %s - 95%% confidence hi\n",i_column++,trend->property[i_property]->name);
-   }
-
-   // Finalize the snapshot histograms and write results
-   hist_info *hist_ordinate=trend->ordinate->hist;
-   for(int i_bin=0;i_bin<hist_ordinate->n_bins;i_bin++){
-      fprintf(fp_out,"%3d %le %le %d",
-                     i_bin,
-                     histogram_bin_x_lo(hist_ordinate,i_bin),
-                     histogram_bin_x_hi(hist_ordinate,i_bin),
-                     hist_ordinate->bin_count[i_bin]);
-      for(int i_property=0;i_property<trend->n_properties;i_property++){
-         double x_peak;
-         double x_68_lo;
-         double x_68_hi;
-         double x_95_lo;
-         double x_95_hi;
-         hist_info *hist_i=&(trend->property[i_property]->hist[i_bin]);
-         finalize_histogram(hist_i);
-         compute_histogram_range(hist_i,68.,GBP_HISTOGRAM_RANGE_HIST,&x_peak,&x_68_lo,&x_68_hi);
-         compute_histogram_range(hist_i,95.,GBP_HISTOGRAM_RANGE_HIST,&x_peak,&x_95_lo,&x_95_hi);
-         fprintf(fp_out," %d %le %le %le %le %le",
-                        hist_i->count_hist,
-                        x_peak,
-                        x_68_lo,
-                        x_68_hi,
-                        x_95_lo,
-                        x_95_hi);
-      }
-      fprintf(fp_out,"\n");
-   }
-   fclose(fp_out);
-   SID_log("Done.",SID_LOG_CLOSE);
-
-   SID_log("Done.",SID_LOG_CLOSE);
-}
-
 // Structure that will carry the needed information to the select-and-analyze function
 typedef struct select_and_analyze_params_local select_and_analyze_params_local;
 struct select_and_analyze_params_local{
@@ -276,29 +22,30 @@ void select_and_analyze_treenodes_fctn_init_local(tree_info *trees,void *params_
   // Create an alias for the passed void pointer
   select_and_analyze_params_local *params=(select_and_analyze_params_local *)params_in;
 
-  // Initialize for analyzing groups or subgroups
-  char filename_output_root[MAX_FILENAME_LENGTH];
+  // Initialize markers (just one-at-a-time to save RAM)
   if(i_type==0){
-     sprintf(filename_output_root,"%s_groups",params->filename_output_root);
      precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_GROUPS);
      write_treenode_markers_all(trees,params->filename_output_root,PRECOMPUTE_TREENODE_MARKER_GROUPS);
   }
   else{
-     sprintf(filename_output_root,"%s_subgroups",params->filename_output_root);
      precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_SUBGROUPS);
      write_treenode_markers_all(trees,params->filename_output_root,PRECOMPUTE_TREENODE_MARKER_SUBGROUPS);
   }
 
-  // Initialize the trend
-  init_trend(trees,&(params->trends_z),INIT_TREENODE_TREND_DEFAULT,filename_output_root,
-                      "z",5,"x_off","SSFctn","tau_form","tau_3to1","tau_10to1");
-  
+  // Initialize the trend(s) to be populated
+  init_trend           (&(params->trends_z));
+  init_trend_ordinate  ( (params->trends_z),"z",        trees,init_tree_property_z,     free_tree_property_z,     calc_tree_property_index_z);
+  init_trend_coordinate( (params->trends_z),"logM",     trees,init_tree_property_logM,  free_tree_property_logM,  calc_tree_property_index_logM);
+  init_trend_coordinate( (params->trends_z),"SSFctn",   trees,init_tree_property_SSFctn,free_tree_property_SSFctn,calc_tree_property_index_SSFctn);
+  init_trend_coordinate( (params->trends_z),"tau_form", trees,init_tree_property_tau,   free_tree_property_tau,   calc_tree_property_index_tau_form);
+  init_trend_coordinate( (params->trends_z),"tau_3to1", trees,init_tree_property_tau,   free_tree_property_tau,   calc_tree_property_index_tau_3to1);
+  init_trend_coordinate( (params->trends_z),"tau_10to1",trees,init_tree_property_tau,   free_tree_property_tau,   calc_tree_property_index_tau_10to1);
 }
 
 // ** Perform the calculation here **
 void select_and_analyze_treenodes_fctn_analyze_local(tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo);
 void select_and_analyze_treenodes_fctn_analyze_local(tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo){
-   add_treenode_to_trend(trees,((select_and_analyze_params_local *)params)->trends_z,halo);
+   add_item_to_trend(((select_and_analyze_params_local *)params)->trends_z,halo);
 }
 
 // ** Write the results here **
@@ -307,13 +54,22 @@ void select_and_analyze_treenodes_fctn_fin_local(tree_info *trees,void *params_i
    // Create an alias for the passed void pointer
    select_and_analyze_params_local *params=(select_and_analyze_params_local *)params_in;
 
-   // Write results and clean-up trend
-   write_trend_ascii(params->trends_z);
-   free_trend(&(params->trends_z));
-
    // Clean-up markers
-   if(i_type==0) free_precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_GROUPS);
-   else          free_precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_SUBGROUPS);
+   char filename_output_root[MAX_FILENAME_LENGTH];
+   if(i_type==0){
+      sprintf(filename_output_root,"%s_groups",params->filename_output_root);
+      free_precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_GROUPS);
+   }
+   else{
+      sprintf(filename_output_root,"%s_subgroups",params->filename_output_root);
+      free_precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_SUBGROUPS);
+   }
+
+   // Write results
+   write_trend_ascii(params->trends_z,filename_output_root);
+
+   // Clean-up trend
+   free_trend(&(params->trends_z));
 }
 
 int main(int argc, char *argv[]){

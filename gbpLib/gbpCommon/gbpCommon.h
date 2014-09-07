@@ -137,9 +137,7 @@
 #define SIGN(A,B) ((B) <  0  ? -(A) : (A))
 #define INDEX_2D(A,B,C) (A*B+C)
 
-/********************************************/
-/* Compile flags to control large variables */
-/********************************************/
+// Compile flags to control large variables
 #if USE_DOUBLE
 #define GBPREAL double
 #else
@@ -149,9 +147,7 @@
 #define big_int long long
 #define id_int  size_t
 
-/*****************************/
-/* Other common header files */
-/*****************************/
+// Other common header files 
 
 // MPI
 #if USE_MPI

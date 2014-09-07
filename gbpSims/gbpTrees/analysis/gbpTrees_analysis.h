@@ -178,6 +178,24 @@ int  select_and_analyze_treenodes_fctn_select_null   (tree_info *trees,void *par
 void select_and_analyze_treenodes_fctn_analyze_null  (tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo);
 void select_and_analyze_treenodes_fctn_fin_snap_null (tree_info *trees,void *params,int mode,int i_type,int flag_init,int i_snap);
 void select_and_analyze_treenodes_fctn_fin_null      (tree_info *trees,void *params,int mode,int i_type);
+void init_tree_property_z     (trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs);
+void init_tree_property_logM  (trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs);
+void init_tree_property_xoff  (trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs);
+void init_tree_property_SSFctn(trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs);
+void init_tree_property_tau   (trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs);
+void free_tree_property_z     (trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs);
+void free_tree_property_logM  (trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs);
+void free_tree_property_xoff  (trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs);
+void free_tree_property_SSFctn(trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs);
+void free_tree_property_tau   (trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs);
+int  calc_tree_property_index_z        (trend_property_info *property,hist_info *hist,void *halo_in);
+int  calc_tree_property_index_logM     (trend_property_info *property,hist_info *hist,void *halo_in);
+int  calc_tree_property_index_xoff     (trend_property_info *property,hist_info *hist,void *halo_in);
+int  calc_tree_property_index_SSFctn   (trend_property_info *property,hist_info *hist,void *halo_in);
+int  calc_tree_property_index_tau_form (trend_property_info *property,hist_info *hist,void *halo_in);
+int  calc_tree_property_index_tau_3to1 (trend_property_info *property,hist_info *hist,void *halo_in);
+int  calc_tree_property_index_tau_10to1(trend_property_info *property,hist_info *hist,void *halo_in);
+
 
 tree_markers_info *fetch_treenode_precomputed_markers(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_delta_t(tree_info *trees,tree_node_info *halo_1,tree_node_info *halo_2);
