@@ -11,7 +11,7 @@
 // Structure that will carry the needed information to the select-and-analyze function
 typedef struct select_and_analyze_params_local select_and_analyze_params_local;
 struct select_and_analyze_params_local{
-   char                 filename_output_root[MAX_FILENAME_LENGTH];
+   char        filename_output_root[MAX_FILENAME_LENGTH];
    trend_info *trends_z;
 };
 
@@ -23,10 +23,14 @@ void select_and_analyze_treenodes_fctn_init_local(tree_info *trees,void *params_
   select_and_analyze_params_local *params=(select_and_analyze_params_local *)params_in;
 
   // Initialize markers (just one-at-a-time to save RAM)
-  if(i_type==0)
-     read_treenode_markers(trees,params->filename_output_root,PRECOMPUTE_TREENODE_MARKER_GROUPS);
-  else
-     read_treenode_markers(trees,params->filename_output_root,PRECOMPUTE_TREENODE_MARKER_SUBGROUPS);
+  if(i_type==0){
+     //read_treenode_markers(trees,params->filename_output_root,PRECOMPUTE_TREENODE_MARKER_GROUPS);
+     precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_GROUPS);
+  }
+  else{
+     //read_treenode_markers(trees,params->filename_output_root,PRECOMPUTE_TREENODE_MARKER_SUBGROUPS);
+     precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_SUBGROUPS);
+  }
 
   // Initialize the trend(s) to be populated
   init_trend           (&(params->trends_z));
