@@ -140,7 +140,8 @@ int    precompute_treenode_markers(tree_info *trees,int mode);
 int    find_treenode_markers(tree_info *trees,tree_node_info *halo,tree_markers_info **markers_all,tree_markers_info *markers);
 int    init_precompute_treenode_markers(tree_info *trees,int mode);
 int    free_precompute_treenode_markers(tree_info *trees,int mode);
-void   write_treenode_markers_all(tree_info *trees,char *filename_output_root,int mode);
+void   write_treenode_markers(tree_info *trees,const char *filename_output_root,int mode);
+void   read_treenode_markers(tree_info *trees,const char *filename_input_root,int mode);
 int    find_treenode_markers_recursive(tree_info          *trees,
                                        tree_markers_info **markers_array,
                                        tree_node_info     *halo,
@@ -195,7 +196,6 @@ int  calc_tree_property_index_SSFctn   (trend_property_info *property,hist_info 
 int  calc_tree_property_index_tau_form (trend_property_info *property,hist_info *hist,void *halo_in);
 int  calc_tree_property_index_tau_3to1 (trend_property_info *property,hist_info *hist,void *halo_in);
 int  calc_tree_property_index_tau_10to1(trend_property_info *property,hist_info *hist,void *halo_in);
-
 
 tree_markers_info *fetch_treenode_precomputed_markers(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_delta_t(tree_info *trees,tree_node_info *halo_1,tree_node_info *halo_2);

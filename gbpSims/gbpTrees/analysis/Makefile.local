@@ -62,7 +62,8 @@ OBJFILES  = average_tree_branches.o              \
 	    fetch_treenode_delta_t.o                 \
 	    find_treenode_markers.o                  \
 	    precompute_treenode_markers.o            \
-	    write_treenode_markers_all.o             \
+	    write_treenode_markers.o                 \
+	    read_treenode_markers.o                  \
 	    find_treenode_markers_recursive.o        \
 	    find_treenode_snap_equals_given.o        \
 	    find_treenode_main_progenitor.o          \

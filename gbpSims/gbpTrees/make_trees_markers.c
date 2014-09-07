@@ -8,70 +8,6 @@
 #include <gbpHalos.h>
 #include <gbpTrees.h>
 
-// Structure that will carry the needed information to the select-and-analyze function
-typedef struct select_and_analyze_params_local select_and_analyze_params_local;
-struct select_and_analyze_params_local{
-   char                 filename_output_root[MAX_FILENAME_LENGTH];
-   trend_info *trends_z;
-};
-
-// ** Define the calculation here **
-void select_and_analyze_treenodes_fctn_init_local(tree_info *trees,void *params_in,int mode,int i_type);
-void select_and_analyze_treenodes_fctn_init_local(tree_info *trees,void *params_in,int mode,int i_type){
-
-  // Create an alias for the passed void pointer
-  select_and_analyze_params_local *params=(select_and_analyze_params_local *)params_in;
-
-  // Initialize markers (just one-at-a-time to save RAM)
-  if(i_type==0){
-     precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_GROUPS);
-     write_treenode_markers_all(trees,params->filename_output_root,PRECOMPUTE_TREENODE_MARKER_GROUPS);
-  }
-  else{
-     precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_SUBGROUPS);
-     write_treenode_markers_all(trees,params->filename_output_root,PRECOMPUTE_TREENODE_MARKER_SUBGROUPS);
-  }
-
-  // Initialize the trend(s) to be populated
-  init_trend           (&(params->trends_z));
-  init_trend_ordinate  ( (params->trends_z),"z",        trees,init_tree_property_z,     free_tree_property_z,     calc_tree_property_index_z);
-  init_trend_coordinate( (params->trends_z),"logM",     trees,init_tree_property_logM,  free_tree_property_logM,  calc_tree_property_index_logM);
-  init_trend_coordinate( (params->trends_z),"SSFctn",   trees,init_tree_property_SSFctn,free_tree_property_SSFctn,calc_tree_property_index_SSFctn);
-  init_trend_coordinate( (params->trends_z),"tau_form", trees,init_tree_property_tau,   free_tree_property_tau,   calc_tree_property_index_tau_form);
-  init_trend_coordinate( (params->trends_z),"tau_3to1", trees,init_tree_property_tau,   free_tree_property_tau,   calc_tree_property_index_tau_3to1);
-  init_trend_coordinate( (params->trends_z),"tau_10to1",trees,init_tree_property_tau,   free_tree_property_tau,   calc_tree_property_index_tau_10to1);
-}
-
-// ** Perform the calculation here **
-void select_and_analyze_treenodes_fctn_analyze_local(tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo);
-void select_and_analyze_treenodes_fctn_analyze_local(tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo){
-   add_item_to_trend(((select_and_analyze_params_local *)params)->trends_z,halo);
-}
-
-// ** Write the results here **
-void select_and_analyze_treenodes_fctn_fin_local(tree_info *trees,void *params_in,int mode,int i_type);
-void select_and_analyze_treenodes_fctn_fin_local(tree_info *trees,void *params_in,int mode,int i_type){
-   // Create an alias for the passed void pointer
-   select_and_analyze_params_local *params=(select_and_analyze_params_local *)params_in;
-
-   // Clean-up markers
-   char filename_output_root[MAX_FILENAME_LENGTH];
-   if(i_type==0){
-      sprintf(filename_output_root,"%s_groups",params->filename_output_root);
-      free_precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_GROUPS);
-   }
-   else{
-      sprintf(filename_output_root,"%s_subgroups",params->filename_output_root);
-      free_precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_SUBGROUPS);
-   }
-
-   // Write results
-   write_trend_ascii(params->trends_z,filename_output_root);
-
-   // Clean-up trend
-   free_trend(&(params->trends_z));
-}
-
 int main(int argc, char *argv[]){
 
   SID_init(&argc,&argv,NULL);
@@ -107,16 +43,22 @@ int main(int argc, char *argv[]){
                       filename_halo_version_root,
                       READ_TREES_CATALOGS_BOTH);
 
-  // ** PERFORM the calculation here **
-  select_and_analyze_params_local params;
-  strcpy(params.filename_output_root,filename_output_root);
-  select_and_analyze_treenodes_by_snap(trees,&params,SELECT_AND_ANALYZE_BOTH,0,trees->n_snaps,
-                                       select_and_analyze_treenodes_fctn_init_local,
-                                       select_and_analyze_treenodes_fctn_init_snap_null,
-                                       select_and_analyze_treenodes_fctn_select_null,
-                                       select_and_analyze_treenodes_fctn_analyze_local,
-                                       select_and_analyze_treenodes_fctn_fin_snap_null,
-                                       select_and_analyze_treenodes_fctn_fin_local);
+  // Loop over the two halo types
+  for(int i_type=0;i_type<2;i_type++){
+     // Initialize markers (just one-at-a-time to save RAM)
+     int mode;
+     if(i_type==0)
+        mode=PRECOMPUTE_TREENODE_MARKER_GROUPS;
+     else
+        mode=PRECOMPUTE_TREENODE_MARKER_SUBGROUPS;
+
+     // Compute markers
+     precompute_treenode_markers(trees,mode);
+     // Write markers
+     write_treenode_markers(trees,filename_output_root,mode);
+     // Free markers
+     free_precompute_treenode_markers(trees,mode);
+  }
 
   // Clean-up
   free_trees(&trees);

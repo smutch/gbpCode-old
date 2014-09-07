@@ -14,10 +14,8 @@ int fread_catalog_file(fp_catalog_info *fp_in,halo_properties_SAGE_info *propert
   // Skip to the right place (if need-be)
   if(halo_index!=fp_in->i_halo || halo_index>fp_in->i_halo_stop || halo_index<fp_in->i_halo_start){
      // We always have to scan forward, so if we're going backwards, we have to start from scratch
-//fprintf(stderr,"   testZ1: %d %d %d %d %d\n",fp_in->i_file,halo_index,fp_in->i_halo,fp_in->i_halo_start,fp_in->i_halo_stop);
      if(halo_index<fp_in->i_halo)         fopen_nth_catalog_file(fp_in,0);
      while(halo_index>fp_in->i_halo_stop) fopen_nth_catalog_file(fp_in,fp_in->i_file+1);
-//fprintf(stderr,"   testZ2: %d %d %d %d %d\n",fp_in->i_file,halo_index,fp_in->i_halo,fp_in->i_halo_start,fp_in->i_halo_stop);
      n_skip=halo_index-fp_in->i_halo;
      if(n_skip>0){
         if(fp_in->flag_read_properties)
@@ -44,13 +42,10 @@ int fread_catalog_file(fp_catalog_info *fp_in,halo_properties_SAGE_info *propert
   if(fp_in->flag_read_properties){
      // Perform Read
      halo_properties_info properties_in;
-//if(fp_in->snap_num==72) fprintf(stderr," B1\n");
 
      fread(&properties_in,sizeof(halo_properties_info),1,fp_in->fp_properties);
-//if(fp_in->snap_num==72) fprintf(stderr," B2\n");
      if(properties_all_out!=NULL)
         memcpy(properties_all_out,&properties_in,sizeof(halo_properties_info));
-//if(fp_in->snap_num==72) fprintf(stderr," B3\n");
 
      // Store the quantities we need to keep
      if(properties_out!=NULL){
@@ -80,7 +75,6 @@ int fread_catalog_file(fp_catalog_info *fp_in,halo_properties_SAGE_info *propert
         properties_out->halo_index      =halo_index;
         properties_out->half_mass       =0.;
      }
-//if(fp_in->snap_num==72) fprintf(stderr," B4\n");
   }
   else if(fp_in->flag_read_properties)
      SID_trap_error("File pointer not initialized while reading halo properties.",ERROR_LOGIC);

@@ -11,7 +11,7 @@
 
 int fetch_treenode_file_index(tree_info *trees,tree_node_info *halo){
    if(halo!=NULL)
-      return(halo->neighbour_index);
+      return(halo->file_index);
    return(-1);
 }
 
