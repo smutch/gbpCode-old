@@ -60,7 +60,12 @@ double histogram_bin_x_lo(hist_info *hist,int bin);
 double histogram_bin_x_hi(hist_info *hist,int bin);
 double histogram_bin_x_mid(hist_info *hist,int bin);
 
-void init_trend(trend_info **trend);
+void init_trend(trend_info **trend,
+                const char  *name,
+                void        *params,
+                void (*init_function)(trend_property_info *property,void *params_init,int i_hist,int *mode,gbp_va_list *vargs_gbp),
+                void (*free_function)(trend_property_info *property,void *params_init,int i_hist,int *mode,gbp_va_list *vargs_gbp),
+                int  (*calc_function)(trend_property_info *property,hist_info *hist,void *params_calc));
 void free_trend(trend_info **trend);
 void init_trend_property(trend_property_info **property,
                          const char           *name,

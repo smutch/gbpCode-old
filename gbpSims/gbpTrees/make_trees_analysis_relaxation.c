@@ -13,6 +13,9 @@ typedef struct select_and_analyze_params_local select_and_analyze_params_local;
 struct select_and_analyze_params_local{
    char        filename_output_root[MAX_FILENAME_LENGTH];
    trend_info *trends_z;
+   trend_info *trends_tau_form;
+   trend_info *trends_tau_3to1;
+   trend_info *trends_tau_10to1;
 };
 
 // ** Define the calculation here **
@@ -33,19 +36,35 @@ void select_and_analyze_treenodes_fctn_init_local(tree_info *trees,void *params_
   }
 
   // Initialize the trend(s) to be populated
-  init_trend           (&(params->trends_z));
-  init_trend_ordinate  ( (params->trends_z),"z",        trees,init_tree_property_z,     free_tree_property_z,     calc_tree_property_index_z);
-  init_trend_coordinate( (params->trends_z),"logM",     trees,init_tree_property_logM,  free_tree_property_logM,  calc_tree_property_index_logM);
-  init_trend_coordinate( (params->trends_z),"SSFctn",   trees,init_tree_property_SSFctn,free_tree_property_SSFctn,calc_tree_property_index_SSFctn);
-  init_trend_coordinate( (params->trends_z),"tau_form", trees,init_tree_property_tau,   free_tree_property_tau,   calc_tree_property_index_tau_form);
-  init_trend_coordinate( (params->trends_z),"tau_3to1", trees,init_tree_property_tau,   free_tree_property_tau,   calc_tree_property_index_tau_3to1);
-  init_trend_coordinate( (params->trends_z),"tau_10to1",trees,init_tree_property_tau,   free_tree_property_tau,   calc_tree_property_index_tau_10to1);
+  init_treenode_trend           (trees,&(params->trends_z),"z");
+  init_treenode_trend_coordinate(trees, (params->trends_z),"logM");
+  init_treenode_trend_coordinate(trees, (params->trends_z),"xoff");
+  init_treenode_trend_coordinate(trees, (params->trends_z),"SSFctn");
+  init_treenode_trend_coordinate(trees, (params->trends_z),"tau_form");
+  init_treenode_trend_coordinate(trees, (params->trends_z),"tau_3to1");
+  init_treenode_trend_coordinate(trees, (params->trends_z),"tau_10to1");
+
+  init_treenode_trend           (trees,&(params->trends_tau_form), "tau_form");
+  init_treenode_trend_coordinate(trees, (params->trends_tau_form), "xoff");
+  init_treenode_trend_coordinate(trees, (params->trends_tau_form), "SSFctn");
+
+  init_treenode_trend           (trees,&(params->trends_tau_3to1), "tau_3to1");
+  init_treenode_trend_coordinate(trees, (params->trends_tau_3to1), "xoff");
+  init_treenode_trend_coordinate(trees, (params->trends_tau_3to1), "SSFctn");
+
+  init_treenode_trend           (trees,&(params->trends_tau_10to1),"tau_10to1");
+  init_treenode_trend_coordinate(trees, (params->trends_tau_10to1),"xoff");
+  init_treenode_trend_coordinate(trees, (params->trends_tau_10to1),"SSFctn");
+
 }
 
 // ** Perform the calculation here **
 void select_and_analyze_treenodes_fctn_analyze_local(tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo);
 void select_and_analyze_treenodes_fctn_analyze_local(tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo){
-   add_item_to_trend(((select_and_analyze_params_local *)params)->trends_z,halo);
+   add_item_to_trend(((select_and_analyze_params_local *)params)->trends_z,        halo);
+   add_item_to_trend(((select_and_analyze_params_local *)params)->trends_tau_form, halo);
+   add_item_to_trend(((select_and_analyze_params_local *)params)->trends_tau_3to1, halo);
+   add_item_to_trend(((select_and_analyze_params_local *)params)->trends_tau_10to1,halo);
 }
 
 // ** Write the results here **
@@ -66,10 +85,16 @@ void select_and_analyze_treenodes_fctn_fin_local(tree_info *trees,void *params_i
    }
 
    // Write results
-   write_trend_ascii(params->trends_z,filename_output_root);
+   write_trend_ascii(params->trends_z,        filename_output_root);
+   write_trend_ascii(params->trends_tau_form, filename_output_root);
+   write_trend_ascii(params->trends_tau_3to1, filename_output_root);
+   write_trend_ascii(params->trends_tau_10to1,filename_output_root);
 
    // Clean-up trend
    free_trend(&(params->trends_z));
+   free_trend(&(params->trends_tau_form));
+   free_trend(&(params->trends_tau_3to1));
+   free_trend(&(params->trends_tau_10to1));
 }
 
 int main(int argc, char *argv[]){

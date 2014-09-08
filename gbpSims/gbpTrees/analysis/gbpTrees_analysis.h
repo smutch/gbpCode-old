@@ -179,6 +179,9 @@ int  select_and_analyze_treenodes_fctn_select_null   (tree_info *trees,void *par
 void select_and_analyze_treenodes_fctn_analyze_null  (tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo);
 void select_and_analyze_treenodes_fctn_fin_snap_null (tree_info *trees,void *params,int mode,int i_type,int flag_init,int i_snap);
 void select_and_analyze_treenodes_fctn_fin_null      (tree_info *trees,void *params,int mode,int i_type);
+
+void init_treenode_trend           (tree_info *trees,trend_info **trend,const char *name);
+void init_treenode_trend_coordinate(tree_info *trees,trend_info  *trend,const char *name);
 void init_tree_property_z     (trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs);
 void init_tree_property_logM  (trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs);
 void init_tree_property_xoff  (trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs);
