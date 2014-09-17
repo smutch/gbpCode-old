@@ -14,7 +14,7 @@ int main(int argc, char *argv[]){
   double      h_Hubble;
   double      z;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Parse arguments and initialize
   if(argc<2 || argc>6){

@@ -13,7 +13,7 @@
 int main(int argc, char *argv[]){
 
   // Initialization -- MPI etc.
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   SID_log("Writing the difference between the grids in {%s} and {%s} to stdout...",SID_LOG_OPEN,argv[1],argv[2]);
 

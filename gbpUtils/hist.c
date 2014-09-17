@@ -62,7 +62,7 @@ int main(int argc, char *argv[]){
     double *bin_median;
     int     bin_start;
 
-    SID_init(&argc,&argv,NULL);
+    SID_init(&argc,&argv,NULL,NULL);
 
     /*********************************************/
     /* Check syntax and read-in input parameters */

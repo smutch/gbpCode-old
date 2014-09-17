@@ -156,7 +156,7 @@ int main(int argc, char *argv[]){
   int         mode;
 
   // Initialization -- MPI etc.
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
   strcpy(filename_groups_root,argv[1]);
   strcpy(filename_cat_root,   argv[2]);
   strcpy(filename_out_root,   argv[3]);

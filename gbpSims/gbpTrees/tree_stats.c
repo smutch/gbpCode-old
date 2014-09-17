@@ -137,7 +137,7 @@ int main(int argc, char *argv[]){
   int           flag_mil;
 
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   init_cosmo_std(&cosmo);
 

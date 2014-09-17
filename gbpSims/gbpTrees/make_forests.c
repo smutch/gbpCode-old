@@ -12,7 +12,7 @@
 int main(int argc, char *argv[]){
   char        filename_root_out[256];
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Fetch user inputs
   strcpy(filename_root_out,argv[1]);

@@ -41,7 +41,7 @@ int main(int argc, char *argv[]){
   int    tree_select;
   int    current;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Fetch user inputs
   strcpy(filename_tree_in,argv[1]);

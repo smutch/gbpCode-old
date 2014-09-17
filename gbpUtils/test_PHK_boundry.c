@@ -11,7 +11,7 @@ int main(int argc,char *argv[]){
    int key_stop;
    int width;
 
-   SID_init(&argc,&argv,NULL);
+   SID_init(&argc,&argv,NULL,NULL);
  
    // Read inputs
    n_bits   =(int)atoi(argv[1]);

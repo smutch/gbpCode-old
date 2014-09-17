@@ -1010,7 +1010,7 @@ int main(int argc, char *argv[]){
   int                   largest_truncated_local;
   char                 *filename_number;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Fetch user inputs
   int min_halo_size;

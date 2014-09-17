@@ -20,7 +20,7 @@ int main(int argc, char *argv[]){
    int     flag_log;
  
    // Initialization -- MPI etc.
-   SID_init(&argc,&argv,NULL);
+   SID_init(&argc,&argv,NULL,NULL);
    if(argc!=10)
      SID_trap_error("Incorrect syntax.",ERROR_SYNTAX);
 

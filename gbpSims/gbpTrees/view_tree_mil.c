@@ -59,7 +59,7 @@ int main(int argc, char *argv[]){
   int snap_num_min,snap_num_max;
   int halo_index_min,halo_index_max;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Fetch user inputs
   strcpy(filename_tree_in,argv[1]);

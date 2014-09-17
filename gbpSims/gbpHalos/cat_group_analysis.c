@@ -89,7 +89,7 @@ int main(int argc, char *argv[]){
   int                   n_files_temp=1;
   int                   flag_process_profiles;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Fetch user inputs
   strcpy(filename_groups_root,argv[1]);

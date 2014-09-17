@@ -18,7 +18,7 @@ int main(int argc, char *argv[]){
   char    filename_in[256],filename_out[256];
 
   // Initialize
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Process user inputs
   if(argc!=8){

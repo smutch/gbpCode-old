@@ -9,7 +9,7 @@
 
 int main(int argc, char *argv[]){
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   SID_log("Constructing match catalog...",SID_LOG_OPEN|SID_LOG_TIMER);
 

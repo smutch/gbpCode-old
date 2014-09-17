@@ -112,7 +112,7 @@ int main(int argc, char *argv[]){
   void                 *particle_buffer=NULL;
   int                   flag_found;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   strcpy(filename_root,argv[1]);
   i_file_start=atoi(argv[2]);

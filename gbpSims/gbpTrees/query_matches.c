@@ -34,7 +34,7 @@ int main(int argc, char *argv[]){
   int     i_read_stop;
   SID_fp  fp_in;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Fetch user inputs
   strcpy(filename_SSimPL_root,argv[1]);

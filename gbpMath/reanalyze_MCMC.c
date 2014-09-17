@@ -12,7 +12,7 @@ int main(int argc, char *argv[]){
   int       coverage_size=100;
   MCMC_info MCMC;
   
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   init_MCMC(&MCMC,"",NULL,NULL,0, NULL, NULL, NULL, NULL, 0); 
 

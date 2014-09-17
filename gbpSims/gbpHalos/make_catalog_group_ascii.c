@@ -31,7 +31,7 @@ int main(int argc, char *argv[]){
   float  offset_COM;
   float  r_min,r_max;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   strcpy(filename_root, argv[1]);
   snap_number     =atoi(argv[2]);

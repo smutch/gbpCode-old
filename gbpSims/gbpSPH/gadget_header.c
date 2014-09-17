@@ -10,7 +10,7 @@ int main(int argc, char *argv[]){
   char       filename_in[256];
   int        snapshot;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Parse command line
   if(argc!=3){

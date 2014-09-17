@@ -38,7 +38,7 @@ int main(int argc, char *argv[]){
   cosmo_info *cosmo;
   int         flag_fix_bridges;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Initialize cosmology
   init_cosmo_std(&cosmo);

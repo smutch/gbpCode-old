@@ -38,7 +38,7 @@ int main(int argc, char *argv[]){
   int halo_search;
   int flag_search;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Fetch user inputs
   strcpy(filename_tree_in,argv[1]);

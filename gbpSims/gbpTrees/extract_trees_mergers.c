@@ -109,7 +109,7 @@ int main(int argc, char *argv[]){
   cosmo_info *cosmo;
   walk_trees_local_info data;
  
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Initialize cosmology
   init_cosmo_std(&cosmo);

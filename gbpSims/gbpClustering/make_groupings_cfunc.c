@@ -39,7 +39,7 @@ int main(int argc, char *argv[]){
    int     grid_size;
  
    // Initialization -- MPI etc.
-   SID_init(&argc,&argv,NULL);
+   SID_init(&argc,&argv,NULL,NULL);
    if(argc!=7)
      SID_trap_error("Incorrect syntax.",ERROR_SYNTAX);
 

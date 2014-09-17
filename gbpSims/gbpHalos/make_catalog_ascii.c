@@ -36,7 +36,7 @@ int main(int argc, char *argv[]){
   float  r_min,r_max;
   double box_size;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   strcpy(filename_root,  argv[1]);
   box_size         =atof(argv[2]);

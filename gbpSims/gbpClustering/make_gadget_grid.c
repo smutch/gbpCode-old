@@ -434,7 +434,7 @@ int main(int argc, char *argv[]){
   char   *grid_identifier;
 
   // Initialization -- MPI etc.
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Parse arguments
   int grid_size;

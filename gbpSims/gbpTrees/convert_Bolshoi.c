@@ -200,7 +200,7 @@ int main(int argc, char *argv[]){
   int              tree_hi_file[1];
   int              n_halos_file[1];
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   SID_log("Converting Bolshoi trees...",SID_LOG_OPEN|SID_LOG_TIMER);
 
