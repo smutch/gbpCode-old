@@ -12,17 +12,30 @@
 void compute_trees_analysis(tree_info *trees){
 
   // Make sure the output directory exists
-  mkdir(trees->filename_root_analysis,02755);
-
-  // Compute merger tree statistics
   char filename_out_root[MAX_FILENAME_LENGTH];
   sprintf(filename_out_root,"%s/treenode",trees->filename_root_analysis);
-  write_treenode_all_hist               (trees,filename_out_root);
-  compute_trees_strayed_halo_analysis   (trees,filename_out_root);
-  compute_trees_dropped_halo_analysis   (trees,filename_out_root);
-  compute_trees_emerged_halo_analysis   (trees,filename_out_root);
-  compute_trees_fragmented_halo_analysis(trees,filename_out_root);
-  compute_trees_merger_analysis         (trees,filename_out_root);
+  mkdir(trees->filename_root_analysis,02755);
 
+  for(int i_type=0;i_type<2;i_type++){
+
+     // Precompute marker statistics
+     if(i_type==0)
+        precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_GROUPS);
+     else
+        precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_SUBGROUPS);
+
+     // Compute merger tree statistics
+     write_treenode_all_hist               (trees,filename_out_root,i_type);
+     compute_trees_strayed_halo_analysis   (trees,filename_out_root,i_type);
+     compute_trees_dropped_halo_analysis   (trees,filename_out_root,i_type);
+     compute_trees_emerged_halo_analysis   (trees,filename_out_root,i_type);
+     compute_trees_fragmented_halo_analysis(trees,filename_out_root,i_type);
+     compute_trees_merger_analysis         (trees,filename_out_root,i_type);
+
+     if(i_type==0)
+        free_precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_GROUPS);
+     else
+        free_precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_SUBGROUPS);
+  }
 }
 

@@ -14,7 +14,10 @@ void finalize_trees(tree_info *trees,int mode){
   int mode_progenitor_order  =mode;
 
   // ... correct substructure ordering ...
-  SID_log("Assigning substructure ordering...",SID_LOG_OPEN|SID_LOG_TIMER);
+  if(check_mode_for_flag(mode_substructure_order,TREE_SUBSTRUCTURE_ORDER_DEFAULT))
+     SID_log("Assigning substructure ordering (by particle count)...",SID_LOG_OPEN|SID_LOG_TIMER);
+  else
+     SID_trap_error("Invalid substructure mode (%d).",ERROR_LOGIC,mode_substructure_order);
   int i_snap;
   for(i_snap=0;i_snap<trees->n_snaps;i_snap++){
      tree_node_info *current_group;
@@ -27,7 +30,12 @@ void finalize_trees(tree_info *trees,int mode){
   SID_log("Done.",SID_LOG_CLOSE);
 
   // ... correct progenitor ordering ...
-  SID_log("Assigning progenitor ordering...",SID_LOG_OPEN|SID_LOG_TIMER);
+  if(check_mode_for_flag(mode_progenitor_order,TREE_PROGENITOR_ORDER_DELUCIA))
+     SID_log("Assigning progenitor ordering (Delucia)...",SID_LOG_OPEN|SID_LOG_TIMER);
+  else if(check_mode_for_flag(mode_progenitor_order,TREE_PROGENITOR_ORDER_N_PARTICLES))
+     SID_log("Assigning progenitor ordering (by particle count)...",SID_LOG_OPEN|SID_LOG_TIMER);
+  else
+     SID_trap_error("Invalid progenitor mode (%d).",ERROR_LOGIC,mode_progenitor_order);
   for(i_snap=0;i_snap<trees->n_snaps;i_snap++){
      // ... groups ...
      tree_node_info *current_group;

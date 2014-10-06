@@ -5,6 +5,7 @@
 
 void init_trend_property(trend_property_info **property,
                          const char           *name,
+                         int                   flag_is_ordinate,
                          int                   n_hist,
                          void                 *params,
                          void (*init_function)(trend_property_info *property,void *params_init,int i_hist,int *mode,gbp_va_list *vargs_gbp),
@@ -16,9 +17,12 @@ void init_trend_property(trend_property_info **property,
    (*property)->init_function=init_function;
    (*property)->free_function=free_function;
    (*property)->calc_function=calc_function;
+   (*property)->is_ordinate  =flag_is_ordinate;
    (*property)->next         =NULL;
 
    // Create the histogram(s)
+   if(flag_is_ordinate)
+      n_hist=1; // force this
    (*property)->n_hist=n_hist;
    (*property)->hist  =(hist_info *)SID_malloc(sizeof(hist_info)*n_hist);
    for(int i_hist=0;i_hist<n_hist;i_hist++){

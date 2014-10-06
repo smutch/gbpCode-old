@@ -67,17 +67,21 @@ void init_histogram(hist_info *hist,int mode,...){
            hist->flag_bin_order_inverted=TRUE;
      }
      // If reversing bin order failed, then this array is not sorted
-     if(flag_error)
-        SID_trap_error("The x_lo array passed to init_histogram() is not sorted in ascending order",ERROR_LOGIC);
+     if(flag_error){
+        for(int i_bin=0;i_bin<hist->n_bins;i_bin++)
+           SID_log("%d %le",SID_LOG_COMMENT,i_bin,x_lo_in[i_bin]);
+        SID_trap_error("The x_lo array passed to init_histogram() is not sorted.",ERROR_LOGIC);
+     }
   }
   else
      SID_trap_error("Invalid mode (%d) specified in init_histogram().",ERROR_LOGIC,mode);
 
   // Set things common to all modes
-  hist->mode      =mode;
-  hist->count_hist=0;
-  hist->count_all =0;
-  hist->bin_count =(size_t *)SID_calloc(sizeof(size_t)*hist->n_bins);
+  hist->mode          =mode;
+  hist->count_hist    =0;
+  hist->count_all     =0;
+  hist->bin_count     =(size_t *)SID_calloc(sizeof(size_t)*hist->n_bins);
+  hist->flag_finalized=FALSE;
 
   va_end(vargs);
 }

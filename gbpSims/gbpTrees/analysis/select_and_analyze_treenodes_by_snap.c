@@ -37,62 +37,78 @@ void select_and_analyze_treenodes_by_snap(tree_info  *trees,
 
    // Loop over each halo type in turn
    for(int i_type=0;i_type<2;i_type++){
-      if(i_type==0 && check_mode_for_flag(mode,SELECT_AND_ANALYZE_GROUPS))
-         SID_log("Performing GROUP analysis...",SID_LOG_OPEN|SID_LOG_TIMER);
-      else if(i_type==1 && check_mode_for_flag(mode,SELECT_AND_ANALYZE_SUBGROUPS))
-         SID_log("Performing SUBGROUP analysis...",SID_LOG_OPEN|SID_LOG_TIMER);
-
-      // Initialize fctn initializeation flags
-      int flag_init_init_snap=TRUE;
-      int flag_init_analyze  =TRUE;
-      int flag_init_select   =TRUE;
-      int flag_init_fin_snap =TRUE;
-
-      // Initialize
-      if(init_fctn!=select_and_analyze_treenodes_fctn_init_null)
-         init_fctn(trees,params,mode,i_type);
-
-      // Loop over each snapshot in turn
-      for(int i_snap=i_snap_lo;i_snap<=i_snap_hi;i_snap++){
-         SID_log("Processing snapshot #%03d of %03d...",SID_LOG_OPEN|SID_LOG_TIMER,i_snap+1,trees->n_snaps);
-
-         // Initialize redshift
-         if(init_snap_fctn!=select_and_analyze_treenodes_fctn_init_snap_null)
-            init_snap_fctn(trees,params,mode,i_type,flag_init_init_snap,i_snap);
-         flag_init_init_snap=FALSE;
-
-         // Process redshift
-         tree_node_info *current_halo;
-         if(i_type==0)
-            current_halo=trees->first_neighbour_groups[i_snap];
-         else if(i_type==1)
-            current_halo=trees->first_neighbour_subgroups[i_snap];
-         while(current_halo!=NULL){
-            // Perfrom select-and-analyze on each halo here
-            if(select_fctn==select_and_analyze_treenodes_fctn_select_null){
-               analyze_fctn(trees,params,mode,i_type,flag_init_analyze,current_halo);
-               flag_init_analyze=FALSE;
-            }
-            else if(select_fctn(trees,params,mode,i_type,flag_init_select,current_halo)){
-               analyze_fctn(trees,params,mode,i_type,flag_init_analyze,current_halo);
-               flag_init_analyze=FALSE;
-            }
-            flag_init_select=FALSE;
-            current_halo=current_halo->next_neighbour;
-         }
-
-         // Finalize redshift
-         if(fin_snap_fctn!=select_and_analyze_treenodes_fctn_fin_snap_null)
-            fin_snap_fctn(trees,params,mode,i_type,flag_init_fin_snap,i_snap);
-         flag_init_fin_snap=FALSE;
-
-         SID_log("Done.",SID_LOG_CLOSE);
+      int flag_do=TRUE;
+      if(i_type==0){
+         if(check_mode_for_flag(mode,SELECT_AND_ANALYZE_GROUPS))
+            SID_log("Performing GROUP analysis...",SID_LOG_OPEN|SID_LOG_TIMER);
+         else
+            flag_do=FALSE;
+      }
+      else if(i_type==1){
+         if(check_mode_for_flag(mode,SELECT_AND_ANALYZE_SUBGROUPS))
+            SID_log("Performing SUBGROUP analysis...",SID_LOG_OPEN|SID_LOG_TIMER);
+         else
+            flag_do=FALSE;
       }
 
-      // Finalize
-      if(fin_fctn!=select_and_analyze_treenodes_fctn_fin_null)
-         fin_fctn(trees,params,mode,i_type);
+      if(flag_do){
+         // Initialize fctn initializeation flags
+         int flag_init_init_snap=TRUE;
+         int flag_init_analyze  =TRUE;
+         int flag_init_select   =TRUE;
+         int flag_init_fin_snap =TRUE;
 
+         // Initialize
+         if(init_fctn!=select_and_analyze_treenodes_fctn_init_null){
+            SID_log("Initializing...",SID_LOG_OPEN|SID_LOG_TIMER);
+            init_fctn(trees,params,mode,i_type);
+            SID_log("Done.",SID_LOG_CLOSE);
+         }
+
+         // Loop over each snapshot in turn
+         for(int i_snap=i_snap_lo;i_snap<=i_snap_hi;i_snap++){
+            SID_log("Processing snapshot #%03d of %03d...",SID_LOG_OPEN|SID_LOG_TIMER,i_snap+1,trees->n_snaps);
+
+            // Initialize redshift
+            if(init_snap_fctn!=select_and_analyze_treenodes_fctn_init_snap_null)
+               init_snap_fctn(trees,params,mode,i_type,flag_init_init_snap,i_snap);
+            flag_init_init_snap=FALSE;
+
+            // Process redshift
+            tree_node_info *current_halo;
+            if(i_type==0)
+               current_halo=trees->first_neighbour_groups[i_snap];
+            else if(i_type==1)
+               current_halo=trees->first_neighbour_subgroups[i_snap];
+            while(current_halo!=NULL){
+               // Perfrom select-and-analyze on each halo here
+               if(select_fctn==select_and_analyze_treenodes_fctn_select_null){
+                  analyze_fctn(trees,params,mode,i_type,flag_init_analyze,current_halo);
+                  flag_init_analyze=FALSE;
+               }
+               else if(select_fctn(trees,params,mode,i_type,flag_init_select,current_halo)){
+                  analyze_fctn(trees,params,mode,i_type,flag_init_analyze,current_halo);
+                  flag_init_analyze=FALSE;
+               }
+               flag_init_select=FALSE;
+               current_halo=current_halo->next_neighbour;
+            }
+
+            // Finalize redshift
+            if(fin_snap_fctn!=select_and_analyze_treenodes_fctn_fin_snap_null)
+               fin_snap_fctn(trees,params,mode,i_type,flag_init_fin_snap,i_snap);
+            flag_init_fin_snap=FALSE;
+
+            SID_log("Done.",SID_LOG_CLOSE);
+         }
+
+         // Finalize
+         if(fin_fctn!=select_and_analyze_treenodes_fctn_fin_null){
+            SID_log("Finalizing...",SID_LOG_OPEN|SID_LOG_TIMER);
+            fin_fctn(trees,params,mode,i_type);
+            SID_log("Done.",SID_LOG_CLOSE);
+         }
+      }
       SID_log("Done.",SID_LOG_CLOSE);
    }
 }

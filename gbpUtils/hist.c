@@ -79,7 +79,13 @@ int main(int argc, char *argv[]){
     strcpy(filename_in,argv[1]);
     data_column  =atoi(argv[2]);
     n_bins       =atoi(argv[3]);
-    sprintf(filename_out,"%s.hist.%05d",filename_in,data_column);
+
+    // If the column is negative, take the log of it
+    int flag_take_log=FALSE;
+    if(data_column<0){
+       data_column*=-1;
+       flag_take_log=TRUE;
+    }
 
     /*******************/
     /* Open input file */
@@ -90,6 +96,7 @@ int main(int argc, char *argv[]){
     }
 
     SID_log("Compiling stats and histogram of column #%d of {%s}...",SID_LOG_OPEN,data_column,filename_in);
+    if(flag_take_log) SID_log("Taking the log of the data.",SID_LOG_COMMENT);
     SID_log("Stats:",SID_LOG_COMMENT,data_column);
 
     /*******************************************/
@@ -107,6 +114,9 @@ int main(int argc, char *argv[]){
       grab_double(line_in,data_column,&(data[i]));
     }
     fclose(unit_in);
+
+    // Take the log of the data if we have been asked to
+    if(flag_take_log) for(i=0;i<n_data;i++) data[i]=take_log10(data[i]);
 
     /******************************************/
     /* Build simple statistics of data column */
@@ -188,6 +198,7 @@ int main(int argc, char *argv[]){
     /********************/
     /* Open output file */
     /********************/
+    sprintf(filename_out,"%s.hist.%05d",filename_in,data_column);
     if((unit_out=fopen(filename_out,"w"))==NULL){
         fprintf(stderr,"Error opening output file {%s}.\n",filename_out);
         SID_free(SID_FARG data);

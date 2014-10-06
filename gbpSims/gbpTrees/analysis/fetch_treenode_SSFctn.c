@@ -13,13 +13,22 @@ double fetch_treenode_SSFctn(tree_info *trees,tree_node_info *halo){
    double SSFctn=0.;
    if(halo!=NULL){
       // Sum the halo's substructure mass
-      double M_vir_substructure=0.;
+      int np_parent      =fetch_treenode_n_particles(trees,halo);
+      int np_substructure=0.;
+      int np_most_massive=0.;
+      int np_i;
+      int i_sub=0;
       tree_node_info *current_substructure=halo->substructure_first;
       while(current_substructure!=NULL){
-         M_vir_substructure+=fetch_treenode_Mvir(trees,current_substructure);
+         np_i            =fetch_treenode_n_particles(trees,current_substructure);
+         np_substructure+=np_i;
+         if(np_i>np_most_massive)
+            np_most_massive=np_i;
+         i_sub++;
          current_substructure=current_substructure->substructure_next;
       }
-      return(M_vir_substructure/fetch_treenode_Mvir(trees,halo));
+      np_substructure-=np_most_massive;
+      SSFctn          =(double)np_substructure/(double)np_parent;
    }
    return(SSFctn);
 }

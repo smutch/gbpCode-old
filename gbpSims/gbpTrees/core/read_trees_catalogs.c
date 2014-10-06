@@ -158,6 +158,9 @@ void read_trees_catalogs(tree_info *trees,
            char   filename_cat_root_in[256];
            sprintf(filename_cat_root_in,"%s/catalogs/%s",
                                         filename_SSimPL_dir,filename_catalog_name);
+           //SID_log("(using .old version)...",SID_LOG_CONTINUE);
+           //sprintf(filename_cat_root_in,"%s/catalogs.old/%s",
+           //                             filename_SSimPL_dir,filename_catalog_name);
            fopen_catalog(filename_cat_root_in,
                          i_read,
                          open_catalog_mode,

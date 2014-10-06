@@ -112,7 +112,8 @@ void init_treenode_hist(tree_info           *trees,
           break;
        }
        case 1:
-       case 2:{
+       case 2:
+       case 3:{
           (*n_d)=args_i[2];
           break;
        }

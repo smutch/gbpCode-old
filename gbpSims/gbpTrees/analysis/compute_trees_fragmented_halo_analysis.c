@@ -10,10 +10,18 @@
 #include <gbpTrees_analysis.h>
 #include <assert.h>
 
-void compute_trees_fragmented_halo_analysis(tree_info *trees,char *filename_out_root){
+void compute_trees_fragmented_halo_analysis(tree_info *trees,char *filename_out_root_in,int i_type){
 
-  // Compute merger rates ...
-  SID_log("Performing fragmented halo analysis...",SID_LOG_OPEN|SID_LOG_TIMER);
+  char group_prefix[8];
+  if(i_type==0)
+     sprintf(group_prefix,"");
+  else
+     sprintf(group_prefix,"sub");
+
+  char filename_out_root[MAX_FILENAME_LENGTH];
+  sprintf(filename_out_root,"%s_%sgroup",filename_out_root_in,group_prefix);
+
+  SID_log("Performing fragmented %sgroup analysis...",SID_LOG_OPEN|SID_LOG_TIMER,group_prefix);
 
   // Count the number of fragmented halos 
   SID_log("Counting fragmented halos...",SID_LOG_OPEN|SID_LOG_TIMER);
@@ -24,7 +32,11 @@ void compute_trees_fragmented_halo_analysis(tree_info *trees,char *filename_out_
   int n_fragmented_new_central     =0;
   int n_fragmented_new_substructure=0;
   for(int i_snap=0;i_snap<trees->n_snaps;i_snap++){
-     tree_node_info *current_halo=trees->first_neighbour_subgroups[i_snap];
+     tree_node_info *current_halo;
+     if(i_type==0)
+        current_halo=trees->first_neighbour_groups[i_snap];
+     else
+        current_halo=trees->first_neighbour_subgroups[i_snap];
      while(current_halo!=NULL){
         // Process each new branch
         if(check_treenode_if_fragmented(current_halo)){
@@ -36,7 +48,7 @@ void compute_trees_fragmented_halo_analysis(tree_info *trees,char *filename_out_
               if(flag_new)
                  n_fragmented_new_central++;
            }
-           else{
+           else if(check_treenode_if_satellite(current_halo)){
               n_fragmented_substructure++;
               if(flag_new)
                  n_fragmented_new_substructure++;
@@ -69,24 +81,30 @@ void compute_trees_fragmented_halo_analysis(tree_info *trees,char *filename_out_
   double             *delta_fragmented;
   double             *Mvir_parent;
   double             *Mvir;
-  init_treenode_list("fragmented_all",             n_fragmented,                 &list_halos);
-  init_treenode_list("fragmented_centrals",        n_fragmented_central,         &list_halos_central);
-  init_treenode_list("fragmented_substructure",    n_fragmented_substructure,    &list_halos_substructure);
-  init_treenode_list("fragmented_new_all",         n_fragmented_new,             &list_halos_new);
-  init_treenode_list("fragmented_new_centrals",    n_fragmented_new_central,     &list_halos_new_central);
-  init_treenode_list("fragmented_new_substructure",n_fragmented_new_substructure,&list_halos_new_substructure);
+  init_treenode_list("fragmented_all",    n_fragmented,    &list_halos);
+  init_treenode_list("fragmented_new_all",n_fragmented_new,&list_halos_new);
   init_treenode_info_data(list_halos_new,SID_FARG frag_length,     SID_INT,   "fragment length (in subsampled snapshots)");
   init_treenode_info_data(list_halos_new,SID_FARG delta_fragmented,SID_DOUBLE,"delta_fragmented [Gyrs]");
   init_treenode_info_data(list_halos_new,SID_FARG Mvir_parent,     SID_DOUBLE,"M_parent [h^{-1] M_sol]");
   init_treenode_info_data(list_halos_new,SID_FARG Mvir,            SID_DOUBLE,"M_vir    [h^{-1] M_sol]");
   init_treenode_info_data(list_halos_new,SID_FARG frag_index,      SID_INT,   "Fragment's starting index");
   init_treenode_info_data(list_halos_new,SID_FARG frag_snapshot,   SID_INT,   "Fragment's starting snapshot");
+  if(i_type==1){
+     init_treenode_list("fragmented_centrals",        n_fragmented_central,         &list_halos_central);
+     init_treenode_list("fragmented_substructure",    n_fragmented_substructure,    &list_halos_substructure);
+     init_treenode_list("fragmented_new_centrals",    n_fragmented_new_central,     &list_halos_new_central);
+     init_treenode_list("fragmented_new_substructure",n_fragmented_new_substructure,&list_halos_new_substructure);
+  }
 
   // Create the list
   SID_log("Creating lists...",SID_LOG_OPEN|SID_LOG_TIMER);
   int i_list=0;
   for(int i_snap=0;i_snap<trees->n_snaps;i_snap++){
-     tree_node_info *current_halo=trees->first_neighbour_subgroups[i_snap];
+     tree_node_info *current_halo;
+     if(i_type==0)
+        current_halo=trees->first_neighbour_groups[i_snap];
+     else
+        current_halo=trees->first_neighbour_subgroups[i_snap];
      while(current_halo!=NULL){
         // Process each new branch
         if(check_treenode_if_fragmented(current_halo)){
@@ -100,7 +118,7 @@ void compute_trees_fragmented_halo_analysis(tree_info *trees,char *filename_out_
               if(flag_new)
                  add_to_treenode_list(list_halos_new_central,current_halo);
            }
-           else{
+           else if(check_treenode_if_satellite(current_halo)){
               add_to_treenode_list(list_halos_substructure,current_halo);
               if(flag_new)
                  add_to_treenode_list(list_halos_new_substructure,current_halo);
@@ -120,34 +138,42 @@ void compute_trees_fragmented_halo_analysis(tree_info *trees,char *filename_out_
         current_halo=current_halo->next_neighbour;
      }
   }
-  finalize_treenode_list(trees,list_halos_central);
-  finalize_treenode_list(trees,list_halos_substructure);
   finalize_treenode_list(trees,list_halos);
+  finalize_treenode_list(trees,list_halos_new);
+  if(i_type==1){
+     finalize_treenode_list(trees,list_halos_central);
+     finalize_treenode_list(trees,list_halos_substructure);
+     finalize_treenode_list(trees,list_halos_new_central);
+     finalize_treenode_list(trees,list_halos_new_substructure);
+  }
   SID_log("Done.",SID_LOG_CLOSE);
 
   // Write data files
-  write_treenode_list_properties(trees,filename_out_root,list_halos);
-  write_treenode_list_markers   (trees,filename_out_root,list_halos);
-  write_treenode_list_properties(trees,filename_out_root,list_halos_new);
-  write_treenode_list_markers   (trees,filename_out_root,list_halos_new);
+  //write_treenode_list_properties(trees,filename_out_root,list_halos);
+  //write_treenode_list_markers   (trees,filename_out_root,list_halos);
+  //write_treenode_list_properties(trees,filename_out_root,list_halos_new);
+  //write_treenode_list_markers   (trees,filename_out_root,list_halos_new);
   write_treenode_list_data      (trees,filename_out_root,list_halos_new);
 
   // Write histograms
   write_treenode_list_hist(trees,filename_out_root,list_halos);
-  write_treenode_list_hist(trees,filename_out_root,list_halos_central);
-  write_treenode_list_hist(trees,filename_out_root,list_halos_substructure);
   write_treenode_list_hist(trees,filename_out_root,list_halos_new);
-  write_treenode_list_hist(trees,filename_out_root,list_halos_new_central);
-  write_treenode_list_hist(trees,filename_out_root,list_halos_new_substructure);
+  if(i_type==1){
+     write_treenode_list_hist(trees,filename_out_root,list_halos_central);
+     write_treenode_list_hist(trees,filename_out_root,list_halos_substructure);
+     write_treenode_list_hist(trees,filename_out_root,list_halos_new_central);
+     write_treenode_list_hist(trees,filename_out_root,list_halos_new_substructure);
+  }
 
   // Clean-up
   free_treenode_list(&list_halos);
-  free_treenode_list(&list_halos_central);
-  free_treenode_list(&list_halos_substructure);
   free_treenode_list(&list_halos_new);
-  free_treenode_list(&list_halos_new_central);
-  free_treenode_list(&list_halos_new_substructure);
-
+  if(i_type==1){
+     free_treenode_list(&list_halos_central);
+     free_treenode_list(&list_halos_substructure);
+     free_treenode_list(&list_halos_new_central);
+     free_treenode_list(&list_halos_new_substructure);
+  }
   SID_log("Done.",SID_LOG_CLOSE);
 }
 

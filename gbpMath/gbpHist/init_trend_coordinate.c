@@ -14,7 +14,7 @@ void init_trend_coordinate(trend_info  *trend,
 
    // Create new coordinate
    trend_property_info *coordinate_new;
-   init_trend_property(&coordinate_new,name,trend->ordinate->hist->n_bins,params,init_function,free_function,calc_function);
+   init_trend_property(&coordinate_new,name,FALSE,trend->ordinate->hist->n_bins,params,init_function,free_function,calc_function);
 
    // Add it to the linked list
    if(trend->coordinate_first!=NULL)

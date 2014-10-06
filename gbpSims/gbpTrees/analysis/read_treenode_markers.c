@@ -12,6 +12,8 @@
 void read_treenode_markers(tree_info *trees,const char *filename_input_root,int mode){
    SID_log("Reading markers...",SID_LOG_OPEN|SID_LOG_TIMER);
 
+SID_trap_error("This function is not working yet.  It needs to be debugged.",ERROR_LOGIC);
+
    // Generate the markers starting recursively from each tree root
    char filename_input_group_text[16];
    int  flag_process_groups=FALSE;

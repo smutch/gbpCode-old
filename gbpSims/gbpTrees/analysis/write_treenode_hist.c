@@ -72,7 +72,8 @@ void write_treenode_hist(tree_info *trees,const char *filename_out_root,treenode
              break;
            }
            case 1: // M
-           case 2:{ // N
+           case 2: // M
+           case 3:{ // N
              double d_min=args_d[0];
              double dd   =args_d[1];
              bin_i       =d_min+((double)i_bin)*dd;

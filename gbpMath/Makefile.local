@@ -1,7 +1,7 @@
 #############################
 # Library-specific settings #
 #############################
-INCFILES  = gbpMath.h 
+INCFILES  = gbpMath.h
 LIBFILE   = libgbpMath.a
 OBJFILES  =
 SCRIPTS   = allresults_MCMC.py allresults_MCMC_pyramid.py

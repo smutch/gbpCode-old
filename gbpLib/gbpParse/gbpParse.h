@@ -54,6 +54,7 @@ int search_and_replace(char *string,const char *search,const char *replace);
 
 void strip_path(char *string);
 void strip_file_root(char *string);
+void float_to_text(float number,int n_sig_fig,char *result);
 
 #ifdef __cplusplus
 }

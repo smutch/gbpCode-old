@@ -10,6 +10,8 @@ OBJFILES = init_histogram.o                     \
 	       add_to_histogram.o                   \
 	       add_to_histogram_index.o             \
 	       finalize_histogram.o                 \
+	       finalize_trend_property.o            \
+	       finalize_trend.o                     \
 	       histogram_bin_x_lo.o                 \
 	       histogram_bin_x_hi.o                 \
 	       histogram_bin_x_mid.o                \

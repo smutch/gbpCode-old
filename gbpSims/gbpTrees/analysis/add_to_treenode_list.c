@@ -35,6 +35,7 @@ void add_to_treenode_list(treenode_list_info *list,tree_node_info *node){
        list->list=(tree_node_info **)SID_realloc(list->list,(sizeof(tree_node_info *)*list->n_list_alloc));
      }
 
+     // Add the node
      list->list[list->n_list_local-1]=node;
   }
 }

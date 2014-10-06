@@ -25,6 +25,7 @@ ifneq ($(USE_GETLINE),0)
 	   strip_path.o            \
 	   strip_file_root.o       \
 	   search_and_replace.o    \
+	   float_to_text.o         \
 	   getline.o
 
 else
@@ -46,7 +47,8 @@ else
 	   grab_word.o             \
 	   strip_path.o            \
 	   strip_file_root.o       \
-	   search_and_replace.o
+	   search_and_replace.o    \
+	   float_to_text.o
 endif
 
 BINFILES = 
