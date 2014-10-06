@@ -40,7 +40,6 @@ int main(int argc, char *argv[]){
     size_t  line_length=0;
     double *data;
     int    *data_bin;
-    size_t *data_bin_index;
     int     i_data,j_data,i_bin;
     int     cumulator_up;
     int     cumulator_dn;
@@ -73,8 +72,8 @@ int main(int argc, char *argv[]){
         return(SYNTAX_ERROR);
     }
     else if(argc==6){
-        min_bin=atof(argv[4]);
-        max_bin=atof(argv[5]);
+        min_bin=(double)atof(argv[4]);
+        max_bin=(double)atof(argv[5]);
     }
     strcpy(filename_in,argv[1]);
     data_column  =atoi(argv[2]);
@@ -145,54 +144,78 @@ int main(int argc, char *argv[]){
     bin[0] =min_bin;
     hist[0]=0;
     for(i=1;i<n_bins;i++){
-        bin[i] =bin[i-1]+bin_size;
+        bin[i] =((double)i)*bin_size+min_bin;
         hist[i]=0;
     }
     bin[n_bins]=max_bin;
+    for(i=0;i<n_bins;i++)
+       bin_median[i]=0.5*(bin[i]+bin[i+1]); // default value for empty bins
 
     SID_log("Properties of histogram:",SID_LOG_COMMENT);
-    SID_log("  n_bins   = %11d",  SID_LOG_COMMENT,n_bins);
-    SID_log("  min_bin  = %11.4e",SID_LOG_COMMENT,min_bin);
-    SID_log("  max_bin  = %11.4e",SID_LOG_COMMENT,max_bin);
-    SID_log("  bin_size = %11.4e",SID_LOG_COMMENT,bin_size);
+    SID_log("  n_bins   = %11d",   SID_LOG_COMMENT,n_bins);
+    SID_log("  min_bin  = %11.4le",SID_LOG_COMMENT,min_bin);
+    SID_log("  max_bin  = %11.4le",SID_LOG_COMMENT,max_bin);
+    SID_log("  bin_size = %11.4le",SID_LOG_COMMENT,bin_size);
 
     /*********************/
     /* Compile histogram */
     /*********************/
     SID_log("Compiling histogram...",SID_LOG_OPEN|SID_LOG_TIMER);
-    data_bin=(int *)SID_malloc(sizeof(int)*n_data);
-    SID_log("Assigning data to bins...",SID_LOG_OPEN|SID_LOG_TIMER);
-    for(i=0;i<n_data;i++)
-      data_bin[i]=(int)((data[i]-min_bin)/bin_size);
-    SID_log("Done.",SID_LOG_CLOSE);
     SID_log("Sorting...",SID_LOG_OPEN|SID_LOG_TIMER);
-    merge_sort(data_bin,(size_t)n_data,&data_bin_index,SID_INT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
+    size_t *data_index=NULL;
+    merge_sort(data,(size_t)n_data,&data_index,SID_DOUBLE,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
     SID_log("Done.",SID_LOG_CLOSE);
     SID_log("Counting...",SID_LOG_OPEN|SID_LOG_TIMER);
-    for(i_data=0,i_bin=0,n_data_used=0;i_data<n_data && i_bin<n_bins;i_bin++){
-      while(data_bin[data_bin_index[i_data]] <i_bin && i_data<(n_data-1)) i_data++;
-      j_data=i_data;
-      while(data_bin[data_bin_index[i_data]]==i_bin && i_data<(n_data-1)){
-        hist[i_bin]++;
-        i_data++;
-        n_data_used++;
-      }
-      if(hist[i_bin]==0)
-        bin_median[i_bin]=0.5*(bin[i_bin]+bin[i_bin+1]);
-      else{
-        switch(hist[i_bin]%2){
-          case 0:
-            bin_median[i_bin]=0.5*(data[data_bin_index[j_data+hist[i_bin]/2-1]]+data[data_bin_index[j_data+hist[i_bin]/2+1]]);
-            break;
-          case 1:
-            bin_median[i_bin]=data[data_bin_index[j_data+hist[i_bin]/2]];
-            break;
-        }
+    int data_bin_last=-1;
+    int i_data_start =-1;
+    int i_data_stop  =-1;
+    int flag_finalize=FALSE;
+    for(i_data=0,n_data_used=0;i_data<n_data;i_data++){
+      size_t idx_i     =data_index[i_data];
+      double data_bin_d=(data[idx_i]-min_bin)/bin_size;
+      int    data_bin;
+      if(data_bin_d<0)
+         data_bin=-1;
+      else
+         data_bin=(int)floor(data_bin_d); 
+      if(data_bin>=0 && data_bin<n_bins){
+         if(data_bin>data_bin_last){
+            if(data_bin_last>=0){
+               switch(hist[data_bin_last]%2){
+                 case 0:
+                   bin_median[data_bin_last]=0.5*(data[data_index[i_data_start+hist[data_bin_last]/2-1]]+
+                                                  data[data_index[i_data_start+hist[data_bin_last]/2+1]]);
+                   break;
+                 case 1:
+                   bin_median[data_bin_last]=data[data_index[i_data_start+hist[data_bin_last]/2]];
+                   break;
+               }
+            }
+            i_data_start =i_data;
+            flag_finalize=TRUE;
+         }
+         data_bin_last=data_bin;
+         i_data_stop  =i_data;
+         hist[data_bin_last]++;
+         n_data_used++;
       }
     }
+    if(flag_finalize){
+       if(data_bin_last>=0){
+          switch(hist[data_bin_last]%2){
+            case 0:
+              bin_median[data_bin_last]=0.5*(data[data_index[i_data_start+hist[data_bin_last]/2-1]]+
+                                             data[data_index[i_data_start+hist[data_bin_last]/2+1]]);
+              break;
+            case 1:
+              bin_median[data_bin_last]=data[data_index[i_data_start+hist[data_bin_last]/2]];
+              break;
+          }
+       }
+       flag_finalize=FALSE;
+    }
     SID_log("Done.",SID_LOG_CLOSE);
-    SID_free(SID_FARG data_bin);
-    SID_free(SID_FARG data_bin_index);
+    SID_free(SID_FARG data_index);
     SID_log("Done.",SID_LOG_CLOSE);
        
     /********************/
