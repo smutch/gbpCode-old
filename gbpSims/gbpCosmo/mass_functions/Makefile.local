@@ -1,0 +1,11 @@
+#############################
+# Library-specific settings #
+#############################
+INCFILES  = gbpCosmo_mass_functions.h
+OBJFILES  = mass_function.o            \
+            mass_function_cumulative.o \
+            scaled_mass_function.o
+LIBFILE   = 
+BINFILES  = 
+LIBS      = 
+#############################

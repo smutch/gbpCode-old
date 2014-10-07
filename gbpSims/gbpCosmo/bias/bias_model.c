@@ -3,7 +3,7 @@
 #include <math.h>
 #include <gbpLib.h>
 #include <gbpMath.h>
-#include <gbpCosmo.h>
+#include <gbpCosmo_bias.h>
 double bias_model_BPR_integral(cosmo_info **cosmo,
                                double       z);
 double bias_model_BPR_integral(cosmo_info **cosmo,

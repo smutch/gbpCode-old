@@ -1,0 +1,30 @@
+#############################
+# Library-specific settings #
+#############################
+INCFILES  = gbpCosmo_linear_theory.h
+OBJFILES  = R_of_k.o                       \
+	        k_of_R.o                       \
+	        M_of_R.o                       \
+	        M_of_k.o                       \
+	        R_of_M.o                       \
+	        k_of_M.o                       \
+	        pspec_names.o                  \
+	        power_spectrum.o               \
+	        power_spectrum_variance.o      \
+	        dln_Inv_sigma_dlogM.o          \
+            sigma2_integrand.o             \
+	        sigma_M.o                      \
+	        ln_sigma_M.o                   \
+	        ln_Inv_sigma_M.o               \
+	        dln_sigma_dlnM.o               \
+	        dlogDplus_dloga.o              \
+	        dDplus_da.o                    \
+	        Dplus.o                        \
+	        linear_growth_factor.o         \
+	        W_k_tophat.o                   \
+	        M_sc.o                         \
+	        lk_sc.o 
+LIBFILE   = 
+BINFILES  = 
+LIBS      = 
+#############################

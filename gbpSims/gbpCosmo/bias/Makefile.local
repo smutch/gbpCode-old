@@ -1,0 +1,10 @@
+#############################
+# Library-specific settings #
+#############################
+INCFILES  = gbpCosmo_bias.h
+OBJFILES  = bias_model.o
+SCRIPTS   = bias_model_Poole2014.py
+LIBFILE   = 
+BINFILES  = 
+LIBS      = 
+#############################

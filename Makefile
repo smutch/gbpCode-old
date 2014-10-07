@@ -428,7 +428,7 @@ $(addprefix $(GBP_DAT)/,$(DATAFILES)):
 	done
 	@$(ECHO) -n "Linking '"$(notdir $@)"' to data directory..."
 	@rm -rf $@
-	@ln -s $(CURDIR)/$(notdir $@) $@
+	@ln -s $(CURDIR)/data/$(notdir $@) $@
 	@$(ECHO) "Done."
 
 # Generate library

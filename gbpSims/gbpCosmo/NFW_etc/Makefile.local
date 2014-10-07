@@ -1,0 +1,22 @@
+#############################
+# Library-specific settings #
+#############################
+INCFILES  = gbpCosmo_NFW_etc.h
+OBJFILES  = set_NFW_params.o       \
+	        R_vir_NFW.o            \
+	        c_vir_NFW.o            \
+	        rho_NFW.o              \
+            rho_NFW_fft.o          \
+            M_r_NFW.o              \
+            V_circ_NFW.o           \
+            V_circ_vir_NFW.o       \
+            V_max_NFW.o            \
+            Vmax_to_Mvir_NFW.o     \
+            R_half_V_max_NFW.o     \
+            R_V_max_NFW.o          \
+            Delta_half_V_max_NFW.o \
+            V2_circ.o
+LIBFILE   = 
+BINFILES  = 
+LIBS      = 
+#############################

@@ -1,0 +1,31 @@
+#############################
+# Library-specific settings #
+#############################
+INCFILES  = gbpCosmo_core.h
+OBJFILES  = a_of_z.o              \
+	        z_of_a.o              \
+	        init_deltat_a.o       \
+	        deltat_a.o            \
+	        R_Delta_z.o           \
+	        Omega_z.o             \
+	        Delta_vir.o           \
+	        Ha_Ho.o               \
+	        E_z.o                 \
+	        H_z.o                 \
+	        H_convert.o           \
+	        dlna_dtau.o           \
+	        rho_crit_z.o          \
+	        rho_crit_z_strip.o    \
+	        D_Hubble.o            \
+	        D_comove.o            \
+	        D_comove_transverse.o \
+	        D_angular.o           \
+	        D_angular_1to2.o      \
+	        D_luminosity.o        \
+	        init_cosmo_std.o      \
+	        init_cosmo.o          \
+	        free_cosmo.o
+LIBFILE   = 
+BINFILES  = 
+LIBS      = 
+#############################
