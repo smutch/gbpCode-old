@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gbpCommon.h>
-#include <gbpParse.h>
+#include <gbpParse_core.h>
 
 int count_words(char   *line){
   int  error=ERROR_NONE;

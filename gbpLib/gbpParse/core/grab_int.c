@@ -2,13 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gbpCommon.h>
-#include <gbpParse.h>
+#include <gbpParse_core.h>
 
-int grab_word(char *line,
-	      int   n, 
-	      char *return_value){
+int grab_int(char   *line,
+		int     n, 
+		int *return_value){
   int  error=ERROR_NONE;
-  char temp_char[2],temp_char_old[2],temp_string[1000];
+  char temp_char[2],temp_char_old[2];
   int  j,k,flag=FALSE;
   strcpy(temp_char_old," ");
   for(k=0,j=0;j<strlen(line);j++) {
@@ -18,8 +18,7 @@ int grab_word(char *line,
       if(!strcmp(temp_char_old," ")) {
 	k++;
 	if(k==n){
-	  sscanf(&(line[j]),"%s ",temp_string);
-          sprintf(return_value,"%s",temp_string);
+	  sscanf(&(line[j]),"%d",return_value);
 	  flag=TRUE;
 	  j=strlen(line);
 	}

@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gbpCommon.h>
-#include <gbpParse.h>
+#include <gbpParse_core.h>
 
 int grab_long(char   *line,
-		int     n, 
-		long *return_value){
+              int     n, 
+              long *return_value){
   int  error=ERROR_NONE;
   char temp_char[2],temp_char_old[2];
   int  j,k,flag=FALSE;
@@ -15,14 +15,14 @@ int grab_long(char   *line,
     strncpy(temp_char,&(line[j]),1);
     sprintf(temp_char,"%c",line[j]);
     if(strcmp(temp_char," ")) {
-      if(!strcmp(temp_char_old," ")) {
-	k++;
-	if(k==n){
-	  sscanf(&(line[j]),"%ld",return_value);
-	  flag=TRUE;
-	  j=strlen(line);
-	}
-      }
+       if(!strcmp(temp_char_old," ")) {
+          k++;
+          if(k==n){
+             sscanf(&(line[j]),"%ld",return_value);
+             flag=TRUE;
+             j=strlen(line);
+          }
+       }
     }
     strcpy(temp_char_old,temp_char);
   }

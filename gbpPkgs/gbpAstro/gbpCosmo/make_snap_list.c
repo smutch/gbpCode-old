@@ -73,12 +73,13 @@ int main(int argc, char *argv[]){
      printf("%lf\n",a_snap);
   }  
 
+  // Clean-up
   SID_free(SID_FARG a_list);
   SID_free(SID_FARG t_list);
   free_interpolate(SID_FARG interp,NULL);
+  free_cosmo(&cosmo);
 
   SID_log("Done.",SID_LOG_CLOSE);
-
-  return(ERROR_NONE);
+  SID_exit(ERROR_NONE);
 }
 

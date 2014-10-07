@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gbpCommon.h>
-#include <gbpParse.h>
+#include <gbpParse_core.h>
 
-int grab_float(char   *line,
+int grab_double(char   *line,
 		int     n, 
-		float *return_value){
+		double *return_value){
   int  error=ERROR_NONE;
   char temp_char[2],temp_char_old[2];
   int  j,k,flag=FALSE;
@@ -18,7 +18,7 @@ int grab_float(char   *line,
       if(!strcmp(temp_char_old," ")) {
 	k++;
 	if(k==n){
-	  sscanf(&(line[j]),"%f",return_value);
+	  sscanf(&(line[j]),"%lf",return_value);
 	  flag=TRUE;
 	  j=strlen(line);
 	}

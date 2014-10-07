@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gbpCommon.h>
-#include <gbpParse.h>
+#include <gbpParse_core.h>
 
 void strip_file_root(char *string){
   int  i_char;

@@ -1,57 +1,11 @@
 #############################
-# Library-sp.oif.o settings #
+# Library-specific settings #
 #############################
-INCFILES = gbpParse.h
-LIBFILE  = 
-
-# Compile getline on Mac platforms
-ifneq ($(USE_GETLINE),0)
-  OBJFILES = count_lines.o         \
-	   count_lines_data.o      \
-	   count_words.o           \
-	   check_comment.o         \
-	   grab_word.o             \
-	   grab_tail.o             \
-	   grab_double.o           \
-	   grab_float.o            \
-	   grab_real.o             \
-	   grab_int.o              \
-	   grab_long.o             \
-	   grab_next_line.o        \
-	   grab_next_line_data.o   \
-	   grab_nth_line.o         \
-	   grab_size_t.o           \
-	   grab_word.o             \
-	   strip_path.o            \
-	   strip_file_root.o       \
-	   search_and_replace.o    \
-	   float_to_text.o         \
-	   getline.o
-
-else
-  OBJFILES = count_lines.o         \
-	   count_lines_data.o      \
-	   count_words.o           \
-	   check_comment.o         \
-	   grab_word.o             \
-	   grab_tail.o             \
-	   grab_double.o           \
-	   grab_float.o            \
-	   grab_real.o             \
-	   grab_int.o              \
-	   grab_long.o             \
-	   grab_next_line.o        \
-	   grab_next_line_data.o   \
-	   grab_nth_line.o         \
-	   grab_size_t.o           \
-	   grab_word.o             \
-	   strip_path.o            \
-	   strip_file_root.o       \
-	   search_and_replace.o    \
-	   float_to_text.o
-endif
-
-BINFILES = 
-LIBS     = 
-SUBDIRS  = 
+INCFILES  = gbpParse.h 
+LIBFILE   = 
+OBJFILES  =
+LIBS      = 
+SUBDIRS   = core parameter_files
+BINFILES  = 
+SCRIPTS   = 
 #############################

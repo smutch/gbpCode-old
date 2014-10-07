@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gbpCommon.h>
-#include <gbpParse.h>
+#include <gbpParse_core.h>
 
 int grab_tail(char *line,
 	      int   n, 

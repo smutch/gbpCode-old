@@ -10,7 +10,7 @@
 #include <string.h>
 #include <gbpCommon.h>
 #include <gbpSID.h>
-#include <gbpParse.h>
+#include <gbpParse_core.h>
 int grab_next_line_data(FILE *fp,char **line, size_t *n){
   int rval;
   rval=getline(line,n,fp);

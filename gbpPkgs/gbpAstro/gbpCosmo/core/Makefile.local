@@ -22,6 +22,7 @@ OBJFILES  = a_of_z.o              \
 	        D_angular.o           \
 	        D_angular_1to2.o      \
 	        D_luminosity.o        \
+            read_gbpCosmo_file.o  \
 	        init_cosmo_std.o      \
 	        init_cosmo.o          \
 	        free_cosmo.o

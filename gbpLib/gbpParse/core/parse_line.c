@@ -4,7 +4,7 @@
 #include <stdarg.h>
 #include <gbpCommon.h>
 #include <gbpSID.h>
-#include <gbpParse.h>
+#include <gbpParse_core.h>
 
 int parse_line(char *line,
 	       int   n_return, ...){ 

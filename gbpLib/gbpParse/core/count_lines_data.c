@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <gbpCommon.h>
 #include <gbpSID.h>
-#include <gbpParse.h>
+#include <gbpParse_core.h>
 
 int count_lines_data(FILE *fp){
   int     n_lines=0;

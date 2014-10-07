@@ -41,8 +41,10 @@ double D_comove_transverse(double z,cosmo_info *cosmo);
 double D_angular(double z,cosmo_info *cosmo);
 double D_angular_1to2(double z_1,double z_2,cosmo_info *cosmo);
 double D_luminosity(double z,cosmo_info *cosmo);
+void   read_gbpCosmo_file(cosmo_info **cosmo,const char *filename_in);
 void   init_cosmo_std(cosmo_info **cosmo);
 void   init_cosmo(cosmo_info **cosmo,
+                  const char  *name,
                   double       Omega_Lambda,
                   double       Omega_M,
                   double       Omega_k,

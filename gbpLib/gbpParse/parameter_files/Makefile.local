@@ -1,0 +1,18 @@
+#############################
+# Library-specific settings #
+#############################
+INCFILES = gbpParse_parameter_files.h
+LIBFILE  = 
+OBJFILES = add_parameter_to_list.o      \
+           fetch_parameter_list_item.o  \
+           fetch_parameter_data.o       \
+           free_parameter_item.o        \
+           free_parameter_list.o        \
+           init_parameter_item.o        \
+           init_parameter_list.o        \
+           read_parameter_file.o        \
+           remove_parameter_character.o 
+BINFILES = 
+LIBS     = 
+SUBDIRS  = 
+#############################
