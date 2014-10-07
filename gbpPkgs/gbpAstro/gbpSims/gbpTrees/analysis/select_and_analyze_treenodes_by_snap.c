@@ -6,8 +6,8 @@
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpHalos.h>
-#include <gbpTrees.h>
-#include <gbpHighZ.h>
+#include <gbpTrees_build.h>
+#include <gbpTrees_analysis.h>
 
 // Create some default null function pointers
 void select_and_analyze_treenodes_fctn_init_null     (tree_info *trees,void *params,int mode,int i_type){}
