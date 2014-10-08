@@ -6,11 +6,8 @@
 
 #include <gbpCosmo_core.h>
 
-#define PSPEC_LINEAR_TF       0
-#define PSPEC_LINEAR_BBKS     1
-#define PSPEC_NONLINEAR_JAIN  2
-#define PSPEC_NONLINEAR_PD    3
-#define PSPEC_NONLINEAR_SMITH 4
+#define PSPEC_LINEAR_TF   0
+#define PSPEC_LINEAR_BBKS 1
 
 #define PSPEC_ALL_MATTER  0
 #define PSPEC_DARK_MATTER 1

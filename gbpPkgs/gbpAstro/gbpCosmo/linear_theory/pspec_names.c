@@ -17,15 +17,6 @@ void pspec_names(int   mode,
   case PSPEC_LINEAR_BBKS:
     sprintf(mode_name,"BBKS");
     break;
-  case PSPEC_NONLINEAR_JAIN:
-    sprintf(mode_name,"JAIN");
-    break;
-  case PSPEC_NONLINEAR_PD:
-    sprintf(mode_name,"NL_PD");
-    break;
-  case PSPEC_NONLINEAR_SMITH:
-    sprintf(mode_name,"NL_Smith");
-    break;
   default:
     fprintf(stderr,"Invalid PSPEC mode in pspec_names!\n");
     break;

@@ -70,7 +70,7 @@ void init_power_spectrum_variance(cosmo_info **cosmo,double z,int mode,int compo
   integrand.function=sigma2_integrand;
   params.component  =component;
   params.mode       =mode;
-  if(mode==PSPEC_LINEAR_TF || mode==PSPEC_NONLINEAR_SMITH)
+  if(mode==PSPEC_LINEAR_TF)
     params.z        =0.;
   else
     params.z        =z;

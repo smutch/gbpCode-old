@@ -10,7 +10,6 @@
 void init_power_spectrum_TF(cosmo_info **cosmo){
   FILE   *fp;
   char   *line=NULL;
-  char    filename_nl[MAX_FILENAME_LENGTH];
   size_t  line_length=0;
   int     i;
   int     n_k;
@@ -22,35 +21,29 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
   double *lP_k;
   double *lP_k_dark;
   double *lP_k_gas;
-  double *lP_k_nl;
   double *lP_k_tmp;
   double *lP_k_gas_tmp;
   double *lP_k_dark_tmp;
-  double *lP_k_nl_tmp;
   interp_info *interp;
   interp_info *interp_dark;
   interp_info *interp_gas;
-  interp_info *interp_nl;
   double  M_8;
   double  sigma2_unnorm;
   double  Omega_b;
   double  Omega_M;
   double  h_Hubble;
   double  norm;
-  double  norm_nl;
   double  n_spectral;
   double  M_WDM,R_WDM;
 
   SID_log("Initializing P(k)...",SID_LOG_OPEN);
 
-  // Names of the files where the transfer function and non-linear power spectrum are stored
+  // Fetch the transfer function filename (must be set before power_spectrum() is called).
   char filename_TF[MAX_FILENAME_LENGTH];
   if(!ADaPS_exist(*cosmo,"filename_transfer_function"))
      SID_trap_error("Transfer function filename has not been specified prior to calling init_power_spectrum_TF().",ERROR_LOGIC);
   memcpy(filename_TF,ADaPS_fetch((*cosmo),"filename_transfer_function"),MAX_FILENAME_LENGTH*sizeof(char));
   
-  sprintf(filename_nl,"%s/nonlinear_power_spectrum.dat",GBP_DATA_DIR);
-
   n_spectral =((double *)ADaPS_fetch((*cosmo),"n_spectral"))[0];
   h_Hubble   =((double *)ADaPS_fetch((*cosmo),"h_Hubble"))[0];
   Omega_M    =((double *)ADaPS_fetch((*cosmo),"Omega_M"))[0];
@@ -64,7 +57,6 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
   lP_k     =(double *)SID_malloc(sizeof(double)*n_k);
   lP_k_gas =(double *)SID_malloc(sizeof(double)*n_k);
   lP_k_dark=(double *)SID_malloc(sizeof(double)*n_k);
-  lP_k_nl  =(double *)SID_malloc(sizeof(double)*n_k);
   for(i=0;i<n_k;i++){
     grab_next_line_data(fp,&line,&line_length);
     grab_double(line,1,&(lk_P[i]));
@@ -73,24 +65,6 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
     lP_k[i]=((Omega_M-Omega_b)*lP_k_dark[i]+Omega_b*lP_k_gas[i])/Omega_M;
   }
   fclose(fp);
-
-  // Read tabulated non-linear power spectrum
-  fp      =fopen(filename_nl,"r");
-  n_k_tmp =count_lines_data(fp);
-  lk_P_tmp=(double *)SID_malloc(sizeof(double)*n_k_tmp);
-  lP_k_tmp=(double *)SID_malloc(sizeof(double)*n_k_tmp);
-  for(i=0;i<n_k_tmp;i++){
-    grab_next_line_data(fp,&line,&line_length);
-    grab_double(line,1,&(lk_P_tmp[i]));
-    grab_double(line,2,&(lP_k_tmp[i]));
-  }
-  fclose(fp);
-  init_interpolate(lk_P_tmp,lP_k_tmp,(size_t)n_k_tmp,gsl_interp_cspline,&interp);
-  for(i=0;i<n_k;i++)
-    lP_k_nl[i]=interpolate(interp,lk_P[i]);
-  SID_free(SID_FARG lk_P_tmp);
-  SID_free(SID_FARG lP_k_tmp);
-  free_interpolate(SID_FARG interp,NULL);
 
   // Take the log of lk_P
   for(i=0;i<n_k;i++)
@@ -112,13 +86,11 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
          lP_k[i]     =0.;
          lP_k_gas[i] =0.;
          lP_k_dark[i]=0.;
-         lP_k_nl[i]  =0.;
       }
       else{
          lP_k[i]     *=exp(-0.5*k_P*R_WDM-0.5*pow(k_P*R_WDM,2.));
          lP_k_gas[i] *=exp(-0.5*k_P*R_WDM-0.5*pow(k_P*R_WDM,2.));
          lP_k_dark[i]*=exp(-0.5*k_P*R_WDM-0.5*pow(k_P*R_WDM,2.));
-         lP_k_nl[i]  *=exp( 2.0*(-0.5*k_P*R_WDM-0.5*pow(k_P*R_WDM,2.)));
       }
     }
   }
@@ -129,17 +101,14 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
     lP_k[i]     =2.*take_log10(lP_k[i])     +(n_spectral)*lk_P[i];
     lP_k_gas[i] =2.*take_log10(lP_k_gas[i]) +(n_spectral)*lk_P[i];
     lP_k_dark[i]=2.*take_log10(lP_k_dark[i])+(n_spectral)*lk_P[i];
-    lP_k_nl[i]  =   take_log10(lP_k_nl[i]);
   }
 
   // Normalize at large scales
-  norm   =lP_k[0];
-  norm_nl=lP_k_nl[0];
+  norm=lP_k[0];
   for(i=0;i<n_k;i++){
     lP_k[i]     -=norm;
     lP_k_gas[i] -=norm;
     lP_k_dark[i]-=norm;
-    lP_k_nl[i]  -=norm_nl;
   }
 
   // Store P(k) arrays now so that the normalization routine can use them
@@ -163,34 +132,22 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
               (void *)(lP_k_dark),
               "lP_k_TF_dark",
               ADaPS_DEFAULT);
-  ADaPS_store(cosmo,
-              (void *)(lP_k_nl),
-              "lP_k_NL_Smith_all",
-              ADaPS_DEFAULT);
+
   // Compute and store interpolation information for the unnormalized P(k)
   //   (needed by the normalization routine)
-  init_interpolate(lk_P,lP_k,   (size_t)n_k,gsl_interp_cspline,&interp);
-  init_interpolate(lk_P,lP_k_nl,(size_t)n_k,gsl_interp_cspline,&interp_nl);
-  ADaPS_store_interp(cosmo,
-                     (void *)(interp),
-                     "lP_k_TF_all_interp");
-  ADaPS_store_interp(cosmo,
-                     (void *)(interp_nl),
-                     "lP_k_NL_Smith_all_interp");
+  init_interpolate(lk_P,lP_k,(size_t)n_k,gsl_interp_cspline,&interp);
+  ADaPS_store_interp(cosmo,(void *)(interp),"lP_k_TF_all_interp");
 
   // Normalize P(k) to sigma_8
   norm=power_spectrum_normalization(*cosmo,PSPEC_LINEAR_TF,PSPEC_ALL_MATTER);
-  norm_nl=lP_k[0]-lP_k_nl[0]+norm;
   for(i=0;i<n_k;i++){
     lP_k[i]     +=norm;
     lP_k_gas[i] +=norm;
     lP_k_dark[i]+=norm;
-    lP_k_nl[i]  +=norm_nl;
   }
 
   // Create interpolation information for P(k) arrays
   init_interpolate(lk_P,lP_k,     (size_t)n_k,gsl_interp_cspline,&interp);
-  init_interpolate(lk_P,lP_k_nl,  (size_t)n_k,gsl_interp_cspline,&interp_nl);
   init_interpolate(lk_P,lP_k_gas, (size_t)n_k,gsl_interp_cspline,&interp_gas);
   init_interpolate(lk_P,lP_k_dark,(size_t)n_k,gsl_interp_cspline,&interp_dark);
 
@@ -198,9 +155,6 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
   ADaPS_store_interp(cosmo,
                      (void *)(interp),
                      "lP_k_TF_all_interp");
-  ADaPS_store_interp(cosmo,
-                     (void *)(interp_nl),
-                     "lP_k_NL_Smith_all_interp");
   ADaPS_store_interp(cosmo,
                     (void *)(interp_gas),
                     "lP_k_TF_gas_interp");
@@ -298,8 +252,6 @@ double power_spectrum(double       k_interp,
 
   switch(mode){
   case PSPEC_LINEAR_TF:       // Linear theory from transfer function
-  case PSPEC_NONLINEAR_JAIN:  // Jain et al correlation function needs linear power spectrum
-  case PSPEC_NONLINEAR_SMITH: // Smith et al '02; generated by CAMB
     pspec_names(mode,
       component,
       mode_name,
