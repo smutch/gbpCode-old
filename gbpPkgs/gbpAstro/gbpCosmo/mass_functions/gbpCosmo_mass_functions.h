@@ -18,14 +18,10 @@ extern "C" {
 double mass_function(double        M_interp,
                      double        z,
                      cosmo_info  **cosmo,
-                     int           mode,
-                     int           component,
                      int           select_flag);
 double mass_function_cumulative(double       M_interp,
                                 double       z,
-                                cosmo_info  *cosmo,
-                                int          mode,
-                                int          component,
+                                cosmo_info **cosmo,
                                 int          select_flag);
 double scaled_mass_function(double sigma,int select_flag);
 #ifdef __cplusplus
