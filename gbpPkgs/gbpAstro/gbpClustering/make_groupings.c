@@ -342,7 +342,7 @@ int main(int argc, char *argv[]){
   cosmo_info *cosmo=NULL;
   if(flag_use_bias_model){
      char filename_cosmology[MAX_FILENAME_LENGTH];
-     sprintf(filename_cosmology,"%s/run/cosmology.txt",filename_SSimPL_root);
+     sprintf(filename_cosmology,"%s/run",filename_SSimPL_root);
      read_gbpCosmo_file(&cosmo,filename_cosmology);
      init_sigma_M(&cosmo,redshift,PSPEC_LINEAR_TF,PSPEC_ALL_MATTER);
   }

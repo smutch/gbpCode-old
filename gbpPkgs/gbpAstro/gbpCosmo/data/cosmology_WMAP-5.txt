@@ -1,4 +1,4 @@
-# Standard WMAP-5 cosmology used for GiggleZ
+# Standard WMAP-5 cosmology
 % Name         WMAP-5
 % Omega_Lambda 0.727
 % Omega_M      0.273

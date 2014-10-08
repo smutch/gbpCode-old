@@ -5,7 +5,7 @@ INCFILES  = gbpCosmo.h
 OBJFILES  = 
 LIBFILE   = libgbpCosmo.a
 BINFILES  = make_snap_list D_angular_1to2 plot_cosmo plot_clustering
-DATAFILES = default_cosmology.txt nonlinear_power_spectrum.dat transfer_function.dat
+DATAFILES = cosmology_WMAP-5.txt  cosmology_WMAP-7.txt  nonlinear_power_spectrum.dat  transfer_function_WMAP-5.txt  transfer_function_WMAP-7.txt
 SUBDIRS   = core linear_theory NFW_etc mass_functions bias
 LIBS      = -lgbpCosmo -lgbpMath -lgbpLib
 #############################

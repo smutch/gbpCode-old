@@ -1,8 +1,11 @@
-/**********************/
-/* Cosmology routines */
-/**********************/
 #ifndef GBPCOSMO_CORE_AWAKE
 #define GBPCOSMO_CORE_AWAKE
+
+// Define the default cosmology if it wasn't specified
+//   when make was called.
+#ifndef GBP_COSMOLOGY_DEFAULT
+#define GBP_COSMOLOGY_DEFAULT "WMAP-7"
+#endif
 
 #define DELTAT_A_MIN_A 1e-5
 

@@ -10,7 +10,6 @@
 void init_power_spectrum_TF(cosmo_info **cosmo){
   FILE   *fp;
   char   *line=NULL;
-  char    filename_TF[MAX_FILENAME_LENGTH];
   char    filename_nl[MAX_FILENAME_LENGTH];
   size_t  line_length=0;
   int     i;
@@ -45,7 +44,11 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
   SID_log("Initializing P(k)...",SID_LOG_OPEN);
 
   // Names of the files where the transfer function and non-linear power spectrum are stored
-  sprintf(filename_TF,"%s/transfer_function.dat",       GBP_DATA_DIR);
+  char filename_TF[MAX_FILENAME_LENGTH];
+  if(!ADaPS_exist(*cosmo,"filename_transfer_function"))
+     SID_trap_error("Transfer function filename has not been specified prior to calling init_power_spectrum_TF().",ERROR_LOGIC);
+  memcpy(filename_TF,ADaPS_fetch((*cosmo),"filename_transfer_function"),MAX_FILENAME_LENGTH*sizeof(char));
+  
   sprintf(filename_nl,"%s/nonlinear_power_spectrum.dat",GBP_DATA_DIR);
 
   n_spectral =((double *)ADaPS_fetch((*cosmo),"n_spectral"))[0];

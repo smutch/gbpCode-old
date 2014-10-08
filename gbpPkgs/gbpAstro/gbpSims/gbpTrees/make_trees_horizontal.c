@@ -59,7 +59,7 @@ int main(int argc, char *argv[]){
 
   // Initialize cosmology
   char filename_cosmology[MAX_FILENAME_LENGTH];
-  sprintf(filename_cosmology,"%s/run/cosmology.txt",filename_SSimPL_dir);
+  sprintf(filename_cosmology,"%s/run",filename_SSimPL_dir);
   read_gbpCosmo_file(&cosmo,filename_cosmology);
 
   SID_log("Constructing horizontal merger trees for snapshots #%d->#%d (step=%d, n_search=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read_start,i_read_stop,i_read_step,n_search);

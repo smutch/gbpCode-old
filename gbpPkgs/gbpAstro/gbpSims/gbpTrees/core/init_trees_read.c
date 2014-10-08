@@ -93,7 +93,7 @@ void init_trees_read(const char  *filename_SSimPL_dir,
 
   // Initialize the cosmology
   char filename_cosmology[MAX_FILENAME_LENGTH];
-  sprintf(filename_cosmology,"%s/run/cosmology.txt",filename_SSimPL_dir);
+  sprintf(filename_cosmology,"%s/run",filename_SSimPL_dir);
   read_gbpCosmo_file(&((*tree)->cosmo),filename_cosmology);
   cosmo_info *cosmo=(*tree)->cosmo;
 
