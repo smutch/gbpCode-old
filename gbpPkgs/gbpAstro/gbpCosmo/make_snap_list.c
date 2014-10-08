@@ -10,19 +10,18 @@ int main(int argc, char *argv[]){
 
   SID_init(&argc,&argv,NULL);
 
-  double a_min;
-  double a_max;
-  double z_min;
-  double z_max;
-  int    n_snap;
-  z_min =atof(argv[1]);
-  z_max =atof(argv[2]);
-  n_snap=atoi(argv[3]);
-  a_min =a_of_z(z_max);
-  a_max =a_of_z(z_min);
+  double z_min =atof(argv[1]);
+  double z_max =atof(argv[2]);
+  int    n_snap=atoi(argv[3]);
+  double a_min =a_of_z(z_max);
+  double a_max =a_of_z(z_min);
 
+   // Initialize cosmology
   ADaPS *cosmo;
-  init_cosmo_std(&cosmo);
+  if(argc==4)
+     init_cosmo_default(&cosmo);
+  else if(argc==5)
+     read_gbpCosmo_file(&cosmo,argv[4]);
 
   SID_log("Constructing %d snapshot expansion factors between z=%lf->%lf...",SID_LOG_OPEN,n_snap,z_min,z_max);
 

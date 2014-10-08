@@ -58,7 +58,7 @@ int main(int argc, char *argv[]){
   tree_info *trees;
   char       filename_file_root[MAX_FILENAME_LENGTH];
   sprintf(filename_file_root,"%s/trees/%s",filename_SSimPL_root,filename_trees_root);
-  init_trees_read(filename_file_root,TREE_READ_DEFAULT,&trees);
+  init_trees_read(filename_SSimPL_root,filename_trees_root,TREE_READ_DEFAULT,&trees);
 
   if(mode==MATCH_GROUPS){
      SID_log("The following group tree IDs are in forest No. %d:",SID_LOG_COMMENT,halo_forest_find);

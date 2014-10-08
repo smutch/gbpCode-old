@@ -459,9 +459,6 @@ int main(int argc, char *argv[]){
   SID_log("Smoothing Gadget file {%s;snapshot=#%d} to a %dx%dx%d grid with %s kernel...",SID_LOG_OPEN|SID_LOG_TIMER,
           filename_in_root,snapshot_number,grid_size,grid_size,grid_size,argv[5]);
 
-  // Initialization -- default cosmology
-  init_cosmo_std(&cosmo);
-
   // Initialization -- fetch header info
   SID_log("Reading Gadget header...",SID_LOG_OPEN);
   gadget_read_info   fp_gadget;
@@ -505,6 +502,31 @@ int main(int argc, char *argv[]){
         else
            flag_used[i_species]=FALSE;
      }
+
+     // Initialize cosmology
+     double box_size        =((double *)ADaPS_fetch(plist.data,"box_size"))[0];
+     double h_Hubble        =((double *)ADaPS_fetch(plist.data,"h_Hubble"))[0];
+     double redshift        =((double *)ADaPS_fetch(plist.data,"redshift"))[0];
+     double expansion_factor=((double *)ADaPS_fetch(plist.data,"expansion_factor"))[0];
+     double Omega_M         =((double *)ADaPS_fetch(plist.data,"Omega_M"))[0];
+     double Omega_Lambda    =((double *)ADaPS_fetch(plist.data,"Omega_Lambda"))[0];
+     double Omega_k         =1.-Omega_Lambda-Omega_M;
+     double Omega_b=0.; // not needed, so doesn't matter
+     double f_gas  =Omega_b/Omega_M;
+     double sigma_8=0.; // not needed, so doesn't matter
+     double n_spec =0.; // not needed, so doesn't matter
+     char   cosmo_name[16];
+     sprintf(cosmo_name,"Gadget file's");
+     init_cosmo(&cosmo,
+                cosmo_name,
+                Omega_Lambda,
+                Omega_M,
+                Omega_k,
+                Omega_b,
+                f_gas,
+                h_Hubble,
+                sigma_8,
+                n_spec);
   }
   SID_log("Done.",SID_LOG_CLOSE);
 

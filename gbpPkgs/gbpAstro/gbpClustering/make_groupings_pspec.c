@@ -27,6 +27,7 @@ int main(int argc, char *argv[]){
    int     i_grouping_start;
    int     i_grouping_stop;
    char    filename_in[MAX_FILENAME_LENGTH];
+   char    filename_cosmology[MAX_FILENAME_LENGTH];
    char    filename_in_root[MAX_FILENAME_LENGTH];
    char    filename_in_model[MAX_FILENAME_LENGTH];
    char    filename_out_root[MAX_FILENAME_LENGTH];
@@ -60,13 +61,14 @@ int main(int argc, char *argv[]){
      SID_trap_error("Incorrect syntax.",ERROR_SYNTAX);
 
    // Parse arguments
-   strcpy(filename_in_root, argv[1]);
-   strcpy(filename_out_root,argv[2]);
+   strcpy(filename_in_root,       argv[1]);
+   strcpy(filename_out_root,      argv[2]);
    redshift         =(double)atof(argv[3]);
-   grid_size        =(int)   atoi(argv[4]);
-   box_size         =(double)atof(argv[5]);
-   i_grouping_start =(int)   atoi(argv[6]);
-   i_grouping_stop  =(int)   atoi(argv[7]);
+   strcpy(filename_cosmology,     argv[4]);
+   grid_size        =(int)   atoi(argv[5]);
+   box_size         =(double)atof(argv[6]);
+   i_grouping_start =(int)   atoi(argv[7]);
+   i_grouping_stop  =(int)   atoi(argv[8]);
 
    // Sanity check
    int n_groupings;
@@ -92,8 +94,8 @@ int main(int argc, char *argv[]){
  
    // Initialize the power spectrum
    pspec_info pspec;
-   init_pspec(&pspec,
- 	     MAP2GRID_DIST_DWT20,
+   init_pspec(&pspec,filename_cosmology,NULL,
+ 	         MAP2GRID_DIST_DWT20,
              redshift,box_size,grid_size,
              k_min_1D,k_max_1D,dk_1D,
              k_min_2D,k_max_2D,dk_2D);

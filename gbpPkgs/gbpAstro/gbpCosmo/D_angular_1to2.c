@@ -7,14 +7,14 @@
 #include <gbpCosmo.h>
 
 int main(int argc, char *argv[]){
-  ADaPS *cosmo;
-  double     Omega_M;
-  double     Omega_Lambda;
-  double     Omega_k;
-  double     h_Hubble;
-  double     z_lo,z_hi;
-  if(argc<3 || argc>7){
-    fprintf(stderr,"\n Syntax: %s z_lo z_hi [h_Hubble] [Omega_M] [Omega_Lambda] [Omega_k]\n",argv[0]);
+
+  SID_init(&argc,&argv,NULL);
+
+  // Parse arguments and initialize
+  double z_lo;
+  double z_hi;
+  if(argc<3 || argc>4){
+    fprintf(stderr,"\n Syntax: %s z [gbpCosmo_file.txt]\n",argv[0]);
     fprintf(stderr," ------\n\n");
     return(ERROR_SYNTAX);
   }
@@ -22,41 +22,20 @@ int main(int argc, char *argv[]){
     z_lo=(double)atof(argv[1]);
     z_hi=(double)atof(argv[2]);
   }
-  init_cosmo_std(&cosmo);
-  if(argc>3){
-    h_Hubble=(double)atof(argv[3]);
-    ADaPS_store(&cosmo,
-               (void *)(&h_Hubble),
-               "h_Hubble",
-               ADaPS_SCALAR_DOUBLE);
-  }
-  if(argc>4){
-    Omega_M     =(double)atof(argv[4]);
-    Omega_Lambda=1.-Omega_M;
-    ADaPS_store(&cosmo,
-               (void *)(&Omega_M),
-               "Omega_M",
-               ADaPS_SCALAR_DOUBLE);
-    ADaPS_store(&cosmo,
-               (void *)(&Omega_Lambda),
-               "Omega_Lambda",
-               ADaPS_SCALAR_DOUBLE);
-  }
-  if(argc>5){
-    Omega_Lambda=(double)atof(argv[5]);
-    ADaPS_store(&cosmo,
-               (void *)(&Omega_Lambda),
-               "Omega_Lambda",
-               ADaPS_SCALAR_DOUBLE);
-  }
-  if(argc>6){
-    Omega_k=(double)atof(argv[6]);
-    ADaPS_store(&cosmo,
-               (void *)(&Omega_k),
-               "Omega_k",
-               ADaPS_SCALAR_DOUBLE);
-  }
-  printf("%10.3lf\n",D_angular_1to2(z_lo,z_hi,cosmo)/M_PER_MPC);
+
+  SID_log("Computing angular diameter distance between redshifts z=%lf and z=%lf...",SID_LOG_OPEN,z_lo,z_hi);
+
+  // Initialize cosmology
+  ADaPS *cosmo;
+  if(argc==2)
+     init_cosmo_default(&cosmo);
+  else if(argc==3)
+     read_gbpCosmo_file(&cosmo,argv[3]);
+
+  SID_log("result=%10.3lf",SID_LOG_COMMENT,D_angular_1to2(z_lo,z_hi,cosmo)/M_PER_MPC);
+
+  // Clean-up
   free_cosmo(&cosmo);
-  return(0);
+
+  SID_exit(ERROR_NONE);
 }

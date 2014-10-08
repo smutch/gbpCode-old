@@ -12,14 +12,14 @@ int main(int argc, char *argv[]){
   SID_init(&argc,&argv,NULL);
 
   // Fetch user inputs -- filenames
-  char filename_SSimPL_dir[MAX_FILENAME_LENGTH];
-  char filename_halo_version_root[MAX_FILENAME_LENGTH];
+  char filename_SSimPL_root[MAX_FILENAME_LENGTH];
+  char filename_halos_version[MAX_FILENAME_LENGTH];
   char filename_trees_root[MAX_FILENAME_LENGTH];
-  char filename_trees_name[MAX_FILENAME_LENGTH];
+  char filename_trees_version[MAX_FILENAME_LENGTH];
   char filename_halos_root[MAX_FILENAME_LENGTH];
-  strcpy(filename_SSimPL_dir,       argv[1]);
-  strcpy(filename_halo_version_root,argv[2]);
-  strcpy(filename_trees_name,       argv[3]);
+  strcpy(filename_SSimPL_root,  argv[1]);
+  strcpy(filename_halos_version,argv[2]);
+  strcpy(filename_trees_version,argv[3]);
 
   // Fetch user inputs -- halo ID list
   int n_list=argc-4;
@@ -34,22 +34,23 @@ int main(int argc, char *argv[]){
      SID_log(" %d",SID_LOG_CONTINUE,halo_ID_list[i_list]);
   SID_log("",SID_LOG_CLOSE|SID_LOG_NOPRINT);
 
-  sprintf(filename_trees_root,"%s/trees/%s",filename_SSimPL_dir,filename_trees_name);
-  sprintf(filename_halos_root,"%s/halos/%s",filename_SSimPL_dir,filename_halo_version_root);
+  sprintf(filename_trees_root,"%s/trees/%s",filename_SSimPL_root,filename_trees_version);
+  sprintf(filename_halos_root,"%s/halos/%s",filename_SSimPL_root,filename_halos_version);
 
   SID_log("Writing ascii versions of %d main progenitor branch(s)...",SID_LOG_OPEN|SID_LOG_TIMER,n_list);
 
   // Perform analysis
   tree_info *trees;
-  read_trees(filename_trees_root,
-             filename_halos_root,
+  read_trees(filename_SSimPL_root,
+             filename_halos_version,
+             filename_trees_version,
              TREE_MODE_DEFAULT,
              &trees);
 
   // Read ancillary data
   read_trees_catalogs(trees,
-                      filename_SSimPL_dir,
-                      filename_halo_version_root,
+                      filename_SSimPL_root,
+                      filename_halos_version,
                       READ_TREES_CATALOGS_GROUPS|READ_TREES_CATALOGS_SUBGROUPS);
 
   // Initialize a tree_node array large enough for all the requested halo IDs
@@ -76,7 +77,7 @@ int main(int argc, char *argv[]){
   for(int i_list=0;i_list<n_list;i_list++){
      char  filename_out[MAX_FILENAME_LENGTH];
      sprintf(filename_out,"subhalo_ID_%09d_branch.txt",halo_ID_list[i_list]);
-     write_tree_branch_ascii(trees,selected[i_list],filename_out,filename_trees_name);
+     write_tree_branch_ascii(trees,selected[i_list],filename_out,filename_trees_version);
   }
 
   // Clean-up

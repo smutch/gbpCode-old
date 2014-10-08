@@ -20,6 +20,7 @@ int main(int argc, char *argv[]){
    int     i_grouping_start;
    int     i_grouping_stop;
    char    filename_in[MAX_FILENAME_LENGTH];
+   char    filename_cosmology[MAX_FILENAME_LENGTH];
    char    filename_in_root[MAX_FILENAME_LENGTH];
    char    filename_in_model[MAX_FILENAME_LENGTH];
    char    filename_out_root[MAX_FILENAME_LENGTH];
@@ -46,12 +47,13 @@ int main(int argc, char *argv[]){
    // Parse arguments
    int n_jack;
    int n_random;
-   strcpy(filename_in_root, argv[1]);
-   strcpy(filename_out_root,argv[2]);
+   strcpy(filename_in_root,       argv[1]);
+   strcpy(filename_out_root,      argv[2]);
    redshift         =(double)atof(argv[3]);
-   n_jack           =(int)   atoi(argv[4]);
-   n_random         =(int)   atoi(argv[5]);
-   box_size         =(double)atof(argv[6]);
+   strcpy(filename_cosmology,     argv[4]);
+   n_jack           =(int)   atoi(argv[5]);
+   n_random         =(int)   atoi(argv[6]);
+   box_size         =(double)atof(argv[7]);
 
    // Count the number of objects involved
    int   n_groupings_in;
@@ -102,7 +104,7 @@ int main(int argc, char *argv[]){
  
    // Initialize the correlation function structure
    cfunc_info cfunc;
-   init_cfunc(&cfunc,n_data,n_random,n_bits_PHK,
+   init_cfunc(&cfunc,filename_cosmology,n_data,n_random,n_bits_PHK,
               redshift,box_size,n_jack,
               r_min_l1D,r_max_1D,dr_1D,
               r_min_2D, r_max_2D,dr_2D);

@@ -73,7 +73,7 @@ int main(int argc, char *argv[]){
   char       filename_file_root[MAX_FILENAME_LENGTH];
   sprintf(filename_file_root,"%s/trees/%s",filename_SSimPL_root,filename_trees_root);
   SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
-  init_trees_read(filename_file_root,TREE_READ_HEADER_ONLY,&trees);
+  init_trees_read(filename_SSimPL_root,filename_trees_root,TREE_READ_HEADER_ONLY,&trees);
   SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
   // If we're searching for an ID, set starting snapshot to be the first ...

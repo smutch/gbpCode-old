@@ -32,10 +32,8 @@ int main(int argc, char *argv[]){
   int     n_subgroups_all;
   int     n_groups;
   size_t  n_group_local;
-  char    filename_groups_root[MAX_FILENAME_LENGTH];
   char    filename_groups_in[MAX_FILENAME_LENGTH];
   char    filename_subgroups_in[MAX_FILENAME_LENGTH];
-  char    filename_cat_root[MAX_FILENAME_LENGTH];
   char    filename_out[MAX_FILENAME_LENGTH];
   char    filename_out_root[MAX_FILENAME_LENGTH];
   char    group_text_prefix[4];
@@ -156,18 +154,26 @@ int main(int argc, char *argv[]){
   int         mode;
 
   // Initialization -- MPI etc.
+  char filename_SSimPL_root[MAX_FILENAME_LENGTH];
+  char filename_halos_version[MAX_FILENAME_LENGTH];
   SID_init(&argc,&argv,NULL);
-  strcpy(filename_groups_root,argv[1]);
-  strcpy(filename_cat_root,   argv[2]);
-  strcpy(filename_out_root,   argv[3]);
-  i_snap              =(int) atoi(argv[4]);
-  n_halos_per_grouping=(int) atoi(argv[5]);
-  n_particles_min     =(int) atoi(argv[6]);
+  strcpy(filename_SSimPL_root,       argv[1]);
+  strcpy(filename_halos_version,     argv[2]);
+  strcpy(filename_out_root,          argv[3]);
+  i_snap              =(int)    atoi(argv[4]);
+  n_halos_per_grouping=(int)    atoi(argv[5]);
+  n_particles_min     =(int)    atoi(argv[6]);
   V_max_lo            =(GBPREAL)atof(argv[7]);
   V_max_hi            =(GBPREAL)atof(argv[8]);
-  n_groupings         =(int) atoi(argv[9]);
-  mode                =(int) atoi(argv[10]);
+  n_groupings         =(int)    atoi(argv[9]);
+  mode                =(int)    atoi(argv[10]);
   delta_V_max         =(V_max_hi-V_max_lo)/(double)(n_groupings-1);
+
+  // Set some filename roots
+  char filename_groups_root[MAX_FILENAME_LENGTH];
+  char filename_cat_root[MAX_FILENAME_LENGTH];
+  sprintf(filename_groups_root,"%s/groups/%s",  filename_SSimPL_root,filename_halos_version);
+  sprintf(filename_cat_root,   "%s/catalogs/%s",filename_SSimPL_root,filename_halos_version);
 
   SID_log("Producing (up to) %d groupings of halos...",SID_LOG_OPEN,n_groupings);
 
@@ -335,7 +341,9 @@ int main(int argc, char *argv[]){
   // Initialize cosmology if we're using the bias model to set number densities
   cosmo_info *cosmo=NULL;
   if(flag_use_bias_model){
-     init_cosmo_std(&cosmo);
+     char filename_cosmology[MAX_FILENAME_LENGTH];
+     sprintf(filename_cosmology,"%s/run/cosmology.txt",filename_SSimPL_root);
+     read_gbpCosmo_file(&cosmo,filename_cosmology);
      init_sigma_M(&cosmo,redshift,PSPEC_LINEAR_TF,PSPEC_ALL_MATTER);
   }
 

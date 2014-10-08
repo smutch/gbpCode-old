@@ -8,7 +8,7 @@
 #include <gbpHalos.h>
 #include <gbpClustering.h>
 
-void init_cfunc(cfunc_info *cfunc,int    n_data,  int    n_random,int    n_bits_PHK,
+void init_cfunc(cfunc_info *cfunc,const char *filename_cosmology,int    n_data,  int    n_random,int    n_bits_PHK,
                 double redshift,  double box_size,int    n_jack,
                 double r_min_l1D, double r_max_1D,double dr_1D,
                 double r_min_2D,  double r_max_2D,double dr_2D){
@@ -98,7 +98,10 @@ void init_cfunc(cfunc_info *cfunc,int    n_data,  int    n_random,int    n_bits_
   }
 
   // Initialize the cosmology
-  init_cosmo_std(&(cfunc->cosmo));
+  if(filename_cosmology==NULL)
+     init_cosmo_default(&(cfunc->cosmo));
+  else
+     read_gbpCosmo_file(&(cfunc->cosmo),filename_cosmology);
 
   SID_log("Done.",SID_LOG_CLOSE);
 }

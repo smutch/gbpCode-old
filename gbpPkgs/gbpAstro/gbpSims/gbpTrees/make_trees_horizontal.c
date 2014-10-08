@@ -39,9 +39,6 @@ int main(int argc, char *argv[]){
 
   SID_init(&argc,&argv,NULL);
 
-  // Initialize cosmology
-  init_cosmo_std(&cosmo); 
-
   // Fetch user inputs
   strcpy(filename_SSimPL_dir,       argv[1]);
   strcpy(filename_halo_version_root,argv[2]);
@@ -59,6 +56,11 @@ int main(int argc, char *argv[]){
   sprintf(filename_root_matches,"%s/trees/matches",filename_SSimPL_dir);
   sprintf(filename_snap_list_in,"%s/run/%s.a_list",filename_SSimPL_dir,filename_SSimPL_base);
   sprintf(filename_root_out,    "%s/trees/%s",     filename_SSimPL_dir,filename_trees_name);
+
+  // Initialize cosmology
+  char filename_cosmology[MAX_FILENAME_LENGTH];
+  sprintf(filename_cosmology,"%s/run/cosmology.txt",filename_SSimPL_dir);
+  read_gbpCosmo_file(&cosmo,filename_cosmology);
 
   SID_log("Constructing horizontal merger trees for snapshots #%d->#%d (step=%d, n_search=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read_start,i_read_stop,i_read_step,n_search);
   compute_trees_horizontal(filename_halo_root_in,

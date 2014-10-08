@@ -7,67 +7,38 @@
 #include <gbpCosmo.h>
 
 int main(int argc, char *argv[]){
-  ADaPS     *cosmo;
-  double     Omega_M;
-  double     Omega_Lambda;
-  double     Omega_k;
-  double     h_Hubble;
-  double     z;
+  SID_init(&argc,&argv,NULL);
 
-  // Print syntax
-  if(argc<2 || argc>6){
-    fprintf(stderr,"\n Syntax: %s z [h_Hubble] [Omega_M] [Omega_Lambda] [Omega_k]\n",argv[0]);
+  // Parse arguments and initialize
+  double z;
+  if(argc<2 || argc>3){
+    fprintf(stderr,"\n Syntax: %s z [gbpCosmo_file.txt]\n",argv[0]);
     fprintf(stderr," ------\n\n");
     return(ERROR_SYNTAX);
   }
+  else
+    z=(double)atof(argv[1]);
+  SID_log("Computing cosmology information for z=%.2lf...",SID_LOG_OPEN,z);
 
-  // Set cosmology
-  init_cosmo_std(&cosmo);
-  z=(double)atof(argv[1]);
-  if(argc>2){
-    h_Hubble=(double)atof(argv[2]);
-    ADaPS_store(&cosmo,
-               (void *)(&h_Hubble),
-               "h_Hubble",
-               ADaPS_SCALAR_DOUBLE);
-  }
-  if(argc>3){
-    Omega_M     =(double)atof(argv[3]);
-    Omega_Lambda=1.-Omega_M;
-    ADaPS_store(&cosmo,
-               (void *)(&Omega_M),
-               "Omega_M",
-               ADaPS_SCALAR_DOUBLE);
-    ADaPS_store(&cosmo,
-               (void *)(&Omega_Lambda),
-               "Omega_Lambda",
-               ADaPS_SCALAR_DOUBLE);
-  }
-  if(argc>4){
-    Omega_Lambda=(double)atof(argv[4]);
-    ADaPS_store(&cosmo,
-               (void *)(&Omega_Lambda),
-               "Omega_Lambda",
-               ADaPS_SCALAR_DOUBLE);
-  }
-  if(argc>5){
-    Omega_k=(double)atof(argv[5]);
-    ADaPS_store(&cosmo,
-               (void *)(&Omega_k),
-               "Omega_k",
-               ADaPS_SCALAR_DOUBLE);
-  }
-  h_Hubble=((double *)ADaPS_fetch(cosmo,"h_Hubble"))[0];
+  // Initialize cosmology
+  ADaPS *cosmo;
+  if(argc==2)
+     init_cosmo_default(&cosmo);
+  else if(argc==3)
+     read_gbpCosmo_file(&cosmo,argv[2]);
 
   // Output results
-  printf("rho_crit     = %13.6le Msol/(Mpc^3)\n",rho_crit_z(z,cosmo)*(M_PER_MPC/M_SOL)*M_PER_MPC*M_PER_MPC);
-  printf("D_angular    = %10.3lf Mpc\n",         D_angular(z,cosmo)/M_PER_MPC);
-  printf("D_luminosity = %10.3lf Mpc\n",         D_luminosity(z,cosmo)/M_PER_MPC);
-  printf("D_comoving   = %10.3lf Mpc\n",         D_comove(z,cosmo)/M_PER_MPC);
-  printf("D_horizon    = %10.3lf Mpc\n",         C_VACUUM*deltat_a(&cosmo,0.,a_of_z(z))/M_PER_MPC);
-  printf("D_V          = %10.3lf Mpc\n",         pow((1+z)*D_angular(z,cosmo)*(1+z)*D_angular(z,cosmo)*z*C_VACUUM/H_convert(H_z(z,cosmo)),ONE_THIRD)/M_PER_MPC);
-  printf("H(z)         = %10.3lf km/s/Mpc\n",    H_z(z,cosmo));
-  printf("1/H(z)       = %10.3le years\n",       1./(H_convert(H_z(z,cosmo))*S_PER_YEAR));
+  double h_Hubble=((double *)ADaPS_fetch(cosmo,"h_Hubble"))[0];
+  SID_log("rho_crit     = %13.6le Msol/(Mpc^3)",SID_LOG_COMMENT,rho_crit_z(z,cosmo)*(M_PER_MPC/M_SOL)*M_PER_MPC*M_PER_MPC);
+  SID_log("D_angular    = %10.3lf Mpc",         SID_LOG_COMMENT,D_angular(z,cosmo)/M_PER_MPC);
+  SID_log("D_luminosity = %10.3lf Mpc",         SID_LOG_COMMENT,D_luminosity(z,cosmo)/M_PER_MPC);
+  SID_log("D_comoving   = %10.3lf Mpc",         SID_LOG_COMMENT,D_comove(z,cosmo)/M_PER_MPC);
+  SID_log("D_horizon    = %10.3lf Mpc",         SID_LOG_COMMENT,C_VACUUM*deltat_a(&cosmo,0.,a_of_z(z))/M_PER_MPC);
+  SID_log("D_V          = %10.3lf Mpc",         SID_LOG_COMMENT,pow((1+z)*D_angular(z,cosmo)*(1+z)*D_angular(z,cosmo)*z*C_VACUUM/H_convert(H_z(z,cosmo)),ONE_THIRD)/M_PER_MPC);
+  SID_log("H(z)         = %10.3lf km/s/Mpc",    SID_LOG_COMMENT,H_z(z,cosmo));
+  SID_log("1/H(z)       = %10.3le years",       SID_LOG_COMMENT,1./(H_convert(H_z(z,cosmo))*S_PER_YEAR));
+
+  SID_log("Done.",SID_LOG_CLOSE);
 
   // Clean-up
   free_cosmo(&cosmo);

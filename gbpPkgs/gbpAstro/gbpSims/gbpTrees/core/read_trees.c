@@ -10,10 +10,17 @@
 #include <gbpTrees_build.h>
 #include <gbpCosmo.h>
 
-void read_trees(char       *filename_tree_root,
-                char       *filename_halo_root,
+void read_trees(char       *filename_SSimPL_root,
+                char       *filename_halos_version,
+                char       *filename_trees_version,
                 int         read_mode,
                 tree_info **trees){
+
+  // Set the halo and tree filename roots
+  char filename_trees_root[MAX_FILENAME_LENGTH];
+  char filename_halos_root[MAX_FILENAME_LENGTH];
+  sprintf(filename_trees_root,"%s/trees/%s",filename_SSimPL_root,filename_trees_version);
+  sprintf(filename_halos_root,"%s/halos/%s",filename_SSimPL_root,filename_halos_version);
 
   // Read the tree search/scan parameters so we can write the opening log statement
   int i_read_start_temp;
@@ -23,7 +30,7 @@ void read_trees(char       *filename_tree_root,
   int flag_fix_bridges_temp;
   int flag_compute_fragmented_temp;
   int flag_compute_ghosts_temp;
-  read_trees_run_parameters(filename_tree_root,
+  read_trees_run_parameters(filename_trees_root,
                             &i_read_start_temp,
                             &i_read_stop_temp,
                             &i_read_step_temp,
@@ -37,7 +44,7 @@ void read_trees(char       *filename_tree_root,
 
   // Initialize tree data structure and populate it
   //   with various pieces of header information
-  init_trees_read(filename_tree_root,TREE_READ_DEFAULT,trees);
+  init_trees_read(filename_SSimPL_root,filename_trees_version,TREE_READ_DEFAULT,trees);
 
   // To make the code look a little cleaner, create some aliases
   int i_read_start=(*trees)->i_read_start;
@@ -54,9 +61,9 @@ void read_trees(char       *filename_tree_root,
   char filename_input_dir_horizontal_groups[MAX_FILENAME_LENGTH];
   char filename_input_dir_horizontal_subgroups[MAX_FILENAME_LENGTH];
   char filename_input_dir_horizontal_trees[MAX_FILENAME_LENGTH];
-  strcpy(filename_input_file_root,filename_tree_root);
+  strcpy(filename_input_file_root,filename_trees_root);
   strip_path(filename_input_file_root);
-  sprintf(filename_input_dir_horizontal,          "%s/horizontal",filename_tree_root);
+  sprintf(filename_input_dir_horizontal,          "%s/horizontal",filename_trees_root);
   sprintf(filename_input_dir_horizontal_groups,   "%s/groups",    filename_input_dir_horizontal);
   sprintf(filename_input_dir_horizontal_subgroups,"%s/subgroups", filename_input_dir_horizontal);
   sprintf(filename_input_dir_horizontal_trees,    "%s/trees",     filename_input_dir_horizontal);
@@ -117,8 +124,8 @@ void read_trees(char       *filename_tree_root,
     int    offset_size;
     SID_fp fp_groups_in;
     SID_fp fp_subgroups_in;
-    sprintf(filename_input_halos_groups,   "%s_%03d.catalog_groups",   filename_halo_root,i_read);
-    sprintf(filename_input_halos_subgroups,"%s_%03d.catalog_subgroups",filename_halo_root,i_read);
+    sprintf(filename_input_halos_groups,   "%s_%03d.catalog_groups",   filename_halos_version,i_read);
+    sprintf(filename_input_halos_subgroups,"%s_%03d.catalog_subgroups",filename_halos_version,i_read);
     SID_fopen(filename_input_halos_groups,   "r",&fp_groups_in);
     SID_fopen(filename_input_halos_subgroups,"r",&fp_subgroups_in);
     SID_fread_all(&n_groups_cat,   sizeof(int),1,&fp_groups_in);

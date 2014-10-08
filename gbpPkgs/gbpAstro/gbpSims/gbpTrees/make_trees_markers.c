@@ -32,8 +32,9 @@ int main(int argc, char *argv[]){
 
   // Perform analysis
   tree_info *trees;
-  read_trees(filename_trees_root,
-             filename_halos_root,
+  read_trees(filename_SSimPL_dir,
+             filename_halo_version_root,
+             filename_trees_name,
              TREE_MODE_DEFAULT,
              &trees);
 

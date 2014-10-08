@@ -20,6 +20,7 @@ int main(int argc, char *argv[]){
    int     i_grouping_start;
    int     i_grouping_stop;
    char    filename_in[MAX_FILENAME_LENGTH];
+   char    filename_cosmology[MAX_FILENAME_LENGTH];
    char    filename_in_model[MAX_FILENAME_LENGTH];
    char    filename_out_root[MAX_FILENAME_LENGTH];
    char    grouping_name[6];
@@ -50,17 +51,18 @@ int main(int argc, char *argv[]){
 
    // Parse arguments
    int n_jack;
-   strcpy(filename_in,      argv[1]);
-   strcpy(filename_out_root,argv[2]);
+   strcpy(filename_in,            argv[1]);
+   strcpy(filename_out_root,      argv[2]);
    redshift         =(double)atof(argv[3]);
-   n_jack           =(int)   atoi(argv[4]);
-   box_size         =(double)atof(argv[5]);
-   x_column         =(int)   atoi(argv[6]);
-   y_column         =(int)   atoi(argv[7]);
-   z_column         =(int)   atoi(argv[8]);
-   vx_column        =(int)   atoi(argv[9]);
-   vy_column        =(int)   atoi(argv[10]);
-   vz_column        =(int)   atoi(argv[11]);
+   strcpy(filename_cosmology,     argv[4]);
+   n_jack           =(int)   atoi(argv[5]);
+   box_size         =(double)atof(argv[6]);
+   x_column         =(int)   atoi(argv[7]);
+   y_column         =(int)   atoi(argv[8]);
+   z_column         =(int)   atoi(argv[9]);
+   vx_column        =(int)   atoi(argv[10]);
+   vy_column        =(int)   atoi(argv[11]);
+   vz_column        =(int)   atoi(argv[12]);
 
    // Sanity check
    int n_groupings;
@@ -105,7 +107,7 @@ int main(int argc, char *argv[]){
  
    // Initialize the power spectrum
    cfunc_info cfunc;
-   init_cfunc(&cfunc,n_data,F_random*n_data,n_bits_PHK,
+   init_cfunc(&cfunc,filename_cosmology,n_data,F_random*n_data,n_bits_PHK,
               redshift,box_size,n_jack,
               r_min_l1D,r_max_1D,dr_1D,
               r_min_2D, r_max_2D,dr_2D);

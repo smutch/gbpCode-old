@@ -11,6 +11,7 @@ int main(int argc, char *argv[]){
    double  redshift;
    char    filename_in[MAX_FILENAME_LENGTH];
    char    filename_out[MAX_FILENAME_LENGTH];
+   char    filename_cosmology[MAX_FILENAME_LENGTH];
    double  box_size;
    double  lM_min,dlM;
    char   *line=NULL;
@@ -28,18 +29,19 @@ int main(int argc, char *argv[]){
    strcpy(filename_in, argv[1]);
    strcpy(filename_out,argv[2]);
    redshift=(double)atof(argv[3]);
-   box_size=(double)atof(argv[4]);
-   M_column=(int)   atoi(argv[5]);
-   flag_log=(int)   atoi(argv[6]);
-   lM_min  =(double)atof(argv[7]);
-   dlM     =(double)atof(argv[8]);
-   n_bins  =(int)   atoi(argv[9]);
+   strcpy(filename_cosmology,argv[4]);
+   box_size=(double)atof(argv[5]);
+   M_column=(int)   atoi(argv[6]);
+   flag_log=(int)   atoi(argv[7]);
+   lM_min  =(double)atof(argv[8]);
+   dlM     =(double)atof(argv[9]);
+   n_bins  =(int)   atoi(argv[10]);
 
    SID_log("Producing a mass function for ascii file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_in);
  
    // Initialize cosmology
    cosmo_info *cosmo;
-   init_cosmo_std(&cosmo);
+   read_gbpCosmo_file(&cosmo,filename_cosmology);
    double h_Hubble=((double *)ADaPS_fetch(cosmo,"h_Hubble"))[0];
 
    // Open file

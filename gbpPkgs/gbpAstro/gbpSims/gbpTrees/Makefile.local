@@ -15,11 +15,8 @@ BINFILES  = query_matches                  \
 	        most_massive_subgroup_analysis \
             tree_stats_horizontal          \
 	        branch2ascii_ID_select         \
-            make_a_list                    \
             validate_ghost_trees           \
             parse_tree_case                \
-            extract_trees_mergers          \
-            tree_stats                     \
             matchfile2ascii                \
             make_trees                     \
 	        make_trees_markers             \

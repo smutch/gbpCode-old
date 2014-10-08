@@ -375,16 +375,12 @@ void read_gadget_binary_local(char       *filename_root_in,
 int main(int argc, char *argv[]){
   int     n_species;
   char    species_name[256];
-  double  h_Hubble;
-  double  n_spec;
-  double  redshift;
   int     i_species;
   char    n_string[64];
   int             n[3];
   double          L[3];
   FILE           *fp_1D;
   FILE           *fp_2D;
-  cosmo_info     *cosmo;
   field_info      FFT;
   plist_info      plist_header;
   plist_info      plist;
@@ -433,20 +429,39 @@ int main(int argc, char *argv[]){
   grid_size      =(int)atoi(argv[4]);
   SID_log("Processing the power spectra of {%s}, snapshot #%d...",SID_LOG_OPEN|SID_LOG_TIMER,filename_in_root,snapshot_number);
 
-  // Initialization -- default cosmology
-  init_cosmo_std(&cosmo);
-
   // Initialization -- fetch header info
-  double box_size;
   SID_log("Reading Gadget header...",SID_LOG_OPEN);
   gadget_read_info   fp_gadget;
   int                flag_filefound=init_gadget_read(filename_in_root,snapshot_number,&fp_gadget);
   int                flag_multifile=fp_gadget.flag_multifile;
   int                flag_file_type=fp_gadget.flag_file_type;
   gadget_header_info header        =fp_gadget.header;
-  redshift=header.redshift;
-  h_Hubble=header.h_Hubble;
-  box_size=header.box_size;
+
+  // Set the cosmology
+  cosmo_info *cosmo;
+  double box_size        =header.box_size;
+  double h_Hubble        =header.h_Hubble;
+  double redshift        =header.redshift;
+  double expansion_factor=header.time;
+  double Omega_M         =header.Omega_M;
+  double Omega_Lambda    =header.Omega_Lambda;
+  double Omega_k         =1.-Omega_Lambda-Omega_M;
+  double Omega_b         =0.; // not needed, so doesn't matter
+  double f_gas           =Omega_b/Omega_M;
+  double sigma_8         =0.; // not needed, so doesn't matter
+  double n_spec          =0.; // not needed, so doesn't matter
+  char   cosmo_name[16];
+  sprintf(cosmo_name,"Gadget file's");
+  init_cosmo(&cosmo,
+             cosmo_name,
+             Omega_Lambda,
+             Omega_M,
+             Omega_k,
+             Omega_b,
+             f_gas,
+             h_Hubble,
+             sigma_8,
+             n_spec);
   SID_log("Done.",SID_LOG_CLOSE);
 
   // Set the k ranges
@@ -467,7 +482,7 @@ int main(int argc, char *argv[]){
   for(i_species=0,n_total=0;i_species<N_GADGET_TYPE;i_species++){
      n_all[i_species]=(size_t)header.n_all_lo_word[i_species]+((size_t)header.n_all_hi_word[i_species])<<32;
      if(i_species>0) SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
-     init_pspec(&(pspec[i_species]),
+     init_pspec(&(pspec[i_species]),NULL,cosmo,
                 MAP2GRID_DIST_DWT20,
                 redshift,box_size,grid_size,
                 k_min_1D,k_max_1D,dk_1D,

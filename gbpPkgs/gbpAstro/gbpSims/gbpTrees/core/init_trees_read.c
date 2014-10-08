@@ -9,11 +9,16 @@
 #include <gbpHalos.h>
 #include <gbpTrees_build.h>
 
-void init_trees_read(const char  *filename_tree_root,
+void init_trees_read(const char  *filename_SSimPL_dir,
+                     const char  *filename_trees_version,
                      int          mode,
                      tree_info  **tree){
 
   SID_log("Initializing trees...",SID_LOG_OPEN|SID_LOG_TIMER);
+
+  // Set the tree filename root
+  char filename_trees_root[MAX_FILENAME_LENGTH];
+  sprintf(filename_trees_root,"%s/trees/%s",filename_SSimPL_dir,filename_trees_version);
 
   // Allocate the data structure
   (*tree)=(tree_info *)SID_malloc(sizeof(tree_info));
@@ -37,16 +42,16 @@ void init_trees_read(const char  *filename_tree_root,
 
   // Initialize filename paths
   char tree_name[MAX_FILENAME_LENGTH];
-  strcpy(tree_name,filename_tree_root);
+  strcpy(tree_name,filename_trees_root);
   strip_path(tree_name);
-  sprintf((*tree)->filename_root,"%s",filename_tree_root);
+  sprintf((*tree)->filename_root,"%s",filename_trees_root);
   sprintf((*tree)->name,         "%s",tree_name);
   sprintf((*tree)->filename_root_analysis,        "%s/analysis",  (*tree)->filename_root);
   sprintf((*tree)->filename_root_horizontal,      "%s/horizontal",(*tree)->filename_root);
   sprintf((*tree)->filename_root_horizontal_trees,"%s/trees",     (*tree)->filename_root_horizontal);
 
   // Read the tree snap-range/search/scan parameters
-  read_trees_run_parameters(filename_tree_root,
+  read_trees_run_parameters(filename_trees_root,
                             &((*tree)->i_read_start),
                             &((*tree)->i_read_stop),
                             &((*tree)->i_read_step),
@@ -86,17 +91,21 @@ void init_trees_read(const char  *filename_tree_root,
      (*tree)->t_list[i_file]   =0.;
   }
 
+  // Initialize the cosmology
+  char filename_cosmology[MAX_FILENAME_LENGTH];
+  sprintf(filename_cosmology,"%s/run/cosmology.txt",filename_SSimPL_dir);
+  read_gbpCosmo_file(&((*tree)->cosmo),filename_cosmology);
+  cosmo_info *cosmo=(*tree)->cosmo;
+
   // Read snapshot expansion factor list
   char        filename_alist_in[MAX_FILENAME_LENGTH];
   FILE       *fp_alist_in;
   int         n_alist_in;
   int         i_alist;
   double      a_in;
-  cosmo_info *cosmo;
   char       *line=NULL;
   size_t      line_length=0;
-  init_cosmo_std(&cosmo);
-  sprintf(filename_alist_in,"%s/a_list.txt",filename_tree_root);
+  sprintf(filename_alist_in,"%s/a_list.txt",filename_trees_root);
   fp_alist_in=fopen(filename_alist_in,"r");
   n_alist_in=count_lines_data(fp_alist_in);
   if(n_alist_in!=(*tree)->n_snaps)
@@ -109,7 +118,6 @@ void init_trees_read(const char  *filename_tree_root,
   }
   fclose(fp_alist_in);
   SID_free(SID_FARG line);
-  free_cosmo(&cosmo);
 
   // Initialize a bunch of stuff
   (*tree)->n_forests                =0;
@@ -149,7 +157,7 @@ void init_trees_read(const char  *filename_tree_root,
      int n_forests_subgroup_in;
      int n_forests_group_local_in;
      int n_forests_subgroup_local_in;
-     read_forests(filename_tree_root,
+     read_forests(filename_trees_root,
                   &n_forests_group_in,
                   &n_forests_subgroup_in,
                   &n_forests_group_local_in,

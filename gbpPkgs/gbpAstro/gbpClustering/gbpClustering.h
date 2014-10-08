@@ -139,7 +139,7 @@ void map_to_grid(size_t      n_particles_local,
                  int         mode);
 
 // Correlation function stuff
-void init_cfunc(cfunc_info *cfunc,int   n_data,  int   n_random,int PHK_width,
+void init_cfunc(cfunc_info *cfunc,const char *filename_cosmology,int   n_data,  int   n_random,int PHK_width,
                 double redshift, double box_size,int n_jack,
                 double r_min_l1D,double r_max_1D,double dr_1D,
                 double r_min_2D, double r_max_2D,double dr_2D);
@@ -153,7 +153,7 @@ void write_cfunc(cfunc_info *cfunc,const char *filename_out_root,plist_info *pli
 void read_cfunc( cfunc_info *cfunc,const char *filename_out_root,int i_run);
 
 // Power spectrum stuff
-void init_pspec(pspec_info *pspec,
+void init_pspec(pspec_info *pspec,const char *filename_cosmology,cosmo_info *cosmo,
                 int mass_assignment_scheme,
                 double redshift,double box_size,int grid_size,
                 double k_min_1D,double k_max_1D,double dk_1D,

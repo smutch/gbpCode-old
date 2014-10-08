@@ -643,19 +643,19 @@ int main(int argc, char *argv[]){
   int flag_write_profiles  =TRUE;
   int flag_write_indices   =TRUE;
   int flag_manual_centre   =TRUE;
-  //flag_manual_centre=FALSE;
-
-  if(!flag_manual_centre) 
-     flag_write_indices=FALSE;
 
   SID_init(&argc,&argv,NULL);
 
   // Fetch user inputs
   strcpy(filename_snapshot_root,argv[1]);
   strcpy(filename_groups_root,  argv[2]);
-  i_file_lo  =atoi(argv[3]);
-  i_file_hi  =atoi(argv[4]);
-  i_file_skip=atoi(argv[5]);
+  i_file_lo         =atoi(argv[3]);
+  i_file_hi         =atoi(argv[4]);
+  i_file_skip       =atoi(argv[5]);
+  flag_manual_centre=atoi(argv[6]);
+
+  if(!flag_manual_centre) 
+     flag_write_indices=FALSE;
 
   SID_log("Processing group/subgroup statistics for files #%d->#%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file_lo,i_file_hi);
   SID_log("Properties structure size=%d bytes",SID_LOG_COMMENT,sizeof(halo_properties_info));
@@ -688,9 +688,8 @@ int main(int argc, char *argv[]){
          vy_array            =(GBPREAL *)ADaPS_fetch(plist.data,"vy_dark");
          vz_array            =(GBPREAL *)ADaPS_fetch(plist.data,"vz_dark");
       }
-      else{
+      else
          n_particles_snapshot=0;
-      }
 
       // Initialize cosmology
       box_size        =((double *)ADaPS_fetch(plist.data,"box_size"))[0];
@@ -699,12 +698,15 @@ int main(int argc, char *argv[]){
       expansion_factor=((double *)ADaPS_fetch(plist.data,"expansion_factor"))[0];
       Omega_M         =((double *)ADaPS_fetch(plist.data,"Omega_M"))[0];
       Omega_Lambda    =((double *)ADaPS_fetch(plist.data,"Omega_Lambda"))[0];
-      f_gas  =Omega_b/Omega_M;
       Omega_k=1.-Omega_Lambda-Omega_M;
-      Omega_b=0.;
-      sigma_8=0.;
-      n_spec =0.;
+      Omega_b=0.; // not needed, so doesn't matter
+      f_gas  =Omega_b/Omega_M;
+      sigma_8=0.; // not needed, so doesn't matter
+      n_spec =0.; // not needed, so doesn't matter
+      char cosmo_name[16];
+      sprintf(cosmo_name,"Gadget file's");
       init_cosmo(&cosmo,
+                 cosmo_name,
                  Omega_Lambda,
                  Omega_M,
                  Omega_k,
@@ -713,7 +715,6 @@ int main(int argc, char *argv[]){
                  h_Hubble,
                  sigma_8,
                  n_spec);
-
 
       // Compute sort indices for ids in snapshot and group catalog
       SID_log("Sorting IDs...",SID_LOG_OPEN|SID_LOG_TIMER);

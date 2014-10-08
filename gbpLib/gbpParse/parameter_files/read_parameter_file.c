@@ -18,11 +18,11 @@ void read_parameter_file(const char          *filename_in,
       double               parameter_value;
       parameter_item_info *parameter_item;
       remove_parameter_character(line);
-      if(count_words(line)!=2)
-         SID_trap_error("Invalid number of words in parameter given by {%s}.",ERROR_LOGIC,line);
       grab_word(line,1,parameter_name);
       if(!fetch_parameter_list_item(param_list,parameter_name,&parameter_item))
          SID_trap_error("Paramter {%s} is not in the file specification for {%s}.",ERROR_LOGIC,parameter_name,filename_in);
+      if(parameter_item->data_type!=SID_CHAR && count_words(line)!=2)
+         SID_trap_error("Invalid number of words in parameter given by {%s}.",ERROR_LOGIC,line);
       if(parameter_item->data_type==SID_DOUBLE)
          grab_double(line,2,(double *)(parameter_item->data));
       else if(parameter_item->data_type==SID_CHAR)

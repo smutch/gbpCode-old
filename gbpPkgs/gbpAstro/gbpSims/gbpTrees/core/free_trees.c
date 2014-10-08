@@ -19,6 +19,10 @@ void free_trees(tree_info **trees){
   // Free ADaPS structure
   ADaPS_free(SID_FARG (*trees)->data);
 
+  // Free cosmology
+  free_cosmo(&((*trees)->cosmo));
+
+  // Free nodes
   int i_snap;
   for(i_snap=0;i_snap<(*trees)->n_snaps;i_snap++){
      tree_node_info *current;
@@ -40,6 +44,8 @@ void free_trees(tree_info **trees){
         }
      }
   }
+
+  // Free the various other arrays
   SID_free(SID_FARG (*trees)->snap_list);
   SID_free(SID_FARG (*trees)->z_list);
   SID_free(SID_FARG (*trees)->t_list);
@@ -59,7 +65,10 @@ void free_trees(tree_info **trees){
   SID_free(SID_FARG (*trees)->last_in_forest_subgroups);
   SID_free(SID_FARG (*trees)->tree2forest_mapping_group);
   SID_free(SID_FARG (*trees)->tree2forest_mapping_subgroup);
+
+  // Free the main structure
   SID_free(SID_FARG (*trees));
+
   SID_log("Done.",SID_LOG_CLOSE);
 }
 

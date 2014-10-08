@@ -8,8 +8,8 @@
 #include <gbpHalos.h>
 #include <gbpClustering.h>
 
-void init_pspec(pspec_info *pspec,
-	        int mass_assignment_scheme,
+void init_pspec(pspec_info *pspec,const char *filename_cosmology,cosmo_info *cosmo,
+	            int    mass_assignment_scheme,
                 double redshift,double box_size,int grid_size,
                 double k_min_1D,double k_max_1D,double dk_1D,
                 double k_min_2D,double k_max_2D,double dk_2D){
@@ -62,7 +62,10 @@ void init_pspec(pspec_info *pspec,
   init_field(3,n,L,&(pspec->FFT));
 
   // Initialize the cosmology
-  init_cosmo_std(&(pspec->cosmo));
+  if(cosmo!=NULL)
+     pspec->cosmo=cosmo;
+  else
+     read_gbpCosmo_file(&(pspec->cosmo),filename_cosmology);
 
   SID_log("Done.",SID_LOG_CLOSE);
 }

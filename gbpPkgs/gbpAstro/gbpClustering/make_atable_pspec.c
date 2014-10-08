@@ -24,6 +24,7 @@ int main(int argc, char *argv[]){
    double  redshift;
    int     i_rank;
    char    filename_in[MAX_FILENAME_LENGTH];
+   char    filename_cosmology[MAX_FILENAME_LENGTH];
    char    filename_in_model[MAX_FILENAME_LENGTH];
    char    filename_out_root[MAX_FILENAME_LENGTH];
    char    grouping_name[6];
@@ -65,14 +66,15 @@ int main(int argc, char *argv[]){
    strcpy(filename_in, argv[1]);
    strcpy(filename_out_root,argv[2]);
    redshift         =(double)atof(argv[3]);
-   grid_size        =(int)   atoi(argv[4]);
-   box_size         =(double)atof(argv[5]);
-   x_column         =(int)   atoi(argv[6]);
-   y_column         =(int)   atoi(argv[7]);
-   z_column         =(int)   atoi(argv[8]);
-   vx_column        =(int)   atoi(argv[9]);
-   vy_column        =(int)   atoi(argv[10]);
-   vz_column        =(int)   atoi(argv[11]);
+   strcpy(filename_cosmology,argv[4]);
+   grid_size        =(int)   atoi(argv[5]);
+   box_size         =(double)atof(argv[6]);
+   x_column         =(int)   atoi(argv[7]);
+   y_column         =(int)   atoi(argv[8]);
+   z_column         =(int)   atoi(argv[9]);
+   vx_column        =(int)   atoi(argv[10]);
+   vy_column        =(int)   atoi(argv[11]);
+   vz_column        =(int)   atoi(argv[12]);
 
    SID_log("Producing power spectra for ascii file {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_in);
  
@@ -92,12 +94,11 @@ int main(int argc, char *argv[]){
  
    // Initialize the power spectrum
    pspec_info pspec;
-   init_pspec(&pspec,
- 	     MAP2GRID_DIST_DWT20,
-             redshift,box_size,grid_size,
-             k_min_1D,k_max_1D,dk_1D,
-             k_min_2D,k_max_2D,dk_2D);
- 
+   init_pspec(&pspec,filename_cosmology,NULL,
+    	      MAP2GRID_DIST_DWT20,
+              redshift,box_size,grid_size,
+              k_min_1D,k_max_1D,dk_1D,
+              k_min_2D,k_max_2D,dk_2D);
   
    // Loop over ithe real-space and 3 redshift-space frames
    int i_run;

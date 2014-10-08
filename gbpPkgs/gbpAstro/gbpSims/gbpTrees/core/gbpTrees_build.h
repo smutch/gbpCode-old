@@ -410,6 +410,8 @@ struct tree_info{
   int              *tree2forest_mapping_subgroup;
   // An ADaPS structure for holding ancillary data
   ADaPS            *data;
+  // Cosmology
+  cosmo_info       *cosmo;
   // Short-cuts to some common stuff added to data
   tree_markers_info         **group_markers;
   tree_markers_info         **subgroup_markers;
@@ -430,9 +432,10 @@ struct store_tree_data_free_parms_info{
 extern "C" {
 #endif
 int tree_case_flags_text(int match_type,const char *separator_string,char **return_string);
-void read_trees(char       *filename_tree_root,
-                char       *filename_cat_root,
-                int         mode_progenitor,
+void read_trees(char       *filename_SSiMPL_root,
+                char       *filename_halos_version,
+                char       *filename_trees_version,
+                int         read_mode,
                 tree_info **trees);
 void init_trees_data(tree_info    *trees,
                      void       ***rval,
@@ -898,7 +901,10 @@ void compute_trees_auxiliary(char *filename_root,
                              int   n_files_groups,
                              int   n_files_subgroups,
                              int  *flag_clean);
-void init_trees_read(const char *filename_trees_root,int mode,tree_info **tree);
+void init_trees_read(const char  *filename_SSimPL_dir,
+                     const char  *filename_trees_version,
+                     int          mode,
+                     tree_info  **tree);
 void free_trees(tree_info **tree);
 int add_node_to_trees(tree_info        *trees,
                       int               i_forest,

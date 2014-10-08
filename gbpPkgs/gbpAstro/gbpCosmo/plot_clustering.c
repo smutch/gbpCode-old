@@ -7,71 +7,35 @@
 #include <gbpCosmo.h>
 
 int main(int argc, char *argv[]){
-  cosmo_info *cosmo=NULL;
-  double      Omega_M;
-  double      Omega_Lambda;
-  double      sigma_8;
-  double      h_Hubble;
-  double      z;
 
   SID_init(&argc,&argv,NULL);
 
   // Parse arguments and initialize
-  if(argc<2 || argc>6){
-    fprintf(stderr,"\n Syntax: %s z [h_Hubble] [Omega_M] [Omega_Lambda] [sigma_8]\n",argv[0]);
+  double z;
+  if(argc<2 || argc>3){
+    fprintf(stderr,"\n Syntax: %s z [gbpCosmo_file.txt]\n",argv[0]);
     fprintf(stderr," ------\n\n");
     return(ERROR_SYNTAX);
   }
   else
     z=(double)atof(argv[1]);
+
   SID_log("Computing clustering information for z=%.2lf...",SID_LOG_OPEN,z);
 
-  SID_log("Initializing...",SID_LOG_OPEN);
-  init_cosmo_std(&cosmo);
-  if(argc>2){
-    h_Hubble=(double)atof(argv[2]);
-    ADaPS_store(&cosmo,
-               (void *)(&h_Hubble),
-               "h_Hubble",
-               ADaPS_SCALAR_DOUBLE);
-  }
-  if(argc>3){
-    Omega_M     =(double)atof(argv[3]);
-    Omega_Lambda=1.-Omega_M;
-    ADaPS_store(&cosmo,
-               (void *)(&Omega_M),
-               "Omega_M",
-               ADaPS_SCALAR_DOUBLE);
-    ADaPS_store(&cosmo,
-               (void *)(&Omega_Lambda),
-               "Omega_Lambda",
-               ADaPS_SCALAR_DOUBLE);
-  }
-  if(argc>4){
-    Omega_Lambda=(double)atof(argv[4]);
-    ADaPS_store(&cosmo,
-               (void *)(&Omega_Lambda),
-               "Omega_Lambda",
-               ADaPS_SCALAR_DOUBLE);
-  }
-  if(argc>5){
-    sigma_8=(double)atof(argv[5]);
-    ADaPS_store(&cosmo,
-               (void *)(&sigma_8),
-               "sigma_8",
-               ADaPS_SCALAR_DOUBLE);
-  }
+  // Initialize cosmology
+  cosmo_info *cosmo=NULL;
+  if(argc==2)
+     init_cosmo_default(&cosmo);
+  else if(argc==3)
+     read_gbpCosmo_file(&cosmo,argv[2]);
 
   // Initialize
-  double *lk_P;
-  int     n_k;
-  int     i_k;
   int     mode     =PSPEC_LINEAR_TF;
   int     component=PSPEC_ALL_MATTER;
   init_sigma_M(&cosmo,z,mode,component);
-  n_k     =((int    *)ADaPS_fetch(cosmo,"n_k"))[0];
-  lk_P    =(double  *)ADaPS_fetch(cosmo,"lk_P");
-  h_Hubble=((double *)ADaPS_fetch(cosmo,"h_Hubble"))[0];
+  int     n_k     =((int    *)ADaPS_fetch(cosmo,"n_k"))[0];
+  double *lk_P    = (double *)ADaPS_fetch(cosmo,"lk_P");
+  double  h_Hubble=((double *)ADaPS_fetch(cosmo,"h_Hubble"))[0];
   SID_log("Done.",SID_LOG_CLOSE);
 
   // Generate file
@@ -95,7 +59,7 @@ int main(int argc, char *argv[]){
   printf("#        (15): b_halo_Poole        (substructure)\n");
   printf("#        (16): z-space boost Poole (substructure)\n");
   printf("#        (17): b_total_Poole       (substructure)\n");
-  for(i_k=0;i_k<n_k;i_k++){
+  for(int i_k=0;i_k<n_k;i_k++){
      double k_P  =take_alog10(lk_P[i_k]);
      double R_P  =R_of_k(k_P);
      double M_R  =M_of_k(k_P,z,cosmo);
