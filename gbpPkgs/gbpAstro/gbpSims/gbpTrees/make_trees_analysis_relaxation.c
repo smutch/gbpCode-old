@@ -180,7 +180,7 @@ int main(int argc, char *argv[]){
           trees->z_list[params.snap_lo_tau_trends],params.snap_lo_tau_trends);
 
   // ** PERFORM the calculation here **
-  process_trees_by_snap(trees,&params,SELECT_AND_ANALYZE_BOTH,0,trees->n_snaps,
+  process_trees_by_snap(trees,&params,PROCESS_TREES_BOTH,0,trees->n_snaps,
                         process_trees_fctn_init_local,
                         process_trees_fctn_init_snap_null,
                         process_trees_fctn_select_null,

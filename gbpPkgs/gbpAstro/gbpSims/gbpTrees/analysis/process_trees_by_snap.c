@@ -39,13 +39,13 @@ void process_trees_by_snap(tree_info  *trees,
    for(int i_type=0;i_type<2;i_type++){
       int flag_do=TRUE;
       if(i_type==0){
-         if(check_mode_for_flag(mode,SELECT_AND_ANALYZE_GROUPS))
+         if(check_mode_for_flag(mode,PROCESS_TREES_GROUPS))
             SID_log("Performing GROUP analysis...",SID_LOG_OPEN|SID_LOG_TIMER);
          else
             flag_do=FALSE;
       }
       else if(i_type==1){
-         if(check_mode_for_flag(mode,SELECT_AND_ANALYZE_SUBGROUPS))
+         if(check_mode_for_flag(mode,PROCESS_TREES_SUBGROUPS))
             SID_log("Performing SUBGROUP analysis...",SID_LOG_OPEN|SID_LOG_TIMER);
          else
             flag_do=FALSE;

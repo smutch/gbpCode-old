@@ -114,26 +114,42 @@ int main(int argc, char *argv[]){
    SID_log("Writing results to {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_out);
    double box_volume=box_size*box_size*box_size;
    fprintf(fp_out,"# Mass function for column %d in {%s}\n",M_column,filename_in);
-   fprintf(fp_out,"# Column (1): M_lo     [source units]\n");
-   fprintf(fp_out,"#        (2): M_median [source units]\n");
-   fprintf(fp_out,"#        (3): M_hi     [source units]\n");
-   fprintf(fp_out,"#        (4): No. in bin\n");
-   fprintf(fp_out,"#        (5): MFn (per unit volume, per dlogM)\n");
-   fprintf(fp_out,"#        (6): +/- MFn\n");
-   fprintf(fp_out,"#        (7): Sheth & Tormen MFn\n");
+   fprintf(fp_out,"# Column (01): M_lo     [source units]\n");
+   fprintf(fp_out,"#        (02): M_median [source units]\n");
+   fprintf(fp_out,"#        (03): M_hi     [source units]\n");
+   fprintf(fp_out,"#        (04): No. in bin\n");
+   fprintf(fp_out,"#        (05): MFn (per unit volume, per dlogM)\n");
+   fprintf(fp_out,"#        (06): +/- MFn\n");
+   fprintf(fp_out,"#        (07): Sheth & Tormen MFn\n");
+   fprintf(fp_out,"#        (08): No. w/ M>M_lo\n");
+   fprintf(fp_out,"#        (09): Cumulative MFn (per unit volume)\n");
+   fprintf(fp_out,"#        (10): +/- Cumulative MFn\n");
+   fprintf(fp_out,"#        (11): Sheth & Tormen Cumulative MFn\n");
    for(int i=0;i<n_bins;i++){
-     double dn_dlogM_theory=mass_function(bin_median[i]*M_SOL/h_Hubble,
+     double dn_dlogM_theory=mass_function(take_alog10(bin_median[i])*M_SOL/h_Hubble,
                                           redshift,
                                           &cosmo,
                                           MF_ST)*pow(M_PER_MPC/h_Hubble,3.0);
-     fprintf(fp_out,"%11.4le %11.4le %11.4le %6d %11.4le %11.4le %10.4le\n",
+     double n_theory=mass_function_cumulative(take_alog10(bin[i])*M_SOL/h_Hubble,
+                                              redshift,
+                                              &cosmo,
+                                              MF_ST)*pow(M_PER_MPC/h_Hubble,3.0);
+     // Compute cumulative histogram
+     int cumulative_hist=0;
+     for(int j_bin=i;j_bin<n_bins;j_bin++)
+        cumulative_hist+=hist[j_bin];
+     fprintf(fp_out,"%11.4le %11.4le %11.4le %6d %11.4le %11.4le %10.4le %6d %10.4le %10.4le %10.4le\n",
              bin[i],
              bin_median[i],
              bin[i+1],
              hist[i],
              (double)(hist[i])/(box_volume*dlM),
              sqrt((double)(hist[i]))/(box_volume*dlM),
-             dn_dlogM_theory);
+             dn_dlogM_theory,
+             cumulative_hist,
+             (double)(cumulative_hist)/box_volume,
+             sqrt((double)(cumulative_hist))/box_volume,
+             n_theory);
    }
    fclose(fp_out);
    SID_log("Done.",SID_LOG_CLOSE);
