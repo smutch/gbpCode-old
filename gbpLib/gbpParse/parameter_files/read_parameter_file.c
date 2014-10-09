@@ -8,7 +8,7 @@
 
 void read_parameter_file(const char          *filename_in,
                          parameter_list_info *param_list){
-   FILE   *fp_in;
+   FILE   *fp_in=NULL;
    char   *line =NULL;
    size_t  line_length=0;
    if((fp_in=fopen(filename_in,"r"))==NULL)

@@ -81,6 +81,7 @@ void init_sigma_M(cosmo_info **cosmo,
     ADaPS_store_interp(cosmo,
                        (void *)(interp_sigma_lnM),
                        sigma_lnM_name);
+    SID_free(SID_FARG lM_k);
     SID_free(SID_FARG sigma_lnM);
     SID_free(SID_FARG ln_sigma);
     SID_free(SID_FARG ln_Inv_sigma);

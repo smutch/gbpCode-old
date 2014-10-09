@@ -12,11 +12,13 @@
 #include <gbpSID.h>
 #include <gbpParse_core.h>
 int grab_next_line_parameter(FILE *fp,char **line, size_t *n){
-  int rval;
-  rval=getline(line,n,fp);
-  while(!feof(fp) && !check_parameter(*line))
-    rval=getline(line,n,fp);
-  if(!check_parameter(*line))
-     rval=FALSE;
+  int rval=FALSE;
+  if(!feof(fp)){
+     rval=getline(line,n,fp);
+     while(!feof(fp) && !check_parameter(*line))
+       rval=getline(line,n,fp);
+     if(!check_parameter(*line))
+        rval=FALSE;
+  }
   return(rval);
 }

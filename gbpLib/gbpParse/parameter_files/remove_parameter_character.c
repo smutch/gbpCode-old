@@ -11,7 +11,7 @@ int remove_parameter_character(char *line){
       sprintf(temp_char,"%c",line[j]);
       if(strcmp(temp_char," ")){
          if(!strcmp(temp_char,GBPPARSE_PARAMETER_CHARACTER)){
-            char replace[1];
+            char replace[2];
             sprintf(replace," ");
             strncpy(&(line[j]),replace,1);
             rval=TRUE;

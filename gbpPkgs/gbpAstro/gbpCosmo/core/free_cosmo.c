@@ -6,6 +6,6 @@
 #include <gbpCosmo_core.h>
 
 void free_cosmo(cosmo_info **cosmo){
-  ADaPS_free((void **)cosmo);
+  ADaPS_free((void **) cosmo);
 }
 

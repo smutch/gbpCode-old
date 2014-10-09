@@ -22,7 +22,7 @@ void init_power_spectrum_variance(cosmo_info **cosmo,double z,int mode,int compo
   double     lk_step;
   double     integral;
   int        n_int=5000;
-  double     rel_accuracy=5e-5;
+  double     rel_accuracy=1e-3;
   double     limit_lo;
   double     limit_hi;
   double     r_val;
@@ -30,6 +30,8 @@ void init_power_spectrum_variance(cosmo_info **cosmo,double z,int mode,int compo
   sigma2_integrand_params    params;
   gsl_integration_workspace *wspace;
   gsl_function               integrand;
+
+  SID_log("Initializing P(k) variance...",SID_LOG_OPEN);
 
   z=0.;
 
@@ -41,24 +43,8 @@ void init_power_spectrum_variance(cosmo_info **cosmo,double z,int mode,int compo
   if(!ADaPS_exist((*cosmo),"n_k")){
     if(mode==PSPEC_LINEAR_TF)
       init_power_spectrum_TF(cosmo);
-    else{
-      n_k        =200;
-      n_k_dim    =(size_t)n_k;
-      lk_P       =(double *)SID_malloc(sizeof(double)*n_k_dim);
-      lk_P[0]    =take_log10(k_of_R(1e0*M_PER_KPC));
-      lk_P[n_k-1]=take_log10(k_of_R(2e4*M_PER_MPC));
-      lk_step    =(lk_P[n_k-1]-lk_P[0])/(double)(n_k-1);
-      for(i=1;i<n_k-1;i++)
-         lk_P[i]=lk_P[i-1]+lk_step;
-      ADaPS_store(cosmo,
-                  (void *)(&n_k),
-                  "n_k",
-                  ADaPS_SCALAR_INT);
-      ADaPS_store(cosmo,
-                  (void *)(lk_P),
-                  "lk_P",
-                  ADaPS_DEFAULT);
-    }
+    else
+      SID_trap_error("Given mode (%d) not supported in init_power_spectrum_variance().",ERROR_LOGIC,mode);
   }
   n_k    =((int   *)ADaPS_fetch((*cosmo),"n_k"))[0];
   lk_P   =(double *)ADaPS_fetch((*cosmo),"lk_P");
@@ -111,6 +97,8 @@ void init_power_spectrum_variance(cosmo_info **cosmo,double z,int mode,int compo
 
   // Clean-up
   gsl_integration_workspace_free(wspace);
+
+  SID_log("Done.",SID_LOG_CLOSE);
 }
 
 double power_spectrum_variance(double       k_interp,

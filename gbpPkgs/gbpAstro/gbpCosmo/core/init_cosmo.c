@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <gbpLib.h>
 #include <gbpMath.h>
@@ -15,14 +16,26 @@ void init_cosmo(cosmo_info **cosmo,
                 double       h_Hubble,
                 double       sigma_8,
                 double       n_spectral){
+
+  // Print a log message
+  char name_store[32];
   if(name!=NULL)
-     SID_log("Initializing %s cosmology...",SID_LOG_OPEN,name);
+     strcpy(name_store,name);
   else
-     SID_log("Initializing unnamed cosmology...",SID_LOG_OPEN);
-  ADaPS_init((ADaPS **)cosmo);
+     sprintf(name_store,"unnamed");
+  SID_log("Initializing %s cosmology...",SID_LOG_OPEN,name_store);
+
+  // Store a name for the cosmology
+  ADaPS_store(cosmo,
+              name_store,
+              "name",
+              ADaPS_COPY,
+              32);
+
+  // Store the parameters
   SID_log("Omega_Lambda=%le",SID_LOG_COMMENT,Omega_Lambda);
-  ADaPS_store((ADaPS **)cosmo,
-             (void *)(&Omega_Lambda),
+  ADaPS_store(cosmo,
+             &Omega_Lambda,
              "Omega_Lambda",
              ADaPS_SCALAR_DOUBLE);
   SID_log("Omega_M     =%le",SID_LOG_COMMENT,Omega_M);

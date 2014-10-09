@@ -57,14 +57,17 @@ void read_gbpCosmo_file(cosmo_info **cosmo,const char *filename_in){
            sprintf(filename_TF,   "%s/transfer_function_%s.txt",GBP_DATA_DIR,filename_in);
         }
         else{
-           sprintf(filename_cosmo,"%s/cosmology.txt",filename_in);
-           sprintf(filename_TF,   "%s/cosmology.txt",filename_in);
+           sprintf(filename_cosmo,"%s/cosmology.txt",        filename_in);
+           sprintf(filename_TF,   "%s/transfer_function.txt",filename_in);
         }
      }
 
+     // Ininitalize
+     ADaPS_init(cosmo);
+
      // Store the transfer function filename
-     ADaPS_store((ADaPS **)cosmo,
-                 (void *)filename_TF,
+     ADaPS_store(cosmo,
+                 filename_TF,
                  "filename_transfer_function",
                  ADaPS_COPY,
                  MAX_FILENAME_LENGTH);

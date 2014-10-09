@@ -223,6 +223,9 @@ double power_spectrum_normalization(cosmo_info *cosmo,
   // Normalize power spectrum to sigma_8
   norm=take_log10(sigma_8*sigma_8/sigma2_unnorm);
 
+  // Clean-up
+  gsl_integration_workspace_free(wspace);
+
   return(norm);
 }
 

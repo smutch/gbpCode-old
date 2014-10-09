@@ -22,7 +22,7 @@ int main(int argc, char *argv[]){
  
    // Initialization -- MPI etc.
    SID_init(&argc,&argv,NULL);
-   if(argc!=10)
+   if(argc!=11)
      SID_trap_error("Incorrect syntax.",ERROR_SYNTAX);
 
    // Parse arguments
@@ -49,11 +49,11 @@ int main(int argc, char *argv[]){
    if((fp_in=fopen(filename_in,"r"))==NULL)
       SID_trap_error("Could not open {%s} for reading.",ERROR_IO_OPEN,filename_in);
 
-   // Count number of lines in the input file 
-   int n_data   =count_lines_data(fp_in);
-   
    // Allocate memory for the data. Read it and sort it in ascending order 
-   double *data =(double *)malloc(sizeof(double)*n_data);
+   SID_log("Reading data...",SID_LOG_OPEN|SID_LOG_TIMER);
+   int     n_data=count_lines_data(fp_in);
+   SID_log("(%d items)...",SID_LOG_CONTINUE,n_data);
+   double *data  =(double *)malloc(sizeof(double)*n_data);
    for(int i=0;i<n_data;i++){
      grab_next_line_data(fp_in,&line,&line_length);
      grab_double(line,M_column,&(data[i]));
@@ -62,11 +62,15 @@ int main(int argc, char *argv[]){
    }
    fclose(fp_in);
    SID_free(SID_FARG line);
+   SID_log("Done.",SID_LOG_CLOSE);
 
    // Perform sort
+   SID_log("Sorting data...",SID_LOG_OPEN|SID_LOG_TIMER);
    merge_sort(data,n_data,NULL,SID_DOUBLE,SORT_INPLACE_ONLY,SORT_COMPUTE_INPLACE);
+   SID_log("Done.",SID_LOG_CLOSE);
 
    // Compile histogram
+   SID_log("Computing mass function...",SID_LOG_OPEN|SID_LOG_TIMER);
    int i_data = 0;
    while(data[i_data]<lM_min && i_data<(n_data-1)) i_data++;
    double *bin       =(double *)SID_malloc(sizeof(double)*(n_bins+1));
@@ -98,6 +102,7 @@ int main(int argc, char *argv[]){
      lM_bin_max=lM_min+((double)i_bin)*dlM;
    }
    bin[i_bin]=lM_bin_max;
+   SID_log("Done.",SID_LOG_CLOSE);
 
    // Write mass function
    FILE *fp_out;
@@ -106,6 +111,7 @@ int main(int argc, char *argv[]){
      SID_free(SID_FARG data);
      return(1);
    }
+   SID_log("Writing results to {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_out);
    double box_volume=box_size*box_size*box_size;
    fprintf(fp_out,"# Mass function for column %d in {%s}\n",M_column,filename_in);
    fprintf(fp_out,"# Column (1): M_lo     [source units]\n");
@@ -119,8 +125,6 @@ int main(int argc, char *argv[]){
      double dn_dlogM_theory=mass_function(bin_median[i]*M_SOL/h_Hubble,
                                           redshift,
                                           &cosmo,
-                                          PSPEC_LINEAR_TF,
-                                          PSPEC_ALL_MATTER,
                                           MF_ST)*pow(M_PER_MPC/h_Hubble,3.0);
      fprintf(fp_out,"%11.4le %11.4le %11.4le %6d %11.4le %11.4le %10.4le\n",
              bin[i],
@@ -132,6 +136,7 @@ int main(int argc, char *argv[]){
              dn_dlogM_theory);
    }
    fclose(fp_out);
+   SID_log("Done.",SID_LOG_CLOSE);
 
    // Free allocated memory
    SID_free(SID_FARG data);
