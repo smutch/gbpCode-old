@@ -9,8 +9,8 @@
 #include <gbpTrees.h>
 
 // Structure that will carry the needed information to the select-and-analyze function
-typedef struct select_and_analyze_params_local select_and_analyze_params_local;
-struct select_and_analyze_params_local{
+typedef struct process_trees_params_local process_trees_params_local;
+struct process_trees_params_local{
    char         filename_output_root[MAX_FILENAME_LENGTH];
    int          snap_lo_tau_trends;
    int          snap_hi_tau_trends;
@@ -22,10 +22,10 @@ struct select_and_analyze_params_local{
 };
 
 // ** Define the calculation here **
-void select_and_analyze_treenodes_fctn_init_local(tree_info *trees,void *params_in,int mode,int i_type);
-void select_and_analyze_treenodes_fctn_init_local(tree_info *trees,void *params_in,int mode,int i_type){
+void process_trees_fctn_init_local(tree_info *trees,void *params_in,int mode,int i_type);
+void process_trees_fctn_init_local(tree_info *trees,void *params_in,int mode,int i_type){
   // Create an alias for the passed void pointer
-  select_and_analyze_params_local *params=(select_and_analyze_params_local *)params_in;
+  process_trees_params_local *params=(process_trees_params_local *)params_in;
   // Initialize markers (just one-at-a-time to save RAM)
   if(i_type==0)
      precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_GROUPS);
@@ -68,27 +68,27 @@ void select_and_analyze_treenodes_fctn_init_local(tree_info *trees,void *params_
 }
 
 // ** Perform the calculation here **
-void select_and_analyze_treenodes_fctn_analyze_local(tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo);
-void select_and_analyze_treenodes_fctn_analyze_local(tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo){
+void process_trees_fctn_analyze_local(tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo);
+void process_trees_fctn_analyze_local(tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo){
    int i_M;
    int i_snap   =halo->snap_tree;
-   int i_snap_lo=((select_and_analyze_params_local *)params)->snap_lo_tau_trends;
-   int i_snap_hi=((select_and_analyze_params_local *)params)->snap_hi_tau_trends;
-   if((i_M=add_item_to_trend(((select_and_analyze_params_local *)params)->mass_binning,GBP_ADD_ITEM_TO_TREND_DEFAULT,halo))>=0){
-      add_item_to_trend(((select_and_analyze_params_local *)params)->trends_z[i_M],GBP_ADD_ITEM_TO_TREND_DEFAULT,halo);
+   int i_snap_lo=((process_trees_params_local *)params)->snap_lo_tau_trends;
+   int i_snap_hi=((process_trees_params_local *)params)->snap_hi_tau_trends;
+   if((i_M=add_item_to_trend(((process_trees_params_local *)params)->mass_binning,GBP_ADD_ITEM_TO_TREND_DEFAULT,halo))>=0){
+      add_item_to_trend(((process_trees_params_local *)params)->trends_z[i_M],GBP_ADD_ITEM_TO_TREND_DEFAULT,halo);
       if(i_snap>=i_snap_lo&&i_snap<=i_snap_hi){
-         add_item_to_trend(((select_and_analyze_params_local *)params)->trends_tau_form[i_M], GBP_ADD_ITEM_TO_TREND_DEFAULT,halo);
-         add_item_to_trend(((select_and_analyze_params_local *)params)->trends_tau_3to1[i_M], GBP_ADD_ITEM_TO_TREND_DEFAULT,halo);
-         add_item_to_trend(((select_and_analyze_params_local *)params)->trends_tau_10to1[i_M],GBP_ADD_ITEM_TO_TREND_DEFAULT,halo);
+         add_item_to_trend(((process_trees_params_local *)params)->trends_tau_form[i_M], GBP_ADD_ITEM_TO_TREND_DEFAULT,halo);
+         add_item_to_trend(((process_trees_params_local *)params)->trends_tau_3to1[i_M], GBP_ADD_ITEM_TO_TREND_DEFAULT,halo);
+         add_item_to_trend(((process_trees_params_local *)params)->trends_tau_10to1[i_M],GBP_ADD_ITEM_TO_TREND_DEFAULT,halo);
       }
    }
 }
 
 // ** Write the results here **
-void select_and_analyze_treenodes_fctn_fin_local(tree_info *trees,void *params_in,int mode,int i_type);
-void select_and_analyze_treenodes_fctn_fin_local(tree_info *trees,void *params_in,int mode,int i_type){
+void process_trees_fctn_fin_local(tree_info *trees,void *params_in,int mode,int i_type);
+void process_trees_fctn_fin_local(tree_info *trees,void *params_in,int mode,int i_type){
    // Create an alias for the passed void pointer
-   select_and_analyze_params_local *params=(select_and_analyze_params_local *)params_in;
+   process_trees_params_local *params=(process_trees_params_local *)params_in;
    // Clean-up markers
    char filename_output_root_root[MAX_FILENAME_LENGTH];
    if(i_type==0){
@@ -171,7 +171,7 @@ int main(int argc, char *argv[]){
                       READ_TREES_CATALOGS_BOTH);
 
   // Populate the structure that gets passed to the calculation
-  select_and_analyze_params_local params;
+  process_trees_params_local params;
   strcpy(params.filename_output_root,filename_output_root);
   params.snap_hi_tau_trends=find_treesnap_z(trees,z_lo_tau_trends); // snap_tree and z_list run in opposite orders
   params.snap_lo_tau_trends=find_treesnap_z(trees,z_hi_tau_trends); // snap_tree and z_list run in opposite orders
@@ -180,13 +180,13 @@ int main(int argc, char *argv[]){
           trees->z_list[params.snap_lo_tau_trends],params.snap_lo_tau_trends);
 
   // ** PERFORM the calculation here **
-  select_and_analyze_treenodes_by_snap(trees,&params,SELECT_AND_ANALYZE_BOTH,0,trees->n_snaps,
-                                       select_and_analyze_treenodes_fctn_init_local,
-                                       select_and_analyze_treenodes_fctn_init_snap_null,
-                                       select_and_analyze_treenodes_fctn_select_null,
-                                       select_and_analyze_treenodes_fctn_analyze_local,
-                                       select_and_analyze_treenodes_fctn_fin_snap_null,
-                                       select_and_analyze_treenodes_fctn_fin_local);
+  process_trees_by_snap(trees,&params,SELECT_AND_ANALYZE_BOTH,0,trees->n_snaps,
+                        process_trees_fctn_init_local,
+                        process_trees_fctn_init_snap_null,
+                        process_trees_fctn_select_null,
+                        process_trees_fctn_analyze_local,
+                        process_trees_fctn_fin_snap_null,
+                        process_trees_fctn_fin_local);
 
   // Clean-up
   free_trees(&trees);

@@ -8,7 +8,7 @@ OBJFILES  = average_tree_branches.o              \
 	    init_treenode_trend.o                    \
 	    init_treenode_trend_coordinate.o         \
 	    init_treenode_trend_functions.o          \
-	    select_and_analyze_treenodes_by_snap.o   \
+	    process_trees_by_snap.o                  \
 	    compute_trees_analysis.o                 \
 	    compute_trees_strayed_halo_analysis.o    \
 	    compute_trees_dropped_halo_analysis.o    \
