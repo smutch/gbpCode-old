@@ -49,7 +49,7 @@ int main(int argc, char *argv[]){
   char  redshift_text[64];
   char *cosmology_name=(char *)ADaPS_fetch(cosmo,"name");
   float_to_text(redshift,3,redshift_text);
-  sprintf(filename_out,"mass_function_z%s_%s.txt",redshift_text,cosmology_name);
+  sprintf(filename_out,"mass_function_z%s_%s_%s.txt",redshift_text,cosmology_name,paramterization);
 
   // Open file and write header
   FILE *fp_out=NULL;
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]){
   SID_init_pcounter(&pcounter,n_M_bins,10);
   double h_Hubble   =((double *)ADaPS_fetch(cosmo,"h_Hubble"))[0];
   double mass_factor=M_SOL/h_Hubble;
-  double MFct_factor=pow(M_PER_MPC/h_Hubble,3.0);
+  double MFct_factor=pow(M_PER_MPC,3.0);
   for(int i_bin=0;i_bin<n_M_bins;i_bin++){
      double log_M;
      if(i_bin==0)

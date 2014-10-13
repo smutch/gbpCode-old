@@ -51,15 +51,20 @@ int main(int argc, char *argv[]){
 
    // Allocate memory for the data. Read it and sort it in ascending order 
    SID_log("Reading data...",SID_LOG_OPEN|SID_LOG_TIMER);
-   int     n_data=count_lines_data(fp_in);
-   SID_log("(%d items)...",SID_LOG_CONTINUE,n_data);
-   double *data  =(double *)malloc(sizeof(double)*n_data);
-   for(int i=0;i<n_data;i++){
+   int     n_data_in=count_lines_data(fp_in);
+   SID_log("(%d items)...",SID_LOG_CONTINUE,n_data_in);
+   double *data  =(double *)malloc(sizeof(double)*n_data_in);
+   int n_data=0;
+   for(int i=0;i<n_data_in;i++){
+     double data_in;
      grab_next_line_data(fp_in,&line,&line_length);
-     grab_double(line,M_column,&(data[i]));
+     grab_double(line,M_column,&data_in);
      if(!flag_log)
-        data[i]=take_log10(data[i]);
+        data_in=take_log10(data_in);
+     if(data_in>=lM_min)
+        data[n_data++]=data_in;
    }
+   SID_log("(%d will be used)...",SID_LOG_CONTINUE,n_data);
    fclose(fp_in);
    SID_free(SID_FARG line);
    SID_log("Done.",SID_LOG_CLOSE);
@@ -71,24 +76,27 @@ int main(int argc, char *argv[]){
 
    // Compile histogram
    SID_log("Computing mass function...",SID_LOG_OPEN|SID_LOG_TIMER);
-   int i_data = 0;
-   while(data[i_data]<lM_min && i_data<(n_data-1)) i_data++;
    double *bin       =(double *)SID_malloc(sizeof(double)*(n_bins+1));
    double *bin_median=(double *)SID_malloc(sizeof(double)*n_bins);
    int    *hist      =(int    *)SID_calloc(sizeof(int)   *n_bins);
    double  lM_bin_min=lM_min;
-   double  lM_bin_max=lM_min+dlM;
+   double  lM_bin_max=lM_min;
    int     i_data_lo=-1;
    int     i_data_hi=-1;
-   int     i_bin;
+   int     i_bin =0;
+   int     i_data=0;
    for(i_bin=0;i_bin<n_bins;i_bin++){
+     lM_bin_min=lM_bin_max;
+     lM_bin_max=lM_min+((double)(i_bin+1))*dlM;
      bin[i_bin]=lM_bin_min;
      i_data_lo=i_data;
-     while(data[i_data]<lM_bin_min && i_data<(n_data-1)){
-        hist[i_bin]++;
-        i_data++;
-     }
      i_data_hi=i_data;
+     while(data[i_data]<lM_bin_max && i_data<n_data){
+        hist[i_bin]++;
+        i_data_hi=i_data;
+        i_data++;
+        if(i_data>=n_data) break;
+     }
      int i_data_mid=(i_data_lo+i_data_hi)/2;
      if(hist[i_bin]>0){
        if(hist[i_bin]%2)
@@ -98,8 +106,6 @@ int main(int argc, char *argv[]){
      }
      else
         bin_median[i_bin]=0.5*(lM_bin_max+lM_bin_min);
-     lM_bin_min=lM_bin_max;
-     lM_bin_max=lM_min+((double)i_bin)*dlM;
    }
    bin[i_bin]=lM_bin_max;
    SID_log("Done.",SID_LOG_CLOSE);
@@ -129,11 +135,11 @@ int main(int argc, char *argv[]){
      double dn_dlogM_theory=mass_function(take_alog10(bin_median[i])*M_SOL/h_Hubble,
                                           redshift,
                                           &cosmo,
-                                          MF_ST)*pow(M_PER_MPC/h_Hubble,3.0);
+                                          MF_ST)*pow(M_PER_MPC,3.0);
      double n_theory=mass_function_cumulative(take_alog10(bin[i])*M_SOL/h_Hubble,
                                               redshift,
                                               &cosmo,
-                                              MF_ST)*pow(M_PER_MPC/h_Hubble,3.0);
+                                              MF_ST)*pow(M_PER_MPC,3.0);
      // Compute cumulative histogram
      int cumulative_hist=0;
      for(int j_bin=i;j_bin<n_bins;j_bin++)
