@@ -124,8 +124,8 @@ void read_trees(char       *filename_SSimPL_root,
     int    offset_size;
     SID_fp fp_groups_in;
     SID_fp fp_subgroups_in;
-    sprintf(filename_input_halos_groups,   "%s_%03d.catalog_groups",   filename_halos_version,i_read);
-    sprintf(filename_input_halos_subgroups,"%s_%03d.catalog_subgroups",filename_halos_version,i_read);
+    sprintf(filename_input_halos_groups,   "%s_%03d.catalog_groups",   filename_halos_root,i_read);
+    sprintf(filename_input_halos_subgroups,"%s_%03d.catalog_subgroups",filename_halos_root,i_read);
     SID_fopen(filename_input_halos_groups,   "r",&fp_groups_in);
     SID_fopen(filename_input_halos_subgroups,"r",&fp_subgroups_in);
     SID_fread_all(&n_groups_cat,   sizeof(int),1,&fp_groups_in);
