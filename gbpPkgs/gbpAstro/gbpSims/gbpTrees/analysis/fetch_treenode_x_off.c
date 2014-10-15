@@ -24,9 +24,10 @@ double fetch_treenode_x_off(tree_info *trees,tree_node_info *halo){
          else
             SID_trap_error("Subgroup properties are not defined.  They probably have not been read.",ERROR_LOGIC);
       }
+      double expansion_factor=a_of_z(trees->z_list[halo->snap_tree]);
       return(sqrt(pow(properties->position_COM[0]-properties->position_MBP[0],2.)+
                   pow(properties->position_COM[1]-properties->position_MBP[1],2.)+
-                  pow(properties->position_COM[2]-properties->position_MBP[2],2.))/properties->R_vir);
+                  pow(properties->position_COM[2]-properties->position_MBP[2],2.))/(properties->R_vir/expansion_factor));
    }
    return(1.);
 }
