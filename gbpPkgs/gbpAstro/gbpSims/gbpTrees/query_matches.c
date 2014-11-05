@@ -27,6 +27,7 @@ int main(int argc, char *argv[]){
   int    *match_ids;
   float  *match_score;
   size_t *match_index;
+  char   *match_2way;
   int     j_halo;
   int     match;
   int     i_read;
@@ -99,6 +100,7 @@ int main(int argc, char *argv[]){
   match_ids    =(int    *)SID_malloc(sizeof(int)   *max_n_groups);
   match_index  =(size_t *)SID_malloc(sizeof(size_t)*max_n_groups);
   match_score  =(float  *)SID_malloc(sizeof(float) *max_n_groups);
+  match_2way   =(char   *)SID_malloc(sizeof(char)  *max_n_groups);
 
   // Open output file
   FILE *fp_out;
@@ -112,6 +114,7 @@ int main(int argc, char *argv[]){
   fprintf(fp_out,"#        (%02d): Matched to No. particles\n",i_column++);
   fprintf(fp_out,"#        (%02d): Match score\n",             i_column++);
   fprintf(fp_out,"#        (%02d): Match sort index\n",        i_column++);
+  fprintf(fp_out,"#        (%02d): Match 2-way flag\n",        i_column++);
   fprintf(fp_out,"#        (%02d): Good or bad match?\n",      i_column++);
 
   // Loop over all matching combinations
@@ -133,6 +136,7 @@ int main(int argc, char *argv[]){
                      match_ids,
                      match_score,
                      match_index,
+                     match_2way,
                      0.);
 
         // Check for goodness of match
@@ -145,21 +149,23 @@ int main(int argc, char *argv[]){
         // Write desired information
         match=match_ids[i_halo];
         if(match>=0)
-          fprintf(fp_out,"%3d %7d %6d %3d %7d %6d %10.3le %7zu %s\n",
+          fprintf(fp_out,"%3d %7d %6d %3d %7d %6d %10.3le %7zu %1d %s\n",
                          i_read,i_halo,
                          n_particles_i[i_halo],
                          j_read,match,
                          n_particles_j[match],
                          match_score[i_halo],
                          match_index[i_halo],
+                         match_2way[i_halo],
                          goodness_of_match_text);
         else
-          fprintf(fp_out,"%3d %7d %6d %3d %7d %6d %10.3le %7zu %s\n",
+          fprintf(fp_out,"%3d %7d %6d %3d %7d %6d %10.3le %7zu %1d %s\n",
                          i_read,i_halo,
                          n_particles_i[i_halo],
                          j_read,match,-1,
                          match_score[i_halo],
                          match_index[i_halo],
+                         match_2way[i_halo],
                          goodness_of_match_text);
      }    
   }
@@ -183,6 +189,7 @@ int main(int argc, char *argv[]){
                      match_ids,
                      match_score,
                      match_index,
+                     match_2way,
                      0.);
 
         // Check for goodness of match
@@ -195,13 +202,14 @@ int main(int argc, char *argv[]){
         // Write desired information
         for(i_halo=0,match=-1;i_halo<n_groups_i && match<0;i_halo++){
           if(match_ids[i_halo]==j_halo){
-            fprintf(fp_out,"%3d %7d %6d %3d %7d %6d %10.3le %7zu %s\n",
+            fprintf(fp_out,"%3d %7d %6d %3d %7d %6d %10.3le %7zu %1d %s\n",
                            i_read,i_halo,
                            n_particles_i[i_halo],
                            j_read,j_halo,
                            n_particles_j[j_halo],
                            match_score[i_halo],
                            match_index[i_halo],
+                           match_2way[i_halo],
                            goodness_of_match_text);
           }
         }
@@ -218,6 +226,7 @@ int main(int argc, char *argv[]){
   SID_free(SID_FARG match_ids);
   SID_free(SID_FARG match_index);
   SID_free(SID_FARG match_score);
+  SID_free(SID_FARG match_2way);
   
   SID_log("Done.",SID_LOG_CLOSE);
   SID_exit(ERROR_NONE);

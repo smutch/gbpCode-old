@@ -110,6 +110,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
   size_t     *bridge_index=NULL;
   size_t     *search_index=NULL;
   float      *match_score=NULL;
+  char       *match_flag_two_way=NULL;
   int        *bridge_keep=NULL;
   int         flag_match_subgroups;
   int         flag_keep_strays=FALSE;
@@ -227,6 +228,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
   match_id             =(int    *)SID_malloc(sizeof(int)   *n_halos_max);
   match_score          =(float  *)SID_malloc(sizeof(float) *n_halos_max);
   match_index          =(size_t *)SID_malloc(sizeof(size_t)*n_halos_max);
+  match_flag_two_way   =(char   *)SID_malloc(sizeof(char)  *n_halos_max);
   subgroups            =(tree_horizontal_info **)SID_malloc(sizeof(tree_horizontal_info *)*n_wrap);
   groups               =(tree_horizontal_info **)SID_malloc(sizeof(tree_horizontal_info *)*n_wrap);
   n_subgroups_group    =(int                  **)SID_malloc(sizeof(int                  *)*n_wrap);
@@ -244,6 +246,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                               match_id,
                               match_score,
                               match_index,
+                              match_flag_two_way,
                               n_particles_groups,
                               n_particles_subgroups,
                               n_subgroups_group,
@@ -324,6 +327,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                            match_id,
                            match_score,
                            match_index,
+                           match_flag_two_way,
                            n_particles,
                            i_file,
                            i_read,
@@ -345,6 +349,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                              match_id,
                              match_score,
                              match_index,
+                             match_flag_two_way,
                              n_particles,
                              i_file,
                              i_read,
@@ -499,6 +504,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
   SID_free(SID_FARG match_id);
   SID_free(SID_FARG match_score);
   SID_free(SID_FARG match_index);
+  SID_free(SID_FARG match_flag_two_way);
   SID_free(SID_FARG n_particles_groups);
   SID_free(SID_FARG n_particles_subgroups);
   SID_log("Done.",SID_LOG_CLOSE);

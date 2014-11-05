@@ -11,6 +11,7 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
                                  int    *match_id,
                                  float  *match_score, 
                                  size_t *match_index,
+                                 char   *match_flag_two_way,
                                  int    *n_particles_groups,
                                  int    *n_particles_subgroups, 
                                  int   **n_subgroups_group,
@@ -45,6 +46,7 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
                match_id,
                match_score,
                match_index,
+               NULL,
                F_GOODNESS_OF_MATCH);
   int i_search;
   for(i_search=1;i_search<n_wrap;i_search++)
@@ -127,6 +129,7 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
                match_id,
                match_score,
                match_index,
+               NULL,
                F_GOODNESS_OF_MATCH);
 
   for(i_halo=0,j_halo=0,k_halo=0,(*max_id_subgroup)=0,(*max_tree_id_subgroup)=0;i_halo<n_subgroups_max;i_halo++,j_halo++){

@@ -21,6 +21,7 @@ void read_matches(char    *filename_in_dir,
                   int     *match_ids,
                   float   *match_score,
                   size_t  *match_index,
+                  char    *match_flag_two_way,
                   double   f_goodness_of_match){
    char   group_text_prefix[5];
    char   filename_in[MAX_FILENAME_LENGTH];
@@ -207,6 +208,80 @@ void read_matches(char    *filename_in_dir,
    merge_sort(match_ids,(size_t)(*n_groups_i),&match_index_temp,SID_INT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
    memcpy(match_index,match_index_temp,(*n_groups_i)*sizeof(size_t));
    SID_free(SID_FARG match_index_temp);
+
+   // Determine if the matches are two-way if we have been asked to check this
+   if(match_flag_two_way!=NULL){
+
+      // We're going to need the particle counts in the target catalog for checking the goodness of return matches.  Make sure we have them.
+      if(n_particles_j==NULL)
+         SID_trap_error("Target catalog halo sizes are not defined in read_matches() but are needed for checking two-way match flags.",ERROR_LOGIC);
+
+      // Flip the file names for reading the return matches
+      sprintf(filename_in_dir_snap,"%s/%s",filename_in_dir,filename_cat2);
+      if(filename_in_dir!=NULL)
+         sprintf(filename_in,"%s/%sgroup_matches_%s_%s.dat",filename_in_dir_snap,group_text_prefix,filename_cat2,filename_cat1);
+      else
+         sprintf(filename_in,"%s_%sgroup_matches_%s_%s.dat",filename_in_name,    group_text_prefix,filename_cat2,filename_cat1);
+
+      // Open three files, one for reading each block of the matching file
+      int i_read_file_check;
+      int j_read_file_check;
+      int n_groups_i_check;
+      int n_groups_j_check;
+      SID_fp fp_check_ids;
+      SID_fp fp_check_score;
+      SID_fopen(filename_in,"r",&fp_check_ids);
+      SID_fopen(filename_in,"r",&fp_check_score);
+      SID_fread(&j_read_file_check,sizeof(int),1,&fp_check_ids);
+      SID_fread(&i_read_file_check,sizeof(int),1,&fp_check_ids);
+      SID_fread(&n_groups_j_check, sizeof(int),1,&fp_check_ids);
+      SID_fread(&n_groups_i_check, sizeof(int),1,&fp_check_ids);
+
+      // Check that we have the right files
+      if(n_groups_i_check!=(*n_groups_i))
+         SID_trap_error("Source halo counts don't match (ie. %d!=%d) in two-way check in read_matches().",ERROR_LOGIC,n_groups_i_check,(*n_groups_i));
+      if(n_groups_j_check!=(*n_groups_j))
+         SID_trap_error("Target halo counts don't match (ie. %d!=%d) in two-way check in read_matches().",ERROR_LOGIC,n_groups_j_check,(*n_groups_j));
+      if(i_read_file_check!=i_read_file)
+         SID_trap_error("Source file numbers don't match (ie. %d!=%d) in two-way check in read_matches().",ERROR_LOGIC,i_read_file_check,i_read_file);
+      if(j_read_file_check!=j_read_file)
+         SID_trap_error("Target file numbers don't match (ie. %d!=%d) in two-way check in read_matches().",ERROR_LOGIC,j_read_file_check,j_read_file);
+
+      // Skip to the beginning of the relevant block for the score-reading file pointer
+      SID_fskip(sizeof(int),   4,            &fp_check_score); // header
+      SID_fskip(sizeof(int),   (*n_groups_j),&fp_check_score); // ids
+      SID_fskip(sizeof(size_t),(*n_groups_j),&fp_check_score); // indices
+
+      // Set everything to being a one-way match unless subsequently changed
+      for(i_halo=0;i_halo<(*n_groups_i);i_halo++) match_flag_two_way[i_halo]=FALSE;
+
+      // Read matching data in buffered chunks
+      int     n_buffer    =1024*1024;
+      int     n_chunk     =0;
+      int     n_remaining =(*n_groups_j);
+      int    *buffer_ids  =(int   *)SID_malloc(sizeof(int)  *n_buffer);
+      float  *buffer_score=(float *)SID_malloc(sizeof(float)*n_buffer);
+      for(int j_halo=0;n_remaining>0;n_remaining-=n_chunk){
+         n_chunk=MIN(n_remaining,n_buffer);
+         SID_fread(buffer_ids,  sizeof(int),   n_chunk,&fp_check_ids);
+         SID_fread(buffer_score,sizeof(float), n_chunk,&fp_check_score);
+         for(int k_halo=0;k_halo<n_chunk;k_halo++){
+            int id_j=buffer_ids[k_halo];
+            if(id_j>=0){
+               if(id_j>=(*n_groups_i))
+                  SID_trap_error("Allowed matching index has been exceeded i(ie %d>=%d) while determining two-way match flags.",ERROR_LOGIC,buffer_ids[k_halo],(*n_groups_i));
+               if(check_goodness_of_match(n_particles_j[j_halo],buffer_score[k_halo],f_goodness_of_match)){
+                 int id_i=match_ids[id_j];
+                 if(id_i==j_halo) match_flag_two_way[id_i]=TRUE; 
+               }
+            }
+         }
+      }
+      SID_fclose(&fp_check_ids);
+      SID_fclose(&fp_check_score);
+      SID_free(SID_FARG buffer_ids);
+      SID_free(SID_FARG buffer_score);
+   }
 
    // If the n_particles_i array is a temporary array, free it
    if(flag_alloc_n_particles_i)

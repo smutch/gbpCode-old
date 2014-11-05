@@ -110,6 +110,7 @@ int main(int argc, char *argv[]){
                match_ids,
                match_score,
                match_index,
+               NULL,
                0.);
 
   // Create a storage array mapping the indices of the second catalog

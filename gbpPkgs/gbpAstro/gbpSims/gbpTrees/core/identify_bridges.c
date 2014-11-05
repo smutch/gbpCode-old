@@ -12,6 +12,7 @@ void identify_bridges(tree_horizontal_info **halos,
                       int    *match_id,
                       float  *match_score,
                       size_t *match_index,
+                      char   *match_flag_two_way,
                       int    *n_particles,
                       int     i_file,
                       int     i_read,
@@ -67,6 +68,7 @@ void identify_bridges(tree_horizontal_info **halos,
                     match_id,
                     match_score,
                     match_index,
+                    NULL,
                     F_GOODNESS_OF_MATCH);
 
        // Store halo sizes for the current snapshot's halos
@@ -125,6 +127,7 @@ void identify_bridges(tree_horizontal_info **halos,
                     match_id,
                     match_score,
                     match_index,
+                    NULL,
                     F_GOODNESS_OF_MATCH);
 
        // For all the halos in i_file_1 with back-matches ...

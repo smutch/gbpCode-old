@@ -8,6 +8,7 @@ void construct_progenitors(tree_horizontal_info **halos,
                            int    *match_id,
                            float  *match_score,
                            size_t *match_index,
+                           char   *match_flag_two_way,
                            int    *n_particles,
                            int     i_file,
                            int     i_read,
@@ -55,6 +56,7 @@ void construct_progenitors(tree_horizontal_info **halos,
                    match_id,
                    match_score,
                    match_index,
+                   match_flag_two_way,
                    F_GOODNESS_OF_MATCH);
 
       // Store halo sizes
@@ -112,7 +114,7 @@ void construct_progenitors(tree_horizontal_info **halos,
                   for(int k_halo=0;k_halo<n_back_matches;k_halo++){
                      tree_horizontal_info *current_back_match=back_matches[k_halo].halo;
                      if(current_back_match->file==j_file_2 && current_back_match->index==match_id[i_halo]){
-                        if(check_validity_of_emerged_match(&(halos_i[i_halo]),&(back_matches[k_halo]),n_search)){
+                        if(check_validity_of_emerged_match(&(halos_i[i_halo]),&(back_matches[k_halo]),match_flag_two_way[i_halo],n_search)){
                            halos_i[i_halo].forematch_default.halo =&(halos[j_file_2%n_wrap][current_back_match->index]);
                            halos_i[i_halo].forematch_default.score=match_score[i_halo];
                            flag_unchanged=FALSE;
