@@ -119,6 +119,7 @@ int    check_treenode_if_branch_start(tree_info *trees,tree_node_info *halo);
 int    check_treenode_if_satellite(tree_node_info *halo);
 int    check_treenode_if_central(tree_node_info *halo);
 int    check_treenode_if_fragmented(tree_node_info *halo);
+int    check_treenode_if_matched_to_emerged(tree_node_info *halo);
 int    find_treenode_snap_equals_given(tree_info *trees,tree_node_info *halo,int snap_tree_given,tree_node_info **treenode_return);
 int    find_treenode_main_progenitor(tree_info *trees,tree_node_info *halo,tree_node_info **main_progenitor);
 int    find_treenode_branch_root(tree_info *trees,tree_node_info *halo,tree_node_info **branch_root);
@@ -208,6 +209,7 @@ int  calc_tree_property_index_tau_3to1 (trend_property_info *property,hist_info 
 int  calc_tree_property_index_tau_10to1(trend_property_info *property,hist_info *hist,void *halo_in);
 
 tree_markers_info *fetch_treenode_precomputed_markers(tree_info *trees,tree_node_info *halo);
+double fetch_treenode_match_score(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_delta_t(tree_info *trees,tree_node_info *halo_1,tree_node_info *halo_2);
 int    fetch_treenode_snapshot(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_snap_tree(tree_info *trees,tree_node_info *halo);

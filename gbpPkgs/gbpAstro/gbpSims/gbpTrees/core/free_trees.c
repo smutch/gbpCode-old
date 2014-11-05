@@ -45,6 +45,20 @@ void free_trees(tree_info **trees){
      }
   }
 
+  // Free match scores
+  for(int i_type=0;i_type<2;i_type++){
+     float **match_scores;
+     if(i_type==0)
+        match_scores=(*trees)->group_match_scores;
+     else
+        match_scores=(*trees)->subgroup_match_scores;
+     if(match_scores!=NULL){
+        for(i_snap=0;i_snap<(*trees)->n_snaps;i_snap++)
+           SID_free(SID_FARG match_scores[i_snap]);
+        SID_free(SID_FARG match_scores);
+     }
+  }
+
   // Free the various other arrays
   SID_free(SID_FARG (*trees)->snap_list);
   SID_free(SID_FARG (*trees)->z_list);

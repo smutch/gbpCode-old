@@ -46,6 +46,8 @@ OBJFILES  = average_tree_branches.o              \
 	    check_treenode_if_satellite.o            \
 	    check_treenode_if_branch_start.o         \
 	    check_treenode_if_fragmented.o           \
+	    check_treenode_if_matched_to_emerged.o   \
+	    fetch_treenode_match_score.o             \
 	    fetch_treenode_precomputed_markers.o     \
 	    fetch_treenode_delta_t.o                 \
 	    fetch_treenode_properties.o              \

@@ -136,11 +136,13 @@ int calc_tree_property_index_tau_form(trend_property_info *property,hist_info *h
    }
 }
 int calc_tree_property_index_tau_3to1(trend_property_info *property,hist_info *hist,void *halo_in){
-   tree_info         *trees      =(tree_info      *)(property->params);
-   tree_node_info    *halo       =(tree_node_info *)(halo_in);
-   tree_markers_info *markers    =fetch_treenode_precomputed_markers(trees,halo);
-   tree_node_info    *marker     =markers->merger_33pc_remnant;
-   int                r_val      =-1;
+   tree_info         *trees         =(tree_info      *)(property->params);
+   tree_node_info    *halo          =(tree_node_info *)(halo_in);
+   tree_markers_info *markers_halo  =fetch_treenode_precomputed_markers(trees,halo);
+   tree_node_info    *merger        =markers_halo->merger_33pc_remnant;
+   tree_markers_info *markers_merger=fetch_treenode_precomputed_markers(trees,merger);
+   tree_node_info    *marker        =markers_merger->peak_mass;
+   int                r_val         =-1;
    if(marker!=NULL){
       int                halo_snap  =fetch_treenode_snap_tree(trees,halo);
       int                marker_snap=fetch_treenode_snap_tree(trees,marker);
@@ -150,11 +152,13 @@ int calc_tree_property_index_tau_3to1(trend_property_info *property,hist_info *h
    return(r_val);
 }
 int calc_tree_property_index_tau_10to1(trend_property_info *property,hist_info *hist,void *halo_in){
-   tree_info         *trees      =(tree_info      *)(property->params);
-   tree_node_info    *halo       =(tree_node_info *)(halo_in);
-   tree_markers_info *markers    =fetch_treenode_precomputed_markers(trees,halo);
-   tree_node_info    *marker     =markers->merger_10pc_remnant;
-   int                r_val      =-1;
+   tree_info         *trees         =(tree_info      *)(property->params);
+   tree_node_info    *halo          =(tree_node_info *)(halo_in);
+   tree_markers_info *markers_halo  =fetch_treenode_precomputed_markers(trees,halo);
+   tree_node_info    *merger        =markers_halo->merger_10pc_remnant;
+   tree_markers_info *markers_merger=fetch_treenode_precomputed_markers(trees,merger);
+   tree_node_info    *marker        =markers_merger->peak_mass;
+   int                r_val         =-1;
    if(marker!=NULL){
       int                halo_snap  =fetch_treenode_snap_tree(trees,halo);
       int                marker_snap=fetch_treenode_snap_tree(trees,marker);

@@ -75,7 +75,7 @@ void write_treenode_markers(tree_info *trees,const char *filename_output_root,in
          n_buffer      =n_buffer_halos*n_buffer_per_halo;
          // Set the buffer to a default value smaller than the smallest possible data size
          for(i_buffer=0;i_buffer<n_buffer;i_buffer++)
-            buffer[i_buffer]=invalid_entry; // Min value of match_score is 0.
+            buffer[i_buffer]=invalid_entry; 
          // Determine if any of the local data is being used for this buffer
          tree_node_info *current_halo;
          if(flag_process_groups)

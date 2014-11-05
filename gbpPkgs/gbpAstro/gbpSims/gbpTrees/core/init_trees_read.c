@@ -130,6 +130,8 @@ void init_trees_read(const char  *filename_SSimPL_dir,
   (*tree)->group_array              =NULL;
   (*tree)->subgroup_indices         =NULL;
   (*tree)->subgroup_array           =NULL;
+  (*tree)->group_match_scores       =NULL;
+  (*tree)->subgroup_match_scores    =NULL;
   (*tree)->group_markers            =NULL;
   (*tree)->subgroup_markers         =NULL;
   (*tree)->group_properties         =NULL;

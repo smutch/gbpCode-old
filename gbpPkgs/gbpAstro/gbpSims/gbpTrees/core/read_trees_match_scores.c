@@ -17,16 +17,18 @@ void read_trees_match_scores(tree_info *trees,char *filename_SSimPL_dir,int mode
   SID_log("Reading tree match scores...",SID_LOG_OPEN|SID_LOG_TIMER);
 
   // Create the array we will return
-  float **match_score_groups_local;
-  float **match_score_subgroups_local;
-  if(check_mode_for_flag(mode,READ_TREES_MATCH_SCORES_GROUPS))
-     init_trees_data(trees,(void ***)&match_score_groups_local,sizeof(float),INIT_TREE_DATA_GROUPS,"match_score_groups");
-  else
-     match_score_groups_local=NULL;
-  if(check_mode_for_flag(mode,READ_TREES_MATCH_SCORES_SUBGROUPS))
-     init_trees_data(trees,(void ***)&match_score_subgroups_local,sizeof(float),INIT_TREE_DATA_SUBGROUPS,"match_score_subgroups");
-  else
-     match_score_subgroups_local=NULL;
+  if(check_mode_for_flag(mode,READ_TREES_MATCH_SCORES_GROUPS)){
+     trees->group_match_scores=(float **)SID_malloc(sizeof(float *)*trees->n_snaps);
+     for(int i_snap=0;i_snap<trees->n_snaps;i_snap++)
+        trees->group_match_scores[i_snap]=(float *)SID_calloc(sizeof(float)*trees->n_groups_snap_local[i_snap]);
+  }
+  if(check_mode_for_flag(mode,READ_TREES_MATCH_SCORES_SUBGROUPS)){
+     trees->subgroup_match_scores=(float **)SID_malloc(sizeof(float *)*trees->n_snaps);
+     for(int i_snap=0;i_snap<trees->n_snaps;i_snap++)
+        trees->subgroup_match_scores[i_snap]=(float *)SID_calloc(sizeof(float)*trees->n_subgroups_snap_local[i_snap]);
+  }
+  float **match_score_groups_local   =trees->group_match_scores;
+  float **match_score_subgroups_local=trees->subgroup_match_scores;
 
   // Process each snapshot in turn
   int    *nebr_idx_list_local;

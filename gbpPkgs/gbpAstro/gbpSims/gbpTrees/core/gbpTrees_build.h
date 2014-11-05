@@ -413,6 +413,8 @@ struct tree_info{
   // Cosmology
   cosmo_info       *cosmo;
   // Short-cuts to some common stuff added to data
+  float                     **group_match_scores;
+  float                     **subgroup_match_scores;
   tree_markers_info         **group_markers;
   tree_markers_info         **subgroup_markers;
   halo_properties_info      **group_properties;
