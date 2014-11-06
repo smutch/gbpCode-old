@@ -114,7 +114,7 @@ int main(int argc, char *argv[]){
   fprintf(fp_out,"#        (%02d): Matched to No. particles\n",i_column++);
   fprintf(fp_out,"#        (%02d): Match score\n",             i_column++);
   fprintf(fp_out,"#        (%02d): Match sort index\n",        i_column++);
-  fprintf(fp_out,"#        (%02d): Match 2-way flag\n",        i_column++);
+  fprintf(fp_out,"#        (%02d): 2-way or 1-way match?\n",   i_column++);
   fprintf(fp_out,"#        (%02d): Good or bad match?\n",      i_column++);
 
   // Loop over all matching combinations
@@ -146,26 +146,33 @@ int main(int argc, char *argv[]){
         else
            sprintf(goodness_of_match_text,"bad");
 
+        // Check for 2-way match
+        char twoway_match_text[5];
+        if(match_2way[i_halo])
+           sprintf(twoway_match_text,"2-way");
+        else
+           sprintf(twoway_match_text,"1-way");
+
         // Write desired information
         match=match_ids[i_halo];
         if(match>=0)
-          fprintf(fp_out,"%3d %7d %6d %3d %7d %6d %10.3le %7zu %1d %s\n",
+          fprintf(fp_out,"%3d %7d %6d %3d %7d %6d %10.3le %7zu %s %s\n",
                          i_read,i_halo,
                          n_particles_i[i_halo],
                          j_read,match,
                          n_particles_j[match],
                          match_score[i_halo],
                          match_index[i_halo],
-                         match_2way[i_halo],
+                         twoway_match_text,
                          goodness_of_match_text);
         else
-          fprintf(fp_out,"%3d %7d %6d %3d %7d %6d %10.3le %7zu %1d %s\n",
+          fprintf(fp_out,"%3d %7d %6d %3d %7d %6d %10.3le %7zu %s %s\n",
                          i_read,i_halo,
                          n_particles_i[i_halo],
                          j_read,match,-1,
                          match_score[i_halo],
                          match_index[i_halo],
-                         match_2way[i_halo],
+                         twoway_match_text,
                          goodness_of_match_text);
      }    
   }
@@ -192,24 +199,32 @@ int main(int argc, char *argv[]){
                      match_2way,
                      0.);
 
-        // Check for goodness of match
-        char goodness_of_match_text[5];
-        if(check_goodness_of_match(n_particles_i[i_halo],match_score[i_halo],F_GOODNESS_OF_MATCH))
-           sprintf(goodness_of_match_text,"good");
-        else
-           sprintf(goodness_of_match_text,"bad");
-
         // Write desired information
         for(i_halo=0,match=-1;i_halo<n_groups_i && match<0;i_halo++){
           if(match_ids[i_halo]==j_halo){
-            fprintf(fp_out,"%3d %7d %6d %3d %7d %6d %10.3le %7zu %1d %s\n",
+
+            // Check for goodness of match
+            char goodness_of_match_text[5];
+            if(check_goodness_of_match(n_particles_i[i_halo],match_score[i_halo],F_GOODNESS_OF_MATCH))
+               sprintf(goodness_of_match_text,"good");
+            else
+               sprintf(goodness_of_match_text,"bad");
+
+            // Check for 2-way match
+            char twoway_match_text[5];
+            if(match_2way[i_halo])
+               sprintf(twoway_match_text,"2-way");
+            else
+               sprintf(twoway_match_text,"1-way");
+
+            fprintf(fp_out,"%3d %7d %6d %3d %7d %6d %10.3le %7zu %s %s\n",
                            i_read,i_halo,
                            n_particles_i[i_halo],
                            j_read,j_halo,
                            n_particles_j[j_halo],
                            match_score[i_halo],
                            match_index[i_halo],
-                           match_2way[i_halo],
+                           twoway_match_text,
                            goodness_of_match_text);
           }
         }
