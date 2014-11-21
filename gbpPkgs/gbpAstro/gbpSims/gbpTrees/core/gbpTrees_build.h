@@ -5,20 +5,24 @@
 
 // This defines the minimum effective fraction of
 //    mass needed to be considered a good match
-#define F_GOODNESS_OF_MATCH  0.1
+//#define F_GOODNESS_OF_MATCH  0.0
+#define F_GOODNESS_OF_MATCH  0.05
+//#define F_GOODNESS_OF_MATCH  0.1
+//#define F_GOODNESS_OF_MATCH  0.2
 
 #define K_MATCH_SUBGROUPS 0
 #define K_MATCH_GROUPS    1
 
 // Tree finalization and reading modes
 #define TREE_READ_DEFAULT                 0
-#define TREE_SUBSTRUCTURE_ORDER_DEFAULT   1
-#define TREE_PROGENITOR_ORDER_DELUCIA     2
-#define TREE_PROGENITOR_ORDER_N_PARTICLES 4
-#define TREE_READ_EXTENDED_POINTERS       8
-#define TREE_READ_HEADER_ONLY             16
-#define TREE_PROGENITOR_ORDER_DEFAULT     TREE_PROGENITOR_ORDER_DELUCIA
-#define TREE_MODE_DEFAULT                 (TREE_SUBSTRUCTURE_ORDER_DEFAULT|TREE_PROGENITOR_ORDER_DEFAULT)
+#define TREE_SUBSTRUCTURE_ORDER_DEFAULT        TTTP00
+#define TREE_PROGENITOR_ORDER_DELUCIA          TTTP01
+#define TREE_PROGENITOR_ORDER_N_PARTICLES      TTTP02
+#define TREE_PROGENITOR_ORDER_N_PARTICLES_PEAK TTTP03
+#define TREE_READ_EXTENDED_POINTERS            TTTP04
+#define TREE_READ_HEADER_ONLY                  TTTP05
+#define TREE_PROGENITOR_ORDER_DEFAULT          TREE_PROGENITOR_ORDER_N_PARTICLES_PEAK
+#define TREE_MODE_DEFAULT                      (TREE_SUBSTRUCTURE_ORDER_DEFAULT|TREE_PROGENITOR_ORDER_DEFAULT)
 
 // If any of these are changed, don't forget to modify parse_match_type.c (TTTPXX means "two-to-the-power-XX")
 #define TREE_CASE_NO_PROGENITORS                TTTP00  // Set for halos that have no progenitors.
@@ -43,15 +47,16 @@
 #define TREE_CASE_EMERGED_CANDIDATE             TTTP12  // Set when a halo is identified as a unique back-match to a halo marked TREE_CASE_BRIDGED 
                                                         //    and is not identified as the BRIDGE's main descendant
 #define TREE_CASE_MATCHED_TO_EMERGED            TTTP13  // Set when a halo is matched to an emerged halo
-#define TREE_CASE_GHOST                         TTTP14  // Marks ghost halos in ghost-populated trees
-#define TREE_CASE_GHOST_NULL                    TTTP15  // Marks a ghost halo where a subgroup is it's own group.
+#define TREE_CASE_2WAY_MATCH                    TTTP14  // Set when the match between a halo and it's descendant is mutual
+#define TREE_CASE_GHOST                         TTTP15  // Marks ghost halos in ghost-populated trees
+#define TREE_CASE_GHOST_NULL                    TTTP16  // Marks a ghost halo where a subgroup is it's own group.
                                                         //    This is a default behaviour that occurs when a group is strayed but one of 
                                                         //    it's subgroups isn't.
-#define TREE_CASE_UNPROCESSED                   TTTP16  // For internal use.  This should never be seen in the output.
-#define TREE_CASE_INVALID                       TTTP17  // For internal use.  This should never be seen in the output.
+#define TREE_CASE_UNPROCESSED                   TTTP17  // For internal use.  This should never be seen in the output.
+#define TREE_CASE_INVALID                       TTTP18  // For internal use.  This should never be seen in the output.
 
 #ifdef _MAIN
-   int   n_tree_case_flag_list=18;
+   int   n_tree_case_flag_list=19;
    int   tree_case_flag_list[]={
                   TREE_CASE_NO_PROGENITORS,
                   TREE_CASE_FRAGMENTED_NEW,
@@ -59,6 +64,7 @@
                   TREE_CASE_FRAGMENTED_RETURNED,
                   TREE_CASE_FRAGMENTED_EXCHANGED,
                   TREE_CASE_MAIN_PROGENITOR,
+                  TREE_CASE_2WAY_MATCH,
                   TREE_CASE_MERGER,
                   TREE_CASE_BRIDGED,
                   TREE_CASE_MATCHED_TO_EMERGED,
@@ -78,6 +84,7 @@
                         "FRAGMENTED_RETURNED",
                         "FRAGMENTED_EXCHANGED",
                         "MAIN_PROGENITOR",
+                        "2WAY",
                         "MERGER",
                         "BRIDGED",
                         "MATCHED_TO_EMERGED",
@@ -497,6 +504,8 @@ int check_if_halo_is_descendant(tree_horizontal_info *possible_progenitor,
                                 int n_search);
 int check_if_descendant_is_back_matched(tree_horizontal_info *halo,
                                         tree_horizontal_info *halo_to_check);
+int check_validity_of_main_progenitor(match_info *old_MP,
+                                      match_info *new_MP);
 int check_validity_of_emerged_match(tree_horizontal_info *halo_i,
                                     back_match_info      *back_match,
                                     char                  match_flag_two_way,
@@ -942,7 +951,7 @@ void assign_depth_first_index_vertical_recursive(tree_node_info *tree,int *depth
 void assign_unique_vertical_tree_ids(tree_info *trees,tree_node_info *tree_node);
 void compute_progenitor_score_recursive(tree_node_info *tree,int *M_i,int mode);
 void compute_substructure_order_recursive(tree_node_info *parent,int *score_parent,int mode);
-void compute_progenitor_order_recursive(tree_node_info *descendant,int *score_descendant,int mode);
+void compute_progenitor_order_recursive(tree_info *trees,tree_node_info *descendant,int *score_descendant,int mode);
 int  construct_unique_vertical_tree_id(tree_node_info *tree_node);
 
 int  construct_unique_tree_id(tree_node_info *tree_node);

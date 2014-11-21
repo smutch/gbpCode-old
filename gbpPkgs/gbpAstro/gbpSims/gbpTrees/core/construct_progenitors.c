@@ -74,6 +74,7 @@ void construct_progenitors(tree_horizontal_info **halos,
       for(i_halo=0;i_halo<(*n_halos_1_matches);i_halo++){
          // Check for and set first matches
          tree_horizontal_info *forematch_i=halos_i[i_halo].forematch_default.halo;
+         // If this halo hasn't been forward-matched to anything yet ...
          if(forematch_i==NULL){
             // If this halo has been matched to something in i_file_2 ...
             int my_descendant_index;
@@ -84,9 +85,11 @@ void construct_progenitors(tree_horizontal_info **halos,
                   halos_i[i_halo].forematch_first.score  =match_score[i_halo];
                   halos_i[i_halo].forematch_default.halo =&(halos_j[my_descendant_index]);
                   halos_i[i_halo].forematch_default.score=match_score[i_halo];
-                  // If there is a back match from this descendant, then we are done with this halo
-                  if(check_if_descendant_is_back_matched(&(halos_i[i_halo]),&(halos_j[my_descendant_index])))
-                     halos_i[i_halo].type&=(~TREE_CASE_UNPROCESSED); 
+                  // If this is a two-way match, then we are done.
+                  if(match_flag_two_way[i_halo]){
+                     halos_i[i_halo].type&=(~TREE_CASE_UNPROCESSED);
+                     halos_i[i_halo].type|=  TREE_CASE_2WAY_MATCH;
+                  }
                }
                else
                   SID_log_warning("descendant ID out of bounds (ie. %d>%d) in snapshot %03d -> snapshot %03d %sgroup matching for i_halo=%d.",
@@ -117,6 +120,7 @@ void construct_progenitors(tree_horizontal_info **halos,
                         if(check_validity_of_emerged_match(&(halos_i[i_halo]),&(back_matches[k_halo]),match_flag_two_way[i_halo],n_search)){
                            halos_i[i_halo].forematch_default.halo =&(halos[j_file_2%n_wrap][current_back_match->index]);
                            halos_i[i_halo].forematch_default.score=match_score[i_halo];
+                           halos_i[i_halo].type|=TREE_CASE_2WAY_MATCH;
                            flag_unchanged=FALSE;
                         }
                      }

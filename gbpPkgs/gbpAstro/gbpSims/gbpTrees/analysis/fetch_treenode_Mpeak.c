@@ -10,13 +10,17 @@
 #include <gbpTrees_analysis.h>
 
 double fetch_treenode_Mpeak(tree_info *trees,tree_node_info *halo){
-   tree_markers_info *markers  =fetch_treenode_precomputed_markers(trees,halo);
-   tree_node_info    *peak_mass=NULL;
-   if(markers!=NULL)
-      peak_mass=markers->peak_mass;
-   if(peak_mass==NULL)
-      return(fetch_treenode_Mvir(trees,halo));
+   if(halo!=NULL){
+      tree_markers_info *markers  =fetch_treenode_precomputed_markers(trees,halo);
+      tree_node_info    *peak_mass=NULL;
+      if(markers!=NULL)
+         peak_mass=markers->peak_mass;
+      if(peak_mass==NULL)
+         return(fetch_treenode_Mvir(trees,halo));
+      else
+         return(fetch_treenode_Mvir(trees,peak_mass));
+   }
    else
-      return(fetch_treenode_Mvir(trees,peak_mass));
+      return(0.);
 }
 

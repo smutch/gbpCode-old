@@ -15,14 +15,14 @@ void write_trend_ascii(trend_info *trend,const char *filename_output_root){
 
       // Write header
       int i_column=1;
-      fprintf(fp_out,"#  Column (%03d): Snapshot\n",   i_column++);
+      fprintf(fp_out,"#  Column (%03d): Bin\n",        i_column++);
       fprintf(fp_out,"#         (%03d): %s bin - lo\n",i_column++,trend->ordinate->name);
       fprintf(fp_out,"#         (%03d): %s bin - hi\n",i_column++,trend->ordinate->name);
-      fprintf(fp_out,"#         (%03d): n_halos_all\n",i_column++);
+      fprintf(fp_out,"#         (%03d): n_all\n",      i_column++);
       // Loop over the properties
       trend_property_info *current_property=trend->coordinate_first;
       while(current_property!=NULL){
-         fprintf(fp_out,"#         (%03d): n_halos_hist (%s)\n",      i_column++,current_property->name);
+         fprintf(fp_out,"#         (%03d): n_hist (%s)\n",            i_column++,current_property->name);
          fprintf(fp_out,"#         (%03d): %s\n",                     i_column++,current_property->name);
          fprintf(fp_out,"#         (%03d): %s - 68%% confidence lo\n",i_column++,current_property->name);
          fprintf(fp_out,"#         (%03d): %s - 68%% confidence hi\n",i_column++,current_property->name);
@@ -32,7 +32,7 @@ void write_trend_ascii(trend_info *trend,const char *filename_output_root){
       }
    }
 
-   // Finalize the snapshot histograms and write results
+   // Finalize the histograms and write results
    hist_info *hist_ordinate=trend->ordinate->hist;
    finalize_histogram(hist_ordinate);
    for(int i_bin=0;i_bin<hist_ordinate->n_bins;i_bin++){

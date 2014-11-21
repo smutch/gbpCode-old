@@ -29,6 +29,7 @@ OBJFILES  = read_trees_run_parameters.o                   \
 	    maximum_match_score.o                         \
 	    check_goodness_of_match.o                     \
 	    check_validity_of_emerged_match.o             \
+	    check_validity_of_main_progenitor.o           \
 	    check_if_halo_is_descendant.o                 \
 	    check_if_descendant_is_back_matched.o         \
 	    init_trees_data.o                             \
@@ -47,14 +48,14 @@ OBJFILES  = read_trees_run_parameters.o                   \
 	    compute_trees_vertical.o                      \
 	    finalize_trees_vertical.o                     \
 	    write_trees_vertical.o                        \
-            write_tree_run_parameters.o                   \
+        write_tree_run_parameters.o                   \
 	    split_forests_n_ways.o                        \
 	    write_a_list.o                                \
 	    read_a_list.o                                 \
 	    write_match_results.o                         \
 	    check_for_matching_input_files.o              \
-            compute_single_matches.o                      \
-            compute_trees_matches.o                       \
+        compute_single_matches.o                      \
+        compute_trees_matches.o                       \
 	    compute_trees_auxiliary.o                     \
 	    compute_forests.o                             \
 	    compute_trees_horizontal_stats.o              \

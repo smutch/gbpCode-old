@@ -11,9 +11,10 @@
 
 int check_treenode_if_merger(tree_node_info *halo){
    if(halo!=NULL){
-      if(halo->descendant!=NULL)
+      if(halo->descendant!=NULL){
          return(halo!=(halo->descendant->progenitor_first));
-//      return(check_mode_for_flag(halo->tree_case,TREE_CASE_MERGER));
+         //return(check_mode_for_flag(halo->tree_case,TREE_CASE_MERGER));
+      }
    }
    return(FALSE);
 }

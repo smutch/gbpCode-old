@@ -34,6 +34,8 @@ void finalize_trees(tree_info *trees,int mode){
      SID_log("Assigning progenitor ordering (Delucia)...",SID_LOG_OPEN|SID_LOG_TIMER);
   else if(check_mode_for_flag(mode_progenitor_order,TREE_PROGENITOR_ORDER_N_PARTICLES))
      SID_log("Assigning progenitor ordering (by particle count)...",SID_LOG_OPEN|SID_LOG_TIMER);
+  else if(check_mode_for_flag(mode_progenitor_order,TREE_PROGENITOR_ORDER_N_PARTICLES_PEAK))
+     SID_log("Assigning progenitor ordering (by peak particle count)...",SID_LOG_OPEN|SID_LOG_TIMER);
   else
      SID_trap_error("Invalid progenitor mode (%d).",ERROR_LOGIC,mode_progenitor_order);
   for(i_snap=0;i_snap<trees->n_snaps;i_snap++){
@@ -42,7 +44,7 @@ void finalize_trees(tree_info *trees,int mode){
      current_group=trees->first_neighbour_groups[i_snap];
      while(current_group!=NULL){
         if(current_group->descendant==NULL)
-           compute_progenitor_order_recursive(current_group,NULL,mode_progenitor_order);
+           compute_progenitor_order_recursive(trees,current_group,NULL,mode_progenitor_order);
         current_group=current_group->next_neighbour;
      }
      // ... subgroups ...
@@ -50,7 +52,7 @@ void finalize_trees(tree_info *trees,int mode){
      current_subgroup=trees->first_neighbour_subgroups[i_snap];
      while(current_subgroup!=NULL){
         if(current_subgroup->descendant==NULL)
-           compute_progenitor_order_recursive(current_subgroup,NULL,mode_progenitor_order);
+           compute_progenitor_order_recursive(trees,current_subgroup,NULL,mode_progenitor_order);
         current_subgroup=current_subgroup->next_neighbour;
      }
   }
