@@ -3,18 +3,24 @@
 #include <gbpLib.h>
 #include <gbpRender.h>
 
-/*********************************************************/
-/* |colourmapselect| = 0 -> discrete                     */
-/*                     1 -> greyscale                    */
-/*                     2 -> blue,red,orange,yellow       */
-/*                     3 -> black,blue,red,orange,yellow */
-/*                     4 -> cyan->green->yellow->white   */
-/*                     5 -> blue->green->yellow->white   */
-/*                     6 -> black->green->yellow->white  */
-/*                     7 -> blue,pink,white              */
-/*                     8 -> pink,red,yellow              */
-/* If colourmapselect<0 then invert                      */
-/*********************************************************/
+int integer_gaussian_local(int i_colour,float f_amplitude,float f_centre,float f_width,int rgb_max,int n_colours);
+int integer_gaussian_local(int i_colour,float f_amplitude,float f_centre,float f_width,int rgb_max,int n_colours){
+   return((int)(f_amplitude*rgb_max*exp(-pow(((float)(i_colour)-f_centre*(float)n_colours)/(float)(f_width*(float)n_colours),2.))));
+}
+
+/************************************************************/
+/* |colourmapselect| = 0 -> discrete                        */
+/*                     1 -> greyscale                       */
+/*                     2 -> blue,red,orange,yellow          */
+/*                     3 -> black,blue,red,orange,yellow    */
+/*                     4 -> cyan->green->yellow->white      */
+/*                     5 -> blue->green->yellow->white      */
+/*                     6 -> black->green->yellow->white     */
+/*                     7 -> blue,pink,white                 */
+/*                     8 -> black/magenta,red,orange,yellow */
+/*                     9 ->       magenta,red,orange,yellow */
+/* If colourmapselect<0 then invert                         */
+/************************************************************/
 void create_colour_table(int     colourmapselect,
                          int     n_colours,
                          int  ***rgb){
@@ -54,6 +60,21 @@ void create_colour_table(int     colourmapselect,
       (*rgb)[2][i]=(*rgb)[0][i];
     }
     break;
+  case 2:
+    i=0;
+    for(j=0;j<n_colours;j+=3)
+      (*rgb)[2][i++]=j;
+    for(j=n_colours-1;j>0 && i<n_colours;j-=3) {
+      (*rgb)[0][i]=(*rgb)[0][i-1]+3;
+      (*rgb)[2][i]=j;
+      i++;
+    }
+    while(i<n_colours) {
+      (*rgb)[1][i]=(*rgb)[1][i-1]+3;
+      (*rgb)[0][i]=(*rgb)[0][i-1]+3;
+      i++;
+    }
+    break;
   case 3:
     i=1;
     for(j=1;j<n_colours;j++)
@@ -71,28 +92,13 @@ void create_colour_table(int     colourmapselect,
     break;
   case 4:
     for(i=0;i<n_colours;i++){      
-      (*rgb)[0][i]=(int)(255.*exp(-pow((float)(i-(int)rgb_max)/(float)(rgb_max/2.25),2.)));
+      (*rgb)[0][i]=(int)(rgb_max*exp(-pow((float)(i-(int)rgb_max)/(float)(rgb_max/2.25),2.)));
       if(i<n_colours/4)
-        (*rgb)[1][i]=(int)(255.*exp(-pow((float)(i-(int)rgb_max/4)/(float)(rgb_max/2),2.)));
+        (*rgb)[1][i]=(int)(rgb_max*exp(-pow((float)(i-(int)rgb_max/4)/(float)(rgb_max/2),2.)));
       else
-        (*rgb)[1][i]=255;
+        (*rgb)[1][i]=rgb_max;
       if(i<n_colours/4)
         (*rgb)[2][i]=MAX((int)(200.*exp(-pow((float)(i-(int)rgb_max/4)/(float)(rgb_max/2),2.))),
-                         (int)(200.*exp(-pow((float)(i-(int)rgb_max)/(float)(rgb_max/7),2.))));
-      else
-        (*rgb)[2][i]=MAX((int)(200.*exp(-pow((float)(i-(int)rgb_max/4)/(float)(rgb_max/4),2.))),
-                         (int)(200.*exp(-pow((float)(i-(int)rgb_max)/(float)(rgb_max/7),2.))));
-    }
-    break;
-  case 6:
-    for(i=0;i<n_colours;i++){
-      (*rgb)[0][i]=(int)(255.*exp(-pow((float)(i-(int)rgb_max)/(float)(rgb_max/2.25),2.)));
-      if(i<n_colours/4)
-        (*rgb)[1][i]=(int)(255.*exp(-pow((float)(i-(int)rgb_max/4)/(float)(rgb_max/4),2.)));
-      else
-        (*rgb)[1][i]=255;
-      if(i<n_colours/4)
-        (*rgb)[2][i]=MAX((int)(200.*exp(-pow((float)(i-(int)rgb_max/4)/(float)(rgb_max/4),2.))),
                          (int)(200.*exp(-pow((float)(i-(int)rgb_max)/(float)(rgb_max/7),2.))));
       else
         (*rgb)[2][i]=MAX((int)(200.*exp(-pow((float)(i-(int)rgb_max/4)/(float)(rgb_max/4),2.))),
@@ -114,6 +120,21 @@ void create_colour_table(int     colourmapselect,
       else
         (*rgb)[2][i]=MAX((int)((double)rgb_max*exp(-pow((float)(i-(int)rgb_max/4)/(float)(rgb_max/5),2.))),
                          (int)((double)rgb_max*exp(-pow((float)(i-(int)rgb_max)  /(float)(rgb_max/8),2.))));
+    }
+    break;
+  case 6:
+    for(i=0;i<n_colours;i++){
+      (*rgb)[0][i]=(int)(rgb_max*exp(-pow((float)(i-(int)rgb_max)/(float)(rgb_max/2.25),2.)));
+      if(i<n_colours/4)
+        (*rgb)[1][i]=(int)(rgb_max*exp(-pow((float)(i-(int)rgb_max/4)/(float)(rgb_max/4),2.)));
+      else
+        (*rgb)[1][i]=rgb_max;
+      if(i<n_colours/4)
+        (*rgb)[2][i]=MAX((int)(200.*exp(-pow((float)(i-(int)rgb_max/4)/(float)(rgb_max/4),2.))),
+                         (int)(200.*exp(-pow((float)(i-(int)rgb_max)/(float)(rgb_max/7),2.))));
+      else
+        (*rgb)[2][i]=MAX((int)(200.*exp(-pow((float)(i-(int)rgb_max/4)/(float)(rgb_max/4),2.))),
+                         (int)(200.*exp(-pow((float)(i-(int)rgb_max)/(float)(rgb_max/7),2.))));
     }
     break;
   case 7:
@@ -142,20 +163,42 @@ void create_colour_table(int     colourmapselect,
     while(i<n_colours) 
       (*rgb)[1][i++]=(int)((float)(i-j)*1.7);
     break;
-  case 2:
-  default:
+  case 9:
     i=0;
-    for(j=0;j<n_colours;j+=3)
-      (*rgb)[2][i++]=j;
-    for(j=n_colours-1;j>0 && i<n_colours;j-=3) {
-      (*rgb)[0][i]=(*rgb)[0][i-1]+3;
-      (*rgb)[2][i]=j;
-      i++;
-    }
-    while(i<n_colours) {
-      (*rgb)[1][i]=(*rgb)[1][i-1]+3;
-      (*rgb)[0][i]=(*rgb)[0][i-1]+3;
-      i++;
+    for(j=0;j<n_colours;j++)
+      (*rgb)[2][i++]=rgb_max-(int)(1.5*(float)j);
+    i=0;
+    (*rgb)[0][i]=(int)((double)(rgb_max)/5.0);
+    for(j=0;j<n_colours;j++)
+      (*rgb)[0][i++]=rgb_max;
+    i=(int)((double)(rgb_max)/2.5);
+    j=i;
+    while(i<n_colours)
+      (*rgb)[1][i++]=(int)((float)(i-j)*1.7);
+    break;
+  //integer_gaussian_local(int i_colour,float f_amplitude,float f_centre,float f_width,int rgb_max,int n_colours);
+  case 10:
+    for(i=0;i<n_colours;i++){
+      //if(i<(n_colours/10))
+      //   (*rgb)[0][i]=0.8*rgb_max;
+      //else
+      //   (*rgb)[0][i]=integer_gaussian_local(i,0.8,0.1,0.50,rgb_max,n_colours);
+      //(*rgb)[1][i]   =integer_gaussian_local(i,0.8,0.0,0.25,rgb_max,n_colours);
+      ////(*rgb)[2][i]   =integer_gaussian_local(i,1.0,0.0,0.15,rgb_max,n_colours);
+      //(*rgb)[0][i]  +=integer_gaussian_local(i,0.1,1.0,0.20,rgb_max,n_colours);
+      //(*rgb)[1][i]  +=integer_gaussian_local(i,0.3,0.6,0.50,rgb_max,n_colours);
+      //(*rgb)[2][i]  +=integer_gaussian_local(i,0.5,1.0,0.20,rgb_max,n_colours);
+
+      if(i<(n_colours/10))
+         (*rgb)[0][i]=1.*rgb_max;
+      else
+         (*rgb)[0][i]=integer_gaussian_local(i,1.0,0.1,0.50,rgb_max,n_colours);
+      (*rgb)[1][i]   =integer_gaussian_local(i,1.0,0.0,0.25,rgb_max,n_colours);
+      //(*rgb)[2][i]   =integer_gaussian_local(i,1.0,0.0,0.15,rgb_max,n_colours);
+      (*rgb)[0][i]  +=integer_gaussian_local(i,0.2,1.0,0.20,rgb_max,n_colours);
+      (*rgb)[1][i]  +=integer_gaussian_local(i,0.6,0.6,0.50,rgb_max,n_colours);
+      (*rgb)[2][i]  +=integer_gaussian_local(i,1.0,1.0,0.20,rgb_max,n_colours);
+
     }
     break;
   }

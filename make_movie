@@ -1,3 +1,3 @@
 #!/bin/csh -f
-ffmpeg -i \!:1_%05d.png -vcodec mpeg4 -sameq \!:2.mp4
+ffmpeg -i '\!:1_%05d.png' -vcodec mpeg4 -sameq \!:2.mp4
 

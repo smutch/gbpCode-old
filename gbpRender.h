@@ -15,6 +15,10 @@
 #define CAMERA_PLANE_PARALLEL  4
 #define CAMERA_DEFAULT         CAMERA_MONO
 
+#define CAMERA_RGB_MODE_TABLE   TTTP01
+#define CAMERA_RGB_MODE_NOTABLE TTTP02
+#define CAMERA_RGB_MODE_DEFAULT CAMERA_RGB_MODE_TABLE
+
 #define RENDER_INIT_PERSPECTIVE 1
 #define RENDER_INIT_EVOLVE      2
 #define RENDER_INIT_DEFAULT     RENDER_INIT_PERSPECTIVE
@@ -161,6 +165,16 @@ struct camera_info{
   image_info       *image_Z;
   image_info       *image_Z_left;
   image_info       *image_Z_right;
+  // These images are used when colours can not be set with a colour table
+  image_info       *image_RY;
+  image_info       *image_RY_left;
+  image_info       *image_RY_right;
+  image_info       *image_GY;
+  image_info       *image_GY_left;
+  image_info       *image_GY_right;
+  image_info       *image_BY;
+  image_info       *image_BY_left;
+  image_info       *image_BY_right;
 };
 
 typedef struct render_info render_info;
@@ -255,6 +269,12 @@ void set_image_RGBY(image_info *image_RGBY_in,
                     double      RGB_max,
                     double      Y_min,
                     double      Y_max);
+void set_image_RGBY_no_table(image_info *image_RGBY_in,
+                             image_info *image_RY_in,
+                             image_info *image_GY_in,
+                             image_info *image_BY_in,
+                             double      Y_min,
+                             double      Y_max);
 
 void write_image(image_info *image,char *filename,int mode);
 void read_image(image_info *image,char *filename_root);

@@ -4,18 +4,40 @@
 
 INCFILES  = gbpRender.h
 OBJFILES  = close_movie.o               \
-	    set_sph_kernel.o            \
-	    set_transfer_function.o     \
-	    read_gadget_binary_render.o \
+            init_perspective.o          \
+	        free_perspective.o          \
+	        copy_perspective.o          \
+	        init_perspective_interp.o   \
+	        free_perspective_interp.o   \
+	        add_scene_perspective.o     \
+	        init_scene.o                \
+	        seal_scenes.o               \
+	        free_scenes.o               \
+	        init_camera.o               \
+	        seal_render_camera.o        \
+	        free_camera.o               \
+	        init_render.o               \
+	        free_render.o               \
+	        add_render_scene.o          \
+	        seal_render.o               \
+	        set_render_state.o          \
+	        parse_render_file.o         \
+	        read_frame.o                \
+	        write_frame.o               \
+	        set_frame.o                 \
+            set_render_scale.o          \
+            set_sph_kernel.o            \
+            set_transfer_function.o     \
+            read_gadget_binary_render.o \
             create_colour_table.o       \
             free_image.o                \
             init_image.o                \
             open_movie.o                \
             read_image.o                \
             render_frame.o              \
-            render_routines.o           \
             set_image_RGB.o             \
             set_image_RGBY.o            \
+	        set_image_RGBY_no_table.o   \
             write_image.o               \
             write_image_to_movie.o
 LIBFILE   = libgbpRender.a

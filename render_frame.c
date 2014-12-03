@@ -2069,20 +2069,24 @@ void render_frame(render_info  *render){
 
     // Take log_10 (if needed)
     if(check_mode_for_flag(v_mode,MAKE_MAP_LOG)){
+      SID_log("Taking log of v-image...",SID_LOG_OPEN);
       for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
         if(mask[i_pixel])
           image[i_pixel]=take_log10(image[i_pixel]);
         else
           image[i_pixel]=LOG_ZERO;
       }
+      SID_log("Done.",SID_LOG_CLOSE);
     }
     if(check_mode_for_flag(w_mode,MAKE_MAP_LOG)){
+      SID_log("Taking log of w-image...",SID_LOG_OPEN);
       for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
         if(mask[i_pixel])
           denominator[i_pixel]=take_log10(denominator[i_pixel]);
         else
           denominator[i_pixel]=LOG_ZERO;
       }
+      SID_log("Done.",SID_LOG_CLOSE);
     }
 
     // Compute some image statistics

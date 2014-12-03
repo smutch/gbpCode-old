@@ -22,7 +22,6 @@ void read_gadget_binary_render(char       *filename_root_in,
    size_t    n_particles_kept;
    size_t    n_particles_kept_all;
    size_t    n_of_type_rank[N_GADGET_TYPE];
-   size_t    n_of_type[N_GADGET_TYPE];
    size_t    i_particle;
    int       n_type_used;
    int       n_particles_all_in_groups;
@@ -74,9 +73,6 @@ void read_gadget_binary_render(char       *filename_root_in,
    char     *keep;
    int       n_keep[N_GADGET_TYPE];
    int       flag_keep_IDs      =TRUE;
-   int       flag_multifile     =FALSE;
-   int       flag_multimass     =FALSE;
-   int       flag_file_type     =0;
    int       flag_filefound     =FALSE;
    int       flag_gas           =FALSE;
    int       flag_initpositions =FALSE;
@@ -115,7 +111,6 @@ void read_gadget_binary_render(char       *filename_root_in,
    size_t    n_buffer;
    int       n_non_zero;
    int       seed =1073743;
-   int       seed2=1073743;
    int       scatter_rank;
    int       read_mode;
    int       mark_mode;
@@ -131,12 +126,13 @@ void read_gadget_binary_render(char       *filename_root_in,
    double    y_max_bcast;
    double    z_min_bcast;
    double    z_max_bcast;
-   gadget_header_info header;
    int                read_rank;
    RNG_info          *RNG;
 
    // Determine file format
-   flag_filefound=init_gadget_read(filename_root_in,snapshot_number,&flag_multifile,&flag_file_type,&header);
+   gadget_read_info read_info;
+   flag_filefound=init_gadget_read(filename_root_in,snapshot_number,&read_info);
+   if(!flag_filefound) SID_trap_error("Could not find snapshot w/ root={%s}.",ERROR_IO_OPEN,filename_root_in);
 
    // A file was found ... 
    if(flag_filefound){
@@ -145,48 +141,39 @@ void read_gadget_binary_render(char       *filename_root_in,
       pname=plist->species;
 
       // Number of particles for each species in this file
-      for(i=0;i<N_GADGET_TYPE;i++)
-         n_of_type[i]=(size_t)header.n_file[i];
-
-      // Expansion factor (or time) 
-      ADaPS_store(&(plist->data),(void *)(&(header.time)),"expansion_factor",ADaPS_SCALAR_DOUBLE);
-      ADaPS_store(&(plist->data),(void *)(&(header.time)),"time",            ADaPS_SCALAR_DOUBLE);
-
-      // Redshift
-      d_value=(double)header.redshift;
-      ADaPS_store(&(plist->data),(void *)(&d_value),"redshift",ADaPS_SCALAR_DOUBLE);
-
-      // Number of particles for each species in all files
       for(i=0;i<N_GADGET_TYPE;i++){
-         n_all[i]     =(size_t)header.n_all[i];
-         mass_array[i]=header.mass_array[i];
+         n_all[i]     =(size_t)read_info.n_all[i];
+         mass_array[i]=read_info.header.mass_array[i];
       }
 
+      // Expansion factor (or time) 
+      ADaPS_store(&(plist->data),(void *)(&(read_info.header.time)),"expansion_factor",ADaPS_SCALAR_DOUBLE);
+      ADaPS_store(&(plist->data),(void *)(&(read_info.header.time)),"time",            ADaPS_SCALAR_DOUBLE);
+
+      // Redshift
+      d_value=(double)read_info.header.redshift;
+      ADaPS_store(&(plist->data),(void *)(&d_value),"redshift",ADaPS_SCALAR_DOUBLE);
+
       // Number of files in this snapshot 
-      ADaPS_store(&(plist->data),(void *)(&(header.n_files)),"n_files",ADaPS_SCALAR_INT);
-      n_files=header.n_files;
+      ADaPS_store(&(plist->data),(void *)(&(read_info.header.n_files)),"n_files",ADaPS_SCALAR_INT);
+      n_files=read_info.header.n_files;
 
       // Cosmology 
 
       // Omega_o
-      d_value=(double)header.Omega_M; 
+      d_value=(double)read_info.header.Omega_M; 
       ADaPS_store(&(plist->data),(void *)(&d_value),"Omega_M",ADaPS_SCALAR_DOUBLE);
 
       // Omega_Lambda 
-      d_value=(double)header.Omega_Lambda; 
+      d_value=(double)read_info.header.Omega_Lambda; 
       ADaPS_store(&(plist->data),(void *)(&d_value),"Omega_Lambda",ADaPS_SCALAR_DOUBLE);
 
       // Hubble parameter 
-      h_Hubble=(double)header.h_Hubble; 
+      h_Hubble=(double)read_info.header.h_Hubble; 
       if(h_Hubble<1e-10) h_Hubble=1.;
-      box_size=header.box_size*plist->length_unit/h_Hubble;
+      box_size=read_info.header.box_size*plist->length_unit/h_Hubble;
       ADaPS_store(&(plist->data),(void *)(&box_size),"box_size",ADaPS_SCALAR_DOUBLE);
       ADaPS_store(&(plist->data),(void *)(&h_Hubble),"h_Hubble",ADaPS_SCALAR_DOUBLE);
-
-      for(i=0;i<N_GADGET_TYPE;i++){
-         if(header.n_all_high_word[i]>0)
-            n_all[i]+=(((size_t)header.n_all_high_word[i]) << 32);
-      }
 
       // Count the total number of particles
       n_particles_all=0;
@@ -236,10 +223,10 @@ void read_gadget_binary_render(char       *filename_root_in,
       }
 
       // Is this a multimass snapshot?
-      flag_multimass=FALSE;
+      int flag_multimass=FALSE;
       for(i=0;i<N_GADGET_TYPE;i++)
          if(n_all[i]>0 && mass_array[i]==0.)
-         flag_multimass=TRUE;
+            flag_multimass=TRUE;
 
       // Is sph being used?
       if(n_all[GADGET_TYPE_GAS]>0)
@@ -270,9 +257,10 @@ void read_gadget_binary_render(char       *filename_root_in,
             read_rank=i_file%SID.n_proc;
             read_rank=0;
 
-            set_gadget_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
+            set_gadget_filename(&read_info,i_file,filename);
   
             // Open file and read header
+            gadget_header_info header;
             if(SID.My_rank==read_rank){
                fp=fopen(filename,"r");
                fread(&record_length_open,4,1,fp);
@@ -296,7 +284,6 @@ void read_gadget_binary_render(char       *filename_root_in,
                }
             }
          }
-         init_RNG(&seed2,RNG,RNG_GLOBAL);
          SID_log("Done.",SID_LOG_CLOSE);
       }
       // In this case we store the particles in the order of their IDs.
@@ -344,7 +331,7 @@ void read_gadget_binary_render(char       *filename_root_in,
 
          // Set n_of_type_rank[i]
          for(i=0,jj=0;i<N_GADGET_TYPE;i++){
-            if(header.n_file[i]>0)
+            if(read_info.header.n_file[i]>0)
                n_of_type_rank[i]=id_local_max-id_local_min+1;
          }
       }
@@ -391,9 +378,10 @@ void read_gadget_binary_render(char       *filename_root_in,
          if(n_files>1)
             SID_log("Reading file %d of %d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file+1,n_files);
 
-         set_gadget_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
+         set_gadget_filename(&read_info,i_file,filename);
 
          // Open file and read header
+         gadget_header_info header;
          if(SID.My_rank==read_rank){
             fp=fopen(filename,"r");
             fread(&record_length_open,4,1,fp);
@@ -766,14 +754,16 @@ void read_gadget_binary_render(char       *filename_root_in,
       // Store everything in the data structure...
 
       //   ... particle counts ...
+      size_t n_of_type[N_GADGET_TYPE];
       for(i=0,n_particles_kept_all=0;i<N_GADGET_TYPE;i++){
          SID_Allreduce(&(n_of_type_rank[i]),&(n_of_type[i]),1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
-         if(n_of_type[i]>0){
-            n_particles_kept_all+=n_of_type[i];
+         if(n_all[i]>0){
+            n_particles_kept_all+=n_of_type_rank[i];
             ADaPS_store(&(plist->data),(void *)(&(n_of_type_rank[i])),"n_%s",    ADaPS_SCALAR_SIZE_T,pname[i]);
-            ADaPS_store(&(plist->data),(void *)(&(n_of_type[i])),     "n_all_%s",ADaPS_SCALAR_SIZE_T,pname[i]);
+            ADaPS_store(&(plist->data),(void *)(&(n_all[i])),     "n_all_%s",ADaPS_SCALAR_SIZE_T,pname[i]);
          }
       }
+      SID_Allreduce(SID_IN_PLACE,&n_particles_kept_all,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
       ADaPS_store(&(plist->data),(void *)(&n_particles_all),"n_particles_all",ADaPS_SCALAR_SIZE_T);
 
       // Check that the right number of particles have been read
@@ -788,6 +778,18 @@ void read_gadget_binary_render(char       *filename_root_in,
             ADaPS_store(&(plist->data),(void *)x_array[i],"x_%s",ADaPS_DEFAULT,pname[i]);
             ADaPS_store(&(plist->data),(void *)y_array[i],"y_%s",ADaPS_DEFAULT,pname[i]);
             ADaPS_store(&(plist->data),(void *)z_array[i],"z_%s",ADaPS_DEFAULT,pname[i]);
+            //GBPREAL x_min,x_max;
+            //calc_min(x_array[i],&x_min,n_of_type_rank[i],SID_REAL,CALC_MODE_DEFAULT);
+            //calc_max(x_array[i],&x_max,n_of_type_rank[i],SID_REAL,CALC_MODE_DEFAULT);
+            //fprintf(stderr,"x_min=%f x_max=%f\n",x_min/M_PER_MPC,x_max/M_PER_MPC);
+            //GBPREAL y_min,y_max;
+            //calc_min(y_array[i],&y_min,n_of_type_rank[i],SID_REAL,CALC_MODE_DEFAULT);
+            //calc_max(y_array[i],&y_max,n_of_type_rank[i],SID_REAL,CALC_MODE_DEFAULT);
+            //fprintf(stderr,"y_min=%f y_max=%f\n",y_min/M_PER_MPC,y_max/M_PER_MPC);
+            //GBPREAL z_min,z_max;
+            //calc_min(z_array[i],&z_min,n_of_type_rank[i],SID_REAL,CALC_MODE_DEFAULT);
+            //calc_max(z_array[i],&z_max,n_of_type_rank[i],SID_REAL,CALC_MODE_DEFAULT);
+            //fprintf(stderr,"z_min=%f z_max=%f\n",z_min/M_PER_MPC,z_max/M_PER_MPC);
          }
       }
 
