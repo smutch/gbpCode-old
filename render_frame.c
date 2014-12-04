@@ -562,6 +562,16 @@ void compute_perspective_transformation(double  x_o,
 
 }
 
+int check_if_particle_marked(char **mark,int i_species,size_t i_particle);
+int check_if_particle_marked(char **mark,int i_species,size_t i_particle){
+   // Return FALSE only if mark[i_species][i_particle] is defined ...
+   if(mark[i_species]==NULL)
+      return(TRUE);
+   // ... and equal to FALSE.
+   else 
+      return(!(mark[i_species][i_particle]==FALSE));
+}
+
 void init_make_map_noabs(render_info *render,
                          double       x_o,
                          double       y_o,
@@ -731,6 +741,16 @@ void init_make_map_noabs(render_info *render,
   // The previous line sets d_o to the object distance.  Compute the distance to the image plane.
   double d_image_plane=d_o*f_image_plane;
 
+  // Set mark arrays
+  char **mark;
+  mark=(char **)SID_malloc(sizeof(char *)*N_GADGET_TYPE);
+  for(i_type=0;i_type<N_GADGET_TYPE;i_type++){
+      if(ADaPS_exist(render->plist_list[0]->data,"mark_%s",render->plist_list[0]->species[i_type]))
+         mark[i_type]=(char *)ADaPS_fetch(render->plist_list[0]->data,"mark_%s",render->plist_list[0]->species[i_type]);
+      else
+         mark[i_type]=NULL;
+  }
+
   // Determine how many particles are contributing to each 
   //    column of the image
   float   x_i;
@@ -761,34 +781,36 @@ void init_make_map_noabs(render_info *render,
        if(ptype_used[i_type] && ADaPS_exist(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type])){
          n_particles_species=((size_t *)ADaPS_fetch(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type]))[0];
          for(i_particle=i_rank,k_particle=j_particle+i_rank;i_particle<n_particles_species;i_particle+=SID.n_proc,k_particle+=SID.n_proc){
+            if(check_if_particle_marked(mark,i_species,i_particle)){
    
-            // Set the preoperties of the particle to be mapped (mode is FALSE because we DON'T need the angular size of the particle)
-            set_particle_map_quantities(render,&mq,FALSE,k_particle,box_size_float,half_box,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
+               // Set the preoperties of the particle to be mapped (mode is FALSE because we DON'T need the angular size of the particle)
+               set_particle_map_quantities(render,&mq,FALSE,k_particle,box_size_float,half_box,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
    
-            // Transform particle to render-coordinates
-            transform_particle(&x_i,
-                               &y_i,
-                               &z_i,
-                               x_o,
-                               y_o,
-                               z_o,
-                               x_hat,
-                               y_hat,
-                               z_hat,
-                               d_o,
-                               stereo_offset,
-                               theta,
-                               theta_roll,
-                               box_size,
-                               expansion_factor,
-                               focus_shift_x,
-                               focus_shift_y,
-                               flag_comoving,
-                               flag_force_periodic);
+               // Transform particle to render-coordinates
+               transform_particle(&x_i,
+                                  &y_i,
+                                  &z_i,
+                                  x_o,
+                                  y_o,
+                                  z_o,
+                                  x_hat,
+                                  y_hat,
+                                  z_hat,
+                                  d_o,
+                                  stereo_offset,
+                                  theta,
+                                  theta_roll,
+                                  box_size,
+                                  expansion_factor,
+                                  focus_shift_x,
+                                  focus_shift_y,
+                                  flag_comoving,
+                                  flag_force_periodic);
    
-            if(z_i>d_near_field){
-               n_rank_local[i_rank]++;
-               n_particles_visible_local++;
+               if(z_i>d_near_field){
+                  n_rank_local[i_rank]++;
+                  n_particles_visible_local++;
+               }
             }
          }
          j_particle+=n_particles_species;
@@ -849,41 +871,42 @@ void init_make_map_noabs(render_info *render,
        if(ptype_used[i_type]){
          n_particles_species=((size_t *)ADaPS_fetch(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type]))[0];
          for(i_particle=rank_to,k_particle=j_particle+rank_to;i_particle<n_particles_species;i_particle+=SID.n_proc,k_particle+=SID.n_proc){
+            if(check_if_particle_marked(mark,i_species,i_particle)){
+               // Set the preoperties of the particle to be mapped 
+               set_particle_map_quantities(render,&mq,TRUE,k_particle,box_size_float,half_box,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
    
-            // Set the preoperties of the particle to be mapped 
-            set_particle_map_quantities(render,&mq,TRUE,k_particle,box_size_float,half_box,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
+               // Transform particle to render-coordinates
+               transform_particle(&x_i,
+                                  &y_i,
+                                  &z_i,
+                                  x_o,
+                                  y_o,
+                                  z_o,
+                                  x_hat,
+                                  y_hat,
+                                  z_hat,
+                                  d_o,
+                                  stereo_offset,
+                                  theta,
+                                  theta_roll,
+                                  box_size,
+                                  expansion_factor,
+                                  focus_shift_x,
+                                  focus_shift_y,
+                                  flag_comoving,
+                                  flag_force_periodic);
    
-            // Transform particle to render-coordinates
-            transform_particle(&x_i,
-                               &y_i,
-                               &z_i,
-                               x_o,
-                               y_o,
-                               z_o,
-                               x_hat,
-                               y_hat,
-                               z_hat,
-                               d_o,
-                               stereo_offset,
-                               theta,
-                               theta_roll,
-                               box_size,
-                               expansion_factor,
-                               focus_shift_x,
-                               focus_shift_y,
-                               flag_comoving,
-                               flag_force_periodic);
-   
-            if(z_i>d_near_field){
-               f_i=(float)compute_f_stretch(d_image_plane,z_i,flag_plane_parallel);
-               x_buffer[particle_index]=x_i;
-               y_buffer[particle_index]=y_i;
-               z_buffer[particle_index]=z_i;
-               h_buffer[particle_index]=h_i;
-               f_buffer[particle_index]=f_i;
-               w_buffer[particle_index]=w_i;
-               v_buffer[particle_index]=v_i;
-               particle_index++;
+               if(z_i>d_near_field){
+                  f_i=(float)compute_f_stretch(d_image_plane,z_i,flag_plane_parallel);
+                  x_buffer[particle_index]=x_i;
+                  y_buffer[particle_index]=y_i;
+                  z_buffer[particle_index]=z_i;
+                  h_buffer[particle_index]=h_i;
+                  f_buffer[particle_index]=f_i;
+                  w_buffer[particle_index]=w_i;
+                  v_buffer[particle_index]=v_i;
+                  particle_index++;
+               }
             }
          }
          j_particle+=n_particles_species;
@@ -961,6 +984,10 @@ void init_make_map_noabs(render_info *render,
   SID_free(SID_FARG v_buffer);
   SID_free(SID_FARG w_buffer);
   free_particle_map_quantities(&mq);
+  for(i_type=0;i_type<N_GADGET_TYPE;i_type++)
+      if(mark[i_type]!=NULL)
+         SID_free(SID_FARG mark[i_type]);
+  SID_free(SID_FARG mark);
 
   (*i_x_min_local_return)=i_x_min_local;
   (*i_x_max_local_return)=i_x_max_local;
@@ -1137,6 +1164,16 @@ void init_make_map_abs(render_info *render,
   // The previous line sets d_o to the object distance.  Compute the distance to the image plane.
   double d_image_plane=d_o*f_image_plane;
 
+  // Set mark arrays
+  char **mark;
+  mark=(char **)SID_malloc(sizeof(char *)*N_GADGET_TYPE);
+  for(i_type=0;i_type<N_GADGET_TYPE;i_type++){
+      if(ADaPS_exist(render->plist_list[0]->data,"mark_%s",render->plist_list[0]->species[i_type]))
+         mark[i_type]=(char *)ADaPS_fetch(render->plist_list[0]->data,"mark_%s",render->plist_list[0]->species[i_type]);
+      else
+         mark[i_type]=NULL;
+  }
+
   // Determine how many particles are contributing to each 
   //    column of the image
   float   x_i;
@@ -1154,72 +1191,73 @@ void init_make_map_abs(render_info *render,
     if(ptype_used[i_type] && ADaPS_exist(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type])){
       n_particles_species=((size_t *)ADaPS_fetch(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type]))[0];
       for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++){
+         if(check_if_particle_marked(mark,i_species,i_particle)){
+            // Set the preoperties of the particle to be mapped (mode is TRUE because we need the angular size of the particle)
+            set_particle_map_quantities(render,&mq,TRUE,k_particle,box_size_float,half_box,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
 
-         // Set the preoperties of the particle to be mapped (mode is TRUE because we need the angular size of the particle)
-         set_particle_map_quantities(render,&mq,TRUE,k_particle,box_size_float,half_box,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
+            // Transform particle to render-coordinates
+            transform_particle(&x_i,
+                               &y_i,
+                               &z_i,
+                               x_o,
+                               y_o,
+                               z_o,
+                               x_hat,
+                               y_hat,
+                               z_hat,
+                               d_o,
+                               stereo_offset,
+                               theta,
+                               theta_roll,
+                               box_size,
+                               expansion_factor,
+                               focus_shift_x,
+                               focus_shift_y,
+                               flag_comoving,
+                               flag_force_periodic);
 
-         // Transform particle to render-coordinates
-         transform_particle(&x_i,
-                            &y_i,
-                            &z_i,
-                            x_o,
-                            y_o,
-                            z_o,
-                            x_hat,
-                            y_hat,
-                            z_hat,
-                            d_o,
-                            stereo_offset,
-                            theta,
-                            theta_roll,
-                            box_size,
-                            expansion_factor,
-                            focus_shift_x,
-                            focus_shift_y,
-                            flag_comoving,
-                            flag_force_periodic);
-
-         if(z_i>d_near_field){
-            double radius2_norm;
-            double radius_kernel;
-            double part_pos_x;
-            double part_pos_y;
-            int    kx_min;
-            int    kx_max;
-            int    ky_min;
-            int    ky_max;
-            int    n_ky;
-            f_i=(float)compute_f_stretch(d_image_plane,z_i,flag_plane_parallel);
-            set_pixel_space(h_i,
-                            x_i,
-                            y_i,
-                            f_i,
-                            xmin,
-                            ymin,
-                            FOV_x,
-                            FOV_y,
-                            pixel_size_x,
-                            pixel_size_y,
-                            radius_kernel_norm,
-                            &radius2_norm,
-                            &radius_kernel,
-                            &part_pos_x,
-                            &part_pos_y,
-                            &kx_min,
-                            &kx_max,
-                            &ky_min,
-                            &ky_max);
-            kx_min=MAX(kx_min,0);
-            kx_max=MIN(kx_max,nx-1);
-            ky_min=MAX(ky_min,0);
-            ky_max=MIN(ky_max,ny-1);
-            n_ky  =(ky_max-ky_min+1); 
-            // It's not clear which of these two scalings should be used.  Scaling
-            //   with no. of pixels yields imperfect results.
-            if(n_ky>0){
-               for(i_x=kx_min;i_x<=kx_max;i_x++)
-                  //n_column[i_x]+=n_ky; // Scale with no. of pixels
-                  n_column[i_x]++;       // Scale with no. of particles
+            if(z_i>d_near_field){
+               double radius2_norm;
+               double radius_kernel;
+               double part_pos_x;
+               double part_pos_y;
+               int    kx_min;
+               int    kx_max;
+               int    ky_min;
+               int    ky_max;
+               int    n_ky;
+               f_i=(float)compute_f_stretch(d_image_plane,z_i,flag_plane_parallel);
+               set_pixel_space(h_i,
+                               x_i,
+                               y_i,
+                               f_i,
+                               xmin,
+                               ymin,
+                               FOV_x,
+                               FOV_y,
+                               pixel_size_x,
+                               pixel_size_y,
+                               radius_kernel_norm,
+                               &radius2_norm,
+                               &radius_kernel,
+                               &part_pos_x,
+                               &part_pos_y,
+                               &kx_min,
+                               &kx_max,
+                               &ky_min,
+                               &ky_max);
+               kx_min=MAX(kx_min,0);
+               kx_max=MIN(kx_max,nx-1);
+               ky_min=MAX(ky_min,0);
+               ky_max=MIN(ky_max,ny-1);
+               n_ky  =(ky_max-ky_min+1); 
+               // It's not clear which of these two scalings should be used.  Scaling
+               //   with no. of pixels yields imperfect results.
+               if(n_ky>0){
+                  for(i_x=kx_min;i_x<=kx_max;i_x++)
+                     //n_column[i_x]+=n_ky; // Scale with no. of pixels
+                     n_column[i_x]++;       // Scale with no. of particles
+               }
             }
          }
       }
@@ -1283,70 +1321,71 @@ void init_make_map_abs(render_info *render,
     if(ptype_used[i_type] && ADaPS_exist(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type])){
       n_particles_species=((size_t *)ADaPS_fetch(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type]))[0];
       for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++){
+         if(check_if_particle_marked(mark,i_species,i_particle)){
+            // Set the preoperties of the particle to be mapped
+            set_particle_map_quantities(render,&mq,TRUE,k_particle,box_size_float,half_box,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
 
-         // Set the preoperties of the particle to be mapped
-         set_particle_map_quantities(render,&mq,TRUE,k_particle,box_size_float,half_box,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
+            // Transform particle to render-coordinates
+            transform_particle(&x_i,
+                               &y_i,
+                               &z_i,
+                               x_o,
+                               y_o,
+                               z_o,
+                               x_hat,
+                               y_hat,
+                               z_hat,
+                               d_o,
+                               stereo_offset,
+                               theta,
+                               theta_roll,
+                               box_size,
+                               expansion_factor,
+                               focus_shift_x,
+                               focus_shift_y,
+                               flag_comoving,
+                               flag_force_periodic);
 
-         // Transform particle to render-coordinates
-         transform_particle(&x_i,
-                            &y_i,
-                            &z_i,
-                            x_o,
-                            y_o,
-                            z_o,
-                            x_hat,
-                            y_hat,
-                            z_hat,
-                            d_o,
-                            stereo_offset,
-                            theta,
-                            theta_roll,
-                            box_size,
-                            expansion_factor,
-                            focus_shift_x,
-                            focus_shift_y,
-                            flag_comoving,
-                            flag_force_periodic);
-
-         if(z_i>d_near_field){
-            double radius2_norm;
-            double radius_kernel;
-            double part_pos_x;
-            double part_pos_y;
-            int    kx_min;
-            int    kx_max;
-            int    ky_min;
-            int    ky_max;
-            int    n_ky;
-            f_i=(float)compute_f_stretch(d_image_plane,z_i,flag_plane_parallel);
-            set_pixel_space(h_i,
-                            x_i,
-                            y_i,
-                            f_i,
-                            xmin,
-                            ymin,
-                            FOV_x,
-                            FOV_y,
-                            pixel_size_x,
-                            pixel_size_y,
-                            radius_kernel_norm,
-                            &radius2_norm,
-                            &radius_kernel,
-                            &part_pos_x,
-                            &part_pos_y,
-                            &kx_min,
-                            &kx_max,
-                            &ky_min,
-                            &ky_max);
-            kx_min=MAX(kx_min,0);
-            kx_max=MIN(kx_max,nx-1);
-            ky_min=MAX(ky_min,0);
-            ky_max=MIN(ky_max,ny-1);
-            n_ky  =(ky_max-ky_min+1);
-            if(n_ky>0){
-               for(i_rank=0;i_rank<SID.n_proc;i_rank++){
-                  if(kx_min<=i_x_max_rank[i_rank] && kx_max>=i_x_min_rank[i_rank])
-                     n_rank_local[i_rank]++;
+            if(z_i>d_near_field){
+               double radius2_norm;
+               double radius_kernel;
+               double part_pos_x;
+               double part_pos_y;
+               int    kx_min;
+               int    kx_max;
+               int    ky_min;
+               int    ky_max;
+               int    n_ky;
+               f_i=(float)compute_f_stretch(d_image_plane,z_i,flag_plane_parallel);
+               set_pixel_space(h_i,
+                               x_i,
+                               y_i,
+                               f_i,
+                               xmin,
+                               ymin,
+                               FOV_x,
+                               FOV_y,
+                               pixel_size_x,
+                               pixel_size_y,
+                               radius_kernel_norm,
+                               &radius2_norm,
+                               &radius_kernel,
+                               &part_pos_x,
+                               &part_pos_y,
+                               &kx_min,
+                               &kx_max,
+                               &ky_min,
+                               &ky_max);
+               kx_min=MAX(kx_min,0);
+               kx_max=MIN(kx_max,nx-1);
+               ky_min=MAX(ky_min,0);
+               ky_max=MIN(ky_max,ny-1);
+               n_ky  =(ky_max-ky_min+1);
+               if(n_ky>0){
+                  for(i_rank=0;i_rank<SID.n_proc;i_rank++){
+                     if(kx_min<=i_x_max_rank[i_rank] && kx_max>=i_x_min_rank[i_rank])
+                        n_rank_local[i_rank]++;
+                  }
                }
             }
          }
@@ -1408,76 +1447,77 @@ void init_make_map_abs(render_info *render,
        if(ptype_used[i_type]){
          n_particles_species=((size_t *)ADaPS_fetch(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type]))[0];
          for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++){
+            if(check_if_particle_marked(mark,i_species,i_particle)){
+               // Set the preoperties of the particle to be mapped
+               set_particle_map_quantities(render,&mq,TRUE,k_particle,box_size_float,half_box,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
 
-            // Set the preoperties of the particle to be mapped
-            set_particle_map_quantities(render,&mq,TRUE,k_particle,box_size_float,half_box,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
+               // Transform particle to render-coordinates
+               transform_particle(&x_i,
+                                  &y_i,
+                                  &z_i,
+                                  x_o,
+                                  y_o,
+                                  z_o,
+                                  x_hat,
+                                  y_hat,
+                                  z_hat,
+                                  d_o,
+                                  stereo_offset,
+                                  theta,
+                                  theta_roll,
+                                  box_size,
+                                  expansion_factor,
+                                  focus_shift_x,
+                                  focus_shift_y,
+                                  flag_comoving,
+                                  flag_force_periodic);
 
-            // Transform particle to render-coordinates
-            transform_particle(&x_i,
-                               &y_i,
-                               &z_i,
-                               x_o,
-                               y_o,
-                               z_o,
-                               x_hat,
-                               y_hat,
-                               z_hat,
-                               d_o,
-                               stereo_offset,
-                               theta,
-                               theta_roll,
-                               box_size,
-                               expansion_factor,
-                               focus_shift_x,
-                               focus_shift_y,
-                               flag_comoving,
-                               flag_force_periodic);
-
-            if(z_i>d_near_field){
-               double radius2_norm;
-               double radius_kernel;
-               double part_pos_x;
-               double part_pos_y;
-               int    kx_min;
-               int    kx_max;
-               int    ky_min;
-               int    ky_max;
-               int    n_ky;
-               f_i=(float)compute_f_stretch(d_image_plane,z_i,flag_plane_parallel);
-               set_pixel_space(h_i,
-                               x_i,
-                               y_i,
-                               f_i,
-                               xmin,
-                               ymin,
-                               FOV_x,
-                               FOV_y,
-                               pixel_size_x,
-                               pixel_size_y,
-                               radius_kernel_norm,
-                               &radius2_norm,
-                               &radius_kernel,
-                               &part_pos_x,
-                               &part_pos_y,
-                               &kx_min,
-                               &kx_max,
-                               &ky_min,
-                               &ky_max);
-               kx_min=MAX(kx_min,0);
-               kx_max=MIN(kx_max,nx-1);
-               ky_min=MAX(ky_min,0);
-               ky_max=MIN(ky_max,ny-1);
-               n_ky  =(ky_max-ky_min+1);
-               if(n_ky>0){
-                  if(kx_min<=i_x_max_rank[rank_to] && kx_max>=i_x_min_rank[rank_to]){
-                     x_buffer[i_particle_rank]=x_i;
-                     y_buffer[i_particle_rank]=y_i;
-                     z_buffer[i_particle_rank]=z_i;
-                     h_buffer[i_particle_rank]=h_i;
-                     f_buffer[i_particle_rank]=f_i;
-                     w_buffer[i_particle_rank]=w_i;
-                     v_buffer[i_particle_rank]=v_i;
-                     i_particle_rank++;
+               if(z_i>d_near_field){
+                  double radius2_norm;
+                  double radius_kernel;
+                  double part_pos_x;
+                  double part_pos_y;
+                  int    kx_min;
+                  int    kx_max;
+                  int    ky_min;
+                  int    ky_max;
+                  int    n_ky;
+                  f_i=(float)compute_f_stretch(d_image_plane,z_i,flag_plane_parallel);
+                  set_pixel_space(h_i,
+                                  x_i,
+                                  y_i,
+                                  f_i,
+                                  xmin,
+                                  ymin,
+                                  FOV_x,
+                                  FOV_y,
+                                  pixel_size_x,
+                                  pixel_size_y,
+                                  radius_kernel_norm,
+                                  &radius2_norm,
+                                  &radius_kernel,
+                                  &part_pos_x,
+                                  &part_pos_y,
+                                  &kx_min,
+                                  &kx_max,
+                                  &ky_min,
+                                  &ky_max);
+                  kx_min=MAX(kx_min,0);
+                  kx_max=MIN(kx_max,nx-1);
+                  ky_min=MAX(ky_min,0);
+                  ky_max=MIN(ky_max,ny-1);
+                  n_ky  =(ky_max-ky_min+1);
+                  if(n_ky>0){
+                     if(kx_min<=i_x_max_rank[rank_to] && kx_max>=i_x_min_rank[rank_to]){
+                        x_buffer[i_particle_rank]=x_i;
+                        y_buffer[i_particle_rank]=y_i;
+                        z_buffer[i_particle_rank]=z_i;
+                        h_buffer[i_particle_rank]=h_i;
+                        f_buffer[i_particle_rank]=f_i;
+                        w_buffer[i_particle_rank]=w_i;
+                        v_buffer[i_particle_rank]=v_i;
+                        i_particle_rank++;
+                     }
                   }
                }
             }
@@ -1556,6 +1596,10 @@ void init_make_map_abs(render_info *render,
   SID_free(SID_FARG v_buffer);
   SID_free(SID_FARG w_buffer);
   free_particle_map_quantities(&mq);
+  for(i_type=0;i_type<N_GADGET_TYPE;i_type++)
+      if(mark[i_type]!=NULL)
+         SID_free(SID_FARG mark[i_type]);
+  SID_free(SID_FARG mark);
 
   (*i_x_min_local_return)=i_x_min_local;
   (*i_x_max_local_return)=i_x_max_local;
@@ -1920,14 +1964,13 @@ void render_frame(render_info  *render){
     }
 
     // Perform projection
-    size_t        ii_particle;
-    size_t        n_particles_used_local;
-    size_t        n_particles_used;
+    size_t        n_particles_used_local=0;
+    size_t        n_particles_used      =0;
     pcounter_info pcounter;
     SID_init_pcounter(&pcounter,n_particles,10);
     SID_log("Performing projection...",SID_LOG_OPEN|SID_LOG_TIMER);
     n_particles_used_local=0;
-    for(ii_particle=0;ii_particle<n_particles;ii_particle++){
+    for(size_t ii_particle=0;ii_particle<n_particles;ii_particle++){
       i_particle=z_index[n_particles-1-ii_particle];
       z_i       =(double)z[i_particle];
 

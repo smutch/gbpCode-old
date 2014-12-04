@@ -195,7 +195,7 @@ void create_colour_table(int     colourmapselect,
          (*rgb)[0][i]=integer_gaussian_local(i,1.0,0.1,0.50,rgb_max,n_colours);
       (*rgb)[1][i]   =integer_gaussian_local(i,1.0,0.0,0.25,rgb_max,n_colours);
       //(*rgb)[2][i]   =integer_gaussian_local(i,1.0,0.0,0.15,rgb_max,n_colours);
-      (*rgb)[0][i]  +=integer_gaussian_local(i,0.2,1.0,0.20,rgb_max,n_colours);
+      (*rgb)[0][i]  +=integer_gaussian_local(i,0.4,1.0,0.20,rgb_max,n_colours);
       (*rgb)[1][i]  +=integer_gaussian_local(i,0.6,0.6,0.50,rgb_max,n_colours);
       (*rgb)[2][i]  +=integer_gaussian_local(i,1.0,1.0,0.20,rgb_max,n_colours);
 

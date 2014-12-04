@@ -24,10 +24,16 @@ int main(int argc, char *argv[]){
   SID_init(&argc,&argv,NULL);
 
   // Parse cmd line arguments
+  int flag_force_render=FALSE;
   strcpy(filename_script,argv[1]);
   if(argc==4){
     i_frame_start=atoi(argv[2]);
     i_frame_stop =atoi(argv[3]);
+  }
+  else if(argc==5){
+    i_frame_start=atoi(argv[2]);
+    i_frame_stop =atoi(argv[3]);
+    flag_force_render=(atoi(argv[4])==TRUE);
   }
   else if(argc!=2)
     SID_trap_error("Invalid number of arguments.",ERROR_SYNTAX);
@@ -38,7 +44,7 @@ int main(int argc, char *argv[]){
   parse_render_file(&render,filename_script);
 
   // Set image range (if not given on the cmd line)
-  if(argc!=4){
+  if(argc<4){
     i_frame_start=0;
     i_frame_stop =render->n_frames-1;
   }
@@ -46,8 +52,11 @@ int main(int argc, char *argv[]){
   // Decide if this is a fresh render based on whether the
   //   output directory exists or not
   if((fp_check=fopen((*render).filename_out_dir,"r"))!=NULL){
-    mode=SET_RENDER_RESCALE;
     fclose(fp_check);
+    if(flag_force_render)
+       mode=SET_RENDER_DEFAULT;
+    else
+       mode=SET_RENDER_RESCALE;
   }
   else
     mode=SET_RENDER_DEFAULT;

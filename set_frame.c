@@ -71,6 +71,7 @@ void set_frame(camera_info *camera){
 
     // Set RGBY Image
     if(check_mode_for_flag(camera->RGB_mode,CAMERA_RGB_MODE_TABLE)){
+       // n.b.: This check may fail deliberately (generally, each case has only a few sets of images defined).  Don't throw an error when it does.
        if(image_RGBY!=NULL && image_RGB!=NULL && image_Y!=NULL)
           set_image_RGBY(image_RGBY,
                          image_RGB,
@@ -79,10 +80,9 @@ void set_frame(camera_info *camera){
                          camera->RGB_range[1],
                          camera->Y_range[0],
                          camera->Y_range[1]);
-       else
-          SID_trap_error("The needed images are not availabel for camera RGB mode (%d) specified in set_frame() (1).",ERROR_LOGIC,camera->RGB_mode);
     }
     else if(check_mode_for_flag(camera->RGB_mode,CAMERA_RGB_MODE_NOTABLE)){
+       // n.b.: This check may fail deliberately (generally, each case has only a few sets of images defined).  Don't throw an error when it does.
        if(image_RGBY!=NULL && image_RY!=NULL && image_GY!=NULL && image_BY!=NULL)
           set_image_RGBY_no_table(image_RGBY,
                                   image_RY,
@@ -90,8 +90,6 @@ void set_frame(camera_info *camera){
                                   image_BY,
                                   camera->Y_range[0],
                                   camera->Y_range[1]);
-       else
-          SID_trap_error("The needed images are not availabel for camera RGB mode (%d) specified in set_frame() (2).",ERROR_LOGIC,camera->RGB_mode);
     }
     else
        SID_trap_error("Invalid camera RGB mode (%d) specified in set_frame().",ERROR_LOGIC,camera->RGB_mode);

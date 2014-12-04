@@ -17,34 +17,8 @@ void read_frame(render_info *render,int frame){
   char filename_GY[256];
   char filename_BY[256];
 
-  SID_log("Writing rendered frame...",SID_LOG_OPEN|SID_LOG_TIMER);
-
-  // Create directory if needed
-  mkdir(render->filename_out_dir,02755);
-
-  sprintf(filename_RGB, "%s/RGB_M_%05d", render->filename_out_dir,frame);
-  sprintf(filename_Y,   "%s/Y_M_%05d",   render->filename_out_dir,frame);
-  sprintf(filename_Z,   "%s/Z_M_%05d",   render->filename_out_dir,frame);
-  sprintf(filename_RGBY,"%s/RGBY_M_%05d",render->filename_out_dir,frame);
-  sprintf(filename_RY,  "%s/RY_M_%05d",  render->filename_out_dir,frame);
-  sprintf(filename_GY,  "%s/GY_M_%05d",  render->filename_out_dir,frame);
-  sprintf(filename_BY,  "%s/BY_M_%05d",  render->filename_out_dir,frame);
-  if(render->camera->image_RGB!=NULL)
-     read_image(render->camera->image_RGB, filename_RGB);
-  if(render->camera->image_Y!=NULL)
-     read_image(render->camera->image_Y,   filename_Y);
-  if(render->camera->image_Z!=NULL)
-     read_image(render->camera->image_Z,   filename_Z);
-  if(render->camera->image_RGBY!=NULL)
-     read_image(render->camera->image_RGBY,filename_RGBY);
-  if(render->camera->image_RY!=NULL)
-     read_image(render->camera->image_RY,filename_RY);
-  if(render->camera->image_GY!=NULL)
-     read_image(render->camera->image_GY,filename_GY);
-  if(render->camera->image_BY!=NULL)
-     read_image(render->camera->image_BY,filename_BY);
-
   // Read stereo-images
+  SID_log("Reading rendered frame...",SID_LOG_OPEN|SID_LOG_TIMER);
   if(check_mode_for_flag(render->camera->camera_mode,CAMERA_STEREO)){
     // Left
     sprintf(filename_RGB, "%s/RGB_L_%05d", render->filename_out_dir,frame);
@@ -68,7 +42,6 @@ void read_frame(render_info *render,int frame){
        read_image(render->camera->image_GY_left, filename_GY);
     if(render->camera->image_BY_left!=NULL)
        read_image(render->camera->image_BY_left, filename_BY);
-
     // Right
     sprintf(filename_RGB, "%s/RGB_R_%05d", render->filename_out_dir,frame);
     sprintf(filename_Y,   "%s/Y_R_%05d",   render->filename_out_dir,frame);
@@ -91,6 +64,30 @@ void read_frame(render_info *render,int frame){
        read_image(render->camera->image_GY_right,filename_GY);
     if(render->camera->image_BY_right!=NULL)
        read_image(render->camera->image_BY_right,filename_BY);
+  }
+  else{
+    // Mono
+    sprintf(filename_RGB, "%s/RGB_M_%05d", render->filename_out_dir,frame);
+    sprintf(filename_Y,   "%s/Y_M_%05d",   render->filename_out_dir,frame);
+    sprintf(filename_Z,   "%s/Z_M_%05d",   render->filename_out_dir,frame);
+    sprintf(filename_RGBY,"%s/RGBY_M_%05d",render->filename_out_dir,frame);
+    sprintf(filename_RY,  "%s/RY_M_%05d",  render->filename_out_dir,frame);
+    sprintf(filename_GY,  "%s/GY_M_%05d",  render->filename_out_dir,frame);
+    sprintf(filename_BY,  "%s/BY_M_%05d",  render->filename_out_dir,frame);
+    if(render->camera->image_RGB!=NULL)
+       read_image(render->camera->image_RGB,filename_RGB);
+    if(render->camera->image_Y!=NULL)
+       read_image(render->camera->image_Y,filename_Y);
+    if(render->camera->image_Z!=NULL)
+       read_image(render->camera->image_Z,filename_Z);
+    if(render->camera->image_RGBY!=NULL)
+       read_image(render->camera->image_RGBY,filename_RGBY);
+    if(render->camera->image_RY!=NULL)
+       read_image(render->camera->image_RY,filename_RY);
+    if(render->camera->image_GY!=NULL)
+       read_image(render->camera->image_GY,filename_GY);
+    if(render->camera->image_BY!=NULL)
+       read_image(render->camera->image_BY,filename_BY);
   }
 
   set_frame(render->camera);
