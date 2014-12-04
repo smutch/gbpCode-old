@@ -7,6 +7,67 @@
 #include <gbpCosmo.h>
 #include <gbpRender.h>
 
+double RGB_lookup(int colour,int channel);
+double RGB_lookup(int colour,int channel){
+   double r_val=0.;
+   switch(colour){
+      // Red
+      case 2:
+         switch(channel){
+            case 0:
+               r_val=1.;
+               break;
+            default:
+               r_val=0.;
+               break;
+         }
+         break;
+      // Green
+      case 3:
+         switch(channel){
+            case 1:
+               r_val=1.;
+               break;
+            default:
+               r_val=0.;
+               break;
+         }
+         break;
+      // Blue
+      case 4:
+         switch(channel){
+            case 2:
+               r_val=1.;
+               break;
+            default:
+               r_val=0.;
+               break;
+         }
+         break;
+      // Orange
+      case 5:
+         switch(channel){
+            case 0:
+            case 1:
+               r_val=1.;
+               break;
+            default:
+               r_val=0.;
+               break;
+         }
+         break;
+      // Black.  Don't change this.
+      case 0:
+         break;
+      // White.  Don't change this.
+      case 1:
+      default:
+         r_val=1.;
+         break;
+   }
+   return(r_val);
+}
+
 void rotate_particle(double   x_hat,
                      double   y_hat,
                      double   z_hat,
@@ -562,14 +623,18 @@ void compute_perspective_transformation(double  x_o,
 
 }
 
-int check_if_particle_marked(char **mark,int i_species,size_t i_particle);
-int check_if_particle_marked(char **mark,int i_species,size_t i_particle){
+int check_if_particle_marked(char **mark,int i_species,size_t i_particle,char *c_i);
+int check_if_particle_marked(char **mark,int i_species,size_t i_particle,char *c_i){
    // Return FALSE only if mark[i_species][i_particle] is defined ...
-   if(mark[i_species]==NULL)
+   if(mark[i_species]==NULL){
+      (*c_i)=1; // default to white
       return(TRUE);
+   }
    // ... and equal to FALSE.
-   else 
+   else{
+      (*c_i)=mark[i_species][i_particle];
       return(!(mark[i_species][i_particle]==FALSE));
+   }
 }
 
 void init_make_map_noabs(render_info *render,
@@ -607,6 +672,7 @@ void init_make_map_noabs(render_info *render,
                          float       **f_stretch,
                          float       **value,
                          float       **weight,
+                         char        **colour,
                          size_t      **z_index,
                          int          *i_x_min_local_return,
                          int          *i_x_max_local_return,
@@ -646,6 +712,7 @@ void init_make_map_noabs(render_info *render,
                          float       **f_stretch,
                          float       **value,
                          float       **weight,
+                         char        **colour,
                          size_t      **z_index,
                          int          *i_x_min_local_return,
                          int          *i_x_max_local_return,
@@ -742,11 +809,13 @@ void init_make_map_noabs(render_info *render,
   double d_image_plane=d_o*f_image_plane;
 
   // Set mark arrays
-  char **mark;
-  mark=(char **)SID_malloc(sizeof(char *)*N_GADGET_TYPE);
+  int    flag_mark_on=FALSE;
+  char **mark        =(char **)SID_malloc(sizeof(char *)*N_GADGET_TYPE);
   for(i_type=0;i_type<N_GADGET_TYPE;i_type++){
-      if(ADaPS_exist(render->plist_list[0]->data,"mark_%s",render->plist_list[0]->species[i_type]))
+      if(ADaPS_exist(render->plist_list[0]->data,"mark_%s",render->plist_list[0]->species[i_type])){
          mark[i_type]=(char *)ADaPS_fetch(render->plist_list[0]->data,"mark_%s",render->plist_list[0]->species[i_type]);
+         flag_mark_on=TRUE;
+      }
       else
          mark[i_type]=NULL;
   }
@@ -760,6 +829,7 @@ void init_make_map_noabs(render_info *render,
   float   f_i;
   float   v_i;
   float   w_i;
+  char    c_i;
   int     i_x;
 
   // Set the range of columns assigned to each rank (all in this case)
@@ -781,7 +851,7 @@ void init_make_map_noabs(render_info *render,
        if(ptype_used[i_type] && ADaPS_exist(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type])){
          n_particles_species=((size_t *)ADaPS_fetch(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type]))[0];
          for(i_particle=i_rank,k_particle=j_particle+i_rank;i_particle<n_particles_species;i_particle+=SID.n_proc,k_particle+=SID.n_proc){
-            if(check_if_particle_marked(mark,i_species,i_particle)){
+            if(check_if_particle_marked(mark,i_type,i_particle,&c_i)){
    
                // Set the preoperties of the particle to be mapped (mode is FALSE because we DON'T need the angular size of the particle)
                set_particle_map_quantities(render,&mq,FALSE,k_particle,box_size_float,half_box,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
@@ -846,6 +916,7 @@ void init_make_map_noabs(render_info *render,
   float  *f_buffer;
   float  *v_buffer;
   float  *w_buffer;
+  char   *c_buffer;
   (*x)        =(float *)SID_malloc(sizeof(float)*n_particles_local);
   (*y)        =(float *)SID_malloc(sizeof(float)*n_particles_local);
   (*z)        =(float *)SID_malloc(sizeof(float)*n_particles_local);
@@ -860,6 +931,14 @@ void init_make_map_noabs(render_info *render,
   f_buffer    =(float *)SID_malloc(sizeof(float)*n_buffer);
   v_buffer    =(float *)SID_malloc(sizeof(float)*n_buffer);
   w_buffer    =(float *)SID_malloc(sizeof(float)*n_buffer);
+  if(flag_mark_on){
+     (*colour)=(char  *)SID_malloc(sizeof(char)*n_particles_local);
+     c_buffer =(char  *)SID_malloc(sizeof(char)*n_buffer);
+  }
+  else{
+     (*colour)=NULL;
+     c_buffer =NULL;
+  }
   size_t i_particle_rank;
   size_t j_particle_rank=0;
   for(i_rank=0;i_rank<SID.n_proc;i_rank++){
@@ -871,7 +950,7 @@ void init_make_map_noabs(render_info *render,
        if(ptype_used[i_type]){
          n_particles_species=((size_t *)ADaPS_fetch(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type]))[0];
          for(i_particle=rank_to,k_particle=j_particle+rank_to;i_particle<n_particles_species;i_particle+=SID.n_proc,k_particle+=SID.n_proc){
-            if(check_if_particle_marked(mark,i_species,i_particle)){
+            if(check_if_particle_marked(mark,i_type,i_particle,&c_i)){
                // Set the preoperties of the particle to be mapped 
                set_particle_map_quantities(render,&mq,TRUE,k_particle,box_size_float,half_box,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
    
@@ -905,6 +984,8 @@ void init_make_map_noabs(render_info *render,
                   f_buffer[particle_index]=f_i;
                   w_buffer[particle_index]=w_i;
                   v_buffer[particle_index]=v_i;
+                  if(c_buffer!=NULL)
+                     c_buffer[particle_index]=c_i;
                   particle_index++;
                }
             }
@@ -960,6 +1041,13 @@ void init_make_map_noabs(render_info *render,
                           &((*value)[j_particle_rank]),
                           &n_exchange,
                           i_rank);
+     if(c_buffer!=NULL)
+        exchange_ring_buffer(c_buffer,
+                             sizeof(float),
+                             n_rank_local[rank_to],
+                             &((*colour)[j_particle_rank]),
+                             &n_exchange,
+                             i_rank);
      j_particle_rank+=n_exchange;
   }
 
@@ -983,6 +1071,7 @@ void init_make_map_noabs(render_info *render,
   SID_free(SID_FARG f_buffer);
   SID_free(SID_FARG v_buffer);
   SID_free(SID_FARG w_buffer);
+  SID_free(SID_FARG c_buffer);
   free_particle_map_quantities(&mq);
   for(i_type=0;i_type<N_GADGET_TYPE;i_type++)
       if(mark[i_type]!=NULL)
@@ -1030,6 +1119,7 @@ void init_make_map_abs(render_info *render,
                        float       **f_stretch,
                        float       **value,
                        float       **weight,
+                       char        **colour,
                        size_t      **z_index,
                        int          *i_x_min_local_return,
                        int          *i_x_max_local_return,
@@ -1069,6 +1159,7 @@ void init_make_map_abs(render_info *render,
                        float       **f_stretch,
                        float       **value,
                        float       **weight,
+                       char        **colour,
                        size_t      **z_index,
                        int          *i_x_min_local_return,
                        int          *i_x_max_local_return,
@@ -1165,11 +1256,13 @@ void init_make_map_abs(render_info *render,
   double d_image_plane=d_o*f_image_plane;
 
   // Set mark arrays
-  char **mark;
-  mark=(char **)SID_malloc(sizeof(char *)*N_GADGET_TYPE);
+  int    flag_mark_on=FALSE;
+  char **mark        =(char **)SID_malloc(sizeof(char *)*N_GADGET_TYPE);
   for(i_type=0;i_type<N_GADGET_TYPE;i_type++){
-      if(ADaPS_exist(render->plist_list[0]->data,"mark_%s",render->plist_list[0]->species[i_type]))
+      if(ADaPS_exist(render->plist_list[0]->data,"mark_%s",render->plist_list[0]->species[i_type])){
          mark[i_type]=(char *)ADaPS_fetch(render->plist_list[0]->data,"mark_%s",render->plist_list[0]->species[i_type]);
+         flag_mark_on=TRUE;
+      }
       else
          mark[i_type]=NULL;
   }
@@ -1183,6 +1276,7 @@ void init_make_map_abs(render_info *render,
   float   f_i;
   float   v_i;
   float   w_i;
+  char    c_i;
   int     i_x;
   size_t *n_column;
   n_column=(size_t *)SID_calloc(sizeof(size_t)*nx);
@@ -1191,7 +1285,7 @@ void init_make_map_abs(render_info *render,
     if(ptype_used[i_type] && ADaPS_exist(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type])){
       n_particles_species=((size_t *)ADaPS_fetch(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type]))[0];
       for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++){
-         if(check_if_particle_marked(mark,i_species,i_particle)){
+         if(check_if_particle_marked(mark,i_type,i_particle,&c_i)){
             // Set the preoperties of the particle to be mapped (mode is TRUE because we need the angular size of the particle)
             set_particle_map_quantities(render,&mq,TRUE,k_particle,box_size_float,half_box,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
 
@@ -1321,7 +1415,7 @@ void init_make_map_abs(render_info *render,
     if(ptype_used[i_type] && ADaPS_exist(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type])){
       n_particles_species=((size_t *)ADaPS_fetch(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type]))[0];
       for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++){
-         if(check_if_particle_marked(mark,i_species,i_particle)){
+         if(check_if_particle_marked(mark,i_type,i_particle,&c_i)){
             // Set the preoperties of the particle to be mapped
             set_particle_map_quantities(render,&mq,TRUE,k_particle,box_size_float,half_box,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
 
@@ -1422,6 +1516,7 @@ void init_make_map_abs(render_info *render,
   float  *f_buffer;
   float  *v_buffer;
   float  *w_buffer;
+  char   *c_buffer;
   (*x)        =(float *)SID_malloc(sizeof(float)*n_particles_local);
   (*y)        =(float *)SID_malloc(sizeof(float)*n_particles_local);
   (*z)        =(float *)SID_malloc(sizeof(float)*n_particles_local);
@@ -1436,6 +1531,14 @@ void init_make_map_abs(render_info *render,
   f_buffer    =(float *)SID_malloc(sizeof(float)*n_buffer);
   v_buffer    =(float *)SID_malloc(sizeof(float)*n_buffer);
   w_buffer    =(float *)SID_malloc(sizeof(float)*n_buffer);
+  if(flag_mark_on){
+     (*colour)=(char  *)SID_malloc(sizeof(char)*n_particles_local);
+     c_buffer =(char  *)SID_malloc(sizeof(char)*n_buffer);
+  }
+  else{
+     (*colour)=NULL;
+     c_buffer =NULL;
+  }
   size_t i_particle_rank;
   size_t j_particle_rank=0;
   for(i_rank=0;i_rank<SID.n_proc;i_rank++){
@@ -1447,7 +1550,7 @@ void init_make_map_abs(render_info *render,
        if(ptype_used[i_type]){
          n_particles_species=((size_t *)ADaPS_fetch(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type]))[0];
          for(i_particle=0,k_particle=j_particle;i_particle<n_particles_species;i_particle++,k_particle++){
-            if(check_if_particle_marked(mark,i_species,i_particle)){
+            if(check_if_particle_marked(mark,i_type,i_particle,&c_i)){
                // Set the preoperties of the particle to be mapped
                set_particle_map_quantities(render,&mq,TRUE,k_particle,box_size_float,half_box,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
 
@@ -1516,6 +1619,8 @@ void init_make_map_abs(render_info *render,
                         f_buffer[i_particle_rank]=f_i;
                         w_buffer[i_particle_rank]=w_i;
                         v_buffer[i_particle_rank]=v_i;
+                        if(c_buffer!=NULL)
+                           c_buffer[i_particle_rank]=c_i;
                         i_particle_rank++;
                      }
                   }
@@ -1570,6 +1675,13 @@ void init_make_map_abs(render_info *render,
                           &((*value)[j_particle_rank]),
                           &n_exchange,
                           i_rank);
+     if(c_buffer!=NULL)
+        exchange_ring_buffer(c_buffer,
+                             sizeof(float),
+                             n_rank_local[rank_to],
+                             &((*colour)[j_particle_rank]),
+                             &n_exchange,
+                             i_rank);
      j_particle_rank+=n_exchange;
   }
 
@@ -1607,6 +1719,14 @@ void init_make_map_abs(render_info *render,
   SID_log("Done.",SID_LOG_CLOSE);
 }
 
+void fetch_render_array(image_info *image,double **values);
+void fetch_render_array(image_info *image,double **values){
+   if(image!=NULL)
+      (*values)=image->values;
+   else
+      (*values)=NULL;
+}
+
 void render_frame(render_info  *render){
   size_t     i_particle;
   size_t     j_particle;
@@ -1620,18 +1740,24 @@ void render_frame(render_info  *render){
   double     pixel_size_x;
   double     pixel_size_y;
   double     pixel_area;
-  float     *weight;
-  float     *value;
-  size_t    *z_index;
+  float     *weight =NULL;
+  float     *value  =NULL;
+  char      *colour =NULL;
+  size_t    *z_index=NULL;
   int        kx_min;
   int        kx_max;
   int        ky_min;
   int        ky_max;
   int        kz_min;
   int        kz_max;
-  double    *numerator;
-  double    *denominator;
-  double    *z_image;
+  char      *mask       =NULL;
+  double    *temp_image =NULL;
+  double    *RGB_image  =NULL;
+  double    *Y_image    =NULL;
+  double    *z_image    =NULL;
+  double    *RY_image   =NULL;
+  double    *GY_image   =NULL;
+  double    *BY_image   =NULL;
   double     part_pos_x;
   double     part_pos_y;
   double     z_i;
@@ -1690,8 +1816,6 @@ void render_frame(render_info  *render){
   double       box_size;
   int          nx;
   int          ny;
-  double      *image;
-  char        *mask;
   int          v_mode;
   int          w_mode;
   char        *parameter;
@@ -1782,36 +1906,36 @@ void render_frame(render_info  *render){
     switch(i_image){
       // Left image
       case 0:
-        image      =render->camera->image_RGB_left->values;
-        numerator  =render->camera->image_RGBY_left->values; // Use as a temp. buffer.
-        denominator=render->camera->image_Y_left->values;
-        if(render->camera->image_Z_left!=NULL)
-           z_image=render->camera->image_Z_left->values;
-        else
-           z_image=NULL;
+        fetch_render_array(render->camera->image_RGB_left, &RGB_image);
+        fetch_render_array(render->camera->image_RGBY_left,&temp_image); // use as workspace
+        fetch_render_array(render->camera->image_Y_left,   &Y_image);
+        fetch_render_array(render->camera->image_Z_left,   &z_image);
+        fetch_render_array(render->camera->image_RY_left,  &RY_image);
+        fetch_render_array(render->camera->image_GY_left,  &GY_image);
+        fetch_render_array(render->camera->image_BY_left,  &BY_image);
         stereo_offset=-d_image_plane/render->camera->stereo_ratio;
         break;
       case 1:
         // Right image
         if(check_mode_for_flag(camera_mode,CAMERA_STEREO)){
-           image      =render->camera->image_RGB_right->values;
-           numerator  =render->camera->image_RGBY_right->values; // Use as a temp. buffer.;
-           denominator=render->camera->image_Y_right->values;
-           if(render->camera->image_Z_right!=NULL)
-              z_image=render->camera->image_Z_right->values;
-           else
-              z_image=NULL;
+           fetch_render_array(render->camera->image_RGB_right, &RGB_image);
+           fetch_render_array(render->camera->image_RGBY_right,&temp_image); // use as workspace
+           fetch_render_array(render->camera->image_Y_right,   &Y_image);
+           fetch_render_array(render->camera->image_Z_right,   &z_image);
+           fetch_render_array(render->camera->image_RY_right,  &RY_image);
+           fetch_render_array(render->camera->image_GY_right,  &GY_image);
+           fetch_render_array(render->camera->image_BY_right,  &BY_image);
            stereo_offset=d_image_plane/render->camera->stereo_ratio;
         }
         // Mono image (stereo turned off)
         else{
-           image      =render->camera->image_RGB->values;
-           numerator  =render->camera->image_RGBY->values; // Use as a temp. buffer.;
-           denominator=render->camera->image_Y->values;
-           if(render->camera->image_Z!=NULL)
-              z_image=render->camera->image_Z->values;
-           else
-              z_image=NULL;
+           fetch_render_array(render->camera->image_RGB, &RGB_image);
+           fetch_render_array(render->camera->image_RGBY,&temp_image); // use as workspace
+           fetch_render_array(render->camera->image_Y,   &Y_image);
+           fetch_render_array(render->camera->image_Z,   &z_image);
+           fetch_render_array(render->camera->image_RY,  &RY_image);
+           fetch_render_array(render->camera->image_GY,  &GY_image);
+           fetch_render_array(render->camera->image_BY,  &BY_image);
            stereo_offset=0;           
         }
         break;
@@ -1917,6 +2041,7 @@ void render_frame(render_info  *render){
                          &f_stretch,
                          &value,
                          &weight,
+                         &colour,
                          &z_index,
                          &i_x_min_local,
                          &i_x_max_local,
@@ -1946,21 +2071,30 @@ void render_frame(render_info  *render){
                            &f_stretch,
                            &value,
                            &weight,
+                           &colour,
                            &z_index,
                            &i_x_min_local,
                            &i_x_max_local,
                            &n_particles);
 
-
     // Initialize image arrays
     mask=(char *)SID_malloc(sizeof(char)*n_pixels);
     for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
-      image[i_pixel]      =0.;
-      numerator[i_pixel]  =0.;
-      denominator[i_pixel]=0.;
-      mask[i_pixel]       =FALSE;
+      if(RGB_image!=NULL)
+         RGB_image[i_pixel]=0.;
+      if(temp_image!=NULL)
+         temp_image[i_pixel]=0.;
+      if(Y_image!=NULL)
+         Y_image[i_pixel]=0.;
       if(z_image!=NULL)
-        z_image[i_pixel] =0.;
+        z_image[i_pixel]=0.;
+      if(RY_image!=NULL)
+        RY_image[i_pixel]=0.;
+      if(GY_image!=NULL)
+        GY_image[i_pixel]=0.;
+      if(BY_image!=NULL)
+        BY_image[i_pixel]=0.;
+      mask[i_pixel]=FALSE;
     }
 
     // Perform projection
@@ -2009,14 +2143,13 @@ void render_frame(render_info  *render){
         f_dim=f_taper*f_fade;
 
         // Set the particle values and weights
-        double w_i;
-        double v_i;
-        double vw_i;
-        double zw_i;
-        v_i =(double)value[i_particle];
-        w_i =(double)weight[i_particle];
-        vw_i=v_i*w_i;
-        zw_i=z_i*w_i;
+        double v_i =(double)value[i_particle];
+        double w_i =(double)weight[i_particle];
+        double R_i =RGB_lookup(colour[i_particle],0);
+        double G_i =RGB_lookup(colour[i_particle],1);
+        double B_i =RGB_lookup(colour[i_particle],2);
+        double vw_i=v_i*w_i;
+        double zw_i=z_i*w_i;
 
         // Loop over the kernal
         for(kx=kx_min,pixel_pos_x=xmin+(kx_min+0.5)*pixel_size_x;kx<=kx_max;kx++,pixel_pos_x+=pixel_size_x){
@@ -2035,13 +2168,18 @@ void render_frame(render_info  *render){
                   kernel =kernel_table[i_table]+
                     (kernel_table[i_table+1]-kernel_table[i_table])*
                     (f_table-kernel_radius[i_table])*(double)N_KERNEL_TABLE;
-                  double I_o_n=numerator[pos];
-                  double I_o_d=denominator[pos];
-                  numerator[pos]  +=(f_dim*v_i-f_absorption*I_o_n)*w_i*kernel;
-                  denominator[pos]+=(f_dim-f_absorption*I_o_d)*w_i*kernel;
-                  if(z_image!=NULL){
-                     double I_o_z=z_image[pos];
-                     z_image[pos]+=(f_dim*z_i-f_absorption*I_o_z)*w_i*kernel;
+                  double w_k=w_i*kernel;
+                  // Perform addition
+                  if(temp_image!=NULL)
+                     temp_image[pos]+=(f_dim*v_i-f_absorption*temp_image[pos])*w_k;
+                  if(Y_image!=NULL)
+                     Y_image[pos]+=(f_dim-f_absorption*Y_image[pos])*w_k;
+                  if(z_image!=NULL)
+                     z_image[pos]+=(f_dim*z_i-f_absorption*z_image[pos])*w_k;
+                  if(RY_image!=NULL){
+                     RY_image[pos]+=(f_dim-f_absorption*RY_image[pos])*w_k*R_i;
+                     GY_image[pos]+=(f_dim-f_absorption*GY_image[pos])*w_k*G_i;
+                     BY_image[pos]+=(f_dim-f_absorption*BY_image[pos])*w_k*B_i;
                   }
                   mask[pos]=TRUE;
                 }
@@ -2065,10 +2203,17 @@ void render_frame(render_info  *render){
        if(!(kx>=i_x_min_local && kx<=i_x_max_local)){
           for(ky=0;ky<ny;ky++){
              pos=ky+kx*ny;
-             numerator[pos]  =0.;
-             denominator[pos]=0.;
+             if(temp_image!=NULL)
+                temp_image[pos]  =0.;
+             if(Y_image!=NULL)
+                Y_image[pos]=0.;
              if(z_image!=NULL)
                 z_image[pos]=0.;
+             if(RY_image!=NULL){
+                RY_image[pos]=0.;
+                GY_image[pos]=0.;
+                BY_image[pos]=0.;
+             }
           }
        }
     }
@@ -2088,23 +2233,30 @@ void render_frame(render_info  *render){
     }
     SID_free(SID_FARG mask_buffer);
 #endif
-    SID_Allreduce(SID_IN_PLACE,numerator,  n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
-    SID_Allreduce(SID_IN_PLACE,denominator,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
+    SID_Allreduce(SID_IN_PLACE,temp_image,  n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
+    SID_Allreduce(SID_IN_PLACE,Y_image,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
     if(z_image!=NULL)
       SID_Allreduce(SID_IN_PLACE,z_image,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
+    if(RY_image!=NULL){
+      SID_Allreduce(SID_IN_PLACE,RY_image,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
+      SID_Allreduce(SID_IN_PLACE,GY_image,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
+      SID_Allreduce(SID_IN_PLACE,BY_image,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
+    }
 
-    // Create final normalize image and clear the numerator which has been used as a buffer
-    for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
-       if(mask[i_pixel])
-          image[i_pixel]=numerator[i_pixel]/denominator[i_pixel];
-       numerator[i_pixel]=0.;
+    // Create final normalize image and clear the temp_image which has been used as a buffer
+    if(RGB_image!=NULL){
+       for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
+          if(mask[i_pixel])
+             RGB_image[i_pixel]=temp_image[i_pixel]/Y_image[i_pixel];
+          temp_image[i_pixel]=0.;
+       }
     }
 
     // Normalize z-frame (if needed)
     if(z_image!=NULL){
        for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
          if(mask[i_pixel])
-           z_image[i_pixel]=z_image[i_pixel]/denominator[i_pixel];
+           z_image[i_pixel]=z_image[i_pixel]/Y_image[i_pixel];
          else
            z_image[i_pixel]=0.;
        }
@@ -2112,43 +2264,77 @@ void render_frame(render_info  *render){
 
     // Take log_10 (if needed)
     if(check_mode_for_flag(v_mode,MAKE_MAP_LOG)){
-      SID_log("Taking log of v-image...",SID_LOG_OPEN);
+      SID_log("Taking log of RGB image...",SID_LOG_OPEN);
       for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
         if(mask[i_pixel])
-          image[i_pixel]=take_log10(image[i_pixel]);
+          RGB_image[i_pixel]=take_log10(RGB_image[i_pixel]);
         else
-          image[i_pixel]=LOG_ZERO;
+          RGB_image[i_pixel]=LOG_ZERO;
       }
       SID_log("Done.",SID_LOG_CLOSE);
     }
     if(check_mode_for_flag(w_mode,MAKE_MAP_LOG)){
-      SID_log("Taking log of w-image...",SID_LOG_OPEN);
+      SID_log("Taking log of Y image...",SID_LOG_OPEN);
       for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
         if(mask[i_pixel])
-          denominator[i_pixel]=take_log10(denominator[i_pixel]);
+          Y_image[i_pixel]=take_log10(Y_image[i_pixel]);
         else
-          denominator[i_pixel]=LOG_ZERO;
+          Y_image[i_pixel]=LOG_ZERO;
       }
       SID_log("Done.",SID_LOG_CLOSE);
+      if(RY_image!=NULL){
+        SID_log("Taking log of RY,GY and BY images...",SID_LOG_OPEN);
+        for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
+          if(mask[i_pixel]){
+            RY_image[i_pixel]=take_log10(Y_image[i_pixel]);
+            GY_image[i_pixel]=take_log10(Y_image[i_pixel]);
+            BY_image[i_pixel]=take_log10(Y_image[i_pixel]);
+          }
+          else{
+            RY_image[i_pixel]=LOG_ZERO;
+            GY_image[i_pixel]=LOG_ZERO;
+            BY_image[i_pixel]=LOG_ZERO;
+          }
+        }
+        SID_log("Done.",SID_LOG_CLOSE);
+      }
     }
 
     // Compute some image statistics
-    double min_image;
-    double max_image;
+    double min_RGB_image;
+    double max_RGB_image;
+    double min_Y_image;
+    double max_Y_image;
     double min_z_image;
     double max_z_image;
-    double min_denominator;
-    double max_denominator;
+    double min_RY_image;
+    double max_RY_image;
+    double min_GY_image;
+    double max_GY_image;
+    double min_BY_image;
+    double max_BY_image;
     for(i_pixel=0,n_unmasked=0;i_pixel<n_pixels;i_pixel++) 
       if(mask[i_pixel]) 
         n_unmasked++;
-    calc_min(image,      &min_image,      n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
-    calc_max(image,      &max_image,      n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
-    calc_min(denominator,&min_denominator,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
-    calc_max(denominator,&max_denominator,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+    if(RGB_image!=NULL){
+      calc_min(RGB_image,&min_RGB_image,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+      calc_max(RGB_image,&max_RGB_image,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+    }
+    if(Y_image!=NULL){
+      calc_min(Y_image,&min_Y_image,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+      calc_max(Y_image,&max_Y_image,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+    }
     if(z_image!=NULL){
-      calc_min(z_image,&min_z_image, n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
-      calc_max(z_image,&max_z_image, n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+      calc_min(z_image,&min_z_image,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+      calc_max(z_image,&max_z_image,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+    }
+    if(RY_image!=NULL){
+      calc_min(RY_image,&min_RY_image,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+      calc_max(RY_image,&max_RY_image,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+      calc_min(GY_image,&min_GY_image,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+      calc_max(GY_image,&max_GY_image,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+      calc_min(BY_image,&min_BY_image,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+      calc_max(BY_image,&max_BY_image,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
     }
     SID_log("Done.",SID_LOG_CLOSE);
   
@@ -2156,10 +2342,22 @@ void render_frame(render_info  *render){
     if(n_unmasked>0){
        SID_log("Image statistics:",SID_LOG_OPEN);
        SID_log("coverage=%3d%%",SID_LOG_COMMENT,(int)(100.*(double)n_unmasked/(double)n_pixels));
-       SID_log("RGB min =%le",SID_LOG_COMMENT,min_image);
-       SID_log("RGB max =%le",SID_LOG_COMMENT,max_image);
-       SID_log("Y   min =%le",SID_LOG_COMMENT,min_denominator);
-       SID_log("Y   max =%le",SID_LOG_COMMENT,max_denominator);
+       if(RGB_image!=NULL){
+          SID_log("RGB min =%le",SID_LOG_COMMENT,min_RGB_image);
+          SID_log("RGB max =%le",SID_LOG_COMMENT,max_RGB_image);
+       }
+       if(Y_image!=NULL){
+          SID_log("Y   min =%le",SID_LOG_COMMENT,min_Y_image);
+          SID_log("Y   max =%le",SID_LOG_COMMENT,max_Y_image);
+       }
+       if(RY_image!=NULL){
+          SID_log("RY  min =%le",SID_LOG_COMMENT,min_RY_image);
+          SID_log("RY  max =%le",SID_LOG_COMMENT,max_RY_image);
+          SID_log("GY  min =%le",SID_LOG_COMMENT,min_GY_image);
+          SID_log("GY  max =%le",SID_LOG_COMMENT,max_GY_image);
+          SID_log("BY  min =%le",SID_LOG_COMMENT,min_BY_image);
+          SID_log("BY  max =%le",SID_LOG_COMMENT,max_BY_image);
+       }
        if(z_image!=NULL){
           SID_log("Z   min =%le [Mpc/h]",SID_LOG_COMMENT,h_Hubble*min_z_image/M_PER_MPC);
           SID_log("Z   max =%le [Mpc/h]",SID_LOG_COMMENT,h_Hubble*max_z_image/M_PER_MPC);
@@ -2177,6 +2375,7 @@ void render_frame(render_info  *render){
     SID_free(SID_FARG f_stretch);
     SID_free(SID_FARG value);
     SID_free(SID_FARG weight);
+    SID_free(SID_FARG colour);
     SID_free(SID_FARG z_index);
     SID_free(SID_FARG mask);
   
