@@ -47,9 +47,9 @@ int main(int argc, char *argv[]){
       irand=(int)(32768.0*random_number(&RNG));
       sprintf(filename,".tmpfile%d",irand);
       if((fp=fopen(filename,"r"))==NULL)
-	flag=FALSE;
+	     flag=FALSE;
       else
-        fclose(fp);
+         fclose(fp);
     }
     fp=fopen(filename,"w");fclose(fp);
     free_RNG(&RNG);

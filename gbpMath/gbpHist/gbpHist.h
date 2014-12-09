@@ -56,6 +56,7 @@ extern "C" {
 void   init_histogram(hist_info *hist,int mode,...);
 void   free_histogram(hist_info *hist);
 void   clear_histogram(hist_info *hist);
+void   clear_trend(trend_info **trend);
 int    calc_histogram_index(hist_info *hist,double x);
 int    is_histogram_index_in_range(hist_info *hist,int index);
 void   add_to_histogram(hist_info *hist,double x);

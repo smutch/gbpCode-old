@@ -14,6 +14,7 @@ struct select_gadget_volume_params_info{
    plist_info *plist;
    GBPREAL     cen[3];
    GBPREAL     size;
+   GBPREAL     size2;
    GBPREAL     box_size;
 };
 
@@ -83,6 +84,50 @@ int select_gadget_cube(gadget_read_info *fp_gadget,
       if(coord<(-half_cube_size) || coord>half_cube_size)
          flag_select=FALSE;
    }
+   return(flag_select);
+}
+
+int select_gadget_sphere(gadget_read_info *fp_gadget,
+                         void             *params,
+                         size_t            i_particle,
+                         size_t            i_particle_type,
+                         int               i_type,
+                         GBPREAL          *pos,
+                         GBPREAL          *vel,
+                         size_t            ID_i);
+int select_gadget_sphere(gadget_read_info *fp_gadget,
+                         void             *params,
+                         size_t            i_particle,
+                         size_t            i_particle_type,
+                         int               i_type,
+                         GBPREAL          *pos,
+                         GBPREAL          *vel,
+                         size_t            ID_i){
+   static GBPREAL  sphere_radius;
+   static GBPREAL  sphere_radius2;
+   static GBPREAL  half_box_size;
+   static GBPREAL  box_size;
+   static GBPREAL *cen;
+   if(fp_gadget->first_select_call){
+      cen           =    ((select_gadget_volume_params_info *)params)->cen;
+      sphere_radius =    ((select_gadget_volume_params_info *)params)->size;
+      sphere_radius2=    ((select_gadget_volume_params_info *)params)->size2;
+      half_box_size =0.5*((select_gadget_volume_params_info *)params)->box_size;
+      box_size      =    ((select_gadget_volume_params_info *)params)->box_size;
+   }
+   int flag_select=TRUE;
+   GBPREAL radius2=0;
+   for(int i_coord=0;i_coord<3 && flag_select;i_coord++){
+      GBPREAL coord=pos[i_coord]-cen[i_coord];
+      force_periodic(&coord,-half_box_size,box_size);
+      if(coord<(-sphere_radius) || coord>sphere_radius)
+         flag_select=FALSE;
+      else
+         radius2+=(coord*coord);
+   }
+   if(radius2>sphere_radius2)
+      flag_select=FALSE;
+
    return(flag_select);
 }
 
@@ -290,10 +335,10 @@ void process_gadget_file(char   *filename_read_root,
    for(int j_file=0;i_file<fp_gadget.header.n_files;i_file+=i_file_skip,j_file++){
  
       // Open file pointers
-      int  record_length;
-      int  record_length_open;
-      int  record_length_close;
-      char filename[MAX_FILENAME_LENGTH];
+      size_t record_length;
+      int    record_length_open;
+      int    record_length_close;
+      char   filename[MAX_FILENAME_LENGTH];
       set_gadget_filename(&fp_gadget,i_file,filename);
       FILE *fp_pos=fopen(filename,"r");
       FILE *fp_vel=fopen(filename,"r");
@@ -304,9 +349,9 @@ void process_gadget_file(char   *filename_read_root,
       fread(&record_length_open,4,1,fp_pos);
       fread(&header,sizeof(gadget_header_info),1,fp_pos);
       fread(&record_length_close,4,1,fp_pos);
-      //if(record_length_open!=record_length_close)
+      //if((size_t)record_length_open!=record_length_close)
       //  SID_log_warning("Problem with GADGET record size (close of header)",ERROR_LOGIC);
-      //if(record_length_open!=sizeof(gadget_header_info))
+      //if((size_t)record_length_open!=sizeof(gadget_header_info))
       //  SID_log_warning("Problem with GADGET header size",ERROR_LOGIC);
       fseeko(fp_pos,(off_t)(4),SEEK_CUR);
       fseeko(fp_vel,(off_t)(2*4+sizeof(gadget_header_info)),SEEK_SET);
@@ -318,7 +363,7 @@ void process_gadget_file(char   *filename_read_root,
          n_particles_file+=(size_t)(header.n_file[i_type]);
 
       // Initialize velocities pointer
-      record_length=3*(int)(n_particles_file*sizeof(GBPREAL));
+      record_length=3*n_particles_file*sizeof(GBPREAL);
       fread(&record_length_open,4,1,fp_vel);
       fseeko(fp_vel,(off_t)(record_length),SEEK_CUR);
       fread(&record_length_close,4,1,fp_vel);
@@ -328,7 +373,7 @@ void process_gadget_file(char   *filename_read_root,
       fseeko(fp_ids,(off_t)(2*4+record_length),SEEK_CUR);
 
       // Initialize IDs pointer
-      record_length=3*(int)(n_particles_file*sizeof(GBPREAL));
+      record_length=3*n_particles_file*sizeof(GBPREAL);
       fread(&record_length_open,4,1,fp_ids);
       fseeko(fp_ids,(off_t)(record_length),SEEK_CUR);
       fread(&record_length_close,4,1,fp_ids);
@@ -338,23 +383,22 @@ void process_gadget_file(char   *filename_read_root,
 
       // Determine what kind of IDs we have
       size_t ID_byte_size;
-      int    flag_force_long_IDs;
-      flag_force_long_IDs=FALSE;
+      int    flag_force_long_IDs=FALSE;
       if(j_file==0){
-         if(record_length_open==((int)n_particles_file*(int)(sizeof(uint64_t))) || flag_force_long_IDs){
+         if((size_t)record_length_open==(n_particles_file*sizeof(uint64_t)) || flag_force_long_IDs){
             (*flag_long_IDs)=TRUE;
             ID_byte_size    =sizeof(uint64_t);
             SID_log("Assuming long IDs.",SID_LOG_COMMENT);
          }
-         else if(record_length_open==((int)n_particles_file*(int)(sizeof(int)))){
+         else if((size_t)record_length_open==(n_particles_file*sizeof(int))){
             (*flag_long_IDs)=FALSE;
             ID_byte_size    =sizeof(int);
             SID_log("Assuming integer IDs.",SID_LOG_COMMENT);
          }
          else{
-            (*flag_long_IDs)=FALSE;
-            ID_byte_size    =sizeof(int);
-            SID_log_warning("Could not determine the IDs size.  Assuming integer IDs.",ERROR_LOGIC);
+            (*flag_long_IDs)=TRUE;
+            ID_byte_size    =sizeof(uint64_t);
+            SID_log_warning("Header does not match ID block size.  Could not determine the IDs type.  Assuming long IDs.",ERROR_LOGIC);
          }
       }
  
@@ -431,6 +475,8 @@ void process_gadget_file(char   *filename_read_root,
 
    // Create global counts
    SID_Allreduce(n_particles_type_local,n_particles_type,N_GADGET_TYPE,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
+
+   SID_log("%lld particles processed.",SID_LOG_COMMENT,n_particles_processed);
  
    // Clean-up
    if(flag_n_particles_type_local_allocate)
@@ -451,6 +497,7 @@ int main(int argc, char *argv[]){
   select_gadget_volume_params_info select_gadget_volume_params;
   int  snapshot;
   int  n_files_out;
+  int  select_mode;
   char filename_in_root[MAX_FILENAME_LENGTH];
   char filename_out_root[MAX_FILENAME_LENGTH];
   GBPREAL cen_select[3];
@@ -463,8 +510,27 @@ int main(int argc, char *argv[]){
   select_gadget_volume_params.cen[2]=(GBPREAL)atof(argv[5]);
   select_gadget_volume_params.size  =(GBPREAL)atof(argv[6]);
   n_files_out                       =         atoi(argv[8]);
+  select_mode                       =         atoi(argv[9]);
 
-  SID_log("Excising cube from Gadget binary file {%s;snapshot=%d}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_in_root,snapshot);
+  // Check that the selection mode is valid and set function pointer
+  int (*select_function)(gadget_read_info *fp_gadget,
+                         void             *params,
+                         size_t            i_particle,
+                         size_t            i_particle_type,
+                         int               i_type,
+                         GBPREAL          *pos,
+                         GBPREAL          *vel,
+                         size_t            ID_i);
+  if(select_mode==1)
+     select_function=select_gadget_cube;
+  else if(select_mode==2){
+     select_function=select_gadget_sphere;
+     select_gadget_volume_params.size2=pow(select_gadget_volume_params.size,2.);
+  }
+  else
+     SID_trap_error("Invalid selection mode (%d) given.",ERROR_SYNTAX,select_mode);
+
+  SID_log("Excising volume from Gadget binary file {%s;snapshot=%d}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_in_root,snapshot);
 
   // Initialize the plist data structure 
   plist_info plist;
@@ -487,7 +553,7 @@ int main(int argc, char *argv[]){
   int    flag_long_IDs;
   process_gadget_file(filename_in_root,
                       snapshot,
-                      select_gadget_cube,
+                      select_function,
                       count_gadget_particles,
                       &select_gadget_volume_params,
                       n_particles_type_local,
@@ -501,7 +567,7 @@ int main(int argc, char *argv[]){
   // Read the particles
   process_gadget_file(filename_in_root,
                       snapshot,
-                      select_gadget_cube,
+                      select_function,
                       store_gadget_particles,
                       &select_gadget_volume_params,
                       NULL,

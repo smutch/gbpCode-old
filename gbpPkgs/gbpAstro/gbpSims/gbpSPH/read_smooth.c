@@ -17,7 +17,6 @@ void read_smooth(plist_info *plist,
   char   *species_name;
   char    var_name[256];
   char    unit_name[256];
-  float   var_min,var_max,var_mean;
   double  unit_factor;
   smoothfile_header_info read_smoothfile_header;
   int     i_file;
@@ -39,6 +38,7 @@ void read_smooth(plist_info *plist,
   float  *r_smooth_array;  
   float  *rho_array;  
   float  *sigma_v_array;  
+  char   *read_array;  
   double  expansion_factor;
   double  h_Hubble;
   int     flag_filefound=FALSE;
@@ -80,7 +80,7 @@ void read_smooth(plist_info *plist,
      n_particles_file =header.n_particles_file;
      offset           =header.offset;
      n_particles_total=header.n_particles_total;
-     n_files          =header.n_files;
+     n_files          =MAX(1,header.n_files);
      SID_Bcast(&n_particles_file, (int)sizeof(int),      read_rank,SID.COMM_WORLD);
      SID_Bcast(&offset,           (int)sizeof(int),      read_rank,SID.COMM_WORLD);
      SID_Bcast(&n_particles_total,(int)sizeof(long long),read_rank,SID.COMM_WORLD);
@@ -106,6 +106,7 @@ void read_smooth(plist_info *plist,
 
      // Allocate arrays
      SID_log("Allocating arrays for %d particles...",SID_LOG_OPEN,n_particles_local);
+     read_array=(char *)SID_calloc(sizeof(char)*n_particles_local);
      for(i_quantity=0;i_quantity<n_quantities;i_quantity++){
        switch(i_quantity){
        case 0:
@@ -125,6 +126,7 @@ void read_smooth(plist_info *plist,
      SID_log("Done.",SID_LOG_CLOSE);
 
      // Read each file in turn
+     size_t I_particle=0;
      for(i_file=0;i_file<n_files;i_file++){
        set_smooth_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
        SID_log("Processing file #%d of %d {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,i_file+1,n_files,filename);
@@ -136,7 +138,7 @@ void read_smooth(plist_info *plist,
        n_particles_file =header.n_particles_file;
        offset           =header.offset;
        n_particles_total=header.n_particles_total;
-       n_files          =header.n_files;
+       n_files          =MAX(1,header.n_files);
        SID_Bcast(&n_particles_file, (int)sizeof(int),      read_rank,SID.COMM_WORLD);
        SID_Bcast(&offset,           (int)sizeof(int),      read_rank,SID.COMM_WORLD);
        SID_Bcast(&n_particles_total,(int)sizeof(long long),read_rank,SID.COMM_WORLD);
@@ -205,6 +207,7 @@ void read_smooth(plist_info *plist,
          fread(&offset,           sizeof(int),      1,fp);
          fread(&n_particles_total,sizeof(long long),1,fp);
          fread(&n_files,          sizeof(int),      1,fp);
+         n_files=MAX(1,n_files);
        }
        SID_Bcast(&n_particles_file, (int)sizeof(int),      read_rank,SID.COMM_WORLD);
        SID_Bcast(&offset,           (int)sizeof(int),      read_rank,SID.COMM_WORLD);
@@ -245,8 +248,11 @@ void read_smooth(plist_info *plist,
 
          // Place in final array
          for(i_particle=0;i_particle<n_particles_file;i_particle++){
-           if(mark[i_particle]>=0)
+           if(mark[i_particle]>=0){
+              if(i_quantity==0)
+                 read_array[mark[i_particle]]=TRUE;
               local_array[mark[i_particle]]=((float *)buffer)[i_particle]*unit_factor;
+           }
          }
          SID_log("Done.",SID_LOG_CLOSE);
        }
@@ -259,28 +265,41 @@ void read_smooth(plist_info *plist,
      SID_free(SID_FARG ids_index);
      SID_Barrier(SID.COMM_WORLD);
 
+     // Check that all particles have been treated
+     size_t sum_check=0;
+     for(i_particle=0;i_particle<n_particles_total;i_particle++)
+        sum_check+=read_array[i_particle];
+     SID_Allreduce(SID_IN_PLACE,&sum_check,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
+     if(sum_check!=n_particles_total)
+        SID_trap_error("Only %lld of %lld particles were set.",ERROR_LOGIC,sum_check,n_particles_total);
+     SID_free(SID_FARG read_array);
+
      SID_log("Summary...",SID_LOG_OPEN);
      for(i_quantity=0;i_quantity<n_quantities;i_quantity++){
+       char var_name[32];
        switch(i_quantity){
        case 0:
-         SID_log("Lengths:   ",SID_LOG_OPEN);
+         sprintf(var_name,"Lengths:   ");
          sprintf(unit_name,"Mpc");
          unit_factor=1./M_PER_MPC;
          local_array=r_smooth_array;
          break;
        case 1:
-         SID_log("Densities: ",SID_LOG_OPEN);
+         sprintf(var_name,"Densities: ");
          sprintf(unit_name,"Msol/Mpc^3");
          unit_factor=M_PER_MPC*M_PER_MPC*M_PER_MPC/M_SOL;
          local_array=rho_array;
          break;
        case 2:
-         SID_log("sigmas_v's:",SID_LOG_OPEN);
+         sprintf(var_name,"sigmas_v's:");
          sprintf(unit_name,"km/s");
          unit_factor=1e-3;
          local_array=sigma_v_array;
          break;
        }
+
+       // Report some stats
+       float var_min,var_max,var_mean;
        calc_min_global(local_array,
                        &var_min,
                        n_particles_local,
@@ -300,11 +319,32 @@ void read_smooth(plist_info *plist,
                         CALC_MODE_DEFAULT,
                         SID.COMM_WORLD);
 
+       // Remove NaN's from sigma_v's if needed
+       size_t n_NaN=0;
+       for(i_particle=0;i_particle<n_particles_local;i_particle++){
+          if(isnan(local_array[i_particle])){
+             local_array[i_particle]=1000.*0.5*(var_min+var_max);
+             n_NaN++;
+          }
+       }
 
-       SID_log("min=%e max=%e mean=%e [%s]",
-               SID_LOG_CLOSE,
-               var_min*unit_factor,var_max*unit_factor,var_mean*unit_factor,
-               unit_name);
+       if(n_NaN>0)
+          SID_log("%s min=%e max=%e mean=%e [%s] (%lld are NaN)",
+                  SID_LOG_COMMENT,
+                  var_name,
+                  var_min*unit_factor,
+                  var_max*unit_factor,
+                  var_mean*unit_factor,
+                  unit_name,
+                  n_NaN);
+       else
+          SID_log("%s min=%e max=%e mean=%e [%s]",
+                  SID_LOG_COMMENT,
+                  var_name,
+                  var_min*unit_factor,
+                  var_max*unit_factor,
+                  var_mean*unit_factor,
+                  unit_name);
      }
      SID_log("",SID_LOG_CLOSE|SID_LOG_NOPRINT);
 

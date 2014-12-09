@@ -5,6 +5,7 @@ INCFILES = gbpHist.h
 OBJFILES = init_histogram.o                     \
 	       free_histogram.o                     \
 	       clear_histogram.o                    \
+	       clear_trend.o                        \
 	       calc_histogram_index.o               \
 	       is_histogram_index_in_range.o        \
 	       add_to_histogram.o                   \

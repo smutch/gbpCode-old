@@ -44,6 +44,7 @@ if ( ${GBP_QUEUE_TYPE} == 'PBS' ) then
   end
 
   set SUBT_FILE="`pwd`/`create_tmpfile`"
+  echo $SUBT_FILE `create_tmpfile`
 
   echo "#\!/bin/csh"                                                                                     > $SUBT_FILE
   echo '#PBS -N '$ARG_CMD                                                                               >> $SUBT_FILE

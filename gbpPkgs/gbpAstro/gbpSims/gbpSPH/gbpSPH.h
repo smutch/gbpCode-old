@@ -215,9 +215,9 @@ void compute_particle_quantity(plist_info *plist,
                                char       *var_text,
                                char       *ptype_in_text);
 void read_mark_file(plist_info *plist,
-                    char      *mark_name,
-                    char      *filename_in,
-                    int        mode);
+                    const char *mark_name,
+                    const char *filename_in,
+                    int         mode);
 void read_tipsy_mark_file(char        *filename,
                           plist_info  *plist,
                           char        *mark_name);

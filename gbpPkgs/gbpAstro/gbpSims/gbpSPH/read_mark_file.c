@@ -7,8 +7,8 @@
 #define MAX_MARK_BUFFER_SIZE SIZE_OF_MEGABYTE
 
 void read_mark_file(plist_info *plist,
-                    char       *mark_name,
-                    char       *filename_in,
+                    const char *mark_name,
+                    const char *filename_in,
                     int         mode){
   int      i_species;
   size_t   i_particle;

@@ -17,18 +17,6 @@ size_t set_n_of_type_file_left_local(size_t n_of_type_all,size_t n_of_type_proce
       return(n_of_type_all/(size_t)n_files);
 }
 
-size_t n_particles_for_file(size_t n_particles_all,
-                            int    n_files,
-                            int    i_rank,
-                            int    n_ranks);
-size_t n_particles_for_file(size_t n_particles_all,
-                            int    n_files,
-                            int    i_rank,
-                            int    n_ranks){
-   if(n_files==1)
-      return(n_particles_all);
-}
-
 void write_gadget_binary_block(plist_info  *plist,
                                int          n_files,
                                char        *filename_out_root,
@@ -237,12 +225,42 @@ void write_gadget_binary_new(plist_info  *plist,
 
   // Fetch total particle counts
   size_t n_all[N_GADGET_TYPE];
+  size_t n_particles_all=0;
+  int    n_non_zero     =0;
   for(int i_type=0;i_type<N_GADGET_TYPE;i_type++){
-     if(ADaPS_exist(plist->data,"n_all_%s",plist->species[i_type]))
+     if(ADaPS_exist(plist->data,"n_all_%s",plist->species[i_type])){
         n_all[i_type]=((size_t *)ADaPS_fetch(plist->data,"n_all_%s",plist->species[i_type]))[0];
+        n_non_zero++;
+     }
      else
         n_all[i_type]=0;
+     n_particles_all+=n_all[i_type];
   }
+
+  // List numbers of particles in the log output
+  SID_log("%lld",SID_LOG_CONTINUE,n_particles_all);
+  if(n_non_zero>0)
+    SID_log(" (",SID_LOG_CONTINUE,n_particles_all);
+  for(int i_type=0;i_type<N_GADGET_TYPE;i_type++){
+    if(n_all[i_type]>0){
+      if(i_type==n_non_zero-1){
+        if(n_non_zero>1)
+          SID_log("and %lld %s",SID_LOG_CONTINUE,n_all[i_type],plist->species[i_type]);
+        else
+          SID_log("%lld %s",SID_LOG_CONTINUE,n_all[i_type],plist->species[i_type]);
+      }
+      else{
+        if(n_non_zero>1)
+          SID_log("%lld %s, ",SID_LOG_CONTINUE,n_all[i_type],plist->species[i_type]);
+        else
+          SID_log("%lld %s",SID_LOG_CONTINUE,n_all[i_type],plist->species[i_type]);
+      }
+    }
+  }
+  if(n_non_zero>0)
+    SID_log(") particles...",SID_LOG_CONTINUE);
+  else
+    SID_log(" particles...",SID_LOG_CONTINUE);
 
   // Write headers
   gadget_header_info *header;
@@ -330,6 +348,26 @@ void write_gadget_binary_new(plist_info  *plist,
                             variable,
                             convert_mode,
                             mode);
+
+  // Create new IDs
+/*
+  SID_log("Creating serialized IDs...",SID_LOG_OPEN);      
+  size_t last_ID=0;
+  for(int i_type=0;i_type<N_GADGET_TYPE;i_type++){
+     for(int i_rank=0;i_rank<SID.n_proc;i_rank++){
+        if(ADaPS_exist(plist->data,"n_%s", plist->species[i_type])){
+           size_t  n_of_type=((size_t *)ADaPS_fetch(plist->data,"n_%s", plist->species[i_type]))[0];
+           size_t *ids      = (size_t *)ADaPS_fetch(plist->data,"id_%s",plist->species[i_type]);
+           if(i_rank==SID.My_rank){
+              for(int i_particle=0;i_particle<n_of_type;i_particle++)
+                 ids[i_particle]=last_ID++;
+           }
+        }
+        SID_Bcast(&last_ID,sizeof(size_t),i_rank,SID.COMM_WORLD);
+     }
+  }
+  SID_log("Done.",SID_LOG_CLOSE);      
+*/
 
   // Write IDs
   int flag_long_IDs=((int *)ADaPS_fetch(plist->data,"flag_long_IDs"))[0];

@@ -69,10 +69,8 @@ int init_gadget_read(char *filename_root_in,int snapshot_number,gadget_read_info
   fp_gadget->n_particles=0;
   for(int i_type=0;i_type<N_GADGET_TYPE;i_type++){
      fp_gadget->n_all[i_type] =(fp_gadget->header.n_all_lo_word[i_type])+(((size_t)(fp_gadget->header.n_all_hi_word[i_type]))<<32);
-if(i_type==1) fp_gadget->n_all[i_type]=(size_t)3072*(size_t)3072*(size_t)3072;
      fp_gadget->n_particles  +=fp_gadget->n_all[i_type];
   }
-     
 
   return(flag_filefound);
 }
