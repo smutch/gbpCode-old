@@ -144,13 +144,7 @@ int set_render_state(render_info *render,int frame,int mode){
     for(i_snap=0;i_snap<render->n_interpolate;i_snap++){
        if(render->snap_list[i_snap]<0){
           render->snap_list[i_snap]=snap_list[i_snap];
-          if(render->flag_read_marked)
-             read_mark_file(render->plist_list[i_snap],"mark",render->mark_filename_root,MARK_LIST_ONLY);
-          //if(render->n_interpolate>1)
-             //read_gadget_binary_render(render->snap_filename_root,render->snap_list[i_snap],render->plist_list[i_snap],READ_GADGET_RENDER_ID_ORDERED);
-             read_gadget_binary_render(render->snap_filename_root,render->snap_list[i_snap],render->plist_list[i_snap],READ_GADGET_RENDER_SCATTER);
-          //else
-          //   read_gadget_binary_render(render->snap_filename_root,render->snap_list[i_snap],render->plist_list[i_snap],READ_GADGET_RENDER_DEFAULT);
+          read_gadget_binary_render(render->snap_filename_root,render->snap_list[i_snap],render->plist_list[i_snap],READ_GADGET_RENDER_SCATTER);
           if(render->n_interpolate>1)
              read_smooth(render->plist_list[i_snap],render->smooth_filename_root,render->snap_list[i_snap],
                          SMOOTH_DEFAULT|READ_SMOOTH_LOG_SIGMA|READ_SMOOTH_LOG_RHO); // this is to speed-up logarythmic interpolation
@@ -159,17 +153,20 @@ int set_render_state(render_info *render,int frame,int mode){
        }
     }
     SID_free(SID_FARG snap_list);
-  }
 
-  // Convert [Mpc/h] -> SI
-  if(render->plist_list!=NULL){
-     if(ADaPS_exist(render->plist_list[0]->data,"h_Hubble"))
-        render->h_Hubble=((double *)ADaPS_fetch(render->plist_list[0]->data,"h_Hubble"))[0];
-     else
-        render->h_Hubble=1.;
+    // Convert [Mpc/h] -> SI
+    if(render->plist_list!=NULL){
+       if(ADaPS_exist(render->plist_list[0]->data,"h_Hubble"))
+          render->h_Hubble=((double *)ADaPS_fetch(render->plist_list[0]->data,"h_Hubble"))[0];
+       else
+          render->h_Hubble=1.;
+    }
+    else
+       render->h_Hubble=1.;
+
+    // Mark particles
+    perform_marking(render);
   }
-  else
-     render->h_Hubble=1.;
   perspective->p_o[0]*=M_PER_MPC/render->h_Hubble;
   perspective->p_o[1]*=M_PER_MPC/render->h_Hubble;
   perspective->p_o[2]*=M_PER_MPC/render->h_Hubble;
@@ -179,6 +176,8 @@ int set_render_state(render_info *render,int frame,int mode){
   perspective->d_o   *=M_PER_MPC/render->h_Hubble;
   perspective->radius*=M_PER_MPC/render->h_Hubble;
   perspective->FOV   *=M_PER_MPC/render->h_Hubble;
+
+  // Perform marking
 
   return(r_val);
 }

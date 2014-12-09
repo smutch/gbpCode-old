@@ -48,8 +48,9 @@ double RGB_lookup(int colour,int channel){
       case 5:
          switch(channel){
             case 0:
-            case 1:
                r_val=1.;
+            case 1:
+               r_val=0.4;
                break;
             default:
                r_val=0.;
@@ -743,11 +744,11 @@ void init_make_map_noabs(render_info *render,
   double   d_hat;
   double   particle_radius;
   double   x_tmp,y_tmp,z_tmp;
-  int          flag_log;
-  double       z_test;
-  int          flag_use_Gadget;
-  float        box_size_float=(float)box_size;
-  float        half_box=0.5*box_size_float;
+  int      flag_log;
+  double   z_test;
+  int      flag_use_Gadget;
+  float    box_size_float=(float)box_size;
+  float    half_box=0.5*box_size_float;
   
   SID_log("Initializing projection-space...",SID_LOG_OPEN|SID_LOG_TIMER);
 
@@ -985,7 +986,7 @@ void init_make_map_noabs(render_info *render,
                   w_buffer[particle_index]=w_i;
                   v_buffer[particle_index]=v_i;
                   if(c_buffer!=NULL)
-                     c_buffer[particle_index]=c_i;
+                     c_buffer[particle_index]=(char)c_i;
                   particle_index++;
                }
             }
@@ -1043,7 +1044,7 @@ void init_make_map_noabs(render_info *render,
                           i_rank);
      if(c_buffer!=NULL)
         exchange_ring_buffer(c_buffer,
-                             sizeof(float),
+                             sizeof(char),
                              n_rank_local[rank_to],
                              &((*colour)[j_particle_rank]),
                              &n_exchange,
@@ -1073,9 +1074,6 @@ void init_make_map_noabs(render_info *render,
   SID_free(SID_FARG w_buffer);
   SID_free(SID_FARG c_buffer);
   free_particle_map_quantities(&mq);
-  for(i_type=0;i_type<N_GADGET_TYPE;i_type++)
-      if(mark[i_type]!=NULL)
-         SID_free(SID_FARG mark[i_type]);
   SID_free(SID_FARG mark);
 
   (*i_x_min_local_return)=i_x_min_local;
@@ -1620,7 +1618,7 @@ void init_make_map_abs(render_info *render,
                         w_buffer[i_particle_rank]=w_i;
                         v_buffer[i_particle_rank]=v_i;
                         if(c_buffer!=NULL)
-                           c_buffer[i_particle_rank]=c_i;
+                           c_buffer[i_particle_rank]=(char)c_i;
                         i_particle_rank++;
                      }
                   }
@@ -1677,7 +1675,7 @@ void init_make_map_abs(render_info *render,
                           i_rank);
      if(c_buffer!=NULL)
         exchange_ring_buffer(c_buffer,
-                             sizeof(float),
+                             sizeof(char),
                              n_rank_local[rank_to],
                              &((*colour)[j_particle_rank]),
                              &n_exchange,
@@ -1707,10 +1705,8 @@ void init_make_map_abs(render_info *render,
   SID_free(SID_FARG f_buffer);
   SID_free(SID_FARG v_buffer);
   SID_free(SID_FARG w_buffer);
+  SID_free(SID_FARG c_buffer);
   free_particle_map_quantities(&mq);
-  for(i_type=0;i_type<N_GADGET_TYPE;i_type++)
-      if(mark[i_type]!=NULL)
-         SID_free(SID_FARG mark[i_type]);
   SID_free(SID_FARG mark);
 
   (*i_x_min_local_return)=i_x_min_local;
@@ -2145,9 +2141,14 @@ void render_frame(render_info  *render){
         // Set the particle values and weights
         double v_i =(double)value[i_particle];
         double w_i =(double)weight[i_particle];
-        double R_i =RGB_lookup(colour[i_particle],0);
-        double G_i =RGB_lookup(colour[i_particle],1);
-        double B_i =RGB_lookup(colour[i_particle],2);
+        double R_i =1.;
+        double G_i =1.;
+        double B_i =1.;
+        if(colour!=NULL){
+           R_i =RGB_lookup(colour[i_particle],0);
+           G_i =RGB_lookup(colour[i_particle],1);
+           B_i =RGB_lookup(colour[i_particle],2);
+        }
         double vw_i=v_i*w_i;
         double zw_i=z_i*w_i;
 
@@ -2184,12 +2185,12 @@ void render_frame(render_info  *render){
                   mask[pos]=TRUE;
                 }
               }
-            }
-          }
-        }
-      }
+            } // loop over kernel
+          } 
+        } // loop over kernel
+      } // near-field selection
       SID_check_pcounter(&pcounter,ii_particle);
-    }
+    } // loop over particles
     SID_Barrier(SID.COMM_WORLD);
     SID_Allreduce(&n_particles_used_local,&n_particles_used,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
     SID_log("n_particles_used=%zd",SID_LOG_COMMENT,n_particles_used);
@@ -2204,7 +2205,7 @@ void render_frame(render_info  *render){
           for(ky=0;ky<ny;ky++){
              pos=ky+kx*ny;
              if(temp_image!=NULL)
-                temp_image[pos]  =0.;
+                temp_image[pos]=0.;
              if(Y_image!=NULL)
                 Y_image[pos]=0.;
              if(z_image!=NULL)
@@ -2233,8 +2234,8 @@ void render_frame(render_info  *render){
     }
     SID_free(SID_FARG mask_buffer);
 #endif
-    SID_Allreduce(SID_IN_PLACE,temp_image,  n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
-    SID_Allreduce(SID_IN_PLACE,Y_image,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
+    SID_Allreduce(SID_IN_PLACE,temp_image,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
+    SID_Allreduce(SID_IN_PLACE,Y_image,   n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
     if(z_image!=NULL)
       SID_Allreduce(SID_IN_PLACE,z_image,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
     if(RY_image!=NULL){
@@ -2286,9 +2287,9 @@ void render_frame(render_info  *render){
         SID_log("Taking log of RY,GY and BY images...",SID_LOG_OPEN);
         for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
           if(mask[i_pixel]){
-            RY_image[i_pixel]=take_log10(Y_image[i_pixel]);
-            GY_image[i_pixel]=take_log10(Y_image[i_pixel]);
-            BY_image[i_pixel]=take_log10(Y_image[i_pixel]);
+            RY_image[i_pixel]=take_log10(RY_image[i_pixel]);
+            GY_image[i_pixel]=take_log10(GY_image[i_pixel]);
+            BY_image[i_pixel]=take_log10(BY_image[i_pixel]);
           }
           else{
             RY_image[i_pixel]=LOG_ZERO;

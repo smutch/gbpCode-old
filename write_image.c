@@ -21,7 +21,7 @@ void write_image(image_info *image,char *filename_root,int mode){
            if(image_i<image_min and image_i!=LOG_ZERO) image_min=image_i;
         }
      }
-     SID_log("Image range =%le -> %le",SID_LOG_COMMENT,image_min,image_max);
+     //SID_log("Image range =%le -> %le",SID_LOG_COMMENT,image_min,image_max);
 
      // Write raw image
      if(!check_mode_for_flag(mode,WRITE_IMAGE_PNG_ONLY)){

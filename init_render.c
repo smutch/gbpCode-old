@@ -39,6 +39,8 @@ void init_render(render_info **render){
   (*render)->v_mode             = MAKE_MAP_LOG;
   (*render)->w_mode             = MAKE_MAP_LOG;
   (*render)->plist_list         = NULL;
+  (*render)->mark_arg_first     = NULL;
+  (*render)->mark_arg_last      = NULL;
   (*render)->kernel_radius      = NULL;
   (*render)->kernel_table       = NULL;
   (*render)->kernel_table_3d    = NULL;

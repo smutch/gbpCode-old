@@ -25,6 +25,7 @@ void free_render(render_info **render){
   SID_free(SID_FARG (*render)->kernel_radius);
   SID_free(SID_FARG (*render)->kernel_table);
   SID_free(SID_FARG (*render)->kernel_table_3d);
+  free_mark_arguments(&((*render)->mark_arg_first));
   SID_free(SID_FARG (*render));
   SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
   SID_log("Done.",SID_LOG_CLOSE);

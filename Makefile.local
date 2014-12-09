@@ -4,6 +4,11 @@
 
 INCFILES  = gbpRender.h
 OBJFILES  = close_movie.o               \
+	        add_mark_argument.o         \
+	        create_mark_argument.o      \
+	        free_mark_arguments.o       \
+	        process_SSimPL_halos.o      \
+	        perform_marking.o           \
             init_perspective.o          \
 	        free_perspective.o          \
 	        copy_perspective.o          \
@@ -37,7 +42,7 @@ OBJFILES  = close_movie.o               \
             render_frame.o              \
             set_image_RGB.o             \
             set_image_RGBY.o            \
-	        set_image_RGBY_no_table.o   \
+	        set_image_RGBY_3CHANNEL.o   \
             write_image.o               \
             write_image_to_movie.o
 LIBFILE   = libgbpRender.a

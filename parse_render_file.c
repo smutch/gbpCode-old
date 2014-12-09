@@ -49,7 +49,34 @@ void parse_render_file(render_info **render, char *filename){
       // Interpret command
       if(!strcmp(command,"set")){
         grab_word(line,i_word++,parameter);
-        if(!strcmp(parameter,"scene")){
+        if(!strcmp(parameter,"mark")){
+           char mark_species[32];
+           int  mark_value;
+           grab_int(line,i_word++, &mark_value);
+           grab_word(line,i_word++,mark_species);
+           if(i_word>count_words(line))
+              add_mark_argument((*render),mark_species,mark_value,"");
+           else{
+              char mark_type[32];
+              grab_word(line,i_word++,mark_type);
+              if(!strcmp(mark_type,"sphere")){
+                 double x,y,z,r;
+                 grab_double(line,i_word++,&x);
+                 grab_double(line,i_word++,&y);
+                 grab_double(line,i_word++,&z);
+                 grab_double(line,i_word++,&r);
+                 add_mark_argument((*render),mark_species,mark_value,mark_type,x,y,z,r);
+              }
+              else if(!strcmp(mark_type,"group_index")){
+                 int halo_index;
+                 grab_int(line,i_word++,&halo_index);
+                 add_mark_argument((*render),mark_species,mark_value,mark_type,halo_index);
+              }
+              else
+                 SID_trap_error("Invalid mark type {%s} in line {%s}.",ERROR_LOGIC,mark_type,line);
+           }
+        }
+        else if(!strcmp(parameter,"scene")){
           grab_word(line,i_word++,variable);
           if(!strcmp(variable,"n_frames")){
             grab_int(line,i_word++,&i_value);
@@ -100,6 +127,14 @@ void parse_render_file(render_info **render, char *filename){
         }
         else if(!strcmp(parameter,"n_interpolate"))
           grab_int(line,i_word++,&((*render)->n_interpolate));
+        else if(!strcmp(parameter,"SSimPL")){
+          grab_word(line,i_word++,(*render)->filename_SSimPL_dir);
+          grab_word(line,i_word++,(*render)->filename_halo_type);
+          if(i_word>count_words(line))
+             sprintf((*render)->filename_tree_version,"version_nominal_res");
+          else
+             grab_word(line,i_word++,(*render)->filename_tree_version);
+        }
         else if(!strcmp(parameter,"snap_file"))
           grab_word(line,i_word++,(*render)->snap_filename_root);
         else if(!strcmp(parameter,"mark_file")){

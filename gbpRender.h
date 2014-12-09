@@ -15,9 +15,9 @@
 #define CAMERA_PLANE_PARALLEL  4
 #define CAMERA_DEFAULT         CAMERA_MONO
 
-#define CAMERA_RGB_MODE_TABLE   TTTP01
-#define CAMERA_RGB_MODE_NOTABLE TTTP02
-#define CAMERA_RGB_MODE_DEFAULT CAMERA_RGB_MODE_TABLE
+#define CAMERA_RGB_MODE_1CHANNEL TTTP01
+#define CAMERA_RGB_MODE_3CHANNEL TTTP02
+#define CAMERA_RGB_MODE_DEFAULT  CAMERA_RGB_MODE_1CHANNEL|CAMERA_RGB_MODE_3CHANNEL
 
 #define RENDER_INIT_PERSPECTIVE 1
 #define RENDER_INIT_EVOLVE      2
@@ -137,6 +137,12 @@ struct camera_info{
   char             *mask_RGBY;
   char             *mask_RGBY_left;
   char             *mask_RGBY_right;
+  image_info       *image_RGBY_3CHANNEL;
+  image_info       *image_RGBY_3CHANNEL_left;
+  image_info       *image_RGBY_3CHANNEL_right;
+  char             *mask_RGBY_3CHANNEL;
+  char             *mask_RGBY_3CHANNEL_left;
+  char             *mask_RGBY_3CHANNEL_right;
   int               RGB_mode;
   int               flag_calc_Z_image;
   char              RGB_param[64];
@@ -177,39 +183,68 @@ struct camera_info{
   image_info       *image_BY_right;
 };
 
+typedef struct mark_arg_info mark_arg_info;
+struct mark_arg_info{
+   char            species[32];
+   char            type[32];
+   double          dval[8];
+   int             ival[8];
+   char            value;
+   mark_arg_info *next;
+};
+
+typedef struct process_halo_info process_halo_info;
+struct process_halo_info{
+    int    n_particles;
+    size_t offset;
+    int    id;
+    int    tree_case;
+    int    descendant_id;
+    int    tree_id;
+    int    file_offset;
+    int    file_index;
+    int    n_subgroups;
+    void  *ids;
+};
+
 typedef struct render_info render_info;
 struct render_info{
-  double      *kernel_radius;
-  double      *kernel_table;
-  double      *kernel_table_3d;
-  double       kernel_table_avg;
-  camera_info *camera;
-  scene_info  *scenes;
-  scene_info  *first_scene;
-  scene_info  *last_scene;
-  double       f_interpolate;
-  int          n_interpolate;
-  int          n_frames;
-  char         filename_out_dir[256];
-  char         snap_filename_root[256];
-  char         mark_filename_root[256];
-  char         smooth_filename_root[256];
-  char         snap_a_list_filename[256];
-  int          n_snap_a_list;
-  int          snap_number;
-  double      *snap_a_list;
-  int         *snap_list;
-  int          flag_comoving;
-  int          flag_fade;
-  int          flag_force_periodic;
-  int          flag_read_marked;
-  int          flag_add_absorption;
-  plist_info **plist_list;
-  double       h_Hubble;
-  double       f_absorption;
-  int          w_mode;
-  int          v_mode;
-  int          sealed; // TRUE if the render is fully initialized
+  double         *kernel_radius;
+  double         *kernel_table;
+  double         *kernel_table_3d;
+  double          kernel_table_avg;
+  camera_info    *camera;
+  scene_info     *scenes;
+  scene_info     *first_scene;
+  scene_info     *last_scene;
+  double          f_interpolate;
+  int             n_interpolate;
+  int             n_frames;
+  char            filename_SSimPL_dir[256];
+  char            filename_halo_type[256];
+  char            filename_tree_version[256];
+  char            filename_out_dir[256];
+  char            snap_filename_root[256];
+  char            mark_filename_root[256];
+  char            smooth_filename_root[256];
+  char            snap_a_list_filename[256];
+  int             n_snap_a_list;
+  int             snap_number;
+  double         *snap_a_list;
+  int            *snap_list;
+  int             flag_comoving;
+  int             flag_fade;
+  int             flag_force_periodic;
+  int             flag_read_marked;
+  int             flag_add_absorption;
+  plist_info    **plist_list;
+  mark_arg_info *mark_arg_first;
+  mark_arg_info *mark_arg_last;
+  double          h_Hubble;
+  double          f_absorption;
+  int             w_mode;
+  int             v_mode;
+  int             sealed; // TRUE if the render is fully initialized
 };
 
 // Function definitions
@@ -269,7 +304,7 @@ void set_image_RGBY(image_info *image_RGBY_in,
                     double      RGB_max,
                     double      Y_min,
                     double      Y_max);
-void set_image_RGBY_no_table(image_info *image_RGBY_in,
+void set_image_RGBY_3CHANNEL(image_info *image_RGBY_3CHANNEL_in,
                              image_info *image_RY_in,
                              image_info *image_GY_in,
                              image_info *image_BY_in,
@@ -290,6 +325,30 @@ void set_sph_kernel(double **kernel_radius,
                     double  *kernel_table_2d_average,
                     int      mode);
 
+void add_mark_argument   (render_info *render,const char *species,int value,const char *type,...);
+void create_mark_argument(render_info *render,mark_arg_info **new_arg);
+void free_mark_arguments(mark_arg_info **argument);
+void perform_marking     (render_info *render);
+void process_SSimPL_halos(char *filename_SSimPL_root,
+                          char *filename_halos_version,
+                          char *filename_trees_version,
+                          int   i_read,
+                          int   mode,
+                          int   select_function(int                i_group,
+                                                int                j_subgroup,
+                                                int                i_subgroup,
+                                                int                flag_long_ids,
+                                                process_halo_info *group_i,
+                                                process_halo_info *subgroup_i,
+                                                void              *params),
+                          int   action_function(int                i_group,
+                                                int                j_subgroup,
+                                                int                i_subgroup,
+                                                int                flag_long_ids,
+                                                process_halo_info *group_i,
+                                                process_halo_info *subgroup_i,
+                                                void              *params),
+                          void *params);
 #ifdef __cplusplus
 }
 #endif
