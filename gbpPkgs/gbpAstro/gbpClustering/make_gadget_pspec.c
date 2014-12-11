@@ -423,10 +423,12 @@ int main(int argc, char *argv[]){
   int grid_size;
   char filename_in_root[MAX_FILENAME_LENGTH];
   char filename_out_root[MAX_FILENAME_LENGTH];
+  char cosmo_name[16];
   strcpy(filename_in_root,  argv[1]);
   snapshot_number=(int)atoi(argv[2]);
   strcpy(filename_out_root, argv[3]);
   grid_size      =(int)atoi(argv[4]);
+  strcpy(cosmo_name,        argv[5]);
   SID_log("Processing the power spectra of {%s}, snapshot #%d...",SID_LOG_OPEN|SID_LOG_TIMER,filename_in_root,snapshot_number);
 
   // Initialization -- fetch header info
@@ -438,11 +440,12 @@ int main(int argc, char *argv[]){
   gadget_header_info header        =fp_gadget.header;
 
   // Set the cosmology
-  cosmo_info *cosmo;
+  cosmo_info *cosmo=NULL;
   double box_size        =header.box_size;
   double h_Hubble        =header.h_Hubble;
   double redshift        =header.redshift;
   double expansion_factor=header.time;
+/*
   double Omega_M         =header.Omega_M;
   double Omega_Lambda    =header.Omega_Lambda;
   double Omega_k         =1.-Omega_Lambda-Omega_M;
@@ -450,8 +453,6 @@ int main(int argc, char *argv[]){
   double f_gas           =Omega_b/Omega_M;
   double sigma_8         =0.; // not needed, so doesn't matter
   double n_spec          =0.; // not needed, so doesn't matter
-  char   cosmo_name[16];
-  sprintf(cosmo_name,"Gadget file's");
   init_cosmo(&cosmo,
              cosmo_name,
              Omega_Lambda,
@@ -462,6 +463,8 @@ int main(int argc, char *argv[]){
              h_Hubble,
              sigma_8,
              n_spec);
+*/
+  read_gbpCosmo_file(&cosmo,cosmo_name);
   SID_log("Done.",SID_LOG_CLOSE);
 
   // Set the k ranges
