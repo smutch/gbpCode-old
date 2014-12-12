@@ -59,7 +59,8 @@ void read_gadget_binary_local(char       *filename_root_in,
     // Number of particles for each species in all files
     size_t n_all[N_GADGET_TYPE];
     for(i_type=0;i_type<N_GADGET_TYPE;i_type++)
-       n_all[i_type]=(size_t)header.n_all_lo_word[i_type]+((size_t)header.n_all_hi_word[i_type])<<32;
+         n_all[i_type]=fp_gadget.n_all[i_type];
+    //   n_all[i_type]=(size_t)header.n_all_lo_word[i_type]+((size_t)header.n_all_hi_word[i_type])<<32;
 
     // Number of files in this snapshot 
     int n_files;
