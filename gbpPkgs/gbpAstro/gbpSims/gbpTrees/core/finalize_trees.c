@@ -81,7 +81,7 @@ void finalize_trees(tree_info *trees,int mode){
         tree_node_info *current=first_in_forest[i_forest];
         while(current!=NULL){
            if(current->descendant==NULL)
-              assign_depth_first_index_vertical_recursive(current,&depth_first_index);
+              assign_depth_first_index_recursive(current,&depth_first_index);
            current=current->next_in_forest;
         }
         if(depth_first_index!=n_halos_forest_local[i_forest])

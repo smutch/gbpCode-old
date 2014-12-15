@@ -21,16 +21,16 @@ MAKE       = make
 ECHO = /bin/echo
 
 # This is needed to fix compilation errors re: undefined trunc() function
-#CCFLAGS := $(CCFLAGS) -lm
+#CPPFLAGS := $(CPPFLAGS) -lm
 
 # Compile getline() on Macs
 ifndef USE_GETLINE
   USE_GETLINE=0
 endif
 ifneq ($(USE_GETLINE),0)
-  CCFLAGS := $(CCFLAGS) -DUSE_GETLINE=1
+  CPPFLAGS := $(CPPFLAGS) -DUSE_GETLINE=1
 else
-  CCFLAGS := $(CCFLAGS) -DUSE_GETLINE=0
+  CPPFLAGS := $(CPPFLAGS) -DUSE_GETLINE=0
 endif
 
 # Set default so that real=float
@@ -38,7 +38,7 @@ ifndef USE_DOUBLE
   USE_DOUBLE=0
 endif
 ifneq ($(USE_DOUBLE),0)
-  CCFLAGS := $(CCFLAGS) -DUSE_DOUBLE
+  CPPFLAGS := $(CPPFLAGS) -DUSE_DOUBLE
 endif
 export USE_DOUBLE
 
@@ -115,8 +115,8 @@ else
   include Makefile.local
 endif
 
-# Set CCFLAGS and LDFLAGS variables
-CCFLAGS := $(CCFLAGS) -I$(GBP_INC) 
+# Set CPPFLAGS and LDFLAGS variables
+CPPFLAGS := $(CPPFLAGS) -I$(GBP_INC) 
 LDFLAGS := $(LDFLAGS) -L$(GBP_LIB_LOCAL)  
 
 # Filter-out Cuda files if USE_CUDA!=1
@@ -146,13 +146,13 @@ include $(GBP_SRC)/Makefile.libs
 
 # Turn on debugging information
 ifeq ($(USE_DEBUGGER),1)
-  CCFLAGS := $(CCFLAGS) -g
+  CPPFLAGS := $(CPPFLAGS) -g
   LDFLAGS := $(LDFLAGS) -g
   ifeq ($(USE_CUDA),1)
-    CCFLAGS_CUDA := $(CCFLAGS_CUDA) -G
+    CPPFLAGS_CUDA := $(CPPFLAGS_CUDA) -G
   endif
 else
-  CCFLAGS := $(CCFLAGS) -O2
+  CPPFLAGS := $(CPPFLAGS) -O2
 endif
 export USE_DEBUGGER
 
@@ -177,7 +177,7 @@ else
   LIBTOUCH2    = .install_lib_mpi
   BINTOUCH2    = .install_bin_mpi
 endif
-CCFLAGS := $(CCFLAGS) -DGBP_DATA_DIR='"$(GBP_DAT)"'
+CPPFLAGS := $(CPPFLAGS) -DGBP_DATA_DIR='"$(GBP_DAT)"'
 OLDDATE=200701010101
 
 ################################
@@ -292,7 +292,7 @@ endif
 	@$(ECHO) "-------------------------------"
 	@$(ECHO) "CC     ="$(CC)
 	@$(ECHO)
-	@$(ECHO) "CCFLAGS="$(CCFLAGS)
+	@$(ECHO) "CPPFLAGS="$(CPPFLAGS)
 	@$(ECHO)
 	@$(ECHO) "LDFLAGS="'$(LDFLAGS)'
 	@$(ECHO)
@@ -460,9 +460,9 @@ $(BINFILES): $(LIBFILE)
 	done
 	@$(ECHO) -n "Generating binary '"$@"'..."
 ifneq ($(USE_CUDA),0)
-	@$(CC_CUDA) $(CCFLAGS) $(CCFLAGS_CUDA) $@.c -o $@  $(LDFLAGS) -lcuda 
+	@$(CC_CUDA) $(CPPFLAGS) $(CPPFLAGS_CUDA) $@.c -o $@  $(LDFLAGS) -lcuda 
 else
-	@$(CC) $(CCFLAGS) $@.c -o $@  $(LDFLAGS)
+	@$(CC) $(CPPFLAGS) $@.c -o $@  $(LDFLAGS)
 endif
 	@cp $@ $(GBP_BIN_LOCAL)
 	@$(ECHO) "Done."
@@ -474,7 +474,7 @@ endif
 		((i = i + 1)) ; \
 	done
 	@$(ECHO) -n "Compiling "$@"..."
-	@$(CC) $(CCFLAGS) -c $*.c
+	@$(CC) $(CPPFLAGS) -c $*.c
 	@$(ECHO) "Done."
 
 # Generate CUDA object files (implicit rule)
@@ -485,7 +485,7 @@ endif
 	done
 ifneq ($(USE_CUDA),0)
 	@$(ECHO) -n "Compiling "$@"..."
-	@$(CC_CUDA) $(CCFLAGS) $(CCFLAGS_CUDA) -c $*.cu
+	@$(CC_CUDA) $(CPPFLAGS) $(CPPFLAGS_CUDA) -c $*.cu
 	@touch $*.ou
 	@$(ECHO) "Done."
 else

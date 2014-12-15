@@ -6,7 +6,7 @@
 #include <gbpLib.h>
 #include <gbpHalos.h>
 
-typedef struct data_info_local data_in_info_local;
+typedef struct data_info_local data_info_local;
 struct data_info_local{
    halo_properties_info group;   
    halo_properties_info subgroup;

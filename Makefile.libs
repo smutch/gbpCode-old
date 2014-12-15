@@ -1,6 +1,6 @@
 #----------------------------------------------------------------------
 #
-# This file sets the library information needed in CCFLAGS and LDFLAGS
+# This file sets the library information needed in CPPFLAGS and LDFLAGS
 # for the gbpCode Makefile
 #
 # YOU REALLY SHOULDN'T NEED TO EDIT THIS FILE!  ANY PROBLEMS
@@ -24,12 +24,12 @@ ifndef USE_CFITSIO
 endif
 ifneq ($(USE_CFITSIO),0)
   ifdef GBP_CFITSIO_DIR
-    CCFLAGS := $(CCFLAGS) -I$(GBP_CFITSIO_DIR)/include/
+    CPPFLAGS := $(CPPFLAGS) -I$(GBP_CFITSIO_DIR)/include/
     LDFLAGS := $(LDFLAGS) -L$(GBP_CFITSIO_DIR)/lib/
   endif
   LIBS    := $(LIBS) -lcfitsio
 endif
-CCFLAGS := $(CCFLAGS) -DUSE_CFITSIO=$(USE_CFITSIO)
+CPPFLAGS := $(CPPFLAGS) -DUSE_CFITSIO=$(USE_CFITSIO)
 export USE_CFITSIO
 
 # Add hdf5
@@ -38,12 +38,12 @@ ifndef USE_HDF5
 endif
 ifneq ($(USE_HDF5),0)
   ifdef GBP_HDF5_DIR
-    CCFLAGS := $(CCFLAGS) -I$(GBP_HDF5_DIR)/include/
+    CPPFLAGS := $(CPPFLAGS) -I$(GBP_HDF5_DIR)/include/
     LDFLAGS := $(LDFLAGS) -L$(GBP_HDF5_DIR)/lib/
   endif
   LIBS    := $(LIBS) -lhdf5
 endif
-CCFLAGS := $(CCFLAGS) -DUSE_HDF5=$(USE_HDF5)
+CPPFLAGS := $(CPPFLAGS) -DUSE_HDF5=$(USE_HDF5)
 export USE_HDF5
 
 # Add gdlib
@@ -52,26 +52,26 @@ ifndef USE_GDLIB
 endif
 ifneq ($(USE_GDLIB),0)
   ifdef GBP_GDLIB_DIR
-    CCFLAGS := $(CCFLAGS) -I$(GBP_GDLIB_DIR)/include/
+    CPPFLAGS := $(CPPFLAGS) -I$(GBP_GDLIB_DIR)/include/
     LDFLAGS := $(LDFLAGS) -L$(GBP_GDLIB_DIR)/lib/
   endif
   LIBS    := $(LIBS) -lgd
 endif
-CCFLAGS := $(CCFLAGS) -DUSE_GDLIB=$(USE_GDLIB)
+CPPFLAGS := $(CPPFLAGS) -DUSE_GDLIB=$(USE_GDLIB)
 export USE_GDLIB
 
 # Add Cuda
 ifndef USE_CUDA
   USE_CUDA    =0
 endif
-CCFLAGS := $(CCFLAGS) -DUSE_CUDA=$(USE_CUDA)
+CPPFLAGS := $(CPPFLAGS) -DUSE_CUDA=$(USE_CUDA)
 export USE_CUDA
 
 # Add debugger support
 ifndef USE_DEBUGGER
   USE_DEBUGGER    =0
 endif
-CCFLAGS := $(CCFLAGS) -DUSE_DEBUGGER=$(USE_DEBUGGER)
+CPPFLAGS := $(CPPFLAGS) -DUSE_DEBUGGER=$(USE_DEBUGGER)
 export USE_DEBUGGER
 
 # Add valgrind
@@ -80,12 +80,12 @@ ifndef USE_VALGRIND
 endif
 ifneq ($(USE_VALGRIND),0)
   ifdef GBP_VALGRIND_DIR
-    CCFLAGS := $(CCFLAGS) -I$(GBP_VALGRIND_DIR)/include/
+    CPPFLAGS := $(CPPFLAGS) -I$(GBP_VALGRIND_DIR)/include/
     LDFLAGS := $(LDFLAGS) -L$(GBP_VALGRIND_DIR)/lib/
   endif
   LIBS    := $(LIBS) 
 endif
-CCFLAGS := $(CCFLAGS) -DUSE_VALGRIND=$(USE_VALGRIND)
+CPPFLAGS := $(CPPFLAGS) -DUSE_VALGRIND=$(USE_VALGRIND)
 export USE_VALGRIND
 
 # Add GSL stuff (default off)
@@ -94,12 +94,12 @@ ifndef USE_GSL
 endif
 ifneq ($(USE_GSL),0)
   ifdef GBP_GSL_DIR
-    CCFLAGS := $(CCFLAGS) -I$(GBP_GSL_DIR)/include/
+    CPPFLAGS := $(CPPFLAGS) -I$(GBP_GSL_DIR)/include/
     LDFLAGS := $(LDFLAGS) -L$(GBP_GSL_DIR)/lib/ 
   endif
   LIBS    := $(LIBS) -lm -lgsl -lgslcblas
 endif
-CCFLAGS := $(CCFLAGS) -DUSE_GSL=$(USE_GSL)
+CPPFLAGS := $(CPPFLAGS) -DUSE_GSL=$(USE_GSL)
 export USE_GSL
 
 # Add FFTW (fast Fourier transform) stuff (default off)
@@ -109,7 +109,7 @@ endif
 ifneq ($(USE_FFTW),0)
   ifneq ($(USE_MPI),0)
     ifdef GBP_FFTW_DIR
-      CCFLAGS := $(CCFLAGS) -I$(GBP_FFTW_DIR)/include
+      CPPFLAGS := $(CPPFLAGS) -I$(GBP_FFTW_DIR)/include
       LDFLAGS := $(LDFLAGS) -L$(GBP_FFTW_DIR)/lib
     endif
     ifeq ($(USE_DOUBLE),0)
@@ -119,7 +119,7 @@ ifneq ($(USE_FFTW),0)
     endif
   else
     ifdef GBP_FFTW_DIR
-      CCFLAGS := $(CCFLAGS) -I$(GBP_FFTW_DIR)/include
+      CPPFLAGS := $(CPPFLAGS) -I$(GBP_FFTW_DIR)/include
       LDFLAGS := $(LDFLAGS) -L$(GBP_FFTW_DIR)/lib
     endif
     ifeq ($(USE_DOUBLE),0)
@@ -129,7 +129,7 @@ ifneq ($(USE_FFTW),0)
     endif
   endif
 endif
-CCFLAGS := $(CCFLAGS) -DUSE_FFTW=$(USE_FFTW)
+CPPFLAGS := $(CPPFLAGS) -DUSE_FFTW=$(USE_FFTW)
 export USE_FFTW
 
 # SPRNG (parallel random number generator) stuff (default off)
@@ -138,26 +138,26 @@ ifndef USE_SPRNG
 endif
 ifneq ($(USE_SPRNG),0)
   ifdef GBP_SPRNG_DIR
-    CCFLAGS := $(CCFLAGS) -I$(GBP_SPRNG_DIR)/include
+    CPPFLAGS := $(CPPFLAGS) -I$(GBP_SPRNG_DIR)/include
     LDFLAGS := $(LDFLAGS) -L$(GBP_SPRNG_DIR)/lib
   endif
   LIBS    := $(LIBS) -llcg
-  CCFLAGS := $(CCFLAGS) 
+  CPPFLAGS := $(CPPFLAGS) 
 endif
-CCFLAGS := $(CCFLAGS) -DUSE_SPRNG=$(USE_SPRNG)
+CPPFLAGS := $(CPPFLAGS) -DUSE_SPRNG=$(USE_SPRNG)
 export USE_SPRNG
 
 # Set default MPI support
 ifndef USE_MPI
   USE_MPI=0
 endif
-CCFLAGS := $(CCFLAGS) -DUSE_MPI=$(USE_MPI)
+CPPFLAGS := $(CPPFLAGS) -DUSE_MPI=$(USE_MPI)
 export USE_MPI
 
 # Set default MPI-IO support
 ifndef USE_MPI_IO
   USE_MPI_IO=0
 endif
-CCFLAGS := $(CCFLAGS) -DUSE_MPI_IO=$(USE_MPI_IO)
+CPPFLAGS := $(CPPFLAGS) -DUSE_MPI_IO=$(USE_MPI_IO)
 export USE_MPI_IO
 
