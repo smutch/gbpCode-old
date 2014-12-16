@@ -63,8 +63,8 @@ int main(int argc, char *argv[]){
      double k_P  =take_alog10(lk_P[i_k]);
      double R_P  =R_of_k(k_P);
      double M_R  =M_of_k(k_P,z,cosmo);
-     double P_k  =power_spectrum(k_P,0.,&cosmo,mode,component);
-     double sigma=sqrt(power_spectrum_variance(k_P,0.,&cosmo,mode,component));
+     double P_k  =power_spectrum(k_P,z,&cosmo,mode,component);
+     double sigma=sqrt(power_spectrum_variance(k_P,z,&cosmo,mode,component));
      double V_max=V_max_NFW(M_R,z,NFW_MODE_DEFAULT,&cosmo);
      double nu   =delta_c/sigma;
      double bias =1.;
