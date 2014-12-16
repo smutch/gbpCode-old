@@ -9,8 +9,8 @@
 #include <gbpHalos.h>
 #include <gbpTrees_build.h>
 
-void assign_depth_first_index_recursive(tree_vertical_node_info *tree,int *depth_first_index){
-  tree_vertical_node_info *current;
+void assign_depth_first_index_recursive(tree_node_info *tree,int *depth_first_index){
+  tree_node_info *current;
 
   // Set and increment the tree index
   tree->depth_first_index=(*depth_first_index)++;
