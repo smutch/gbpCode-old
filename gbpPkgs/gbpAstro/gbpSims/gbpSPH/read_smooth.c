@@ -235,7 +235,7 @@ void read_smooth(plist_info *plist,
            SID_log("Reading sigmas_v's...",SID_LOG_OPEN);
            sprintf(var_name,"sigma_v_%s",species_name);
            sprintf(unit_name,"km/s");
-           unit_factor=plist->velocity_unit*sqrt(expansion_factor);
+           unit_factor=sqrt(expansion_factor)*plist->velocity_unit;
            local_array=sigma_v_array;
            break;
          }

@@ -6,13 +6,12 @@
 #include <gbpSPH.h>
 
 int main(int argc, char *argv[]){
-  plist_info plist;
-  char       filename_in[256];
-  int        snapshot;
 
   SID_init(&argc,&argv,NULL);
 
   // Parse command line
+  char filename_in[256];
+  int  snapshot;
   if(argc!=3){
     fprintf(stderr,"\n syntax: %s filename_in_root snapshot\n",argv[0]);
     fprintf(stderr," ------\n\n");
@@ -23,11 +22,10 @@ int main(int argc, char *argv[]){
  
   SID_log("Displaying header for GADGET file {%s}...",SID_LOG_OPEN,filename_in);
 
-  // Read GADGET file
+  // Display header
+  plist_info plist;
   init_plist(&plist,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
   read_gadget_binary_header(filename_in,snapshot,&plist);
-
-  // Display header
   display_gadget_header(&plist);
 
   // Clean-up

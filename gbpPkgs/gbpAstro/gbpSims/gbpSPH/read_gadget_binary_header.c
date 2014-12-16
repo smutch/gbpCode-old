@@ -47,38 +47,17 @@ void read_gadget_binary_header(char        *filename_root_in,
   int     i_file;
   int     flag_filefound=FALSE;
   int     flag_multifile=FALSE;
-  int     flag_file_type=0;;
+  int     flag_file_type=0;
 
-  // Determing snapshot format and open file ...
-  for(i_file=0;i_file<3 && !flag_filefound;i_file++){
-    if(i_file==0)
-      sprintf(filename,"%s/snapshot_%03d/snapshot_%03d",filename_root_in,snapshot_number,snapshot_number);
-    else if(i_file==1)
-      sprintf(filename,"%s/snapshot_%03d",filename_root_in,snapshot_number);
-    else if(i_file==2)
-      sprintf(filename,"%s_%03d",filename_root_in,snapshot_number);
-    else if(i_file==3)
-      sprintf(filename,"%s",filename_root_in);
-    fp=fopen(filename,"r");
-    if(fp!=NULL){
-      flag_filefound=TRUE;
-      flag_multifile=FALSE;
-      flag_file_type=i_file;
-    }
-    // ... if that doesn't work, check for multi-file
-    else{
-      strcat(filename,".0");
-      fp=fopen(filename,"r");
-      if(fp!=NULL){
-        flag_filefound=TRUE;
-        flag_multifile=TRUE;
-        flag_file_type=i_file;
-      }
-    }
-  }
+  gadget_read_info fp_gadget;
+  flag_filefound=init_gadget_read(filename_root_in,snapshot_number,&fp_gadget);
 
   // A file was found ... read the header
   if(flag_filefound){
+    flag_multifile=fp_gadget.flag_multifile;
+    flag_file_type=fp_gadget.flag_file_type;
+    set_gadget_filename(&fp_gadget,0,filename);
+    fp=fopen(filename,"r");
 
     // Grab species names from the plist header
     pname=plist->species;

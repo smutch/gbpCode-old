@@ -189,7 +189,8 @@ void read_gadget_binary_local(char       *filename_root_in,
                for(i_buffer=0;i_buffer<i_step;i_buffer++){
                   index=3*i_buffer;
                   pos_test =(double)(pos_buffer[index]);
-                  pos_test+=(double)(1e3*h_Hubble*((double)vel_buffer[index])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+                  double d =(double)(1e3*h_Hubble*((double)vel_buffer[index])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+                  pos_test+=d;
                   if(pos_test<0)                pos_test+=header.box_size;
                   if(pos_test>=header.box_size) pos_test-=header.box_size;
                   if(pos_test>=slab->x_min_local && pos_test<slab->x_max_local)
@@ -246,6 +247,7 @@ void read_gadget_binary_local(char       *filename_root_in,
     }
 
     // Perform read
+    double d_bar=0.;
     SID_log("Performing read...",SID_LOG_OPEN|SID_LOG_TIMER);
     for(i_file=0;i_file<n_files;i_file++){
 
@@ -295,19 +297,26 @@ void read_gadget_binary_local(char       *filename_root_in,
                double x_test;
                double y_test;
                double z_test;
+               double d;
                index=3*i_buffer;
                x_test=pos_buffer[index+0];
                y_test=pos_buffer[index+1];
                z_test=pos_buffer[index+2];
                switch(i_coord){
                   case 1:
-                     x_test+=(1e3*h_Hubble*((double)vel_buffer[index+0])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+                     d      =(1e3*h_Hubble*((double)vel_buffer[index+0])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+                     x_test+=d;
+                     d_bar +=fabs(d);
                      break;
                   case 2:
-                     y_test+=(1e3*h_Hubble*((double)vel_buffer[index+1])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+                     d      =(1e3*h_Hubble*((double)vel_buffer[index+1])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+                     y_test+=d;
+                     d_bar +=fabs(d);
                      break;
                   case 3:
-                     z_test+=(1e3*h_Hubble*((double)vel_buffer[index+2])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+                     d      =(1e3*h_Hubble*((double)vel_buffer[index+2])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
+                     z_test+=d;
+                     d_bar +=fabs(d);
                      break;
                }
                if(x_test<0)                x_test+=header.box_size;
@@ -332,6 +341,11 @@ void read_gadget_binary_local(char       *filename_root_in,
 
       if(n_files>1)
          SID_log("Done.",SID_LOG_CLOSE);
+    }
+    if(i_coord>0){
+       SID_Allreduce(SID_IN_PLACE,&d_bar,1,SID_SUM,SID_DOUBLE,SID.COMM_WORLD);
+       d_bar/=(double)n_particles_all;
+       SID_log("(d_bar=%.2lf [Mpc/h])...",SID_LOG_CONTINUE,d_bar);
     }
     SID_free(SID_FARG pos_buffer);
     SID_free(SID_FARG vel_buffer);
@@ -487,7 +501,7 @@ int main(int argc, char *argv[]){
      n_all[i_species]=(size_t)header.n_all_lo_word[i_species]+((size_t)header.n_all_hi_word[i_species])<<32;
      if(i_species>0) SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
      init_pspec(&(pspec[i_species]),NULL,cosmo,
-                MAP2GRID_DIST_DWT20,
+                MAP2GRID_DIST_DWT12,
                 redshift,box_size,grid_size,
                 k_min_1D,k_max_1D,dk_1D,
                 k_min_2D,k_max_2D,dk_2D);
