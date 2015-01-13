@@ -45,7 +45,7 @@ int main(int argc, char *argv[]){
    int     vz_column;
  
    // Initialization -- MPI etc.
-   SID_init(&argc,&argv,NULL);
+   SID_init(&argc,&argv,NULL,NULL);
    if(argc!=12)
      SID_trap_error("Incorrect syntax.",ERROR_SYNTAX);
 

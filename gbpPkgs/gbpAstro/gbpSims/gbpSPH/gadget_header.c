@@ -7,7 +7,7 @@
 
 int main(int argc, char *argv[]){
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Parse command line
   char filename_in[256];

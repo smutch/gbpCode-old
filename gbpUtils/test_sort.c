@@ -36,7 +36,7 @@ int main(int argc, char *argv[]){
     double *bin_median;
     int     bin_start;
 
-    SID_init(&argc,&argv,NULL);
+    SID_init(&argc,&argv,NULL,NULL);
 
     // Process inputs
     strcpy(filename_in,argv[1]);

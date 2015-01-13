@@ -56,7 +56,7 @@ int main(int argc, char *argv[]){
    double  k_max_2D;
  
    // Initialization -- MPI etc.
-   SID_init(&argc,&argv,NULL);
+   SID_init(&argc,&argv,NULL,NULL);
    if(argc!=8)
      SID_trap_error("Incorrect syntax.",ERROR_SYNTAX);
 

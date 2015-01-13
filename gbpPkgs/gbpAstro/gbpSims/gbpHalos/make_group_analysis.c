@@ -698,7 +698,7 @@ int main(int argc, char *argv[]){
   int flag_write_indices   =TRUE;
   int flag_manual_centre   =TRUE;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Fetch user inputs
   strcpy(filename_snapshot_root,argv[1]);

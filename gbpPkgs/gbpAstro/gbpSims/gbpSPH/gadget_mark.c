@@ -20,7 +20,7 @@ int main(int argc, char *argv[]){
   double      y_min,y_max;
   double      z_min,z_max;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Parse command line
   if(argc<=1){

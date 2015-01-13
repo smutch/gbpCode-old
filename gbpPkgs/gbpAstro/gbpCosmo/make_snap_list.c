@@ -8,7 +8,7 @@
 
 int main(int argc, char *argv[]){
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   double z_min =atof(argv[1]);
   double z_max =atof(argv[2]);

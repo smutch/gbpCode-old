@@ -17,7 +17,7 @@ int main(int argc, char *argv[]){
   double     *input_vals;
   double      h_Hubble;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Parse command line
   if(argc<=1){

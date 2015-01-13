@@ -44,7 +44,7 @@ int main(int argc, char *argv[]){
   long long id_in_long;
   int       n_groups;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Parse command line
   if(argc!=4){

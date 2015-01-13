@@ -12,7 +12,7 @@ int main(int argc, char *argv[]){
   char       filename_out[256];
   int        n_files;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Parse command line
   if(argc!=5){

@@ -9,7 +9,7 @@
 #include <gbpTrees.h>
 
 int main(int argc,char *argv[]){
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   char filename_root[MAX_FILENAME_LENGTH];
   int  snap_start,snap_stop,snap_step;

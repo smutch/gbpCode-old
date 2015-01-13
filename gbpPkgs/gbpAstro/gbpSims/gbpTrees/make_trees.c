@@ -41,7 +41,7 @@ int main(int argc, char *argv[]){
   cosmo_info *cosmo;
   int         flag_fix_bridges;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Fetch user inputs
   double box_size;

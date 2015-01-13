@@ -20,7 +20,7 @@ int main(int argc, char *argv[]){
   int     snap_number;
   char   *group_type_in;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   strcpy(filename_root, argv[1]);
   snap_number     =atoi(argv[2]);

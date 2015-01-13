@@ -9,7 +9,7 @@
 
 int main(int argc, char *argv[]){
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Fetch user inputs -- filenames
   char filename_SSimPL_root[MAX_FILENAME_LENGTH];

@@ -19,7 +19,7 @@ int main(int argc, char *argv[]){
   int         grid_size;
   double      box_size;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Fetch user inputs
   strcpy(filename_root_in, argv[1]);

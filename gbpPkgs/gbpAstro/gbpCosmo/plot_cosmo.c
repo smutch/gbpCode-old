@@ -7,7 +7,7 @@
 #include <gbpCosmo.h>
 
 int main(int argc, char *argv[]){
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Parse arguments and initialize
   double z;

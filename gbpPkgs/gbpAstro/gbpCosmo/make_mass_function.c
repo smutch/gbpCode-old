@@ -9,7 +9,7 @@
 
 int main(int argc, char *argv[]){
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   char   filename_cosmology[MAX_FILENAME_LENGTH];
   char   paramterization[MAX_FILENAME_LENGTH];

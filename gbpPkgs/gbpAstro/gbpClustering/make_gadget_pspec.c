@@ -432,7 +432,7 @@ int main(int argc, char *argv[]){
   double  dk_2D;
 
   // Initialization -- MPI etc.
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Parse arguments
   int grid_size;

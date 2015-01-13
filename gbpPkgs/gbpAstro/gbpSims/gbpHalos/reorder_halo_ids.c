@@ -10,7 +10,7 @@
 #include <gbpHalos.h>
 
 int main(int argc, char *argv[]){
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Fetch user inputs
   char filename_in_root[MAX_FILENAME_LENGTH];

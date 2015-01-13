@@ -25,7 +25,7 @@ int main(int argc, char *argv[]){
   GBPREAL       *sigma_v_array;
   FILE       *fp_out;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   strcpy(filename_snapshot,argv[1]);
   snapshot=atoi(argv[2]);

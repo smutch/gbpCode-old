@@ -82,7 +82,7 @@ int main(int argc, char *argv[]){
   float   r_min,r_max;
   double  box_size;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   strcpy(filename_SSimPL_root,argv[1]);
   strcpy(filename_halos_root, argv[2]);

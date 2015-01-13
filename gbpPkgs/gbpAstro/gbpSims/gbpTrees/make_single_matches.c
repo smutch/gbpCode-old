@@ -34,7 +34,7 @@ int main(int argc, char *argv[]){
   int        *n_groups;
   int         flag_fix_bridges=TRUE;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Fetch user inputs
   strcpy(filename_halo_root_in,argv[1]);

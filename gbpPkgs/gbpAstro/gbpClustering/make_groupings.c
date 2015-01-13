@@ -156,7 +156,7 @@ int main(int argc, char *argv[]){
   // Initialization -- MPI etc.
   char filename_SSimPL_root[MAX_FILENAME_LENGTH];
   char filename_halos_version[MAX_FILENAME_LENGTH];
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
   strcpy(filename_SSimPL_root,       argv[1]);
   strcpy(filename_halos_version,     argv[2]);
   strcpy(filename_out_root,          argv[3]);

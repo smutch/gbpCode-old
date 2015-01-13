@@ -20,7 +20,7 @@ int main(int argc, char *argv[]){
   double val;
   int    i_P,j_P,n_P,i_C,n_C;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   strcpy(filename_in_root,argv[1]);
   sprintf(filename_in2,"%s/results/covariance.dat",  filename_in_root);

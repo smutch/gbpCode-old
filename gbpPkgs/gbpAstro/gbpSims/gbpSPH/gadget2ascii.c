@@ -19,7 +19,7 @@ int main(int argc, char *argv[]){
   int  flag_filefound,flag_multifile,flag_file_type;
   FILE *fp;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Parse command line
   if(argc!=4){

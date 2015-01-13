@@ -37,7 +37,7 @@ int main(int argc, char *argv[]){
   cosmo_info *cosmo;
   int         flag_fix_bridges=TRUE;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Fetch user inputs
   strcpy(filename_SSimPL_dir,       argv[1]);

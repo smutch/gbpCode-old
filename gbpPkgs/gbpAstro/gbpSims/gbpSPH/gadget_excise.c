@@ -491,7 +491,7 @@ void process_gadget_file(char   *filename_read_root,
 }
 
 int main(int argc, char *argv[]){
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Parse command line
   select_gadget_volume_params_info select_gadget_volume_params;
