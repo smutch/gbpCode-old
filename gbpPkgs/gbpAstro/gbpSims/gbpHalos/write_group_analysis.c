@@ -11,7 +11,7 @@ void write_group_analysis(FILE                 *fp_properties,
                           halo_properties_info *properties,
                           halo_profile_info    *profile,
                           size_t               *R_index,
-                          int                   n_particles){
+                          int                   n_particles){ // Needed because properties may not be defined
   int i_bin;
 
   // Write properties

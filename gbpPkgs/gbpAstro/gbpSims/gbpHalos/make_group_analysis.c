@@ -12,6 +12,61 @@
 
 #define _FILE_OFFSET_BITS 64
 
+typedef struct params_info_local params_info_local;
+struct params_info_local{
+   GBPREAL *x_array;
+   GBPREAL *y_array;
+   GBPREAL *z_array;
+   GBPREAL *vx_array;
+   GBPREAL *vy_array;
+   GBPREAL *vz_array;
+   size_t  *ids_array;
+   size_t  *halo_sort_index;
+   size_t   first_particle_offset;
+};
+
+double p_i_local(void *params,int i_coord,int j_particle);
+double p_i_local(void *params,int i_coord,int j_particle){
+   double r_val;
+   size_t k_particle=((params_info_local *)params)->halo_sort_index[((params_info_local *)params)->first_particle_offset+j_particle];
+   switch(i_coord){
+      case 0:
+        r_val=((params_info_local *)params)->x_array[k_particle];
+        break;
+      case 1:
+        r_val=((params_info_local *)params)->y_array[k_particle];
+        break;
+      case 2:
+        r_val=((params_info_local *)params)->z_array[k_particle];
+        break;
+   }
+   return(r_val);
+}
+
+double v_i_local(void *params,int i_coord,int j_particle);
+double v_i_local(void *params,int i_coord,int j_particle){
+   double r_val;
+   size_t k_particle=((params_info_local *)params)->halo_sort_index[((params_info_local *)params)->first_particle_offset+j_particle];
+   switch(i_coord){
+      case 0:
+        r_val=((params_info_local *)params)->vx_array[k_particle];
+        break;
+      case 1:
+        r_val=((params_info_local *)params)->vy_array[k_particle];
+        break;
+      case 2:
+        r_val=((params_info_local *)params)->vz_array[k_particle];
+        break;
+   }
+   return(r_val);
+}
+
+size_t id_i_local(void *params,int j_particle);
+size_t id_i_local(void *params,int j_particle){
+   size_t k_particle=((params_info_local *)params)->halo_sort_index[((params_info_local *)params)->first_particle_offset+j_particle];
+   return(((params_info_local *)params)->ids_array[k_particle]);
+}
+
 void read_gadget_binary_local(char       *filename_root_in,
                               int         snapshot_number,
                               plist_info *plist);
@@ -631,7 +686,6 @@ int main(int argc, char *argv[]){
   FILE       *fp_properties;
   FILE       *fp_profiles;
   FILE       *fp_indices;
-  cosmo_info *cosmo;
   halo_properties_info  properties;
   halo_profile_info     profile;
   int                   n_temp;
@@ -692,6 +746,7 @@ int main(int argc, char *argv[]){
          n_particles_snapshot=0;
 
       // Initialize cosmology
+      cosmo_info *cosmo=NULL;
       box_size        =((double *)ADaPS_fetch(plist.data,"box_size"))[0];
       h_Hubble        =((double *)ADaPS_fetch(plist.data,"h_Hubble"))[0];
       redshift        =((double *)ADaPS_fetch(plist.data,"redshift"))[0];
@@ -866,23 +921,28 @@ int main(int argc, char *argv[]){
         vz               =(double *)SID_malloc(sizeof(double)*n_particles_alloc);
         R                =(double *)SID_malloc(sizeof(double)*n_particles_alloc);
 
+        params_info_local params;
+        params.ids_array            =ids_snapshot;
+        params.x_array              =x_array;
+        params.y_array              =y_array;
+        params.z_array              =z_array;
+        params.vx_array             =vx_array;
+        params.vy_array             =vy_array;
+        params.vz_array             =vz_array;
+        params.halo_sort_index      =ids_sort_index;
+
+
         for(i_group=0,n_truncated_local=0,largest_truncated_local=0;i_group<n_groups;i_group++){
+          params.first_particle_offset=group_offset[i_group];
           if(compute_group_analysis(&properties,
                                     &profile,
-                                    ids_snapshot,
-                                    x_array,
-                                    y_array,
-                                    z_array,
-                                    vx_array,
-                                    vy_array,
-                                    vz_array,
-                                    &(ids_sort_index[group_offset[i_group]]),
+                                    p_i_local,
+                                    v_i_local,
+                                    id_i_local,
+                                    &params,
                                     box_size,
-                                    h_Hubble,
-                                    Omega_M,
                                     particle_mass,
                                     n_particles_groups[i_group],
-                                    redshift,
                                     expansion_factor,
                                     i_group,
                                     x,y,z,vx,vy,vz,R,&R_index,

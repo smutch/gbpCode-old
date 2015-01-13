@@ -11,20 +11,21 @@
 
 int compute_group_analysis(halo_properties_info  *properties,
                            halo_profile_info     *profile,
-                           size_t                *id_array,
-                           GBPREAL               *x_array,
-                           GBPREAL               *y_array,
-                           GBPREAL               *z_array,
-                           GBPREAL               *vx_array,
-                           GBPREAL               *vy_array,
-                           GBPREAL               *vz_array,
-                           size_t                *ids_sort_index,
+                           double (*p_i_fctn) (void *,int,int), 
+                           double (*v_i_fctn) (void *,int,int), 
+                           size_t (*id_i_fctn)(void *,int), 
+                           void   *params,
+                           //size_t                *id_array,
+                           //GBPREAL               *x_array,
+                           //GBPREAL               *y_array,
+                           //GBPREAL               *z_array,
+                           //GBPREAL               *vx_array,
+                           //GBPREAL               *vy_array,
+                           //GBPREAL               *vz_array,
+                           //size_t                *ids_sort_index,
                            double                 box_size,
-                           double                 h_Hubble,
-                           double                 Omega_M,
                            double                 particle_mass,
                            int                    n_particles,
-                           double                 redshift,
                            double                 expansion_factor,
                            int                    i_halo,
                            double                *x,
@@ -38,7 +39,6 @@ int compute_group_analysis(halo_properties_info  *properties,
                            int                    flag_manual_centre,
                            cosmo_info            *cosmo){
   size_t      *R_index;
-  size_t       index_MBP;
   int          i,j;
   int          i_profile;
   int          j_profile;
@@ -92,25 +92,28 @@ int compute_group_analysis(halo_properties_info  *properties,
   double M_cor,M_halo;
   double x_vir,gamma;
 
+  double h_Hubble=((double *)ADaPS_fetch(cosmo,"h_Hubble"))[0];
+  double Omega_M =((double *)ADaPS_fetch(cosmo,"Omega_M"))[0];
+  double redshift=z_of_a(expansion_factor);
+
   Delta=Delta_vir(redshift,cosmo);
   Omega=1.;
 
   // Initialize properties
-  index_MBP                  =ids_sort_index[0];
-  properties->id_MBP         =id_array[index_MBP];
+  properties->id_MBP         =id_i_fctn(params,0);//id_array[index_MBP];
   properties->n_particles    =n_particles;
   properties->position_COM[0]=0.;
   properties->position_COM[1]=0.;
   properties->position_COM[2]=0.;
-  properties->position_MBP[0]=(float)(x_array[index_MBP]);
-  properties->position_MBP[1]=(float)(y_array[index_MBP]);
-  properties->position_MBP[2]=(float)(z_array[index_MBP]);
+  properties->position_MBP[0]=(float)p_i_fctn(params,0,0);//(x_array[index_MBP]);
+  properties->position_MBP[1]=(float)p_i_fctn(params,1,0);//(y_array[index_MBP]);
+  properties->position_MBP[2]=(float)p_i_fctn(params,2,0);//(z_array[index_MBP]);
   properties->velocity_COM[0]=0.;
   properties->velocity_COM[1]=0.;
   properties->velocity_COM[2]=0.;
-  properties->velocity_MBP[0]=(float)(vx_array[index_MBP]);
-  properties->velocity_MBP[1]=(float)(vy_array[index_MBP]);
-  properties->velocity_MBP[2]=(float)(vz_array[index_MBP]);
+  properties->velocity_MBP[0]=(float)v_i_fctn(params,0,0);//(vx_array[index_MBP]);
+  properties->velocity_MBP[1]=(float)v_i_fctn(params,1,0);//(vy_array[index_MBP]);
+  properties->velocity_MBP[2]=(float)v_i_fctn(params,2,0);//(vz_array[index_MBP]);
   properties->M_vir          =0.;
   properties->R_vir          =0.;
   properties->R_halo         =0.;
@@ -181,10 +184,9 @@ int compute_group_analysis(halo_properties_info  *properties,
        double z_cen_manual;
        // Compute a rough comoving centre
        for(j_particle=0;j_particle<n_particles;j_particle++){
-         k_particle=ids_sort_index[j_particle];
-         x[j_particle]=d_periodic((double)(x_array[k_particle])-x_cen,box_size);
-         y[j_particle]=d_periodic((double)(y_array[k_particle])-y_cen,box_size);
-         z[j_particle]=d_periodic((double)(z_array[k_particle])-z_cen,box_size);
+         x[j_particle]=d_periodic(p_i_fctn(params,0,j_particle)-x_cen,box_size);//(double)(x_array[k_particle])-x_cen,box_size);
+         y[j_particle]=d_periodic(p_i_fctn(params,1,j_particle)-y_cen,box_size);//(double)(y_array[k_particle])-y_cen,box_size);
+         z[j_particle]=d_periodic(p_i_fctn(params,2,j_particle)-z_cen,box_size);//(double)(z_array[k_particle])-z_cen,box_size);
        }
        // Refine it with shrinking spheres
        int n_iterations;
@@ -215,17 +217,15 @@ int compute_group_analysis(halo_properties_info  *properties,
     }
     
     for(j_particle=0;j_particle<n_particles;j_particle++){
-      k_particle=ids_sort_index[j_particle];
-
       // ... halo-centric particle positions ...
-      x[j_particle]=d_periodic((double)(x_array[k_particle])-x_cen,box_size)*expansion_factor;
-      y[j_particle]=d_periodic((double)(y_array[k_particle])-y_cen,box_size)*expansion_factor;
-      z[j_particle]=d_periodic((double)(z_array[k_particle])-z_cen,box_size)*expansion_factor;
+      x[j_particle]=expansion_factor*d_periodic(p_i_fctn(params,0,j_particle)-x_cen,box_size);//((double)x_array[k_particle])-x_cen,box_size);
+      y[j_particle]=expansion_factor*d_periodic(p_i_fctn(params,1,j_particle)-y_cen,box_size);//((double)y_array[k_particle])-y_cen,box_size);
+      z[j_particle]=expansion_factor*d_periodic(p_i_fctn(params,2,j_particle)-z_cen,box_size);//((double)z_array[k_particle])-z_cen,box_size);
 
       // ... velocities ...
-      vx[j_particle]=(double)(vx_array[k_particle]);
-      vy[j_particle]=(double)(vy_array[k_particle]);
-      vz[j_particle]=(double)(vz_array[k_particle]);
+      vx[j_particle]=v_i_fctn(params,0,j_particle);//(double)(vx_array[k_particle]);
+      vy[j_particle]=v_i_fctn(params,1,j_particle);//(double)(vy_array[k_particle]);
+      vz[j_particle]=v_i_fctn(params,2,j_particle);//(double)(vz_array[k_particle]);
 
       // ... particle radii ...
       R[j_particle]=sqrt(x[j_particle]*x[j_particle]+y[j_particle]*y[j_particle]+z[j_particle]*z[j_particle]);
@@ -288,9 +288,9 @@ int compute_group_analysis(halo_properties_info  *properties,
       // ... COM positions and velocities ...
       for(j_particle=0;j_particle<n_in_bin;j_particle++){
         k_particle=R_index[i_particle+j_particle];
-        x_COM_accumulator +=x[k_particle];
-        y_COM_accumulator +=y[k_particle];
-        z_COM_accumulator +=z[k_particle];
+        x_COM_accumulator += x[k_particle];
+        y_COM_accumulator += y[k_particle];
+        z_COM_accumulator += z[k_particle];
         vx_COM_accumulator+=vx[k_particle];
         vy_COM_accumulator+=vy[k_particle];
         vz_COM_accumulator+=vz[k_particle];
