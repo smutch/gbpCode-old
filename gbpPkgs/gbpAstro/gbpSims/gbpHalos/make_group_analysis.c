@@ -944,7 +944,6 @@ int main(int argc, char *argv[]){
                                     particle_mass,
                                     n_particles_groups[i_group],
                                     expansion_factor,
-                                    i_group,
                                     x,y,z,vx,vy,vz,R,&R_index,
                                     flag_manual_centre,
                                     cosmo)!=TRUE){

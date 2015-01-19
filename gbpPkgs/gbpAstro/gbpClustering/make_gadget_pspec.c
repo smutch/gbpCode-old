@@ -343,7 +343,7 @@ void read_gadget_binary_local(char       *filename_root_in,
          SID_log("Done.",SID_LOG_CLOSE);
     }
     if(i_coord>0){
-       SID_Allreduce(SID_IN_PLACE,&d_bar,1,SID_SUM,SID_DOUBLE,SID.COMM_WORLD);
+       SID_Allreduce(SID_IN_PLACE,&d_bar,1,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
        d_bar/=(double)n_particles_all;
        SID_log("(d_bar=%.2lf [Mpc/h])...",SID_LOG_CONTINUE,d_bar);
     }
