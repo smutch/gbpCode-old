@@ -52,7 +52,7 @@ void read_gbpCosmo_file(cosmo_info **cosmo,const char *filename_in){
            sprintf(filename_cosmo,"%s/cosmology_%s.txt",        GBP_DATA_DIR,GBP_COSMOLOGY_DEFAULT);
            sprintf(filename_TF,   "%s/transfer_function_%s.txt",GBP_DATA_DIR,GBP_COSMOLOGY_DEFAULT);
         }
-        else if(!strcmp(filename_in,"WMAP-5") || !strcmp(filename_in,"WMAP-7")){
+        else if(!strcmp(filename_in,"WMAP-5") || !strcmp(filename_in,"WMAP-7") || !strcmp(filename_in,"Planck-2013")){
            sprintf(filename_cosmo,"%s/cosmology_%s.txt",        GBP_DATA_DIR,filename_in);
            sprintf(filename_TF,   "%s/transfer_function_%s.txt",GBP_DATA_DIR,filename_in);
         }
