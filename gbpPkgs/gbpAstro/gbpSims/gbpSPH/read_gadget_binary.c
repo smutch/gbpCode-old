@@ -632,30 +632,24 @@ void read_gadget_binary(char       *filename_root_in,
 
       // If we are reading marked particles only, then we need another fp to 
       //   read ids for domain decomposition and we need to skip to the ids
-      if(i_file==0 || (flag_read_marked || flag_read_catalog)){
+      if(n_particles_file>0){
          SID_fopen(filename,"r",&fp_ids);
          s_load=4+GADGET_HEADER_SIZE+4;                   // skip header
          s_load+=(4+4);                                   // skip position block size
-         for(i=0;i<N_GADGET_TYPE;i++){
-           if(n_of_type_file[i]>0)
-             s_load+=2*3*n_of_type_file[i]*sizeof(float); // skip positions & velocities
-         }
+         s_load+=2*3*n_particles_file*sizeof(float); // skip positions & velocities
          s_load+=(4+4);                                   // skip velocity block size
          SID_fseek(&fp_ids,1,s_load,SID_SEEK_SET);
          SID_fread_all(&record_length_open,4,1,&fp_ids);  // read ids block size
-         // Find out if we are reading long IDs or not (check block size for this)
-         if(i_file==0){
-            if(record_length_open/sizeof(int)==n_particles_file){
-               flag_LONGIDS=FALSE;
-               SID_log("using (int) IDs...",SID_LOG_CONTINUE);
-            }
-            else{
-               flag_LONGIDS=TRUE;
-               SID_log("using (long long) IDs...",SID_LOG_CONTINUE);
-            }
+         SID_fclose(&fp_ids);
+         int flag_LONGIDS_old=flag_LONGIDS;
+         if(record_length_open/sizeof(int)==n_particles_file)
+            flag_LONGIDS=FALSE;
+         else if(record_length_open/sizeof(long long)==n_particles_file){
+            flag_LONGIDS=TRUE;
+            SID_log("using (long long) IDs...",SID_LOG_CONTINUE);
          }
-         if(!(flag_read_marked || flag_read_catalog))
-            SID_fclose(&fp_ids);
+         if(i_file>0 && flag_LONGIDS_old!=flag_LONGIDS)
+            SID_trap_error("ID block sizes/ID types are not consistant accross files (ie. %d!=%d)",ERROR_LOGIC,flag_LONGIDS_old,flag_LONGIDS);
       }
 
       // Read positions and count the number needed by this rank from this file
@@ -973,8 +967,11 @@ void read_gadget_binary(char       *filename_root_in,
       //  and skip the rest of the header
       SID_fread_all(&record_length_open,4,1,&fp);
       n_return=SID_fread_all(n_of_type_tmp,sizeof(unsigned int),N_GADGET_TYPE,&fp);
-      for(i=0;i<N_GADGET_TYPE;i++)
+      n_particles_file=0;
+      for(i=0;i<N_GADGET_TYPE;i++){
+        n_particles_file+=n_of_type_tmp[i];
         n_of_type_file[i]=(size_t)n_of_type_tmp[i];
+      }
       s_load  =n_return*sizeof(unsigned int);
       SID_fread_all(unused,sizeof(int),(GADGET_HEADER_SIZE-s_load)/(sizeof(int)),&fp);
       SID_fread_all(&record_length_close,4,1,&fp);
