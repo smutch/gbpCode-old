@@ -6,6 +6,7 @@ LIBFILE  =
 
 # Compile getline on Mac platforms
 OBJFILES = swap_endian.o                \
+	       rewrite_swap_endian.o        \
 	       count_lines.o                \
            count_lines_data.o           \
            count_lines_paramters.o      \
