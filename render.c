@@ -21,7 +21,7 @@ int main(int argc, char *argv[]){
   double       Y_max;
   FILE        *fp_check;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Parse cmd line arguments
   int flag_force_render=FALSE;

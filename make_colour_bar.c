@@ -17,7 +17,7 @@ int main(int argc, char *argv[]){
   FILE       *fp;
   int         i_x,i_y,i_pixel;
 
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   width       =atoi(argv[1]);
   height      =atoi(argv[2]);

@@ -243,6 +243,7 @@ void transform_particle(GBPREAL *x_i,
 
 typedef struct map_quantities_info map_quantities_info;
 struct map_quantities_info{
+   int           flag_velocity_space;
    int           flag_weigh;
    int           flag_line_integral;
    int          *ptype_used;
@@ -282,6 +283,7 @@ void init_particle_map_quantities(map_quantities_info *mq,render_info *render,AD
   SID_log("Initializing quantities...",SID_LOG_OPEN);
 
   // Defaults
+  mq->flag_velocity_space    =FALSE;
   mq->flag_weigh             =FALSE;
   mq->flag_line_integral     =FALSE;
   mq->flag_transfer_sigma_log=FALSE;
@@ -313,6 +315,7 @@ void init_particle_map_quantities(map_quantities_info *mq,render_info *render,AD
   // Render a dark matter velocity dispersion map
   if(!strcmp(render->camera->RGB_param,"sigma_v_dark") && !strcmp(render->camera->Y_param,"tau_dark")){
     mq->ptype_used[GADGET_TYPE_DARK]=TRUE;
+    mq->flag_velocity_space         =FALSE;
     mq->flag_weigh                  =TRUE;
     mq->flag_line_integral          =TRUE;
     mq->n_particles                 =((size_t *)ADaPS_fetch(render->plist_list[0]->data,"n_dark"))[0];
@@ -351,10 +354,51 @@ void init_particle_map_quantities(map_quantities_info *mq,render_info *render,AD
     else
       SID_trap_error("No sigma_v's available in make_map.",ERROR_LOGIC);
   }
+  else if(!strcmp(render->camera->Y_param,"sigma_v_dark") && !strcmp(render->camera->RGB_param,"tau_dark")){
+    mq->ptype_used[GADGET_TYPE_DARK]=TRUE;
+    mq->flag_velocity_space         =TRUE;
+    mq->flag_weigh                  =TRUE;
+    mq->flag_line_integral          =TRUE;
+    mq->n_particles                 =((size_t *)ADaPS_fetch(render->plist_list[0]->data,"n_dark"))[0];
+    mq->v_mode=MAKE_MAP_MODE_SIGMA;
+    mq->w_mode=MAKE_MAP_MODE_RHO;
+    if(ADaPS_exist(render->plist_list[0]->data,"rho_dark")){
+      for(i_snap=0;i_snap<render->n_interpolate;i_snap++)
+         mq->rho[i_snap]=(float *)ADaPS_fetch(render->plist_list[i_snap]->data,"sigma_v_dark");
+      if(ADaPS_exist(transfer_list,"sigma_v_dark")){
+        if(ADaPS_exist(transfer_list,"sigma_v_dark_log"))
+          mq->flag_transfer_rho_log=TRUE;
+        mq->transfer_rho=(interp_info *)ADaPS_fetch(transfer_list,"sigma_v_dark");
+      }
+      else{
+        mq->flag_transfer_rho_log=FALSE;
+        mq->transfer_rho         =NULL;
+      }
+    }
+    else
+      SID_trap_error("No densities available in make_map.",ERROR_LOGIC);
+
+    // Use sigma_v for values
+    if(ADaPS_exist(render->plist_list[0]->data,"rho_dark")){
+      for(i_snap=0;i_snap<render->n_interpolate;i_snap++)
+         mq->sigma[i_snap]=(float *)ADaPS_fetch(render->plist_list[i_snap]->data,"rho_dark");
+      if(ADaPS_exist(transfer_list,"rho_dark")){
+        if(ADaPS_exist(transfer_list,"rho_dark_log"))
+          mq->flag_transfer_sigma_log=TRUE;
+        mq->transfer_sigma=(interp_info *)ADaPS_fetch(transfer_list,"rho_dark");
+      }
+      else{
+        mq->flag_transfer_sigma_log=FALSE;
+        mq->transfer_sigma         =NULL;
+      }
+    }
+    else
+      SID_trap_error("No sigma_v's available in make_map.",ERROR_LOGIC);
+  }
   else
     SID_trap_error("Unknown rendering configuration RGB={%s} Y={%s}.",ERROR_LOGIC,render->camera->RGB_param,render->camera->Y_param);
 
-  // Initialize smoothings
+  // Initialize arrays
   int n_type_used=0;
   for(i_type=0;i_type<N_GADGET_TYPE;i_type++){
      if(mq->ptype_used[i_type]){
@@ -362,12 +406,22 @@ void init_particle_map_quantities(map_quantities_info *mq,render_info *render,AD
         n_type_used++;
         if(n_type_used>1)
            SID_trap_error("An invalid number of particle types (%d) are being used in make_map.",ERROR_LOGIC,n_type_used);
-        for(i_snap=0;i_snap<render->n_interpolate;i_snap++){
-           mq->x[i_snap]       =(GBPREAL *)ADaPS_fetch(render->plist_list[i_snap]->data,"x_%s",       render->plist_list[i_snap]->species[i_type]);
-           mq->y[i_snap]       =(GBPREAL *)ADaPS_fetch(render->plist_list[i_snap]->data,"y_%s",       render->plist_list[i_snap]->species[i_type]);
-           mq->z[i_snap]       =(GBPREAL *)ADaPS_fetch(render->plist_list[i_snap]->data,"z_%s",       render->plist_list[i_snap]->species[i_type]);
-           mq->h_smooth[i_snap]=(float   *)ADaPS_fetch(render->plist_list[i_snap]->data,"r_smooth_%s",render->plist_list[i_snap]->species[i_type]);
+        if(mq->flag_velocity_space){
+           for(i_snap=0;i_snap<render->n_interpolate;i_snap++){
+              mq->x[i_snap]=(GBPREAL *)ADaPS_fetch(render->plist_list[i_snap]->data,"vx_%s",render->plist_list[i_snap]->species[i_type]);
+              mq->y[i_snap]=(GBPREAL *)ADaPS_fetch(render->plist_list[i_snap]->data,"vy_%s",render->plist_list[i_snap]->species[i_type]);
+              mq->z[i_snap]=(GBPREAL *)ADaPS_fetch(render->plist_list[i_snap]->data,"vz_%s",render->plist_list[i_snap]->species[i_type]);
+           }
         }
+        else{
+           for(i_snap=0;i_snap<render->n_interpolate;i_snap++){
+              mq->x[i_snap]=(GBPREAL *)ADaPS_fetch(render->plist_list[i_snap]->data,"x_%s",render->plist_list[i_snap]->species[i_type]);
+              mq->y[i_snap]=(GBPREAL *)ADaPS_fetch(render->plist_list[i_snap]->data,"y_%s",render->plist_list[i_snap]->species[i_type]);
+              mq->z[i_snap]=(GBPREAL *)ADaPS_fetch(render->plist_list[i_snap]->data,"z_%s",render->plist_list[i_snap]->species[i_type]);
+           }
+        }
+        for(i_snap=0;i_snap<render->n_interpolate;i_snap++)
+           mq->h_smooth[i_snap]=(float *)ADaPS_fetch(render->plist_list[i_snap]->data,"r_smooth_%s",render->plist_list[i_snap]->species[i_type]);
      }
   }
   SID_log("%zd eligible for rendering...Done.",SID_LOG_CLOSE,mq->n_particles);
@@ -1188,11 +1242,11 @@ void init_make_map_abs(render_info *render,
   double   d_hat;
   double   particle_radius;
   double   x_tmp,y_tmp,z_tmp;
-  int          flag_log;
-  double       z_test;
-  int          flag_use_Gadget;
-  float        box_size_float=(float)box_size;
-  float        half_box=0.5*box_size_float;
+  int      flag_log;
+  double   z_test;
+  int      flag_use_Gadget;
+  float    box_size_float=(float)box_size;
+  float    half_box      =0.5*box_size_float;
   
   SID_log("Initializing projection-space...",SID_LOG_OPEN|SID_LOG_TIMER);
 
@@ -1715,8 +1769,8 @@ void init_make_map_abs(render_info *render,
   SID_log("Done.",SID_LOG_CLOSE);
 }
 
-void fetch_render_array(image_info *image,double **values);
-void fetch_render_array(image_info *image,double **values){
+void fetch_image_array(image_info *image,double **values);
+void fetch_image_array(image_info *image,double **values){
    if(image!=NULL)
       (*values)=image->values;
    else
@@ -1902,36 +1956,36 @@ void render_frame(render_info  *render){
     switch(i_image){
       // Left image
       case 0:
-        fetch_render_array(render->camera->image_RGB_left, &RGB_image);
-        fetch_render_array(render->camera->image_RGBY_left,&temp_image); // use as workspace
-        fetch_render_array(render->camera->image_Y_left,   &Y_image);
-        fetch_render_array(render->camera->image_Z_left,   &z_image);
-        fetch_render_array(render->camera->image_RY_left,  &RY_image);
-        fetch_render_array(render->camera->image_GY_left,  &GY_image);
-        fetch_render_array(render->camera->image_BY_left,  &BY_image);
+        fetch_image_array(render->camera->image_RGB_left, &RGB_image);
+        fetch_image_array(render->camera->image_RGBY_left,&temp_image); // use as workspace
+        fetch_image_array(render->camera->image_Y_left,   &Y_image);
+        fetch_image_array(render->camera->image_Z_left,   &z_image);
+        fetch_image_array(render->camera->image_RY_left,  &RY_image);
+        fetch_image_array(render->camera->image_GY_left,  &GY_image);
+        fetch_image_array(render->camera->image_BY_left,  &BY_image);
         stereo_offset=-d_image_plane/render->camera->stereo_ratio;
         break;
       case 1:
         // Right image
         if(check_mode_for_flag(camera_mode,CAMERA_STEREO)){
-           fetch_render_array(render->camera->image_RGB_right, &RGB_image);
-           fetch_render_array(render->camera->image_RGBY_right,&temp_image); // use as workspace
-           fetch_render_array(render->camera->image_Y_right,   &Y_image);
-           fetch_render_array(render->camera->image_Z_right,   &z_image);
-           fetch_render_array(render->camera->image_RY_right,  &RY_image);
-           fetch_render_array(render->camera->image_GY_right,  &GY_image);
-           fetch_render_array(render->camera->image_BY_right,  &BY_image);
+           fetch_image_array(render->camera->image_RGB_right, &RGB_image);
+           fetch_image_array(render->camera->image_RGBY_right,&temp_image); // use as workspace
+           fetch_image_array(render->camera->image_Y_right,   &Y_image);
+           fetch_image_array(render->camera->image_Z_right,   &z_image);
+           fetch_image_array(render->camera->image_RY_right,  &RY_image);
+           fetch_image_array(render->camera->image_GY_right,  &GY_image);
+           fetch_image_array(render->camera->image_BY_right,  &BY_image);
            stereo_offset=d_image_plane/render->camera->stereo_ratio;
         }
         // Mono image (stereo turned off)
         else{
-           fetch_render_array(render->camera->image_RGB, &RGB_image);
-           fetch_render_array(render->camera->image_RGBY,&temp_image); // use as workspace
-           fetch_render_array(render->camera->image_Y,   &Y_image);
-           fetch_render_array(render->camera->image_Z,   &z_image);
-           fetch_render_array(render->camera->image_RY,  &RY_image);
-           fetch_render_array(render->camera->image_GY,  &GY_image);
-           fetch_render_array(render->camera->image_BY,  &BY_image);
+           fetch_image_array(render->camera->image_RGB, &RGB_image);
+           fetch_image_array(render->camera->image_RGBY,&temp_image); // use as workspace
+           fetch_image_array(render->camera->image_Y,   &Y_image);
+           fetch_image_array(render->camera->image_Z,   &z_image);
+           fetch_image_array(render->camera->image_RY,  &RY_image);
+           fetch_image_array(render->camera->image_GY,  &GY_image);
+           fetch_image_array(render->camera->image_BY,  &BY_image);
            stereo_offset=0;           
         }
         break;
@@ -2119,6 +2173,8 @@ void render_frame(render_info  *render){
         kx_max=(int)((part_pos_x+radius_kernel-xmin)/pixel_size_x+ONE_HALF);
         ky_min=(int)((part_pos_y-radius_kernel-ymin)/pixel_size_y);
         ky_max=(int)((part_pos_y+radius_kernel-ymin)/pixel_size_y+ONE_HALF);
+//if(ii_particle<100) fprintf(stderr,"%le %le %le -- %d %d\n",part_pos_x,xmin,FOV_x_image_plane,kx_min,kx_max);
+//else exit(0);
 
         // Compute any potential fading
         double f_fade;
