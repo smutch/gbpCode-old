@@ -129,12 +129,15 @@ void read_smooth(plist_info *plist,
      size_t I_particle=0;
      for(i_file=0;i_file<n_files;i_file++){
        set_smooth_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
-       SID_log("Processing file #%d of %d {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,i_file+1,n_files,filename);
-       fp=fopen(filename,"r");
-       fread(&(header.n_particles_file), sizeof(int),      1,fp);
-       fread(&(header.offset),           sizeof(int),      1,fp);
-       fread(&(header.n_particles_total),sizeof(long long),1,fp);
-       fread(&(header.n_files),          sizeof(int),      1,fp);
+       SID_log("Processing file %d of %d {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,i_file+1,n_files,filename);
+       if((fp=fopen(filename,"r"))!=NULL){
+          fread(&(header.n_particles_file), sizeof(int),      1,fp);
+          fread(&(header.offset),           sizeof(int),      1,fp);
+          fread(&(header.n_particles_total),sizeof(long long),1,fp);
+          fread(&(header.n_files),          sizeof(int),      1,fp);
+       }
+       else
+          SID_trap_error("Could not open smooth file {%s}",ERROR_IO_OPEN,filename);
        n_particles_file =header.n_particles_file;
        offset           =header.offset;
        n_particles_total=header.n_particles_total;
