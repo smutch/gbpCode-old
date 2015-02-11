@@ -619,6 +619,7 @@ void read_gadget_binary_local(char       *filename_root_in,
 int main(int argc, char *argv[]){
   plist_info  plist;
   char        filename_groups_root[256];
+  char        filename_out_root[256];
   char        filename_snapshot_root[256];
   char        filename_snapshot[256];
   char       *filename_number;
@@ -703,13 +704,16 @@ int main(int argc, char *argv[]){
   // Fetch user inputs
   strcpy(filename_snapshot_root,argv[1]);
   strcpy(filename_groups_root,  argv[2]);
-  i_file_lo         =atoi(argv[3]);
-  i_file_hi         =atoi(argv[4]);
-  i_file_skip       =atoi(argv[5]);
-  flag_manual_centre=atoi(argv[6]);
+  strcpy(filename_out_root,     argv[3]);
+  i_file_lo         =atoi(argv[4]);
+  i_file_hi         =atoi(argv[5]);
+  i_file_skip       =atoi(argv[6]);
+  flag_manual_centre=atoi(argv[7]);
 
   if(!flag_manual_centre) 
      flag_write_indices=FALSE;
+  else
+     flag_write_indices=TRUE;
 
   SID_log("Processing group/subgroup statistics for files #%d->#%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file_lo,i_file_hi);
   SID_log("Properties structure size=%d bytes",SID_LOG_COMMENT,sizeof(halo_properties_info));
@@ -795,6 +799,10 @@ int main(int argc, char *argv[]){
       }
       SID_log("Done.",SID_LOG_CLOSE);
 
+      // Create the output directory     
+      if(SID.I_am_Master)
+         mkdir(filename_out_root,02755);
+
       // Print stats; groups first and then subgroups
       for(i_process=0;i_process<2;i_process++){
       
@@ -816,9 +824,9 @@ int main(int argc, char *argv[]){
         group_offset       = (size_t *)ADaPS_fetch(plist.data,"particle_offset_%sgroup_%s",group_text_prefix,filename_number);
 
         // Create filenames, directories, etc
-        sprintf(filename_output_properties_temp,"%s_%s.catalog_%sgroups_properties",filename_groups_root,filename_number,group_text_prefix);
-        sprintf(filename_output_profiles_temp,  "%s_%s.catalog_%sgroups_profiles",  filename_groups_root,filename_number,group_text_prefix);
-        sprintf(filename_output_indices_temp,   "%s_%s.catalog_%sgroups_indices",   filename_groups_root,filename_number,group_text_prefix);
+        sprintf(filename_output_properties_temp,"%s_%s.catalog_%sgroups_properties",filename_out_root,filename_number,group_text_prefix);
+        sprintf(filename_output_profiles_temp,  "%s_%s.catalog_%sgroups_profiles",  filename_out_root,filename_number,group_text_prefix);
+        sprintf(filename_output_indices_temp,   "%s_%s.catalog_%sgroups_indices",   filename_out_root,filename_number,group_text_prefix);
         if(SID.n_proc>1){
            // Create property filenames
            if(flag_write_properties){
@@ -1008,7 +1016,7 @@ int main(int argc, char *argv[]){
             n_groups_all=0;
             n_temp      =1;
             if(flag_write_properties){
-               sprintf(filename_output_properties,"%s_%s.catalog_%sgroups_properties",filename_groups_root,filename_number,group_text_prefix);
+               sprintf(filename_output_properties,"%s_%s.catalog_%sgroups_properties",filename_out_root,filename_number,group_text_prefix);
                fp_properties=fopen(filename_output_properties,"w");
                fwrite(&(SID.My_rank), sizeof(int),1,fp_properties);
                fwrite(&n_temp,        sizeof(int),1,fp_properties);
@@ -1017,7 +1025,7 @@ int main(int argc, char *argv[]){
                fclose(fp_properties);
             }
             if(flag_write_profiles){
-               sprintf(filename_output_profiles,  "%s_%s.catalog_%sgroups_profiles",filename_groups_root,filename_number,group_text_prefix);
+               sprintf(filename_output_profiles,  "%s_%s.catalog_%sgroups_profiles",filename_out_root,filename_number,group_text_prefix);
                fp_profiles  =fopen(filename_output_profiles,  "w");
                fwrite(&(SID.My_rank), sizeof(int),1,fp_profiles);
                fwrite(&n_temp,        sizeof(int),1,fp_profiles);
