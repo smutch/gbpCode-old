@@ -13,6 +13,11 @@
 #define READ_BUFFER_SIZE_LOCAL    (1024*1024)
 #define READ_BUFFER_ALLOC_LOCAL 3*(1024*1024)
 
+GBPREAL x_vspace_local(GBPREAL x,GBPREAL vx,double h_Hubble,double redshift,cosmo_info *cosmo);
+GBPREAL x_vspace_local(GBPREAL x,GBPREAL vx,double h_Hubble,double redshift,cosmo_info *cosmo){
+   return((GBPREAL)((double)x+1e3*h_Hubble*((double)vx/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))))));
+}
+
 void read_gadget_binary_local(char       *filename_root_in,
                               int         snapshot_number,
                               int         i_coord,
@@ -133,7 +138,7 @@ void read_gadget_binary_local(char       *filename_root_in,
     size_t   index;
     GBPREAL *pos_buffer;
     GBPREAL *vel_buffer;
-    double   pos_test;
+    GBPREAL  pos_test;
 
     // Initialize some arrays
     pos_buffer=(GBPREAL *)SID_malloc(sizeof(GBPREAL)*READ_BUFFER_ALLOC_LOCAL);
@@ -188,9 +193,7 @@ void read_gadget_binary_local(char       *filename_root_in,
                SID_Bcast(vel_buffer,sizeof(GBPREAL)*3*i_step,MASTER_RANK,SID.COMM_WORLD);
                for(i_buffer=0;i_buffer<i_step;i_buffer++){
                   index=3*i_buffer;
-                  pos_test =(double)(pos_buffer[index]);
-                  double d =(double)(1e3*h_Hubble*((double)vel_buffer[index])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-                  pos_test+=d;
+                  pos_test=x_vspace_local(pos_buffer[index],vel_buffer[index],h_Hubble,redshift,cosmo);
                   if(pos_test<0)                pos_test+=header.box_size;
                   if(pos_test>=header.box_size) pos_test-=header.box_size;
                   if(pos_test>=slab->x_min_local && pos_test<slab->x_max_local)
@@ -299,24 +302,29 @@ void read_gadget_binary_local(char       *filename_root_in,
                double z_test;
                double d;
                index=3*i_buffer;
-               x_test=pos_buffer[index+0];
-               y_test=pos_buffer[index+1];
-               z_test=pos_buffer[index+2];
                switch(i_coord){
+                  case 0:
+                     x_test=pos_buffer[index+0];
+                     y_test=pos_buffer[index+1];
+                     z_test=pos_buffer[index+2];
+                     break;
                   case 1:
-                     d      =(1e3*h_Hubble*((double)vel_buffer[index+0])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-                     x_test+=d;
-                     d_bar +=fabs(d);
+                     x_test=x_vspace_local(pos_buffer[index+0],vel_buffer[index+0],h_Hubble,redshift,cosmo);
+                     d     =(double)pos_buffer[index+0]-(double)x_test;
+                     d_bar+=fabs(d);
                      break;
                   case 2:
-                     d      =(1e3*h_Hubble*((double)vel_buffer[index+1])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-                     y_test+=d;
-                     d_bar +=fabs(d);
+                     y_test=x_vspace_local(pos_buffer[index+1],vel_buffer[index+1],h_Hubble,redshift,cosmo);
+                     d     =(double)pos_buffer[index+1]-(double)y_test;
+                     d_bar+=fabs(d);
                      break;
                   case 3:
-                     d      =(1e3*h_Hubble*((double)vel_buffer[index+2])/(a_of_z(redshift)*M_PER_MPC*H_convert(H_z(redshift,cosmo))));
-                     z_test+=d;
-                     d_bar +=fabs(d);
+                     z_test=x_vspace_local(pos_buffer[index+2],vel_buffer[index+2],h_Hubble,redshift,cosmo);
+                     d     =(double)pos_buffer[index+2]-(double)z_test;
+                     d_bar+=fabs(d);
+                     break;
+                  default:
+                     SID_trap_error("Invalid i_coord=%d in read_gadget()",ERROR_LOGIC,i_coord);
                      break;
                }
                if(x_test<0)                x_test+=header.box_size;
