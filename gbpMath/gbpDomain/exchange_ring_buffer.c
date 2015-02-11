@@ -58,6 +58,8 @@ void exchange_ring_buffer(void     *send_buffer,
     receive_count      =send_count;
     memcpy(receive_buffer,send_buffer,(size_t)receive_buffer_size);
   }
+  else
+    receive_count=0;
 #endif
   // At times, we may not want to bother
   //   returning the number of received items

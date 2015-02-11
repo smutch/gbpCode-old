@@ -14,6 +14,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+void swap_endian(char *string,int n_items,int item_byte_size);
+void rewrite_swap_endian(FILE *fp_in,FILE *fp_out,int n_items,int item_byte_size,char *buffer_in);
 int count_lines(FILE *fp);
 int count_lines_data(FILE *fp);
 int count_lines_parameters(FILE *fp);

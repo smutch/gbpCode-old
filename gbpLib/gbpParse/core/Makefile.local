@@ -5,7 +5,9 @@ INCFILES = gbpParse_core.h
 LIBFILE  = 
 
 # Compile getline on Mac platforms
-OBJFILES = count_lines.o                \
+OBJFILES = swap_endian.o                \
+	       rewrite_swap_endian.o        \
+	       count_lines.o                \
            count_lines_data.o           \
            count_lines_paramters.o      \
            count_words.o                \
