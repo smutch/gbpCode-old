@@ -44,6 +44,7 @@ void read_gadget_binary_local(char       *filename_root_in,
   int                flag_multifile=fp_gadget.flag_multifile;
   int                flag_file_type=fp_gadget.flag_file_type;
   gadget_header_info header        =fp_gadget.header;
+  GBPREAL            box_size      =(GBPREAL)header.box_size;
 
   // A file was found ... 
   if(flag_filefound){
@@ -194,8 +195,8 @@ void read_gadget_binary_local(char       *filename_root_in,
                for(i_buffer=0;i_buffer<i_step;i_buffer++){
                   index=3*i_buffer;
                   pos_test=x_vspace_local(pos_buffer[index],vel_buffer[index],h_Hubble,redshift,cosmo);
-                  if(pos_test<0)                pos_test+=header.box_size;
-                  if(pos_test>=header.box_size) pos_test-=header.box_size;
+                  if(pos_test<0)         pos_test+=box_size;
+                  if(pos_test>=box_size) pos_test-=box_size;
                   if(pos_test>=slab->x_min_local && pos_test<slab->x_max_local)
                      n_of_type_local[i_type]++;
                }
@@ -211,8 +212,8 @@ void read_gadget_binary_local(char       *filename_root_in,
                SID_Bcast(pos_buffer,sizeof(GBPREAL)*3*i_step,MASTER_RANK,SID.COMM_WORLD);
                for(i_buffer=0;i_buffer<i_step;i_buffer++){
                   pos_test=pos_buffer[3*i_buffer];
-                  if(pos_test<0)                pos_test+=header.box_size;
-                  if(pos_test>=header.box_size) pos_test-=header.box_size;
+                  if(pos_test<0)         pos_test+=box_size;
+                  if(pos_test>=box_size) pos_test-=box_size;
                   if(pos_test>=slab->x_min_local && pos_test<slab->x_max_local)
                     n_of_type_local[i_type]++;
                }
@@ -327,12 +328,12 @@ void read_gadget_binary_local(char       *filename_root_in,
                      SID_trap_error("Invalid i_coord=%d in read_gadget()",ERROR_LOGIC,i_coord);
                      break;
                }
-               if(x_test<0)                x_test+=header.box_size;
-               if(x_test>=header.box_size) x_test-=header.box_size;
-               if(y_test<0)                y_test+=header.box_size;
-               if(y_test>=header.box_size) y_test-=header.box_size;
-               if(z_test<0)                z_test+=header.box_size;
-               if(z_test>=header.box_size) z_test-=header.box_size;
+               if(x_test<0)         x_test+=box_size;
+               if(x_test>=box_size) x_test-=box_size;
+               if(y_test<0)         y_test+=box_size;
+               if(y_test>=box_size) y_test-=box_size;
+               if(z_test<0)         z_test+=box_size;
+               if(z_test>=box_size) z_test-=box_size;
                if(x_test>=slab->x_min_local && x_test<slab->x_max_local){
                   x_array[i_type][type_counter[i_type]]=x_test;
                   y_array[i_type][type_counter[i_type]]=y_test;
