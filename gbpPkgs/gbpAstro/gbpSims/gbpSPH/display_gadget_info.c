@@ -108,82 +108,82 @@ void display_gadget_info(plist_info  *plist){
           if(flag_used[i]){
             sprintf(var_name,"x_%s",pname[i]);
             if(ADaPS_exist(plist->data,var_name)){
-              calc_mean(  ADaPS_fetch(plist->data,var_name),&mean,   n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);mean   /=(M_PER_KPC/h_Hubble);
-              calc_median(ADaPS_fetch(plist->data,var_name),&median, n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);median /=(M_PER_KPC/h_Hubble);
-              calc_min(   ADaPS_fetch(plist->data,var_name),&min,    n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);min    /=(M_PER_KPC/h_Hubble);
-              calc_max(   ADaPS_fetch(plist->data,var_name),&max,    n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);max    /=(M_PER_KPC/h_Hubble);
-              calc_stddev(ADaPS_fetch(plist->data,var_name),&std_dev,n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);std_dev/=(M_PER_KPC/h_Hubble);
+              calc_mean(  ADaPS_fetch(plist->data,var_name),&mean,   n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);mean   /=(M_PER_KPC/h_Hubble);
+              calc_median(ADaPS_fetch(plist->data,var_name),&median, n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);median /=(M_PER_KPC/h_Hubble);
+              calc_min(   ADaPS_fetch(plist->data,var_name),&min,    n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);min    /=(M_PER_KPC/h_Hubble);
+              calc_max(   ADaPS_fetch(plist->data,var_name),&max,    n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);max    /=(M_PER_KPC/h_Hubble);
+              calc_stddev(ADaPS_fetch(plist->data,var_name),&std_dev,n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);std_dev/=(M_PER_KPC/h_Hubble);
               fprintf(stderr,"%11s  %11.3le  %11.3le  %11.3le  %11.3le  %11.3le kpc/h\n",var_name,min,max,mean,median,std_dev);
             }
 
             sprintf(var_name,"y_%s",pname[i]);
             if(ADaPS_exist(plist->data,var_name)){
-              calc_mean(  ADaPS_fetch(plist->data,var_name),&mean,   n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);mean   /=(M_PER_KPC/h_Hubble);
-              calc_median(ADaPS_fetch(plist->data,var_name),&median, n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);median /=(M_PER_KPC/h_Hubble);
-              calc_min(   ADaPS_fetch(plist->data,var_name),&min,    n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);min    /=(M_PER_KPC/h_Hubble);
-              calc_max(   ADaPS_fetch(plist->data,var_name),&max,    n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);max    /=(M_PER_KPC/h_Hubble);
-              calc_stddev(ADaPS_fetch(plist->data,var_name),&std_dev,n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);std_dev/=(M_PER_KPC/h_Hubble);
+              calc_mean(  ADaPS_fetch(plist->data,var_name),&mean,   n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);mean   /=(M_PER_KPC/h_Hubble);
+              calc_median(ADaPS_fetch(plist->data,var_name),&median, n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);median /=(M_PER_KPC/h_Hubble);
+              calc_min(   ADaPS_fetch(plist->data,var_name),&min,    n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);min    /=(M_PER_KPC/h_Hubble);
+              calc_max(   ADaPS_fetch(plist->data,var_name),&max,    n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);max    /=(M_PER_KPC/h_Hubble);
+              calc_stddev(ADaPS_fetch(plist->data,var_name),&std_dev,n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);std_dev/=(M_PER_KPC/h_Hubble);
               fprintf(stderr,"%11s  %11.3le  %11.3le  %11.3le  %11.3le  %11.3le kpc/h\n",var_name,min,max,mean,median,std_dev);
             }
         
             sprintf(var_name,"z_%s",pname[i]);
             if(ADaPS_exist(plist->data,var_name)){
-              calc_mean(  ADaPS_fetch(plist->data,var_name),&mean,   n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);mean   /=(M_PER_KPC/h_Hubble);
-              calc_median(ADaPS_fetch(plist->data,var_name),&median, n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);median /=(M_PER_KPC/h_Hubble);
-              calc_min(   ADaPS_fetch(plist->data,var_name),&min,    n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);min    /=(M_PER_KPC/h_Hubble);
-              calc_max(   ADaPS_fetch(plist->data,var_name),&max,    n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);max    /=(M_PER_KPC/h_Hubble);
-              calc_stddev(ADaPS_fetch(plist->data,var_name),&std_dev,n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);std_dev/=(M_PER_KPC/h_Hubble);
+              calc_mean(  ADaPS_fetch(plist->data,var_name),&mean,   n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);mean   /=(M_PER_KPC/h_Hubble);
+              calc_median(ADaPS_fetch(plist->data,var_name),&median, n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);median /=(M_PER_KPC/h_Hubble);
+              calc_min(   ADaPS_fetch(plist->data,var_name),&min,    n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);min    /=(M_PER_KPC/h_Hubble);
+              calc_max(   ADaPS_fetch(plist->data,var_name),&max,    n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);max    /=(M_PER_KPC/h_Hubble);
+              calc_stddev(ADaPS_fetch(plist->data,var_name),&std_dev,n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);std_dev/=(M_PER_KPC/h_Hubble);
               fprintf(stderr,"%11s  %11.3le  %11.3le  %11.3le  %11.3le  %11.3le kpc/h\n",var_name,min,max,mean,median,std_dev);
             }
           }
         }
 
-        /* Velocities */
+        // Velocities 
         for(i=0;i<plist->n_species;i++) {
           if(flag_used[i]){
             sprintf(var_name,"vx_%s",pname[i]);
             if(ADaPS_exist(plist->data,var_name)){
-              calc_mean(  ADaPS_fetch(plist->data,var_name),&mean,   n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);mean   /=1e3;
-              calc_median(ADaPS_fetch(plist->data,var_name),&median, n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);median /=1e3;
-              calc_min(   ADaPS_fetch(plist->data,var_name),&min,    n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);min    /=1e3;
-              calc_max(   ADaPS_fetch(plist->data,var_name),&max,    n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);max    /=1e3;
-              calc_stddev(ADaPS_fetch(plist->data,var_name),&std_dev,n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);std_dev/=1e3;
+              calc_mean(  ADaPS_fetch(plist->data,var_name),&mean,   n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);mean   /=1e3;
+              calc_median(ADaPS_fetch(plist->data,var_name),&median, n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);median /=1e3;
+              calc_min(   ADaPS_fetch(plist->data,var_name),&min,    n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);min    /=1e3;
+              calc_max(   ADaPS_fetch(plist->data,var_name),&max,    n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);max    /=1e3;
+              calc_stddev(ADaPS_fetch(plist->data,var_name),&std_dev,n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);std_dev/=1e3;
               fprintf(stderr,"%11s  %11.3le  %11.3le  %11.3le  %11.3le  %11.3le km/s\n",var_name,min,max,mean,median,std_dev);
             }
 
             sprintf(var_name,"vy_%s",pname[i]);
             if(ADaPS_exist(plist->data,var_name)){
-              calc_mean(  ADaPS_fetch(plist->data,var_name),&mean,   n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);mean   /=1e3;
-              calc_median(ADaPS_fetch(plist->data,var_name),&median, n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);median /=1e3;
-              calc_min(   ADaPS_fetch(plist->data,var_name),&min,    n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);min    /=1e3;
-              calc_max(   ADaPS_fetch(plist->data,var_name),&max,    n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);max    /=1e3;
-              calc_stddev(ADaPS_fetch(plist->data,var_name),&std_dev,n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);std_dev/=1e3;
+              calc_mean(  ADaPS_fetch(plist->data,var_name),&mean,   n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);mean   /=1e3;
+              calc_median(ADaPS_fetch(plist->data,var_name),&median, n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);median /=1e3;
+              calc_min(   ADaPS_fetch(plist->data,var_name),&min,    n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);min    /=1e3;
+              calc_max(   ADaPS_fetch(plist->data,var_name),&max,    n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);max    /=1e3;
+              calc_stddev(ADaPS_fetch(plist->data,var_name),&std_dev,n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);std_dev/=1e3;
               fprintf(stderr,"%11s  %11.3le  %11.3le  %11.3le  %11.3le  %11.3le km/s\n",var_name,min,max,mean,median,std_dev);
             }
 
             sprintf(var_name,"vz_%s",pname[i]);
             if(ADaPS_exist(plist->data,var_name)){
-              calc_mean(  ADaPS_fetch(plist->data,var_name),&mean,   n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);mean   /=1e3;
-              calc_median(ADaPS_fetch(plist->data,var_name),&median, n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);median /=1e3;
-              calc_min(   ADaPS_fetch(plist->data,var_name),&min,    n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);min    /=1e3;
-              calc_max(   ADaPS_fetch(plist->data,var_name),&max,    n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);max    /=1e3;
-              calc_stddev(ADaPS_fetch(plist->data,var_name),&std_dev,n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);std_dev/=1e3;
+              calc_mean(  ADaPS_fetch(plist->data,var_name),&mean,   n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);mean   /=1e3;
+              calc_median(ADaPS_fetch(plist->data,var_name),&median, n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);median /=1e3;
+              calc_min(   ADaPS_fetch(plist->data,var_name),&min,    n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);min    /=1e3;
+              calc_max(   ADaPS_fetch(plist->data,var_name),&max,    n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);max    /=1e3;
+              calc_stddev(ADaPS_fetch(plist->data,var_name),&std_dev,n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);std_dev/=1e3;
               fprintf(stderr,"%11s  %11.3le  %11.3le  %11.3le  %11.3le  %11.3le km/s\n",var_name,min,max,mean,median,std_dev);
             }
 
           }
         }
 
-        /* Masses */
+        // Masses 
         for(i=0;i<plist->n_species;i++) {
           if(flag_used[i]){
             sprintf(var_name,"M_%s",pname[i]);
             if(ADaPS_exist(plist->data,var_name)){
-              calc_mean(  ADaPS_fetch(plist->data,var_name),&mean,   n_of_type[i],SID_DOUBLE,CALC_MODE_DEFAULT);mean   /=M_SOL;
-              calc_median(ADaPS_fetch(plist->data,var_name),&median, n_of_type[i],SID_DOUBLE,CALC_MODE_DEFAULT);median /=M_SOL;
-              calc_min(   ADaPS_fetch(plist->data,var_name),&min,    n_of_type[i],SID_DOUBLE,CALC_MODE_DEFAULT);min    /=M_SOL;
-              calc_max(   ADaPS_fetch(plist->data,var_name),&max,    n_of_type[i],SID_DOUBLE,CALC_MODE_DEFAULT);max    /=M_SOL;
-              calc_stddev(ADaPS_fetch(plist->data,var_name),&std_dev,n_of_type[i],SID_DOUBLE,CALC_MODE_DEFAULT);std_dev/=M_SOL;
+              calc_mean(  ADaPS_fetch(plist->data,var_name),&mean,   n_of_type[i],SID_DOUBLE,CALC_MODE_RETURN_DOUBLE);mean   /=M_SOL;
+              calc_median(ADaPS_fetch(plist->data,var_name),&median, n_of_type[i],SID_DOUBLE,CALC_MODE_RETURN_DOUBLE);median /=M_SOL;
+              calc_min(   ADaPS_fetch(plist->data,var_name),&min,    n_of_type[i],SID_DOUBLE,CALC_MODE_RETURN_DOUBLE);min    /=M_SOL;
+              calc_max(   ADaPS_fetch(plist->data,var_name),&max,    n_of_type[i],SID_DOUBLE,CALC_MODE_RETURN_DOUBLE);max    /=M_SOL;
+              calc_stddev(ADaPS_fetch(plist->data,var_name),&std_dev,n_of_type[i],SID_DOUBLE,CALC_MODE_RETURN_DOUBLE);std_dev/=M_SOL;
               fprintf(stderr,"%11s  %11.3le  %11.3le  %11.3le  %11.3le  %11.3le M_sol\n",var_name,min,max,mean,median,std_dev);
             }
           }
@@ -201,29 +201,29 @@ void display_gadget_info(plist_info  *plist){
           rho_crit=rho_crit_z_strip(redshift,h_Hubble,Omega_M,Omega_Lambda);
           sprintf(var_name,"u_%s",pname[GADGET_TYPE_GAS]);
           if(ADaPS_exist(plist->data,var_name)){
-            calc_mean(  ADaPS_fetch(plist->data,var_name),&mean,   n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);mean   /=1e3;
-            calc_median(ADaPS_fetch(plist->data,var_name),&median, n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);median /=1e3;
-            calc_min(   ADaPS_fetch(plist->data,var_name),&min,    n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);min    /=1e3;
-            calc_max(   ADaPS_fetch(plist->data,var_name),&max,    n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);max    /=1e3;
-            calc_stddev(ADaPS_fetch(plist->data,var_name),&std_dev,n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);std_dev/=1e3;
+            calc_mean(  ADaPS_fetch(plist->data,var_name),&mean,   n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);mean   /=1e3;
+            calc_median(ADaPS_fetch(plist->data,var_name),&median, n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);median /=1e3;
+            calc_min(   ADaPS_fetch(plist->data,var_name),&min,    n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);min    /=1e3;
+            calc_max(   ADaPS_fetch(plist->data,var_name),&max,    n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);max    /=1e3;
+            calc_stddev(ADaPS_fetch(plist->data,var_name),&std_dev,n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);std_dev/=1e3;
             fprintf(stderr,"%11s  %11.3le  %11.3le  %11.3le  %11.3le  %11.3le Joules/kg\n",var_name,min,max,mean,median,std_dev);
           }
           sprintf(var_name,"rho_%s",pname[GADGET_TYPE_GAS]);
           if(ADaPS_exist(plist->data,var_name)){
-            calc_mean(  ADaPS_fetch(plist->data,var_name),&mean,   n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);mean   /=rho_crit;
-            calc_median(ADaPS_fetch(plist->data,var_name),&median, n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);median /=rho_crit;
-            calc_min(   ADaPS_fetch(plist->data,var_name),&min,    n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);min    /=rho_crit;
-            calc_max(   ADaPS_fetch(plist->data,var_name),&max,    n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);max    /=rho_crit;
-            calc_stddev(ADaPS_fetch(plist->data,var_name),&std_dev,n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);std_dev/=rho_crit;
+            calc_mean(  ADaPS_fetch(plist->data,var_name),&mean,   n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);mean   /=rho_crit;
+            calc_median(ADaPS_fetch(plist->data,var_name),&median, n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);median /=rho_crit;
+            calc_min(   ADaPS_fetch(plist->data,var_name),&min,    n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);min    /=rho_crit;
+            calc_max(   ADaPS_fetch(plist->data,var_name),&max,    n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);max    /=rho_crit;
+            calc_stddev(ADaPS_fetch(plist->data,var_name),&std_dev,n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);std_dev/=rho_crit;
             fprintf(stderr,"%11s  %11.3le  %11.3le  %11.3le  %11.3le  %11.3le [rho_crit(z)]\n",var_name,min,max,mean,median,std_dev);
           }
           sprintf(var_name,"T_%s",pname[GADGET_TYPE_GAS]);
           if(ADaPS_exist(plist->data,var_name)){
-            calc_mean(  ADaPS_fetch(plist->data,var_name),&mean,   n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);
-            calc_median(ADaPS_fetch(plist->data,var_name),&median, n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);
-            calc_min(   ADaPS_fetch(plist->data,var_name),&min,    n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);
-            calc_max(   ADaPS_fetch(plist->data,var_name),&max,    n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);
-            calc_stddev(ADaPS_fetch(plist->data,var_name),&std_dev,n_of_type[i],SID_REAL,CALC_MODE_DEFAULT);
+            calc_mean(  ADaPS_fetch(plist->data,var_name),&mean,   n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);
+            calc_median(ADaPS_fetch(plist->data,var_name),&median, n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);
+            calc_min(   ADaPS_fetch(plist->data,var_name),&min,    n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);
+            calc_max(   ADaPS_fetch(plist->data,var_name),&max,    n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);
+            calc_stddev(ADaPS_fetch(plist->data,var_name),&std_dev,n_of_type[i],SID_REAL,CALC_MODE_RETURN_DOUBLE);
             fprintf(stderr,"%11s  %11.3le  %11.3le  %11.3le  %11.3le  %11.3le K\n",var_name,min,max,mean,median,std_dev);
           }
         }
