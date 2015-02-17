@@ -444,15 +444,30 @@ int main(int argc, char *argv[]){
   SID_init(&argc,&argv,NULL,NULL);
 
   // Parse arguments
-  int grid_size;
+  int  grid_size;
   char filename_in_root[MAX_FILENAME_LENGTH];
   char filename_out_root[MAX_FILENAME_LENGTH];
   char cosmo_name[16];
+  int  distribution_scheme;
   strcpy(filename_in_root,  argv[1]);
   snapshot_number=(int)atoi(argv[2]);
   strcpy(filename_out_root, argv[3]);
   grid_size      =(int)atoi(argv[4]);
   strcpy(cosmo_name,        argv[5]);
+  if(argc==7){
+     if(!strcmp(argv[6],"ngp") || !strcmp(argv[6],"NGP"))
+        distribution_scheme=MAP2GRID_DIST_NGP;
+     else if(!strcmp(argv[6],"cic") || !strcmp(argv[6],"CIC"))
+        distribution_scheme=MAP2GRID_DIST_CIC;
+     else if(!strcmp(argv[6],"tsc") || !strcmp(argv[6],"TSC"))
+        distribution_scheme=MAP2GRID_DIST_TSC;
+     else if(!strcmp(argv[6],"d12") || !strcmp(argv[6],"D12"))
+        distribution_scheme=MAP2GRID_DIST_DWT12;
+     else if(!strcmp(argv[6],"d20") || !strcmp(argv[6],"D20"))
+        distribution_scheme=MAP2GRID_DIST_DWT20;
+     else
+        SID_trap_error("Invalid distribution scheme {%s} specified.",ERROR_SYNTAX,argv[6]);
+  }
   SID_log("Processing the power spectra of {%s}, snapshot #%d...",SID_LOG_OPEN|SID_LOG_TIMER,filename_in_root,snapshot_number);
 
   // Initialization -- fetch header info
@@ -510,7 +525,7 @@ int main(int argc, char *argv[]){
      n_all[i_species]=(size_t)header.n_all_lo_word[i_species]+((size_t)header.n_all_hi_word[i_species])<<32;
      if(i_species>0) SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
      init_pspec(&(pspec[i_species]),NULL,cosmo,
-                MAP2GRID_DIST_DWT12,
+                distribution_scheme,
                 redshift,box_size,grid_size,
                 k_min_1D,k_max_1D,dk_1D,
                 k_min_2D,k_max_2D,dk_2D);
