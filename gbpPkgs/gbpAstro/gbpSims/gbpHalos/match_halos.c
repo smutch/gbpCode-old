@@ -259,16 +259,16 @@ void match_halos(plist_info  *plist_1_in,
       group_offset_1     = (size_t *)ADaPS_fetch(plist_1->data,"particle_offset_group_%s",catalog_1);
       file_index_1       = (int    *)ADaPS_fetch(plist_1->data,"file_index_groups_%s",    catalog_1);
     }
-size_t count;
-size_t id_max=(((size_t)2160)*((size_t)2160)*((size_t)2160))-1;
-fprintf(stderr,"[%d]cat1: {%s}\n",SID.My_rank,catalog_1); 
-if(SID.I_am_Master)
-   ADaPS_status(plist_1->data);
-SID_Barrier(SID.COMM_WORLD);
-for(size_t i_id=0,count=0;i_id<n_particles_1_local;i_id++){
-   if(id_1[i_id]>id_max) count++;
-}
-fprintf(stderr,"[%d]count1=%zd\n",SID.My_rank,count);
+//size_t count;
+//size_t id_max=(((size_t)2160)*((size_t)2160)*((size_t)2160))-1;
+//fprintf(stderr,"[%d]cat1: {%s}\n",SID.My_rank,catalog_1); 
+//if(SID.I_am_Master)
+//   ADaPS_status(plist_1->data);
+//SID_Barrier(SID.COMM_WORLD);
+//for(size_t i_id=0,count=0;i_id<n_particles_1_local;i_id++){
+//   if(id_1[i_id]>id_max) count++;
+//}
+//fprintf(stderr,"[%d]count1=%zd\n",SID.My_rank,count);
 
     // Fetch needed info for catalog_2
     n_particles_2_all  =((size_t *)ADaPS_fetch(plist_2->data,"n_particles_all_%s",catalog_2))[0];
