@@ -284,15 +284,15 @@ void match_halos(plist_info  *plist_1_in,
       group_offset_2_local     = (size_t *)ADaPS_fetch(plist_2->data,"particle_offset_group_%s",catalog_2);
       file_index_2_local       = (int    *)ADaPS_fetch(plist_2->data,"file_index_groups_%s",    catalog_2);
     }
-fprintf(stderr,"cat2: {%s}\n",catalog_2); 
-if(SID.I_am_Master)
-   ADaPS_status(plist_2->data);
-SID_Barrier(SID.COMM_WORLD);
-for(size_t i_id=0,count=0;i_id<n_particles_2_local;i_id++){
-   if(id_2_local[i_id]>id_max) count++;
-}   
-fprintf(stderr,"[%d]count2=%zd\n",SID.My_rank,count);
-SID_exit(ERROR_NONE);
+//fprintf(stderr,"cat2: {%s}\n",catalog_2); 
+//if(SID.I_am_Master)
+//   ADaPS_status(plist_2->data);
+//SID_Barrier(SID.COMM_WORLD);
+//for(size_t i_id=0,count=0;i_id<n_particles_2_local;i_id++){
+//   if(id_2_local[i_id]>id_max) count++;
+//}   
+//fprintf(stderr,"[%d]count2=%zd\n",SID.My_rank,count);
+//SID_exit(ERROR_NONE);
 
     // Set the number of particles that need to be checked by exchanges
     if(flag_PHK_decomp){
