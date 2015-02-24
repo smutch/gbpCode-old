@@ -54,11 +54,11 @@ int main(int argc, char *argv[]){
   // Set some paths etc
   sprintf(filename_SSimPL_base,"%s",filename_SSimPL_dir);
   strip_path(filename_SSimPL_base);
-  sprintf(filename_halo_root_in,"%s/halos/%s",     filename_SSimPL_dir,filename_halo_version_root);
-  sprintf(filename_cat_root_in, "%s/catalogs/%s",  filename_SSimPL_dir,filename_halo_version_root);
-  sprintf(filename_root_matches,"%s/trees/matches",filename_SSimPL_dir);
-  sprintf(filename_snap_list_in,"%s/run/%s.a_list",filename_SSimPL_dir,filename_SSimPL_base);
-  sprintf(filename_root_out,    "%s/trees/%s",     filename_SSimPL_dir,filename_trees_name);
+  sprintf(filename_halo_root_in,"%s/halos/%s",      filename_SSimPL_dir,filename_halo_version_root);
+  sprintf(filename_cat_root_in, "%s/catalogs/%s",   filename_SSimPL_dir,filename_halo_version_root);
+  sprintf(filename_root_matches,"%s/trees/matches", filename_SSimPL_dir);
+  sprintf(filename_snap_list_in,"%s/run/a_list.txt",filename_SSimPL_dir,filename_SSimPL_base);
+  sprintf(filename_root_out,    "%s/trees/%s",      filename_SSimPL_dir,filename_trees_name);
 
   // Initialize cosmology
   char filename_cosmology[MAX_FILENAME_LENGTH];
