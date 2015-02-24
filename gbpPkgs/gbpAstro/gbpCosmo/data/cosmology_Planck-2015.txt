@@ -1,0 +1,9 @@
+# Standard Planck (2015) cosmology 
+% Name         Planck-2015 
+% Omega_Lambda 0.692
+% Omega_M      0.308
+% Omega_k      0.
+% Omega_b      0.0484
+% h_Hubble     0.678
+% sigma_8      0.815
+% n_spectral   0.968
