@@ -468,7 +468,7 @@ int compute_trees_matches(char   *filename_root_in,
                        SID_log("Done.",SID_LOG_CLOSE);
                     }
                     else{
-                       SID_log("Input for snapshot #%d absent...Skipping.",SID_LOG_COMMENT,j_read);
+                       SID_log("Input for snapshot #%d {%s} absent...Skipping.",SID_LOG_COMMENT,j_read,filename_root_in);
                        flag_sucessful_completion=FALSE;
                     }
                  } // If this is a valid pair
@@ -477,7 +477,7 @@ int compute_trees_matches(char   *filename_root_in,
               SID_log("Done.",SID_LOG_CLOSE);
            }
            else{
-              SID_log("Input for snapshot #%d absent...Skipping.",SID_LOG_COMMENT,i_read);                 
+              SID_log("Input for snapshot #%d {%s} absent...Skipping.",SID_LOG_COMMENT,i_read,filename_root_in);                 
               flag_sucessful_completion=FALSE;
            } 
         } // If this snapshot needs to be processed

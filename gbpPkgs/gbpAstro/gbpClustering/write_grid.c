@@ -32,6 +32,7 @@ void write_grid(field_info *field,const char *filename_out_root,int i_grid,int n
             case MAP2GRID_DIST_DWT20:
             case MAP2GRID_DIST_DWT12:
             case MAP2GRID_DIST_NGP:
+            case MAP2GRID_DIST_CIC:
             case MAP2GRID_DIST_TSC:
                fwrite(&mass_assignment_scheme,sizeof(int),1,fp_out);
                break;
