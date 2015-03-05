@@ -5,7 +5,7 @@
 #include <math.h>
 #include <sys/stat.h>
 #include <gbpLib.h>
-#include <gbpSSimPL.h>
+#include <gbpSims_Swap_Endian.h>
 
 int main(int argc, char *argv[]){
 

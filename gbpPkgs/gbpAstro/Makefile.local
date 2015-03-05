@@ -8,5 +8,5 @@ BINFILES  =
 SCRIPTS   =
 DATAFILES =
 LIBS      =
-SUBDIRS   = gbpCosmo gbpSims gbpClustering gbpSSimPL
+SUBDIRS   = gbpCosmo gbpSims gbpClustering
 #############################

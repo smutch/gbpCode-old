@@ -1,7 +1,7 @@
 #############################
 # Library-specific settings #
 #############################
-INCFILES  = gbpSSimPL.h
+INCFILES  = gbpSims_Swap_Endian.h
 OBJFILES  = swap_endian_snapshot.o \
 	        swap_endian_smooth.o   \
 	        swap_endian_grids.o    \

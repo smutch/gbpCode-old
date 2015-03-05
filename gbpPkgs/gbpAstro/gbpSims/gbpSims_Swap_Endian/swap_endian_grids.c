@@ -5,7 +5,7 @@
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpClustering.h>
-#include <gbpSSimPL.h>
+#include <gbpSims_Swap_Endian.h>
 
 void swap_endian_grids(const char *filename_in,const char *filename_out,int mode){
 

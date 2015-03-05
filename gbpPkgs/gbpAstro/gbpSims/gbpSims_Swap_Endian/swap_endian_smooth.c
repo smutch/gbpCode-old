@@ -7,7 +7,7 @@
 #include <gbpMath.h>
 #include <gbpClustering.h>
 #include <gbpHalos.h>
-#include <gbpSSimPL.h>
+#include <gbpSims_Swap_Endian.h>
 
 int swap_endian_smooth(const char *filename_in_root,const char *filename_out_root,int region_number,int snap_number,int mode,int IDs_byte_size){
 
