@@ -46,6 +46,12 @@ int main(int argc, char *argv[]){
   mkdir(dir_halos,          02755);
   mkdir(dir_catalogs,       02755);
 
+  // Set which files will be processed
+  int flag_process_halos    =TRUE;
+  int flag_process_catalogs =TRUE;
+  int flag_process_grids    =TRUE;
+  int flag_process_snapshots=TRUE;
+
   // Loop over the given snapshot range
   SID_log("Processing group/subgroup statistics for files #%d->#%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_snap_lo,i_snap_hi);
   for(int i_snap=i_snap_lo;i_snap<=i_snap_hi;i_snap++){
@@ -53,26 +59,34 @@ int main(int argc, char *argv[]){
     char filename_out[MAX_FILENAME_LENGTH];
     SID_log("Processing snapshot #%03d...",SID_LOG_OPEN|SID_LOG_TIMER,i_snap);
     // Process halos
-    sprintf(filename_in, "%s/halos/",filename_SSimPL_in);
-    sprintf(filename_out,"%s/halos/",filename_SSimPL_out);
-    swap_endian_halos(filename_in,filename_out,filename_halo_type,i_snap,mode);
+    if(flag_process_halos){
+       sprintf(filename_in, "%s/halos/",filename_SSimPL_in);
+       sprintf(filename_out,"%s/halos/",filename_SSimPL_out);
+       swap_endian_halos(filename_in,filename_out,filename_halo_type,i_snap,mode);
+    }
     // Process catalogs
-    sprintf(filename_in, "%s/catalogs/",filename_SSimPL_in, filename_halo_type);
-    sprintf(filename_out,"%s/catalogs/",filename_SSimPL_out,filename_halo_type);
-    swap_endian_catalogs(filename_in,filename_out,filename_halo_type,i_snap,mode);
+    if(flag_process_catalogs){
+       sprintf(filename_in, "%s/catalogs/",filename_SSimPL_in, filename_halo_type);
+       sprintf(filename_out,"%s/catalogs/",filename_SSimPL_out,filename_halo_type);
+       swap_endian_catalogs(filename_in,filename_out,filename_halo_type,i_snap,mode);
+    }
     // Process grids
-    sprintf(filename_in, "%s/grids/snapshot_%03d_dark_grid.dat",filename_SSimPL_in, i_snap);
-    sprintf(filename_out,"%s/grids/snapshot_%03d_dark_grid.dat",filename_SSimPL_out,i_snap);
-    swap_endian_grids(filename_in,filename_out,mode);
+    if(flag_process_grids){
+       sprintf(filename_in, "%s/grids/snapshot_%03d_dark_grid.dat",filename_SSimPL_in, i_snap);
+       sprintf(filename_out,"%s/grids/snapshot_%03d_dark_grid.dat",filename_SSimPL_out,i_snap);
+       swap_endian_grids(filename_in,filename_out,mode);
+    }
     // Process snapshots and their smooth files
-    int IDs_byte_size;
-    int i_region=-1;
-    if(swap_endian_snapshot(filename_SSimPL_in,filename_SSimPL_out,i_region,i_snap,mode,&IDs_byte_size))
-       swap_endian_smooth(filename_SSimPL_in,filename_SSimPL_out,i_region,i_snap,mode,IDs_byte_size);
-    i_region++;
-    while(swap_endian_snapshot(filename_SSimPL_in,filename_SSimPL_out,i_region,i_snap,mode,&IDs_byte_size)){
-       swap_endian_smooth(filename_SSimPL_in,filename_SSimPL_out,i_region,i_snap,mode,IDs_byte_size);
+    if(flag_process_snapshots){
+       int IDs_byte_size;
+       int i_region=-1;
+       if(swap_endian_snapshot(filename_SSimPL_in,filename_SSimPL_out,i_region,i_snap,mode,&IDs_byte_size))
+          swap_endian_smooth(filename_SSimPL_in,filename_SSimPL_out,i_region,i_snap,mode,IDs_byte_size);
        i_region++;
+       while(swap_endian_snapshot(filename_SSimPL_in,filename_SSimPL_out,i_region,i_snap,mode,&IDs_byte_size)){
+          swap_endian_smooth(filename_SSimPL_in,filename_SSimPL_out,i_region,i_snap,mode,IDs_byte_size);
+          i_region++;
+       }
     }
     SID_log("Done.",SID_LOG_CLOSE);
   }

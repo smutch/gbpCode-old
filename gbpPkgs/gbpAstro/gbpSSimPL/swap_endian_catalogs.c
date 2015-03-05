@@ -192,9 +192,15 @@ void swap_endian_catalogs_profiles_local(const char *filename_in_root,const char
      rewrite_swap_endian(fp_in,fp_out,4,sizeof(int),NULL);
      for(int i_halo=0;i_halo<n_halos_file;i_halo++){
         int n_bins;
-        fread(&n_bins,sizeof(int),1,fp_in);
+        int n_bins_in;
+        int n_bins_out;
+        fread(&n_bins_in,sizeof(int),1,fp_in);
+        n_bins    =n_bins_in;
+        n_bins_out=n_bins_in;
+        swap_endian((char *)(&n_bins_out),1,sizeof(int));
         if(check_mode_for_flag(mode,SWAP_SSIMPL_ENDIAN_TO_NATIVE))
            swap_endian((char *)(&n_bins),1,sizeof(int));
+        fwrite(&n_bins_out,sizeof(int),1,fp_out);
         for(int i_bin=0;i_bin<n_bins;i_bin++){
            halo_profile_bin_info profile_bin;
            fread(&profile_bin,sizeof(halo_profile_bin_info),1,fp_in);
