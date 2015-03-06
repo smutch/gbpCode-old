@@ -954,6 +954,7 @@ int main(int argc, char *argv[]){
                                     expansion_factor,
                                     x,y,z,vx,vy,vz,R,&R_index,
                                     flag_manual_centre,
+                                    TRUE,
                                     cosmo)!=TRUE){
              n_truncated_local++;
              largest_truncated_local=MAX(largest_truncated_local,n_particles_groups[i_group]);

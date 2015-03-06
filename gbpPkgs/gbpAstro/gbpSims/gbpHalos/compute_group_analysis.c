@@ -15,14 +15,6 @@ int compute_group_analysis(halo_properties_info  *properties,
                            double (*v_i_fctn) (void *,int,int), 
                            size_t (*id_i_fctn)(void *,int), 
                            void   *params,
-                           //size_t                *id_array,
-                           //GBPREAL               *x_array,
-                           //GBPREAL               *y_array,
-                           //GBPREAL               *z_array,
-                           //GBPREAL               *vx_array,
-                           //GBPREAL               *vy_array,
-                           //GBPREAL               *vz_array,
-                           //size_t                *ids_sort_index,
                            double                 box_size,
                            double                 particle_mass,
                            int                    n_particles,
@@ -36,6 +28,7 @@ int compute_group_analysis(halo_properties_info  *properties,
                            double                *R,
                            size_t               **R_index_in,
                            int                    flag_manual_centre,
+                           int                    flag_compute_shapes,
                            cosmo_info            *cosmo){
   size_t      *R_index;
   int          i,j;
@@ -122,11 +115,12 @@ int compute_group_analysis(halo_properties_info  *properties,
   properties->spin[0]        =0.;
   properties->spin[1]        =0.;
   properties->spin[2]        =0.;
-  properties->q_triaxial     =0.;
-  properties->s_triaxial     =0.;
+  properties->q_triaxial     =1.;
+  properties->s_triaxial     =1.;
   for(i=0;i<3;i++){
     for(j=0;j<3;j++)
       properties->shape_eigen_vectors[i][j]=0.;
+    properties->shape_eigen_vectors[i][i]=1.;
   }
 
   // Set the number of profile bins and the number of particles per bin
@@ -161,11 +155,12 @@ int compute_group_analysis(halo_properties_info  *properties,
       profile->bins[i_bin].spin[0]         =0.;
       profile->bins[i_bin].spin[1]         =0.;
       profile->bins[i_bin].spin[2]         =0.;
-      profile->bins[i_bin].q_triaxial      =0.;
-      profile->bins[i_bin].s_triaxial      =0.;
+      profile->bins[i_bin].q_triaxial      =1.;
+      profile->bins[i_bin].s_triaxial      =1.;
       for(i=0;i<3;i++){
         for(j=0;j<3;j++)
           profile->bins[i_bin].shape_eigen_vectors[i][j]=0.;
+        profile->bins[i_bin].shape_eigen_vectors[i][i]=1.;
       }
     }
 
@@ -309,22 +304,24 @@ int compute_group_analysis(halo_properties_info  *properties,
       profile->bins[i_bin].overdensity=(float)(profile->bins[i_bin].M_r/(V2*Omega*rho_crit_z(redshift,cosmo)));
 
       /// ... triaxiality ...
-      compute_triaxiality(x,
-                          y,
-                          z,
-                          (double)profile->bins[i_bin].position_COM[0],
-                          (double)profile->bins[i_bin].position_COM[1],
-                          (double)profile->bins[i_bin].position_COM[2],
-                          box_size,
-                          n_cumulative,
-                          R_index,
-                          shape_eigen_values,
-                          shape_eigen_vectors);
-      profile->bins[i_bin].q_triaxial=(float)(shape_eigen_values[1]/shape_eigen_values[0]);
-      profile->bins[i_bin].s_triaxial=(float)(shape_eigen_values[2]/shape_eigen_values[0]);
-      for(i=0;i<3;i++)
-        for(j=0;j<3;j++)
-          profile->bins[i_bin].shape_eigen_vectors[i][j]=(float)shape_eigen_vectors[i][j];
+      if(flag_compute_shapes){
+         compute_triaxiality(x,
+                             y,
+                             z,
+                             (double)profile->bins[i_bin].position_COM[0],
+                             (double)profile->bins[i_bin].position_COM[1],
+                             (double)profile->bins[i_bin].position_COM[2],
+                             box_size,
+                             n_cumulative,
+                             R_index,
+                             shape_eigen_values,
+                             shape_eigen_vectors);
+         profile->bins[i_bin].q_triaxial=(float)(shape_eigen_values[1]/shape_eigen_values[0]);
+         profile->bins[i_bin].s_triaxial=(float)(shape_eigen_values[2]/shape_eigen_values[0]);
+         for(i=0;i<3;i++)
+           for(j=0;j<3;j++)
+             profile->bins[i_bin].shape_eigen_vectors[i][j]=(float)shape_eigen_vectors[i][j];
+      }
     }
 
     // Interpolate to get R_vir

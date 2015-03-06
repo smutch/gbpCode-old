@@ -190,6 +190,7 @@ int  compute_group_analysis(halo_properties_info *properties,
                             double      *R,
                             size_t     **R_index,
                             int          flag_manual_centre,
+                            int          flag_compute_shapes,
                             cosmo_info  *cosmo);
 void write_group_properties(FILE *fp,halo_properties_info *properties,    double h_Hubble);
 void write_group_profiles(FILE   *fp,halo_profile_info    *profiles,      double h_Hubble,double redshift,cosmo_info *cosmo);
