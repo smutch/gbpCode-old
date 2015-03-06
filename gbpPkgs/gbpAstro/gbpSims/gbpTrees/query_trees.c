@@ -235,6 +235,8 @@ int main(int argc, char *argv[]){
        if(flag_write_header){
           int i_column=1;
           fprintf(fp_out,"# Column (%02d): Halo snapshot\n",               i_column++);
+          fprintf(fp_out,"#        (%02d): Halo expansion factor\n",       i_column++);
+          fprintf(fp_out,"#        (%02d): Halo redshift\n",               i_column++);
           fprintf(fp_out,"#        (%02d): Halo index\n",                  i_column++);
           fprintf(fp_out,"#        (%02d): Halo ID\n",                     i_column++);
           fprintf(fp_out,"#        (%02d): Halo log10(M_vir [M_sol/h])\n", i_column++);
@@ -269,8 +271,10 @@ int main(int argc, char *argv[]){
           bridge_backmatch_snap=trees->snap_list[bridge_backmatch_file];
        else
           bridge_backmatch_snap=-1;
-       fprintf(fp_out,"%3d %7d %7d %5.2lf %5.2lf %5.2lf %5.2lf %7d %3d %3d %7d %7d %3d %7d %3d %7d %7d %s\n",
+       fprintf(fp_out,"%3d %le %7.3lf %7d %7d %5.2lf %5.2lf %5.2lf %5.2lf %7d %3d %3d %7d %7d %3d %7d %3d %7d %7d %s\n",
                       i_read,
+                      a_of_z(trees->z_list[i_read]),
+                      trees->z_list[i_read],
                       i_halo,
                       halo_id,
                       take_log10(properties.M_vir),
