@@ -238,6 +238,9 @@ int main(int argc, char *argv[]){
           fprintf(fp_out,"#        (%02d): Halo index\n",                  i_column++);
           fprintf(fp_out,"#        (%02d): Halo ID\n",                     i_column++);
           fprintf(fp_out,"#        (%02d): Halo log10(M_vir [M_sol/h])\n", i_column++);
+          fprintf(fp_out,"#        (%02d): Halo x [Mpc/h])\n",             i_column++);
+          fprintf(fp_out,"#        (%02d): Halo y [Mpc/h])\n",             i_column++);
+          fprintf(fp_out,"#        (%02d): Halo z [Mpc/h])\n",             i_column++);
           fprintf(fp_out,"#        (%02d): Halo tree ID\n",                i_column++);
           fprintf(fp_out,"#        (%02d): Descendant file offset\n",      i_column++);
           fprintf(fp_out,"#        (%02d): Descendant snapshot\n",         i_column++);
@@ -266,11 +269,14 @@ int main(int argc, char *argv[]){
           bridge_backmatch_snap=trees->snap_list[bridge_backmatch_file];
        else
           bridge_backmatch_snap=-1;
-       fprintf(fp_out,"%3d %7d %7d %5.2lf %7d %3d %3d %7d %7d %3d %7d %3d %7d %7d %s\n",
+       fprintf(fp_out,"%3d %7d %7d %5.2lf %5.2lf %5.2lf %5.2lf %7d %3d %3d %7d %7d %3d %7d %3d %7d %7d %s\n",
                       i_read,
                       i_halo,
                       halo_id,
                       take_log10(properties.M_vir),
+                      properties.position_COM[0],
+                      properties.position_COM[1],
+                      properties.position_COM[2],
                       halo_tree_id,
                       halo_file_offset,
                       descendant_snap,
