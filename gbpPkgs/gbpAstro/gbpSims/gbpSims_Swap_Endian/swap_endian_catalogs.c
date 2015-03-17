@@ -231,8 +231,8 @@ void swap_endian_catalogs_profiles_local(const char *filename_in_root,const char
   SID_log("Done.",SID_LOG_CLOSE);
 }
 
-void swap_endian_catalogs_SO_local(const char *filename_in_root,const char *filename_out_root,const char *filename_halo_type,const char *prefix,int snap_number,int mode);
-void swap_endian_catalogs_SO_local(const char *filename_in_root,const char *filename_out_root,const char *filename_halo_type,const char *prefix,int snap_number,int mode){
+int swap_endian_catalogs_SO_local(const char *filename_in_root,const char *filename_out_root,const char *filename_halo_type,const char *prefix,int snap_number,int mode);
+int swap_endian_catalogs_SO_local(const char *filename_in_root,const char *filename_out_root,const char *filename_halo_type,const char *prefix,int snap_number,int mode){
   SID_log("Swapping endian of %sgroup SO properties...",SID_LOG_OPEN,prefix);
 
   // Sanity check
@@ -251,8 +251,10 @@ void swap_endian_catalogs_SO_local(const char *filename_in_root,const char *file
   int   flag_type=FALSE;
   if((fp_in=fopen(filename_in,"r"))==NULL){
      sprintf(filename_in,"%s/%s_%03d.catalog_%sgroups_SO",filename_in_root,filename_halo_type,snap_number,prefix);
-     if((fp_in=fopen(filename_in,"r"))==NULL)
-        SID_trap_error("Could not open {%s} for reading.",ERROR_IO_OPEN,filename_in_root);
+     if((fp_in=fopen(filename_in,"r"))==NULL){
+        SID_log("not present.",SID_LOG_CLOSE);
+        return(FALSE);
+     }
      flag_type=TRUE;
   }
   else{

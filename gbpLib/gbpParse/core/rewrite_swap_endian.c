@@ -14,7 +14,9 @@ void rewrite_swap_endian(FILE *fp_in,FILE *fp_out,int n_items,int item_byte_size
       buffer=buffer_in;
 
    // Populate the input buffer
-   fread(buffer,item_byte_size,n_items,fp_in);
+   size_t n_return;
+   if((n_return=fread(buffer,item_byte_size,n_items,fp_in))!=(size_t)n_items)
+      SID_trap_error("Failed to read %d %d-byte items (only got %d).",ERROR_IO_READ,n_items,item_byte_size,(int)n_return);
 
    // Swap endian
    swap_endian(buffer,n_items,item_byte_size);
