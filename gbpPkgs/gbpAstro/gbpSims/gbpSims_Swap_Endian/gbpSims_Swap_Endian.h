@@ -13,6 +13,11 @@ int  swap_endian_smooth(const char *filename_in,const char *filename_out,int reg
 void swap_endian_grids(const char *filename_in,const char *filename_out,int mode);
 void swap_endian_halos(const char *filename_in_root,const char *filename_out_root,const char *filename_halo_type,int snap_number,int mode);
 void swap_endian_catalogs(const char *filename_in_root,const char *filename_out_root,const char *filename_halo_type,int snap_number,int mode);
+
+void check_integrity_grids(const char *filename_in);
+void check_integrity_halos(const char *filename_in_root,const char *filename_halo_type,int snap_number);
+void check_integrity_catalogs(const char *filename_in_root,const char *filename_halo_type,int snap_number);
+
 #ifdef __cplusplus
 }
 #endif

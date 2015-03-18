@@ -2,12 +2,15 @@
 # Library-specific settings #
 #############################
 INCFILES  = gbpSims_Swap_Endian.h
-OBJFILES  = swap_endian_snapshot.o \
-	        swap_endian_smooth.o   \
-	        swap_endian_grids.o    \
-	        swap_endian_halos.o    \
-	        swap_endian_catalogs.o
+OBJFILES  = swap_endian_snapshot.o     \
+	        swap_endian_smooth.o       \
+	        swap_endian_grids.o        \
+	        swap_endian_halos.o        \
+	        swap_endian_catalogs.o     \
+	        check_integrity_grids.o    \
+	        check_integrity_halos.o    \
+	        check_integrity_catalogs.o
 LIBFILE   = libgbpSSimPL.a
-BINFILES  = swap_endian_SSimPL
+BINFILES  = check_integrity_SSimPL swap_endian_SSimPL
 LIBS      = -lgbpSSimPL -lgbpHalos -lgbpSPH -lgbpCosmo -lgbpMath -lgbpLib
 #############################
