@@ -1048,7 +1048,6 @@ void init_make_map_noabs(render_info *render,
          j_particle+=n_particles_species;
        }
      } // loop over particles
-
      if(particle_index!=n_rank_local[rank_to])
         SID_trap_error("Buffer particle count does not equal desired exchange count (ie. %zd!=%zd)",ERROR_LOGIC,particle_index,n_rank_local[rank_to]);
 
@@ -1104,7 +1103,7 @@ void init_make_map_noabs(render_info *render,
                              &n_exchange,
                              i_rank);
      j_particle_rank+=n_exchange;
-  }
+  } // i_rank
 
   // Sanity checks
   if(j_particle_rank!=n_particles_local)
