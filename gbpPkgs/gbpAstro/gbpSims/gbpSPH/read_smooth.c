@@ -56,6 +56,8 @@ void read_smooth(plist_info *plist,
   SID_log("Reading header information...",SID_LOG_OPEN);
   smooth_header_info header;
   flag_filefound   =init_smooth_read(filename_root_in,snapshot_number,&flag_multifile,&flag_file_type,&header);
+  SID_log("n_files    =%d",  SID_LOG_COMMENT,header.n_files);
+  SID_log("n_particles=%lld",SID_LOG_COMMENT,header.n_particles_total);
   SID_log("Done.",SID_LOG_CLOSE);
 
   // Interpret the mode passed to this function
