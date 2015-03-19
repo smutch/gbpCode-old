@@ -4,7 +4,7 @@
 INCFILES  = 
 OBJFILES  = ran1.o
 LIBFILE   = libgbpUtils.a
-BINFILES  = parse_binaryfile_number make_atable_selection test_sort test_PHK_boundry hist create_tmpfile gpause random_numbers
+BINFILES  = parse_binfile make_atable_selection test_sort test_PHK_boundry hist create_tmpfile gpause random_numbers
 LIBS      = -lgbpUtils -lgbpMath -lgbpLib
 SCRIPTS   = run_queue run_mpi run_mpi_valgrind run_valgrind gbpCode gbpCode_new gbpCode_add gbpCode_add_dtype gbpDir gbpDir_push gbpDir_pull gbpDir_list gbpDir_item
 
