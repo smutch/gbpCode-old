@@ -247,9 +247,7 @@ void read_gadget_binary_render(char       *filename_root_in,
       // In this case, we scatter the particles randomly to the ranks
       if(check_mode_for_flag(mode,READ_GADGET_RENDER_SCATTER)){
          // Count the number of particles that will be scattered to each rank
-         pcounter_info pcounter;
-         size_t        k_particle;
-         SID_init_pcounter(&pcounter,n_particles_all,10);
+         size_t k_particle;
          SID_log("Counting the number of particles that will be scattered to each rank...",SID_LOG_OPEN|SID_LOG_TIMER);
          RNG_info *RNG=(RNG_info *)SID_malloc(sizeof(RNG_info));
          init_RNG(&seed,RNG,RNG_GLOBAL);
@@ -280,7 +278,6 @@ void read_gadget_binary_render(char       *filename_root_in,
                      scatter_rank=SID.n_proc-1;
                   if(scatter_rank==SID.My_rank)
                      n_of_type_rank[i]++;
-                  SID_check_pcounter(&pcounter,k_particle);
                }
             }
          }
@@ -352,6 +349,7 @@ void read_gadget_binary_render(char       *filename_root_in,
       // Allocate data arrays
       int flag_read_positions =TRUE;
       int flag_read_velocities=TRUE;
+      SID_log("Allocating arrays...",SID_LOG_OPEN);
       for(i=0;i<N_GADGET_TYPE;i++){
          if(n_of_type_rank[i]>0){
             if(flag_read_positions){
@@ -371,19 +369,22 @@ void read_gadget_binary_render(char       *filename_root_in,
                id_array[i][j]=n_particles_all+1;
          }
       }
+      SID_log("Done.",SID_LOG_CLOSE);
 
       // Set offsets (needed for random scattering mode)
       for(i=0;i<N_GADGET_TYPE;i++)
          k_offset[i]=0;
 
       // Read data
-      RNG_info *RNG=(RNG_info *)SID_malloc(sizeof(RNG_info));
+      pcounter_info pcounter;
+      size_t        n_particles_read=0;
+      RNG_info     *RNG=(RNG_info *)SID_malloc(sizeof(RNG_info));
       init_RNG(&seed,RNG,RNG_GLOBAL);
+      SID_init_pcounter(&pcounter,n_particles_all,10);
+      SID_log("Performing read...",SID_LOG_OPEN|SID_LOG_TIMER);
       for(i_file=0,n_particles_kept=0;i_file<n_files;i_file++){
          read_rank=i_file%SID.n_proc;
          read_rank=0;
-         if(n_files>1)
-            SID_log("Reading file %d of %d...",SID_LOG_OPEN|SID_LOG_TIMER,i_file+1,n_files);
 
          set_gadget_filename(&read_info,i_file,filename);
 
@@ -408,7 +409,6 @@ void read_gadget_binary_render(char       *filename_root_in,
 
          if(n_particles_file>0){
             // Initialize buffer
-            SID_log("File domain decomposition...",SID_LOG_OPEN|SID_LOG_TIMER);
             buffer=SID_malloc((size_t)record_length_positions); // This is large enough to hold any of the blocks
             if(check_mode_for_flag(mode,READ_GADGET_RENDER_SCATTER)){
                flag_alloc_keep=TRUE;
@@ -500,7 +500,6 @@ void read_gadget_binary_render(char       *filename_root_in,
             }
             else
                SID_trap_error("Valid read_gadget mode not specified.",ERROR_LOGIC);
-            SID_log("Done.",SID_LOG_CLOSE);
 
             // Some modes need to hold-on to the IDs so we need to use a second buffer
             int   flag_alloc_buffer2;
@@ -516,7 +515,6 @@ void read_gadget_binary_render(char       *filename_root_in,
 
             // Read positions
             if(flag_read_positions){
-               SID_log("Reading positions...",SID_LOG_OPEN|SID_LOG_TIMER);
                if(SID.My_rank==read_rank){
                   fread(&record_length_open,4,1,fp);
                   fread(buffer2,(size_t)record_length_open,1,fp);
@@ -581,7 +579,7 @@ void read_gadget_binary_render(char       *filename_root_in,
                   SID_trap_error("Valid read_gadget mode not specified.",ERROR_LOGIC);
             }
             else{
-               SID_log("Skipping positions...",SID_LOG_OPEN|SID_LOG_TIMER);
+               if(i_file==0) SID_log("Skipping positions.",SID_LOG_COMMENT);
                size_t record_length=3*sizeof(GBPREAL)*n_particles_file;
                if(SID.My_rank==read_rank){
                   fread(&record_length_open,4,1,fp);
@@ -591,11 +589,9 @@ void read_gadget_binary_render(char       *filename_root_in,
                      SID_log_warning("Problem with GADGET record size (close of positions)",ERROR_LOGIC);
                }
             }
-            SID_log("Done.",SID_LOG_CLOSE);
 
             // Read velocities
             if(flag_read_velocities){
-               SID_log("Reading velocities...",SID_LOG_OPEN|SID_LOG_TIMER);
                if(SID.My_rank==read_rank){
                   fread(&record_length_open,4,1,fp);
                   fread(buffer2,record_length_open,1,fp);
@@ -658,10 +654,9 @@ void read_gadget_binary_render(char       *filename_root_in,
                }
                else
                   SID_trap_error("Valid read_gadget mode not specified.",ERROR_LOGIC);      
-               SID_log("Done.",SID_LOG_CLOSE);
             }
             else{
-               SID_log("Skipping velocities...",SID_LOG_OPEN|SID_LOG_TIMER);
+               if(i_file==0) SID_log("Skipping velocities.",SID_LOG_COMMENT);
                if(SID.My_rank==read_rank){
                   size_t record_length=3*sizeof(GBPREAL)*n_particles_file;
                   fread(&record_length_open,4,1,fp);
@@ -670,12 +665,10 @@ void read_gadget_binary_render(char       *filename_root_in,
                   if(record_length_open!=record_length_close)
                      SID_log_warning("Problem with GADGET record size (close of velocities)",ERROR_LOGIC);
                }
-               SID_log("Done.",SID_LOG_CLOSE);
             }
 
             // Read IDs
             if(check_mode_for_flag(mode,READ_GADGET_RENDER_SCATTER)){  
-               SID_log("Reading IDs...",SID_LOG_OPEN|SID_LOG_TIMER);
                if(SID.My_rank==read_rank){
                   fread(&record_length_open,4,1,fp);
                   fread(buffer2,(size_t)record_length_open,1,fp);
@@ -689,11 +682,11 @@ void read_gadget_binary_render(char       *filename_root_in,
 
                // Decide what kind of IDs we have
                if(record_length_open/(int)n_particles_file==sizeof(long long)){
-                  SID_log("(long long)...",SID_LOG_CONTINUE);
+                  if(i_file==0) SID_log("Reading (long long) IDs.",SID_LOG_COMMENT);
                   flag_LONGIDs=TRUE;
                }
                else{
-                  SID_log("(int)...",SID_LOG_CONTINUE);
+                  if(i_file==0) SID_log("Reading (int) IDs.",SID_LOG_COMMENT);
                   flag_LONGIDs=FALSE;
                }
 
@@ -716,7 +709,6 @@ void read_gadget_binary_render(char       *filename_root_in,
                   if(k!=n_keep[i])
                      SID_trap_error("Particle count mismatch (ie. %d!=%d) during IDs read",ERROR_LOGIC,k,n_keep[i]);
                }
-               SID_log("Done.",SID_LOG_CLOSE);
             }
             else if(check_mode_for_flag(mode,READ_GADGET_RENDER_ID_ORDERED)){
                if(flag_LONGIDs){
@@ -757,12 +749,13 @@ void read_gadget_binary_render(char       *filename_root_in,
                SID_free(SID_FARG buffer2);
             if(flag_alloc_keep)
                SID_free(SID_FARG keep);
-         }
-         if(n_files>1)
-            SID_log("Done.",SID_LOG_CLOSE);
-      }
+         } // if n_particles_file>0
+         n_particles_read+=n_particles_file;
+         SID_check_pcounter(&pcounter,n_particles_read);
+      } // loop over i_file
       free_RNG(RNG);
       SID_free(SID_FARG RNG);
+      SID_log("Done.",SID_LOG_CLOSE);
 
       // Check that all particles have been properly initialized if ID-rank-decomposing 
       if(check_mode_for_flag(mode,READ_GADGET_RENDER_ID_ORDERED)){
