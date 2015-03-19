@@ -22,10 +22,17 @@ void init_RNG(int *seed,RNG_info *RNG,int mode){
       else
         RNG->global=FALSE;
     #endif
-    if((*seed)<0)
-      RNG->stream= (long)(RNG->seed-(long)(173*SID.My_rank));
+    // Make sure we start with a negative value; ran1 requires it
+    if(!RNG->global){
+      if(RNG->seed<0)
+        RNG->stream= (long)(RNG->seed)-(long)(173*SID.My_rank);
+      else
+        RNG->stream=-(long)(RNG->seed)-(long)(173*SID.My_rank);
+    }
+    else if(RNG->seed<0)
+      RNG->stream= (long)(RNG->seed);
     else
-      RNG->stream=-(long)(RNG->seed-(long)(173*SID.My_rank));
+      RNG->stream=-(long)(RNG->seed);
   #endif
   RNG->IGauss     =0;
   RNG->GaussBak   =0.;
