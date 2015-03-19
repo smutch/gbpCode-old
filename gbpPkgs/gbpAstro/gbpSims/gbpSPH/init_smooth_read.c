@@ -52,7 +52,6 @@ int init_smooth_read(char *filename_root_in,int snapshot_number,int *flag_multif
   }
 
   if(flag_filefound){
-     fread(&record_length_in,sizeof(int),1,fp);
      fread(&(header->n_particles_file), sizeof(int),      1,fp);
      fread(&(header->offset),           sizeof(int),      1,fp);
      fread(&(header->n_particles_total),sizeof(long long),1,fp);
