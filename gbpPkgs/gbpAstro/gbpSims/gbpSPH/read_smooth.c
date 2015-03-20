@@ -102,12 +102,12 @@ void read_smooth(plist_info *plist,
        flag_LONGIDs=FALSE;
 
      // Sort particle IDs
-     SID_log("Sorting particle IDs...",SID_LOG_OPEN);
+     SID_log("Sorting particle IDs...",SID_LOG_OPEN|SID_LOG_TIMER);
      merge_sort(ids,(size_t)n_particles_local,&ids_index,SID_SIZE_T,SORT_COMPUTE_INDEX,FALSE);
      SID_log("Done.",SID_LOG_CLOSE);
 
      // Allocate arrays
-     SID_log("Allocating arrays for %d particles...",SID_LOG_OPEN,n_particles_local);
+     SID_log("Allocating arrays...",SID_LOG_OPEN);
      read_array=(char *)SID_calloc(sizeof(char)*n_particles_local);
      for(i_quantity=0;i_quantity<n_quantities;i_quantity++){
        switch(i_quantity){
@@ -128,10 +128,12 @@ void read_smooth(plist_info *plist,
      SID_log("Done.",SID_LOG_CLOSE);
 
      // Read each file in turn
-     size_t I_particle=0;
+     pcounter_info pcounter;
+     size_t n_particles_read=0;
+     SID_log("Performing read...",SID_LOG_OPEN|SID_LOG_TIMER);
+     SID_init_pcounter(&pcounter,n_particles_total,10);
      for(i_file=0;i_file<n_files;i_file++){
        set_smooth_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
-       SID_log("Processing file %d of %d {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,i_file+1,n_files,filename);
        if((fp=fopen(filename,"r"))!=NULL){
           fread(&(header.n_particles_file), sizeof(int),      1,fp);
           fread(&(header.offset),           sizeof(int),      1,fp);
@@ -148,12 +150,10 @@ void read_smooth(plist_info *plist,
        SID_Bcast(&offset,           (int)sizeof(int),      read_rank,SID.COMM_WORLD);
        SID_Bcast(&n_particles_total,(int)sizeof(long long),read_rank,SID.COMM_WORLD);
        SID_Bcast(&n_files,          (int)sizeof(int),      read_rank,SID.COMM_WORLD);
-       SID_log("(%d of %d particles)...",SID_LOG_CONTINUE,n_particles_file,n_particles_total);
 
        // Read IDs
-       SID_log("Read IDs (%d particles)...",SID_LOG_OPEN,n_particles_file);
        if(flag_LONGIDs){
-         SID_log("(long long)...",SID_LOG_CONTINUE);
+         if(i_file==0) SID_log("Reading (long long) IDs.",SID_LOG_COMMENT);
          id_buf  =SID_malloc(sizeof(long long)*n_particles_file);
          id_buf_L=(long long *)id_buf;
          if(SID.My_rank==read_rank){
@@ -165,7 +165,7 @@ void read_smooth(plist_info *plist,
          merge_sort(id_buf_L,(size_t)n_particles_file,&id_buf_index,SID_SIZE_T,SORT_COMPUTE_INDEX,FALSE);
        }
        else{
-         SID_log("(int)...",SID_LOG_CONTINUE);
+         if(i_file==0) SID_log("Reading (int) IDs.",SID_LOG_COMMENT);
          id_buf  =SID_malloc(sizeof(int)*n_particles_file);
          id_buf_i=(int *)id_buf;
          if(SID.My_rank==read_rank){
@@ -176,10 +176,8 @@ void read_smooth(plist_info *plist,
          SID_Bcast(id_buf_i,(int)(n_particles_file*sizeof(int)),read_rank,SID.COMM_WORLD);
          merge_sort(id_buf_i,(size_t)n_particles_file,&id_buf_index,SID_INT,SORT_COMPUTE_INDEX,FALSE);
        }
-       SID_log("Done.",SID_LOG_CLOSE);
 
        // Create local particle mapping
-       SID_log("Create mapping...",SID_LOG_OPEN);
        mark=(long long *)SID_malloc(sizeof(long long)*n_particles_file);
        for(i_particle=0;i_particle<n_particles_file;i_particle++) 
          mark[i_particle]=-1;
@@ -203,7 +201,6 @@ void read_smooth(plist_info *plist,
        }
        SID_free(SID_FARG id_buf);
        SID_free(SID_FARG id_buf_index);
-       SID_log("Done.",SID_LOG_CLOSE);
 
        // Move to the start of the particle quantities
        if(SID.My_rank==read_rank){
@@ -223,21 +220,18 @@ void read_smooth(plist_info *plist,
          int flag_log_quantity;
          switch(i_quantity){
          case 0:
-           SID_log("Reading lengths...",SID_LOG_OPEN);
            sprintf(var_name,"r_smooth_%s",species_name);
            sprintf(unit_name,"Mpc");
            unit_factor=plist->length_unit/h_Hubble;
            local_array=r_smooth_array;
            break;
          case 1:
-           SID_log("Reading densities...",SID_LOG_OPEN);
            sprintf(var_name,"rho_%s",species_name);
            sprintf(unit_name,"Msol/Mpc^3");
            unit_factor=h_Hubble*h_Hubble*plist->mass_unit/pow(plist->length_unit,3.);
            local_array=rho_array;
            break;
          case 2:
-           SID_log("Reading sigmas_v's...",SID_LOG_OPEN);
            sprintf(var_name,"sigma_v_%s",species_name);
            sprintf(unit_name,"km/s");
            unit_factor=sqrt(expansion_factor)*plist->velocity_unit;
@@ -259,20 +253,21 @@ void read_smooth(plist_info *plist,
               local_array[mark[i_particle]]=((float *)buffer)[i_particle]*unit_factor;
            }
          }
-         SID_log("Done.",SID_LOG_CLOSE);
        }
        SID_free(SID_FARG mark);
        SID_free(SID_FARG buffer);
        if(SID.My_rank==read_rank)
          fclose(fp);
-       SID_log("Done.",SID_LOG_CLOSE);
-     }
+       n_particles_read+=n_particles_file;
+       SID_check_pcounter(&pcounter,n_particles_read);
+     } // i_file
      SID_free(SID_FARG ids_index);
      SID_Barrier(SID.COMM_WORLD);
+     SID_log("Done.",SID_LOG_CLOSE);
 
      // Check that all particles have been treated
      size_t sum_check=0;
-     for(i_particle=0;i_particle<n_particles_total;i_particle++)
+     for(i_particle=0;i_particle<n_particles_local;i_particle++)
         sum_check+=read_array[i_particle];
      SID_Allreduce(SID_IN_PLACE,&sum_check,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
      if(sum_check!=n_particles_total)
@@ -385,6 +380,5 @@ void read_smooth(plist_info *plist,
   }
   else
     SID_trap_error("Could not find file with root {%s}",ERROR_IO_OPEN,filename_root_in);
-  
 }
 
