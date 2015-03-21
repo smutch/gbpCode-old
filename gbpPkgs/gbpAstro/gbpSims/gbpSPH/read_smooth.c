@@ -9,6 +9,7 @@ void read_smooth(plist_info *plist,
                  int         snapshot_number,
                  int         mode){
   char    filename[256];
+  size_t  n_particles_all_mem;
   size_t  n_particles_local;
   size_t  n_particles_total;
   int     i_quantity;
@@ -18,7 +19,6 @@ void read_smooth(plist_info *plist,
   char    var_name[256];
   char    unit_name[256];
   double  unit_factor;
-  smoothfile_header_info read_smoothfile_header;
   int     i_file;
   size_t *ids;
   size_t *ids_index;
@@ -90,8 +90,9 @@ void read_smooth(plist_info *plist,
 
      // Fetch the number of particles and their ids
      species_name     =plist->species[GADGET_TYPE_DARK];
-     n_particles_local=((size_t *)ADaPS_fetch(plist->data,"n_%s",species_name))[0]; 
-     ids              = (size_t *)ADaPS_fetch(plist->data,"id_%s",species_name); 
+     n_particles_local=((size_t *)ADaPS_fetch(plist->data,"n_%s",    species_name))[0]; 
+     n_particles_all_mem  =((size_t *)ADaPS_fetch(plist->data,"n_all_%s",species_name))[0]; 
+     ids              = (size_t *)ADaPS_fetch(plist->data,"id_%s",   species_name); 
      expansion_factor =((double *)ADaPS_fetch(plist->data,"expansion_factor"))[0]; 
      h_Hubble         =((double *)ADaPS_fetch(plist->data,"h_Hubble"))[0]; 
 
@@ -135,10 +136,10 @@ void read_smooth(plist_info *plist,
      for(i_file=0;i_file<n_files;i_file++){
        set_smooth_filename(filename_root_in,snapshot_number,i_file,flag_multifile,flag_file_type,filename);
        if((fp=fopen(filename,"r"))!=NULL){
-          fread(&(header.n_particles_file), sizeof(int),      1,fp);
-          fread(&(header.offset),           sizeof(int),      1,fp);
-          fread(&(header.n_particles_total),sizeof(long long),1,fp);
-          fread(&(header.n_files),          sizeof(int),      1,fp);
+          fread_verify(&(header.n_particles_file), sizeof(int),      1,fp);
+          fread_verify(&(header.offset),           sizeof(int),      1,fp);
+          fread_verify(&(header.n_particles_total),sizeof(long long),1,fp);
+          fread_verify(&(header.n_files),          sizeof(int),      1,fp);
        }
        else
           SID_trap_error("Could not open smooth file {%s}",ERROR_IO_OPEN,filename);
@@ -153,24 +154,24 @@ void read_smooth(plist_info *plist,
 
        // Read IDs
        if(flag_LONGIDs){
-         if(i_file==0) SID_log("Reading (long long) IDs.",SID_LOG_COMMENT);
+         if(i_file==0) SID_log("(long long) IDs...",SID_LOG_CONTINUE);
          id_buf  =SID_malloc(sizeof(long long)*n_particles_file);
          id_buf_L=(long long *)id_buf;
          if(SID.My_rank==read_rank){
            fseeko(fp,(size_t)(3*n_particles_file*sizeof(float)),SEEK_CUR);
-           fread(id_buf,sizeof(long long),n_particles_file,fp);
+           fread_verify(id_buf,sizeof(long long),n_particles_file,fp);
          }
          SID_Barrier(SID.COMM_WORLD);
          SID_Bcast(id_buf_L,(int)(n_particles_file*sizeof(long long)),read_rank,SID.COMM_WORLD);
          merge_sort(id_buf_L,(size_t)n_particles_file,&id_buf_index,SID_SIZE_T,SORT_COMPUTE_INDEX,FALSE);
        }
        else{
-         if(i_file==0) SID_log("Reading (int) IDs.",SID_LOG_COMMENT);
+         if(i_file==0) SID_log("(int) IDs...",SID_LOG_CONTINUE);
          id_buf  =SID_malloc(sizeof(int)*n_particles_file);
          id_buf_i=(int *)id_buf;
          if(SID.My_rank==read_rank){
            fseeko(fp,(size_t)(3*n_particles_file*sizeof(float)),SEEK_CUR);
-           fread(id_buf,sizeof(int),n_particles_file,fp);
+           fread_verify(id_buf,sizeof(int),n_particles_file,fp);
          }
          SID_Barrier(SID.COMM_WORLD);
          SID_Bcast(id_buf_i,(int)(n_particles_file*sizeof(int)),read_rank,SID.COMM_WORLD);
@@ -178,6 +179,7 @@ void read_smooth(plist_info *plist,
        }
 
        // Create local particle mapping
+       int n_mark_i=0;
        mark=(long long *)SID_malloc(sizeof(long long)*n_particles_file);
        for(i_particle=0;i_particle<n_particles_file;i_particle++) 
          mark[i_particle]=-1;
@@ -187,6 +189,7 @@ void read_smooth(plist_info *plist,
            if(ids[ids_index[j_particle]]==id_buf_L[id_buf_index[i_particle]]){
              mark[id_buf_index[i_particle]]=(long long)ids_index[j_particle];
              n_mark++;
+             n_mark_i++;
            }
          }
        }
@@ -196,6 +199,7 @@ void read_smooth(plist_info *plist,
            if(ids[ids_index[j_particle]]==id_buf_i[id_buf_index[i_particle]]){
              mark[id_buf_index[i_particle]]=(long long)ids_index[j_particle];
              n_mark++;
+             n_mark_i++;
            }
          }
        }
@@ -205,10 +209,10 @@ void read_smooth(plist_info *plist,
        // Move to the start of the particle quantities
        if(SID.My_rank==read_rank){
          rewind(fp);
-         fread(&n_particles_file, sizeof(int),      1,fp);
-         fread(&offset,           sizeof(int),      1,fp);
-         fread(&n_particles_total,sizeof(long long),1,fp);
-         fread(&n_files,          sizeof(int),      1,fp);
+         fread_verify(&n_particles_file, sizeof(int),      1,fp);
+         fread_verify(&offset,           sizeof(int),      1,fp);
+         fread_verify(&n_particles_total,sizeof(long long),1,fp);
+         fread_verify(&n_files,          sizeof(int),      1,fp);
          n_files=MAX(1,n_files);
        }
        SID_Bcast(&n_particles_file, (int)sizeof(int),      read_rank,SID.COMM_WORLD);
@@ -241,17 +245,18 @@ void read_smooth(plist_info *plist,
 
          // Read next quantity
          if(SID.My_rank==read_rank)
-           fread(buffer,sizeof(float),n_particles_file,fp);
+           fread_verify(buffer,sizeof(float),n_particles_file,fp);
          SID_Barrier(SID.COMM_WORLD);
          SID_Bcast(buffer,(int)(n_particles_file*sizeof(float)),read_rank,SID.COMM_WORLD);
 
          // Place in final array
-         for(i_particle=0;i_particle<n_particles_file;i_particle++){
-           if(mark[i_particle]>=0){
-              if(i_quantity==0)
-                 read_array[mark[i_particle]]=TRUE;
-              local_array[mark[i_particle]]=((float *)buffer)[i_particle]*unit_factor;
+         if(n_mark_i>0){
+           if(i_quantity==0){
+             for(i_particle=0;i_particle<n_particles_file;i_particle++)
+               if(mark[i_particle]>=0) read_array[mark[i_particle]]=TRUE;
            }
+           for(i_particle=0;i_particle<n_particles_file;i_particle++)
+             if(mark[i_particle]>=0) local_array[mark[i_particle]]=((float *)buffer)[i_particle]*unit_factor;
          }
        }
        SID_free(SID_FARG mark);
@@ -259,7 +264,8 @@ void read_smooth(plist_info *plist,
        if(SID.My_rank==read_rank)
          fclose(fp);
        n_particles_read+=n_particles_file;
-       SID_check_pcounter(&pcounter,n_particles_read);
+       if(n_files>1)
+          SID_check_pcounter(&pcounter,n_particles_read);
      } // i_file
      SID_free(SID_FARG ids_index);
      SID_Barrier(SID.COMM_WORLD);
@@ -268,10 +274,10 @@ void read_smooth(plist_info *plist,
      // Check that all particles have been treated
      size_t sum_check=0;
      for(i_particle=0;i_particle<n_particles_local;i_particle++)
-        sum_check+=read_array[i_particle];
+        sum_check+=(size_t)read_array[i_particle];
      SID_Allreduce(SID_IN_PLACE,&sum_check,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
-     if(sum_check!=n_particles_total)
-        SID_trap_error("Only %lld of %lld particles were set.",ERROR_LOGIC,sum_check,n_particles_total);
+     if(sum_check!=n_particles_all_mem)
+        SID_trap_error("Only %lld of %lld particles were set.",ERROR_LOGIC,sum_check,n_particles_all_mem);
      SID_free(SID_FARG read_array);
 
      SID_log("Summary...",SID_LOG_OPEN);
@@ -375,7 +381,7 @@ void read_smooth(plist_info *plist,
         }
         SID_log("Done.",SID_LOG_CLOSE);
      }
-
+     SID_Barrier(SID.COMM_WORLD);
      SID_log("Done.",SID_LOG_CLOSE);
   }
   else
