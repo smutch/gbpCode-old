@@ -68,6 +68,9 @@ void print_results_local(FILE                 *fp_out,
        float f_sub=(float)(properties->M_vir/properties_group->M_vir);
        fprintf(fp_out,"  %9d %3d %11.5f",j_group,j_subgroup,f_sub);
     }
+    else{
+       fprintf(fp_out,"  %3d",j_subgroup);
+    }
     fprintf(fp_out,"\n");
 }
 
@@ -172,16 +175,20 @@ int main(int argc, char *argv[]){
             fprintf(fp_out[i_type],"#               (%02d)     V_max      [km/s]\n",   i_column++);
             fprintf(fp_out[i_type],"#               (%02d)     V_vir      [km/s]\n",   i_column++);
             fprintf(fp_out[i_type],"#               (%02d)     sigma_v    [km/s]\n",   i_column++);
-            fprintf(fp_out[i_type],"#               (%02d,%02d,%02d) spin       [Mpc/h km/s]\n",i_column++,i_column++,i_column++);
+            fprintf(fp_out[i_type],"#               (%02d,%02d,%02d) spin       [Mpc/h km/s]\n",i_column,i_column+1,i_column+2);i_column+=3;
             fprintf(fp_out[i_type],"#               (%02d)     lambda (spin parameter)\n",i_column++);
             fprintf(fp_out[i_type],"#               (%02d)     q_triaxial\n",             i_column++);
             fprintf(fp_out[i_type],"#               (%02d)     s_triaxial\n",             i_column++);
             fprintf(fp_out[i_type],"#               (%02d)     offset_COM [kpc/h]\n",     i_column++);
             if(flag_use_profiles)
-               fprintf(fp_out[i_type],"#               (%02d)    overdensity(R_halo)\n",i_column++);
-            if(i_type==1){
-               fprintf(fp_out[i_type],"#               (%02d)    substructure rank\n",     i_column++);
-               fprintf(fp_out[i_type],"#               (%02d)    fraction of group mass\n",i_column++);
+               fprintf(fp_out[i_type],"#               (%02d)     overdensity(R_halo)\n",i_column++);
+            if(i_type==0){
+               fprintf(fp_out[i_type],"#               (%02d)     n_substructures\n",     i_column++);
+            }
+            else{
+               fprintf(fp_out[i_type],"#               (%02d)     group index\n",           i_column++);
+               fprintf(fp_out[i_type],"#               (%02d)     substructure rank\n",     i_column++);
+               fprintf(fp_out[i_type],"#               (%02d)     fraction of group mass\n",i_column++);
             }
          }
 
@@ -199,10 +206,10 @@ int main(int argc, char *argv[]){
            int n_subgroups_group;
            fread_catalog_file(&fp_catalog_groups,NULL,properties_group,profile_group,i_group);
            fread(&n_subgroups_group,sizeof(int),1,fp_halos);
-           print_results_local(fp_out[0],flag_use_profiles,box_size,properties_group,properties_group,profile_group,i_group,-1,-1);
+           print_results_local(fp_out[0],flag_use_profiles,box_size,properties_group,properties_group,profile_group,i_group,n_subgroups_group,-1);
            for(int j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
               fread_catalog_file(&fp_catalog_subgroups,NULL,properties_subgroup,profile_subgroup,i_subgroup);
-              print_results_local(fp_out[1],flag_use_profiles,box_size,properties_subgroup,properties_group,profile_subgroup,i_subgroup,i_group,j_subgroup);
+              print_results_local(fp_out[1],flag_use_profiles,box_size,properties_subgroup,properties_group,profile_subgroup,i_subgroup,j_subgroup,i_group);
            }
          }
 
