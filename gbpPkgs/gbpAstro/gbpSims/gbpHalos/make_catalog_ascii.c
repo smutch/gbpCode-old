@@ -218,6 +218,7 @@ int main(int argc, char *argv[]){
          fclose(fp_halos);
          fclose_catalog(&fp_catalog_groups);
          fclose_catalog(&fp_catalog_subgroups);
+         SID_log("Done.",SID_LOG_CLOSE);
      }
      SID_log("Done.",SID_LOG_CLOSE);
   }  
