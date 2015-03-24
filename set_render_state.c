@@ -47,7 +47,7 @@ int set_render_state(render_info *render,int frame,int mode){
   if(!check_mode_for_flag(render->camera->camera_mode,CAMERA_PLANE_PARALLEL))
     perspective->radius*=perspective->phi;
   else
-    perspective->radius=1e8*M_PER_MPC;
+    perspective->radius=1e8;
 
   perspective->FOV   *=perspective->phi;
   perspective->p_c[0] =perspective->p_o[0]+perspective->radius*cos(perspective->zeta)*sin(perspective->theta);
@@ -167,17 +167,6 @@ int set_render_state(render_info *render,int frame,int mode){
     // Mark particles
     perform_marking(render);
   }
-  perspective->p_o[0]*=M_PER_MPC/render->h_Hubble;
-  perspective->p_o[1]*=M_PER_MPC/render->h_Hubble;
-  perspective->p_o[2]*=M_PER_MPC/render->h_Hubble;
-  perspective->p_c[0]*=M_PER_MPC/render->h_Hubble;
-  perspective->p_c[1]*=M_PER_MPC/render->h_Hubble;
-  perspective->p_c[2]*=M_PER_MPC/render->h_Hubble;
-  perspective->d_o   *=M_PER_MPC/render->h_Hubble;
-  perspective->radius*=M_PER_MPC/render->h_Hubble;
-  perspective->FOV   *=M_PER_MPC/render->h_Hubble;
-
-  // Perform marking
 
   return(r_val);
 }

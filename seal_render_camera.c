@@ -96,10 +96,10 @@ void seal_render_camera(render_info *render){
   }
 
   // Convert camera depth-range to Mpc/h
-  if(render->camera->flag_calc_Z_image){
-     render->camera->Z_range[0]*=M_PER_MPC/render->h_Hubble;
-     render->camera->Z_range[1]*=M_PER_MPC/render->h_Hubble;
-  }
+  //if(render->camera->flag_calc_Z_image){
+  //   render->camera->Z_range[0]*=M_PER_MPC/render->h_Hubble;
+  //   render->camera->Z_range[1]*=M_PER_MPC/render->h_Hubble;
+  //}
 
   SID_log("Done.",SID_LOG_CLOSE);
 }

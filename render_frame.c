@@ -112,7 +112,7 @@ int set_pixel_space(float   h_i,
                     double  FOV_y,
                     double  pixel_size_x,
                     double  pixel_size_y,
-                    double  radius_kernel_norm,
+                    double  radius_kernel_max,
                     double *radius2_norm,
                     double *radius_kernel,
                     double *part_pos_x,
@@ -131,7 +131,7 @@ int set_pixel_space(float   h_i,
                     double  FOV_y,
                     double  pixel_size_x,
                     double  pixel_size_y,
-                    double  radius_kernel_norm,
+                    double  radius_kernel_max,
                     double *radius2_norm,
                     double *radius_kernel,
                     double *part_pos_x,
@@ -145,7 +145,7 @@ int set_pixel_space(float   h_i,
    (*part_pos_x)   =(double)x_i*(double)f_i;
    (*part_pos_y)   =(double)y_i*(double)f_i;
    (*radius2_norm) =1./(part_h_xy*part_h_xy);
-   (*radius_kernel)=radius_kernel_norm*part_h_xy;
+   (*radius_kernel)=radius_kernel_max*part_h_xy;
    (*kx_min)       =(int)(((*part_pos_x)-(*radius_kernel)-xmin)/pixel_size_x);
    (*kx_max)       =(int)(((*part_pos_x)+(*radius_kernel)-xmin)/pixel_size_x+ONE_HALF);
    (*ky_min)       =(int)(((*part_pos_y)-(*radius_kernel)-ymin)/pixel_size_y);
@@ -237,13 +237,8 @@ void transform_particle(GBPREAL *x_i,
 
 }
 
-#define MAKE_MAP_NO_WEIGHTING 0
-#define MAKE_MAP_MODE_RHO     2
-#define MAKE_MAP_MODE_SIGMA   4
-
 typedef struct map_quantities_info map_quantities_info;
 struct map_quantities_info{
-   int           flag_velocity_space;
    int           flag_weigh;
    int           flag_line_integral;
    int          *ptype_used;
@@ -283,7 +278,6 @@ void init_particle_map_quantities(map_quantities_info *mq,render_info *render,AD
   SID_log("Initializing quantities...",SID_LOG_OPEN);
 
   // Defaults
-  mq->flag_velocity_space    =FALSE;
   mq->flag_weigh             =FALSE;
   mq->flag_line_integral     =FALSE;
   mq->flag_transfer_sigma_log=FALSE;
@@ -315,7 +309,6 @@ void init_particle_map_quantities(map_quantities_info *mq,render_info *render,AD
   // Render a dark matter velocity dispersion map
   if(!strcmp(render->camera->RGB_param,"sigma_v_dark") && !strcmp(render->camera->Y_param,"tau_dark")){
     mq->ptype_used[GADGET_TYPE_DARK]=TRUE;
-    mq->flag_velocity_space         =FALSE;
     mq->flag_weigh                  =TRUE;
     mq->flag_line_integral          =TRUE;
     mq->n_particles                 =((size_t *)ADaPS_fetch(render->plist_list[0]->data,"n_dark"))[0];
@@ -356,13 +349,12 @@ void init_particle_map_quantities(map_quantities_info *mq,render_info *render,AD
   }
   else if(!strcmp(render->camera->Y_param,"sigma_v_dark") && !strcmp(render->camera->RGB_param,"tau_dark")){
     mq->ptype_used[GADGET_TYPE_DARK]=TRUE;
-    mq->flag_velocity_space         =TRUE;
     mq->flag_weigh                  =TRUE;
     mq->flag_line_integral          =TRUE;
     mq->n_particles                 =((size_t *)ADaPS_fetch(render->plist_list[0]->data,"n_dark"))[0];
     mq->v_mode=MAKE_MAP_MODE_SIGMA;
     mq->w_mode=MAKE_MAP_MODE_RHO;
-    if(ADaPS_exist(render->plist_list[0]->data,"rho_dark")){
+    if(ADaPS_exist(render->plist_list[0]->data,"sigma_v_dark")){
       for(i_snap=0;i_snap<render->n_interpolate;i_snap++)
          mq->rho[i_snap]=(float *)ADaPS_fetch(render->plist_list[i_snap]->data,"sigma_v_dark");
       if(ADaPS_exist(transfer_list,"sigma_v_dark")){
@@ -378,7 +370,7 @@ void init_particle_map_quantities(map_quantities_info *mq,render_info *render,AD
     else
       SID_trap_error("No densities available in make_map.",ERROR_LOGIC);
 
-    // Use sigma_v for values
+    // Use rho for values
     if(ADaPS_exist(render->plist_list[0]->data,"rho_dark")){
       for(i_snap=0;i_snap<render->n_interpolate;i_snap++)
          mq->sigma[i_snap]=(float *)ADaPS_fetch(render->plist_list[i_snap]->data,"rho_dark");
@@ -395,8 +387,36 @@ void init_particle_map_quantities(map_quantities_info *mq,render_info *render,AD
     else
       SID_trap_error("No sigma_v's available in make_map.",ERROR_LOGIC);
   }
+  else if(!strcmp(render->camera->RGB_param,"sigma_v_dark") && render->camera->flag_velocity_space){
+    mq->ptype_used[GADGET_TYPE_DARK]=TRUE;
+    mq->flag_weigh                  =FALSE;
+    mq->flag_line_integral          =TRUE;
+    mq->n_particles                 =((size_t *)ADaPS_fetch(render->plist_list[0]->data,"n_dark"))[0];
+    mq->v_mode=MAKE_MAP_MODE_SIGMA;
+    mq->w_mode=MAKE_MAP_INV_SIGMA;
+
+    // Use sigma_v for values
+    if(ADaPS_exist(render->plist_list[0]->data,"sigma_v_dark")){
+      for(i_snap=0;i_snap<render->n_interpolate;i_snap++)
+         mq->sigma[i_snap]=(float *)ADaPS_fetch(render->plist_list[i_snap]->data,"sigma_v_dark");
+      if(ADaPS_exist(transfer_list,"sigma_v_dark")){
+        if(ADaPS_exist(transfer_list,"sigma_v_dark_log"))
+          mq->flag_transfer_sigma_log=TRUE;
+        mq->transfer_sigma=(interp_info *)ADaPS_fetch(transfer_list,"sigma_v_dark");
+      }
+      else{
+        mq->flag_transfer_sigma_log=FALSE;
+        mq->transfer_sigma         =NULL;
+      }
+    }
+    else
+      SID_trap_error("No sigma_v's available in make_map.",ERROR_LOGIC);
+  }
   else
-    SID_trap_error("Unknown rendering configuration RGB={%s} Y={%s}.",ERROR_LOGIC,render->camera->RGB_param,render->camera->Y_param);
+    SID_trap_error("Unknown rendering configuration RGB={%s} Y={%s} w/ flag_velocity_space=%d.",ERROR_LOGIC,
+                   render->camera->RGB_param,
+                   render->camera->Y_param,
+                   render->camera->flag_velocity_space);
 
   // Initialize arrays
   int n_type_used=0;
@@ -406,12 +426,14 @@ void init_particle_map_quantities(map_quantities_info *mq,render_info *render,AD
         n_type_used++;
         if(n_type_used>1)
            SID_trap_error("An invalid number of particle types (%d) are being used in make_map.",ERROR_LOGIC,n_type_used);
-        if(mq->flag_velocity_space){
+        if(render->camera->flag_velocity_space){
            for(i_snap=0;i_snap<render->n_interpolate;i_snap++){
               mq->x[i_snap]=(GBPREAL *)ADaPS_fetch(render->plist_list[i_snap]->data,"vx_%s",render->plist_list[i_snap]->species[i_type]);
               mq->y[i_snap]=(GBPREAL *)ADaPS_fetch(render->plist_list[i_snap]->data,"vy_%s",render->plist_list[i_snap]->species[i_type]);
               mq->z[i_snap]=(GBPREAL *)ADaPS_fetch(render->plist_list[i_snap]->data,"vz_%s",render->plist_list[i_snap]->species[i_type]);
            }
+           for(i_snap=0;i_snap<render->n_interpolate;i_snap++)
+              mq->h_smooth[i_snap]=(float *)ADaPS_fetch(render->plist_list[i_snap]->data,"sigma_v_%s",render->plist_list[i_snap]->species[i_type]);
         }
         else{
            for(i_snap=0;i_snap<render->n_interpolate;i_snap++){
@@ -419,9 +441,9 @@ void init_particle_map_quantities(map_quantities_info *mq,render_info *render,AD
               mq->y[i_snap]=(GBPREAL *)ADaPS_fetch(render->plist_list[i_snap]->data,"y_%s",render->plist_list[i_snap]->species[i_type]);
               mq->z[i_snap]=(GBPREAL *)ADaPS_fetch(render->plist_list[i_snap]->data,"z_%s",render->plist_list[i_snap]->species[i_type]);
            }
+           for(i_snap=0;i_snap<render->n_interpolate;i_snap++)
+              mq->h_smooth[i_snap]=(float *)ADaPS_fetch(render->plist_list[i_snap]->data,"r_smooth_%s",render->plist_list[i_snap]->species[i_type]);
         }
-        for(i_snap=0;i_snap<render->n_interpolate;i_snap++)
-           mq->h_smooth[i_snap]=(float *)ADaPS_fetch(render->plist_list[i_snap]->data,"r_smooth_%s",render->plist_list[i_snap]->species[i_type]);
      }
   }
   SID_log("%zd eligible for rendering...Done.",SID_LOG_CLOSE,mq->n_particles);
@@ -497,7 +519,27 @@ void set_particle_map_quantities(render_info *render,map_quantities_info *mq,int
               (*w_i)*=mq->inv_expansion_factor_cubed;
            */
            break;
+        case MAKE_MAP_INV_SIGMA:
+           if(render->n_interpolate==1)
+              (*w_i)=1./mq->sigma[0][i_particle];
+           else if(render->n_interpolate==2){
+              double sigma_0=1./mq->sigma[0][i_particle];
+              double sigma_1=1./mq->sigma[1][i_particle];
+              (*w_i)=take_alog10(sigma_0+render->f_interpolate*(sigma_1-sigma_0));
+           }
+           if(mq->transfer_sigma!=NULL){
+              switch(mq->flag_transfer_sigma_log){
+                 case TRUE:
+                    (*w_i)*=MAX(0.,MIN(1.,interpolate(mq->transfer_sigma,take_log10((double)(*w_i)))));
+                    break;
+                 case FALSE:
+                    (*w_i)*=MAX(0.,MIN(1.,interpolate(mq->transfer_sigma,(double)(*w_i))));
+                    break;
+              }
+           }
+           break;
         case MAKE_MAP_NO_WEIGHTING:
+           (*w_i)=1.;
            break;
         default:
            SID_trap_error("Unknown w_mode (%d) in make_map.",ERROR_LOGIC,mq->v_mode);
@@ -557,6 +599,8 @@ void compute_perspective_transformation(double  x_o,
                                         double  x_c,
                                         double  y_c,
                                         double  z_c,
+                                        double  unit_factor,
+                                        const char *unit_text,
                                         double  f_image_plane,
                                         double  stereo_offset,
                                         double *FOV_x,
@@ -579,6 +623,8 @@ void compute_perspective_transformation(double  x_o,
                                         double  x_c,
                                         double  y_c,
                                         double  z_c,
+                                        double  unit_factor,
+                                        const char *unit_text,
                                         double  f_image_plane,
                                         double  stereo_offset,
                                         double *FOV_x,
@@ -657,10 +703,10 @@ void compute_perspective_transformation(double  x_o,
      else
         Dz_stereo=-sqrt(stereo_offset*stereo_offset-Dx_stereo*Dx_stereo-Dy_stereo*Dy_stereo);
      if(stereo_offset!=0){
-        SID_log("Stereo offset results: (offset=%10.3le [Mpc])",SID_LOG_OPEN,stereo_offset/M_PER_MPC);
-        SID_log("(x_o,x_c,D_x)=(%10.3le,%10.3le,%10.3le) [Mpc]",SID_LOG_COMMENT,x_o/M_PER_MPC,x_c/M_PER_MPC,Dx_stereo/M_PER_MPC);
-        SID_log("(y_o,y_c,D_y)=(%10.3le,%10.3le,%10.3le) [Mpc]",SID_LOG_COMMENT,y_o/M_PER_MPC,y_c/M_PER_MPC,Dy_stereo/M_PER_MPC);
-        SID_log("(z_o,z_c,D_z)=(%10.3le,%10.3le,%10.3le) [Mpc]",SID_LOG_COMMENT,z_o/M_PER_MPC,z_c/M_PER_MPC,Dz_stereo/M_PER_MPC);
+        SID_log("Stereo offset results: (offset=%10.3le [%s])",SID_LOG_OPEN,   stereo_offset/unit_factor,unit_text);
+        SID_log("(x_o,x_c,D_x)=(%10.3le,%10.3le,%10.3le) [%s]",SID_LOG_COMMENT,x_o/unit_factor,x_c/unit_factor,Dx_stereo/unit_factor,unit_text);
+        SID_log("(y_o,y_c,D_y)=(%10.3le,%10.3le,%10.3le) [%s]",SID_LOG_COMMENT,y_o/unit_factor,y_c/unit_factor,Dy_stereo/unit_factor,unit_text);
+        SID_log("(z_o,z_c,D_z)=(%10.3le,%10.3le,%10.3le) [%s]",SID_LOG_COMMENT,z_o/unit_factor,z_c/unit_factor,Dz_stereo/unit_factor,unit_text);
         SID_log("",SID_LOG_SILENT_CLOSE);
      }
      (*x_o_out)+=Dx_stereo;
@@ -699,6 +745,8 @@ void init_make_map_noabs(render_info *render,
                          double       x_c,
                          double       y_c,
                          double       z_c,
+                         double       unit_factor,
+                         const char  *unit_text,
                          double       f_image_plane,
                          double       box_size,
                          double       FOV_x_in,
@@ -707,7 +755,7 @@ void init_make_map_noabs(render_info *render,
                          double       ymin,
                          double       pixel_size_x,
                          double       pixel_size_y,
-                         double       radius_kernel_norm,
+                         double       radius_kernel_max,
                          int          nx,
                          int          ny,
                          double       expansion_factor,
@@ -739,6 +787,8 @@ void init_make_map_noabs(render_info *render,
                          double       x_c,
                          double       y_c,
                          double       z_c,
+                         double       unit_factor,
+                         const char  *unit_text,
                          double       f_image_plane,
                          double       box_size,
                          double       FOV_x_in,
@@ -747,7 +797,7 @@ void init_make_map_noabs(render_info *render,
                          double       ymin,
                          double       pixel_size_x,
                          double       pixel_size_y,
-                         double       radius_kernel_norm,
+                         double       radius_kernel_max,
                          int          nx,
                          int          ny,
                          double       expansion_factor,
@@ -843,6 +893,8 @@ void init_make_map_noabs(render_info *render,
                                      x_c_in,
                                      y_c_in,
                                      z_c_in,
+                                     unit_factor,
+                                     unit_text,
                                      f_image_plane,
                                      stereo_offset,
                                      &FOV_x,
@@ -1142,6 +1194,8 @@ void init_make_map_abs(render_info *render,
                        double       x_c,
                        double       y_c,
                        double       z_c,
+                       double       unit_factor,
+                       const char  *unit_text,
                        double       f_image_plane,
                        double       box_size,
                        double       FOV_x_in,
@@ -1150,7 +1204,7 @@ void init_make_map_abs(render_info *render,
                        double       ymin,
                        double       pixel_size_x,
                        double       pixel_size_y,
-                       double       radius_kernel_norm,
+                       double       radius_kernel_max,
                        int          nx,
                        int          ny,
                        double       expansion_factor,
@@ -1182,6 +1236,8 @@ void init_make_map_abs(render_info *render,
                        double       x_c,
                        double       y_c,
                        double       z_c,
+                       double       unit_factor,
+                       const char  *unit_text,
                        double       f_image_plane,
                        double       box_size,
                        double       FOV_x_in,
@@ -1190,7 +1246,7 @@ void init_make_map_abs(render_info *render,
                        double       ymin,
                        double       pixel_size_x,
                        double       pixel_size_y,
-                       double       radius_kernel_norm,
+                       double       radius_kernel_max,
                        int          nx,
                        int          ny,
                        double       expansion_factor,
@@ -1286,6 +1342,8 @@ void init_make_map_abs(render_info *render,
                                      x_c_in,
                                      y_c_in,
                                      z_c_in,
+                                     unit_factor,
+                                     unit_text,
                                      f_image_plane,
                                      stereo_offset,
                                      &FOV_x,
@@ -1382,7 +1440,7 @@ void init_make_map_abs(render_info *render,
                                FOV_y,
                                pixel_size_x,
                                pixel_size_y,
-                               radius_kernel_norm,
+                               radius_kernel_max,
                                &radius2_norm,
                                &radius_kernel,
                                &part_pos_x,
@@ -1512,7 +1570,7 @@ void init_make_map_abs(render_info *render,
                                FOV_y,
                                pixel_size_x,
                                pixel_size_y,
-                               radius_kernel_norm,
+                               radius_kernel_max,
                                &radius2_norm,
                                &radius_kernel,
                                &part_pos_x,
@@ -1647,7 +1705,7 @@ void init_make_map_abs(render_info *render,
                                   FOV_y,
                                   pixel_size_x,
                                   pixel_size_y,
-                                  radius_kernel_norm,
+                                  radius_kernel_max,
                                   &radius2_norm,
                                   &radius_kernel,
                                   &part_pos_x,
@@ -1847,8 +1905,8 @@ void render_frame(render_info  *render){
   double    *kernel_radius;
   double    *kernel_table;
   double     kernel_table_avg;
-  double     radius_kernel_norm;
-  double     radius_kernel_norm2;
+  double     radius_kernel_max;
+  double     radius_kernel_max2;
 
   double     d_o,d_x_o,d_y_o,d_z_o;
 
@@ -1858,6 +1916,7 @@ void render_frame(render_info  *render){
   double       x_c;
   double       y_c;
   double       z_c;
+  double       FOV;
   double       FOV_x_object_plane;
   double       FOV_y_object_plane;
   double       FOV_x_image_plane;
@@ -1893,53 +1952,83 @@ void render_frame(render_info  *render){
   if(f_absorption<0.)
      f_absorption=0.;
 
-  x_o     =render->camera->perspective->p_o[0];
-  y_o     =render->camera->perspective->p_o[1];
-  z_o     =render->camera->perspective->p_o[2];
-  d_o     =render->camera->perspective->d_o;
-  x_c     =render->camera->perspective->p_c[0];
-  y_c     =render->camera->perspective->p_c[1];
-  z_c     =render->camera->perspective->p_c[2];
-  nx      =render->camera->width;
-  ny      =render->camera->height;
-  v_mode  =render->v_mode;
-  w_mode  =render->w_mode;
+  x_o          =render->camera->perspective->p_o[0];
+  y_o          =render->camera->perspective->p_o[1];
+  z_o          =render->camera->perspective->p_o[2];
+  x_c          =render->camera->perspective->p_c[0];
+  y_c          =render->camera->perspective->p_c[1];
+  z_c          =render->camera->perspective->p_c[2];
+  d_o          =render->camera->perspective->d_o;
+  FOV          =render->camera->perspective->FOV;
+  focus_shift_x=render->camera->perspective->focus_shift_x;
+  focus_shift_y=render->camera->perspective->focus_shift_y;
+  h_Hubble     =render->h_Hubble;
+
+  double unit_factor;
+  char   unit_text[32];
+  int    kernel_flag;
+  int    flag_velocity_space=render->camera->flag_velocity_space;
+  if(flag_velocity_space){
+     SID_log("Rendering in velocity-space.",SID_LOG_COMMENT);
+     kernel_flag=SPH_KERNEL_GAUSSIAN;
+     unit_factor=1e3;
+     sprintf(unit_text,"km/s");
+  }
+  else{
+     SID_log("Rendering in real-space.",SID_LOG_COMMENT);
+     kernel_flag=SPH_KERNEL_GADGET;
+     unit_factor=M_PER_MPC/h_Hubble;
+     sprintf(unit_text,"Mpc/h");
+  }
+
+  x_o          *=unit_factor;
+  y_o          *=unit_factor;
+  z_o          *=unit_factor;
+  x_c          *=unit_factor;
+  y_c          *=unit_factor;
+  z_c          *=unit_factor;
+  d_o          *=unit_factor;
+  FOV          *=unit_factor;
+  focus_shift_x*=unit_factor;
+  focus_shift_y*=unit_factor;
+
+  nx                 =render->camera->width;
+  ny                 =render->camera->height;
+  v_mode             =render->v_mode;
+  w_mode             =render->w_mode;
   camera_mode        =render->camera->camera_mode;
   flag_comoving      =render->flag_comoving;
   flag_fade          =render->flag_fade;
   flag_force_periodic=render->flag_force_periodic;
   flag_add_absorption=render->flag_add_absorption;
   expansion_factor   =render->camera->perspective->time;
-  box_size           =((double *)ADaPS_fetch(render->plist_list[0]->data,"box_size"))[0];
-  h_Hubble           =render->h_Hubble;
-  focus_shift_x      =render->camera->perspective->focus_shift_x*M_PER_MPC/h_Hubble;
-  focus_shift_y      =render->camera->perspective->focus_shift_y*M_PER_MPC/h_Hubble;
   f_image_plane      =render->camera->f_image_plane;
   d_near_field       =render->camera->f_near_field*d_o;
   d_taper_field      =render->camera->f_taper_field*d_o;
   d_image_plane      =d_o*f_image_plane;
+  box_size           =((double *)ADaPS_fetch(render->plist_list[0]->data,"box_size"))[0];
 
   // Sanity check the taper distances
   double taper_width=d_taper_field-d_near_field;
   if(taper_width<0.)
-     SID_trap_error("The near-field distance (%le [Mpc/h]) must be less than the taper distance (%le [Mpc/h]) if non-zero.",ERROR_LOGIC,
-                    d_near_field*h_Hubble/M_PER_MPC,
-                    d_taper_field*h_Hubble/M_PER_MPC);
+     SID_trap_error("The near-field distance (%le [%s]) must be less than the taper distance (%le [%s]) if non-zero.",ERROR_LOGIC,
+                    d_near_field*unit_factor, unit_text,
+                    d_taper_field*unit_factor,unit_text);
 
   // Set FOV
   if(d_near_field>0.)
-     SID_log("Near  field  = %le [Mpc/h]",SID_LOG_COMMENT,d_near_field *h_Hubble/M_PER_MPC);
+     SID_log("Near  field  = %le [%s]",SID_LOG_COMMENT,d_near_field *unit_factor,unit_text);
   if(d_taper_field>0.)
-     SID_log("Taper field  = %le [Mpc/h]",SID_LOG_COMMENT,d_taper_field*h_Hubble/M_PER_MPC);
+     SID_log("Taper field  = %le [%s]",SID_LOG_COMMENT,d_taper_field*unit_factor,unit_text);
   if(d_near_field>0. || d_taper_field>0.)
-     SID_log("Image plane  = %le [Mpc/h]",SID_LOG_COMMENT,d_image_plane*h_Hubble/M_PER_MPC);
+     SID_log("Image plane  = %le [%s]",SID_LOG_COMMENT,d_image_plane*unit_factor,unit_text);
   SID_log("f_absorption = %le",SID_LOG_COMMENT,f_absorption);
   if(nx>=ny){
-    FOV_y_object_plane=render->camera->perspective->FOV;
+    FOV_y_object_plane=FOV;
     FOV_x_object_plane=FOV_y_object_plane*(double)nx/(double)ny;    
   }
   else{
-    FOV_x_object_plane=render->camera->perspective->FOV;
+    FOV_x_object_plane=FOV;
     FOV_y_object_plane=FOV_x_object_plane*(double)nx/(double)ny;        
   }
   FOV_x_image_plane=FOV_x_object_plane*f_image_plane;
@@ -2012,12 +2101,12 @@ void render_frame(render_info  *render){
                    &(render->kernel_table_3d),
                    &(render->kernel_table),
                    &(render->kernel_table_avg),
-                   SPH_KERNEL_GADGET|SPH_KERNEL_2D);
-    kernel_radius      =render->kernel_radius;
-    kernel_table       =render->kernel_table;
-    kernel_table_avg   =render->kernel_table_avg;
-    radius_kernel_norm =kernel_radius[N_KERNEL_TABLE];
-    radius_kernel_norm2=radius_kernel_norm*radius_kernel_norm;
+                   kernel_flag|SPH_KERNEL_2D);
+    kernel_radius     =render->kernel_radius;
+    kernel_table      =render->kernel_table;
+    kernel_table_avg  =render->kernel_table_avg;
+    radius_kernel_max =kernel_radius[N_KERNEL_TABLE];
+    radius_kernel_max2=radius_kernel_max*radius_kernel_max;
 
     double x_o_in=x_o;
     double y_o_in=y_o;
@@ -2045,6 +2134,8 @@ void render_frame(render_info  *render){
                                        x_c_in,
                                        y_c_in,
                                        z_c_in,
+                                       unit_factor,
+                                       unit_text,
                                        f_image_plane,
                                        stereo_offset,
                                        &FOV_x,
@@ -2069,11 +2160,12 @@ void render_frame(render_info  *render){
        init_make_map_abs(render,
                          x_o,y_o,z_o,
                          x_c,y_c,z_c,
+                         unit_factor,unit_text,
                          f_image_plane,
                          box_size,FOV_x_object_plane,FOV_y_object_plane,
                          xmin,ymin,
                          pixel_size_x,pixel_size_y,
-                         radius_kernel_norm,
+                         radius_kernel_max,
                          nx,ny,
                          expansion_factor,
                          focus_shift_x,
@@ -2099,11 +2191,12 @@ void render_frame(render_info  *render){
        init_make_map_noabs(render,
                            x_o,y_o,z_o,
                            x_c,y_c,z_c,
+                           unit_factor,unit_text,
                            f_image_plane,
                            box_size,FOV_x_object_plane,FOV_y_object_plane,
                            xmin,ymin,
                            pixel_size_x,pixel_size_y,
-                           radius_kernel_norm,
+                           radius_kernel_max,
                            nx,ny,
                            expansion_factor,
                            focus_shift_x,
@@ -2167,13 +2260,11 @@ void render_frame(render_info  *render){
         radius2_norm =1./(part_h_xy*part_h_xy);
         part_pos_x   =(double)(x[i_particle]*f_stretch[i_particle]);
         part_pos_y   =(double)(y[i_particle]*f_stretch[i_particle]);
-        radius_kernel=radius_kernel_norm*part_h_xy;
+        radius_kernel=part_h_xy;
         kx_min=(int)((part_pos_x-radius_kernel-xmin)/pixel_size_x);
         kx_max=(int)((part_pos_x+radius_kernel-xmin)/pixel_size_x+ONE_HALF);
         ky_min=(int)((part_pos_y-radius_kernel-ymin)/pixel_size_y);
         ky_max=(int)((part_pos_y+radius_kernel-ymin)/pixel_size_y+ONE_HALF);
-//if(ii_particle<100) fprintf(stderr,"%le %le %le -- %d %d\n",part_pos_x,xmin,FOV_x_image_plane,kx_min,kx_max);
-//else exit(0);
 
         // Compute any potential fading
         double f_fade;
@@ -2207,6 +2298,8 @@ void render_frame(render_info  *render){
         double vw_i=v_i*w_i;
         double zw_i=z_i*w_i;
 
+//printf("%f %f %f -- %le -- %le %le -- %le %le %le -- %4d %4d %4d %4d -- %le %le\n",part_pos_x,part_pos_y,f_stretch[i_particle],radius_kernel,pixel_size_x,pixel_size_y,xmin,ymin,FOV,kx_min,kx_max,ky_min,ky_max,w_i,v_i);
+//if(n_particles_used_local>=10) SID_exit(ERROR_NONE);
         // Loop over the kernal
         for(kx=kx_min,pixel_pos_x=xmin+(kx_min+0.5)*pixel_size_x;kx<=kx_max;kx++,pixel_pos_x+=pixel_size_x){
           if(kx>=0 && kx<nx){
@@ -2217,9 +2310,9 @@ void render_frame(render_info  *render){
                   (pixel_pos_y-part_pos_y)*(pixel_pos_y-part_pos_y);
                 radius2*=radius2_norm;
                 // Construct images here
-                if(radius2<radius_kernel_norm2){
+                if(radius2<radius_kernel_max2){
                   pos    =ky+kx*ny;
-                  f_table=sqrt(radius2);
+                  f_table=sqrt(radius2)/radius_kernel_max;
                   i_table=(int)(f_table*(double)N_KERNEL_TABLE);
                   kernel =kernel_table[i_table]+
                     (kernel_table[i_table+1]-kernel_table[i_table])*
@@ -2233,6 +2326,7 @@ void render_frame(render_info  *render){
                   if(z_image!=NULL)
                      z_image[pos]+=(f_dim*z_i-f_absorption*z_image[pos])*w_k;
                   if(RY_image!=NULL){
+// Should the R,G,B_i's be after the f_dim's here?
                      RY_image[pos]+=(f_dim-f_absorption*RY_image[pos])*w_k*R_i;
                      GY_image[pos]+=(f_dim-f_absorption*GY_image[pos])*w_k*G_i;
                      BY_image[pos]+=(f_dim-f_absorption*BY_image[pos])*w_k*B_i;
@@ -2415,8 +2509,8 @@ void render_frame(render_info  *render){
           SID_log("BY  max =%le",SID_LOG_COMMENT,max_BY_image);
        }
        if(z_image!=NULL){
-          SID_log("Z   min =%le [Mpc/h]",SID_LOG_COMMENT,h_Hubble*min_z_image/M_PER_MPC);
-          SID_log("Z   max =%le [Mpc/h]",SID_LOG_COMMENT,h_Hubble*max_z_image/M_PER_MPC);
+          SID_log("Z   min =%le [%s]",SID_LOG_COMMENT,min_z_image/unit_factor,unit_text);
+          SID_log("Z   max =%le [%s]",SID_LOG_COMMENT,max_z_image/unit_factor,unit_text);
        }
        SID_log("",SID_LOG_SILENT_CLOSE);
     }

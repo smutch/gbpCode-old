@@ -682,11 +682,11 @@ void read_gadget_binary_render(char       *filename_root_in,
 
                // Decide what kind of IDs we have
                if(record_length_open/(int)n_particles_file==sizeof(long long)){
-                  if(i_file==0) SID_log("Reading (long long) IDs.",SID_LOG_COMMENT);
+                  if(i_file==0) SID_log("(long long) IDs...",SID_LOG_CONTINUE);
                   flag_LONGIDs=TRUE;
                }
                else{
-                  if(i_file==0) SID_log("Reading (int) IDs.",SID_LOG_COMMENT);
+                  if(i_file==0) SID_log("(int) IDs...",SID_LOG_CONTINUE);
                   flag_LONGIDs=FALSE;
                }
 
@@ -751,7 +751,8 @@ void read_gadget_binary_render(char       *filename_root_in,
                SID_free(SID_FARG keep);
          } // if n_particles_file>0
          n_particles_read+=n_particles_file;
-         SID_check_pcounter(&pcounter,n_particles_read);
+         if(n_files>1)
+            SID_check_pcounter(&pcounter,n_particles_read);
       } // loop over i_file
       free_RNG(RNG);
       SID_free(SID_FARG RNG);

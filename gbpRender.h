@@ -10,6 +10,21 @@
   #include <swscale.h>
 #endif
 
+#define MAKE_MAP_LOG           TTTP01
+#define MAKE_MAP_APPLY_DIMMING TTTP02
+#define MAKE_MAP_COLOUR        TTTP03
+#define MAKE_MAP_LUMINOSITY    TTTP04
+#define MAKE_MAP_NO_WEIGHTING  TTTP05
+#define MAKE_MAP_MODE_RHO      TTTP06
+#define MAKE_MAP_MODE_SIGMA    TTTP07
+#define MAKE_MAP_INV_SIGMA     TTTP08
+
+#define N_KERNEL_TABLE      20000
+#define SPH_KERNEL_2D       TTTP01
+#define SPH_KERNEL_GADGET   TTTP02
+#define SPH_KERNEL_GASOLINE TTTP03
+#define SPH_KERNEL_GAUSSIAN TTTP04
+
 #define CAMERA_MONO            0
 #define CAMERA_STEREO          2
 #define CAMERA_PLANE_PARALLEL  4
@@ -124,6 +139,7 @@ typedef struct camera_info camera_info;
 struct camera_info{
   int               camera_mode;
   int               colour_table;
+  int               flag_velocity_space;
   int               width;
   int               height;
   double            stereo_ratio;

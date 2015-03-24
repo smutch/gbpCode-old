@@ -30,13 +30,13 @@ void set_sph_kernel(double **kernel_radius,
     // Initialize kernel arrays
     (*kernel_radius)  =(double *)SID_malloc(sizeof(double)*(N_KERNEL_TABLE+1));
     (*kernel_table_3d)=(double *)SID_malloc(sizeof(double)*(N_KERNEL_TABLE+1));
-    for(i_table=0;i_table<=N_KERNEL_TABLE;i_table++){
-      (*kernel_radius)[i_table]  =(double)i_table/(double)N_KERNEL_TABLE;
-      (*kernel_table_3d)[i_table]=0.;
-    }
 
     // Set gadget kernel
     if(check_mode_for_flag(mode,SPH_KERNEL_GADGET)){
+      for(i_table=0;i_table<=N_KERNEL_TABLE;i_table++){
+        (*kernel_radius)[i_table]  =(double)i_table/(double)N_KERNEL_TABLE;
+        (*kernel_table_3d)[i_table]=0.;
+      }
       // From subfind ...
       //#define  NUMDIMS 3      //!< For 3D-normalized kernel 
       //#define  KERNEL_COEFF_1  2.546479089470 //!< Coefficients for SPH spline kernel and its derivative 
@@ -63,6 +63,16 @@ void set_sph_kernel(double **kernel_radius,
         else
           (*kernel_table_3d)[i_table]=0.;
       }
+    }
+    else if(check_mode_for_flag(mode,SPH_KERNEL_GAUSSIAN)){
+      for(i_table=0;i_table<=N_KERNEL_TABLE;i_table++){
+        (*kernel_radius)[i_table]  =3.*(double)i_table/(double)N_KERNEL_TABLE;
+        (*kernel_table_3d)[i_table]=0.;
+      }
+      // Radius is in units of standard deviation
+      double norm=1./sqrt(TWO_PI);
+      for(i_table=0;i_table<=N_KERNEL_TABLE;i_table++)
+         (*kernel_table_3d)[i_table]=norm*exp(-0.5*(*kernel_radius)[i_table]*(*kernel_radius)[i_table]);
     }
     else
       SID_trap_error("Unknown kernel type in set_sph_kernel!",ERROR_LOGIC);

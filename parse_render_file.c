@@ -72,6 +72,11 @@ void parse_render_file(render_info **render, char *filename){
                  grab_int(line,i_word++,&halo_index);
                  add_mark_argument((*render),mark_species,mark_value,mark_type,halo_index);
               }
+              else if(!strcmp(mark_type,"subgroup_index")){
+                 int halo_index;
+                 grab_int(line,i_word++,&halo_index);
+                 add_mark_argument((*render),mark_species,mark_value,mark_type,halo_index);
+              }
               else
                  SID_trap_error("Invalid mark type {%s} in line {%s}.",ERROR_LOGIC,mark_type,line);
            }
@@ -186,6 +191,8 @@ void parse_render_file(render_info **render, char *filename){
             grab_int(line,i_word++,&i_value);
             (*render)->camera->height=i_value;
           }
+          else if(!strcmp(variable,"v-space"))
+            (*render)->camera->flag_velocity_space=TRUE;
           else if(!strcmp(variable,"stereo_factor")){
             grab_double(line,i_word++,&d_value);
             (*render)->camera->stereo_ratio=d_value;
