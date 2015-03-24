@@ -453,16 +453,18 @@ void match_halos(plist_info  *plist_1_in,
     SID_log("Done.",SID_LOG_CLOSE|SID_LOG_TIMER);
 
     // Perform matching
+    size_t *index_1;
+    size_t *index_2_local;
     for(i_rank=0,n_match=0;i_rank<SID.n_proc;i_rank++){
        if(SID.n_proc>1)
           SID_log("Processing rank %4d of %4d...",SID_LOG_OPEN|SID_LOG_TIMER,i_rank+1,SID.n_proc);
 
        // Sort the IDs of the first catalog.  Only needs to be done for i_rank==0 for
        //   all particles and then for i_rank==1 for exchanged particles.
-       size_t *index_1      =NULL;
-       size_t *index_2_local=NULL;
        if(i_rank==0){
           SID_log("Sorting all IDs...",SID_LOG_OPEN|SID_LOG_TIMER);
+          index_1      =NULL;
+          index_2_local=NULL;
           merge_sort(id_1,      (size_t)(n_particles_1),      &index_1,      SID_SIZE_T,SORT_COMPUTE_INDEX,FALSE); //*
           merge_sort(id_2_local,(size_t)(n_particles_2_local),&index_2_local,SID_SIZE_T,SORT_COMPUTE_INDEX,FALSE);
           SID_log("Done.",SID_LOG_CLOSE);
@@ -683,11 +685,11 @@ void match_halos(plist_info  *plist_1_in,
           } // If we are matching this group and particle
        } // Loop over local particles in catalog 1
        SID_log("Done.",SID_LOG_CLOSE);
-       SID_free(SID_FARG index_1);
-       SID_free(SID_FARG index_2_local);
        if(SID.n_proc>1)
           SID_log("Done.",SID_LOG_CLOSE);
     } // Loop over ranks
+    SID_free(SID_FARG index_1);
+    SID_free(SID_FARG index_2_local);
 
     // Determine the best matches
     for(i_group=0,i_mark=0;i_group<n_groups_1_local;i_group++){

@@ -34,7 +34,7 @@ if ( ${GBP_QUEUE_TYPE} == 'PBS' ) then
   #set CMD_STRING = ( $GBP_MPI_BIN'/bin/mpiexec --mca btl_openib_cpc_include rdmacm --mca btl self,openib '$GBP_BIN'/mpi/'$ARG_CMD )
   #set CMD_STRING = ( $GBP_MPI_BIN'/bin/mpiexec --mca btl self,openib '$GBP_BIN'/mpi/'$ARG_CMD )
 
-  set CMD_STRING = ( $GBP_MPI_BIN'/mpiexec --mca btl self,openib -mca btl_openib_flags 1 '$GBP_VALGRIND_DIR'/bin/valgrind '$GBP_BIN'/mpi/'$ARG_CMD )
+  set CMD_STRING = ( $GBP_MPI_BIN'/mpiexec --mca btl self,openib -mca btl_openib_flags 1 '$GBP_VALGRIND_DIR'/bin/valgrind --leak-check=full '$GBP_BIN'/mpi/'$ARG_CMD )
 
   # Add the command arguments
   @ i=$FIRST_ARG
@@ -86,7 +86,7 @@ else
   #setenv LD_LIBRARY_PATH $GBP_MPI_LIB:$LD_LIBRARY_PATH
   setenv LD_PRELOAD      $GBP_VALGRIND_DIR//lib/valgrind/libmpiwrap-$GBP_VALGRIND_PLAT.so
   # Set the mpiexec command
-  set CMD_STRING = ( $GBP_MPI_BIN'mpiexec -mca btl tcp,self -n '$NPROCS' '$GBP_VALGRIND_DIR'/bin/valgrind '$GBP_BIN'/mpi/'$ARG_CMD )
+  set CMD_STRING = ( $GBP_MPI_BIN'mpiexec -mca btl tcp,self -n '$NPROCS' '$GBP_VALGRIND_DIR'/bin/valgrind --leak-check=full '$GBP_BIN'/mpi/'$ARG_CMD )
 
   # Add the command arguments
   @ i=$FIRST_ARG
