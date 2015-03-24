@@ -11,6 +11,7 @@
 typedef struct select_group_params_local select_group_params_local;
 struct select_group_params_local{
    int     selection_index;
+   int     flag_long_ids_store;
    size_t  n_ids_list;
    void   *ids_list;
    char   *val_list;
@@ -43,20 +44,29 @@ int add_to_ids_list_local(int                i_group,
 int add_to_ids_list_local(int                i_group,
                           int                j_subgroup,
                           int                i_subgroup,
-                          int                flag_long_ids,
+                          int                flag_long_ids_in,
                           process_halo_info *group_i,
                           process_halo_info *subgroup_i,
                           void              *params_in){
    select_group_params_local *params=(select_group_params_local *)params_in;
+   int     flag_long_ids_store=params->flag_long_ids_store;
    size_t *ids_l=(size_t *)params->ids_list;
    int    *ids_i=(int    *)params->ids_list;
-   switch(flag_long_ids){
-      case TRUE:
+   if(flag_long_ids_in){
+      if(flag_long_ids_in!=flag_long_ids_store){
+         for(int i_particle=0;i_particle<group_i->n_particles;i_particle++)
+            ids_i[params->n_ids_list+i_particle]=(int)(((size_t *)group_i->ids)[i_particle]);
+      }
+      else
          memcpy(&(ids_l[params->n_ids_list]),group_i->ids,group_i->n_particles*sizeof(size_t));
-         break;
-      case FALSE:
+   }
+   else{
+      if(flag_long_ids_in!=flag_long_ids_store){
+         for(int i_particle=0;i_particle<group_i->n_particles;i_particle++)
+            ids_l[params->n_ids_list+i_particle]=(size_t)(((int *)group_i->ids)[i_particle]);
+      }
+      else
          memcpy(&(ids_i[params->n_ids_list]),group_i->ids,group_i->n_particles*sizeof(int));
-         break;
    }
    params->n_ids_list+=group_i->n_particles;
 }
@@ -128,15 +138,16 @@ void make_ids_list(render_info *render,
    int i_read=render->snap_list[i_snap];
    int flag_long_ids=ADaPS_exist(render->plist_list[i_snap]->data,"flag_LONGIDs");
    select_group_params_local params;
-   params.selection_index=selection;
-   params.n_ids_list =0;
+   params.flag_long_ids_store=flag_long_ids;
+   params.selection_index    =selection;
+   params.n_ids_list         =0;
 
    // Count the number of particles we will have
    process_SSimPL_halos(render->filename_SSimPL_dir,
                         render->filename_halo_type,
                         render->filename_tree_version,
                         i_read,0,
-                        select_group_index_local,
+                        select_function,
                         count_group_ids_local,
                         &params);
 
@@ -162,7 +173,7 @@ void make_ids_list(render_info *render,
                         render->filename_halo_type,
                         render->filename_tree_version,
                         i_read,1,
-                        select_group_index_local,
+                        select_function,
                         add_to_ids_list_local,
                         &params);
 
@@ -244,6 +255,8 @@ void execute_marking_argument_local(render_info *render,mark_arg_info *arg){
       SID_log("Marking spherical volume...",SID_LOG_OPEN|SID_LOG_TIMER);
    else if(!strcmp(arg->type,"group_index"))
       SID_log("Marking group halo (index=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,arg->ival[0]);
+   else if(!strcmp(arg->type,"subgroup_index"))
+      SID_log("Marking subgroup halo (index=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,arg->ival[0]);
    else
       SID_trap_error("Invalid selection type {%s} in perform_marking().",ERROR_LOGIC,arg->type);
    for(int i_snap=0;i_snap<render->n_interpolate;i_snap++){
@@ -275,13 +288,28 @@ void execute_marking_argument_local(render_info *render,mark_arg_info *arg){
                }
                // ... set all particles in a sphere to a value.
                else if(!strcmp(arg->type,"sphere")){
-                  double   x_cen=arg->dval[0]*M_PER_MPC/render->h_Hubble;
-                  double   y_cen=arg->dval[1]*M_PER_MPC/render->h_Hubble;
-                  double   z_cen=arg->dval[2]*M_PER_MPC/render->h_Hubble;
-                  double   r2   =arg->dval[3]*arg->dval[3]*pow(M_PER_MPC/render->h_Hubble,2.);
-                  GBPREAL *x=(GBPREAL *)ADaPS_fetch(plist->data,"x_%s",species_name);
-                  GBPREAL *y=(GBPREAL *)ADaPS_fetch(plist->data,"y_%s",species_name);
-                  GBPREAL *z=(GBPREAL *)ADaPS_fetch(plist->data,"z_%s",species_name);
+                  double x_cen,y_cen,z_cen,r2;
+                  GBPREAL *x=NULL;
+                  GBPREAL *y=NULL;
+                  GBPREAL *z=NULL;
+                  if(!render->camera->flag_velocity_space){
+                     x_cen=arg->dval[0]*M_PER_MPC/render->h_Hubble;
+                     y_cen=arg->dval[1]*M_PER_MPC/render->h_Hubble;
+                     z_cen=arg->dval[2]*M_PER_MPC/render->h_Hubble;
+                     r2   =arg->dval[3]*arg->dval[3]*pow(M_PER_MPC/render->h_Hubble,2.);
+                     x=(GBPREAL *)ADaPS_fetch(plist->data,"x_%s",species_name);
+                     y=(GBPREAL *)ADaPS_fetch(plist->data,"y_%s",species_name);
+                     z=(GBPREAL *)ADaPS_fetch(plist->data,"z_%s",species_name);
+                  }
+                  else{
+                     x_cen=arg->dval[0]*1e3;
+                     y_cen=arg->dval[1]*1e3;
+                     z_cen=arg->dval[2]*1e3;
+                     r2   =arg->dval[3]*arg->dval[3]*pow(1e3,2.);
+                     x=(GBPREAL *)ADaPS_fetch(plist->data,"vx_%s",species_name);
+                     y=(GBPREAL *)ADaPS_fetch(plist->data,"vy_%s",species_name);
+                     z=(GBPREAL *)ADaPS_fetch(plist->data,"vz_%s",species_name);
+                  }
                   for(size_t i_particle=0;i_particle<n_species_local;i_particle++){
                      double r2_i;
                      r2_i =(double)(x[i_particle]-x_cen)*(double)(x[i_particle]-x_cen);
