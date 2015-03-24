@@ -4,11 +4,6 @@
 #include <gbpMath.h>
 #include <gbpCosmo.h>
 
-#define MAKE_MAP_LOG           2
-#define MAKE_MAP_APPLY_DIMMING 4
-#define MAKE_MAP_COLOUR        8
-#define MAKE_MAP_LUMINOSITY    16
-
 #define GADGET_BUFFER_SIZE  SIZE_OF_MEGABYTE
 
 #define GADGET_HEADER_SIZE  256

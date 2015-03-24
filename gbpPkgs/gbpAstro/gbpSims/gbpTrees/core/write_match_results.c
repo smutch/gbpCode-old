@@ -13,6 +13,8 @@ void write_match_results(char       *filename_out_dir,
                          char       *filename_out_root,
                          int         i_read,
                          int         j_read,
+                         const char *filename_cat1,
+                         const char *filename_cat2,
                          plist_info *plist1,
                          plist_info *plist2,
                          int         k_match,
@@ -32,8 +34,6 @@ void write_match_results(char       *filename_out_dir,
   char        group_text_prefix[5];
   int         n_matches;
   int         n_files;
-  char        filename_cat1[256];
-  char        filename_cat2[256];
   int         n_groups_1;
   int         n_groups_1_local;
   int         n_groups_2;
@@ -63,10 +63,6 @@ void write_match_results(char       *filename_out_dir,
   int         n_buffer;
   int         i_buffer;
   int         j_buffer;
-
-  // Set catalog names
-  sprintf(filename_cat1,"%03d",i_read);
-  sprintf(filename_cat2,"%03d",j_read);
 
   switch(k_match){
      case 0:

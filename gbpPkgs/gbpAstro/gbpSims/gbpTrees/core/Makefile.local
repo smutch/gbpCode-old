@@ -54,7 +54,7 @@ OBJFILES  = read_trees_run_parameters.o                   \
 	    read_a_list.o                                 \
 	    write_match_results.o                         \
 	    check_for_matching_input_files.o              \
-        compute_single_matches.o                      \
+        compute_cross_catalog_matches.o               \
         compute_trees_matches.o                       \
 	    compute_trees_auxiliary.o                     \
 	    compute_forests.o                             \

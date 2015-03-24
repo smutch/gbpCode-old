@@ -42,13 +42,13 @@ int main(int argc, char *argv[]){
   i_read_1               =atoi(argv[3]);
   i_read_2               =atoi(argv[4]);
 
-  SID_log("Constructing matches between snapshots #%d and #%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_read_1,i_read_2);
-
   // Perform matching
-  compute_single_matches(filename_halo_root_in,
-                         filename_root_matches,
-                         i_read_1,
-                         i_read_2);
+  SID_log("Constructing matches between snapshots #%d and #%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_read_1,i_read_2);
+  compute_cross_catalog_matches(filename_halo_root_in,
+                                filename_halo_root_in,
+                                filename_root_matches,
+                                i_read_1,
+                                i_read_2);
 
   SID_log("Done.",SID_LOG_CLOSE);
   SID_exit(ERROR_NONE);

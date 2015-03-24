@@ -137,6 +137,7 @@ int main(int argc, char *argv[]){
        n_particles_groups=(int *)ADaPS_fetch(plist.data,"n_particles_group_%s",filename_number);
 
        // Read MBP data from halo catalogs
+       SID_log("Reading most-bound-particle positions...",SID_LOG_OPEN);
        halo_properties_info group_properties;
        fp_catalog_info      fp_group_properties;
        x_array=(double *)SID_malloc(sizeof(double)*n_groups);
@@ -162,6 +163,7 @@ int main(int argc, char *argv[]){
           if(z_array[i_group]>=box_size) z_array[i_group]-=box_size;
        }
        fclose_catalog(&fp_group_properties);
+       SID_log("Done.",SID_LOG_CLOSE);
 
        // Determine the number of bits to use for the PHKs
        for(n_bits=N_BITS_MIN;(box_size/pow(2.,(double)(n_bits+1)))>dx && n_bits<=20;) n_bits++;

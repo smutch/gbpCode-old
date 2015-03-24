@@ -213,7 +213,8 @@ void store_gadget_particles(gadget_read_info *fp_gadget,
    id_particle[i_type][i_particle_type]=ID_i;
 }
 
-void process_gadget_file(char   *filename_read_root,
+void process_gadget_file(const char *status_message,
+                         char   *filename_read_root,
                          int     snapshot_number,
                          int     select_function(gadget_read_info *fp_gadget,
                                                  void             *params,
@@ -236,7 +237,8 @@ void process_gadget_file(char   *filename_read_root,
                          size_t *n_particles_type_pass,
                          int    *flag_long_IDs,
                          int     mode);
-void process_gadget_file(char   *filename_read_root,
+void process_gadget_file(const char *status_message,
+                         char   *filename_read_root,
                          int     snapshot_number,
                          int     select_function(gadget_read_info *fp_gadget,
                                                  void             *params,
@@ -259,7 +261,7 @@ void process_gadget_file(char   *filename_read_root,
                          size_t *n_particles_type_pass,
                          int    *flag_long_IDs,
                          int     mode){
-   SID_log("Processing Gadget binary file...",SID_LOG_OPEN|SID_LOG_TIMER);
+   SID_log(status_message,SID_LOG_OPEN|SID_LOG_TIMER);
  
    // Initialize particle counters
    size_t *n_particles_type_local;
@@ -551,7 +553,8 @@ int main(int argc, char *argv[]){
   size_t n_particles_type_local[N_GADGET_TYPE];
   size_t n_particles_type[N_GADGET_TYPE];
   int    flag_long_IDs;
-  process_gadget_file(filename_in_root,
+  process_gadget_file("Counting particles in selection...",
+                      filename_in_root,
                       snapshot,
                       select_function,
                       count_gadget_particles,
@@ -565,7 +568,8 @@ int main(int argc, char *argv[]){
   allocate_gadget_particles(&plist,n_particles_type_local,n_particles_type,flag_long_IDs);
 
   // Read the particles
-  process_gadget_file(filename_in_root,
+  process_gadget_file("Performing read/select/write...",
+                      filename_in_root,
                       snapshot,
                       select_function,
                       store_gadget_particles,

@@ -5,10 +5,12 @@
 #include <gbpHalos.h>
 
 void match_halos(plist_info  *plist_1_in,
+                 const char  *catalog_1_in,
                  int          i_file_1_in,
                  int         *mark_list_1,
                  int          n_mark_1_local,
                  plist_info  *plist_2_in,
+                 const char  *catalog_2_in,
                  int          i_file_2_in,
                  int         *mark_list_2_local,
                  int          n_mark_2_local,
@@ -79,8 +81,6 @@ void match_halos(plist_info  *plist_1_in,
   int     flag_store_score;
   int     flag_read_marked;
   int     flag_match_this;
-  char    catalog_1[5];
-  char    catalog_2[5];
   int     flag_match_subgroups;
   int     flag_match_substructure;
   int     flag_PHK_decomp;
@@ -107,8 +107,12 @@ void match_halos(plist_info  *plist_1_in,
 
   // Create string versions of the snapshot numbers
   //   (used for setting data labels in storage)
-  sprintf(catalog_1,"%03d",i_file_1);
-  sprintf(catalog_2,"%03d",i_file_2);
+  char catalog_1[64];
+  char catalog_2[64];
+  if(catalog_1_in==NULL) sprintf(catalog_1,"%03d",i_file_1);
+  else                   strcpy(catalog_1,catalog_1_in);
+  if(catalog_2_in==NULL) sprintf(catalog_2,"%03d",i_file_2);
+  else                   strcpy(catalog_2,catalog_2_in);
 
   // Determine if we are matching groups or subgroups (default is subgroups)
   if(check_mode_for_flag(mode,MATCH_GROUPS) && check_mode_for_flag(mode,MATCH_SUBGROUPS))

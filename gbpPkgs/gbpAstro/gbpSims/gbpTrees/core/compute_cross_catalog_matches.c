@@ -9,10 +9,11 @@
 #include <gbpHalos.h>
 #include <gbpTrees_build.h>
 
-int compute_single_matches(char   *filename_root_in,
-                           char   *filename_root_out,
-                           int     i_read,
-                           int     j_read){
+int compute_cross_catalog_matches(char   *filename_root_in_1,
+                                  char   *filename_root_in_2,
+                                  char   *filename_root_out,
+                                  int     i_read_1,
+                                  int     i_read_2){
   char        filename_out[256];
   char       *filename_out_dir;
   char        filename_out_name[256];
@@ -72,7 +73,17 @@ int compute_single_matches(char   *filename_root_in,
   int         flag_compute_header;
   int         flag_sucessful_completion=TRUE;
 
-  SID_log("Processing matches between snaps %03d and %03d...",SID_LOG_OPEN|SID_LOG_TIMER,i_read,j_read);
+  if(!strcmp(filename_root_in_1,filename_root_in_2))
+     SID_log("Processing matches for catalog {%s} bewtween snapshots #%03d and #%03d...",SID_LOG_OPEN|SID_LOG_TIMER,
+             filename_root_in_1,
+             i_read_1,
+             i_read_2);
+  else
+     SID_log("Processing matches between catalog;snap's {%s;%03d} and {%s;%03d}...",SID_LOG_OPEN|SID_LOG_TIMER,
+             filename_root_in_1,
+             i_read_1,
+             filename_root_in_2,
+             i_read_2);
 
   // Set results directory and root
   filename_out_dir=NULL;
@@ -80,23 +91,35 @@ int compute_single_matches(char   *filename_root_in,
 
   // Check if all the needed files are present
   int flag_all_inputs_present=TRUE;
-  flag_all_inputs_present&=check_for_matching_input_files(filename_root_in,i_read);
-  flag_all_inputs_present&=check_for_matching_input_files(filename_root_in,j_read);
+  flag_all_inputs_present&=check_for_matching_input_files(filename_root_in_1,i_read_1);
+  flag_all_inputs_present&=check_for_matching_input_files(filename_root_in_2,i_read_2);
 
   // Read groups
   int PHK_min_local;
   int PHK_max_local;
-  sprintf(filename_cat1,"%03d",i_read);
-  sprintf(filename_cat2,"%03d",j_read);
-  SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
+  int n_bits_PHK_1;
+  int n_bits_PHK_2;
+  if(i_read_1==i_read_2){
+     sprintf(filename_cat1,"A");
+     sprintf(filename_cat2,"B");
+  }
+  else{
+     sprintf(filename_cat1,"%03d",i_read_1);
+     sprintf(filename_cat2,"%03d",i_read_2);
+  }
+  //SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
   init_plist(&plist1,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-  read_groups(filename_root_in,i_read,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES|READ_GROUPS_PEANOHILBERT,&plist1,filename_cat1,-1,-1);
+  read_groups(filename_root_in_1,i_read_1,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES|READ_GROUPS_PEANOHILBERT,&plist1,filename_cat1,-1,-1);
   PHK_min_local=((int *)ADaPS_fetch(plist1.data,"PHK_min_local_%s",filename_cat1))[0];
   PHK_max_local=((int *)ADaPS_fetch(plist1.data,"PHK_max_local_%s",filename_cat1))[0];
+  n_bits_PHK_1 =((int *)ADaPS_fetch(plist1.data,"n_bits_PHK_%s",   filename_cat1))[0];
   init_plist(&plist2,NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
-  read_groups(filename_root_in,j_read,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES|READ_GROUPS_PEANOHILBERT,
+  read_groups(filename_root_in_2,i_read_2,READ_GROUPS_ALL|READ_GROUPS_NOPROPERTIES|READ_GROUPS_PEANOHILBERT,
               &plist2,filename_cat2,PHK_min_local,PHK_max_local);
-  SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+  n_bits_PHK_2 =((int *)ADaPS_fetch(plist2.data,"n_bits_PHK_%s",   filename_cat2))[0];
+  //SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+  if(n_bits_PHK_1!=n_bits_PHK_2)
+     SID_trap_error("The PHK bit-sizeo of the two catalog's precomputed PHKs don't match (ie %d!=%d).",ERROR_LOGIC,n_bits_PHK_1,n_bits_PHK_2);
 
   // First match one way, then the other
   int         k_order;
@@ -106,19 +129,37 @@ int compute_single_matches(char   *filename_root_in,
   plist_info *plist2_order;
   for(k_order=0;k_order<2;k_order++){
      if(k_order==0){
-        i_read_order=i_read;
-        j_read_order=j_read;
+        i_read_order=i_read_1;
+        j_read_order=i_read_2;
         plist1_order=&plist1;
         plist2_order=&plist2;
+        if(i_read_order==j_read_order)
+           sprintf(filename_out_name,"%s",filename_root_out);
+        if(i_read_1==i_read_2){
+           sprintf(filename_cat1_order,"A");
+           sprintf(filename_cat2_order,"B");
+        }
+        else{
+           sprintf(filename_cat1_order,"%03d",i_read_1);
+           sprintf(filename_cat2_order,"%03d",i_read_2);
+        }
      }
      else{
-        i_read_order=j_read;
-        j_read_order=i_read;
+        i_read_order=i_read_2;
+        j_read_order=i_read_1;
         plist1_order=&plist2;
         plist2_order=&plist1;
+        if(i_read_order==j_read_order)
+           sprintf(filename_out_name,"%s",filename_root_out);
+        if(i_read_1==i_read_2){
+           sprintf(filename_cat1_order,"B");
+           sprintf(filename_cat2_order,"A");
+        }
+        else{
+           sprintf(filename_cat1_order,"%03d",i_read_2);
+           sprintf(filename_cat2_order,"%03d",i_read_1);
+        }
      }
-     sprintf(filename_cat1_order,"%03d",i_read_order);
-     sprintf(filename_cat2_order,"%03d",j_read_order);
 
      // Perform matching
      for(k_match=0;k_match<2;k_match++){
@@ -134,12 +175,32 @@ int compute_single_matches(char   *filename_root_in,
            break;
         }
         SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
-        match_halos(plist1_order,i_read_order,NULL,0,plist2_order,j_read_order,NULL,0,"match",flag_match_subgroups|MATCH_STORE_SCORE);
+        match_halos(plist1_order,
+                    filename_cat1_order,
+                    i_read_order,
+                    NULL,
+                    0,
+                    plist2_order,
+                    filename_cat2_order,
+                    j_read_order,
+                    NULL,
+                    0,
+                    "match",
+                    flag_match_subgroups|MATCH_STORE_SCORE);
         SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
         // Writing results
         SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
-        write_match_results(filename_out_dir,filename_out_name,i_read_order,j_read_order,plist1_order,plist2_order,k_match,WRITE_MATCHES_MODE_SINGLE);
+        write_match_results(filename_out_dir,
+                            filename_out_name,
+                            i_read_order,
+                            j_read_order,
+                            filename_cat1_order,
+                            filename_cat2_order,
+                            plist1_order,
+                            plist2_order,
+                            k_match,
+                            WRITE_MATCHES_MODE_SINGLE);
         SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
      }
   } // Loop over matching order
