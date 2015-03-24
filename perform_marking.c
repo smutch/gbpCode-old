@@ -34,20 +34,37 @@ int count_group_ids_local(int                i_group,
    ((select_group_params_local *)params)->n_ids_list+=group_i->n_particles;
 }
 
-int add_to_ids_list_local(int                i_group,
-                          int                j_subgroup,
-                          int                i_subgroup,
-                          int                flag_long_ids,
-                          process_halo_info *group_i,
-                          process_halo_info *subgroup_i,
-                          void              *params_in);
-int add_to_ids_list_local(int                i_group,
-                          int                j_subgroup,
-                          int                i_subgroup,
-                          int                flag_long_ids_in,
-                          process_halo_info *group_i,
-                          process_halo_info *subgroup_i,
-                          void              *params_in){
+int count_subgroup_ids_local(int                i_group,
+                             int                j_subgroup,
+                             int                i_subgroup,
+                             int                flag_long_ids,
+                             process_halo_info *group_i,
+                             process_halo_info *subgroup_i,
+                             void              *params);
+int count_subgroup_ids_local(int                i_group,
+                             int                j_subgroup,
+                             int                i_subgroup,
+                             int                flag_long_ids,
+                             process_halo_info *group_i,
+                             process_halo_info *subgroup_i,
+                             void              *params){
+   ((select_group_params_local *)params)->n_ids_list+=subgroup_i->n_particles;
+}
+
+int add_group_to_ids_list_local(int                i_group,
+                                int                j_subgroup,
+                                int                i_subgroup,
+                                int                flag_long_ids,
+                                process_halo_info *group_i,
+                                process_halo_info *subgroup_i,
+                                void              *params_in);
+int add_group_to_ids_list_local(int                i_group,
+                                int                j_subgroup,
+                                int                i_subgroup,
+                                int                flag_long_ids_in,
+                                process_halo_info *group_i,
+                                process_halo_info *subgroup_i,
+                                void              *params_in){
    select_group_params_local *params=(select_group_params_local *)params_in;
    int     flag_long_ids_store=params->flag_long_ids_store;
    size_t *ids_l=(size_t *)params->ids_list;
@@ -69,6 +86,43 @@ int add_to_ids_list_local(int                i_group,
          memcpy(&(ids_i[params->n_ids_list]),group_i->ids,group_i->n_particles*sizeof(int));
    }
    params->n_ids_list+=group_i->n_particles;
+}
+
+int add_subgroup_to_ids_list_local(int                i_group,
+                                   int                j_subgroup,
+                                   int                i_subgroup,
+                                   int                flag_long_ids,
+                                   process_halo_info *group_i,
+                                   process_halo_info *subgroup_i,
+                                   void              *params_in);
+int add_subgroup_to_ids_list_local(int                i_group,
+                                   int                j_subgroup,
+                                   int                i_subgroup,
+                                   int                flag_long_ids_in,
+                                   process_halo_info *group_i,
+                                   process_halo_info *subgroup_i,
+                                   void              *params_in){
+   select_group_params_local *params=(select_group_params_local *)params_in;
+   int     flag_long_ids_store=params->flag_long_ids_store;
+   size_t *ids_l=(size_t *)params->ids_list;
+   int    *ids_i=(int    *)params->ids_list;
+   if(flag_long_ids_in){
+      if(flag_long_ids_in!=flag_long_ids_store){
+         for(int i_particle=0;i_particle<subgroup_i->n_particles;i_particle++)
+            ids_i[params->n_ids_list+i_particle]=(int)(((size_t *)subgroup_i->ids)[i_particle]);
+      }
+      else
+         memcpy(&(ids_l[params->n_ids_list]),subgroup_i->ids,subgroup_i->n_particles*sizeof(size_t));
+   }
+   else{
+      if(flag_long_ids_in!=flag_long_ids_store){
+         for(int i_particle=0;i_particle<subgroup_i->n_particles;i_particle++)
+            ids_l[params->n_ids_list+i_particle]=(size_t)(((int *)subgroup_i->ids)[i_particle]);
+      }
+      else
+         memcpy(&(ids_i[params->n_ids_list]),subgroup_i->ids,subgroup_i->n_particles*sizeof(int));
+   }
+   params->n_ids_list+=subgroup_i->n_particles;
 }
 
 int select_group_index_local(int                i_group,
@@ -114,6 +168,13 @@ void make_ids_list(render_info *render,
                                           process_halo_info *group_i,
                                           process_halo_info *subgroup_i,
                                           void              *params),
+                   int    action_function(int                i_group,
+                                          int                j_subgroup,
+                                          int                i_subgroup,
+                                          int                flag_long_ids,
+                                          process_halo_info *group_i,
+                                          process_halo_info *subgroup_i,
+                                          void              *params),
                    void   **ids_list,
                    char   **val_list,
                    size_t   n_ids_list,
@@ -122,6 +183,20 @@ void make_ids_list(render_info *render,
 void make_ids_list(render_info *render,
                    int    i_snap,
                    int    select_function(int                i_group,
+                                          int                j_subgroup,
+                                          int                i_subgroup,
+                                          int                flag_long_ids,
+                                          process_halo_info *group_i,
+                                          process_halo_info *subgroup_i,
+                                          void              *params),
+                   int    count_function( int                i_group,
+                                          int                j_subgroup,
+                                          int                i_subgroup,
+                                          int                flag_long_ids,
+                                          process_halo_info *group_i,
+                                          process_halo_info *subgroup_i,
+                                          void              *params),
+                   int    action_function(int                i_group,
                                           int                j_subgroup,
                                           int                i_subgroup,
                                           int                flag_long_ids,
@@ -148,7 +223,7 @@ void make_ids_list(render_info *render,
                         render->filename_tree_version,
                         i_read,0,
                         select_function,
-                        count_group_ids_local,
+                        count_function,
                         &params);
 
    // Allocate the array for the list
@@ -174,7 +249,7 @@ void make_ids_list(render_info *render,
                         render->filename_tree_version,
                         i_read,1,
                         select_function,
-                        add_to_ids_list_local,
+                        action_function,
                         &params);
 
    // Sort the list in place
@@ -339,10 +414,30 @@ void execute_marking_argument_local(render_info *render,mark_arg_info *arg){
                                          process_halo_info *group_i,
                                          process_halo_info *subgroup_i,
                                          void              *params);
-                  if(flag_process_group)
+                  int (*count_function) (int                i_group,
+                                         int                j_subgroup,
+                                         int                i_subgroup,
+                                         int                flag_long_ids,
+                                         process_halo_info *group_i,
+                                         process_halo_info *subgroup_i,
+                                         void              *params);
+                  int (*action_function)(int                i_group,
+                                         int                j_subgroup,
+                                         int                i_subgroup,
+                                         int                flag_long_ids,
+                                         process_halo_info *group_i,
+                                         process_halo_info *subgroup_i,
+                                         void              *params);
+                  if(flag_process_group){
                      select_function=select_group_index_local;
-                  else
+                     count_function =count_group_ids_local;
+                     action_function=add_group_to_ids_list_local;
+                  }
+                  else{
                      select_function=select_subgroup_index_local;
+                     count_function =count_subgroup_ids_local;
+                     action_function=add_subgroup_to_ids_list_local;
+                  }
 
                   // Create list of particles to mark
                   void   *ids_list=NULL;
@@ -351,6 +446,8 @@ void execute_marking_argument_local(render_info *render,mark_arg_info *arg){
                   make_ids_list(render,
                                 i_snap,
                                 select_function,
+                                count_function,
+                                action_function,
                                 &ids_list,
                                 &val_list,
                                 &n_ids_list,

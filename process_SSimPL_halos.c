@@ -136,6 +136,7 @@ void process_SSimPL_halos(char *filename_SSimPL_root,
     int n_particles_group;SID_fread_all_buffer(&n_particles_group,sizeof(int),1,fp_groups_length_buffer);
     largest_group=MAX(largest_group,n_particles_group);
   }
+
   // Allocate IDs
   void *ids=NULL;
   if(mode)
