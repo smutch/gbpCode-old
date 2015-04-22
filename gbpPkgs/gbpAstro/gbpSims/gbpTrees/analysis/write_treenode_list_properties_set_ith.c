@@ -39,31 +39,47 @@ void write_treenode_list_properties_set_ith(tree_info *trees,tree_node_info *cur
          if(data_d!=NULL)    *data_d   =fetch_treenode_Mpeak(trees,current_halo);
          break;
       case 5:
+         if(data_name!=NULL) sprintf(data_name,"M_peak_descendant [h^{-1} M_sol]");
+         if(data_type!=NULL) *data_type=SID_DOUBLE;
+         if(data_d!=NULL)    *data_d   =fetch_treenode_Mpeak(trees,current_halo->descendant);
+         break;
+      case 6:{
+         if(data_name!=NULL) sprintf(data_name,"M_peak_main_progenitor [h^{-1} M_sol]");
+         if(data_type!=NULL) *data_type=SID_DOUBLE;
+         if(data_d!=NULL)    *data_d   =fetch_treenode_Mpeak(trees,current_halo->descendant->progenitor_first);
+         break;
+      }
+      case 7:
+         if(data_name!=NULL) sprintf(data_name,"Progenitor rank");
+         if(data_type!=NULL) *data_type=SID_INT;
+         if(data_i!=NULL)    *data_i   =fetch_treenode_progenitor_rank(trees,current_halo);
+         break;
+      case 8:
          if(data_name!=NULL) sprintf(data_name,"x-position [h^{-1} Mpc]");
          if(data_type!=NULL) *data_type=SID_DOUBLE;
          if(data_d!=NULL)    *data_d   =fetch_treenode_x(trees,current_halo);
          break;
-      case 6:
+      case 9:
          if(data_name!=NULL) sprintf(data_name,"y-position [h^{-1} Mpc]");
          if(data_type!=NULL) *data_type=SID_DOUBLE;
          if(data_d!=NULL)    *data_d   =fetch_treenode_y(trees,current_halo);
          break;
-      case 7:
+      case 10:
          if(data_name!=NULL) sprintf(data_name,"z-position [h^{-1} Mpc]");
          if(data_type!=NULL) *data_type=SID_DOUBLE;
          if(data_d!=NULL)    *data_d   =fetch_treenode_z(trees,current_halo);
          break;
-      case 8:
+      case 11:
          if(data_name!=NULL) sprintf(data_name,"x-velocity [km/s]");
          if(data_type!=NULL) *data_type=SID_DOUBLE;
          if(data_d!=NULL)    *data_d   =fetch_treenode_vx(trees,current_halo);
          break;
-      case 9:
+      case 12:
          if(data_name!=NULL) sprintf(data_name,"y-velocity [km/s]");
          if(data_type!=NULL) *data_type=SID_DOUBLE;
          if(data_d!=NULL)    *data_d   =fetch_treenode_vy(trees,current_halo);
          break;
-      case 10:
+      case 13:
          if(data_name!=NULL) sprintf(data_name,"z-velocity [km/s]");
          if(data_type!=NULL) *data_type=SID_DOUBLE;
          if(data_d!=NULL)    *data_d   =fetch_treenode_vz(trees,current_halo);

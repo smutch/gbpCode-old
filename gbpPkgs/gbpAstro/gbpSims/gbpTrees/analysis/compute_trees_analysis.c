@@ -9,7 +9,7 @@
 #include <gbpTrees_build.h>
 #include <gbpTrees_analysis.h>
 
-void compute_trees_analysis(tree_info *trees){
+void compute_trees_analysis(tree_info *trees,double logM_min,double dlogM,int n_logM){
 
   // Make sure the output directory exists
   char filename_out_root[MAX_FILENAME_LENGTH];
@@ -25,12 +25,12 @@ void compute_trees_analysis(tree_info *trees){
         precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_SUBGROUPS);
 
      // Compute merger tree statistics
-     write_treenode_all_hist               (trees,filename_out_root,i_type);
-     compute_trees_strayed_halo_analysis   (trees,filename_out_root,i_type);
-     compute_trees_dropped_halo_analysis   (trees,filename_out_root,i_type);
-     compute_trees_emerged_halo_analysis   (trees,filename_out_root,i_type);
-     compute_trees_fragmented_halo_analysis(trees,filename_out_root,i_type);
-     compute_trees_merger_analysis         (trees,filename_out_root,i_type);
+     write_treenode_all_hist               (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
+     compute_trees_strayed_halo_analysis   (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
+     compute_trees_dropped_halo_analysis   (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
+     compute_trees_emerged_halo_analysis   (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
+     compute_trees_fragmented_halo_analysis(trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
+     compute_trees_merger_analysis         (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
 
      if(i_type==0)
         free_precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_GROUPS);

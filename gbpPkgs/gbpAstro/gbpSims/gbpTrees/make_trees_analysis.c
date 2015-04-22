@@ -20,6 +20,9 @@ int main(int argc, char *argv[]){
   strcpy(filename_SSimPL_dir,       argv[1]);
   strcpy(filename_halo_version_root,argv[2]);
   strcpy(filename_trees_name,       argv[3]);
+  double logM_min=atof(argv[4]);
+  double dlogM   =atof(argv[5]);
+  int    n_logM  =atoi(argv[6]);
 
   // Set some filenames
   sprintf(filename_trees_root,"%s/trees/%s",filename_SSimPL_dir,filename_trees_name);
@@ -46,7 +49,7 @@ int main(int argc, char *argv[]){
   //                        READ_TREES_MATCH_SCORES_ALL);
 
   // Perform analysis
-  compute_trees_analysis(trees);
+  compute_trees_analysis(trees,logM_min,dlogM,n_logM);
 
   // Clean-up
   free_trees(&trees);

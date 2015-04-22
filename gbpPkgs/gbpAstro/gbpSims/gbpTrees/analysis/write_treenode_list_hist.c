@@ -10,12 +10,12 @@
 #include <gbpTrees_analysis.h>
 #include <assert.h>
 
-void write_treenode_list_hist(tree_info *trees,const char *filename_out_root,treenode_list_info *list){
+void write_treenode_list_hist(tree_info *trees,const char *filename_out_root,treenode_list_info *list,double logM_min,double dlogM,int n_logM){
   int     n_z_bin  = MAX(1,trees->n_snaps/25);
-  double  logM_min = 9.00;
+//  double  logM_min = 9.00;
 //  double  logM_min = 6.50;
-  double  dlogM    = 0.25;
-  int     n_logM   =   24;
+//  double  dlogM    = 0.25;
+//  int     n_logM   =   24;
   double  logN_min = 1.50;
   double  dlogN    = 0.25;
   int     n_logN   =   20;

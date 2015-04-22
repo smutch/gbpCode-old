@@ -10,7 +10,7 @@
 #include <gbpTrees_analysis.h>
 #include <assert.h>
 
-void compute_trees_fragmented_halo_analysis(tree_info *trees,char *filename_out_root_in,int i_type){
+void compute_trees_fragmented_halo_analysis(tree_info *trees,char *filename_out_root_in,int i_type,double logM_min,double dlogM,int n_logM){
 
   char group_prefix[8];
   if(i_type==0)
@@ -156,13 +156,13 @@ void compute_trees_fragmented_halo_analysis(tree_info *trees,char *filename_out_
   write_treenode_list_data      (trees,filename_out_root,list_halos_new);
 
   // Write histograms
-  write_treenode_list_hist(trees,filename_out_root,list_halos);
-  write_treenode_list_hist(trees,filename_out_root,list_halos_new);
+  write_treenode_list_hist(trees,filename_out_root,list_halos,    logM_min,dlogM,n_logM);
+  write_treenode_list_hist(trees,filename_out_root,list_halos_new,logM_min,dlogM,n_logM);
   if(i_type==1){
-     write_treenode_list_hist(trees,filename_out_root,list_halos_central);
-     write_treenode_list_hist(trees,filename_out_root,list_halos_substructure);
-     write_treenode_list_hist(trees,filename_out_root,list_halos_new_central);
-     write_treenode_list_hist(trees,filename_out_root,list_halos_new_substructure);
+     write_treenode_list_hist(trees,filename_out_root,list_halos_central,         logM_min,dlogM,n_logM);
+     write_treenode_list_hist(trees,filename_out_root,list_halos_substructure,    logM_min,dlogM,n_logM);
+     write_treenode_list_hist(trees,filename_out_root,list_halos_new_central,     logM_min,dlogM,n_logM);
+     write_treenode_list_hist(trees,filename_out_root,list_halos_new_substructure,logM_min,dlogM,n_logM);
   }
 
   // Clean-up
