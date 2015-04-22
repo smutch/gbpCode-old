@@ -12,7 +12,7 @@ int main(int argc, char *argv[]){
   SID_init(&argc,&argv,NULL,NULL);
 
   // Fetch user inputs
-  if(argc!=7) SID_trap_error("Invalid syntax.",ERROR_SYNTAX);
+  if(argc!=7 && argc!=11) SID_trap_error("Invalid syntax.",ERROR_SYNTAX);
   char filename_SSimPL_in[MAX_FILENAME_LENGTH];
   char filename_SSimPL_out[MAX_FILENAME_LENGTH];
   char filename_halo_type[MAX_FILENAME_LENGTH];
@@ -22,6 +22,18 @@ int main(int argc, char *argv[]){
   int i_snap_lo=atoi(argv[4]);
   int i_snap_hi=atoi(argv[5]);
   int mode_in  =atoi(argv[6]);
+
+  // Set which files will be processed
+  int flag_process_halos    =TRUE;
+  int flag_process_catalogs =TRUE;
+  int flag_process_grids    =TRUE;
+  int flag_process_snapshots=TRUE;
+  if(argc==11){
+     flag_process_halos    =atoi(argv[7]);
+     flag_process_catalogs =atoi(argv[8]);
+     flag_process_grids    =atoi(argv[9]);
+     flag_process_snapshots=atoi(argv[10]);
+  }
 
   // Parse the mode flag
   int mode=SWAP_SSIMPL_ENDIAN_TO_NATIVE;
@@ -45,12 +57,6 @@ int main(int argc, char *argv[]){
   mkdir(dir_grids,          02755);
   mkdir(dir_halos,          02755);
   mkdir(dir_catalogs,       02755);
-
-  // Set which files will be processed
-  int flag_process_halos    =TRUE;
-  int flag_process_catalogs =TRUE;
-  int flag_process_grids    =TRUE;
-  int flag_process_snapshots=TRUE;
 
   // Loop over the given snapshot range
   SID_log("Processing group/subgroup statistics for files #%d->#%d...",SID_LOG_OPEN|SID_LOG_TIMER,i_snap_lo,i_snap_hi);
