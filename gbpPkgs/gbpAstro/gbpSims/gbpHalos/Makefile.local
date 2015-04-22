@@ -11,6 +11,6 @@ OBJFILES  = fopen_catalog.o          \
 	    compute_group_analysis.o \
 	    write_group_analysis.o     
 LIBFILE   = libgbpHalos.a
-BINFILES  = make_catalog_subvolume_stats make_catalog_summary haloIDs2stdout update_properties convert_PHK2ascii reorder_halo_ids query_catalog_indices remove_duplicates update_halo_files_format make_group_PHKs query_group query_catalog make_catalog_ascii make_catalog_group_ascii make_group_analysis cat_group_analysis convert_AHF
+BINFILES  = catalog_splitmerge make_catalog_subvolume_stats make_catalog_summary haloIDs2stdout update_properties convert_PHK2ascii reorder_halo_ids query_catalog_indices remove_duplicates update_halo_files_format make_group_PHKs query_group query_catalog make_catalog_ascii make_catalog_group_ascii make_group_analysis cat_group_analysis convert_AHF
 LIBS      = -lgbpHalos -lgbpSPH -lgbpCosmo -lgbpMath -lgbpLib
 #############################
