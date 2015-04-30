@@ -419,6 +419,7 @@ struct tree_info{
   ADaPS            *data;
   // Cosmology
   cosmo_info       *cosmo;
+  double            box_size;
   // Short-cuts to some common stuff added to data
   float                     **group_match_scores;
   float                     **subgroup_match_scores;

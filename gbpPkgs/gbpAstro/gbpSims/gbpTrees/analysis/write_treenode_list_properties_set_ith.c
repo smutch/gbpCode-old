@@ -84,6 +84,16 @@ void write_treenode_list_properties_set_ith(tree_info *trees,tree_node_info *cur
          if(data_type!=NULL) *data_type=SID_DOUBLE;
          if(data_d!=NULL)    *data_d   =fetch_treenode_vz(trees,current_halo);
          break;
+      case 14:
+         if(data_name!=NULL) sprintf(data_name,"Separation from main progenitor [units of main progenitor R_vir]");
+         if(data_type!=NULL) *data_type=SID_DOUBLE;
+         if(data_d!=NULL)    *data_d   =fetch_treenode_delta_r_MP(trees,current_halo);
+         break;
+      case 15:
+         if(data_name!=NULL) sprintf(data_name,"Branch age [yrs]");
+         if(data_type!=NULL) *data_type=SID_DOUBLE;
+         if(data_d!=NULL)    *data_d   =fetch_treenode_delta_t_leaf(trees,current_halo)/S_PER_GYR;
+         break;
       default:
          SID_trap_error("Invalid counter given in write_treenode_list_properties_set_ith()",ERROR_LOGIC);
    }
