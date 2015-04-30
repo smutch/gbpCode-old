@@ -74,6 +74,30 @@ void init_trees_read(const char  *filename_SSimPL_dir,
                           &((*tree)->n_trees_group));
   (*tree)->n_wrap=(*tree)->n_search+1;
 
+  // Read box size
+  char    filename_run_in[MAX_FILENAME_LENGTH];
+  FILE   *fp_run_in;
+  int     n_run_in;
+  char   *line=NULL;
+  size_t  line_length  =0;
+  int     flag_continue=TRUE;
+  sprintf(filename_run_in,"%s/run/run.txt",filename_SSimPL_dir);
+  fp_run_in=fopen(filename_run_in,"r");
+  n_run_in =count_lines_data(fp_run_in);
+  for(int i_run=0;i_run<n_run_in && flag_continue;i_run++){
+     char name[64];
+     grab_next_line_data(fp_run_in,&line,&line_length);
+     grab_word(line,2,name);
+     if(!strcmp(name,"box_size")){
+        grab_double(line,3,&((*tree)->box_size));
+        flag_continue=FALSE;
+     }
+  }
+  fclose(fp_run_in);
+  if(flag_continue)
+     SID_trap_error("Could not find 'box_size' in the SSimPL run.txt file.",ERROR_LOGIC);
+  SID_log("Box size = %.1lf [Mpc/h]",SID_LOG_COMMENT,(*tree)->box_size);
+
   // Create an array which maps the file numbers in the trees
   //   to the snapshot number (may differ from 1:1 if skipping snaps)
   int i_read;
@@ -103,8 +127,6 @@ void init_trees_read(const char  *filename_SSimPL_dir,
   int         n_alist_in;
   int         i_alist;
   double      a_in;
-  char       *line=NULL;
-  size_t      line_length=0;
   sprintf(filename_alist_in,"%s/a_list.txt",filename_trees_root);
   fp_alist_in=fopen(filename_alist_in,"r");
   n_alist_in=count_lines_data(fp_alist_in);
