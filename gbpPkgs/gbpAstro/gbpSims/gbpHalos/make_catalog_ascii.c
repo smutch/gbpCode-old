@@ -12,6 +12,7 @@ void print_results_local(FILE                 *fp_out,
                          halo_properties_info *properties,
                          halo_properties_info *properties_group,
                          halo_profile_info    *profile,
+                         float                *group_SO_data,
                          int                   i_group,
                          int                   j_subgroup,
                          int                   j_group);
@@ -21,6 +22,7 @@ void print_results_local(FILE                 *fp_out,
                          halo_properties_info *properties,
                          halo_properties_info *properties_group,
                          halo_profile_info    *profile,
+                         float                *group_SO_data,
                          int                   i_group,
                          int                   j_subgroup,
                          int                   j_group){
@@ -70,6 +72,8 @@ void print_results_local(FILE                 *fp_out,
     }
     else{
        fprintf(fp_out,"  %3d",j_subgroup);
+       if(group_SO_data!=NULL)
+          fprintf(fp_out,"  %10.5le",1e10*group_SO_data[0]);
     }
     fprintf(fp_out,"\n");
 }
@@ -132,6 +136,15 @@ int main(int argc, char *argv[]){
                        READ_CATALOG_SUBGROUPS|READ_CATALOG_PROPERTIES|READ_CATALOG_PROPERTIES,
                        &fp_catalog_subgroups);
 
+         // Open SO files if they're available
+         float *group_SO_data=NULL;
+         fp_multifile_info fp_SO;
+         int flag_use_SO=fopen_multifile("%s/catalogs/%s_%03d.catalog_groups_SO",sizeof(float),&fp_SO,filename_SSimPL,filename_halo_type,snap_number);
+         if(flag_use_SO){
+            group_SO_data=(float *)SID_malloc(sizeof(float));
+            SID_log("SO files present.",SID_LOG_COMMENT);
+         }
+
          // Sanity check
          if(n_groups_halos!=fp_catalog_groups.n_halos_total)
             SID_trap_error("Group counts in halo and catalog files don't match (ie. %d!=%d).",ERROR_LOGIC,n_groups_halos,fp_catalog_groups.n_halos_total);
@@ -184,6 +197,8 @@ int main(int argc, char *argv[]){
                fprintf(fp_out[i_type],"#               (%02d)     overdensity(R_halo)\n",i_column++);
             if(i_type==0){
                fprintf(fp_out[i_type],"#               (%02d)     n_substructures\n",     i_column++);
+               if(group_SO_data!=NULL)
+                  fprintf(fp_out[i_type],"#               (%02d)     M_SO       [M_sol/h]\n",     i_column++);
             }
             else{
                fprintf(fp_out[i_type],"#               (%02d)     group index\n",           i_column++);
@@ -203,14 +218,23 @@ int main(int argc, char *argv[]){
 
          // Perform read and write
          for(int i_group=0,i_subgroup=0;i_group<fp_catalog_groups.n_halos_total;i_group++){
-           int n_subgroups_group;
-           fread_catalog_file(&fp_catalog_groups,NULL,properties_group,profile_group,i_group);
-           fread(&n_subgroups_group,sizeof(int),1,fp_halos);
-           print_results_local(fp_out[0],flag_use_profiles,box_size,properties_group,properties_group,profile_group,i_group,n_subgroups_group,-1);
-           for(int j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
-              fread_catalog_file(&fp_catalog_subgroups,NULL,properties_subgroup,profile_subgroup,i_subgroup);
-              print_results_local(fp_out[1],flag_use_profiles,box_size,properties_subgroup,properties_group,profile_subgroup,i_subgroup,j_subgroup,i_group);
-           }
+            int n_subgroups_group;
+            // Read group catalog
+            fread_catalog_file(&fp_catalog_groups,NULL,properties_group,profile_group,i_group);
+            // Read number of subgroups
+            fread(&n_subgroups_group,sizeof(int),1,fp_halos);
+            // Read SO masses (if available)
+            if(group_SO_data!=NULL)
+               fread_multifile(&fp_SO,group_SO_data,i_group);
+            // Write group results
+            print_results_local(fp_out[0],flag_use_profiles,box_size,properties_group,properties_group,profile_group,group_SO_data,i_group,n_subgroups_group,-1);
+            // Loop over subgroups
+            for(int j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
+               // Read subgroup properties
+               fread_catalog_file(&fp_catalog_subgroups,NULL,properties_subgroup,profile_subgroup,i_subgroup);
+               // Write subgroup results
+               print_results_local(fp_out[1],flag_use_profiles,box_size,properties_subgroup,properties_group,profile_subgroup,NULL,i_subgroup,j_subgroup,i_group);
+            }
          }
 
          // Clean-up
@@ -220,11 +244,13 @@ int main(int argc, char *argv[]){
             SID_free(SID_FARG profile_group);
             SID_free(SID_FARG profile_subgroup);
          }
+         SID_free(SID_FARG group_SO_data);
          fclose(fp_out[0]);
          fclose(fp_out[1]);
          fclose(fp_halos);
          fclose_catalog(&fp_catalog_groups);
          fclose_catalog(&fp_catalog_subgroups);
+         fclose_multifile(&fp_SO);
          SID_log("Done.",SID_LOG_CLOSE);
      }
      SID_log("Done.",SID_LOG_CLOSE);
