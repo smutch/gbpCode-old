@@ -36,7 +36,7 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
   double  n_spectral;
   double  M_WDM,R_WDM;
 
-  SID_log("Initializing P(k)...",SID_LOG_OPEN);
+  SID_log("Initializing P(k)...",SID_LOG_OPEN|SID_LOG_TIMER);
 
   // Fetch the transfer function filename (must be set before power_spectrum() is called).
   char filename_TF[MAX_FILENAME_LENGTH];

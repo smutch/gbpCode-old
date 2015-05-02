@@ -31,7 +31,7 @@ void init_power_spectrum_variance(cosmo_info **cosmo,double z,int mode,int compo
   gsl_integration_workspace *wspace;
   gsl_function               integrand;
 
-  SID_log("Initializing P(k) variance...",SID_LOG_OPEN);
+  SID_log("Initializing P(k) variance...",SID_LOG_OPEN|SID_LOG_TIMER);
 
   z=0.;
 

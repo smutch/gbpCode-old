@@ -35,7 +35,7 @@ double mass_function_cumulative(double       M_interp,
                                 int          select_flag){
   double  *lk_P;
   int      n_int=5000;
-  double   rel_accuracy=1e-3;
+  double   rel_accuracy=1e-4;
   double   limit_lo;
   double   limit_hi;
   double   r_val;
