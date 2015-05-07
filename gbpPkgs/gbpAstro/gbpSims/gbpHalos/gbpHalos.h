@@ -1,6 +1,8 @@
 #ifndef GBPHALOS_AWAKE
 #define GBPHALOS_AWAKE
 
+#include <gbpLib.h>
+#include <gbpMath.h>
 #include <gbpSPH.h>
 #include <gbpCosmo.h>
 
@@ -146,6 +148,29 @@ struct halo_MBP_info{
   int   halo_index;
 };
 
+typedef struct halo_info halo_info;
+struct halo_info{
+   int                   flag_use_profiles;
+   int                   flag_use_SO;
+   int                   snapshot;
+   halo_properties_info *properties_group;
+   halo_properties_info *properties_subgroup;
+   halo_profile_info    *profiles_group;
+   halo_profile_info    *profiles_subgroup;
+   float                 SO_data_group[6];
+   int                   n_sub;
+   int                   np_sub;
+   int                   np_sub_largest;
+};
+
+typedef struct halo_trend_info halo_trend_info;
+struct halo_trend_info{
+   double *z_list;
+   double  m_p;
+   double  box_size;
+   int     n_snaps;
+};
+
 // Function definitions
 #ifdef __cplusplus
 extern "C" {
@@ -166,6 +191,20 @@ int fopen_catalog(char            *filename_catalog_root,
                   int              snapshot_number,
                   int              mode,
                   fp_catalog_info *fp_out);
+
+void init_halo_trend           (halo_trend_info *trend_data,trend_info **trend,const char *name);
+void init_halo_trend_coordinate(halo_trend_info *trend_data,trend_info  *trend,const char *name);
+
+void init_halo_trend_property_z(trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs);
+void free_halo_trend_property_z(trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs);
+int  calc_halo_trend_property_index_z(trend_property_info *property,hist_info *hist,void *halo);
+void init_halo_trend_property_logM_FoF(trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs);
+void free_halo_trend_property_logM_FoF(trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs);
+int  calc_halo_trend_property_index_logM_FoF(trend_property_info *property,hist_info *hist,void *halo_in);
+void init_halo_trend_property_SSFctn(trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs);
+void free_halo_trend_property_SSFctn(trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs);
+int  calc_halo_trend_property_index_SSFctn(trend_property_info *property,hist_info *hist,void *halo_in);
+
 int  fopen_nth_catalog_file(fp_catalog_info *fp_in,int n);
 int  fread_catalog_file(fp_catalog_info *fp_in,halo_properties_SAGE_info *properties_out,halo_properties_info *properties_all_out,halo_profile_info *profiles_out,int halo_index);
 int  fread_catalog_raw(fp_catalog_info *fp_in,halo_properties_info *properties_out,halo_profile_info *profiles_out,int halo_index);
