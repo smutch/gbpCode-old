@@ -13,6 +13,14 @@ double scaled_mass_function(double sigma,int select_flag){
   double delta_k;
   double rval;
   switch(select_flag){
+  case MF_WATSON:{ // Watson et al. (2013) universal FoF mass function
+    double A     = 0.282;
+    double alpha = 2.163;
+    double beta  = 1.406;
+    double gamma = 1.210;
+    rval         = A*(pow(beta/sigma,alpha)+1.)*exp(-gamma/(sigma*sigma));
+    break;
+    }
   case MF_JENKINS: // Jenkins et al. (2001)
     delta_k=1.686;
     rval   =0.315*exp(-pow((double)fabs((float)(take_ln(1./sigma)+0.61)),3.8));

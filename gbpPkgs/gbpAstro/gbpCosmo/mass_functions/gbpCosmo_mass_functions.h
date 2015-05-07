@@ -7,9 +7,10 @@
 #include <gbpCosmo_core.h>
 #include <gbpCosmo_linear_theory.h>
 
-#define MF_JENKINS        0
-#define MF_PS             1
-#define MF_ST             2
+#define MF_JENKINS TTTP01
+#define MF_PS      TTTP02
+#define MF_ST      TTTP03
+#define MF_WATSON  TTTP04
 
 // Function definitions
 #ifdef __cplusplus

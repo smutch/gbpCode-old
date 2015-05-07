@@ -41,6 +41,10 @@ int main(int argc, char *argv[]){
      sprintf(mfn_text,"Sheth & Tormen");
      select_flag=MF_ST;
   }
+  else if(!strcmp(paramterization,"WATSON")){
+     sprintf(mfn_text,"Watson et al (2013)");
+     select_flag=MF_WATSON;
+  }
   else
      SID_trap_error("Invalid parameterization selected {%s}.  Should be {JENKINS,PS or ST}.",ERROR_SYNTAX,paramterization);
 
