@@ -25,6 +25,10 @@ void read_parameter_file(const char          *filename_in,
          SID_trap_error("Invalid number of words in parameter given by {%s}.",ERROR_LOGIC,line);
       if(parameter_item->data_type==SID_DOUBLE)
          grab_double(line,2,(double *)(parameter_item->data));
+      else if(parameter_item->data_type==SID_INT)
+         grab_int(line,2,(int *)(parameter_item->data));
+      else if(parameter_item->data_type==SID_SIZE_T)
+         grab_size_t(line,2,(size_t *)(parameter_item->data));
       else if(parameter_item->data_type==SID_CHAR)
          grab_tail(line,2,(char *)(parameter_item->data));
       else
