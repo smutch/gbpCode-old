@@ -20,8 +20,8 @@ int calc_halo_trend_property_index_z(trend_property_info *property,hist_info *hi
 void init_halo_trend_property_logM_FoF(trend_property_info *property,void *property_data,int i_hist,int *mode,gbp_va_list *vargs){
    (*mode)=GBP_HISTOGRAM_FIXED;
    double x_min = 7.0;
-   double dx    = 0.1;
-   int    n_x   =  80;
+   double dx    = 0.2;
+   int    n_x   =  40;
    gbp_va_start(vargs);
    gbp_add_va_arg(vargs,sizeof(double),&x_min);
    gbp_add_va_arg(vargs,sizeof(double),&dx);

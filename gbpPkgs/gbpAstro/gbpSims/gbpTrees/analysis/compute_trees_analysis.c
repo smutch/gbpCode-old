@@ -26,10 +26,10 @@ void compute_trees_analysis(tree_info *trees,double logM_min,double dlogM,int n_
 
      // Compute merger tree statistics
      write_treenode_all_hist               (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
-     compute_trees_strayed_halo_analysis   (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
-     compute_trees_dropped_halo_analysis   (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
-     compute_trees_emerged_halo_analysis   (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
-     compute_trees_fragmented_halo_analysis(trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
+     //compute_trees_strayed_halo_analysis   (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
+     //compute_trees_dropped_halo_analysis   (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
+     //compute_trees_emerged_halo_analysis   (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
+     //compute_trees_fragmented_halo_analysis(trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
      compute_trees_merger_analysis         (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
 
      if(i_type==0)

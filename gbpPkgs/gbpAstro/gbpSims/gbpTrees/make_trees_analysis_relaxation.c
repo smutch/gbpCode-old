@@ -8,6 +8,11 @@
 #include <gbpHalos.h>
 #include <gbpTrees.h>
 
+#define TAU_FORM_RECOVERED   2.0
+#define TAU_MERGER_RECOVERED 3.0
+#define XOFF_RELAXED         0.07
+#define FSUB_RELAXED         0.1
+
 // Structure that will carry the needed information to the select-and-analyze function
 typedef struct process_trees_params_local process_trees_params_local;
 struct process_trees_params_local{
@@ -19,6 +24,13 @@ struct process_trees_params_local{
    trend_info **trends_tau_form;
    trend_info **trends_tau_3to1;
    trend_info **trends_tau_10to1;
+   int        **n_halos_z;
+   int        **n_halos_z_recovered_form;
+   int        **n_halos_z_recovered_3to1;
+   int        **n_halos_z_recovered_10to1;
+   int        **n_halos_z_relaxed_x_off;
+   int        **n_halos_z_relaxed_f_sub;
+   int        **n_halos_z_relaxed_all;
 };
 
 // ** Define the calculation here **
@@ -48,7 +60,7 @@ void process_trees_fctn_init_local(tree_info *trees,void *params_in,int mode,int
      init_treenode_trend_coordinate(trees, (params->trends_z[i_M]),"tau_3to1");
      init_treenode_trend_coordinate(trees, (params->trends_z[i_M]),"tau_10to1");
      if(i_type==0)
-        init_treenode_trend_coordinate(trees, (params->trends_z[i_M]),"SSFctn");
+        init_treenode_trend_coordinate(trees,(params->trends_z[i_M]),"SSFctn");
      // f(tau_form) trends
      init_treenode_trend           (trees,&(params->trends_tau_form[i_M]),"tau_form");
      init_treenode_trend_coordinate(trees, (params->trends_tau_form[i_M]),"xoff");
@@ -65,17 +77,54 @@ void process_trees_fctn_init_local(tree_info *trees,void *params_in,int mode,int
      if(i_type==0)
         init_treenode_trend_coordinate(trees, (params->trends_tau_10to1[i_M]),"SSFctn");
   }
+  // Initialize recovery/relaxation arrays
+  params->n_halos_z                =(int **)SID_calloc(sizeof(int *)*n_M);
+  params->n_halos_z_recovered_form =(int **)SID_calloc(sizeof(int *)*n_M);
+  params->n_halos_z_recovered_3to1 =(int **)SID_calloc(sizeof(int *)*n_M);
+  params->n_halos_z_recovered_10to1=(int **)SID_calloc(sizeof(int *)*n_M);
+  params->n_halos_z_relaxed_x_off  =(int **)SID_calloc(sizeof(int *)*n_M);
+  params->n_halos_z_relaxed_f_sub  =(int **)SID_calloc(sizeof(int *)*n_M);
+  params->n_halos_z_relaxed_all    =(int **)SID_calloc(sizeof(int *)*n_M);
+  for(int i_M=0;i_M<n_M;i_M++){
+     int n_z=params->trends_z[i_M]->ordinate->hist->n_bins;
+     params->n_halos_z[i_M]                =(int *)SID_calloc(sizeof(int)*n_z);
+     params->n_halos_z_recovered_form[i_M] =(int *)SID_calloc(sizeof(int)*n_z);
+     params->n_halos_z_recovered_3to1[i_M] =(int *)SID_calloc(sizeof(int)*n_z);
+     params->n_halos_z_recovered_10to1[i_M]=(int *)SID_calloc(sizeof(int)*n_z);
+     params->n_halos_z_relaxed_x_off[i_M]  =(int *)SID_calloc(sizeof(int)*n_z);
+     params->n_halos_z_relaxed_f_sub[i_M]  =(int *)SID_calloc(sizeof(int)*n_z);
+     params->n_halos_z_relaxed_all[i_M]    =(int *)SID_calloc(sizeof(int)*n_z);
+  }
 }
 
 // ** Perform the calculation here **
-void process_trees_fctn_analyze_local(tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo);
-void process_trees_fctn_analyze_local(tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo){
+void process_trees_fctn_analyze_local(tree_info *trees,void *params_in,int mode,int i_type,int flag_init,tree_node_info *halo);
+void process_trees_fctn_analyze_local(tree_info *trees,void *params_in,int mode,int i_type,int flag_init,tree_node_info *halo){
+   process_trees_params_local *params=(process_trees_params_local *)params_in;
    int i_M;
    int i_snap   =halo->snap_tree;
    int i_snap_lo=((process_trees_params_local *)params)->snap_lo_tau_trends;
    int i_snap_hi=((process_trees_params_local *)params)->snap_hi_tau_trends;
    if((i_M=add_item_to_trend(((process_trees_params_local *)params)->mass_binning,GBP_ADD_ITEM_TO_TREND_DEFAULT,halo))>=0){
-      add_item_to_trend(((process_trees_params_local *)params)->trends_z[i_M],GBP_ADD_ITEM_TO_TREND_DEFAULT,halo);
+      // Add halo to redshift trend
+      int i_z=add_item_to_trend(((process_trees_params_local *)params)->trends_z[i_M],GBP_ADD_ITEM_TO_TREND_DEFAULT,halo);
+      // Add halo to redshift arrays
+      if(i_z>=0 && i_z<((process_trees_params_local *)params)->trends_z[i_M]->ordinate->hist->n_bins){
+         double tau_form_i =fetch_treenode_tau_form (trees,halo);
+         double tau_3to1_i =fetch_treenode_tau_3to1 (trees,halo);
+         double tau_10to1_i=fetch_treenode_tau_10to1(trees,halo);
+         double x_off_i    =fetch_treenode_x_off    (trees,halo);
+         double f_sub_i    =fetch_treenode_SSFctn   (trees,halo);
+         params->n_halos_z[i_M][i_z]++;
+         if(tau_form_i >=TAU_FORM_RECOVERED)   params->n_halos_z_recovered_form[i_M][i_z]++;
+         if(tau_3to1_i >=TAU_MERGER_RECOVERED) params->n_halos_z_recovered_3to1[i_M][i_z]++;
+         if(tau_10to1_i>=TAU_MERGER_RECOVERED) params->n_halos_z_recovered_10to1[i_M][i_z]++;
+         if(x_off_i    <=XOFF_RELAXED)         params->n_halos_z_relaxed_x_off[i_M][i_z]++;
+         if(f_sub_i    <=FSUB_RELAXED)         params->n_halos_z_relaxed_f_sub[i_M][i_z]++;
+         if((x_off_i   <=XOFF_RELAXED) &&
+            (f_sub_i   <=FSUB_RELAXED))        params->n_halos_z_relaxed_all[i_M][i_z]++;
+      }
+      // Add halo to tau trends
       if(i_snap>=i_snap_lo&&i_snap<=i_snap_hi){
          add_item_to_trend(((process_trees_params_local *)params)->trends_tau_form[i_M], GBP_ADD_ITEM_TO_TREND_DEFAULT,halo);
          add_item_to_trend(((process_trees_params_local *)params)->trends_tau_3to1[i_M], GBP_ADD_ITEM_TO_TREND_DEFAULT,halo);
@@ -99,9 +148,72 @@ void process_trees_fctn_fin_local(tree_info *trees,void *params_in,int mode,int 
       sprintf(filename_output_root_root,"%s_subgroups",params->filename_output_root);
       free_precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_SUBGROUPS);
    }
-   // Write results
-   finalize_trend(params->mass_binning); // needed for the check on bin_count (below) to work w/ n_proc>1
+
+   // Finalize recovery/relaxation arrays
    int n_M=params->mass_binning->ordinate->hist->n_bins;
+   for(int i_M=0;i_M<n_M;i_M++){
+      int n_z=params->trends_z[i_M]->ordinate->hist->n_bins;
+      SID_Allreduce(SID_IN_PLACE,params->n_halos_z[i_M],                n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
+      SID_Allreduce(SID_IN_PLACE,params->n_halos_z_recovered_form[i_M], n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
+      SID_Allreduce(SID_IN_PLACE,params->n_halos_z_recovered_3to1[i_M], n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
+      SID_Allreduce(SID_IN_PLACE,params->n_halos_z_recovered_10to1[i_M],n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
+      SID_Allreduce(SID_IN_PLACE,params->n_halos_z_relaxed_x_off[i_M],  n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
+      SID_Allreduce(SID_IN_PLACE,params->n_halos_z_relaxed_f_sub[i_M],  n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
+      SID_Allreduce(SID_IN_PLACE,params->n_halos_z_relaxed_all[i_M],    n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
+   }
+
+   // Write recovery/relaxation arrays
+   for(int i_M=0;i_M<n_M;i_M++){
+      char  filename_out[MAX_FILENAME_LENGTH];
+      char mass_text_lo[64];
+      char mass_text_hi[64];
+      float_to_text((float)histogram_bin_x_lo(params->mass_binning->ordinate->hist,i_M),1,mass_text_lo);
+      float_to_text((float)histogram_bin_x_hi(params->mass_binning->ordinate->hist,i_M),1,mass_text_hi);
+      sprintf(filename_out,"%s_logM_%s_to_%s_relaxed.txt",filename_output_root_root,mass_text_lo,mass_text_hi);
+      FILE *fp_out=fopen(filename_out,"w");
+      int   n_z   =params->trends_z[i_M]->ordinate->hist->n_bins;
+      int   i_column=1;
+      fprintf(fp_out,"# Column (%02d): Snapshot\n",                        i_column++);
+      fprintf(fp_out,"#        (%02d): Redshift\n",                        i_column++);
+      fprintf(fp_out,"#        (%02d): No. of halos at z\n",               i_column++);
+      fprintf(fp_out,"#        (%02d): No. of halos w/ tau_form >=%.1lf\n",i_column++,TAU_FORM_RECOVERED);
+      fprintf(fp_out,"#        (%02d): No. of halos w/ tau_3to1 >=%.1lf\n",i_column++,TAU_MERGER_RECOVERED);
+      fprintf(fp_out,"#        (%02d): No. of halos w/ tau_10to1>=%.1lf\n",i_column++,TAU_MERGER_RECOVERED);
+      fprintf(fp_out,"#        (%02d): No. of halos w/ x_off    <=%.2lf\n",i_column++,XOFF_RELAXED);
+      fprintf(fp_out,"#        (%02d): No. of halos w/ f_sub    <=%.1lf\n",i_column++,FSUB_RELAXED);
+      fprintf(fp_out,"#        (%02d): No. of halos w/ x_off    <=%.2lf & f_sub<=%.1lf\n",i_column++,XOFF_RELAXED,FSUB_RELAXED);
+      for(int i_z=0;i_z<n_z;i_z++)
+         fprintf(fp_out,"%3d %6.2lf %6d %6d %6d %6d %6d %6d %6d\n",
+                        trees->snap_list[i_z],
+                        trees->z_list[i_z],
+                        params->n_halos_z[i_M][i_z],
+                        params->n_halos_z_recovered_form[i_M][i_z],
+                        params->n_halos_z_recovered_3to1[i_M][i_z],
+                        params->n_halos_z_recovered_10to1[i_M][i_z],
+                        params->n_halos_z_relaxed_x_off[i_M][i_z],
+                        params->n_halos_z_relaxed_f_sub[i_M][i_z],
+                        params->n_halos_z_relaxed_all[i_M][i_z]);
+      fclose(fp_out);
+   }
+
+   // Free recovery/relaxation arrays
+   for(int i_M=0;i_M<n_M;i_M++){
+      SID_free(SID_FARG params->n_halos_z[i_M]);
+      SID_free(SID_FARG params->n_halos_z_recovered_form[i_M]);
+      SID_free(SID_FARG params->n_halos_z_recovered_3to1[i_M]);
+      SID_free(SID_FARG params->n_halos_z_recovered_10to1[i_M]);
+      SID_free(SID_FARG params->n_halos_z_relaxed_x_off[i_M]);
+      SID_free(SID_FARG params->n_halos_z_relaxed_f_sub[i_M]);
+   }
+   SID_free(SID_FARG params->n_halos_z);
+   SID_free(SID_FARG params->n_halos_z_recovered_form);
+   SID_free(SID_FARG params->n_halos_z_recovered_3to1);
+   SID_free(SID_FARG params->n_halos_z_recovered_10to1);
+   SID_free(SID_FARG params->n_halos_z_relaxed_x_off);
+   SID_free(SID_FARG params->n_halos_z_relaxed_f_sub);
+
+   // Finalize & write trend results
+   finalize_trend(params->mass_binning); // needed for the check on bin_count (below) to work w/ n_proc>1
    for(int i_M=0;i_M<n_M;i_M++){
       if(params->mass_binning->ordinate->hist->bin_count[i_M]>50){
          // Set the root of the output filename

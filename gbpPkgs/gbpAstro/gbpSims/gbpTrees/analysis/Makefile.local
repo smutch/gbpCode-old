@@ -59,6 +59,9 @@ OBJFILES  = average_tree_branches.o              \
 	    fetch_treenode_x_off.o                   \
 	    fetch_treenode_SSFctn.o                  \
 	    fetch_treenode_list_local_log_sigma_vx.o \
+	    fetch_treenode_tau_form.o                \
+	    fetch_treenode_tau_3to1.o                \
+	    fetch_treenode_tau_10to1.o               \
 	    fetch_treenode_x.o                       \
 	    fetch_treenode_y.o                       \
 	    fetch_treenode_z.o                       \
