@@ -504,13 +504,13 @@ int main(int argc, char *argv[]){
   char filename_out_root[MAX_FILENAME_LENGTH];
   GBPREAL cen_select[3];
   GBPREAL select_size;
-  strcpy(filename_in_root, argv[1]);
-  strcpy(filename_out_root,argv[7]);
+  strcpy(filename_in_root,                         argv[1]);
   snapshot                          =         atoi(argv[2]);
   select_gadget_volume_params.cen[0]=(GBPREAL)atof(argv[3]);
   select_gadget_volume_params.cen[1]=(GBPREAL)atof(argv[4]);
   select_gadget_volume_params.cen[2]=(GBPREAL)atof(argv[5]);
   select_gadget_volume_params.size  =(GBPREAL)atof(argv[6]);
+  strcpy(filename_out_root,                        argv[7]);
   n_files_out                       =         atoi(argv[8]);
   select_mode                       =         atoi(argv[9]);
 
