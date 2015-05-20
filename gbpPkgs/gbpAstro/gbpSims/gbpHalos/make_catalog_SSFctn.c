@@ -18,17 +18,15 @@ int main(int argc, char *argv[]){
   int     snap_number_start;
   int     snap_number_stop;
   int     snap_number_step;
-  double  box_size;
 
   SID_init(&argc,&argv,NULL,NULL);
 
   strcpy(filename_SSimPL,   argv[1]);
   strcpy(filename_halo_type,argv[2]);
-  box_size            =atof(argv[3]);
-  snap_number_start   =atoi(argv[4]);
-  snap_number_stop    =atoi(argv[5]);
-  snap_number_step    =atoi(argv[6]);
-  strcpy(filename_out_root, argv[7]);
+  snap_number_start   =atoi(argv[3]);
+  snap_number_stop    =atoi(argv[4]);
+  snap_number_step    =atoi(argv[5]);
+  strcpy(filename_out_root, argv[6]);
 
   int flag_use_profiles=FALSE;
 
@@ -118,7 +116,7 @@ int main(int argc, char *argv[]){
 
          // Initialize trends
          trend_info *trend_M_FoF=NULL;
-         init_trend(&trend_M_FoF,"M_FoF",&halo_trend_data,init_halo_trend_property_logM_FoF,free_halo_trend_property_logM_FoF,calc_halo_trend_property_index_logM_FoF);
+         init_trend(&trend_M_FoF,"SSFctn",&halo_trend_data,init_halo_trend_property_logM_FoF,free_halo_trend_property_logM_FoF,calc_halo_trend_property_index_logM_FoF);
          init_halo_trend_coordinate(&halo_trend_data,trend_M_FoF,"SSFctn");
 
          // Read halos and construct histograms
