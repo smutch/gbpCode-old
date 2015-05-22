@@ -133,6 +133,10 @@
 #define READ_TREES_CATALOGS_ALL         (READ_TREES_CATALOGS_BOTH)|READ_TREES_CATALOGS_PROFILES
 #define READ_TREES_CATALOGS_DEFAULT     READ_TREES_CATALOGS_BOTH
 
+#define READ_TREES_DATA_SUBGROUPS   0
+#define READ_TREES_DATA_GROUPS      1
+#define READ_TREES_DATA_BOTH        (READ_TREES_DATA_GROUPS|READ_TREES_DATA_SUBGROUPS)
+
 #define READ_TREES_MATCH_SCORES_SUBGROUPS   0
 #define READ_TREES_MATCH_SCORES_GROUPS      1
 #define READ_TREES_MATCH_SCORES_ALL         READ_TREES_MATCH_SCORES_GROUPS|READ_TREES_MATCH_SCORES_SUBGROUPS
@@ -447,6 +451,10 @@ void read_trees(char       *filename_SSiMPL_root,
                 char       *filename_trees_version,
                 int         read_mode,
                 tree_info **trees);
+void read_trees_data(tree_info  *trees,
+                     char       *filename_root,
+                     int         mode,
+                     const char *name);
 void init_trees_data(tree_info    *trees,
                      void       ***rval,
                      size_t        data_size,

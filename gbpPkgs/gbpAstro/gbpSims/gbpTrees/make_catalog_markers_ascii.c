@@ -1,63 +1,115 @@
-#define  _MAIN
+#define _MAIN
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #include <gbpLib.h>
+#include <gbpMath.h>
 #include <gbpHalos.h>
 #include <gbpTrees.h>
 
-#define N_ITEMS_MARKERS   25
-#define I_SNAP_TREE_FORM  11
-#define I_SNAP_TREE_3TO1  13
-#define I_SNAP_TREE_10TO1 19
+#define TAU_FORM_RECOVERED   2.0
+#define TAU_MERGER_RECOVERED 3.0
+#define XOFF_RELAXED         0.07
+#define FSUB_RELAXED         0.1
+#define VIR_RELAXED          1.35
 
-void print_results_local(FILE                 *fp_out,
-                         int                   flag_use_profiles,
-                         double                box_size,
-                         tree_info            *trees,
-                         int                   snap_tree_halo,
-                         halo_properties_info *properties_group,
-                         halo_properties_info *properties_subgroup,
-                         halo_profile_info    *profile,
-                         float                *group_SO_data,
-                         int                  *marker_data,
-                         int                   i_group,
-                         int                   j_subgroup,
-                         int                   j_group);
-void print_results_local(FILE                 *fp_out,
-                         int                   flag_use_profiles,
-                         double                box_size,
-                         tree_info            *trees,
-                         int                   snap_tree_halo,
-                         halo_properties_info *properties_group,
-                         halo_properties_info *properties_subgroup,
-                         halo_profile_info    *profile,
-                         float                *group_SO_data,
-                         int                  *marker_data,
-                         int                   i_group,
-                         int                   j_subgroup,
-                         int                   j_group){
-   float overdensity;
-   if(flag_use_profiles){
-      int n_bins=profile->n_bins;
-      overdensity=profile->bins[n_bins-1].overdensity;
-   }
+// Structure that will carry the needed information to the select-and-analyze function
+typedef struct process_trees_params_local process_trees_params_local;
+struct process_trees_params_local{
+   char  filename_output_root[MAX_FILENAME_LENGTH];
+   FILE *fp_out;
+};
+
+void process_trees_fctn_init_snap_local(tree_info *trees,void *params_in,int mode,int i_type,int flag_init,int i_snap);
+void process_trees_fctn_init_snap_local(tree_info *trees,void *params_in,int mode,int i_type,int flag_init,int i_snap){
+   process_trees_params_local *params=(process_trees_params_local *)params_in;
+   char filename_out[MAX_FILENAME_LENGTH];
+   if(i_type==0)
+      sprintf(filename_out,"%s_%03d_groups.txt",params->filename_output_root,trees->snap_list[i_snap]);
    else
-      overdensity=-1.;
-
-   int n_subgroups;
-   int flag_process_group=FALSE;
-   halo_properties_info *properties;
-   if(j_group<0){
-      properties        =properties_group;
-      n_subgroups       =j_subgroup;
-      flag_process_group=TRUE;
+      sprintf(filename_out,"%s_%03d_subgroups.txt",params->filename_output_root,trees->snap_list[i_snap]);
+   if(SID.n_proc>1)
+      sprintf(filename_out,"%s.%d",filename_out,SID.My_rank);
+   params->fp_out=fopen(filename_out,"w");
+   int i_column=1;
+   if(i_type==0){
+      fprintf(params->fp_out,"# ASCII group catalog of snap #%d of %s\n",trees->snap_list[i_snap],params->filename_output_root);
+      fprintf(params->fp_out,"# File columns: (%02d)     group number\n",      i_column++);
    }
-   else
-      properties =properties_subgroup;
+   else{
+      fprintf(params->fp_out,"# ASCII subgroup catalog of snap #%d of %s\n",trees->snap_list[i_snap],params->filename_output_root);
+      fprintf(params->fp_out,"# File columns: (%02d)     subgroup number\n",      i_column++);
+   }
+   fprintf(params->fp_out,"#               (%02d)     # of particles\n",      i_column++);
+   fprintf(params->fp_out,"#               (%02d)     id_MBP\n",              i_column++);
+   fprintf(params->fp_out,"#               (%02d)     x_COM      [Mpc/h]\n",  i_column++);
+   fprintf(params->fp_out,"#               (%02d)     y_COM      [Mpc/h]\n",  i_column++);
+   fprintf(params->fp_out,"#               (%02d)     z_COM      [Mpc/h]\n",  i_column++);
+   fprintf(params->fp_out,"#               (%02d)     v_x_COM    [km/s]\n",   i_column++);
+   fprintf(params->fp_out,"#               (%02d)     v_y_COM    [km/s]\n",   i_column++);
+   fprintf(params->fp_out,"#               (%02d)     v_z_COM    [km/s]\n",   i_column++);
+   fprintf(params->fp_out,"#               (%02d)     x_MBP      [Mpc/h]\n",  i_column++);
+   fprintf(params->fp_out,"#               (%02d)     y_MBP      [Mpc/h]\n",  i_column++);
+   fprintf(params->fp_out,"#               (%02d)     z_MBP      [Mpc/h]\n",  i_column++);
+   fprintf(params->fp_out,"#               (%02d)     v_x_MBP    [km/s]\n",   i_column++);
+   fprintf(params->fp_out,"#               (%02d)     v_y_MBP    [km/s]\n",   i_column++);
+   fprintf(params->fp_out,"#               (%02d)     v_z_MBP    [km/s]\n",   i_column++);
+   fprintf(params->fp_out,"#               (%02d)     M_vir      [M_sol/h]\n",i_column++);
+   fprintf(params->fp_out,"#               (%02d)     R_vir      [Mpc/h]\n",  i_column++);
+   fprintf(params->fp_out,"#               (%02d)     R_halo     [Mpc/h]\n",  i_column++);
+   fprintf(params->fp_out,"#               (%02d)     R_max      [Mpc/h]\n",  i_column++);
+   fprintf(params->fp_out,"#               (%02d)     V_max      [km/s]\n",   i_column++);
+   fprintf(params->fp_out,"#               (%02d)     V_vir      [km/s]\n",   i_column++);
+   fprintf(params->fp_out,"#               (%02d)     sigma_v    [km/s]\n",   i_column++);
+   fprintf(params->fp_out,"#               (%02d,%02d,%02d) spin       [Mpc/h km/s]\n",i_column,i_column+1,i_column+2);i_column+=3;
+   fprintf(params->fp_out,"#               (%02d)     lambda (spin parameter)\n",i_column++);
+   fprintf(params->fp_out,"#               (%02d)     q_triaxial\n",             i_column++);
+   fprintf(params->fp_out,"#               (%02d)     s_triaxial\n",             i_column++);
+   fprintf(params->fp_out,"#               (%02d)     offset_COM [R_vir]\n",     i_column++);
+   if(i_type==0){
+      fprintf(params->fp_out,"#               (%02d)     n_substructures\n",     i_column++);
+   }
+   else{
+      fprintf(params->fp_out,"#               (%02d)     group index\n",           i_column++);
+   }
+   fprintf(params->fp_out,"#               (%02d)     f_sub\n",i_column++);
+   fprintf(params->fp_out,"#               (%02d)     M_peak [M_sol/h]\n",         i_column++);
+   fprintf(params->fp_out,"#               (%02d)     tau_form\n",           i_column++);
+   fprintf(params->fp_out,"#               (%02d)     tau_3to1\n",           i_column++);
+   fprintf(params->fp_out,"#               (%02d)     tau_10to1\n",          i_column++);
+}
 
-   double expansion_factor=a_of_z(trees->z_list[snap_tree_halo]);
+void process_trees_fctn_fin_snap_local(tree_info *trees,void *params_in,int mode,int i_type,int flag_init,int i_snap);
+void process_trees_fctn_fin_snap_local(tree_info *trees,void *params_in,int mode,int i_type,int flag_init,int i_snap){
+   process_trees_params_local *params=(process_trees_params_local *)params_in;
+   fclose(params->fp_out);
+}
+
+// ** Define the calculation here **
+void process_trees_fctn_init_local(tree_info *trees,void *params_in,int mode,int i_type);
+void process_trees_fctn_init_local(tree_info *trees,void *params_in,int mode,int i_type){
+  // Create an alias for the passed void pointer
+  process_trees_params_local *params=(process_trees_params_local *)params_in;
+  // Initialize markers (just one-at-a-time to save RAM)
+  if(i_type==0)
+     precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_GROUPS);
+  else
+     precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_SUBGROUPS);
+}
+
+// ** Perform halo-by-halo processing here **
+void process_trees_fctn_analyze_local(tree_info *trees,void *params_in,int mode,int i_type,int flag_init,tree_node_info *halo);
+void process_trees_fctn_analyze_local(tree_info *trees,void *params_in,int mode,int i_type,int flag_init,tree_node_info *halo){
+   process_trees_params_local *params=(process_trees_params_local *)params_in;
+
+   int n_subgroups       =halo->n_substructures;
+   int flag_process_group=(i_type==0);
+   halo_properties_info *properties      =fetch_treenode_properties(trees,halo);
+   halo_properties_info *properties_group=fetch_treenode_properties(trees,halo->parent);
+   double expansion_factor=a_of_z(trees->z_list[halo->snap_tree]);
+   double box_size=(double)trees->box_size;
+   int    i_group=halo->file_index;
 
    // Create a few properties
    double dx,dy,dz,v_c,lambda;
@@ -71,7 +123,7 @@ void print_results_local(FILE                 *fp_out,
    offset_COM=sqrt(dx*dx+dy*dy+dz*dz)/(properties->R_vir/expansion_factor);
 
    // Perform write
-   fprintf(fp_out,"%9d %9d %9lld  %12.5e %12.5e %12.5e %11.5f %11.5f %11.5f  %12.5e %12.5e %12.5e %11.5f %11.5f %11.5f  %10.5le %11.5f %11.5f %11.5f  %11.5f %11.5f %11.5f  %12.5e %12.5e %12.5e %11.5f  %11.5f %11.5f  %11.5f",
+   fprintf(params->fp_out,"%9d %9d %9lld  %12.5e %12.5e %12.5e %11.5f %11.5f %11.5f  %12.5e %12.5e %12.5e %11.5f %11.5f %11.5f  %10.5le %11.5f %11.5f %11.5f  %11.5f %11.5f %11.5f  %12.5e %12.5e %12.5e %11.5f  %11.5f %11.5f  %11.5f",
            i_group,properties->n_particles,properties->id_MBP,
            properties->position_COM[0],properties->position_COM[1],properties->position_COM[2],
            properties->velocity_COM[0],properties->velocity_COM[1],properties->velocity_COM[2],
@@ -89,266 +141,91 @@ void print_results_local(FILE                 *fp_out,
            properties->q_triaxial,
            properties->s_triaxial,
            offset_COM); // converts to kpc/h
-    if(flag_use_profiles)
-       fprintf(fp_out,"  %11.5f",overdensity);
     if(!flag_process_group){
-       float f_sub=(float)(properties->M_vir/properties_group->M_vir);
-       fprintf(fp_out,"  %9d %3d %11.5f",j_group,j_subgroup,f_sub);
+       float f_sub=(float)properties->n_particles/(float)properties_group->n_particles;
+       fprintf(params->fp_out,"  %9d %11.5f",halo->parent->file_index,f_sub);
     }
     else{
-       float f_sub=((float)(properties_subgroup->n_particles))/((float)(properties_group->n_particles));
-       fprintf(fp_out,"  %11.5f %3d",f_sub,n_subgroups);
-       if(group_SO_data!=NULL)
-          fprintf(fp_out,"  %10.5le",1e10*group_SO_data[0]);
+       double f_sub=fetch_treenode_SSFctn(trees,halo);
+       fprintf(params->fp_out,"  %3d %11.5lf",n_subgroups,f_sub);
     }
-    if(marker_data!=NULL){
-       int    snap_tree_form =marker_data[I_SNAP_TREE_FORM];
-       int    snap_tree_3to1 =marker_data[I_SNAP_TREE_3TO1];
-       int    snap_tree_10to1=marker_data[I_SNAP_TREE_10TO1];
-       double tau_form =-1.;
-       double tau_3to1 =-1.;
-       double tau_10to1=-1.;
-       if(snap_tree_form>=0)
-          tau_form =10.*((trees->t_list[snap_tree_halo]-trees->t_list[snap_tree_form]) /trees->t_list[snap_tree_halo]);
-       if(snap_tree_3to1>=0)
-          tau_3to1 =10.*((trees->t_list[snap_tree_halo]-trees->t_list[snap_tree_3to1]) /trees->t_list[snap_tree_halo]);
-       if(snap_tree_10to1>=0)
-          tau_10to1=10.*((trees->t_list[snap_tree_halo]-trees->t_list[snap_tree_10to1])/trees->t_list[snap_tree_halo]);
-       fprintf(fp_out,"  %11.5f  %11.5f  %11.5f",tau_form,tau_3to1,tau_10to1);
-    }
-    fprintf(fp_out,"\n");
+    double tau_form =fetch_treenode_tau_form (trees,halo);
+    double tau_3to1 =fetch_treenode_tau_3to1 (trees,halo);
+    double tau_10to1=fetch_treenode_tau_10to1(trees,halo);
+    double M_peak   =fetch_treenode_Mpeak(trees,halo);
+    fprintf(params->fp_out,"  %10.5le %11.5lf  %11.5lf  %11.5lf",M_peak,tau_form,tau_3to1,tau_10to1);
+    fprintf(params->fp_out,"\n");
+}
+
+// ** Write the results here **
+void process_trees_fctn_fin_local(tree_info *trees,void *params_in,int mode,int i_type);
+void process_trees_fctn_fin_local(tree_info *trees,void *params_in,int mode,int i_type){
+   // Create an alias for the passed void pointer
+   process_trees_params_local *params=(process_trees_params_local *)params_in;
+   // Clean-up markers
+   if(i_type==0)
+      free_precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_GROUPS);
+   else
+      free_precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_SUBGROUPS);
 }
 
 int main(int argc, char *argv[]){
-  char    filename_properties[256];
-  char    filename_profiles[256];
-  char    filename_out_root[256];
-  char    filename_markers_dir[256];
-  char    filename_out[256];
-  char    filename_SSimPL[MAX_FILENAME_LENGTH];
-  char    filename_halo_type[MAX_FILENAME_LENGTH];
-  char    filename_tree_version[MAX_FILENAME_LENGTH];
-  FILE   *fp_out[2];
-  int     snap_number;
-  int     snap_number_start;
-  int     snap_number_stop;
-  int     snap_number_step;
-  double  box_size;
 
   SID_init(&argc,&argv,NULL,NULL);
 
-  strcpy(filename_SSimPL,      argv[1]);
-  strcpy(filename_halo_type,   argv[2]);
-  strcpy(filename_tree_version,argv[3]);
-  box_size               =atof(argv[4]);
-  snap_number_start      =atoi(argv[5]);
-  snap_number_stop       =atoi(argv[6]);
-  snap_number_step       =atoi(argv[7]);
-  strcpy(filename_out_root,    argv[8]);
-  strcpy(filename_markers_dir, argv[9]);
+  // Fetch user inputs
+  char filename_SSimPL_dir[MAX_FILENAME_LENGTH];
+  char filename_halo_version_root[MAX_FILENAME_LENGTH];
+  char filename_trees_name[MAX_FILENAME_LENGTH];
+  char filename_output_root[MAX_FILENAME_LENGTH];
+  strcpy(filename_SSimPL_dir,       argv[1]);
+  strcpy(filename_halo_version_root,argv[2]);
+  strcpy(filename_trees_name,       argv[3]);
+  int  snap_number_start      =atoi(argv[4]);
+  int  snap_number_stop       =atoi(argv[5]);
+  strcpy(filename_output_root,      argv[6]);
 
-  int flag_use_profiles=FALSE;
+  // Set the halo and tree filename roots
+  char filename_trees_root[MAX_FILENAME_LENGTH];
+  char filename_halos_root[MAX_FILENAME_LENGTH];
+  sprintf(filename_trees_root,"%s/trees/%s",filename_SSimPL_dir,filename_trees_name);
+  sprintf(filename_halos_root,"%s/halos/%s",filename_SSimPL_dir,filename_halo_version_root);
 
-  // Initialize trees
-  tree_info *trees=NULL;
-  init_trees_read(filename_SSimPL,filename_tree_version,TREE_READ_HEADER_ONLY,&trees);
+  SID_log("Generating ascii version of catalogs with tree markers...",SID_LOG_OPEN|SID_LOG_TIMER);
 
-  if(SID.I_am_Master){
-    int i_type;
-    SID_log("Processing catalogs for snaps %d->%d...",SID_LOG_OPEN|SID_LOG_TIMER,snap_number_start,snap_number_stop);
-    SID_log("Properties structure size=%lld",SID_LOG_COMMENT,sizeof(halo_properties_info));
-    for(snap_number=snap_number_start;snap_number<=snap_number_stop;snap_number++){
+  // Perform analysis
+  tree_info *trees;
+  read_trees(filename_SSimPL_dir,
+             filename_halo_version_root,
+             filename_trees_name,
+             TREE_MODE_DEFAULT,
+             &trees);
 
-         // Determine the tree snapshot for this snapshot (and check that it's in the trees)
-         int snap_tree_catalog=find_treesnap_snap(trees,snap_number);
+  // Convert given snapshot ranges to snap_tree ranges
+  snap_number_start=find_treesnap_snap(trees,snap_number_start);
+  snap_number_stop =find_treesnap_snap(trees,snap_number_stop);
 
-         // Open halos
-         char filename_halos[256];
-         sprintf(filename_halos,"%s/halos/%s_%03d.catalog_groups",filename_SSimPL,filename_halo_type,snap_number);
-         FILE *fp_halos=NULL;
-         if((fp_halos=fopen(filename_halos,"r"))==NULL)
-            SID_trap_error("Could not open halo file {%s} for reading.",ERROR_IO_OPEN,filename_halos);
-         int n_groups_halos,group_offset_byte_size;
-         fread(&n_groups_halos,        sizeof(int),1,fp_halos);
-         fread(&group_offset_byte_size,sizeof(int),1,fp_halos);
+  // Read catalogs
+  read_trees_catalogs(trees,
+                      filename_SSimPL_dir,
+                      filename_halo_version_root,
+                      READ_TREES_CATALOGS_BOTH);
 
-         // Skip group sizes and offsets
-         fseeko(fp_halos,(off_t)(n_groups_halos*(sizeof(int)+group_offset_byte_size)),SEEK_CUR);
+  // ** PERFORM the calculation here **a
+  process_trees_params_local params;
+  strcpy(params.filename_output_root,filename_output_root);
+  process_trees_by_snap(trees,&params,PROCESS_TREES_BOTH,snap_number_start,snap_number_stop-snap_number_start+1,
+                        process_trees_fctn_init_local,
+                        process_trees_fctn_init_snap_local,
+                        process_trees_fctn_select_null,
+                        process_trees_fctn_analyze_local,
+                        process_trees_fctn_fin_snap_local,
+                        process_trees_fctn_fin_local);
 
-         // Open catalogs
-         char filename_cat_root[256];
-         sprintf(filename_cat_root,"%s/catalogs/%s",filename_SSimPL,filename_halo_type);
-         fp_catalog_info fp_catalog_groups;
-         fp_catalog_info fp_catalog_subgroups;
-         fopen_catalog(filename_cat_root,
-                       snap_number,
-                       READ_CATALOG_GROUPS|READ_CATALOG_PROPERTIES|READ_CATALOG_PROPERTIES,
-                       &fp_catalog_groups);
-         fopen_catalog(filename_cat_root,
-                       snap_number,
-                       READ_CATALOG_SUBGROUPS|READ_CATALOG_PROPERTIES|READ_CATALOG_PROPERTIES,
-                       &fp_catalog_subgroups);
-
-         // Open SO files if they're available
-         float *group_SO_data=NULL;
-         fp_multifile_info fp_SO;
-         int flag_use_SO=fopen_multifile("%s/catalogs/%s_%03d.catalog_groups_SO",sizeof(float),&fp_SO,filename_SSimPL,filename_halo_type,snap_number);
-         if(flag_use_SO){
-            group_SO_data=(float *)SID_malloc(sizeof(float));
-            SID_log("SO files present.",SID_LOG_COMMENT);
-         }
-
-         // Sanity check
-         if(n_groups_halos!=fp_catalog_groups.n_halos_total)
-            SID_trap_error("Group counts in halo and catalog files don't match (ie. %d!=%d).",ERROR_LOGIC,n_groups_halos,fp_catalog_groups.n_halos_total);
-
-         // Process halos
-         SID_log("Writing snap #%03d...",SID_LOG_OPEN,snap_number);
-         SID_log("(%d groups, %d subgroups)...",SID_LOG_CONTINUE,fp_catalog_groups.n_halos_total,fp_catalog_subgroups.n_halos_total);
-         int  *marker_data_group   =NULL;
-         int  *marker_data_subgroup=NULL;
-         FILE *fp_markers_groups;
-         FILE *fp_markers_subgroups;
-         int   flag_use_markers_groups;
-         int   flag_use_markers_subgroups;
-         for(int i_type=0;i_type<2;i_type++){
-            char  filename_markers[MAX_FILENAME_LENGTH];
-            int   flag_use_markers;
-            if(i_type==0){
-               sprintf(filename_out,    "%s_%03d_groups.ascii",   filename_out_root,snap_number);
-               sprintf(filename_markers,"%s/groups_%03d.dat",filename_markers_dir,snap_number);
-               marker_data_group      =(int *)SID_malloc(N_ITEMS_MARKERS*sizeof(int));
-               fp_markers_groups      =fopen(filename_markers,"r");
-               fseeko(fp_markers_groups,(off_t)(2*sizeof(int)),SEEK_SET); // skip header
-               flag_use_markers_groups=(!(fp_markers_groups==NULL));
-               flag_use_markers       =flag_use_markers_groups;
-            }
-            else{
-               sprintf(filename_out,    "%s_%03d_subgroups.ascii",filename_out_root,snap_number);
-               sprintf(filename_markers,"%s/subgroups_%03d.dat",filename_markers_dir,snap_number);
-               marker_data_subgroup      =(int *)SID_malloc(N_ITEMS_MARKERS*sizeof(int));
-               fp_markers_subgroups      =fopen(filename_markers,"r");
-               fseeko(fp_markers_subgroups,(off_t)(2*sizeof(int)),SEEK_SET); // skip header
-               flag_use_markers_subgroups=(!(fp_markers_subgroups==NULL));
-               flag_use_markers          =flag_use_markers_subgroups;
-            }
-
-            // Open output file and write header
-            fp_out[i_type]=fopen(filename_out,"w");
-            int i_column=1;
-            if(i_type==0){
-               fprintf(fp_out[i_type],"# ASCII group catalog of snap #%d of %s\n",snap_number,filename_SSimPL);
-               fprintf(fp_out[i_type],"# File columns: (%02d)     group number\n",      i_column++);
-            }
-            else{
-               fprintf(fp_out[i_type],"# ASCII subgroup catalog of snap #%d of %s\n",snap_number,filename_SSimPL);
-               fprintf(fp_out[i_type],"# File columns: (%02d)     subgroup number\n",      i_column++);
-            }
-            fprintf(fp_out[i_type],"#               (%02d)     # of particles\n",      i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     id_MBP\n",              i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     x_COM      [Mpc/h]\n",  i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     y_COM      [Mpc/h]\n",  i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     z_COM      [Mpc/h]\n",  i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     v_x_COM    [km/s]\n",   i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     v_y_COM    [km/s]\n",   i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     v_z_COM    [km/s]\n",   i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     x_MBP      [Mpc/h]\n",  i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     y_MBP      [Mpc/h]\n",  i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     z_MBP      [Mpc/h]\n",  i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     v_x_MBP    [km/s]\n",   i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     v_y_MBP    [km/s]\n",   i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     v_z_MBP    [km/s]\n",   i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     M_vir      [M_sol/h]\n",i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     R_vir      [Mpc/h]\n",  i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     R_halo     [Mpc/h]\n",  i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     R_max      [Mpc/h]\n",  i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     V_max      [km/s]\n",   i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     V_vir      [km/s]\n",   i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     sigma_v    [km/s]\n",   i_column++);
-            fprintf(fp_out[i_type],"#               (%02d,%02d,%02d) spin       [Mpc/h km/s]\n",i_column,i_column+1,i_column+2);i_column+=3;
-            fprintf(fp_out[i_type],"#               (%02d)     lambda (spin parameter)\n",i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     q_triaxial\n",             i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     s_triaxial\n",             i_column++);
-            fprintf(fp_out[i_type],"#               (%02d)     offset_COM [R_vir]\n",     i_column++);
-            if(flag_use_profiles)
-               fprintf(fp_out[i_type],"#               (%02d)     overdensity(R_halo)\n",i_column++);
-            if(i_type==0){
-               fprintf(fp_out[i_type],"#               (%02d)     f_sub\n",i_column++);
-               fprintf(fp_out[i_type],"#               (%02d)     n_substructures\n",     i_column++);
-               if(group_SO_data!=NULL)
-                  fprintf(fp_out[i_type],"#               (%02d)     M_SO       [M_sol/h]\n",     i_column++);
-            }
-            else{
-               fprintf(fp_out[i_type],"#               (%02d)     group index\n",           i_column++);
-               fprintf(fp_out[i_type],"#               (%02d)     substructure rank\n",     i_column++);
-               fprintf(fp_out[i_type],"#               (%02d)     fraction of group mass\n",i_column++);
-            }
-            if(flag_use_markers){
-               fprintf(fp_out[i_type],"#               (%02d)     tau_form\n",           i_column++);
-               fprintf(fp_out[i_type],"#               (%02d)     tau_3to1\n",           i_column++);
-               fprintf(fp_out[i_type],"#               (%02d)     tau_10to1\n",          i_column++);
-            }
-         }
-
-         halo_properties_info *properties_group   =(halo_properties_info *)SID_malloc(sizeof(halo_properties_info));
-         halo_properties_info *properties_subgroup=(halo_properties_info *)SID_malloc(sizeof(halo_properties_info));
-         halo_profile_info    *profile_group   =NULL;
-         halo_profile_info    *profile_subgroup=NULL;
-         if(flag_use_profiles){
-            profile_group    = (halo_profile_info *)SID_malloc(sizeof(halo_profile_info));
-            profile_subgroup = (halo_profile_info *)SID_malloc(sizeof(halo_profile_info));
-         }
-
-         // Perform read and write
-         for(int i_group=0,i_subgroup=0;i_group<fp_catalog_groups.n_halos_total;i_group++){
-            int n_subgroups_group;
-            // Read group catalog
-            fread_catalog_file(&fp_catalog_groups,NULL,properties_group,profile_group,i_group);
-            // Read number of subgroups
-            fread(&n_subgroups_group,sizeof(int),1,fp_halos);
-            // Read SO masses (if available)
-            if(group_SO_data!=NULL)
-               fread_multifile(&fp_SO,group_SO_data,i_group);
-            // Read markers (if available)
-            if(flag_use_markers_groups)
-               fread(marker_data_group,sizeof(int),N_ITEMS_MARKERS,fp_markers_groups);
-            // Loop over subgroups
-            for(int j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
-               // Read subgroup properties
-               fread_catalog_file(&fp_catalog_subgroups,NULL,properties_subgroup,profile_subgroup,i_subgroup);
-               // Read markers (if available)
-               if(flag_use_markers_subgroups)
-                  fread(marker_data_subgroup,sizeof(int),N_ITEMS_MARKERS,fp_markers_subgroups);
-               // Write results
-               print_results_local(fp_out[1],flag_use_profiles,box_size,trees,snap_tree_catalog,properties_group,properties_subgroup,profile_subgroup,NULL,marker_data_subgroup,i_subgroup,j_subgroup,i_group);
-               if(j_subgroup==0)
-                  print_results_local(fp_out[0],flag_use_profiles,box_size,trees,snap_tree_catalog,properties_group,properties_subgroup,profile_subgroup,group_SO_data,marker_data_group,i_group,n_subgroups_group,-1);
-            }
-         }
-
-         // Clean-up
-         SID_free(SID_FARG properties_group);
-         SID_free(SID_FARG properties_subgroup);
-         if(flag_use_profiles){
-            SID_free(SID_FARG profile_group);
-            SID_free(SID_FARG profile_subgroup);
-         }
-         SID_free(SID_FARG group_SO_data);
-         SID_free(SID_FARG marker_data_group);
-         SID_free(SID_FARG marker_data_subgroup);
-         fclose(fp_out[0]);
-         fclose(fp_out[1]);
-         fclose(fp_halos);
-         if(flag_use_markers_groups)    fclose(fp_markers_groups);
-         if(flag_use_markers_subgroups) fclose(fp_markers_subgroups);
-         fclose_catalog(&fp_catalog_groups);
-         fclose_catalog(&fp_catalog_subgroups);
-         fclose_multifile(&fp_SO);
-         SID_log("Done.",SID_LOG_CLOSE);
-     }
-     SID_log("Done.",SID_LOG_CLOSE);
-  }
+  // Clean-up
   free_trees(&trees);
 
+  SID_log("Done.",SID_LOG_CLOSE);
   SID_exit(ERROR_NONE);
 }
+

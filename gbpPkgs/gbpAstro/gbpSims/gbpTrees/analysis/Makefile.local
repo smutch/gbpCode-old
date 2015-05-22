@@ -54,8 +54,12 @@ OBJFILES  = average_tree_branches.o              \
 	    fetch_treenode_delta_t_leaf.o            \
 	    fetch_treenode_properties.o              \
 	    fetch_treenode_Mvir.o                    \
+	    fetch_treenode_Rvir.o                    \
+	    fetch_treenode_sigmav.o                  \
+	    fetch_treenode_c_NFW.o                   \
 	    fetch_treenode_zeta.o                    \
 	    fetch_treenode_Mpeak.o                   \
+	    fetch_treenode_Vir_ratio.o               \
 	    fetch_treenode_x_off.o                   \
 	    fetch_treenode_SSFctn.o                  \
 	    fetch_treenode_list_local_log_sigma_vx.o \
