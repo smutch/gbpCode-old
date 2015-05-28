@@ -57,5 +57,8 @@ int precompute_treenode_markers(tree_info *trees,int mode){
    SID_Barrier(SID.COMM_WORLD);
    SID_log("Done.",SID_LOG_CLOSE);
 
+   // Process reference trees if present
+   if(trees->trees_reference!=NULL)
+      precompute_treenode_markers(trees->trees_reference,mode);
 }
 

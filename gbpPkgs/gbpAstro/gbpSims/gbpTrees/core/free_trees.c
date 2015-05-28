@@ -13,6 +13,10 @@ void free_trees(tree_info **trees){
 
   SID_log("Freeing trees...",SID_LOG_OPEN);
 
+  // Free reference trees
+  if((*trees)->trees_reference!=NULL)
+     free_trees(&((*trees)->trees_reference));
+
   // Free look-up arrays
   free_trees_lookup((*trees));
 
@@ -61,6 +65,7 @@ void free_trees(tree_info **trees){
 
   // Free the various other arrays
   SID_free(SID_FARG (*trees)->snap_list);
+  SID_free(SID_FARG (*trees)->a_list);
   SID_free(SID_FARG (*trees)->z_list);
   SID_free(SID_FARG (*trees)->t_list);
   SID_free(SID_FARG (*trees)->n_groups_catalog);

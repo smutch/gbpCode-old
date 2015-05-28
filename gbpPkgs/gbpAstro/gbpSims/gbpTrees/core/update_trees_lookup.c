@@ -15,16 +15,16 @@ void update_trees_lookup(tree_info *trees,int i_file){
    i_halo =0;
    current=trees->first_neighbour_groups[i_file];
    while(current!=NULL){
-      trees->group_indices[i_file%trees->n_wrap][i_halo]=current->file_index;
-      trees->group_array[i_file%trees->n_wrap][i_halo]  =current;
+      trees->group_indices[i_file%trees->n_wrap_lookup][i_halo]=current->file_index;
+      trees->group_array[i_file%trees->n_wrap_lookup][i_halo]  =current;
       i_halo++;
       current=current->next_neighbour;
    }
    i_halo =0;
    current=trees->first_neighbour_subgroups[i_file];
    while(current!=NULL){
-      trees->subgroup_indices[i_file%trees->n_wrap][i_halo]=current->file_index;
-      trees->subgroup_array[i_file%trees->n_wrap][i_halo]  =current;
+      trees->subgroup_indices[i_file%trees->n_wrap_lookup][i_halo]=current->file_index;
+      trees->subgroup_array[i_file%trees->n_wrap_lookup][i_halo]  =current;
       i_halo++;
       current=current->next_neighbour;
    }

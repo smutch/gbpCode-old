@@ -25,5 +25,9 @@ int free_precompute_treenode_markers(tree_info *trees,int mode){
          SID_free(SID_FARG markers[i_snap]);
    }
    SID_free(SID_FARG markers);
+
+   // Process reference trees if present
+   if(trees->trees_reference!=NULL)
+      free_precompute_treenode_markers(trees->trees_reference,mode);
 }
 

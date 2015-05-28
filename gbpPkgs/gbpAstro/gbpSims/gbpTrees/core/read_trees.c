@@ -46,6 +46,9 @@ void read_trees(char       *filename_SSimPL_root,
   //   with various pieces of header information
   init_trees_read(filename_SSimPL_root,filename_trees_version,TREE_READ_DEFAULT,trees);
 
+  // Set the mode
+  (*trees)->mode=read_mode;
+
   // To make the code look a little cleaner, create some aliases
   int i_read_start=(*trees)->i_read_start;
   int i_read_stop =(*trees)->i_read_stop;
@@ -53,7 +56,6 @@ void read_trees(char       *filename_SSimPL_root,
   int i_read_last =(*trees)->i_read_last;
   int n_snaps     =(*trees)->n_snaps;
   int n_search    =(*trees)->n_search;
-  int n_wrap      =(*trees)->n_wrap;
 
   // Initialize filename paths
   char filename_input_file_root[MAX_FILENAME_LENGTH];
@@ -69,7 +71,9 @@ void read_trees(char       *filename_SSimPL_root,
   sprintf(filename_input_dir_horizontal_trees,    "%s/trees",     filename_input_dir_horizontal);
 
   // Create index->pointer look-up arrays.  These are temporary arrays
-  //   needed only for reading and will be deallocated afterwards.
+  //   needed only for reading and will be deallocated afterwards, unless
+  //   these trees are being read with the TREE_MODE_REFERENCE flag,
+  //   in which case they will be kept for doing reference halo lookups
   init_trees_lookup((*trees));
 
   // Initialize the extended tree pointers if we are reading them
@@ -342,7 +346,8 @@ void read_trees(char       *filename_SSimPL_root,
   calc_max((*trees)->n_subgroups_forest_local,&((*trees)->max_n_subgroups_forest_local),(*trees)->n_forests_local,SID_INT,CALC_MODE_DEFAULT);
 
   // Clean-up
-  free_trees_lookup((*trees));
+  if(!check_mode_for_flag((*trees)->mode,TREE_MODE_REFERENCE))
+     free_trees_lookup((*trees));
 
   SID_log("Done.",SID_LOG_CLOSE);
 }

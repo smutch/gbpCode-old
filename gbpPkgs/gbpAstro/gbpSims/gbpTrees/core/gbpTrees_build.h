@@ -21,6 +21,7 @@
 #define TREE_PROGENITOR_ORDER_N_PARTICLES_PEAK TTTP03
 #define TREE_READ_EXTENDED_POINTERS            TTTP04
 #define TREE_READ_HEADER_ONLY                  TTTP05
+#define TREE_MODE_REFERENCE                    TTTP06
 #define TREE_PROGENITOR_ORDER_DEFAULT          TREE_PROGENITOR_ORDER_N_PARTICLES_PEAK
 #define TREE_MODE_DEFAULT                      (TREE_SUBSTRUCTURE_ORDER_DEFAULT|TREE_PROGENITOR_ORDER_DEFAULT)
 
@@ -346,6 +347,7 @@ struct tree_markers_info{
 
 typedef struct tree_info tree_info;
 struct tree_info{
+  int              mode;
   // Filename info
   char             filename_root[MAX_FILENAME_LENGTH];
   char             filename_root_horizontal[MAX_FILENAME_LENGTH];
@@ -359,8 +361,10 @@ struct tree_info{
   int              i_read_last;
   int              n_snaps;
   int              n_wrap;
+  int              n_wrap_lookup;
   int              n_search;
   int             *snap_list;
+  double          *a_list;
   double          *z_list;
   double          *t_list;
   // Halo and tree counts etc
@@ -433,6 +437,8 @@ struct tree_info{
   halo_properties_info      **subgroup_properties;
   halo_properties_SAGE_info **group_properties_SAGE;
   halo_properties_SAGE_info **subgroup_properties_SAGE;
+  // Reference trees pointer permitting communication between difference tree versions
+  tree_info *trees_reference;
 };
 
 // Structure needed for passing parameters to the tree data ADaPS deallocation function
@@ -451,10 +457,11 @@ void read_trees(char       *filename_SSiMPL_root,
                 char       *filename_trees_version,
                 int         read_mode,
                 tree_info **trees);
-void read_trees_data(tree_info  *trees,
-                     char       *filename_root,
-                     int         mode,
-                     const char *name);
+void read_trees_data(tree_info    *trees,
+                     char         *filename_root,
+                     int           mode,
+                     SID_Datatype  data_type,
+                     const char   *name);
 void init_trees_data(tree_info    *trees,
                      void       ***rval,
                      size_t        data_size,

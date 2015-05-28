@@ -31,7 +31,7 @@ struct process_trees_params_local{
    int        **n_halos_z_recovered_10to1;
    int        **n_halos_z_relaxed_x_off;
    int        **n_halos_z_relaxed_f_sub;
-   int        **n_halos_z_relaxed_vir;
+   int        **n_halos_z_relaxed_Vir_ratio;
    int        **n_halos_z_relaxed_all;
 };
 
@@ -57,47 +57,51 @@ void process_trees_fctn_init_local(tree_info *trees,void *params_in,int mode,int
   for(int i_M=0;i_M<n_M;i_M++){
      // f(z) trends
      init_treenode_trend           (trees,&(params->trends_z[i_M]),"z");
-     init_treenode_trend_coordinate(trees, (params->trends_z[i_M]),"xoff");
      init_treenode_trend_coordinate(trees, (params->trends_z[i_M]),"tau_form");
      init_treenode_trend_coordinate(trees, (params->trends_z[i_M]),"tau_3to1");
      init_treenode_trend_coordinate(trees, (params->trends_z[i_M]),"tau_10to1");
+     init_treenode_trend_coordinate(trees, (params->trends_z[i_M]),"xoff");
+     init_treenode_trend_coordinate(trees, (params->trends_z[i_M]),"Vir_ratio");
      if(i_type==0)
         init_treenode_trend_coordinate(trees,(params->trends_z[i_M]),"SSFctn");
      // f(tau_form) trends
      init_treenode_trend           (trees,&(params->trends_tau_form[i_M]),"tau_form");
      init_treenode_trend_coordinate(trees, (params->trends_tau_form[i_M]),"xoff");
+     init_treenode_trend_coordinate(trees, (params->trends_tau_form[i_M]),"Vir_ratio");
      if(i_type==0)
         init_treenode_trend_coordinate(trees, (params->trends_tau_form[i_M]),"SSFctn");
      // f(tau_3to1) trends
      init_treenode_trend           (trees,&(params->trends_tau_3to1[i_M]),"tau_3to1");
      init_treenode_trend_coordinate(trees, (params->trends_tau_3to1[i_M]),"xoff");
+     init_treenode_trend_coordinate(trees, (params->trends_tau_3to1[i_M]),"Vir_ratio");
      if(i_type==0)
         init_treenode_trend_coordinate(trees, (params->trends_tau_3to1[i_M]), "SSFctn");
      // f(tau_10to1) trends
      init_treenode_trend           (trees,&(params->trends_tau_10to1[i_M]),"tau_10to1");
      init_treenode_trend_coordinate(trees, (params->trends_tau_10to1[i_M]),"xoff");
+     init_treenode_trend_coordinate(trees, (params->trends_tau_10to1[i_M]),"Vir_ratio");
      if(i_type==0)
         init_treenode_trend_coordinate(trees, (params->trends_tau_10to1[i_M]),"SSFctn");
   }
   // Initialize recovery/relaxation arrays
-  params->n_halos_z                =(int **)SID_calloc(sizeof(int *)*n_M);
-  params->n_halos_z_recovered_form =(int **)SID_calloc(sizeof(int *)*n_M);
-  params->n_halos_z_recovered_3to1 =(int **)SID_calloc(sizeof(int *)*n_M);
-  params->n_halos_z_recovered_10to1=(int **)SID_calloc(sizeof(int *)*n_M);
-  params->n_halos_z_relaxed_x_off  =(int **)SID_calloc(sizeof(int *)*n_M);
-  params->n_halos_z_relaxed_f_sub  =(int **)SID_calloc(sizeof(int *)*n_M);
-  params->n_halos_z_relaxed_vir    =(int **)SID_calloc(sizeof(int *)*n_M);
-  params->n_halos_z_relaxed_all    =(int **)SID_calloc(sizeof(int *)*n_M);
+  params->n_halos_z                  =(int **)SID_calloc(sizeof(int *)*n_M);
+  params->n_halos_z_recovered_form   =(int **)SID_calloc(sizeof(int *)*n_M);
+  params->n_halos_z_recovered_3to1   =(int **)SID_calloc(sizeof(int *)*n_M);
+  params->n_halos_z_recovered_10to1  =(int **)SID_calloc(sizeof(int *)*n_M);
+  params->n_halos_z_relaxed_x_off    =(int **)SID_calloc(sizeof(int *)*n_M);
+  params->n_halos_z_relaxed_f_sub    =(int **)SID_calloc(sizeof(int *)*n_M);
+  params->n_halos_z_relaxed_Vir_ratio=(int **)SID_calloc(sizeof(int *)*n_M);
+  params->n_halos_z_relaxed_all      =(int **)SID_calloc(sizeof(int *)*n_M);
   for(int i_M=0;i_M<n_M;i_M++){
      int n_z=params->trends_z[i_M]->ordinate->hist->n_bins;
-     params->n_halos_z[i_M]                =(int *)SID_calloc(sizeof(int)*n_z);
-     params->n_halos_z_recovered_form[i_M] =(int *)SID_calloc(sizeof(int)*n_z);
-     params->n_halos_z_recovered_3to1[i_M] =(int *)SID_calloc(sizeof(int)*n_z);
-     params->n_halos_z_recovered_10to1[i_M]=(int *)SID_calloc(sizeof(int)*n_z);
-     params->n_halos_z_relaxed_x_off[i_M]  =(int *)SID_calloc(sizeof(int)*n_z);
-     params->n_halos_z_relaxed_f_sub[i_M]  =(int *)SID_calloc(sizeof(int)*n_z);
-     params->n_halos_z_relaxed_vir[i_M]    =(int *)SID_calloc(sizeof(int)*n_z);
-     params->n_halos_z_relaxed_all[i_M]    =(int *)SID_calloc(sizeof(int)*n_z);
+     params->n_halos_z[i_M]                  =(int *)SID_calloc(sizeof(int)*n_z);
+     params->n_halos_z_recovered_form[i_M]   =(int *)SID_calloc(sizeof(int)*n_z);
+     params->n_halos_z_recovered_3to1[i_M]   =(int *)SID_calloc(sizeof(int)*n_z);
+     params->n_halos_z_recovered_10to1[i_M]  =(int *)SID_calloc(sizeof(int)*n_z);
+     params->n_halos_z_relaxed_x_off[i_M]    =(int *)SID_calloc(sizeof(int)*n_z);
+     params->n_halos_z_relaxed_f_sub[i_M]    =(int *)SID_calloc(sizeof(int)*n_z);
+     params->n_halos_z_relaxed_Vir_ratio[i_M]=(int *)SID_calloc(sizeof(int)*n_z);
+     params->n_halos_z_relaxed_all[i_M]      =(int *)SID_calloc(sizeof(int)*n_z);
   }
 }
 
@@ -126,7 +130,7 @@ void process_trees_fctn_analyze_local(tree_info *trees,void *params_in,int mode,
          if(tau_10to1_i>=TAU_MERGER_RECOVERED) params->n_halos_z_recovered_10to1[i_M][i_z]++;
          if(x_off_i    <=XOFF_RELAXED)         params->n_halos_z_relaxed_x_off[i_M][i_z]++;
          if(f_sub_i    <=FSUB_RELAXED)         params->n_halos_z_relaxed_f_sub[i_M][i_z]++;
-         if(vir_i      <=VIR_RELAXED)          params->n_halos_z_relaxed_vir[i_M][i_z]++;
+         if(vir_i      <=VIR_RELAXED)          params->n_halos_z_relaxed_Vir_ratio[i_M][i_z]++;
          if((x_off_i   <=XOFF_RELAXED) &&
             (f_sub_i   <=FSUB_RELAXED) &&       
             (vir_i     <=VIR_RELAXED))         params->n_halos_z_relaxed_all[i_M][i_z]++;
@@ -160,14 +164,14 @@ void process_trees_fctn_fin_local(tree_info *trees,void *params_in,int mode,int 
    int n_M=params->mass_binning->ordinate->hist->n_bins;
    for(int i_M=0;i_M<n_M;i_M++){
       int n_z=params->trends_z[i_M]->ordinate->hist->n_bins;
-      SID_Allreduce(SID_IN_PLACE,params->n_halos_z[i_M],                n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
-      SID_Allreduce(SID_IN_PLACE,params->n_halos_z_recovered_form[i_M], n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
-      SID_Allreduce(SID_IN_PLACE,params->n_halos_z_recovered_3to1[i_M], n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
-      SID_Allreduce(SID_IN_PLACE,params->n_halos_z_recovered_10to1[i_M],n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
-      SID_Allreduce(SID_IN_PLACE,params->n_halos_z_relaxed_x_off[i_M],  n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
-      SID_Allreduce(SID_IN_PLACE,params->n_halos_z_relaxed_f_sub[i_M],  n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
-      SID_Allreduce(SID_IN_PLACE,params->n_halos_z_relaxed_vir[i_M],    n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
-      SID_Allreduce(SID_IN_PLACE,params->n_halos_z_relaxed_all[i_M],    n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
+      SID_Allreduce(SID_IN_PLACE,params->n_halos_z[i_M],                  n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
+      SID_Allreduce(SID_IN_PLACE,params->n_halos_z_recovered_form[i_M],   n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
+      SID_Allreduce(SID_IN_PLACE,params->n_halos_z_recovered_3to1[i_M],   n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
+      SID_Allreduce(SID_IN_PLACE,params->n_halos_z_recovered_10to1[i_M],  n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
+      SID_Allreduce(SID_IN_PLACE,params->n_halos_z_relaxed_x_off[i_M],    n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
+      SID_Allreduce(SID_IN_PLACE,params->n_halos_z_relaxed_f_sub[i_M],    n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
+      SID_Allreduce(SID_IN_PLACE,params->n_halos_z_relaxed_Vir_ratio[i_M],n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
+      SID_Allreduce(SID_IN_PLACE,params->n_halos_z_relaxed_all[i_M],      n_z,SID_INT,SID_SUM,SID.COMM_WORLD);
    }
 
    // Write recovery/relaxation arrays
@@ -181,15 +185,15 @@ void process_trees_fctn_fin_local(tree_info *trees,void *params_in,int mode,int 
       FILE *fp_out=fopen(filename_out,"w");
       int   n_z   =params->trends_z[i_M]->ordinate->hist->n_bins;
       int   i_column=1;
-      fprintf(fp_out,"# Column (%02d): Snapshot\n",                        i_column++);
-      fprintf(fp_out,"#        (%02d): Redshift\n",                        i_column++);
-      fprintf(fp_out,"#        (%02d): No. of halos at z\n",               i_column++);
-      fprintf(fp_out,"#        (%02d): No. of halos w/ tau_form     >=%.1lf\n",i_column++,TAU_FORM_RECOVERED);
-      fprintf(fp_out,"#        (%02d): No. of halos w/ tau_3to1     >=%.1lf\n",i_column++,TAU_MERGER_RECOVERED);
-      fprintf(fp_out,"#        (%02d): No. of halos w/ tau_10to1    >=%.1lf\n",i_column++,TAU_MERGER_RECOVERED);
-      fprintf(fp_out,"#        (%02d): No. of halos w/ x_off        <=%.2lf\n",i_column++,XOFF_RELAXED);
-      fprintf(fp_out,"#        (%02d): No. of halos w/ f_sub        <=%.1lf\n",i_column++,FSUB_RELAXED);
-      fprintf(fp_out,"#        (%02d): No. of halos w/ Virial Ratio <=%.1lf\n",i_column++,FSUB_RELAXED);
+      fprintf(fp_out,"# Column (%02d): Snapshot\n",                                          i_column++);
+      fprintf(fp_out,"#        (%02d): Redshift\n",                                          i_column++);
+      fprintf(fp_out,"#        (%02d): No. of halos at z\n",                                 i_column++);
+      fprintf(fp_out,"#        (%02d): No. of halos w/ tau_form     >=%.1lf\n",              i_column++,TAU_FORM_RECOVERED);
+      fprintf(fp_out,"#        (%02d): No. of halos w/ tau_3to1     >=%.1lf\n",              i_column++,TAU_MERGER_RECOVERED);
+      fprintf(fp_out,"#        (%02d): No. of halos w/ tau_10to1    >=%.1lf\n",              i_column++,TAU_MERGER_RECOVERED);
+      fprintf(fp_out,"#        (%02d): No. of halos w/ x_off        <=%.2lf\n",              i_column++,XOFF_RELAXED);
+      fprintf(fp_out,"#        (%02d): No. of halos w/ f_sub        <=%.1lf\n",              i_column++,FSUB_RELAXED);
+      fprintf(fp_out,"#        (%02d): No. of halos w/ Virial Ratio <=%.1lf\n",              i_column++,FSUB_RELAXED);
       fprintf(fp_out,"#        (%02d): No. of halos meeting all three relaxation criteria\n",i_column++);
       for(int i_z=0;i_z<n_z;i_z++)
          fprintf(fp_out,"%3d %6.2lf %6d %6d %6d %6d %6d %6d %6d %6d\n",
@@ -201,7 +205,7 @@ void process_trees_fctn_fin_local(tree_info *trees,void *params_in,int mode,int 
                         params->n_halos_z_recovered_10to1[i_M][i_z],
                         params->n_halos_z_relaxed_x_off[i_M][i_z],
                         params->n_halos_z_relaxed_f_sub[i_M][i_z],
-                        params->n_halos_z_relaxed_vir[i_M][i_z],
+                        params->n_halos_z_relaxed_Vir_ratio[i_M][i_z],
                         params->n_halos_z_relaxed_all[i_M][i_z]);
       fclose(fp_out);
    }
@@ -214,7 +218,7 @@ void process_trees_fctn_fin_local(tree_info *trees,void *params_in,int mode,int 
       SID_free(SID_FARG params->n_halos_z_recovered_10to1[i_M]);
       SID_free(SID_FARG params->n_halos_z_relaxed_x_off[i_M]);
       SID_free(SID_FARG params->n_halos_z_relaxed_f_sub[i_M]);
-      SID_free(SID_FARG params->n_halos_z_relaxed_vir[i_M]);
+      SID_free(SID_FARG params->n_halos_z_relaxed_Vir_ratio[i_M]);
    }
    SID_free(SID_FARG params->n_halos_z);
    SID_free(SID_FARG params->n_halos_z_recovered_form);
@@ -222,7 +226,7 @@ void process_trees_fctn_fin_local(tree_info *trees,void *params_in,int mode,int 
    SID_free(SID_FARG params->n_halos_z_recovered_10to1);
    SID_free(SID_FARG params->n_halos_z_relaxed_x_off);
    SID_free(SID_FARG params->n_halos_z_relaxed_f_sub);
-   SID_free(SID_FARG params->n_halos_z_relaxed_vir);
+   SID_free(SID_FARG params->n_halos_z_relaxed_Vir_ratio);
 
    // Finalize & write trend results
    finalize_trend(params->mass_binning); // needed for the check on bin_count (below) to work w/ n_proc>1
@@ -251,6 +255,7 @@ void process_trees_fctn_fin_local(tree_info *trees,void *params_in,int mode,int 
    SID_free(SID_FARG params->trends_tau_form);
    SID_free(SID_FARG params->trends_tau_3to1);
    SID_free(SID_FARG params->trends_tau_10to1);
+
    // Write and clean-up the mass-binning trend
    write_trend_ascii(params->mass_binning,filename_output_root_root);
    free_trend(&(params->mass_binning));
@@ -300,13 +305,14 @@ int main(int argc, char *argv[]){
   read_trees_data(trees,
                   filename_NFW_root,
                   READ_TREES_DATA_SUBGROUPS,
+                  SID_FLOAT,
                   "c_NFW");
 
   // Set group concentrations to central subgroup concentrations
-  double **group_concentrations_local;
-  double **subgroup_concentrations_local;
-  init_trees_data(trees,(void ***)&group_concentrations_local,sizeof(double),INIT_TREE_DATA_GROUPS,"c_NFW_groups");
-  subgroup_concentrations_local=(double **)ADaPS_fetch(trees->data,"c_NFW_subgroups");
+  float **group_concentrations_local;
+  float **subgroup_concentrations_local;
+  init_trees_data(trees,(void ***)&group_concentrations_local,sizeof(float),INIT_TREE_DATA_GROUPS,"c_NFW_groups");
+  subgroup_concentrations_local=(float **)ADaPS_fetch(trees->data,"c_NFW_subgroups");
   for(int i_snap=0;i_snap<trees->n_snaps;i_snap++){
      tree_node_info *group_current=trees->first_neighbour_groups[i_snap];
      while(group_current!=NULL){
@@ -319,7 +325,7 @@ int main(int argc, char *argv[]){
         }
         if(subgroup_central!=NULL){
            group_concentrations_local[group_current->snap_tree][group_current->neighbour_index]=
-              subgroup_concentrations_local[subgroup_current->snap_tree][subgroup_central->neighbour_index];
+              subgroup_concentrations_local[subgroup_central->snap_tree][subgroup_central->neighbour_index];
         }
         else
            group_concentrations_local[group_current->snap_tree][group_current->neighbour_index]=0.;

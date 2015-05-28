@@ -10,7 +10,7 @@
 #include <gbpTrees_analysis.h>
 
 double fetch_treenode_Vir_ratio(tree_info *trees,tree_node_info *halo){
-   double virial_ratio=0.;
+   double virial_ratio=-1.;
    if(halo!=NULL){
       double M_vir   = fetch_treenode_Mvir(trees,halo);
       double R_vir   = fetch_treenode_Rvir(trees,halo);
@@ -21,6 +21,7 @@ double fetch_treenode_Vir_ratio(tree_info *trees,tree_node_info *halo){
       double pot     = pot_fac*(1.0-1.0/(1.0+c)/(1.0+c)-2*take_log10(1.0+c)/(1.0+c));
       double kin     = 0.5*M_vir*sigma_v*sigma_v;
       virial_ratio   = 2*kin/pot;
+if(M_vir>1e8 && M_vir<3e8) printf("%10.5le %10.5lf %10.5lf -- %10.5lf -- %10.3le %10.3le %10.5lf\n",M_vir,R_vir,sigma_v,c,pot,kin,virial_ratio);
    }
    return(virial_ratio);
 }

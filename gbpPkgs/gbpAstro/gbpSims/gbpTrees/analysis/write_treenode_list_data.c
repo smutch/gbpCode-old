@@ -11,7 +11,7 @@
 
 void write_treenode_list_data(tree_info *trees,const char *filename_out_root,treenode_list_info *list){
   tree_node_info **list_in         =list->list;
-  int              n_list_in       =list->n_list_local;
+  int              n_list_local       =list->n_list_local;
   int              flag_groups_list=list->flag_groups_list;
   char            *catalog_name    =list->catalog_name;
 
@@ -55,10 +55,9 @@ void write_treenode_list_data(tree_info *trees,const char *filename_out_root,tre
         int   n_list_i;
         void *data_i;
         // Generate properties
-        if(SID.I_am_Master)
-           n_list_i=n_list_in;
-        else
-           SID_Sendrecv(&n_list_in,
+        n_list_i=n_list_local;
+        if(i_rank!=MASTER_RANK)
+           SID_Sendrecv(&n_list_local,
                         1,
                         SID_INT,
                         MASTER_RANK,
@@ -69,36 +68,58 @@ void write_treenode_list_data(tree_info *trees,const char *filename_out_root,tre
                         i_rank,
                         1918270,
                         SID.COMM_WORLD);
-        // Write properties
-        for(int i_list=0;i_list<n_list_i;i_list++,j_list++){
-           int n_write;
-           if(SID.I_am_Master)
-              fprintf(fp_props_out,"%4d",j_list);
-           for(int i_write=0;i_write<n_data;i_write++){
-              // Perform data exchange (if needed)
-              if(typ_data[i_write]==SID_INT){
-                 int data_i;
-                 if(i_rank!=MASTER_RANK)
-                    SID_Sendrecv(&data_i,1,SID_INT,MASTER_RANK,1978271,&(((int *)(ptr_data[i_write]))[i_list]),1,SID_INT,i_rank,1978271,SID.COMM_WORLD);
-                 else
-                    data_i=((int *)(ptr_data[i_write]))[i_list];
-                 if(SID.I_am_Master)
-                    fprintf(fp_props_out," %4d",data_i);
-              }
-              else if(typ_data[i_write]==SID_DOUBLE){
-                 double data_d;
-                 if(i_rank!=MASTER_RANK)
-                    SID_Sendrecv(&data_d,1,SID_DOUBLE,MASTER_RANK,1978272,&(((double *)(ptr_data[i_write]))[i_list]),1,SID_DOUBLE,i_rank,1978272,SID.COMM_WORLD);
-                 else
-                    data_d=((double *)(ptr_data[i_write]))[i_list];
-                 if(SID.I_am_Master)
-                    fprintf(fp_props_out," %le",data_d);
-              }
-              else
-                 SID_trap_error("Unsupported data type in write_treenode_list_data() (2).",ERROR_LOGIC);
-           } // i_write
-           if(SID.I_am_Master) fprintf(fp_props_out,"\n");
+        // Allocate buffers
+        void   **buffer      =(void  **)SID_malloc(sizeof(void *)*n_data);
+        size_t  *data_written=(size_t *)SID_calloc(sizeof(size_t)*n_data);
+        int     *dtype_size  =(int    *)SID_malloc(sizeof(int)   *n_data);
+        int      n_buffer_max=4*1024;
+        int      n_remaining =n_list_i;
+        for(int i_data=0;i_data<n_data;i_data++)
+           SID_Type_size(typ_data[i_data],&(dtype_size[i_data]));
+        if(i_rank!=MASTER_RANK){
+           for(int i_data=0;i_data<n_data;i_data++)
+              buffer[i_data]=SID_malloc(n_buffer_max*dtype_size[i_data]);
         }
+        else{
+           for(int i_data=0;i_data<n_data;i_data++)
+             buffer[i_data]=ptr_data[i_data];
+           n_buffer_max=n_remaining;
+        }
+        // Fill buffers and perform write in chunks
+        while(n_remaining>0){
+           int n_buffer_i=MAX(n_buffer_max,n_remaining);
+           // Buffer exchange between ranks
+           if(i_rank!=MASTER_RANK){
+              for(int i_data=0;i_data<n_data;i_data++){
+                 int buffer_size=n_buffer_i*dtype_size[i_data];
+                 SID_Sendrecv(&(((char *)(ptr_data[i_data]))[data_written[i_data]]),buffer_size,SID_CHAR,MASTER_RANK,1978271,buffer[i_data],buffer_size,SID_CHAR,i_rank,1978271,SID.COMM_WORLD);
+              }
+           }
+           // Write buffer
+           if(SID.I_am_Master){
+              for(int i_buffer=0;i_buffer<n_buffer_i;i_buffer++,j_list++){
+                 fprintf(fp_props_out,"%4d",j_list);
+                 for(int i_data=0;i_data<n_data;i_data++){
+                    if     (typ_data[i_data]==SID_INT)    fprintf(fp_props_out," %4d",((int    *)(buffer[i_data]))[i_buffer]);
+                    else if(typ_data[i_data]==SID_DOUBLE) fprintf(fp_props_out," %le",((double *)(buffer[i_data]))[i_buffer]);
+                    else SID_trap_error("Unsupported data type in write_treenode_list_data() (2).",ERROR_LOGIC);
+                 }
+                 fprintf(fp_props_out,"\n");
+              }
+           }
+           // Update counters
+           n_remaining-=n_buffer_i;
+           for(int i_data=0;i_data<n_data;i_data++)
+              data_written[i_data]+=(size_t)n_buffer_i*(size_t)dtype_size[i_data];
+        }
+        // Free buffers
+        if(i_rank!=MASTER_RANK){
+           for(int i_data=0;i_data<n_data;i_data++)
+              SID_free(SID_FARG buffer[i_data]);
+        }
+        SID_free(SID_FARG buffer);
+        SID_free(SID_FARG data_written);
+        SID_free(SID_FARG dtype_size);
      } // if i_rank
      SID_Barrier(SID.COMM_WORLD);
   } // for i_rank

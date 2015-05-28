@@ -273,8 +273,8 @@ int main(int argc, char *argv[]){
           bridge_backmatch_snap=-1;
        fprintf(fp_out,"%3d %le %7.3lf %7d %7d %5.2lf %5.2lf %5.2lf %5.2lf %7d %3d %3d %7d %7d %3d %7d %3d %7d %7d %s\n",
                       i_read,
-                      a_of_z(trees->z_list[i_read]),
-                      trees->z_list[i_read],
+                      trees->a_list[i_file],
+                      trees->z_list[i_file],
                       i_halo,
                       halo_id,
                       take_log10(properties.M_vir),

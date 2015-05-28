@@ -15,22 +15,30 @@ int main(int argc, char *argv[]){
   char filename_SSimPL_dir[MAX_FILENAME_LENGTH];
   char filename_halo_version_root[MAX_FILENAME_LENGTH];
   char filename_trees_root[MAX_FILENAME_LENGTH];
+  char filename_trees_reference_root[MAX_FILENAME_LENGTH];
   char filename_trees_name[MAX_FILENAME_LENGTH];
+  char filename_trees_reference_name[MAX_FILENAME_LENGTH];
   char filename_halos_root[MAX_FILENAME_LENGTH];
-  strcpy(filename_SSimPL_dir,       argv[1]);
-  strcpy(filename_halo_version_root,argv[2]);
-  strcpy(filename_trees_name,       argv[3]);
-  double logM_min=atof(argv[4]);
-  double dlogM   =atof(argv[5]);
-  int    n_logM  =atoi(argv[6]);
+  int  i_arg=1;
+  strcpy(filename_SSimPL_dir,       argv[i_arg++]);
+  strcpy(filename_halo_version_root,argv[i_arg++]);
+  strcpy(filename_trees_name,       argv[i_arg++]);
+  if(argc==8)
+     strcpy(filename_trees_reference_name,argv[i_arg++]);
+  else
+     sprintf(filename_trees_reference_name,"");
+  double logM_min=atof(argv[i_arg++]);
+  double dlogM   =atof(argv[i_arg++]);
+  int    n_logM  =atoi(argv[i_arg++]);
 
   // Set some filenames
-  sprintf(filename_trees_root,"%s/trees/%s",filename_SSimPL_dir,filename_trees_name);
-  sprintf(filename_halos_root,"%s/halos/%s",filename_SSimPL_dir,filename_halo_version_root);
+  sprintf(filename_trees_root,          "%s/trees/%s",filename_SSimPL_dir,filename_trees_name);
+  sprintf(filename_trees_reference_root,"%s/trees/%s",filename_SSimPL_dir,filename_trees_reference_name);
+  sprintf(filename_halos_root,          "%s/halos/%s",filename_SSimPL_dir,filename_halo_version_root);
 
   SID_log("Performing analysis of merger trees...",SID_LOG_OPEN|SID_LOG_TIMER);
 
-  // Perform analysis
+  // Read trees
   tree_info *trees;
   read_trees(filename_SSimPL_dir,
              filename_halo_version_root,
@@ -43,6 +51,20 @@ int main(int argc, char *argv[]){
                       filename_SSimPL_dir,
                       filename_halo_version_root,
                       READ_TREES_CATALOGS_GROUPS|READ_TREES_CATALOGS_SUBGROUPS);
+
+  if(strcmp(filename_trees_reference_name,"")){
+     read_trees(filename_SSimPL_dir,
+                filename_halo_version_root,
+                filename_trees_reference_name,
+                TREE_MODE_DEFAULT|TREE_READ_EXTENDED_POINTERS|TREE_MODE_REFERENCE,
+                &(trees->trees_reference));
+
+     // Read ancillary data
+     read_trees_catalogs(trees->trees_reference,
+                         filename_SSimPL_dir,
+                         filename_halo_version_root,
+                         READ_TREES_CATALOGS_GROUPS|READ_TREES_CATALOGS_SUBGROUPS);
+  }
 
   //read_trees_match_scores(trees,
   //                        filename_SSimPL_dir,

@@ -23,6 +23,7 @@ void init_trees_read(const char  *filename_SSimPL_dir,
   // Allocate the data structure
   (*tree)=(tree_info *)SID_malloc(sizeof(tree_info));
   (*tree)->snap_list                   =NULL;
+  (*tree)->a_list                      =NULL;
   (*tree)->z_list                      =NULL;
   (*tree)->t_list                      =NULL;
   (*tree)->n_groups_snap_local         =NULL;
@@ -107,10 +108,12 @@ void init_trees_read(const char  *filename_SSimPL_dir,
   int i_read_stop =(*tree)->i_read_stop;
   int i_read_step =(*tree)->i_read_step;
   (*tree)->snap_list=(int    *)SID_malloc(sizeof(int)   *n_snaps);
+  (*tree)->a_list   =(double *)SID_malloc(sizeof(double)*n_snaps);
   (*tree)->z_list   =(double *)SID_malloc(sizeof(double)*n_snaps);
   (*tree)->t_list   =(double *)SID_malloc(sizeof(double)*n_snaps);
   for(i_read=i_read_stop,i_file=n_snaps-1;i_read>=i_read_start;i_read-=i_read_step,i_file--){
      (*tree)->snap_list[i_file]=i_read;
+     (*tree)->a_list[i_file]   =0.;
      (*tree)->z_list[i_file]   =0.;
      (*tree)->t_list[i_file]   =0.;
   }
@@ -135,6 +138,7 @@ void init_trees_read(const char  *filename_SSimPL_dir,
   for(i_alist=0;i_alist<(*tree)->n_snaps;i_alist++){
      grab_next_line_data(fp_alist_in,&line,&line_length);
      grab_double(line,1,&a_in);
+     (*tree)->a_list[i_alist]=a_in;
      (*tree)->z_list[i_alist]=z_of_a(a_in);
      (*tree)->t_list[i_alist]=deltat_a(&cosmo,DELTAT_A_MIN_A,a_in);
   }
@@ -172,6 +176,7 @@ void init_trees_read(const char  *filename_SSimPL_dir,
   (*tree)->last_in_forest_subgroups =NULL;
   (*tree)->n_groups_forest_local    =NULL;
   (*tree)->n_subgroups_forest_local =NULL;
+  (*tree)->trees_reference          =NULL;
   ADaPS_init(&((*tree)->data));
 
   // If we only want the header information, then don't do the rest

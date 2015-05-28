@@ -6,10 +6,11 @@
 #include <gbpHalos.h>
 #include <gbpTrees_build.h>
 
-void read_trees_data(tree_info  *trees,
-                     char       *filename_root,
-                     int         mode,
-                     const char *name){
+void read_trees_data(tree_info    *trees,
+                     char         *filename_root,
+                     int           mode,
+                     SID_Datatype  data_type,
+                     const char   *name){
   int i_read;
   int j_read;
   int i_snap;
@@ -20,12 +21,14 @@ void read_trees_data(tree_info  *trees,
   SID_log("Reading %s...",SID_LOG_OPEN|SID_LOG_TIMER,name);
 
   // Create the data array(s) where stuff will be stored
-  double **data_groups_local   =NULL;
-  double **data_subgroups_local=NULL;
+  void **data_groups_local   =NULL;
+  void **data_subgroups_local=NULL;
+  int    data_type_size;
+  SID_Type_size(data_type,&data_type_size);
   if(check_mode_for_flag(mode,READ_TREES_DATA_GROUPS))
-     init_trees_data(trees,(void ***)&data_groups_local,sizeof(double),INIT_TREE_DATA_GROUPS,"%s_groups",name);
+     init_trees_data(trees,&data_groups_local,data_type_size,INIT_TREE_DATA_GROUPS,"%s_groups",name);
   if(check_mode_for_flag(mode,READ_TREES_DATA_SUBGROUPS))
-     init_trees_data(trees,(void ***)&data_subgroups_local,sizeof(double),INIT_TREE_DATA_SUBGROUPS,"%s_subgroups",name);
+     init_trees_data(trees,&data_subgroups_local,data_type_size,INIT_TREE_DATA_SUBGROUPS,"%s_subgroups",name);
 
   // Process each snapshot in turn
   int    *nebr_idx_list_local;
@@ -42,13 +45,14 @@ void read_trees_data(tree_info  *trees,
      SID_log("Processing snapshot %03d...",SID_LOG_OPEN|SID_LOG_TIMER,i_read);
 
      // Loop twice; once for subgroups and then once for groups
+     void *data_read=SID_malloc(data_type_size);
      for(int i_type=0;i_type<2;i_type++){
         // Set some group/subgroup specific things
         int             n_halos;
         tree_node_info *first_neighbour;
         char            group_text_prefix[5];
         int             open_catalog_mode;
-        double         *data_in;
+        char           *data_in;
         int             flag_proceed=TRUE;
         switch(i_type){
            case 0:
@@ -58,7 +62,7 @@ void read_trees_data(tree_info  *trees,
                  n_halos            =trees->n_subgroups_snap_local[i_snap];
                  first_neighbour    =trees->first_neighbour_subgroups[i_snap];
                  if(data_subgroups_local!=NULL)
-                    data_in=data_subgroups_local[i_snap];
+                    data_in=(char *)data_subgroups_local[i_snap];
                  else
                     data_in=NULL;
               }
@@ -70,7 +74,7 @@ void read_trees_data(tree_info  *trees,
                  n_halos            =trees->n_groups_snap_local[i_snap];
                  first_neighbour    =trees->first_neighbour_groups[i_snap];
                  if(data_groups_local!=NULL)
-                    data_in=data_groups_local[i_snap];
+                    data_in=(char *)data_groups_local[i_snap];
                  else
                     data_in=NULL;
               }
@@ -118,12 +122,11 @@ void read_trees_data(tree_info  *trees,
               int k_read;
               int l_read;
               for(k_read=0,l_read=0;k_read<n_halos_total;k_read++){
-                 double data_read;
-                 fread(&data_read,sizeof(double),1,fp_data);
+                 fread(&data_read,data_type_size,1,fp_data);
                  if(l_read<n_list_local){
                     if(k_read==file_idx_list_local[file_idx_list_local_index[l_read]]){
                        if(data_in!=NULL)
-                          memcpy(&(data_in[nebr_idx_list_local[file_idx_list_local_index[l_read]]]),&data_read,sizeof(double));
+                          memcpy(&(data_in[data_type_size*nebr_idx_list_local[file_idx_list_local_index[l_read]]]),&data_read,data_type_size);
                        list_init_local[nebr_idx_list_local[file_idx_list_local_index[l_read]]]++;
                        l_read++;
                     }
@@ -142,7 +145,7 @@ void read_trees_data(tree_info  *trees,
            }
            else{
               if(data_in!=NULL){
-                 for(int k_read=0;k_read<n_halos;k_read++)
+                 for(int k_read=0;k_read<n_halos*data_type_size;k_read++)
                     data_in[k_read]=0;
               }
            }
@@ -151,6 +154,7 @@ void read_trees_data(tree_info  *trees,
            SID_free(SID_FARG file_idx_list_local_index);
         } // if(flag_proceed)
      } // i_type
+     SID_free(SID_FARG data_read);
 
      SID_log("Done.",SID_LOG_CLOSE);
   }

@@ -79,6 +79,23 @@ int calc_tree_property_index_SSFctn(trend_property_info *property,hist_info *his
    return(calc_histogram_index(hist,fetch_treenode_SSFctn(trees,halo)));
 }
 
+void init_tree_property_Vir_ratio(trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs){
+   (*mode)=GBP_HISTOGRAM_FIXED;
+   double x_min = 0.0;
+   double dx    =0.02;
+   int    n_x   = 200;
+   gbp_va_start(vargs);
+   gbp_add_va_arg(vargs,sizeof(double),&x_min);
+   gbp_add_va_arg(vargs,sizeof(double),&dx);
+   gbp_add_va_arg(vargs,sizeof(int),   &n_x);
+}
+void free_tree_property_Vir_ratio(trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs){}
+int calc_tree_property_index_Vir_ratio(trend_property_info *property,hist_info *hist,void *halo_in){
+   tree_info      *trees=(tree_info      *)(property->params);
+   tree_node_info *halo =(tree_node_info *)(halo_in);
+   return(calc_histogram_index(hist,fetch_treenode_Vir_ratio(trees,halo)));
+}
+
 void init_tree_property_log_sigma_vx(trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs){
    (*mode)=GBP_HISTOGRAM_FIXED;
    double x_min = 0.0;

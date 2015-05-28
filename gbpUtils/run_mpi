@@ -1,8 +1,8 @@
 #!/bin/csh -f
 
-if ($#argv < 4) then
+if ($#argv < 5) then
   echo
-  echo 'Syntax: run_mpi #nodes #proc_per_node wall_time_in_hrs mpi_command ...'
+  echo 'Syntax: run_mpi #nodes #proc_per_node wall_time_in_hrs pmem mpi_command ...'
   echo '------'
   echo
   exit(1)
@@ -11,6 +11,7 @@ else
   set ARG_NNODE=($argv[$FIRST_ARG]);@ FIRST_ARG++
   set ARG_PPN  =($argv[$FIRST_ARG]);@ FIRST_ARG++
   set ARG_HRS  =($argv[$FIRST_ARG]);@ FIRST_ARG++
+  set ARG_PMEM =($argv[$FIRST_ARG]);@ FIRST_ARG++
   if ( $HOSTNAME == 'g2.hpc.swin.edu.au' ) then
      set ARG_QUEUE  =($argv[$FIRST_ARG]);@ FIRST_ARG++
   endif
@@ -51,8 +52,9 @@ if ( ${GBP_QUEUE_TYPE} == 'PBS' ) then
   echo '#PBS -l nodes='$ARG_NNODE':ppn='$ARG_PPN',walltime='$ARG_HRS':00:00'                            >> $SUBT_FILE
   #echo '#PBS -l nodes=sstar203:ppn=1+sstar204:ppn=1,walltime='$ARG_HRS':00:00'                            >> $SUBT_FILE
   echo '#PBS -S /bin/csh'                                                                               >> $SUBT_FILE
-  echo '#PBS -l pmem=3gb'                                                                             >> $SUBT_FILE
-  #echo '#PBS -l pmem=312GB'                                                                             >> $SUBT_FILE
+  #echo '#PBS -l pmem=3gb'                                                                             >> $SUBT_FILE
+  #echo '#PBS -l pmem=450GB'                                                                             >> $SUBT_FILE
+  echo '#PBS -l pmem='$ARG_PMEM                                                                         >> $SUBT_FILE
   if ( $HOSTNAME == 'g2.hpc.swin.edu.au' ) then
      echo '#PBS -q '$ARG_QUEUE                                                                          >> $SUBT_FILE
   endif

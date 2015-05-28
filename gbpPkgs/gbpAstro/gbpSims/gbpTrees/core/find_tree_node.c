@@ -16,7 +16,7 @@ int find_tree_node(tree_info *trees,int node_file,int node_index,int group_mode,
       int             *halo_indices;
       int              index_index;
       int              n_halos;
-      int              i_wrap=node_file%trees->n_wrap;
+      int              i_wrap=node_file%trees->n_wrap_lookup;
       if(group_mode==TRUE){
          n_halos     =trees->n_groups_snap_local[node_file];
          halo_indices=trees->group_indices[i_wrap];
