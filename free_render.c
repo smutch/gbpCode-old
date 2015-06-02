@@ -22,6 +22,8 @@ void free_render(render_info **render){
   }
   if((*render)->snap_a_list!=NULL)
      SID_free(SID_FARG (*render)->snap_a_list);
+  if((*render)->trees!=NULL)
+     free_trees(&((*render)->trees));
   SID_free(SID_FARG (*render)->kernel_radius);
   SID_free(SID_FARG (*render)->kernel_table);
   SID_free(SID_FARG (*render)->kernel_table_3d);

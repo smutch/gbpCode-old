@@ -10,32 +10,42 @@
 #include <gbpTrees_build.h>
 #include <gbpRender.h>
 
-void process_SSimPL_halos(char *filename_SSimPL_root,
-                          char *filename_halos_version,
-                          char *filename_trees_version,
-                          int   i_read,
-                          int   mode,
-                          int   select_function(int                i_group,
-                                                int                j_subgroup,
-                                                int                i_subgroup,
-                                                int                flag_long_ids,
-                                                process_halo_info *group_i,
-                                                process_halo_info *subgroup_i,
-                                                void              *params),
-                          int   action_function(int                i_group,
-                                                int                j_subgroup,
-                                                int                i_subgroup,
-                                                int                flag_long_ids,
-                                                process_halo_info *group_i,
-                                                process_halo_info *subgroup_i,
-                                                void              *params),
-                          void *params){
+void process_SSimPL_halos(render_info *render,
+                          int          i_snap,
+                          int          i_pass,
+                          int          mode,
+                          int          select_function(int                i_group,
+                                                       int                j_subgroup,
+                                                       int                i_subgroup,
+                                                       int                flag_long_ids,
+                                                       process_halo_info *group_i,
+                                                       process_halo_info *subgroup_i,
+                                                       void              *params),
+                          int          action_function(int                i_group,
+                                                       int                j_subgroup,
+                                                       int                i_subgroup,
+                                                       int                flag_long_ids,
+                                                       process_halo_info *group_i,
+                                                       process_halo_info *subgroup_i,
+                                                       void              *params),
+                          void        *params){
+
+
+  // Initialize trees if they haven't been already and if they've been given
+  if(render->trees==NULL)
+     init_trees_read(render->filename_SSimPL_root,render->filename_trees_version,TREE_READ_HEADER_ONLY,&(render->trees));
+
+  // The snapshot list passed to render may not be the same as those used for the trees,
+  //    figure-out the appropriate tree_snap to use here
+  int i_read;
+  pick_best_snap(render->snap_a_list[render->snap_list[i_snap]],render->trees->a_list,render->trees->n_snaps,&i_read,NULL);
+  i_read=render->trees->snap_list[i_read];
 
   // Set the halo and tree filename roots
   char filename_trees_root[MAX_FILENAME_LENGTH];
   char filename_halos_root[MAX_FILENAME_LENGTH];
-  sprintf(filename_trees_root,"%s/trees/%s",filename_SSimPL_root,filename_trees_version);
-  sprintf(filename_halos_root,"%s/halos/%s",filename_SSimPL_root,filename_halos_version);
+  sprintf(filename_trees_root,"%s/trees/%s",render->filename_SSimPL_root,render->filename_trees_version);
+  sprintf(filename_halos_root,"%s/halos/%s",render->filename_SSimPL_root,render->filename_halos_version);
 
   // Initialize filename paths
   char filename_input_file_root[MAX_FILENAME_LENGTH];
@@ -118,7 +128,7 @@ void process_SSimPL_halos(char *filename_SSimPL_root,
   int     flag_long_ids=TRUE;
   size_t  n_ids        =0;
   SID_fp  fp_ids;
-  if(mode){
+  if(i_pass){
      SID_fopen(filename_ids,"r",&fp_ids);
      SID_fread_all(&id_byte_size,sizeof(int),1,&fp_ids);
      if(id_byte_size==sizeof(int)){
@@ -139,7 +149,7 @@ void process_SSimPL_halos(char *filename_SSimPL_root,
 
   // Allocate IDs
   void *ids=NULL;
-  if(mode)
+  if(i_pass)
      ids=SID_malloc(id_byte_size*largest_group);
   int    *ids_i=(int    *)ids;
   size_t *ids_l=(size_t *)ids;
@@ -216,7 +226,7 @@ void process_SSimPL_halos(char *filename_SSimPL_root,
                           &subgroup_i,
                           params)){
           // Read IDs
-          if(mode){
+          if(i_pass){
              if(flag_group_ids_unread){
                 SID_fseek(&fp_ids,(off_t)(group_i.offset-index_last_read),id_byte_size,SEEK_CUR);
                 SID_fread_all(ids,id_byte_size,group_i.n_particles,&fp_ids);
@@ -255,7 +265,7 @@ void process_SSimPL_halos(char *filename_SSimPL_root,
   free_SID_fp_buffer(&fp_groups_offset_buffer);
   free_SID_fp_buffer(&fp_subgroups_length_buffer);
   free_SID_fp_buffer(&fp_subgroups_offset_buffer);
-  if(mode){
+  if(i_pass){
      SID_fclose(&fp_ids);
      SID_free(SID_FARG ids);
   }

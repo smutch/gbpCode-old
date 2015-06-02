@@ -67,16 +67,7 @@ int set_render_state(render_info *render,int frame,int mode){
          SID_log("Selecting snapshots for t=%lf...",SID_LOG_OPEN,perspective->time);
       else
          SID_log("Selecting snapshot for t=%lf...",SID_LOG_OPEN,perspective->time);
-      snap_best     =0;
-      snap_diff_best=1e60;
-      for(i_snap=0;i_snap<render->n_snap_a_list;i_snap++){
-        snap_diff=perspective->time-render->snap_a_list[i_snap];
-        if(fabs(snap_diff)<fabs(snap_diff_best)){
-          snap_diff_best=snap_diff;
-          snap_best     =i_snap;
-        }
-      }
-
+      pick_best_snap(perspective->time,render->snap_a_list,render->n_snap_a_list,&snap_best,&snap_diff_best);
       if(render->n_interpolate>1){
          // Determine the list of best snapshots to use
          if(snap_diff_best<0)

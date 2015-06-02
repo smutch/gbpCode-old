@@ -67,12 +67,18 @@ void parse_render_file(render_info **render, char *filename){
                  grab_double(line,i_word++,&r);
                  add_mark_argument((*render),mark_species,mark_value,mark_type,x,y,z,r);
               }
-              else if(!strcmp(mark_type,"group_index")){
-                 int halo_index;
-                 grab_int(line,i_word++,&halo_index);
-                 add_mark_argument((*render),mark_species,mark_value,mark_type,halo_index);
+              else if(!strcmp(mark_type,"group_index")   || !strcmp(mark_type,"subgroup_index")   ||
+                      !strcmp(mark_type,"group_tree_id") || !strcmp(mark_type,"subgroup_tree_id") ||
+                      !strcmp(mark_type,"group_id")      || !strcmp(mark_type,"subgroup_id")){
+                 int mark_index;
+                 grab_int(line,i_word++,&mark_index);
+                 add_mark_argument((*render),mark_species,mark_value,mark_type,mark_index);
               }
-              else if(!strcmp(mark_type,"subgroup_index")){
+              else if(!strcmp(mark_type,"group_fragmented") || !strcmp(mark_type,"subgroup_fragmented")){
+                 int mark_index=0;
+                 add_mark_argument((*render),mark_species,mark_value,mark_type,mark_index);
+              }
+              else if(!strcmp(mark_type,"<n_p")){
                  int halo_index;
                  grab_int(line,i_word++,&halo_index);
                  add_mark_argument((*render),mark_species,mark_value,mark_type,halo_index);
@@ -133,12 +139,12 @@ void parse_render_file(render_info **render, char *filename){
         else if(!strcmp(parameter,"n_interpolate"))
           grab_int(line,i_word++,&((*render)->n_interpolate));
         else if(!strcmp(parameter,"SSimPL")){
-          grab_word(line,i_word++,(*render)->filename_SSimPL_dir);
-          grab_word(line,i_word++,(*render)->filename_halo_type);
+          grab_word(line,i_word++,(*render)->filename_SSimPL_root);
+          grab_word(line,i_word++,(*render)->filename_halos_version);
           if(i_word>count_words(line))
-             sprintf((*render)->filename_tree_version,"version_nominal_res");
+             sprintf((*render)->filename_trees_version,"version_nominal_res");
           else
-             grab_word(line,i_word++,(*render)->filename_tree_version);
+             grab_word(line,i_word++,(*render)->filename_trees_version);
         }
         else if(!strcmp(parameter,"snap_file"))
           grab_word(line,i_word++,(*render)->snap_filename_root);
@@ -181,6 +187,12 @@ void parse_render_file(render_info **render, char *filename){
           grab_int(line,i_word++,&((*render)->flag_comoving));
         else if(!strcmp(parameter,"flag_fade"))
           (*render)->flag_fade=TRUE;
+        // Setting alpha_fade sets flag_fade by default
+        else if(!strcmp(parameter,"flag_fade")){
+          grab_double(line,i_word++,&d_value);
+          (*render)->alpha_fade=d_value;
+          (*render)->flag_fade =TRUE;
+        }
         else if(!strcmp(parameter,"force_periodic"))
           (*render)->flag_force_periodic=TRUE;
         else if(!strcmp(parameter,"camera")){
@@ -261,7 +273,7 @@ void parse_render_file(render_info **render, char *filename){
                else if(!strcmp(next_word,"log"))
                   (*render)->w_mode|=MAKE_MAP_LOG;
                else
-                  SID_log("Ignoring unknown RGB_range modifier {%s}.",SID_LOG_COMMENT,next_word);
+                  SID_log("Ignoring unknown Y_range modifier {%s}.",SID_LOG_COMMENT,next_word);
                i_word++;
             }
           }

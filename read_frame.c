@@ -66,30 +66,30 @@ void read_frame(render_info *render,int frame){
     }
     else
        SID_trap_error("Undefined image set index in read_frame().",ERROR_LOGIC);
-    sprintf(filename_RGB,          "%s/RGB_%s_%05d",          render->filename_out_dir,set_label,frame);
-    sprintf(filename_Y,            "%s/Y_%s_%05d",            render->filename_out_dir,set_label,frame);
-    sprintf(filename_Z,            "%s/Z_%s_%05d",            render->filename_out_dir,set_label,frame);
-    sprintf(filename_RGBY,         "%s/RGBY_%s_%05d",         render->filename_out_dir,set_label,frame);
-    sprintf(filename_RGBY_3CHANNEL,"%s/RGBY_3CHANNEL_%s_%05d",render->filename_out_dir,set_label,frame);
-    sprintf(filename_RY,           "%s/RY_%s_%05d",           render->filename_out_dir,set_label,frame);
-    sprintf(filename_GY,           "%s/GY_%s_%05d",           render->filename_out_dir,set_label,frame);
-    sprintf(filename_BY,           "%s/BY_%s_%05d",           render->filename_out_dir,set_label,frame);
+    sprintf(filename_RGB,          "RGB_%s_%05d",          set_label,frame);
+    sprintf(filename_Y,            "Y_%s_%05d",            set_label,frame);
+    sprintf(filename_Z,            "Z_%s_%05d",            set_label,frame);
+    sprintf(filename_RGBY,         "RGBY_%s_%05d",         set_label,frame);
+    sprintf(filename_RGBY_3CHANNEL,"RGBY_3CHANNEL_%s_%05d",set_label,frame);
+    sprintf(filename_RY,           "RY_%s_%05d",           set_label,frame);
+    sprintf(filename_GY,           "GY_%s_%05d",           set_label,frame);
+    sprintf(filename_BY,           "BY_%s_%05d",           set_label,frame);
     if(image_RGB!=NULL)
-       read_image(image_RGB,filename_RGB);
+       read_image(image_RGB,render->filename_out_dir,filename_RGB);
     if(image_Y!=NULL)
-       read_image(image_Y,filename_Y);
+       read_image(image_Y,render->filename_out_dir,filename_Y);
     if(image_Z!=NULL)
-       read_image(image_Z,filename_Z);
+       read_image(image_Z,render->filename_out_dir,filename_Z);
     if(image_RGBY!=NULL)
-       read_image(image_RGBY,filename_RGBY);
+       read_image(image_RGBY,render->filename_out_dir,filename_RGBY);
     if(image_RY!=NULL)
-       read_image(image_RY,filename_RY);
+       read_image(image_RY,render->filename_out_dir,filename_RY);
     if(image_GY!=NULL)
-       read_image(image_GY,filename_GY);
+       read_image(image_GY,render->filename_out_dir,filename_GY);
     if(image_BY!=NULL)
-       read_image(image_BY,filename_BY);
+       read_image(image_BY,render->filename_out_dir,filename_BY);
     if(image_RGBY_3CHANNEL!=NULL)
-       read_image(image_RGBY_3CHANNEL,filename_RGBY_3CHANNEL);
+       read_image(image_RGBY_3CHANNEL,render->filename_out_dir,filename_RGBY_3CHANNEL);
   }
 
   // Finalize things

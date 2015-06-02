@@ -6,6 +6,7 @@
 #include <gd.h>
 #include <gbpLib.h>
 #include <gbpSPH.h>
+#include <gbpTrees.h>
 #include <gbpRender.h>
 
 typedef struct select_group_params_local select_group_params_local;
@@ -16,6 +17,14 @@ struct select_group_params_local{
    void   *ids_list;
    char   *val_list;
 };
+
+int check_case_for_fragmented_local(int tree_case);
+int check_case_for_fragmented_local(int tree_case){
+      return(check_mode_for_flag(tree_case,TREE_CASE_FRAGMENTED_NEW)      ||
+             check_mode_for_flag(tree_case,TREE_CASE_FRAGMENTED_STRAYED)  ||
+             check_mode_for_flag(tree_case,TREE_CASE_FRAGMENTED_RETURNED) ||
+             check_mode_for_flag(tree_case,TREE_CASE_FRAGMENTED_EXCHANGED));
+}
 
 int count_group_ids_local(int                i_group,
                           int                j_subgroup,
@@ -142,6 +151,74 @@ int select_group_index_local(int                i_group,
    return(i_group==((select_group_params_local *)params)->selection_index && j_subgroup==0);
 }
 
+int select_group_tree_id_local(int                i_group,
+                               int                j_subgroup,
+                               int                i_subgroup,
+                               int                flag_long_ids,
+                               process_halo_info *group_i,
+                               process_halo_info *subgroup_i,
+                               void              *params);
+int select_group_tree_id_local(int                i_group,
+                               int                j_subgroup,
+                               int                i_subgroup,
+                               int                flag_long_ids,
+                               process_halo_info *group_i,
+                               process_halo_info *subgroup_i,
+                               void              *params){
+   return(group_i->tree_id==((select_group_params_local *)params)->selection_index && j_subgroup==0);
+}
+
+int select_group_id_local(int                i_group,
+                          int                j_subgroup,
+                          int                i_subgroup,
+                          int                flag_long_ids,
+                          process_halo_info *group_i,
+                          process_halo_info *subgroup_i,
+                          void              *params);
+int select_group_id_local(int                i_group,
+                          int                j_subgroup,
+                          int                i_subgroup,
+                          int                flag_long_ids,
+                          process_halo_info *group_i,
+                          process_halo_info *subgroup_i,
+                          void              *params){
+   return(group_i->id==((select_group_params_local *)params)->selection_index && j_subgroup==0);
+}
+
+int select_group_fragmented_local(int                i_group,
+                                  int                j_subgroup,
+                                  int                i_subgroup,
+                                  int                flag_long_ids,
+                                  process_halo_info *group_i,
+                                  process_halo_info *subgroup_i,
+                                  void              *params);
+int select_group_fragmented_local(int                i_group,
+                                  int                j_subgroup,
+                                  int                i_subgroup,
+                                  int                flag_long_ids,
+                                  process_halo_info *group_i,
+                                  process_halo_info *subgroup_i,
+                                  void              *params){
+   return(check_case_for_fragmented_local(group_i->tree_case) && j_subgroup==0);
+}
+
+int select_group_len_lt_local(int                i_group,
+                              int                j_subgroup,
+                              int                i_subgroup,
+                              int                flag_long_ids,
+                              process_halo_info *group_i,
+                              process_halo_info *subgroup_i,
+                              void              *params);
+int select_group_len_lt_local(int                i_group,
+                              int                j_subgroup,
+                              int                i_subgroup,
+                              int                flag_long_ids,
+                              process_halo_info *group_i,
+                              process_halo_info *subgroup_i,
+                              void              *params){
+   return(group_i->n_particles<((select_group_params_local *)params)->selection_index && j_subgroup==0);
+}
+
 int select_subgroup_index_local(int                i_group,
                                 int                j_subgroup,
                                 int                i_subgroup,
@@ -157,6 +234,57 @@ int select_subgroup_index_local(int                i_group,
                                 process_halo_info *subgroup_i,
                                 void              *params){
    return(i_subgroup==((select_group_params_local *)params)->selection_index);
+}
+
+int select_subgroup_id_local(int                i_group,
+                             int                j_subgroup,
+                             int                i_subgroup,
+                             int                flag_long_ids,
+                             process_halo_info *group_i,
+                             process_halo_info *subgroup_i,
+                             void              *params);
+int select_subgroup_id_local(int                i_group,
+                             int                j_subgroup,
+                             int                i_subgroup,
+                             int                flag_long_ids,
+                             process_halo_info *group_i,
+                             process_halo_info *subgroup_i,
+                             void              *params){
+   return(subgroup_i->id==((select_group_params_local *)params)->selection_index);
+}
+
+int select_subgroup_tree_id_local(int                i_group,
+                                  int                j_subgroup,
+                                  int                i_subgroup,
+                                  int                flag_long_ids,
+                                  process_halo_info *group_i,
+                                  process_halo_info *subgroup_i,
+                                  void              *params);
+int select_subgroup_tree_id_local(int                i_group,
+                                  int                j_subgroup,
+                                  int                i_subgroup,
+                                  int                flag_long_ids,
+                                  process_halo_info *group_i,
+                                  process_halo_info *subgroup_i,
+                                  void              *params){
+   return(subgroup_i->tree_id==((select_group_params_local *)params)->selection_index);
+}
+
+int select_subgroup_fragmented_local(int                i_group,
+                                     int                j_subgroup,
+                                     int                i_subgroup,
+                                     int                flag_long_ids,
+                                     process_halo_info *group_i,
+                                     process_halo_info *subgroup_i,
+                                     void              *params);
+int select_subgroup_fragmented_local(int                i_group,
+                                     int                j_subgroup,
+                                     int                i_subgroup,
+                                     int                flag_long_ids,
+                                     process_halo_info *group_i,
+                                     process_halo_info *subgroup_i,
+                                     void              *params){
+   return(check_case_for_fragmented_local(subgroup_i->tree_case));
 }
 
 void make_ids_list(render_info *render,
@@ -210,7 +338,6 @@ void make_ids_list(render_info *render,
                    int      selection){
 
    // Initialize some stuff
-   int i_read=render->snap_list[i_snap];
    int flag_long_ids=ADaPS_exist(render->plist_list[i_snap]->data,"flag_LONGIDs");
    select_group_params_local params;
    params.flag_long_ids_store=flag_long_ids;
@@ -218,13 +345,7 @@ void make_ids_list(render_info *render,
    params.n_ids_list         =0;
 
    // Count the number of particles we will have
-   process_SSimPL_halos(render->filename_SSimPL_dir,
-                        render->filename_halo_type,
-                        render->filename_tree_version,
-                        i_read,0,
-                        select_function,
-                        count_function,
-                        &params);
+   process_SSimPL_halos(render,i_snap,0,mode,select_function,count_function,&params);
 
    // Allocate the array for the list
    (*n_ids_list)=params.n_ids_list;
@@ -244,13 +365,7 @@ void make_ids_list(render_info *render,
    params.ids_list  =(*ids_list);
    params.val_list  =(*val_list);
    params.n_ids_list=0;
-   process_SSimPL_halos(render->filename_SSimPL_dir,
-                        render->filename_halo_type,
-                        render->filename_tree_version,
-                        i_read,1,
-                        select_function,
-                        action_function,
-                        &params);
+   process_SSimPL_halos(render,i_snap,1,mode,select_function,action_function,&params);
 
    // Sort the list in place
    switch(flag_long_ids){
@@ -324,6 +439,27 @@ void apply_mark_list(render_info   *render,
 
 void execute_marking_argument_local(render_info *render,mark_arg_info *arg);
 void execute_marking_argument_local(render_info *render,mark_arg_info *arg){
+   int (*select_function)(int                i_group,
+                          int                j_subgroup,
+                          int                i_subgroup,
+                          int                flag_long_ids,
+                          process_halo_info *group_i,
+                          process_halo_info *subgroup_i,
+                          void              *params);
+   int (*count_function) (int                i_group,
+                          int                j_subgroup,
+                          int                i_subgroup,
+                          int                flag_long_ids,
+                          process_halo_info *group_i,
+                          process_halo_info *subgroup_i,
+                          void              *params);
+   int (*action_function)(int                i_group,
+                          int                j_subgroup,
+                          int                i_subgroup,
+                          int                flag_long_ids,
+                          process_halo_info *group_i,
+                          process_halo_info *subgroup_i,
+                          void              *params);
    if(!strcmp(arg->type,"all"))
       SID_log("Marking %s particles...",SID_LOG_OPEN|SID_LOG_TIMER,arg->species);
    else if(!strcmp(arg->type,"sphere"))
@@ -332,6 +468,20 @@ void execute_marking_argument_local(render_info *render,mark_arg_info *arg){
       SID_log("Marking group halo (index=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,arg->ival[0]);
    else if(!strcmp(arg->type,"subgroup_index"))
       SID_log("Marking subgroup halo (index=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,arg->ival[0]);
+   else if(!strcmp(arg->type,"group_tree_id"))
+      SID_log("Marking group tree ID (index=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,arg->ival[0]);
+   else if(!strcmp(arg->type,"subgroup_tree_id"))
+      SID_log("Marking subgroup tree ID (index=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,arg->ival[0]);
+   else if(!strcmp(arg->type,"group_id"))
+      SID_log("Marking group halo ID (index=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,arg->ival[0]);
+   else if(!strcmp(arg->type,"subgroup_id"))
+      SID_log("Marking subgroup halo ID (index=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,arg->ival[0]);
+   else if(!strcmp(arg->type,"group_fragmented"))
+      SID_log("Marking fragmented groups...",SID_LOG_OPEN|SID_LOG_TIMER,arg->ival[0]);
+   else if(!strcmp(arg->type,"subgroup_fragmented"))
+      SID_log("Marking fragmented subgroups...",SID_LOG_OPEN|SID_LOG_TIMER,arg->ival[0]);
+   else if(!strcmp(arg->type,"<n_p"))
+      SID_log("Marking groups with less than %d particles...",SID_LOG_OPEN|SID_LOG_TIMER,arg->ival[0]);
    else
       SID_trap_error("Invalid selection type {%s} in perform_marking().",ERROR_LOGIC,arg->type);
    for(int i_snap=0;i_snap<render->n_interpolate;i_snap++){
@@ -397,47 +547,75 @@ void execute_marking_argument_local(render_info *render,mark_arg_info *arg){
                   }
                }
                // ... set all particles in a group or subgroup to a value.
-               else if(!strcmp(arg->type,"group_index") ||
+               else if(!strcmp(arg->type,"<n_p")                ||
+                       !strcmp(arg->type,"group_fragmented")    ||
+                       !strcmp(arg->type,"subgroup_fragmented") ||
+                       !strcmp(arg->type,"group_id")            ||
+                       !strcmp(arg->type,"subgroup_id")         ||
+                       !strcmp(arg->type,"group_tree_id")       ||
+                       !strcmp(arg->type,"subgroup_tree_id")    ||
+                       !strcmp(arg->type,"group_index")         ||
                        !strcmp(arg->type,"subgroup_index")){
-                  int selection_index=arg->ival[0];
-
-                  // Set a flag to indicate whether we are processing a group or subgroup
-                  int flag_process_group=TRUE;
-                  if(!strcmp(arg->type,"subgroup_index"))
-                     flag_process_group=FALSE;
+                  int select_index=arg->ival[0];
 
                   // Decide which selection function to use
-                  int (*select_function)(int                i_group,
-                                         int                j_subgroup,
-                                         int                i_subgroup,
-                                         int                flag_long_ids,
-                                         process_halo_info *group_i,
-                                         process_halo_info *subgroup_i,
-                                         void              *params);
-                  int (*count_function) (int                i_group,
-                                         int                j_subgroup,
-                                         int                i_subgroup,
-                                         int                flag_long_ids,
-                                         process_halo_info *group_i,
-                                         process_halo_info *subgroup_i,
-                                         void              *params);
-                  int (*action_function)(int                i_group,
-                                         int                j_subgroup,
-                                         int                i_subgroup,
-                                         int                flag_long_ids,
-                                         process_halo_info *group_i,
-                                         process_halo_info *subgroup_i,
-                                         void              *params);
-                  if(flag_process_group){
+                  if(!strcmp(arg->type,"group_index")){
                      select_function=select_group_index_local;
                      count_function =count_group_ids_local;
                      action_function=add_group_to_ids_list_local;
                   }
-                  else{
+                  else if(!strcmp(arg->type,"subgroup_index")){
                      select_function=select_subgroup_index_local;
                      count_function =count_subgroup_ids_local;
                      action_function=add_subgroup_to_ids_list_local;
                   }
+                  else if(!strcmp(arg->type,"group_fragmented")){
+                     select_function=select_group_fragmented_local;
+                     count_function =count_group_ids_local;
+                     action_function=add_group_to_ids_list_local;
+                  }
+                  else if(!strcmp(arg->type,"subgroup_fragmented")){
+                     select_function=select_subgroup_fragmented_local;
+                     count_function =count_subgroup_ids_local;
+                     action_function=add_subgroup_to_ids_list_local;
+                  }
+                  else if(!strcmp(arg->type,"group_tree_id")){
+                     select_function=select_group_tree_id_local;
+                     count_function =count_group_ids_local;
+                     action_function=add_group_to_ids_list_local;
+                  }
+                  else if(!strcmp(arg->type,"subgroup_tree_id")){
+                     select_function=select_subgroup_tree_id_local;
+                     count_function =count_subgroup_ids_local;
+                     action_function=add_subgroup_to_ids_list_local;
+                  }
+                  else if(!strcmp(arg->type,"group_id")){
+                     select_function=select_group_id_local;
+                     count_function =count_group_ids_local;
+                     action_function=add_group_to_ids_list_local;
+                  }
+                  else if(!strcmp(arg->type,"subgroup_id")){
+                     select_function=select_subgroup_id_local;
+                     count_function =count_subgroup_ids_local;
+                     action_function=add_subgroup_to_ids_list_local;
+                  }
+                  else if(!strcmp(arg->type,"group_fragmented")){
+                     select_function=select_group_fragmented_local;
+                     count_function =count_group_ids_local;
+                     action_function=add_group_to_ids_list_local;
+                  }
+                  else if(!strcmp(arg->type,"subgroup_fragmented")){
+                     select_function=select_subgroup_fragmented_local;
+                     count_function =count_subgroup_ids_local;
+                     action_function=add_subgroup_to_ids_list_local;
+                  }
+                  else if(!strcmp(arg->type,"<n_p")){
+                     select_function=select_group_len_lt_local;
+                     count_function =count_group_ids_local;
+                     action_function=add_group_to_ids_list_local;
+                  }
+                  else
+                     SID_trap_error("Option {%s} not properly implemented in perform_marking().",ERROR_LOGIC,arg->type);
 
                   // Create list of particles to mark
                   void   *ids_list=NULL;
@@ -452,7 +630,7 @@ void execute_marking_argument_local(render_info *render,mark_arg_info *arg){
                                 &val_list,
                                 &n_ids_list,
                                 0,
-                                selection_index);
+                                select_index);
 
                   // Mark the particles in the list
                   apply_mark_list(render,arg,i_snap,i_type,ids_list,val_list,n_ids_list,mark,&mark_count);
@@ -477,7 +655,7 @@ void execute_marking_argument_local(render_info *render,mark_arg_info *arg){
 void perform_marking(render_info *render){
    mark_arg_info *current_arg=render->mark_arg_first;
    if(current_arg!=NULL){
-      SID_log("Performing particle marking...",SID_LOG_OPEN);
+      SID_log("Performing particle marking...",SID_LOG_OPEN|SID_LOG_TIMER);
       while(current_arg!=NULL){
          // Perform marking
          execute_marking_argument_local(render,current_arg);

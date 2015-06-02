@@ -4,12 +4,14 @@
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpSPH.h>
+#include <gbpTrees.h>
 #include <gd.h>
 #if USE_FFMPEG
   #include <avformat.h>
   #include <swscale.h>
 #endif
 
+#define MAKE_MAP_DEFAULT       0
 #define MAKE_MAP_LOG           TTTP01
 #define MAKE_MAP_APPLY_DIMMING TTTP02
 #define MAKE_MAP_COLOUR        TTTP03
@@ -51,12 +53,15 @@
 #define RENDER_GOP_SIZE        2
 #define RENDER_QSCALE          1
 
-#define WRITE_IMAGE_DEFAULT  2
-#define WRITE_IMAGE_PNG_ONLY 4
+#define WRITE_IMAGE_PNG      TTTP01
+#define WRITE_IMAGE_RAW      TTTP02
+#define WRITE_IMAGE_DEFAULT  (WRITE_IMAGE_PNG|WRITE_IMAGE_RAW)
 
 #define READ_GADGET_RENDER_SCATTER    2
 #define READ_GADGET_RENDER_ID_ORDERED 4
 #define READ_GADGET_RENDER_DEFAULT    READ_GADGET_RENDER_SCATTER
+
+#define RENDER_INVALID_SSIMPL_DIR ":%* invalid directory *%:"
 
 // Data structure which holds all info about an image
 typedef struct image_info image_info;
@@ -236,9 +241,9 @@ struct render_info{
   double          f_interpolate;
   int             n_interpolate;
   int             n_frames;
-  char            filename_SSimPL_dir[256];
-  char            filename_halo_type[256];
-  char            filename_tree_version[256];
+  char            filename_SSimPL_root[256];
+  char            filename_halos_version[256];
+  char            filename_trees_version[256];
   char            filename_out_dir[256];
   char            snap_filename_root[256];
   char            mark_filename_root[256];
@@ -250,12 +255,14 @@ struct render_info{
   int            *snap_list;
   int             flag_comoving;
   int             flag_fade;
+  double          alpha_fade;
   int             flag_force_periodic;
   int             flag_read_marked;
   int             flag_add_absorption;
   plist_info    **plist_list;
-  mark_arg_info *mark_arg_first;
-  mark_arg_info *mark_arg_last;
+  tree_info      *trees;
+  mark_arg_info  *mark_arg_first;
+  mark_arg_info  *mark_arg_last;
   double          h_Hubble;
   double          f_absorption;
   int             w_mode;
@@ -324,11 +331,12 @@ void set_image_RGBY_3CHANNEL(image_info *image_RGBY_3CHANNEL_in,
                              image_info *image_RY_in,
                              image_info *image_GY_in,
                              image_info *image_BY_in,
+                             image_info *image_Y_in,
                              double      Y_min,
                              double      Y_max);
 
-void write_image(image_info *image,char *filename,int mode);
-void read_image(image_info *image,char *filename_root);
+void write_image(image_info *image,const char *filename_dir,const char *filename_root,int mode);
+void read_image (image_info *image,const char *filename_dir,const char *filename_root);
 
 void read_gadget_binary_render(char       *filename_root_in,
                                int         snapshot_number,
@@ -345,26 +353,26 @@ void add_mark_argument   (render_info *render,const char *species,int value,cons
 void create_mark_argument(render_info *render,mark_arg_info **new_arg);
 void free_mark_arguments(mark_arg_info **argument);
 void perform_marking     (render_info *render);
-void process_SSimPL_halos(char *filename_SSimPL_root,
-                          char *filename_halos_version,
-                          char *filename_trees_version,
-                          int   i_read,
-                          int   mode,
-                          int   select_function(int                i_group,
-                                                int                j_subgroup,
-                                                int                i_subgroup,
-                                                int                flag_long_ids,
-                                                process_halo_info *group_i,
-                                                process_halo_info *subgroup_i,
-                                                void              *params),
-                          int   action_function(int                i_group,
-                                                int                j_subgroup,
-                                                int                i_subgroup,
-                                                int                flag_long_ids,
-                                                process_halo_info *group_i,
-                                                process_halo_info *subgroup_i,
-                                                void              *params),
-                          void *params);
+void pick_best_snap(double a_search,double *snap_a_list,int n_snap_a_list,int *snap_best,double *snap_diff_best);
+void process_SSimPL_halos(render_info *render,
+                          int          i_snap,
+                          int          i_pass,
+                          int          mode,
+                          int          select_function(int                i_group,
+                                                       int                j_subgroup,
+                                                       int                i_subgroup,
+                                                       int                flag_long_ids,
+                                                       process_halo_info *group_i,
+                                                       process_halo_info *subgroup_i,
+                                                       void              *params),
+                          int          action_function(int                i_group,
+                                                       int                j_subgroup,
+                                                       int                i_subgroup,
+                                                       int                flag_long_ids,
+                                                       process_halo_info *group_i,
+                                                       process_halo_info *subgroup_i,
+                                                       void              *params),
+                          void        *params);
 #ifdef __cplusplus
 }
 #endif

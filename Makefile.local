@@ -7,6 +7,7 @@ OBJFILES  = close_movie.o               \
 	        add_mark_argument.o         \
 	        create_mark_argument.o      \
 	        free_mark_arguments.o       \
+	        pick_best_snapshot.o        \
 	        process_SSimPL_halos.o      \
 	        perform_marking.o           \
             init_perspective.o          \
@@ -48,5 +49,5 @@ OBJFILES  = close_movie.o               \
 LIBFILE   = libgbpRender.a
 BINFILES  = make_colour_bar render
 SCRIPTS   = make_movie
-LIBS      = -lgbpRender -lgbpSPH -lgbpCosmo -lgbpMath -lgbpLib
+LIBS      = -lgbpRender -lgbpSPH -lgbpTrees -lgbpCosmo -lgbpMath -lgbpLib
 #############################

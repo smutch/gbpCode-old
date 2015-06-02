@@ -33,12 +33,14 @@ void init_render(render_info **render){
   (*render)->flag_read_marked   = FALSE;
   (*render)->flag_comoving      = TRUE;
   (*render)->flag_fade          = FALSE;
+  (*render)->alpha_fade         = 2.;
   (*render)->flag_force_periodic= FALSE;
   (*render)->flag_add_absorption= FALSE;
   (*render)->sealed             = FALSE;
-  (*render)->v_mode             = MAKE_MAP_LOG;
-  (*render)->w_mode             = MAKE_MAP_LOG;
+  (*render)->v_mode             = MAKE_MAP_DEFAULT;
+  (*render)->w_mode             = MAKE_MAP_DEFAULT;
   (*render)->plist_list         = NULL;
+  (*render)->trees              = NULL;
   (*render)->mark_arg_first     = NULL;
   (*render)->mark_arg_last      = NULL;
   (*render)->kernel_radius      = NULL;
@@ -46,6 +48,9 @@ void init_render(render_info **render){
   (*render)->kernel_table_3d    = NULL;
   (*render)->kernel_table_avg   = 0.;
   (*render)->f_interpolate      = 0.;
+
+  // Initialize SSimPL directory to something invalid
+  sprintf((*render)->filename_SSimPL_root,"%s",RENDER_INVALID_SSIMPL_DIR);
 
   SID_log("Done.",SID_LOG_CLOSE);
 }

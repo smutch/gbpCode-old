@@ -21,7 +21,10 @@ void write_frame(render_info *render,int frame,int mode){
   SID_log("Writing rendered frame...",SID_LOG_OPEN|SID_LOG_TIMER);
 
   // Create directory if needed
+  char filename_out_dir_raw[MAX_FILENAME_LENGTH];
+  sprintf(filename_out_dir_raw,"%s/raw",render->filename_out_dir);
   mkdir(render->filename_out_dir,02755);
+  mkdir(filename_out_dir_raw,    02755);
 
   // Write mono-images
   set_frame(render->camera);
@@ -72,26 +75,26 @@ void write_frame(render_info *render,int frame,int mode){
      }
      else
         SID_trap_error("Undefined image set index in read_frame().",ERROR_LOGIC);
-     sprintf(filename_RGB,          "%s/RGB_%s_%05d",          render->filename_out_dir,set_label,frame);
-     sprintf(filename_Y,            "%s/Y_%s_%05d",            render->filename_out_dir,set_label,frame);
-     sprintf(filename_Z,            "%s/Z_%s_%05d",            render->filename_out_dir,set_label,frame);
-     sprintf(filename_RGBY,         "%s/RGBY_%s_%05d",         render->filename_out_dir,set_label,frame);
-     sprintf(filename_RY,           "%s/RY_%s_%05d",           render->filename_out_dir,set_label,frame);
-     sprintf(filename_GY,           "%s/GY_%s_%05d",           render->filename_out_dir,set_label,frame);
-     sprintf(filename_BY,           "%s/BY_%s_%05d",           render->filename_out_dir,set_label,frame);
-     sprintf(filename_RGBY_3CHANNEL,"%s/RGBY_3CHANNEL_%s_%05d",render->filename_out_dir,set_label,frame);
+     sprintf(filename_RGB,          "RGB_%s_%05d",          set_label,frame);
+     sprintf(filename_Y,            "Y_%s_%05d",            set_label,frame);
+     sprintf(filename_Z,            "Z_%s_%05d",            set_label,frame);
+     sprintf(filename_RGBY,         "RGBY_%s_%05d",         set_label,frame);
+     sprintf(filename_RY,           "RY_%s_%05d",           set_label,frame);
+     sprintf(filename_GY,           "GY_%s_%05d",           set_label,frame);
+     sprintf(filename_BY,           "BY_%s_%05d",           set_label,frame);
+     sprintf(filename_RGBY_3CHANNEL,"RGBY_3CHANNEL_%s_%05d",set_label,frame);
      if(check_mode_for_flag(render->camera->RGB_mode,CAMERA_RGB_MODE_1CHANNEL)){
-        write_image(image_RGB, filename_RGB, mode);
-        write_image(image_Y,   filename_Y,   mode);
-        write_image(image_RGBY,filename_RGBY,mode);
+        write_image(image_RGB, render->filename_out_dir,filename_RGB, mode);
+        write_image(image_Y,   render->filename_out_dir,filename_Y,   mode);
+        write_image(image_RGBY,render->filename_out_dir,filename_RGBY,mode);
      }
      if(check_mode_for_flag(render->camera->RGB_mode,CAMERA_RGB_MODE_3CHANNEL)){
-        write_image(image_RY,           filename_RY,           mode);
-        write_image(image_GY,           filename_GY,           mode);
-        write_image(image_BY,           filename_BY,           mode);
-        write_image(image_RGBY_3CHANNEL,filename_RGBY_3CHANNEL,mode);
+        write_image(image_RY,           render->filename_out_dir,filename_RY,           mode&(~WRITE_IMAGE_PNG));
+        write_image(image_GY,           render->filename_out_dir,filename_GY,           mode&(~WRITE_IMAGE_PNG));
+        write_image(image_BY,           render->filename_out_dir,filename_BY,           mode&(~WRITE_IMAGE_PNG));
+        write_image(image_RGBY_3CHANNEL,render->filename_out_dir,filename_RGBY_3CHANNEL,mode);
      }
-     write_image(image_Z,filename_Z,mode);
+     write_image(image_Z,render->filename_out_dir,filename_Z,mode);
   }
   SID_log("Done.",SID_LOG_CLOSE);
 }

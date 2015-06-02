@@ -78,7 +78,7 @@ int main(int argc, char *argv[]){
     // Write output
     if(SID.I_am_Master){
       if(mode==SET_RENDER_RESCALE)
-        write_frame(render,i_frame,WRITE_IMAGE_DEFAULT|WRITE_IMAGE_PNG_ONLY);
+        write_frame(render,i_frame,WRITE_IMAGE_DEFAULT&(~WRITE_IMAGE_RAW));
       else
         write_frame(render,i_frame,WRITE_IMAGE_DEFAULT);
     }

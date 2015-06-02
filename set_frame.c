@@ -74,13 +74,14 @@ void set_frame(camera_info *camera){
                       camera->Y_range[1]);
     }
     if(image_RGBY_3CHANNEL!=NULL){
-       set_image_RGB(image_RY,camera->Y_range[0],camera->Y_range[1]);
-       set_image_RGB(image_GY,camera->Y_range[0],camera->Y_range[1]);
-       set_image_RGB(image_BY,camera->Y_range[0],camera->Y_range[1]);
+       set_image_RGB(image_RY,0.,1.);
+       set_image_RGB(image_GY,0.,1.);
+       set_image_RGB(image_BY,0.,1.);
        set_image_RGBY_3CHANNEL(image_RGBY_3CHANNEL,
                                image_RY,
                                image_GY,
                                image_BY,
+                               image_Y,
                                camera->Y_range[0],
                                camera->Y_range[1]);
     }

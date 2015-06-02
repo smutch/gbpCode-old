@@ -44,15 +44,54 @@ double RGB_lookup(int colour,int channel){
                break;
          }
          break;
-      // Orange
+      // Yellow
       case 5:
+         switch(channel){
+            case 0:
+               r_val=1.;
+            case 1:
+               r_val=1.;
+               break;
+            case 2:
+               r_val=0.;
+               break;
+         }
+         break;
+      // Cyan
+      case 6:
+         switch(channel){
+            case 0:
+               r_val=0.;
+            case 1:
+               r_val=1.;
+               break;
+            case 2:
+               r_val=1.;
+               break;
+         }
+         break;
+      // Magenta
+      case 7:
+         switch(channel){
+            case 0:
+               r_val=1.;
+            case 1:
+               r_val=0.;
+               break;
+            case 2:
+               r_val=1.;
+               break;
+         }
+         break;
+      // Orange
+      case 8:
          switch(channel){
             case 0:
                r_val=1.;
             case 1:
                r_val=0.4;
                break;
-            default:
+            case 2:
                r_val=0.;
                break;
          }
@@ -1929,6 +1968,7 @@ void render_frame(render_info  *render){
   char        *parameter;
   int          flag_comoving;
   int          flag_fade;
+  double       alpha_fade;
   int          flag_force_periodic;
   int          flag_add_absorption;
   double       expansion_factor;
@@ -1981,6 +2021,8 @@ void render_frame(render_info  *render){
      sprintf(unit_text,"Mpc/h");
   }
 
+  // Put all the render distances into the Gadget units of the
+  //    relevant space (r or v-space)
   x_o          *=unit_factor;
   y_o          *=unit_factor;
   z_o          *=unit_factor;
@@ -1999,6 +2041,7 @@ void render_frame(render_info  *render){
   camera_mode        =render->camera->camera_mode;
   flag_comoving      =render->flag_comoving;
   flag_fade          =render->flag_fade;
+  alpha_fade         =render->alpha_fade;
   flag_force_periodic=render->flag_force_periodic;
   flag_add_absorption=render->flag_add_absorption;
   expansion_factor   =render->camera->perspective->time;
@@ -2267,9 +2310,10 @@ void render_frame(render_info  *render){
         ky_max=(int)((part_pos_y+radius_kernel-ymin)/pixel_size_y+ONE_HALF);
 
         // Compute any potential fading
+        // alpha_fade=2 for normal inverse-square fading past the image plane
         double f_fade;
         if(flag_fade && z_i>d_o)
-           f_fade=(d_image_plane*d_image_plane)/(z_i*z_i);
+           f_fade=pow(d_image_plane/z_i,-alpha_fade);
         else
            f_fade=1;
 
@@ -2298,9 +2342,16 @@ void render_frame(render_info  *render){
         double vw_i=v_i*w_i;
         double zw_i=z_i*w_i;
 
-//printf("%f %f %f -- %le -- %le %le -- %le %le %le -- %4d %4d %4d %4d -- %le %le\n",part_pos_x,part_pos_y,f_stretch[i_particle],radius_kernel,pixel_size_x,pixel_size_y,xmin,ymin,FOV,kx_min,kx_max,ky_min,ky_max,w_i,v_i);
-//if(n_particles_used_local>=10) SID_exit(ERROR_NONE);
         // Loop over the kernal
+//printf("%le %d\n",
+//printf("%f %f %f -- %le %le -- %le %le -- %le %le %le -- %4d %4d %4d %4d -- %le %le %le\n",
+//       part_pos_x,part_pos_y,f_stretch[i_particle],
+//       radius_kernel,f_table,
+//       pixel_size_x,pixel_size_y,
+//       xmin,ymin,FOV,
+//       kx_min,kx_max-kx_min,ky_min,ky_max-ky_min,
+//       w_i,v_i,kernel);
+//if(n_particles_used_local>=10) SID_exit(ERROR_NONE);
         for(kx=kx_min,pixel_pos_x=xmin+(kx_min+0.5)*pixel_size_x;kx<=kx_max;kx++,pixel_pos_x+=pixel_size_x){
           if(kx>=0 && kx<nx){
             for(ky=ky_min,pixel_pos_y=ymin+(ky_min+0.5)*pixel_size_y;ky<=ky_max;ky++,pixel_pos_y+=pixel_size_y){
@@ -2319,18 +2370,12 @@ void render_frame(render_info  *render){
                     (f_table-kernel_radius[i_table])*(double)N_KERNEL_TABLE;
                   double w_k=w_i*kernel;
                   // Perform addition
-                  if(temp_image!=NULL)
-                     temp_image[pos]+=(f_dim*v_i-f_absorption*temp_image[pos])*w_k;
-                  if(Y_image!=NULL)
-                     Y_image[pos]+=(f_dim-f_absorption*Y_image[pos])*w_k;
-                  if(z_image!=NULL)
-                     z_image[pos]+=(f_dim*z_i-f_absorption*z_image[pos])*w_k;
-                  if(RY_image!=NULL){
-// Should the R,G,B_i's be after the f_dim's here?
-                     RY_image[pos]+=(f_dim-f_absorption*RY_image[pos])*w_k*R_i;
-                     GY_image[pos]+=(f_dim-f_absorption*GY_image[pos])*w_k*G_i;
-                     BY_image[pos]+=(f_dim-f_absorption*BY_image[pos])*w_k*B_i;
-                  }
+                  if(Y_image!=NULL)    Y_image[pos]   +=(f_dim    -f_absorption*   Y_image[pos])*w_k;
+                  if(temp_image!=NULL) temp_image[pos]+=(f_dim*v_i-f_absorption*temp_image[pos])*w_k;
+                  if(z_image!=NULL)    z_image[pos]   +=(f_dim*z_i-f_absorption*   z_image[pos])*w_k;
+                  if(RY_image!=NULL)   RY_image[pos]  +=(f_dim*R_i-f_absorption*  RY_image[pos])*w_k;
+                  if(GY_image!=NULL)   GY_image[pos]  +=(f_dim*G_i-f_absorption*  GY_image[pos])*w_k;
+                  if(BY_image!=NULL)   BY_image[pos]  +=(f_dim*B_i-f_absorption*  BY_image[pos])*w_k;
                   mask[pos]=TRUE;
                 }
               }
@@ -2393,12 +2438,30 @@ void render_frame(render_info  *render){
       SID_Allreduce(SID_IN_PLACE,BY_image,n_pixels,SID_DOUBLE,SID_SUM,SID.COMM_WORLD);
     }
 
-    // Create final normalize image and clear the temp_image which has been used as a buffer
+    // Create final normalized images and clear the temp_image which has been used as a buffer
     if(RGB_image!=NULL){
        for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
           if(mask[i_pixel])
              RGB_image[i_pixel]=temp_image[i_pixel]/Y_image[i_pixel];
           temp_image[i_pixel]=0.;
+       }
+    }
+    if(RY_image!=NULL){
+       for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
+          if(mask[i_pixel])
+             RY_image[i_pixel]=RY_image[i_pixel]/Y_image[i_pixel];
+       }
+    }
+    if(GY_image!=NULL){
+       for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
+          if(mask[i_pixel])
+             GY_image[i_pixel]=GY_image[i_pixel]/Y_image[i_pixel];
+       }
+    }
+    if(BY_image!=NULL){
+       for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
+          if(mask[i_pixel])
+             BY_image[i_pixel]=BY_image[i_pixel]/Y_image[i_pixel];
        }
     }
 
@@ -2432,22 +2495,6 @@ void render_frame(render_info  *render){
           Y_image[i_pixel]=LOG_ZERO;
       }
       SID_log("Done.",SID_LOG_CLOSE);
-      if(RY_image!=NULL){
-        SID_log("Taking log of RY,GY and BY images...",SID_LOG_OPEN);
-        for(i_pixel=0;i_pixel<n_pixels;i_pixel++){
-          if(mask[i_pixel]){
-            RY_image[i_pixel]=take_log10(RY_image[i_pixel]);
-            GY_image[i_pixel]=take_log10(GY_image[i_pixel]);
-            BY_image[i_pixel]=take_log10(BY_image[i_pixel]);
-          }
-          else{
-            RY_image[i_pixel]=LOG_ZERO;
-            GY_image[i_pixel]=LOG_ZERO;
-            BY_image[i_pixel]=LOG_ZERO;
-          }
-        }
-        SID_log("Done.",SID_LOG_CLOSE);
-      }
     }
 
     // Compute some image statistics
@@ -2481,8 +2528,12 @@ void render_frame(render_info  *render){
     if(RY_image!=NULL){
       calc_min(RY_image,&min_RY_image,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
       calc_max(RY_image,&max_RY_image,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+    }
+    if(GY_image!=NULL){
       calc_min(GY_image,&min_GY_image,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
       calc_max(GY_image,&max_GY_image,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
+    }
+    if(BY_image!=NULL){
       calc_min(BY_image,&min_BY_image,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
       calc_max(BY_image,&max_BY_image,n_pixels,SID_DOUBLE,CALC_MODE_DEFAULT);
     }
@@ -2503,8 +2554,12 @@ void render_frame(render_info  *render){
        if(RY_image!=NULL){
           SID_log("RY  min =%le",SID_LOG_COMMENT,min_RY_image);
           SID_log("RY  max =%le",SID_LOG_COMMENT,max_RY_image);
+       }
+       if(GY_image!=NULL){
           SID_log("GY  min =%le",SID_LOG_COMMENT,min_GY_image);
           SID_log("GY  max =%le",SID_LOG_COMMENT,max_GY_image);
+       }
+       if(BY_image!=NULL){
           SID_log("BY  min =%le",SID_LOG_COMMENT,min_BY_image);
           SID_log("BY  max =%le",SID_LOG_COMMENT,max_BY_image);
        }
@@ -2531,6 +2586,5 @@ void render_frame(render_info  *render){
   
     SID_log("Done.",SID_LOG_CLOSE);
   }
-
 }
 
