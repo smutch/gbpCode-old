@@ -21,7 +21,7 @@ int main(int argc, char *argv[]){
   SID_log("Computing cosmology information for z=%.2lf...",SID_LOG_OPEN,z);
 
   // Initialize cosmology
-  ADaPS *cosmo;
+  ADaPS *cosmo=NULL;
   if(argc==2)
      init_cosmo_default(&cosmo);
   else if(argc==3)
@@ -35,8 +35,10 @@ int main(int argc, char *argv[]){
   SID_log("D_comoving   = %10.3lf Mpc",         SID_LOG_COMMENT,D_comove(z,cosmo)/M_PER_MPC);
   SID_log("D_horizon    = %10.3lf Mpc",         SID_LOG_COMMENT,C_VACUUM*deltat_a(&cosmo,0.,a_of_z(z))/M_PER_MPC);
   SID_log("D_V          = %10.3lf Mpc",         SID_LOG_COMMENT,pow((1+z)*D_angular(z,cosmo)*(1+z)*D_angular(z,cosmo)*z*C_VACUUM/H_convert(H_z(z,cosmo)),ONE_THIRD)/M_PER_MPC);
-  SID_log("H(z)         = %10.3lf km/s/Mpc",    SID_LOG_COMMENT,H_z(z,cosmo));
-  SID_log("1/H(z)       = %10.3le years",       SID_LOG_COMMENT,1./(H_convert(H_z(z,cosmo))*S_PER_YEAR));
+  SID_log("H(z)         = %10.3lf km/s/Mpc",    SID_LOG_COMMENT,H_z       (z, cosmo));
+  SID_log("t_age(z)     = %10.3le years",       SID_LOG_COMMENT,t_age_z   (z,&cosmo)/S_PER_YEAR);
+  SID_log("t_Hubble(z)  = %10.3le years",       SID_LOG_COMMENT,t_Hubble_z(z, cosmo)/S_PER_YEAR);
+  SID_log("t_dyn(z)     = %10.3le years",       SID_LOG_COMMENT,t_dyn_z   (z, cosmo)/S_PER_YEAR);
 
   SID_log("Done.",SID_LOG_CLOSE);
 

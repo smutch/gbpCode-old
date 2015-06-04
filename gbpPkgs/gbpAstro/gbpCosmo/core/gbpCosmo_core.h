@@ -4,7 +4,7 @@
 // Define the default cosmology if it wasn't specified
 //   when make was called.
 #ifndef GBP_COSMOLOGY_DEFAULT
-#define GBP_COSMOLOGY_DEFAULT "WMAP-7"
+#define GBP_COSMOLOGY_DEFAULT "Planck-2015"
 #endif
 
 #define DELTAT_A_MIN_A 1e-5
@@ -29,6 +29,10 @@ double Delta_vir(double redshift,cosmo_info *cosmo);
 double Ha_Ho(double a,cosmo_info *cosmo);
 double E_z(double Omega_M, double Omega_k, double Omega_Lambda, double z);
 double H_z(double redshift,cosmo_info *cosmo);
+double t_Hubble_z(double redshift,cosmo_info *cosmo);
+double t_dyn_z(double redshift,cosmo_info  *cosmo);
+double t_age_a(double a_in,    cosmo_info **cosmo);
+double t_age_z(double redshift,cosmo_info **cosmo);
 double H_convert(double Hz);
 double dlna_dtau(double      a,
        cosmo_info *cosmo);
