@@ -166,10 +166,103 @@ struct fp_gadget{
   int   flag_file_type;
 };
 
+#define PROCESS_GADGET_FILE_BUFFER_SIZE (1024*1024)
+#define WRITE_GADGET_BINARY_DEFAULT 0
+typedef struct select_gadget_volume_params_info select_gadget_volume_params_info;
+struct select_gadget_volume_params_info{
+   plist_info *plist;
+   GBPREAL     cen[3];
+   GBPREAL     size;
+   GBPREAL     size2;
+   GBPREAL     box_size;
+};
+typedef struct select_gadget_ids_params_info select_gadget_ids_params_info;
+struct select_gadget_ids_params_info{
+   plist_info *plist;
+   int         n_ids;
+   size_t     *id_list;
+};
+
 // Function Definitions
 #ifdef __cplusplus
 extern "C" {
 #endif
+void process_gadget_file(const char *status_message,
+                         char   *filename_read_root,
+                         int     snapshot_number,
+                         int     select_function(gadget_read_info *fp_gadget,
+                                                 void             *params,
+                                                 size_t            i_particle,
+                                                 size_t            i_particle_type,
+                                                 int               i_type,
+                                                 GBPREAL          *pos,
+                                                 GBPREAL          *vel,
+                                                 size_t            ID_i),
+                         void    action_function(gadget_read_info *fp_gadget,
+                                                 void             *params,
+                                                 size_t            i_particle,
+                                                 size_t            i_particle_type,
+                                                 int               i_type,
+                                                 GBPREAL          *pos,
+                                                 GBPREAL          *vel,
+                                                 size_t            ID_i),
+                         void   *params,
+                         size_t *n_particles_type_local_pass,
+                         size_t *n_particles_type_pass,
+                         int    *flag_long_IDs,
+                         int     mode);
+void allocate_gadget_particles(plist_info *plist,
+                               size_t     *n_particles_type_local,
+                               size_t     *n_particles_type,
+                               int         flag_long_IDs);
+int select_gadget_cube(gadget_read_info *fp_gadget,
+                       void             *params,
+                       size_t            i_particle,
+                       size_t            i_particle_type,
+                       int               i_type,
+                       GBPREAL          *pos,
+                       GBPREAL          *vel,
+                       size_t            ID_i);
+int select_gadget_sphere(gadget_read_info *fp_gadget,
+                         void             *params,
+                         size_t            i_particle,
+                         size_t            i_particle_type,
+                         int               i_type,
+                         GBPREAL          *pos,
+                         GBPREAL          *vel,
+                         size_t            ID_i);
+void process_gadget_file_fctn_null(gadget_read_info *fp_gadget,
+                                   void             *params,
+                                   size_t            i_particle,
+                                   size_t            i_particle_type,
+                                   int               i_type,
+                                   GBPREAL          *pos,
+                                   GBPREAL          *vel,
+                                   size_t            ID_i);
+void store_gadget_particles(gadget_read_info *fp_gadget,
+                            void             *params,
+                            size_t            i_particle,
+                            size_t            i_particle_type,
+                            int               i_type,
+                            GBPREAL          *pos,
+                            GBPREAL          *vel,
+                            size_t            ID_i);
+int select_gadget_ids(gadget_read_info *fp_gadget,
+                      void             *params,
+                      size_t            i_particle,
+                      size_t            i_particle_type,
+                      int               i_type,
+                      GBPREAL          *pos,
+                      GBPREAL          *vel,
+                      size_t            ID_i);
+int select_gadget_all(gadget_read_info *fp_gadget,
+                      void             *params,
+                      size_t            i_particle,
+                      size_t            i_particle_type,
+                      int               i_type,
+                      GBPREAL          *pos,
+                      GBPREAL          *vel,
+                      size_t            ID_i);
 void open_gadget_file(char      *filename_root_in,
                       int        snapshot_number,
                       fp_gadget *fp);
@@ -179,7 +272,10 @@ int  init_smooth_read(char *filename_root_in,int snapshot_number,int *flag_multi
 void set_gadget_filename(gadget_read_info *fp,int i_file,char *filename);
 void set_smooth_filename(char *filename_root_in,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename);
 void change_gadget_filename(const char *filename_root_in,const char *filename_root,int snapshot_number,int multifile_number,int flag_multifile,int flag_file_type,char *filename);
-
+void allocate_gadget_particles(plist_info *plist,
+                               size_t     *n_particles_type_local,
+                               size_t     *n_particles_type,
+                               int         flag_long_IDs);
 void init_plist(plist_info *plist, slab_info *slab,double length_unit,double mass_unit, double velocity_unit); 
 void free_plist(plist_info *plist);
 void standard_to_system(plist_info *plist, char *species_name);
@@ -222,7 +318,8 @@ void write_gadget_binary_new(plist_info  *plist,
 void write_tipsy_binary(char       *filename,
                         plist_info *plist);
 void write_gadget_ascii(char       *filename,
-                        plist_info *plist);
+                        plist_info *plist,
+                        size_t     *id_ordering);
 void write_gadget_csv(char       *filename_out,
                       plist_info *plist);
 void write_mark_file(plist_info *plist,

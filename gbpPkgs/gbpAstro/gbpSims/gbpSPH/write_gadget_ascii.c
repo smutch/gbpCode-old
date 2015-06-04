@@ -7,7 +7,8 @@
 // In the future ... receive a list of variables to make this adaptive
 
 void write_gadget_ascii(char       *filename_out,
-	                    plist_info *plist){
+	                    plist_info *plist,
+                        size_t     *write_order_indices){
   FILE   *fp;
   double  h_Hubble;
   GBPREAL   *x;
@@ -18,7 +19,6 @@ void write_gadget_ascii(char       *filename_out,
   GBPREAL   *vz;
   size_t    *id;
   size_t  n_p;
-  size_t  i_p;
   int     i_rank;
   int     i_species;
 
@@ -47,6 +47,7 @@ void write_gadget_ascii(char       *filename_out,
         fp=fopen(filename_out,"a");
 
       // Write this rank's particles
+      int i_p=0;
       for(i_species=0;i_species<N_GADGET_TYPE;i_species++){
         if(ADaPS_exist(plist->data,"n_%s",plist->species[i_species])){
           n_p=((size_t *)ADaPS_fetch(plist->data,"n_%s",plist->species[i_species]))[0];
@@ -58,16 +59,19 @@ void write_gadget_ascii(char       *filename_out,
              vy=(GBPREAL *)ADaPS_fetch(plist->data,"vy_%s",plist->species[i_species]);
              vz=(GBPREAL *)ADaPS_fetch(plist->data,"vz_%s",plist->species[i_species]);
              id=(size_t  *)ADaPS_fetch(plist->data,"id_%s",plist->species[i_species]);
-             for(i_p=0;i_p<n_p;i_p++){
+             for(int j_p=0;j_p<n_p;i_p++,j_p++){
+               size_t k_p=j_p;
+               if(write_order_indices!=NULL)
+                  k_p=write_order_indices[i_p];
                fprintf(fp,"%1d %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %7zd\n",
                        i_species,
-                       (double)(x[i_p]/(M_PER_MPC/h_Hubble)),
-                       (double)(y[i_p]/(M_PER_MPC/h_Hubble)),
-                       (double)(z[i_p]/(M_PER_MPC/h_Hubble)),
-                       (double)(vx[i_p]*1e-3),
-                       (double)(vy[i_p]*1e-3),
-                       (double)(vz[i_p]*1e-3),
-                       id[i_p]);
+                       (double)(x[k_p]/(M_PER_MPC/h_Hubble)),
+                       (double)(y[k_p]/(M_PER_MPC/h_Hubble)),
+                       (double)(z[k_p]/(M_PER_MPC/h_Hubble)),
+                       (double)(vx[k_p]*1e-3),
+                       (double)(vy[k_p]*1e-3),
+                       (double)(vz[k_p]*1e-3),
+                       id[k_p]);
              }
           }
         }
@@ -78,3 +82,4 @@ void write_gadget_ascii(char       *filename_out,
   }
   SID_log("Done.",SID_LOG_CLOSE);
 }
+

@@ -4,6 +4,9 @@
 INCFILES  = gbpSPH.h
 OBJFILES  = display_gadget_header.o         \
 		    display_gadget_info.o           \
+	        process_gadget_file.o           \
+	        process_gadget_file_functions.o \
+	        allocate_gadget_particles.o     \
 		    init_gadget_read.o              \
 		    init_smooth_read.o              \
 		    set_gadget_filename.o           \

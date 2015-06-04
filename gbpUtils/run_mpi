@@ -54,7 +54,7 @@ if ( ${GBP_QUEUE_TYPE} == 'PBS' ) then
   echo '#PBS -S /bin/csh'                                                                               >> $SUBT_FILE
   #echo '#PBS -l pmem=3gb'                                                                             >> $SUBT_FILE
   #echo '#PBS -l pmem=450GB'                                                                             >> $SUBT_FILE
-  echo '#PBS -l pmem='$ARG_PMEM                                                                         >> $SUBT_FILE
+  echo '#PBS -l pmem='$ARG_PMEM'Gb'                                                                         >> $SUBT_FILE
   if ( $HOSTNAME == 'g2.hpc.swin.edu.au' ) then
      echo '#PBS -q '$ARG_QUEUE                                                                          >> $SUBT_FILE
   endif

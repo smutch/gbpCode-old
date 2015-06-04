@@ -43,7 +43,7 @@ int main(int argc, char *argv[]){
      read_gadget_binary(filename_root_in,snapshot_number,&plist,READ_GADGET_DEFAULT);
 
      // Write ascii file
-     write_gadget_ascii(filename_out,&plist);
+     write_gadget_ascii(filename_out,&plist,NULL);
   }
 
   // Clean-up
