@@ -21,7 +21,7 @@ double fetch_treenode_tau_3to1(tree_info *trees,tree_node_info *halo){
          if(marker!=NULL){
             int    halo_snap  =fetch_treenode_snap_tree(trees,halo);
             int    marker_snap=fetch_treenode_snap_tree(trees,marker);
-            tau=10.*((trees->t_list[halo_snap]-trees->t_list[marker_snap])/trees->t_list[halo_snap]);
+            tau=(trees->t_list[halo_snap]-trees->t_list[marker_snap])/t_dyn_z(trees->z_list[halo_snap],trees->cosmo);
          }
       }
    }

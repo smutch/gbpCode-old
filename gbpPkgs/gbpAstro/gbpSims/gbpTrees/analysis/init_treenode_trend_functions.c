@@ -131,7 +131,7 @@ void init_tree_property_tau(trend_property_info *property,void *trees_in,int i_h
    gbp_add_va_arg(vargs,sizeof(double),&tau_array);
    gbp_add_va_arg(vargs,sizeof(int),   &n_bins);
    for(int i_tau=0;i_tau<n_bins;i_tau++)
-      tau_array[i_tau]=10.*((trees->t_list[i_0]-trees->t_list[i_0-i_tau])/trees->t_list[i_0]);
+      tau_array[i_tau]=(trees->t_list[i_0]-trees->t_list[i_0-i_tau])/t_dyn_z(trees->z_list[i_0],trees->cosmo);
 }
 void free_tree_property_tau(trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs){
    double *tau_array;
@@ -149,7 +149,7 @@ int calc_tree_property_index_tau_form(trend_property_info *property,hist_info *h
       if(marker!=NULL){
          int    halo_snap  =fetch_treenode_snap_tree(trees,halo);
          int    marker_snap=fetch_treenode_snap_tree(trees,marker);
-         double tau        =10.*((trees->t_list[halo_snap]-trees->t_list[marker_snap])/trees->t_list[halo_snap]);
+         double tau        =(trees->t_list[halo_snap]-trees->t_list[marker_snap])/t_dyn_z(trees->z_list[halo_snap],trees->cosmo);
          r_val=calc_histogram_index(hist,tau);
       }
    }
@@ -168,7 +168,7 @@ int calc_tree_property_index_tau_3to1(trend_property_info *property,hist_info *h
          if(marker!=NULL){
             int    halo_snap  =fetch_treenode_snap_tree(trees,halo);
             int    marker_snap=fetch_treenode_snap_tree(trees,marker);
-            double tau        =10.*((trees->t_list[halo_snap]-trees->t_list[marker_snap])/trees->t_list[halo_snap]);
+            double tau        =(trees->t_list[halo_snap]-trees->t_list[marker_snap])/t_dyn_z(trees->z_list[halo_snap],trees->cosmo);
             r_val=calc_histogram_index(hist,tau);
          }
       }
@@ -188,7 +188,7 @@ int calc_tree_property_index_tau_10to1(trend_property_info *property,hist_info *
          if(marker!=NULL){
             int    halo_snap  =fetch_treenode_snap_tree(trees,halo);
             int    marker_snap=fetch_treenode_snap_tree(trees,marker);
-            double tau        =10.*((trees->t_list[halo_snap]-trees->t_list[marker_snap])/trees->t_list[halo_snap]);
+            double tau        =(trees->t_list[halo_snap]-trees->t_list[marker_snap])/t_dyn_z(trees->z_list[halo_snap],trees->cosmo);
             r_val=calc_histogram_index(hist,tau);
          }
       }

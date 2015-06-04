@@ -140,7 +140,7 @@ void init_trees_read(const char  *filename_SSimPL_dir,
      grab_double(line,1,&a_in);
      (*tree)->a_list[i_alist]=a_in;
      (*tree)->z_list[i_alist]=z_of_a(a_in);
-     (*tree)->t_list[i_alist]=deltat_a(&cosmo,DELTAT_A_MIN_A,a_in);
+     (*tree)->t_list[i_alist]=t_age_a(a_in,&cosmo);
   }
   fclose(fp_alist_in);
   SID_free(SID_FARG line);

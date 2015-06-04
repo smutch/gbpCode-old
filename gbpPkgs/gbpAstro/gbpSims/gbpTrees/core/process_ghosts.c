@@ -112,8 +112,8 @@ void process_ghosts(tree_horizontal_ghost_group_info    **groups_in,
             if(groups_in[i_file%n_wrap][i_group].file_index<0)
                SID_trap_error("Invalid stopping state for group interpolation: file=%d i_file=%d index=%d type=%d",ERROR_LOGIC,
                               file,i_file,group_descendant->interp.index_stop,group_descendant->type);
-            group_descendant->interp.time_start =deltat_a(cosmo,a_list[j_file],0.)/S_PER_YEAR;
-            group_descendant->interp.time_stop  =deltat_a(cosmo,a_list[j_file-group_file_offset],0.)/S_PER_YEAR;
+            group_descendant->interp.time_start =t_age_a(a_list[j_file],cosmo)/S_PER_YEAR;
+            group_descendant->interp.time_stop  =t_age_a(a_list[j_file-group_file_offset],cosmo)/S_PER_YEAR;
          }
 
          // If this is the last in this chain of ghost groups, force the descendant to the known solution
@@ -227,8 +227,8 @@ void process_ghosts(tree_horizontal_ghost_group_info    **groups_in,
                   SID_trap_error("Invalid stopping state for subgroup interpolation: file=%d i_file=%d index=%d type=%d offset=%d",ERROR_LOGIC,
                                  file,i_file,subgroups_in[file%n_wrap][ghost_index].interp.index_stop,
                                  subgroups_in[file%n_wrap][ghost_index].type,subgroups_in[i_file%n_wrap][i_subgroup].file_offset);
-               subgroups_in[file%n_wrap][ghost_index].interp.time_start =deltat_a(cosmo,a_list[j_file],0.)/S_PER_YEAR;
-               subgroups_in[file%n_wrap][ghost_index].interp.time_stop  =deltat_a(cosmo,a_list[j_file-group_file_offset],0.)/S_PER_YEAR;
+               subgroups_in[file%n_wrap][ghost_index].interp.time_start =t_age_a(a_list[j_file],cosmo)/S_PER_YEAR;
+               subgroups_in[file%n_wrap][ghost_index].interp.time_stop  =t_age_a(a_list[j_file-group_file_offset],cosmo)/S_PER_YEAR;
 
                // Create the new halo
                subgroups_in[file%n_wrap][ghost_index].halo_index =-1; // This will be set later when we perform the write

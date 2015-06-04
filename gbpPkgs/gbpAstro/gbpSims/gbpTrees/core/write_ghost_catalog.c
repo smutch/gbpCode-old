@@ -142,7 +142,7 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
             group_final     =group_properties[(group_i->interp.file_stop)%n_wrap][group_i->interp.index_stop];
             time_initial    =group_i->interp.time_start;
             time_final      =group_i->interp.time_stop;
-            time_return     =deltat_a(cosmo,a_list[l_write],0.)/S_PER_YEAR;
+            time_return     =t_age_a(a_list[l_write],cosmo)/S_PER_YEAR;
             interpolate_halo_local(group_initial,
                                    group_final,
                                    group_return,
@@ -173,7 +173,7 @@ void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
             subgroup_final  =subgroup_properties[(current->interp.file_stop)%n_wrap][current->interp.index_stop];
             time_initial    =current->interp.time_start;
             time_final      =current->interp.time_stop;
-            time_return     =deltat_a(cosmo,a_list[l_write],0.)/S_PER_YEAR;
+            time_return     =t_age_a(a_list[l_write],cosmo)/S_PER_YEAR;
             interpolate_halo_local(subgroup_initial,
                                    subgroup_final,
                                    subgroup_return,

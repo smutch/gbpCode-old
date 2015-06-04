@@ -108,7 +108,7 @@ void compute_trees_emerged_halo_analysis(tree_info *trees,char *filename_out_roo
         current_halo=trees->first_neighbour_groups[i_snap];
      else
         current_halo=trees->first_neighbour_subgroups[i_snap];
-     double t_dyn_z=0.1*trees->t_list[i_snap];
+     double z=(double)trees->z_list[i_snap];
      while(current_halo!=NULL){
         // Process each new branch
         if(check_mode_for_flag(current_halo->tree_case,TREE_CASE_EMERGED)){
@@ -125,7 +125,7 @@ void compute_trees_emerged_halo_analysis(tree_info *trees,char *filename_out_roo
                  add_to_treenode_list(list_halos,current_progenitor);
                  branch_number[n_emerged_i]  =i_list;
                  delta_emerged[n_emerged_i]  =fetch_treenode_delta_t(trees,current_progenitor,current_progenitor->progenitor_first)/S_PER_GYR;
-                 delta_normed[n_emerged_i]   =fetch_treenode_delta_t(trees,current_progenitor,current_progenitor->progenitor_first)/t_dyn_z;
+                 delta_normed[n_emerged_i]   =fetch_treenode_delta_t(trees,current_progenitor,current_progenitor->progenitor_first)/t_dyn_z(z,trees->cosmo);
                  n_particles[n_emerged_i]    =fetch_treenode_n_particles(trees,current_progenitor);
                  Mvir[n_emerged_i]           =fetch_treenode_Mvir (trees,current_progenitor);
                  Mvir_descendant[n_emerged_i]=fetch_treenode_Mvir (trees,current_progenitor->descendant);

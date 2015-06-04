@@ -90,9 +90,14 @@ void write_treenode_list_properties_set_ith(tree_info *trees,tree_node_info *cur
          if(data_d!=NULL)    *data_d   =fetch_treenode_delta_r_MP(trees,current_halo);
          break;
       case 15:
-         if(data_name!=NULL) sprintf(data_name,"Branch age [yrs]");
+         if(data_name!=NULL) sprintf(data_name,"Branch age [Gyrs]");
          if(data_type!=NULL) *data_type=SID_DOUBLE;
          if(data_d!=NULL)    *data_d   =fetch_treenode_delta_t_leaf(trees,current_halo)/S_PER_GYR;
+         break;
+      case 16:
+         if(data_name!=NULL) sprintf(data_name,"Half-mass age [Gyrs]");
+         if(data_type!=NULL) *data_type=SID_DOUBLE;
+         if(data_d!=NULL)    *data_d   =fetch_treenode_delta_t_form(trees,current_halo)/S_PER_GYR;
          break;
       default:
          SID_trap_error("Invalid counter given in write_treenode_list_properties_set_ith()",ERROR_LOGIC);

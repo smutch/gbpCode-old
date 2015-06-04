@@ -79,11 +79,11 @@ void compute_trees_dropped_halo_analysis(tree_info *trees,char *filename_out_roo
   int i_list=0;
   for(int i_snap=0;i_snap<trees->n_snaps;i_snap++){
      tree_node_info *current_halo;
+     double z=(double)trees->z_list[i_snap];
      if(i_type==0)
         current_halo=trees->first_neighbour_groups[i_snap];
      else
         current_halo=trees->first_neighbour_subgroups[i_snap];
-     double t_dyn_z=0.1*trees->t_list[i_snap];
      while(current_halo!=NULL){
         // Process each new branch
         if(check_mode_for_flag(current_halo->tree_case,TREE_CASE_DROPPED)){
@@ -95,7 +95,7 @@ void compute_trees_dropped_halo_analysis(tree_info *trees,char *filename_out_roo
            n_p_dropped[i_list]  =fetch_treenode_n_particles(trees,current_halo);
            Mvir_parent[i_list]  =fetch_treenode_Mvir       (trees,current_halo->parent);
            delta_dropped[i_list]=fetch_treenode_delta_t    (trees,current_halo->descendant,current_halo)/S_PER_GYR;
-           delta_normed[i_list] =fetch_treenode_delta_t    (trees,current_halo->descendant,current_halo)/t_dyn_z;
+           delta_normed[i_list] =fetch_treenode_delta_t    (trees,current_halo->descendant,current_halo)/t_dyn_z(z,trees->cosmo);
            i_list++;
         }
         current_halo=current_halo->next_neighbour;

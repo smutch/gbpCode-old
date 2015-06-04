@@ -3,7 +3,7 @@
 #include <gbpTrees_build.h>
 
 // V Preprocessor definitions V
-#define WRITE_TREENODE_LIST_PROPERTIES_N 16
+#define WRITE_TREENODE_LIST_PROPERTIES_N 17
 
 #define PROCESS_TREES_GROUPS    TTTP01
 #define PROCESS_TREES_SUBGROUPS TTTP02
@@ -222,6 +222,7 @@ tree_node_info *fetch_treenode_reference(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_match_score(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_delta_t(tree_info *trees,tree_node_info *halo_1,tree_node_info *halo_2);
 double fetch_treenode_delta_t_leaf(tree_info *trees,tree_node_info *halo);
+double fetch_treenode_delta_t_form(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_snapshot(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_snap_tree(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_file_index(tree_info *trees,tree_node_info *halo);

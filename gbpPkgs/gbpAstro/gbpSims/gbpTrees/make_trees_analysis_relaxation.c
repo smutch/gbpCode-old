@@ -8,8 +8,8 @@
 #include <gbpHalos.h>
 #include <gbpTrees.h>
 
-#define TAU_FORM_RECOVERED   2.0
-#define TAU_MERGER_RECOVERED 3.0
+#define TAU_FORM_RECOVERED   1.5
+#define TAU_MERGER_RECOVERED 2.0
 #define XOFF_RELAXED         0.07
 #define FSUB_RELAXED         0.1
 #define VIR_RELAXED          1.35
@@ -17,6 +17,7 @@
 // Structure that will carry the needed information to the select-and-analyze function
 typedef struct process_trees_params_local process_trees_params_local;
 struct process_trees_params_local{
+   int          flag_calc_Vir;
    char         filename_output_root[MAX_FILENAME_LENGTH];
    int          snap_lo_tau_trends;
    int          snap_hi_tau_trends;
@@ -61,25 +62,29 @@ void process_trees_fctn_init_local(tree_info *trees,void *params_in,int mode,int
      init_treenode_trend_coordinate(trees, (params->trends_z[i_M]),"tau_3to1");
      init_treenode_trend_coordinate(trees, (params->trends_z[i_M]),"tau_10to1");
      init_treenode_trend_coordinate(trees, (params->trends_z[i_M]),"xoff");
-     init_treenode_trend_coordinate(trees, (params->trends_z[i_M]),"Vir_ratio");
+     if(params->flag_calc_Vir)
+        init_treenode_trend_coordinate(trees, (params->trends_z[i_M]),"Vir_ratio");
      if(i_type==0)
         init_treenode_trend_coordinate(trees,(params->trends_z[i_M]),"SSFctn");
      // f(tau_form) trends
      init_treenode_trend           (trees,&(params->trends_tau_form[i_M]),"tau_form");
      init_treenode_trend_coordinate(trees, (params->trends_tau_form[i_M]),"xoff");
-     init_treenode_trend_coordinate(trees, (params->trends_tau_form[i_M]),"Vir_ratio");
+     if(params->flag_calc_Vir)
+        init_treenode_trend_coordinate(trees, (params->trends_tau_form[i_M]),"Vir_ratio");
      if(i_type==0)
         init_treenode_trend_coordinate(trees, (params->trends_tau_form[i_M]),"SSFctn");
      // f(tau_3to1) trends
      init_treenode_trend           (trees,&(params->trends_tau_3to1[i_M]),"tau_3to1");
      init_treenode_trend_coordinate(trees, (params->trends_tau_3to1[i_M]),"xoff");
-     init_treenode_trend_coordinate(trees, (params->trends_tau_3to1[i_M]),"Vir_ratio");
+     if(params->flag_calc_Vir)
+        init_treenode_trend_coordinate(trees, (params->trends_tau_3to1[i_M]),"Vir_ratio");
      if(i_type==0)
         init_treenode_trend_coordinate(trees, (params->trends_tau_3to1[i_M]), "SSFctn");
      // f(tau_10to1) trends
      init_treenode_trend           (trees,&(params->trends_tau_10to1[i_M]),"tau_10to1");
      init_treenode_trend_coordinate(trees, (params->trends_tau_10to1[i_M]),"xoff");
-     init_treenode_trend_coordinate(trees, (params->trends_tau_10to1[i_M]),"Vir_ratio");
+     if(params->flag_calc_Vir)
+        init_treenode_trend_coordinate(trees, (params->trends_tau_10to1[i_M]),"Vir_ratio");
      if(i_type==0)
         init_treenode_trend_coordinate(trees, (params->trends_tau_10to1[i_M]),"SSFctn");
   }
@@ -123,7 +128,11 @@ void process_trees_fctn_analyze_local(tree_info *trees,void *params_in,int mode,
          double tau_10to1_i=fetch_treenode_tau_10to1(trees,halo);
          double x_off_i    =fetch_treenode_x_off    (trees,halo);
          double f_sub_i    =fetch_treenode_SSFctn   (trees,halo);
-         double vir_i      =fetch_treenode_Vir_ratio(trees,halo);
+         double vir_i;
+         if(params->flag_calc_Vir)
+            vir_i=fetch_treenode_Vir_ratio(trees,halo);
+         else
+            vir_i=-1;
          params->n_halos_z[i_M][i_z]++;
          if(tau_form_i >=TAU_FORM_RECOVERED)   params->n_halos_z_recovered_form[i_M][i_z]++;
          if(tau_3to1_i >=TAU_MERGER_RECOVERED) params->n_halos_z_recovered_3to1[i_M][i_z]++;
@@ -185,28 +194,42 @@ void process_trees_fctn_fin_local(tree_info *trees,void *params_in,int mode,int 
       FILE *fp_out=fopen(filename_out,"w");
       int   n_z   =params->trends_z[i_M]->ordinate->hist->n_bins;
       int   i_column=1;
-      fprintf(fp_out,"# Column (%02d): Snapshot\n",                                          i_column++);
-      fprintf(fp_out,"#        (%02d): Redshift\n",                                          i_column++);
-      fprintf(fp_out,"#        (%02d): No. of halos at z\n",                                 i_column++);
-      fprintf(fp_out,"#        (%02d): No. of halos w/ tau_form     >=%.1lf\n",              i_column++,TAU_FORM_RECOVERED);
-      fprintf(fp_out,"#        (%02d): No. of halos w/ tau_3to1     >=%.1lf\n",              i_column++,TAU_MERGER_RECOVERED);
-      fprintf(fp_out,"#        (%02d): No. of halos w/ tau_10to1    >=%.1lf\n",              i_column++,TAU_MERGER_RECOVERED);
-      fprintf(fp_out,"#        (%02d): No. of halos w/ x_off        <=%.2lf\n",              i_column++,XOFF_RELAXED);
-      fprintf(fp_out,"#        (%02d): No. of halos w/ f_sub        <=%.1lf\n",              i_column++,FSUB_RELAXED);
-      fprintf(fp_out,"#        (%02d): No. of halos w/ Virial Ratio <=%.1lf\n",              i_column++,FSUB_RELAXED);
-      fprintf(fp_out,"#        (%02d): No. of halos meeting all three relaxation criteria\n",i_column++);
-      for(int i_z=0;i_z<n_z;i_z++)
-         fprintf(fp_out,"%3d %6.2lf %6d %6d %6d %6d %6d %6d %6d %6d\n",
-                        trees->snap_list[i_z],
-                        trees->z_list[i_z],
-                        params->n_halos_z[i_M][i_z],
-                        params->n_halos_z_recovered_form[i_M][i_z],
-                        params->n_halos_z_recovered_3to1[i_M][i_z],
-                        params->n_halos_z_recovered_10to1[i_M][i_z],
-                        params->n_halos_z_relaxed_x_off[i_M][i_z],
-                        params->n_halos_z_relaxed_f_sub[i_M][i_z],
-                        params->n_halos_z_relaxed_Vir_ratio[i_M][i_z],
-                        params->n_halos_z_relaxed_all[i_M][i_z]);
+      fprintf(fp_out,"# Column (%02d): Snapshot\n",                                    i_column++);
+      fprintf(fp_out,"#        (%02d): Redshift\n",                                    i_column++);
+      fprintf(fp_out,"#        (%02d): No. of halos at z\n",                           i_column++);
+      fprintf(fp_out,"#        (%02d): No. of halos w/ tau_form     >=%.1lf\n",        i_column++,TAU_FORM_RECOVERED);
+      fprintf(fp_out,"#        (%02d): No. of halos w/ tau_3to1     >=%.1lf\n",        i_column++,TAU_MERGER_RECOVERED);
+      fprintf(fp_out,"#        (%02d): No. of halos w/ tau_10to1    >=%.1lf\n",        i_column++,TAU_MERGER_RECOVERED);
+      fprintf(fp_out,"#        (%02d): No. of halos w/ x_off        <=%.2lf\n",        i_column++,XOFF_RELAXED);
+      fprintf(fp_out,"#        (%02d): No. of halos w/ f_sub        <=%.1lf\n",        i_column++,FSUB_RELAXED);
+      if(params->flag_calc_Vir)
+         fprintf(fp_out,"#        (%02d): No. of halos w/ Virial Ratio <=%.1lf\n",        i_column++,FSUB_RELAXED);
+      fprintf(fp_out,"#        (%02d): No. of halos meeting all relaxation criteria\n",i_column++);
+      if(params->flag_calc_Vir)
+         for(int i_z=0;i_z<n_z;i_z++)
+            fprintf(fp_out,"%3d %6.2lf %6d %6d %6d %6d %6d %6d %6d %6d\n",
+                           trees->snap_list[i_z],
+                           trees->z_list[i_z],
+                           params->n_halos_z[i_M][i_z],
+                           params->n_halos_z_recovered_form[i_M][i_z],
+                           params->n_halos_z_recovered_3to1[i_M][i_z],
+                           params->n_halos_z_recovered_10to1[i_M][i_z],
+                           params->n_halos_z_relaxed_x_off[i_M][i_z],
+                           params->n_halos_z_relaxed_f_sub[i_M][i_z],
+                           params->n_halos_z_relaxed_Vir_ratio[i_M][i_z],
+                           params->n_halos_z_relaxed_all[i_M][i_z]);
+      else
+         for(int i_z=0;i_z<n_z;i_z++)
+            fprintf(fp_out,"%3d %6.2lf %6d %6d %6d %6d %6d %6d %6d\n",
+                           trees->snap_list[i_z],
+                           trees->z_list[i_z],
+                           params->n_halos_z[i_M][i_z],
+                           params->n_halos_z_recovered_form[i_M][i_z],
+                           params->n_halos_z_recovered_3to1[i_M][i_z],
+                           params->n_halos_z_recovered_10to1[i_M][i_z],
+                           params->n_halos_z_relaxed_x_off[i_M][i_z],
+                           params->n_halos_z_relaxed_f_sub[i_M][i_z],
+                           params->n_halos_z_relaxed_all[i_M][i_z]);
       fclose(fp_out);
    }
 
@@ -271,13 +294,18 @@ int main(int argc, char *argv[]){
   char filename_trees_name[MAX_FILENAME_LENGTH];
   char filename_NFW_root[MAX_FILENAME_LENGTH];
   char filename_output_root[MAX_FILENAME_LENGTH];
-  strcpy(filename_SSimPL_dir,       argv[1]);
-  strcpy(filename_halo_version_root,argv[2]);
-  strcpy(filename_trees_name,       argv[3]);
-  strcpy(filename_NFW_root,         argv[4]);
-  strcpy(filename_output_root,      argv[5]);
-  double z_lo_tau_trends      =atof(argv[6]);
-  double z_hi_tau_trends      =atof(argv[7]);
+  int i_arg       =1;
+  int flag_calc_Vir=TRUE;
+  strcpy(filename_SSimPL_dir,       argv[i_arg++]);
+  strcpy(filename_halo_version_root,argv[i_arg++]);
+  strcpy(filename_trees_name,       argv[i_arg++]);
+  if(argc==8)
+     strcpy(filename_NFW_root,      argv[i_arg++]);
+  else
+     flag_calc_Vir=FALSE;
+  strcpy(filename_output_root,      argv[i_arg++]);
+  double z_lo_tau_trends      =atof(argv[i_arg++]);
+  double z_hi_tau_trends      =atof(argv[i_arg++]);
 
   // Set the halo and tree filename roots
   char filename_trees_root[MAX_FILENAME_LENGTH];
@@ -301,40 +329,43 @@ int main(int argc, char *argv[]){
                       filename_halo_version_root,
                       READ_TREES_CATALOGS_BOTH);
 
-  // Read NFW concentrations
-  read_trees_data(trees,
-                  filename_NFW_root,
-                  READ_TREES_DATA_SUBGROUPS,
-                  SID_FLOAT,
-                  "c_NFW");
+  // Read NFW concentrations (if given)
+  if(flag_calc_Vir){
+     read_trees_data(trees,
+                     filename_NFW_root,
+                     READ_TREES_DATA_SUBGROUPS,
+                     SID_FLOAT,
+                     "c_NFW");
 
-  // Set group concentrations to central subgroup concentrations
-  float **group_concentrations_local;
-  float **subgroup_concentrations_local;
-  init_trees_data(trees,(void ***)&group_concentrations_local,sizeof(float),INIT_TREE_DATA_GROUPS,"c_NFW_groups");
-  subgroup_concentrations_local=(float **)ADaPS_fetch(trees->data,"c_NFW_subgroups");
-  for(int i_snap=0;i_snap<trees->n_snaps;i_snap++){
-     tree_node_info *group_current=trees->first_neighbour_groups[i_snap];
-     while(group_current!=NULL){
-        tree_node_info *subgroup_current=group_current->substructure_first;
-        tree_node_info *subgroup_central=subgroup_current;
-        while(subgroup_current!=NULL){
-           if(subgroup_current->n_particles>subgroup_central->n_particles)
-              subgroup_central=subgroup_current;
-           subgroup_current=subgroup_current->substructure_next;
+     // Set group concentrations to central subgroup concentrations
+     float **group_concentrations_local;
+     float **subgroup_concentrations_local;
+     init_trees_data(trees,(void ***)&group_concentrations_local,sizeof(float),INIT_TREE_DATA_GROUPS,"c_NFW_groups");
+     subgroup_concentrations_local=(float **)ADaPS_fetch(trees->data,"c_NFW_subgroups");
+     for(int i_snap=0;i_snap<trees->n_snaps;i_snap++){
+        tree_node_info *group_current=trees->first_neighbour_groups[i_snap];
+        while(group_current!=NULL){
+           tree_node_info *subgroup_current=group_current->substructure_first;
+           tree_node_info *subgroup_central=subgroup_current;
+           while(subgroup_current!=NULL){
+              if(subgroup_current->n_particles>subgroup_central->n_particles)
+                 subgroup_central=subgroup_current;
+              subgroup_current=subgroup_current->substructure_next;
+           }
+           if(subgroup_central!=NULL){
+              group_concentrations_local[group_current->snap_tree][group_current->neighbour_index]=
+                 subgroup_concentrations_local[subgroup_central->snap_tree][subgroup_central->neighbour_index];
+           }
+           else
+              group_concentrations_local[group_current->snap_tree][group_current->neighbour_index]=0.;
+           group_current=group_current->next_neighbour;
         }
-        if(subgroup_central!=NULL){
-           group_concentrations_local[group_current->snap_tree][group_current->neighbour_index]=
-              subgroup_concentrations_local[subgroup_central->snap_tree][subgroup_central->neighbour_index];
-        }
-        else
-           group_concentrations_local[group_current->snap_tree][group_current->neighbour_index]=0.;
-        group_current=group_current->next_neighbour;
      }
   }
 
   // Populate the structure that gets passed to the calculation
   process_trees_params_local params;
+  params.flag_calc_Vir=flag_calc_Vir;
   strcpy(params.filename_output_root,filename_output_root);
   params.snap_hi_tau_trends=find_treesnap_z(trees,z_lo_tau_trends); // snap_tree and z_list run in opposite orders
   params.snap_lo_tau_trends=find_treesnap_z(trees,z_hi_tau_trends); // snap_tree and z_list run in opposite orders
