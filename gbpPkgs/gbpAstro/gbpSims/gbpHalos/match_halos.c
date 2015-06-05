@@ -243,10 +243,10 @@ void match_halos(plist_info  *plist_1_in,
   if(n_groups_1_all>0 && n_groups_2_all>0){                
 
     // Create a lookup table to save time computing match scores
-    n_score_lookup_table=256;
+    n_score_lookup_table=512;
     score_lookup_table  =(float *)SID_malloc(sizeof(float)*n_score_lookup_table);
     for(i_lookup=0;i_lookup<n_score_lookup_table;i_lookup++)
-      score_lookup_table[i_lookup]=(float)pow((double)i_lookup,-TWO_THIRDS);
+      score_lookup_table[i_lookup]=(float)pow((double)i_lookup,MATCH_SCORE_RANK_INDEX);
 
     // Fetch needed info for catalog_1
     n_particles_1_all  =((size_t *)ADaPS_fetch(plist_1->data,"n_particles_all_%s",catalog_1))[0];
@@ -263,16 +263,6 @@ void match_halos(plist_info  *plist_1_in,
       group_offset_1     = (size_t *)ADaPS_fetch(plist_1->data,"particle_offset_group_%s",catalog_1);
       file_index_1       = (int    *)ADaPS_fetch(plist_1->data,"file_index_groups_%s",    catalog_1);
     }
-//size_t count;
-//size_t id_max=(((size_t)2160)*((size_t)2160)*((size_t)2160))-1;
-//fprintf(stderr,"[%d]cat1: {%s}\n",SID.My_rank,catalog_1); 
-//if(SID.I_am_Master)
-//   ADaPS_status(plist_1->data);
-//SID_Barrier(SID.COMM_WORLD);
-//for(size_t i_id=0,count=0;i_id<n_particles_1_local;i_id++){
-//   if(id_1[i_id]>id_max) count++;
-//}
-//fprintf(stderr,"[%d]count1=%zd\n",SID.My_rank,count);
 
     // Fetch needed info for catalog_2
     n_particles_2_all  =((size_t *)ADaPS_fetch(plist_2->data,"n_particles_all_%s",catalog_2))[0];
@@ -288,15 +278,6 @@ void match_halos(plist_info  *plist_1_in,
       group_offset_2_local     = (size_t *)ADaPS_fetch(plist_2->data,"particle_offset_group_%s",catalog_2);
       file_index_2_local       = (int    *)ADaPS_fetch(plist_2->data,"file_index_groups_%s",    catalog_2);
     }
-//fprintf(stderr,"cat2: {%s}\n",catalog_2); 
-//if(SID.I_am_Master)
-//   ADaPS_status(plist_2->data);
-//SID_Barrier(SID.COMM_WORLD);
-//for(size_t i_id=0,count=0;i_id<n_particles_2_local;i_id++){
-//   if(id_2_local[i_id]>id_max) count++;
-//}   
-//fprintf(stderr,"[%d]count2=%zd\n",SID.My_rank,count);
-//SID_exit(ERROR_NONE);
 
     // Set the number of particles that need to be checked by exchanges
     if(flag_PHK_decomp){
@@ -625,7 +606,7 @@ void match_halos(plist_info  *plist_1_in,
                                  hist_score[i_hist]+=score_lookup_table[particle_rank_1[idx_1]];
                                  break;
                               default:
-                                 hist_score[i_hist]+=(float)pow((double)(particle_rank_1[idx_1]),-TWO_THIRDS);
+                                 hist_score[i_hist]+=(float)pow((double)(particle_rank_1[idx_1]),MATCH_SCORE_RANK_INDEX);
                                  break;
                             }
                             flag=FALSE;
@@ -674,7 +655,7 @@ void match_halos(plist_info  *plist_1_in,
                               hist_score[n_hist_array[i_group]]=score_lookup_table[particle_rank_1[idx_1]];
                               break;
                            default:
-                              hist_score[n_hist_array[i_group]]=(float)pow((double)(particle_rank_1[idx_1]),-TWO_THIRDS);
+                              hist_score[n_hist_array[i_group]]=(float)pow((double)(particle_rank_1[idx_1]),MATCH_SCORE_RANK_INDEX);
                               break;
                          }
                          n_hist_array[i_group]++;

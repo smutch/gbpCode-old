@@ -8,6 +8,8 @@
 
 #define WRITE_GROUPS_ASCII
 
+#define MATCH_SCORE_RANK_INDEX -1.5
+
 #define MIN_PROFILE_BINS     5
 #define MAX_PROFILE_BINS     1000
 #define MAX_PROFILE_BINS_P1  1001 // This must be set to MAX_PROFILE_BINS+1
