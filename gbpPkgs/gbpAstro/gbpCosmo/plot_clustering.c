@@ -32,7 +32,7 @@ int main(int argc, char *argv[]){
   // Initialize
   int     mode     =PSPEC_LINEAR_TF;
   int     component=PSPEC_ALL_MATTER;
-  init_sigma_M(&cosmo,z,mode,component);
+  init_sigma_M(&cosmo,mode,component);
   int     n_k     =((int    *)ADaPS_fetch(cosmo,"n_k"))[0];
   double *lk_P    = (double *)ADaPS_fetch(cosmo,"lk_P");
   double  h_Hubble=((double *)ADaPS_fetch(cosmo,"h_Hubble"))[0];
@@ -62,7 +62,7 @@ int main(int argc, char *argv[]){
   for(int i_k=0;i_k<n_k;i_k++){
      double k_P  =take_alog10(lk_P[i_k]);
      double R_P  =R_of_k(k_P);
-     double M_R  =M_of_k(k_P,z,cosmo);
+     double M_R  =M_of_k(k_P,cosmo);
      double P_k  =power_spectrum(k_P,z,&cosmo,mode,component);
      double sigma=sqrt(power_spectrum_variance(k_P,z,&cosmo,mode,component));
      double V_max=V_max_NFW(M_R,z,NFW_MODE_DEFAULT,&cosmo);

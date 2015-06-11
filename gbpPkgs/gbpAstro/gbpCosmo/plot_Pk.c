@@ -32,7 +32,7 @@ int main(int argc, char *argv[]){
   // Initialize
   int     mode     =PSPEC_LINEAR_TF;
   int     component=PSPEC_ALL_MATTER;
-  init_sigma_M(&cosmo,z,mode,component);
+  init_sigma_M(&cosmo,mode,component);
   int     n_k     =((int    *)ADaPS_fetch(cosmo,"n_k"))[0];
   double *lk_P    = (double *)ADaPS_fetch(cosmo,"lk_P");
   double  h_Hubble=((double *)ADaPS_fetch(cosmo,"h_Hubble"))[0];

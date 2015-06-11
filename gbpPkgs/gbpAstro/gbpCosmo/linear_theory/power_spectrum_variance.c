@@ -6,85 +6,128 @@
 #include <gbpMath.h>
 #include <gbpCosmo_linear_theory.h>
 
-void init_power_spectrum_variance(cosmo_info **cosmo,double z,int mode,int component){
-  int        i;
-  int        n_k;
-  size_t     n_k_dim;
-  double    *lk_P;
-  double    *sigma2;
-  interp_info *interp;
-  double     b_z;
-  double     coefficient;
-  char       mode_name[ADaPS_NAME_LENGTH];
-  char       component_name[ADaPS_NAME_LENGTH];
-  char       sigma2_name[ADaPS_NAME_LENGTH];
-  char       d2sigma2_name[ADaPS_NAME_LENGTH];
-  double     lk_step;
-  double     integral;
-  int        n_int=5000;
-  double     rel_accuracy=1e-3;
-  double     limit_lo;
-  double     limit_hi;
-  double     r_val;
-  double     abs_error;
-  sigma2_integrand_params    params;
-  gsl_integration_workspace *wspace;
-  gsl_function               integrand;
+void init_power_spectrum_variance(cosmo_info **cosmo,int mode,int component){
 
   SID_log("Initializing P(k) variance...",SID_LOG_OPEN|SID_LOG_TIMER);
 
-  z=0.;
-
-  // Compute sigma^2 coefficient
-  b_z        =1.;
-  coefficient=b_z*b_z/(TWO_PI*PI);
-
-  // Make sure k's are initialized
+  // Make sure the power spectrum is initialized
   if(!ADaPS_exist((*cosmo),"n_k")){
     if(mode==PSPEC_LINEAR_TF)
       init_power_spectrum_TF(cosmo);
     else
       SID_trap_error("Given mode (%d) not supported in init_power_spectrum_variance().",ERROR_LOGIC,mode);
   }
-  n_k    =((int   *)ADaPS_fetch((*cosmo),"n_k"))[0];
-  lk_P   =(double *)ADaPS_fetch((*cosmo),"lk_P");
-  n_k_dim=(size_t)n_k;
+
+  // Fetch the k array and its size
+  int     n_k =((int    *)ADaPS_fetch((*cosmo),"n_k"))[0];
+  double *lk_P= (double *)ADaPS_fetch((*cosmo),"lk_P");
+
+  // Initialize lower integration limit
+  double limit_lo_init=0.;
+  if(ADaPS_exist((*cosmo),"box_size")){
+     double h_Hubble=((double *)ADaPS_fetch((*cosmo),"h_Hubble"))[0];
+     double box_size=((double *)ADaPS_fetch((*cosmo),"box_size"))[0];
+     SID_log("Using integration limits for a box_size of %.2lf h^-1 [Mpc].",SID_LOG_COMMENT,box_size*h_Hubble/M_PER_MPC);
+     limit_lo_init=TWO_PI/box_size;
+  }
+
+  // Compute sigma^2 coefficient
+  double b_z        =1.;
+  double coefficient=b_z*b_z/(TWO_PI*PI);
 
   // Initialize integral
-  limit_lo          =take_alog10(lk_P[0]);
-  limit_hi          =take_alog10(lk_P[n_k-1]);
-  integrand.function=sigma2_integrand;
+  int    n_int       =1024;
+  double abs_accuracy=0.;
+  double rel_accuracy=1e-4;
+  sigma2_integrand_params    params;
+  gsl_integration_workspace *wspace;
+  gsl_function               integrand;
   params.component  =component;
   params.mode       =mode;
-  if(mode==PSPEC_LINEAR_TF)
-    params.z        =0.;
-  else
-    params.z        =z;
+  params.z          =0.;
   params.cosmo      =(*cosmo);
+  integrand.function=sigma2_integrand;
   integrand.params  =(void *)(&params);
-  wspace            =gsl_integration_workspace_alloc(n_int);
+  wspace            =gsl_integration_workspace_alloc(128*n_int);
 
   // Loop over the whole range of scales
-  sigma2=(double *)SID_malloc(sizeof(double)*n_k_dim);
-  for(i=0;i<n_k;i++){
-
-    // Perform spherical top-hat integral
+  double *sigma2    =(double *)SID_malloc(sizeof(double)*n_k);
+  double  sigma2_min=1e10;
+  for(int i=0;i<n_k;i++){
+    // Set top-hat size 
     params.R=R_of_k(take_alog10(lk_P[i]));
-    gsl_integration_qag(&integrand,
-         limit_lo,limit_hi,
-         0,rel_accuracy,
-         n_int,
-         GSL_INTEG_GAUSS61,
-         wspace,
-         &integral,&abs_error);
+
+    // This is an oscillating function.  Integrate
+    //    in chunks integral periods long until 
+    //    convergence is found.
+    double rel_diff   =10.*rel_accuracy;
+    double integral   =0.;
+    int    i_order    =2;
+    int    n_order_max=10000;
+    double k_period   =TWO_PI/params.R;
+    double limit_lo   =limit_lo_init;
+    double limit_hi   =(double)i_order*k_period;
+    if(limit_lo<limit_hi){
+       while(rel_diff>=0.25*rel_accuracy){
+   //fprintf(stderr,"A:%le %le\n",limit_lo,limit_hi);
+   //for(double k_i=limit_lo;k_i<limit_hi;k_i+=(limit_hi-limit_lo)*0.01) printf("%le %le\n",k_i,sigma2_integrand(k_i,(void *)(&params)));
+   //fprintf(stderr,"B:%le %le\n",limit_lo,limit_hi);
+   //SID_exit(0);
+   
+          // Perform spherical top-hat integral
+          //    for this iteration
+          double dintegral;
+          double abs_error;
+          gsl_integration_qag(&integrand,
+               limit_lo,limit_hi,
+               abs_accuracy,rel_accuracy,
+               n_int,
+               GSL_INTEG_GAUSS15,
+               wspace,
+               &dintegral,&abs_error);
+          //gsl_integration_qags(&integrand,
+          //                     limit_lo,limit_hi,
+          //                     abs_accuracy,rel_accuracy,
+          //                     n_int,
+          //                     wspace,
+          //                     &dintegral,&abs_error); 
+   
+          // Update integral and compute relative change
+          //    from this iteration
+          if(integral>0.)
+             rel_diff=dintegral/integral;
+          integral+=dintegral;
+          // Add an order to the integral range
+          //    and adjust limits accordingly
+          i_order++;
+          if(i_order>=n_order_max)
+             SID_trap_error("Variance integral is not converging for scale R=%le [Mpc]",ERROR_LOGIC,params.R/M_PER_MPC);
+          limit_lo=limit_hi;
+          limit_hi=(double)i_order*k_period;
+       }
+    }
+
+    // Apply coefficient
     sigma2[i]=coefficient*integral;
+
+    // Find the smallest non-zero value
+    if(sigma2[i]>0.) sigma2_min=MIN(sigma2_min,sigma2[i]);
   }
+
+  // Because we may need 1/sigma in various places, we
+  //    can not have sigma=0 anywhere ... so, set all zeros
+  //    to the the minimum value.  Zeros can come
+  //    about principly due to finite box size effects.
+  for(int i=0;i<n_k;i++) sigma2[i]=MAX(sigma2[i],sigma2_min);
+
+  // Initialize interpolation
+  interp_info *interp;
   init_interpolate(lk_P,sigma2,(size_t)n_k,gsl_interp_cspline,&interp);
 
-
+  // Store sigma^2 array and its interpolation
+  char mode_name[ADaPS_NAME_LENGTH];
+  char component_name[ADaPS_NAME_LENGTH];
   pspec_names(mode,component,mode_name,component_name);
-  sprintf(sigma2_name,  "sigma2_k_%s_%s",       mode_name,component_name);
-  sprintf(d2sigma2_name,"sigma2_k_%s_%s_interp",mode_name,component_name);
   ADaPS_store(cosmo,
               (void *)(sigma2),
               "sigma2_k_%s_%s",
@@ -94,6 +137,14 @@ void init_power_spectrum_variance(cosmo_info **cosmo,double z,int mode,int compo
                      (void *)(interp),
                      "sigma2_k_%s_%s_interp",
                      mode_name,component_name);
+
+//double *y_temp=(double *)SID_malloc(sizeof(double)*n_k);
+//for(int i_k=0;i_k<n_k;i_k++) y_temp[i_k]=1./sqrt(sigma2[i_k]);
+//interp_info *interp2;
+//init_interpolate(lk_P,y_temp,(size_t)n_k,gsl_interp_cspline,&interp2);
+//
+//for(double lk=lk_P[0];lk<lk_P[n_k-1];lk+=0.05) printf("%le %le %le %le %le\n",lk,interpolate(interp,lk),1./sqrt(interpolate(interp,lk)),interpolate_derivative(interp2,lk),interpolate_derivative(interp,lk));
+//SID_exit(0);
 
   // Clean-up
   gsl_integration_workspace_free(wspace);
@@ -106,33 +157,28 @@ double power_spectrum_variance(double       k_interp,
                                cosmo_info **cosmo,
                                int          mode,
                                int          component){
-  int     n_k;
-  double *lk_P;
-  double *sigma2;
-  interp_info *interp;
-  double  rval=0.;
-  char    mode_name[ADaPS_NAME_LENGTH];
-  char    component_name[ADaPS_NAME_LENGTH];
-  char    sigma2_name[ADaPS_NAME_LENGTH];
-  char    d2sigma2_name[ADaPS_NAME_LENGTH];
-  static double z_last=-42.;
-  static double norm;
-
+  // Set array names
+  char mode_name[ADaPS_NAME_LENGTH];
+  char component_name[ADaPS_NAME_LENGTH];
+  char sigma2_name[ADaPS_NAME_LENGTH];
+  char d2sigma2_name[ADaPS_NAME_LENGTH];
   pspec_names(mode,component,mode_name,component_name);
   sprintf(sigma2_name,  "sigma2_k_%s_%s",       mode_name,component_name);
   sprintf(d2sigma2_name,"sigma2_k_%s_%s_interp",mode_name,component_name);
 
+  // Initialize arrays if needed
   if(!ADaPS_exist(*cosmo,sigma2_name))
-    init_power_spectrum_variance(cosmo,redshift,mode,component);
+    init_power_spectrum_variance(cosmo,mode,component);
 
-  n_k     =((int   *)ADaPS_fetch(*cosmo,"n_k"))[0];
-  lk_P    =(double *)ADaPS_fetch(*cosmo,"lk_P");
-  sigma2  =(double *)ADaPS_fetch(*cosmo,sigma2_name);
-  interp  =(interp_info *)ADaPS_fetch(*cosmo,d2sigma2_name);
+  // Fetch arrays
+  int          n_k   =((int   *)ADaPS_fetch(*cosmo,"n_k"))[0];
+  double      *lk_P  =(double *)ADaPS_fetch(*cosmo,"lk_P");
+  double      *sigma2=(double *)ADaPS_fetch(*cosmo,sigma2_name);
+  interp_info *interp=(interp_info *)ADaPS_fetch(*cosmo,d2sigma2_name);
 
-  norm=pow(linear_growth_factor(redshift,*cosmo),2.);
-
-  rval=norm*interpolate(interp,take_log10(k_interp));
+  // Set result
+  double norm=pow(linear_growth_factor(redshift,*cosmo),2.);
+  double rval=norm*interpolate(interp,take_log10(k_interp));
 
   return(rval);
 }

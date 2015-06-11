@@ -344,7 +344,7 @@ int main(int argc, char *argv[]){
      char filename_cosmology[MAX_FILENAME_LENGTH];
      sprintf(filename_cosmology,"%s/run",filename_SSimPL_root);
      read_gbpCosmo_file(&cosmo,filename_cosmology);
-     init_sigma_M(&cosmo,redshift,PSPEC_LINEAR_TF,PSPEC_ALL_MATTER);
+     init_sigma_M(&cosmo,PSPEC_LINEAR_TF,PSPEC_ALL_MATTER);
   }
 
   // Write each halo grouping in turn ...

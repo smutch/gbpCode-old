@@ -19,63 +19,51 @@ double mass_function_cumulative_integrand(double  lM,
                                           void   *params_in);
 double mass_function_cumulative_integrand(double  lM,
                                           void   *params_in){
-  double M;
-  double n;
-  double r_val;
   mass_function_cumulative_params *params;
   params=(mass_function_cumulative_params *)params_in;
-  M     =take_alog10(lM);
-  n     =mass_function(M,params->z,params->cosmo,params->select_flag);
-  r_val =n;
+  double M    =take_alog10(lM);
+  double r_val=mass_function(M,params->z,params->cosmo,params->select_flag);
   return(r_val);
 }
 double mass_function_cumulative(double       M_interp,
                                 double       z,
                                 cosmo_info **cosmo,
                                 int          select_flag){
-  double  *lk_P;
-  int      n_int=5000;
-  double   rel_accuracy=1e-4;
-  double   limit_lo;
-  double   limit_hi;
-  double   r_val;
-  double   abs_error;
-  gsl_integration_workspace       *wspace;
-  gsl_function                     integrand;
-  mass_function_cumulative_params  params;
-
-  // Specify the linear matter power spectrum here
-  int mode     =PSPEC_LINEAR_TF;
-  int component=PSPEC_ALL_MATTER;
-
   // Initialize integral
   if(!ADaPS_exist((*cosmo),"lk_P"))
     init_power_spectrum_TF(cosmo);
-  lk_P              =(double *)ADaPS_fetch((*cosmo),"lk_P");
-  limit_lo          =take_log10(M_interp);
-  limit_hi          =take_log10(M_of_k(take_alog10(lk_P[0]),z,(*cosmo)));
+  double *lk_P    =(double *)ADaPS_fetch((*cosmo),"lk_P");
+  double  limit_lo=take_log10(M_interp);
+  double  limit_hi=take_log10(M_of_k(take_alog10(lk_P[0]),(*cosmo)));
+
+  // Perform integral
+  int    n_int       =5000;
+  double rel_accuracy=1e-4;
+  double r_val       =0.;
   if(limit_lo<limit_hi){
-    integrand.function=mass_function_cumulative_integrand;
-    params.z          =z;
-    params.cosmo      =cosmo;
-    params.select_flag=select_flag;
-    integrand.params  =(void *)(&params);
-    wspace            =gsl_integration_workspace_alloc(n_int);
+     double                           abs_error;
+     mass_function_cumulative_params  params;
+     gsl_function                     integrand;
+     gsl_integration_workspace       *wspace;
+     params.z          =z;
+     params.cosmo      =cosmo;
+     params.select_flag=select_flag;
+     integrand.function=mass_function_cumulative_integrand;
+     integrand.params  =(void *)(&params);
+     wspace            =gsl_integration_workspace_alloc(n_int);
 
-    // Integrate mass function * halo occupation
-    gsl_integration_qag(&integrand,
-                        limit_lo,limit_hi,
-                        0,rel_accuracy,
-                        n_int,
-                        GSL_INTEG_GAUSS61,
-                        wspace,
-                        &r_val,&abs_error);
+     // Integrate mass function 
+     gsl_integration_qag(&integrand,
+                         limit_lo,limit_hi,
+                         0,rel_accuracy,
+                         n_int,
+                         GSL_INTEG_GAUSS61,
+                         wspace,
+                         &r_val,&abs_error);
 
-    // Clean-up
-    gsl_integration_workspace_free(wspace);
+     // Clean-up
+     gsl_integration_workspace_free(wspace);
   }
-  else
-    r_val=0.;
 
   return(r_val);
 }

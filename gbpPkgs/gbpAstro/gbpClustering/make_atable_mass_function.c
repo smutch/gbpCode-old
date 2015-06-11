@@ -127,35 +127,46 @@ int main(int argc, char *argv[]){
    fprintf(fp_out,"#        (05): MFn (per unit volume, per dlogM)\n");
    fprintf(fp_out,"#        (06): +/- MFn\n");
    fprintf(fp_out,"#        (07): Sheth & Tormen MFn\n");
-   fprintf(fp_out,"#        (08): No. w/ M>M_lo\n");
-   fprintf(fp_out,"#        (09): Cumulative MFn (per unit volume)\n");
-   fprintf(fp_out,"#        (10): +/- Cumulative MFn\n");
-   fprintf(fp_out,"#        (11): Sheth & Tormen Cumulative MFn\n");
+   fprintf(fp_out,"#        (08): Watson MFn\n");
+   fprintf(fp_out,"#        (09): No. w/ M>M_lo\n");
+   fprintf(fp_out,"#        (10): Cumulative MFn (per unit volume)\n");
+   fprintf(fp_out,"#        (11): +/- Cumulative MFn\n");
+   fprintf(fp_out,"#        (12): Sheth & Tormen Cumulative MFn\n");
+   fprintf(fp_out,"#        (13): Watson Cumulative MFn\n");
+   double inv_h3=pow(h_Hubble,-3.);
    for(int i=0;i<n_bins;i++){
-     double dn_dlogM_theory=mass_function(take_alog10(bin_median[i])*M_SOL/h_Hubble,
-                                          redshift,
-                                          &cosmo,
-                                          MF_ST)*pow(M_PER_MPC,3.0);
-     double n_theory=mass_function_cumulative(take_alog10(bin[i])*M_SOL/h_Hubble,
-                                              redshift,
-                                              &cosmo,
-                                              MF_ST)*pow(M_PER_MPC,3.0);
+     double dn_dlogM_theory_1=mass_function(take_alog10(bin_median[i])*M_SOL/h_Hubble,
+                                            redshift,
+                                            &cosmo,
+                                            MF_ST)*pow(M_PER_MPC,3.0)*inv_h3;
+     double n_theory_1=mass_function_cumulative(take_alog10(bin[i])*M_SOL/h_Hubble,
+                                                redshift,
+                                                &cosmo,
+                                                MF_ST)*pow(M_PER_MPC,3.0)*inv_h3;
+     double dn_dlogM_theory_2=mass_function(take_alog10(bin_median[i])*M_SOL/h_Hubble,
+                                            redshift,
+                                            &cosmo,
+                                            MF_WATSON)*pow(M_PER_MPC,3.0)*inv_h3;
+     double n_theory_2=mass_function_cumulative(take_alog10(bin[i])*M_SOL/h_Hubble,
+                                                redshift,
+                                                &cosmo,
+                                                MF_WATSON)*pow(M_PER_MPC,3.0)*inv_h3;
      // Compute cumulative histogram
      int cumulative_hist=0;
      for(int j_bin=i;j_bin<n_bins;j_bin++)
         cumulative_hist+=hist[j_bin];
-     fprintf(fp_out,"%11.4le %11.4le %11.4le %6d %11.4le %11.4le %10.4le %6d %10.4le %10.4le %10.4le\n",
+     fprintf(fp_out,"%11.4le %11.4le %11.4le %6d %11.4le %11.4le %10.4le %10.4le %6d %10.4le %10.4le %10.4le %10.4le\n",
              bin[i],
              bin_median[i],
              bin[i+1],
              hist[i],
              (double)(hist[i])/(box_volume*dlM),
              sqrt((double)(hist[i]))/(box_volume*dlM),
-             dn_dlogM_theory,
+             dn_dlogM_theory_1,dn_dlogM_theory_2,
              cumulative_hist,
              (double)(cumulative_hist)/box_volume,
              sqrt((double)(cumulative_hist))/box_volume,
-             n_theory);
+             n_theory_1,n_theory_2);
    }
    fclose(fp_out);
    SID_log("Done.",SID_LOG_CLOSE);

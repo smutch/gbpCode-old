@@ -8,12 +8,8 @@
 
 // Initialize the power spectrum at z=0 
 void init_power_spectrum_TF(cosmo_info **cosmo){
-  FILE   *fp;
   char   *line=NULL;
   size_t  line_length=0;
-  int     i;
-  int     n_k;
-  size_t  n_k_dim;
   int     n_k_tmp;
   double  k_P;
   double *lk_P;
@@ -50,24 +46,29 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
   Omega_b    =((double *)ADaPS_fetch((*cosmo),"Omega_b"))[0];
 
   // Read the transfer function
-  fp       =fopen(filename_TF,"r");
-  n_k      =count_lines_data(fp);
-  n_k_dim  =(size_t)n_k;
-  lk_P     =(double *)SID_malloc(sizeof(double)*n_k);
-  lP_k     =(double *)SID_malloc(sizeof(double)*n_k);
-  lP_k_gas =(double *)SID_malloc(sizeof(double)*n_k);
-  lP_k_dark=(double *)SID_malloc(sizeof(double)*n_k);
-  for(i=0;i<n_k;i++){
+  int   n_skip=5;
+  FILE *fp    =fopen(filename_TF,"r");
+  int   n_k_in=count_lines_data(fp);
+  int   n_k   =n_k_in/n_skip+1;
+  lk_P      =(double *)SID_malloc(sizeof(double)*n_k);
+  lP_k      =(double *)SID_malloc(sizeof(double)*n_k);
+  lP_k_gas  =(double *)SID_malloc(sizeof(double)*n_k);
+  lP_k_dark =(double *)SID_malloc(sizeof(double)*n_k);
+  for(int i=0,j=0;j<n_k_in;j++){
     grab_next_line_data(fp,&line,&line_length);
-    grab_double(line,1,&(lk_P[i]));
-    grab_double(line,2,&(lP_k_dark[i]));
-    grab_double(line,3,&(lP_k_gas[i]));
-    lP_k[i]=((Omega_M-Omega_b)*lP_k_dark[i]+Omega_b*lP_k_gas[i])/Omega_M;
+    if(!(j%n_skip)){
+       grab_double(line,1,&(lk_P[i]));
+       grab_double(line,2,&(lP_k_dark[i]));
+       grab_double(line,3,&(lP_k_gas[i]));
+       lP_k[i]=((Omega_M-Omega_b)*lP_k_dark[i]+Omega_b*lP_k_gas[i])/Omega_M;
+       i++;
+    }
+    n_k=i;
   }
   fclose(fp);
 
   // Take the log of lk_P
-  for(i=0;i<n_k;i++)
+  for(int i=0;i<n_k;i++)
     lk_P[i]=take_log10(lk_P[i]/(M_PER_MPC/h_Hubble));
 
   // Supress small-scale power following the
@@ -97,7 +98,7 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
   */
 
   // Compute power spectrum
-  for(i=0;i<n_k;i++){
+  for(int i=0;i<n_k;i++){
     lP_k[i]     =2.*take_log10(lP_k[i])     +(n_spectral)*lk_P[i];
     lP_k_gas[i] =2.*take_log10(lP_k_gas[i]) +(n_spectral)*lk_P[i];
     lP_k_dark[i]=2.*take_log10(lP_k_dark[i])+(n_spectral)*lk_P[i];
@@ -105,7 +106,7 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
 
   // Normalize at large scales
   norm=lP_k[0];
-  for(i=0;i<n_k;i++){
+  for(int i=0;i<n_k;i++){
     lP_k[i]     -=norm;
     lP_k_gas[i] -=norm;
     lP_k_dark[i]-=norm;
@@ -140,7 +141,7 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
 
   // Normalize P(k) to sigma_8
   norm=power_spectrum_normalization(*cosmo,PSPEC_LINEAR_TF,PSPEC_ALL_MATTER);
-  for(i=0;i<n_k;i++){
+  for(int i=0;i<n_k;i++){
     lP_k[i]     +=norm;
     lP_k_gas[i] +=norm;
     lP_k_dark[i]+=norm;
@@ -161,6 +162,20 @@ void init_power_spectrum_TF(cosmo_info **cosmo){
   ADaPS_store_interp(cosmo,
                      (void *)(interp_dark),
                      "lP_k_TF_dark_interp");
+
+  // Compute end-point slopes for extrapolation
+  double slope_lo_all =interpolate_derivative(interp,     lk_P[1]);
+  double slope_hi_all =interpolate_derivative(interp,     lk_P[n_k-2]);
+  double slope_lo_gas =interpolate_derivative(interp_gas, lk_P[1]);
+  double slope_hi_gas =interpolate_derivative(interp_gas, lk_P[n_k-2]);
+  double slope_lo_dark=interpolate_derivative(interp_dark,lk_P[1]);
+  double slope_hi_dark=interpolate_derivative(interp_dark,lk_P[n_k-2]);
+  ADaPS_store(cosmo,&slope_lo_all, "lP_k_TF_all_slope_lo", ADaPS_SCALAR_DOUBLE);
+  ADaPS_store(cosmo,&slope_hi_all, "lP_k_TF_all_slope_hi", ADaPS_SCALAR_DOUBLE);
+  ADaPS_store(cosmo,&slope_lo_gas, "lP_k_TF_gas_slope_lo", ADaPS_SCALAR_DOUBLE);
+  ADaPS_store(cosmo,&slope_hi_gas, "lP_k_TF_gas_slope_hi", ADaPS_SCALAR_DOUBLE);
+  ADaPS_store(cosmo,&slope_lo_dark,"lP_k_TF_dark_slope_lo",ADaPS_SCALAR_DOUBLE);
+  ADaPS_store(cosmo,&slope_hi_dark,"lP_k_TF_dark_slope_hi",ADaPS_SCALAR_DOUBLE);
 
   SID_free(SID_FARG line);
   SID_log("Done.",SID_LOG_CLOSE);
@@ -201,12 +216,12 @@ double power_spectrum_normalization(cosmo_info *cosmo,
   // Initialize data needed by integrand
   limit_lo          =take_alog10(lk_P[0]);
   limit_hi          =take_alog10(lk_P[n_k-1]);
-  integrand.function=sigma2_integrand;
   params.component  =component;
   params.mode       =mode;
   params.z          =0.;
   params.cosmo      =cosmo;
   params.R          =8.*M_PER_MPC/h_Hubble;
+  integrand.function=sigma2_integrand;
   integrand.params  =(void *)(&params);
   wspace            =gsl_integration_workspace_alloc(n_int);
 
@@ -242,38 +257,50 @@ double power_spectrum(double       k_interp,
                       cosmo_info **cosmo,
                       int          mode,
                       int          component){
-  int     n_k;
-  double *lk_P;
-  double *lP_k;
-  interp_info *interp;
-  double  norm;
-  double  rval;
-  char    mode_name[ADaPS_NAME_LENGTH];
-  char    component_name[ADaPS_NAME_LENGTH];
-  char    lP_name[ADaPS_NAME_LENGTH];
-  char    d2lP_name[ADaPS_NAME_LENGTH];
 
+  double  rval;
   switch(mode){
-  case PSPEC_LINEAR_TF:       // Linear theory from transfer function
-    pspec_names(mode,
-      component,
-      mode_name,
-      component_name);
-    sprintf(lP_name,  "lP_k_%s_%s",       mode_name,component_name);
-    sprintf(d2lP_name,"lP_k_%s_%s_interp",mode_name,component_name);
-    if(!ADaPS_exist(*cosmo,lP_name)){
-      init_power_spectrum_TF(cosmo);
-    }
-    n_k   =((int   *)ADaPS_fetch(*cosmo,"n_k"))[0];
-    lk_P  =(double *)ADaPS_fetch(*cosmo,"lk_P");
-    lP_k  =(double *)ADaPS_fetch(*cosmo,lP_name);
-    interp=(interp_info *)ADaPS_fetch(*cosmo,d2lP_name);
-    if(redshift!=0.)
-      norm=pow(linear_growth_factor(redshift,*cosmo),2.);
-    else
-      norm=1.;
-    rval=norm*take_alog10(interpolate(interp,take_log10(k_interp)));
-    break;
+    case PSPEC_LINEAR_TF:{       // Linear theory from transfer function
+      char mode_name[ADaPS_NAME_LENGTH];
+      char component_name[ADaPS_NAME_LENGTH];
+      pspec_names(mode,component,mode_name,component_name);
+
+      if(!ADaPS_exist(*cosmo,"lP_k_%s_%s",mode_name,component_name))
+        init_power_spectrum_TF(cosmo);
+      int          n_k   =((int        *)ADaPS_fetch(*cosmo,"n_k"))[0];
+      double      *lk_P  =(double      *)ADaPS_fetch(*cosmo,"lk_P");
+      double      *lP_k  =(double      *)ADaPS_fetch(*cosmo,"lP_k_%s_%s",       mode_name,component_name);
+      interp_info *interp=(interp_info *)ADaPS_fetch(*cosmo,"lP_k_%s_%s_interp",mode_name,component_name);
+      // Compute the needed normalization
+      double  norm;
+      if(redshift!=0.)
+        norm=pow(linear_growth_factor(redshift,*cosmo),2.);
+      else
+        norm=1.;
+      // Compute the power spectrum.  Exstrapolate from the
+      //    given transfer function if needed.
+      double lP_k_0;
+      double lk_interp=take_log10(k_interp);
+      if(k_interp<=0)
+         return(0.);
+      else if(lk_interp<lk_P[0]){
+         double slope_lo=((double *)ADaPS_fetch(*cosmo,"lP_k_TF_%s_slope_lo",component_name))[0];
+         double dl_k    =lk_interp-lk_P[0];
+         lP_k_0         =lP_k[0]+dl_k*slope_lo;
+      }
+      else if(lk_interp>lk_P[n_k-1]){
+         double slope_hi=((double *)ADaPS_fetch(*cosmo,"lP_k_TF_%s_slope_hi",component_name))[0];
+         double dl_k    =lk_interp-lk_P[n_k-1];
+         lP_k_0         =lP_k[n_k-1]+dl_k*slope_hi;
+      }
+      else
+         lP_k_0=interpolate(interp,lk_interp);
+      rval=norm*take_alog10(lP_k_0);
+      break;
+      }
+    default:
+      SID_trap_error("Unsupported mode (%d) passed to power_spectrum().",ERROR_LOGIC,mode);
+      break;
   }
   return(rval);
 }

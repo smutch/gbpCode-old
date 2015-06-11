@@ -22,7 +22,6 @@ double ln_sigma_M(cosmo_info *cosmo,
   sprintf(sigma_lnM_name,"sigma_lnM_%s_%s_interp",mode_name,component_name);
   if(!ADaPS_exist(cosmo,sigma_lnM_name))
      init_sigma_M(&cosmo,
-                  z,
                   mode,
                   component);
   interp_sigma_lnM=(interp_info *)ADaPS_fetch(cosmo,sigma_lnM_name);

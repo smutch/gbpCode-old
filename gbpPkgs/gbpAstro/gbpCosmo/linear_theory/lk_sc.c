@@ -11,6 +11,6 @@ double lk_sc(double       z,
              int          mode,
              int          component){
   double M_sc_val=M_sc(z,cosmo,mode,component);
-  return(take_log10(k_of_M(M_sc_val,z,*cosmo)));
+  return(take_log10(k_of_M(M_sc_val,*cosmo)));
 }
 

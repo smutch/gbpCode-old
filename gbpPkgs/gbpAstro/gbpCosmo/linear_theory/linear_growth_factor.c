@@ -6,17 +6,16 @@
 #include <gbpMath.h>
 #include <gbpCosmo_linear_theory.h>
 
-double linear_growth_factor(double       redshift,
-                            cosmo_info  *cosmo){
-  double        Dplus_a;
-  double        Dplus_1;
-  static double b_z;
+double linear_growth_factor(double z,cosmo_info *cosmo){
+  // Repeat the integral only if we change 
+  //    redshift from the last call.
+  static double b_z   =  1.;
   static double z_last=-42.;
-  if(redshift!=z_last){
-    Dplus_a=Dplus(a_of_z(redshift),cosmo);
-    Dplus_1=Dplus(1.,              cosmo);
+  if(z!=z_last){
+    double Dplus_a=Dplus(a_of_z(z),cosmo);
+    double Dplus_1=Dplus(1.,       cosmo);
     b_z    =Dplus_a/Dplus_1;
-    z_last =redshift;
+    z_last =z;
   }
   return(b_z);
 }

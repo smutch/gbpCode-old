@@ -28,10 +28,10 @@ extern "C" {
 #endif
 double R_of_k(double k);
 double k_of_R(double R);
-double M_of_R(double R,double z,cosmo_info *cosmo);
-double M_of_k(double k,double z,cosmo_info *cosmo);
-double R_of_M(double M,double z,cosmo_info *cosmo);
-double k_of_M(double M,double z,cosmo_info *cosmo);
+double M_of_R(double R,cosmo_info *cosmo);
+double M_of_k(double k,cosmo_info *cosmo);
+double R_of_M(double M,cosmo_info *cosmo);
+double k_of_M(double M,cosmo_info *cosmo);
 void   pspec_names(int   mode,
                    int   component,
                    char *mode_name,
@@ -39,7 +39,7 @@ void   pspec_names(int   mode,
 void   init_power_spectrum_TF(cosmo_info **cosmo);
 void   init_transfer_function(cosmo_info **cosmo);
 double power_spectrum(double k, double z, cosmo_info **cosmo, int mode,int component);
-void   init_power_spectrum_variance(cosmo_info **cosmo,double z,int mode,int component);
+void   init_power_spectrum_variance(cosmo_info **cosmo,int mode,int component);
 double power_spectrum_normalization(cosmo_info *cosmo,
                                     int         mode,
                                     int         component);
@@ -50,11 +50,9 @@ double power_spectrum_variance(double       k_interp,
                                int          component);
 double dln_Inv_sigma_dlogM(cosmo_info **cosmo,
                            double       M_interp,
-                           double       z,
                            int          mode,
                            int          component);
 void init_sigma_M(cosmo_info **cosmo,
-                  double       z,
                   int          mode,
                   int          component);
 double sigma_M(cosmo_info *cosmo,

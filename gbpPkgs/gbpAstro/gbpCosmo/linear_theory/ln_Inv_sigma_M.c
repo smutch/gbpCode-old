@@ -22,15 +22,13 @@ double ln_Inv_sigma_M(cosmo_info **cosmo,
   sprintf(d2ln_Inv_sigma_name,"ln_Inv_sigma_lnM_%s_%s_interp",mode_name,component_name);
   if(!ADaPS_exist(*cosmo,d2ln_Inv_sigma_name))
      init_sigma_M(cosmo,
-                  z,
                   mode,
                   component);
   interp_ln_Inv_sigma=(interp_info *)ADaPS_fetch(*cosmo,d2ln_Inv_sigma_name);
 
   // Perform interpolation
-  double norm;
-  norm =linear_growth_factor(z,*cosmo);
-  r_val=interpolate(interp_ln_Inv_sigma,take_ln(M_interp))/norm;
+  double b_z=linear_growth_factor(z,*cosmo);
+  r_val=interpolate(interp_ln_Inv_sigma,take_ln(M_interp))/b_z;
   return(r_val);
 }
 
