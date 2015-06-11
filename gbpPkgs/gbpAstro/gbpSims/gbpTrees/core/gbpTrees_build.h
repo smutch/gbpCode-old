@@ -5,7 +5,7 @@
 
 // This defines the minimum effective fraction of
 //    mass needed to be considered a good match
-#define F_GOODNESS_OF_MATCH   0.2
+#define F_GOODNESS_OF_MATCH   0.1
 
 // This defines the minimum fraction of the max score
 //    needed to be considered a good match

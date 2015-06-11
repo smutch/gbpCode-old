@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <stdarg.h>
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpCosmo_mass_functions.h>
@@ -12,7 +13,9 @@
 double mass_function(double        M_interp,
                      double        z,
                      cosmo_info  **cosmo,
-                     int           select_flag){
+                     int           mode,...){
+  va_list vargs;
+  va_start(vargs,mode);
 
   // Initialize/compute some misc. cosmology things
   double sigma_interp=sqrt(power_spectrum_variance(k_of_M(M_interp,*cosmo),z,cosmo,PSPEC_LINEAR_TF,PSPEC_ALL_MATTER));
@@ -21,7 +24,8 @@ double mass_function(double        M_interp,
 
   // Compute mass function (eqn 41 of Lukic et al, 2007, for example)
   double dlnInvs_dlogM=dln_Inv_sigma_dlogM(cosmo,M_interp,PSPEC_LINEAR_TF,PSPEC_ALL_MATTER);
-  double rval         =rho_o*scaled_mass_function(sigma_interp,select_flag)*dlnInvs_dlogM/M_interp;
+  double rval         =rho_o*scaled_mass_function(sigma_interp,mode,vargs)*dlnInvs_dlogM/M_interp;
+  va_end(vargs);
   return(rval);
 }
 

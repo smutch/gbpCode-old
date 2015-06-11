@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <stdarg.h>
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpCosmo_mass_functions.h>
@@ -13,7 +14,8 @@ typedef struct mass_function_cumulative_params_struct mass_function_cumulative_p
 struct mass_function_cumulative_params_struct {
   cosmo_info **cosmo; 
   double       z;
-  int          select_flag;
+  int          mode;
+  va_list     *vargs;
 };
 double mass_function_cumulative_integrand(double  lM,
                                           void   *params_in);
@@ -22,13 +24,16 @@ double mass_function_cumulative_integrand(double  lM,
   mass_function_cumulative_params *params;
   params=(mass_function_cumulative_params *)params_in;
   double M    =take_alog10(lM);
-  double r_val=mass_function(M,params->z,params->cosmo,params->select_flag);
+  double r_val=mass_function(M,params->z,params->cosmo,params->mode,*(params->vargs));
   return(r_val);
 }
 double mass_function_cumulative(double       M_interp,
                                 double       z,
                                 cosmo_info **cosmo,
-                                int          select_flag){
+                                int          mode,...){
+  va_list vargs;
+  va_start(vargs,mode);
+
   // Initialize integral
   if(!ADaPS_exist((*cosmo),"lk_P"))
     init_power_spectrum_TF(cosmo);
@@ -47,7 +52,8 @@ double mass_function_cumulative(double       M_interp,
      gsl_integration_workspace       *wspace;
      params.z          =z;
      params.cosmo      =cosmo;
-     params.select_flag=select_flag;
+     params.mode=mode;
+     params.vargs      =&vargs;
      integrand.function=mass_function_cumulative_integrand;
      integrand.params  =(void *)(&params);
      wspace            =gsl_integration_workspace_alloc(n_int);
@@ -65,6 +71,7 @@ double mass_function_cumulative(double       M_interp,
      gsl_integration_workspace_free(wspace);
   }
 
+  va_end(vargs);
   return(r_val);
 }
 

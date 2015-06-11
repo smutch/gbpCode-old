@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <stdarg.h>
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpCosmo_mass_functions.h>
@@ -9,37 +10,61 @@
 #include <gsl/gsl_spline.h>
 
 // Scaled mass functions
-double scaled_mass_function(double sigma,int select_flag){
-  double rval;
-  switch(select_flag){
-  case MF_WATSON:{ // Watson et al. (2013) universal FoF mass function
+double scaled_mass_function(double sigma,int mode,...){
+  double  rval;
+  va_list vargs;
+  va_start(vargs,mode);
+  if(check_mode_for_flag(mode,MF_WATSON)){ // Watson et al. (2013) universal FoF mass function
     double A     = 0.282;
     double alpha = 2.163;
     double beta  = 1.406;
     double gamma = 1.210;
-    rval         = A*(pow(beta/sigma,alpha)+1.)*exp(-gamma/(sigma*sigma));
-    break;
+    if(check_mode_for_flag(mode,MF_PASS_PARAMS)){
+       double *P=(double *)va_arg(vargs,double *);
+       A     = P[0];
+       alpha = P[1];
+       beta  = P[2];
+       gamma = P[3];
     }
-  case MF_JENKINS:{ // Jenkins et al. (2001)
-    double delta_k=1.686;
-    rval =0.315*exp(-pow((double)fabs((float)(take_ln(1./sigma)+0.61)),3.8));
-    break;
-    }
-  case MF_ST:{ // Sheth-Torman (1999)
-    double delta_k=1.686;
-    rval =0.3222*sqrt(2.*0.707/PI)*(delta_k/sigma)*exp(-0.707*delta_k*delta_k/(2.*sigma*sigma))*
-      (1.+pow(sigma*sigma/(0.707*delta_k*delta_k),0.3));
-    break;
-    }
-  case MF_PS:{ // Press-Schechter (1974)
-    double delta_k=1.686;
-    rval =sqrt(2./PI)*(delta_k/sigma)*exp(-delta_k*delta_k/(2.*sigma*sigma));
-    break;
-    }
-  default:
-    SID_trap_error("Unknown select_flag (%d)in scaled_mass_function().\n",ERROR_LOGIC,select_flag);
-    break;
+    rval=A*(pow(beta/sigma,alpha)+1.)*exp(-gamma/(sigma*sigma));
   }
-  return rval;
+  else if(check_mode_for_flag(mode,MF_JENKINS)){ // Jenkins et al. (2001)
+    double A=0.315;
+    double B=0.61;
+    double C=3.8;
+    if(check_mode_for_flag(mode,MF_PASS_PARAMS)){
+       double *P=(double *)va_arg(vargs,double *);
+       A=P[0];
+       B=P[1];
+       C=P[2];
+    }
+    rval =A*exp(-pow((double)fabs((float)(take_ln(1./sigma)+B)),C));
+  }
+  else if(check_mode_for_flag(mode,MF_ST)){ // Sheth-Torman (1999)
+    double delta_k=1.686;
+    double A      =0.3222;
+    double B      =0.707;
+    double C      =0.3;
+    if(check_mode_for_flag(mode,MF_PASS_PARAMS)){
+       double *P=(double *)va_arg(vargs,double *);
+       delta_k=P[0];
+       A      =P[1];
+       B      =P[2];
+       C      =P[3];
+    }
+    rval =A*sqrt(2.*B/PI)*(delta_k/sigma)*exp(-B*delta_k*delta_k/(2.*sigma*sigma))*(1.+pow(sigma*sigma/(B*delta_k*delta_k),C));
+  }
+  else if(check_mode_for_flag(mode,MF_PS)){ // Press-Schechter (1974)
+    double delta_k=1.686;
+    if(check_mode_for_flag(mode,MF_PASS_PARAMS)){
+       double *P=(double *)va_arg(vargs,double *);
+       delta_k=P[0];
+    }
+    rval =sqrt(2./PI)*(delta_k/sigma)*exp(-delta_k*delta_k/(2.*sigma*sigma));
+  }
+  else
+    SID_trap_error("A valid mass function was not specified with mode (%d) in scaled_mass_function().\n",ERROR_LOGIC,mode);
+  va_end(vargs);
+  return(rval);
 }
 
