@@ -51,6 +51,7 @@ if ( ${GBP_QUEUE_TYPE} == 'PBS' ) then
   echo '#PBS -N '$ARG_CMD                                                                               >> $SUBT_FILE
   echo '#PBS -l nodes='$ARG_NNODE':ppn='$ARG_PPN',walltime='$ARG_HRS':00:00'                            >> $SUBT_FILE
   #echo '#PBS -l nodes=sstar203:ppn=1+sstar204:ppn=1,walltime='$ARG_HRS':00:00'                            >> $SUBT_FILE
+  #echo '#PBS -l nodes=sstar203:ppn=16,walltime='$ARG_HRS':00:00'                            >> $SUBT_FILE
   echo '#PBS -S /bin/csh'                                                                               >> $SUBT_FILE
   #echo '#PBS -l pmem=3gb'                                                                             >> $SUBT_FILE
   #echo '#PBS -l pmem=450GB'                                                                             >> $SUBT_FILE

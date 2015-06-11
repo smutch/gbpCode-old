@@ -171,7 +171,7 @@ int compute_trees_matches(char   *filename_root_in,
      flag_sucessful_completion=FALSE;
   }
   if(flag_create_headers){
-     SID_log("Checking if header files exist and are adequate...",SID_LOG_OPEN);
+     SID_log("Checking if header files exist and are adequate...",SID_LOG_OPEN|SID_LOG_TIMER);
      for(k_match=0;k_match<2;k_match++){
 
         // Set working array pointers to point to group or subgroup information (alternately, depending on k_match)

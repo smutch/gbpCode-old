@@ -6,7 +6,9 @@ LIBFILE   = libgbpTrees.a
 OBJFILES  =
 LIBS      = -lgbpTrees -lgbpHalos -lgbpSPH -lgbpCosmo -lgbpMath -lgbpLib
 SUBDIRS   = core analysis
-BINFILES  = make_atable_match_score        \
+BINFILES  = make_match_score_table         \
+	        query_2way_matches             \
+	        make_atable_match_score        \
 	        query_trees_volume             \
 	        make_catalog_markers_ascii     \
 	        make_cross_catalog_matches     \

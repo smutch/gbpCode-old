@@ -58,6 +58,10 @@ int main(int argc, char *argv[]){
   merge_sort(ids_to,  n_ids_to,  &ids_to_index,  SID_SIZE_T,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
   SID_log("Done.",SID_LOG_CLOSE);
 
+  FILE *fp_test=fopen("test.out","w");
+  for(int i_test=1;i_test<5000000;i_test*=5) fprintf(fp_test,"%6d %le\n",i_test,maximum_match_score((double)i_test));
+  fclose(fp_test);
+
   // Compute and report score
   double score=0;
   for(int i_from=0,i_to=0;i_from<n_ids_from;i_from++){

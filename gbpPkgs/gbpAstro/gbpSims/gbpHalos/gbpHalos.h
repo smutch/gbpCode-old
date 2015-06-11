@@ -6,9 +6,9 @@
 #include <gbpSPH.h>
 #include <gbpCosmo.h>
 
-#define WRITE_GROUPS_ASCII
-
-#define MATCH_SCORE_RANK_INDEX -1.5
+//#define MATCH_SCORE_RANK_INDEX -1.5
+#define MATCH_SCORE_RANK_INDEX -1.
+//#define MATCH_SCORE_RANK_INDEX -TWO_THIRDS
 
 #define MIN_PROFILE_BINS     5
 #define MAX_PROFILE_BINS     1000
