@@ -12,6 +12,7 @@
 #define MF_PS          TTTP03
 #define MF_ST          TTTP04
 #define MF_WATSON      TTTP05
+#define MF_TIAMAT      TTTP06
 
 // Function definitions
 #ifdef __cplusplus
@@ -25,7 +26,7 @@ double mass_function_cumulative(double       M_interp,
                                 double       z,
                                 cosmo_info **cosmo,
                                 int          select_flag,...);
-double scaled_mass_function(double sigma,int mode,...);
+double scaled_mass_function(double sigma,int mode,double *P);
 #ifdef __cplusplus
 }
 #endif

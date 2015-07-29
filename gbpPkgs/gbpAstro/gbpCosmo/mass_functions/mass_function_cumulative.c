@@ -15,7 +15,7 @@ struct mass_function_cumulative_params_struct {
   cosmo_info **cosmo; 
   double       z;
   int          mode;
-  va_list     *vargs;
+  double      *P;
 };
 double mass_function_cumulative_integrand(double  lM,
                                           void   *params_in);
@@ -24,7 +24,7 @@ double mass_function_cumulative_integrand(double  lM,
   mass_function_cumulative_params *params;
   params=(mass_function_cumulative_params *)params_in;
   double M    =take_alog10(lM);
-  double r_val=mass_function(M,params->z,params->cosmo,params->mode,*(params->vargs));
+  double r_val=mass_function(M,params->z,params->cosmo,params->mode,params->P);
   return(r_val);
 }
 double mass_function_cumulative(double       M_interp,
@@ -33,6 +33,11 @@ double mass_function_cumulative(double       M_interp,
                                 int          mode,...){
   va_list vargs;
   va_start(vargs,mode);
+
+  // Get passed parameters (if mode specifies they are there).
+  double *P=NULL;
+  if(check_mode_for_flag(mode,MF_PASS_PARAMS))
+       P=(double *)va_arg(vargs,double *);
 
   // Initialize integral
   if(!ADaPS_exist((*cosmo),"lk_P"))
@@ -50,10 +55,10 @@ double mass_function_cumulative(double       M_interp,
      mass_function_cumulative_params  params;
      gsl_function                     integrand;
      gsl_integration_workspace       *wspace;
-     params.z          =z;
-     params.cosmo      =cosmo;
-     params.mode=mode;
-     params.vargs      =&vargs;
+     params.z    =z;
+     params.cosmo=cosmo;
+     params.mode =mode;
+     params.P    =P;
      integrand.function=mass_function_cumulative_integrand;
      integrand.params  =(void *)(&params);
      wspace            =gsl_integration_workspace_alloc(n_int);

@@ -55,6 +55,10 @@ int main(int argc, char *argv[]){
      sprintf(mfn_text,"Watson et al (2013)");
      select_flag=MF_WATSON;
   }
+  else if(!strcmp(paramterization,"TIAMAT")){
+     sprintf(mfn_text,"Poole et al (2015)");
+     select_flag=MF_TIAMAT;
+  }
   else
      SID_trap_error("Invalid parameterization selected {%s}.  Should be {JENKINS,PS or ST}.",ERROR_SYNTAX,paramterization);
 
@@ -71,9 +75,11 @@ int main(int argc, char *argv[]){
   int i_column=1;
   fprintf(fp_out,"# Mass function (%s) for %s cosmology at z=%lf\n",mfn_text,filename_cosmology,redshift);
   fprintf(fp_out,"# \n");
-  fprintf(fp_out,"# Column (%02d): log M                        [h^-1 M_sol]\n",        i_column++);
-  fprintf(fp_out,"#        (%02d): Mass function                [h^4 Mpc^{-3} M_sol]\n",i_column++);
-  fprintf(fp_out,"#        (%02d): Cumulative Mass function(>M) [h^3 Mpc^{-3}]\n",      i_column++);
+  fprintf(fp_out,"# Column (%02d): log(M)     [h^-1 M_sol]  \n",i_column++);
+  fprintf(fp_out,"#        (%02d): sigma(M)                 \n",i_column++);
+  fprintf(fp_out,"#        (%02d): dn/dlog(M) [h^3 Mpc^{-3}]\n",i_column++);
+  fprintf(fp_out,"#        (%02d): dn/dlog(M) [h^3 Mpc^{-3}]\n",i_column++);
+  fprintf(fp_out,"#        (%02d): n(>M)      [h^3 Mpc^{-3}]\n",i_column++);
 
   // Create the mass function
   SID_log("Writing results to {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_out);
@@ -92,7 +98,7 @@ int main(int argc, char *argv[]){
         log_M=log_M_max;
      else
         log_M=log_M_min+(((double)(i_bin))/((double)(n_M_bins-1)))*(log_M_max-log_M_min);
-     fprintf(fp_out,"%le %le %le\n",log_M,
+     fprintf(fp_out,"%le %le %le %le\n",log_M,sqrt(power_spectrum_variance(k_of_M(mass_factor*take_alog10(log_M),cosmo),redshift,&cosmo,PSPEC_LINEAR_TF,PSPEC_ALL_MATTER)),
                                     MFctn_factor* mass_function           (mass_factor*take_alog10(log_M),redshift,&cosmo,select_flag),
                                     cMFctn_factor*mass_function_cumulative(mass_factor*take_alog10(log_M),redshift,&cosmo,select_flag));
      SID_check_pcounter(&pcounter,i_bin);

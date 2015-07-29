@@ -17,6 +17,11 @@ double mass_function(double        M_interp,
   va_list vargs;
   va_start(vargs,mode);
 
+  // Get passed parameters (if mode specifies they are there).
+  double *P=NULL;
+  if(check_mode_for_flag(mode,MF_PASS_PARAMS))
+       P=(double *)va_arg(vargs,double *);
+
   // Initialize/compute some misc. cosmology things
   double sigma_interp=sqrt(power_spectrum_variance(k_of_M(M_interp,*cosmo),z,cosmo,PSPEC_LINEAR_TF,PSPEC_ALL_MATTER));
   double Omega_M     =((double *)ADaPS_fetch(*cosmo,"Omega_M"))[0];
@@ -24,7 +29,7 @@ double mass_function(double        M_interp,
 
   // Compute mass function (eqn 41 of Lukic et al, 2007, for example)
   double dlnInvs_dlogM=dln_Inv_sigma_dlogM(cosmo,M_interp,PSPEC_LINEAR_TF,PSPEC_ALL_MATTER);
-  double rval         =rho_o*scaled_mass_function(sigma_interp,mode,vargs)*dlnInvs_dlogM/M_interp;
+  double rval         =rho_o*scaled_mass_function(sigma_interp,mode,P)*dlnInvs_dlogM/M_interp;
   va_end(vargs);
   return(rval);
 }

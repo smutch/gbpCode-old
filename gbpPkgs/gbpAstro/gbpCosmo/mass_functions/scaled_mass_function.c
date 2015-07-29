@@ -10,17 +10,27 @@
 #include <gsl/gsl_spline.h>
 
 // Scaled mass functions
-double scaled_mass_function(double sigma,int mode,...){
+double scaled_mass_function(double sigma,int mode,double *P){
   double  rval;
-  va_list vargs;
-  va_start(vargs,mode);
   if(check_mode_for_flag(mode,MF_WATSON)){ // Watson et al. (2013) universal FoF mass function
     double A     = 0.282;
     double alpha = 2.163;
     double beta  = 1.406;
     double gamma = 1.210;
     if(check_mode_for_flag(mode,MF_PASS_PARAMS)){
-       double *P=(double *)va_arg(vargs,double *);
+       A     = P[0];
+       alpha = P[1];
+       beta  = P[2];
+       gamma = P[3];
+    }
+    rval=A*(pow(beta/sigma,alpha)+1.)*exp(-gamma/(sigma*sigma));
+  }
+  else if(check_mode_for_flag(mode,MF_TIAMAT)){ // Poole et al. (2013) universal FoF mass function for Tiamat
+    double A     =  0.03331;
+    double alpha =  1.153;
+    double beta  = 12.33;
+    double gamma =  1.009;
+    if(check_mode_for_flag(mode,MF_PASS_PARAMS)){
        A     = P[0];
        alpha = P[1];
        beta  = P[2];
@@ -33,7 +43,6 @@ double scaled_mass_function(double sigma,int mode,...){
     double B=0.61;
     double C=3.8;
     if(check_mode_for_flag(mode,MF_PASS_PARAMS)){
-       double *P=(double *)va_arg(vargs,double *);
        A=P[0];
        B=P[1];
        C=P[2];
@@ -46,25 +55,21 @@ double scaled_mass_function(double sigma,int mode,...){
     double B      =0.707;
     double C      =0.3;
     if(check_mode_for_flag(mode,MF_PASS_PARAMS)){
-       double *P=(double *)va_arg(vargs,double *);
-       delta_k=P[0];
-       A      =P[1];
-       B      =P[2];
-       C      =P[3];
+       A      =P[0];
+       B      =P[1];
+       C      =P[2];
     }
     rval =A*sqrt(2.*B/PI)*(delta_k/sigma)*exp(-B*delta_k*delta_k/(2.*sigma*sigma))*(1.+pow(sigma*sigma/(B*delta_k*delta_k),C));
   }
   else if(check_mode_for_flag(mode,MF_PS)){ // Press-Schechter (1974)
     double delta_k=1.686;
     if(check_mode_for_flag(mode,MF_PASS_PARAMS)){
-       double *P=(double *)va_arg(vargs,double *);
        delta_k=P[0];
     }
     rval =sqrt(2./PI)*(delta_k/sigma)*exp(-delta_k*delta_k/(2.*sigma*sigma));
   }
   else
     SID_trap_error("A valid mass function was not specified with mode (%d) in scaled_mass_function().\n",ERROR_LOGIC,mode);
-  va_end(vargs);
   return(rval);
 }
 

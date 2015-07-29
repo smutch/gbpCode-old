@@ -14,7 +14,7 @@ double Dplus(double a,cosmo_info *cosmo){
 
   // Initialize integral
   int    n_int       =1000;
-  double rel_accuracy=1e-5;
+  double rel_accuracy=1e-8;
   double abs_error;
   double r_val;
   double limit_lo=0.;
@@ -27,11 +27,19 @@ double Dplus(double a,cosmo_info *cosmo){
 
   // Perform integral
   gsl_integration_qags(&integrand,
-                       limit_lo,limit_hi,
-                       0.,rel_accuracy,
+                       0.,limit_hi,
+                       1e-5,0.,
                        n_int,
                        wspace,
                        &r_val,&abs_error); // use qags for singularity at a=0
+
+  //gsl_integration_qag(&integrand,
+  //                     limit_lo,limit_hi,
+  //                     0.,rel_accuracy,
+  //                     n_int,
+  //                     GSL_INTEG_GAUSS61,
+  //                     wspace,
+  //                     &r_val,&abs_error); // use qags for singularity at a=0
 
   // Clean-up
   gsl_integration_workspace_free(wspace);
@@ -44,6 +52,7 @@ double Dplus(double a,cosmo_info *cosmo){
 
   // Apply coefficients and return result
   r_val*=2.5*Omega_M*Ez;
+
   return(r_val);
 }
 
