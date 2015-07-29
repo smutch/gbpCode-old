@@ -143,14 +143,14 @@ int main(int argc, char *argv[]){
   FILE *fp_out;
   fp_out=fopen(filename_out,"w");
   int i_column=1;
-  fprintf(fp_out,"# Column (%02d): Halo index for snapshot %d\n",    i_column++,i_read);
-  fprintf(fp_out,"#        (%02d): Halo index for snapshot %d\n",    i_column++,j_read);
-  fprintf(fp_out,"#        (%02d): No. particles in snapshot %d\n",  i_column++,i_read);
-  fprintf(fp_out,"#        (%02d): No. particles in snapshot %d\n",  i_column++,j_read);
-  fprintf(fp_out,"#        (%02d): Forward  match score\n",          i_column++);
-  fprintf(fp_out,"#        (%02d): Forward  match score/max score\n",i_column++);
-  fprintf(fp_out,"#        (%02d): Backward match score\n",          i_column++);
-  fprintf(fp_out,"#        (%02d): Backward match score/max score\n",i_column++);
+  fprintf(fp_out,"# Column (%02d): Halo index for snapshot %d\n",          i_column++,i_read);
+  fprintf(fp_out,"#        (%02d): Halo index for snapshot %d\n",          i_column++,j_read);
+  fprintf(fp_out,"#        (%02d): No. particles in snapshot %d\n",        i_column++,i_read);
+  fprintf(fp_out,"#        (%02d): No. particles in snapshot %d\n",        i_column++,j_read);
+  fprintf(fp_out,"#        (%02d): Forward  match score\n",                i_column++);
+  fprintf(fp_out,"#        (%02d): Forward  match score/min match score\n",i_column++);
+  fprintf(fp_out,"#        (%02d): Backward match score\n",                i_column++);
+  fprintf(fp_out,"#        (%02d): Backward match score/min match score\n",i_column++);
   for(int i_halo=0;i_halo<n_groups_i;i_halo++){
      int j_halo=match_forward_ids[i_halo];
      if(match_forward_2way[i_halo]){
@@ -162,9 +162,9 @@ int main(int argc, char *argv[]){
                 n_particles_i[i_halo],
                 n_particles_j[j_halo],
                 match_forward_score[i_halo],
-                match_forward_score[i_halo]/maximum_match_score((double)n_particles_i[i_halo]),
+                match_forward_score[i_halo]/minimum_match_score((double)n_particles_i[i_halo]),
                 match_backward_score[j_halo],
-                match_backward_score[j_halo]/maximum_match_score((double)n_particles_j[j_halo]));
+                match_backward_score[j_halo]/minimum_match_score((double)n_particles_j[j_halo]));
      }                
   }
   fclose(fp_out);

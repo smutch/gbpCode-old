@@ -90,7 +90,7 @@ void identify_bridges(tree_horizontal_info **halos,
           }
        }
        SID_log("Done.",SID_LOG_CLOSE);
-    }
+    } // loop over snaps
 
     //    ... second, do a conservative allocation using the non-unique counts and reset the counter.
     for(i_halo=0;i_halo<n_halos_i;i_halo++){

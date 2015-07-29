@@ -18,7 +18,7 @@ void identify_emerged_halo_candidates(tree_horizontal_info *halos_i,
          back_match_info *back_matches=halos_i[i_halo].back_matches;
          for(int i_back_match=0;i_back_match<(halos_i[i_halo].n_back_matches);i_back_match++){
             // ... all but the one identified as it's main progenitor are candidate emerged halos.
-            if(halos_i[i_halo].id!=back_matches[i_back_match].halo->id)
+            if(back_matches[i_back_match].halo->id!=halos_i[i_halo].id)
                back_matches[i_back_match].halo->type|=TREE_CASE_EMERGED_CANDIDATE;
          }
       }

@@ -191,15 +191,6 @@ void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n
             }
          }
 
-         /*
-         // Don't count fragmented halos as mergers when they're accreated
-         else if(check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_STRAYED)  ||
-                 check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_RETURNED) ||
-                 check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_EXCHANGED)){
-            subgroups[i_read%n_wrap][i_subgroup].type&=(~TREE_CASE_MERGER);
-         }
-         */
-
          // Propagate the information about the bridge as well
          if((check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_STRAYED)  ||
              check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_RETURNED) ||

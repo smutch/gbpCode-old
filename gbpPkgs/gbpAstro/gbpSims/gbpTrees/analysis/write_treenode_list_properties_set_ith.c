@@ -46,7 +46,12 @@ void write_treenode_list_properties_set_ith(tree_info *trees,tree_node_info *cur
       case 6:{
          if(data_name!=NULL) sprintf(data_name,"M_peak_main_progenitor [h^{-1} M_sol]");
          if(data_type!=NULL) *data_type=SID_DOUBLE;
-         if(data_d!=NULL)    *data_d   =fetch_treenode_Mpeak(trees,current_halo->descendant->progenitor_first);
+         if(data_d!=NULL){ // Need to check this first for when we're writing the header and current_halo==NULL
+            if(current_halo->descendant!=NULL) // This 'if' is needed for things like strayed halos, where descendant is NULL
+               *data_d=fetch_treenode_Mpeak(trees,current_halo->descendant->progenitor_first);
+            else
+               *data_d=0.;
+         }
          break;
       }
       case 7:

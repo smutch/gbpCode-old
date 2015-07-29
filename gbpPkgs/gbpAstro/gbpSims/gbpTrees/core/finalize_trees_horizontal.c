@@ -12,24 +12,50 @@ void finalize_trees_horizontal(int                    n_halos_1_matches,
                                int                   *max_tree_id){
    SID_log("Finalizing...",SID_LOG_OPEN|SID_LOG_TIMER);
 
-   // ... first, finalize the sucessful matches ...
-   int i_halo;
-   for(i_halo=0;i_halo<n_halos_1_matches;i_halo++){
-      if((halos_i[i_halo].forematch_default.halo)!=NULL)
-         add_progenitor_to_halo(halos,
-                                i_file,
-                                i_halo,
-                                halos_i[i_halo].forematch_default.halo->file,
-                                halos_i[i_halo].forematch_default.halo->index,
-                                halos_i[i_halo].forematch_default.score,
-                                max_id,
-                                n_wrap);
+   // ... finalize the sucessful matches ...
+   for(int i_halo=0;i_halo<n_halos_1_matches;i_halo++){
+      if((halos_i[i_halo].forematch_default.halo)!=NULL){
+         // First, if this halo's initial match is the best from this
+         //   snapshot to a halo with no progenitors yet, use it to
+         //   make sure that every halo with a match gets a progenitor 
+         //   (rather then let all matches get converted to emerged 
+         //   halos later).  If a halo has a default match, it must
+         //   have a first match (by construction) so no need to check
+         //   for it.
+         if((halos_i[i_halo].forematch_first.halo->forematch_best.halo)==(&(halos_i[i_halo]))){
+            add_progenitor_to_halo(halos,
+                                   i_file,
+                                   i_halo,
+                                   halos_i[i_halo].forematch_first.halo->file,
+                                   halos_i[i_halo].forematch_first.halo->index,
+                                   halos_i[i_halo].forematch_first.score,
+                                   max_id,
+                                   n_wrap);
+            // Add 2WAY match flags
+            if(halos_i[i_halo].forematch_first.flag_two_way)
+               halos_i[i_halo].type|=TREE_CASE_2WAY_MATCH;
+         }
+         // ... else, use the default pointer.
+         else{
+            add_progenitor_to_halo(halos,
+                                   i_file,
+                                   i_halo,
+                                   halos_i[i_halo].forematch_default.halo->file,
+                                   halos_i[i_halo].forematch_default.halo->index,
+                                   halos_i[i_halo].forematch_default.score,
+                                   max_id,
+                                   n_wrap);
+            // Add 2WAY match flags
+            if(halos_i[i_halo].forematch_default.flag_two_way)
+               halos_i[i_halo].type|=TREE_CASE_2WAY_MATCH;
+         }
+      }
    }
 
    // ... then assign flags for halos not successfully processed.  Call them strays.
    //     These will include halos which have stopped existing without merging with
    //     anything over the search range.
-   for(i_halo=0;i_halo<n_halos_i;i_halo++){
+   for(int i_halo=0;i_halo<n_halos_i;i_halo++){
       if(halos_i[i_halo].descendant.halo==NULL){
          halos_i[i_halo].type   |=TREE_CASE_STRAYED;
          halos_i[i_halo].type   &=(~TREE_CASE_UNPROCESSED);

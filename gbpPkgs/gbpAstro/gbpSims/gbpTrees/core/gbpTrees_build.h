@@ -5,11 +5,13 @@
 
 // This defines the minimum effective fraction of
 //    mass needed to be considered a good match
-#define F_GOODNESS_OF_MATCH   0.1
+#define F_GOODNESS_OF_MATCH   0.0
+//#define F_GOODNESS_OF_MATCH   0.05
 
-// This defines the minimum fraction of the max score
-//    needed to be considered a good match
-#define F_MAX_MATCH_SCORE_MIN 0.70
+// This defines the minimum and minimum fraction of the 
+//    max score needed to be considered a good match
+#define F_MAX_MATCH_SCORE_MIN 0.0
+#define MIN_MATCH_SCORE       3.0
 
 #define K_MATCH_SUBGROUPS 0
 #define K_MATCH_GROUPS    1
@@ -178,6 +180,7 @@ typedef struct match_info match_info;
 struct match_info{
   tree_horizontal_info *halo;
   float                 score;
+  int                   flag_two_way;
 };
 typedef struct back_match_info back_match_info;
 struct back_match_info{
@@ -207,6 +210,9 @@ struct tree_horizontal_info{
   match_info       forematch_default;              // Pointer to the default halo matched to.  Starts with an initial match but may change
                                                    //    if we manage to match to one-or-more emerged halo(s).  When we finish scanning, 
                                                    //    this becomes the match.
+  match_info       forematch_best;                 // The best match to this halo generated in 'construct_progenitors'.  Used
+                                                   //    to ensure that a bridged halo gets at least one progenitor, rather
+                                                   //    than have all matches to it end-up as later matches to emerged halos.
   match_info       bridge_backmatch;               // Pointer to a possible back-matched bridged halo
   match_info       descendant;                     // Contains all the needed pointers to the descendant
 };
@@ -515,6 +521,7 @@ void read_matches(char    *filename_root_matches,
                   double   f_goodness_of_match);
 int check_for_matching_input_files(const char *filename_root_in,int i_read);
 float maximum_match_score(double n_particles);
+float minimum_match_score(double n_particles);
 int check_goodness_of_match(int n_particles_in,float match_score,double f_goodness_of_match);
 int check_if_halo_is_descendant(tree_horizontal_info *possible_progenitor,
                                 tree_horizontal_info *possible_descendant,

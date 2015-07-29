@@ -319,7 +319,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
        // Initialize tree pointer-arrays with dummy values
        init_trees_horizontal_snapshot(halos_i,n_halos_i,i_read,i_file,n_halos_max);
 
-       // Use back-matching to identify bridged and fragmented halos (alos, read current snapshot halo sizes here)...
+       // Use back-matching to identify bridged and fragmented halos (also, read current snapshot halo sizes here)...
        if(flag_fix_bridges)
           identify_bridges(halos,
                            halos_i,

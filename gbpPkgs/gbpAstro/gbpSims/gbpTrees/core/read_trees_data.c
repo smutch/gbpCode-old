@@ -49,6 +49,7 @@ void read_trees_data(tree_info    *trees,
      for(int i_type=0;i_type<2;i_type++){
         // Set some group/subgroup specific things
         int             n_halos;
+        int             n_halos_all;
         tree_node_info *first_neighbour;
         char            group_text_prefix[5];
         int             open_catalog_mode;
@@ -60,6 +61,7 @@ void read_trees_data(tree_info    *trees,
               if(flag_proceed){
                  sprintf(group_text_prefix,"sub");
                  n_halos            =trees->n_subgroups_snap_local[i_snap];
+                 n_halos_all        =trees->n_subgroups_catalog[i_snap];
                  first_neighbour    =trees->first_neighbour_subgroups[i_snap];
                  if(data_subgroups_local!=NULL)
                     data_in=(char *)data_subgroups_local[i_snap];
@@ -72,6 +74,7 @@ void read_trees_data(tree_info    *trees,
               if(flag_proceed){
                  sprintf(group_text_prefix,"");
                  n_halos            =trees->n_groups_snap_local[i_snap];
+                 n_halos_all        =trees->n_groups_catalog[i_snap];
                  first_neighbour    =trees->first_neighbour_groups[i_snap];
                  if(data_groups_local!=NULL)
                     data_in=(char *)data_groups_local[i_snap];
@@ -115,18 +118,18 @@ void read_trees_data(tree_info    *trees,
               fread(&n_files,      sizeof(int),1,fp_data);
               fread(&n_halos_file, sizeof(int),1,fp_data);
               fread(&n_halos_total,sizeof(int),1,fp_data);
-              if(n_halos_total!=n_halos)
-                 SID_trap_error("Count of halos in data file does not match trees (ie. %d!=%d).",ERROR_LOGIC,n_halos_total,n_halos);
+//              if(n_halos_total!=n_halos_all)
+//                 SID_trap_error("Count of halos in data file does not match trees (ie. %d!=%d).",ERROR_LOGIC,n_halos_total,n_halos_all);
 
               // Perform read
               int k_read;
               int l_read;
               for(k_read=0,l_read=0;k_read<n_halos_total;k_read++){
-                 fread(&data_read,data_type_size,1,fp_data);
+                 fread(data_read,data_type_size,1,fp_data);
                  if(l_read<n_list_local){
                     if(k_read==file_idx_list_local[file_idx_list_local_index[l_read]]){
                        if(data_in!=NULL)
-                          memcpy(&(data_in[data_type_size*nebr_idx_list_local[file_idx_list_local_index[l_read]]]),&data_read,data_type_size);
+                          memcpy(&(data_in[data_type_size*nebr_idx_list_local[file_idx_list_local_index[l_read]]]),data_read,data_type_size);
                        list_init_local[nebr_idx_list_local[file_idx_list_local_index[l_read]]]++;
                        l_read++;
                     }
@@ -135,13 +138,14 @@ void read_trees_data(tree_info    *trees,
               fclose(fp_data);
 
               // Check that everything was read properly
-              if(l_read!=n_list_local)
-                 SID_trap_error("An incorrect number of matches were read (ie. %d!=%d) for snaphot %d",ERROR_LOGIC,
-                                l_read,n_list_local,i_read);
-              for(i_neighbour=0;i_neighbour<n_halos;i_neighbour++)
-                 if(list_init_local[i_neighbour]!=1 && list_init_local[i_neighbour]>=0)
-                    SID_trap_error("Neighbour %d of %d was not processed correctly (init=%d) for snapshot %d.",ERROR_LOGIC,
-                                   i_neighbour,n_halos,list_init_local[i_neighbour],i_read);
+if(l_read!=n_list_local) SID_log_warning("Invalid read count: %d!=%d",SID_WARNING_DEFAULT,l_read,n_list_local);
+//              if(l_read!=n_list_local)
+//                 SID_trap_error("An incorrect number of matches were read (ie. %d!=%d) for snaphot %d",ERROR_LOGIC,
+//                                l_read,n_list_local,i_read);
+//              for(i_neighbour=0;i_neighbour<n_halos;i_neighbour++)
+//                 if(list_init_local[i_neighbour]!=1 && list_init_local[i_neighbour]>=0)
+//                    SID_trap_error("Neighbour %d of %d was not processed correctly (init=%d) for snapshot %d.",ERROR_LOGIC,
+//                                   i_neighbour,n_halos,list_init_local[i_neighbour],i_read);
            }
            else{
               if(data_in!=NULL){

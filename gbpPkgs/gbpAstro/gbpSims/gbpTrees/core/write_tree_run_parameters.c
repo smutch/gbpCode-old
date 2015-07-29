@@ -32,6 +32,8 @@ void write_tree_run_parameters(char *filename_root_out,
    fprintf(fp_out,"#flag_compute_fragmented %d\n",flag_compute_fragmented);
    fprintf(fp_out,"#flag_compute_ghosts     %d\n",flag_compute_ghosts);
    fprintf(fp_out,"#f_s_goodness_of_match   %f\n",F_GOODNESS_OF_MATCH);
+   fprintf(fp_out,"#f_max_match_score_min   %f\n",F_MAX_MATCH_SCORE_MIN);
+   fprintf(fp_out,"#min_match_score         %f\n",MIN_MATCH_SCORE);
 
    // Close file
    fclose(fp_out);

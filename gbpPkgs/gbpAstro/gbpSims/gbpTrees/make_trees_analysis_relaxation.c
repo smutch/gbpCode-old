@@ -203,7 +203,7 @@ void process_trees_fctn_fin_local(tree_info *trees,void *params_in,int mode,int 
       fprintf(fp_out,"#        (%02d): No. of halos w/ x_off        <=%.2lf\n",        i_column++,XOFF_RELAXED);
       fprintf(fp_out,"#        (%02d): No. of halos w/ f_sub        <=%.1lf\n",        i_column++,FSUB_RELAXED);
       if(params->flag_calc_Vir)
-         fprintf(fp_out,"#        (%02d): No. of halos w/ Virial Ratio <=%.1lf\n",        i_column++,FSUB_RELAXED);
+         fprintf(fp_out,"#        (%02d): No. of halos w/ Virial Ratio <=%.1lf\n",        i_column++,VIR_RELAXED);
       fprintf(fp_out,"#        (%02d): No. of halos meeting all relaxation criteria\n",i_column++);
       if(params->flag_calc_Vir)
          for(int i_z=0;i_z<n_z;i_z++)
@@ -289,18 +289,18 @@ int main(int argc, char *argv[]){
   SID_init(&argc,&argv,NULL,NULL);
 
   // Fetch user inputs
-  char filename_SSimPL_dir[MAX_FILENAME_LENGTH];
+  char filename_SSimPL_root[MAX_FILENAME_LENGTH];
   char filename_halo_version_root[MAX_FILENAME_LENGTH];
   char filename_trees_name[MAX_FILENAME_LENGTH];
-  char filename_NFW_root[MAX_FILENAME_LENGTH];
+  char filename_data_root[MAX_FILENAME_LENGTH];
   char filename_output_root[MAX_FILENAME_LENGTH];
   int i_arg       =1;
   int flag_calc_Vir=TRUE;
-  strcpy(filename_SSimPL_dir,       argv[i_arg++]);
+  strcpy(filename_SSimPL_root,       argv[i_arg++]);
   strcpy(filename_halo_version_root,argv[i_arg++]);
   strcpy(filename_trees_name,       argv[i_arg++]);
   if(argc==8)
-     strcpy(filename_NFW_root,      argv[i_arg++]);
+     strcpy(filename_data_root,      argv[i_arg++]);
   else
      flag_calc_Vir=FALSE;
   strcpy(filename_output_root,      argv[i_arg++]);
@@ -310,14 +310,14 @@ int main(int argc, char *argv[]){
   // Set the halo and tree filename roots
   char filename_trees_root[MAX_FILENAME_LENGTH];
   char filename_halos_root[MAX_FILENAME_LENGTH];
-  sprintf(filename_trees_root,"%s/trees/%s",filename_SSimPL_dir,filename_trees_name);
-  sprintf(filename_halos_root,"%s/halos/%s",filename_SSimPL_dir,filename_halo_version_root);
+  sprintf(filename_trees_root,"%s/trees/%s",filename_SSimPL_root,filename_trees_name);
+  sprintf(filename_halos_root,"%s/halos/%s",filename_SSimPL_root,filename_halo_version_root);
 
   SID_log("Generating treenode markers & analysis of merger trees...",SID_LOG_OPEN|SID_LOG_TIMER);
 
   // Perform analysis
   tree_info *trees;
-  read_trees(filename_SSimPL_dir,
+  read_trees(filename_SSimPL_root,
              filename_halo_version_root,
              filename_trees_name,
              TREE_MODE_DEFAULT,
@@ -325,12 +325,19 @@ int main(int argc, char *argv[]){
 
   // Read catalogs
   read_trees_catalogs(trees,
-                      filename_SSimPL_dir,
+                      filename_SSimPL_root,
                       filename_halo_version_root,
                       READ_TREES_CATALOGS_BOTH);
 
   // Read NFW concentrations (if given)
   if(flag_calc_Vir){
+     // Set the filename root
+     char filename_sim_root[MAX_FILENAME_LENGTH];
+     strcpy(filename_sim_root,filename_SSimPL_root);
+     strip_path(filename_sim_root);
+     char filename_NFW_root[MAX_FILENAME_LENGTH];
+     sprintf(filename_NFW_root,"%s/NFW_concentrations_%s",filename_data_root,filename_sim_root);
+
      read_trees_data(trees,
                      filename_NFW_root,
                      READ_TREES_DATA_SUBGROUPS,
