@@ -78,7 +78,6 @@ int main(int argc, char *argv[]){
   fprintf(fp_out,"# Column (%02d): log(M)     [h^-1 M_sol]  \n",i_column++);
   fprintf(fp_out,"#        (%02d): sigma(M)                 \n",i_column++);
   fprintf(fp_out,"#        (%02d): dn/dlog(M) [h^3 Mpc^{-3}]\n",i_column++);
-  fprintf(fp_out,"#        (%02d): dn/dlog(M) [h^3 Mpc^{-3}]\n",i_column++);
   fprintf(fp_out,"#        (%02d): n(>M)      [h^3 Mpc^{-3}]\n",i_column++);
 
   // Create the mass function
@@ -98,9 +97,10 @@ int main(int argc, char *argv[]){
         log_M=log_M_max;
      else
         log_M=log_M_min+(((double)(i_bin))/((double)(n_M_bins-1)))*(log_M_max-log_M_min);
-     fprintf(fp_out,"%le %le %le %le\n",log_M,sqrt(power_spectrum_variance(k_of_M(mass_factor*take_alog10(log_M),cosmo),redshift,&cosmo,PSPEC_LINEAR_TF,PSPEC_ALL_MATTER)),
-                                    MFctn_factor* mass_function           (mass_factor*take_alog10(log_M),redshift,&cosmo,select_flag),
-                                    cMFctn_factor*mass_function_cumulative(mass_factor*take_alog10(log_M),redshift,&cosmo,select_flag));
+     fprintf(fp_out,"%le %le %le %le\n",log_M,
+                                        sqrt(power_spectrum_variance(k_of_M(mass_factor*take_alog10(log_M),cosmo),redshift,&cosmo,PSPEC_LINEAR_TF,PSPEC_ALL_MATTER)),
+                                        MFctn_factor* mass_function           (mass_factor*take_alog10(log_M),redshift,&cosmo,select_flag),
+                                        cMFctn_factor*mass_function_cumulative(mass_factor*take_alog10(log_M),redshift,&cosmo,select_flag));
      SID_check_pcounter(&pcounter,i_bin);
   }
   fclose(fp_out);
