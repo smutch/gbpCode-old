@@ -133,24 +133,25 @@ int main(int argc, char *argv[]){
    fprintf(fp_out,"#        (11): +/- Cumulative MFn\n");
    fprintf(fp_out,"#        (12): Sheth & Tormen Cumulative MFn\n");
    fprintf(fp_out,"#        (13): Watson Cumulative MFn\n");
-   double inv_h3=pow(h_Hubble,-3.);
+   double M_sol_inv_h=M_SOL/h_Hubble;
+   double Mpc_inv_h  =M_PER_MPC/h_Hubble;
    for(int i=0;i<n_bins;i++){
-     double dn_dlogM_theory_1=mass_function(take_alog10(bin_median[i])*M_SOL/h_Hubble,
+     double dn_dlogM_theory_1=mass_function(take_alog10(bin_median[i])*M_sol_inv_h,
                                             redshift,
                                             &cosmo,
-                                            MF_ST)*pow(M_PER_MPC,3.0)*inv_h3;
-     double n_theory_1=mass_function_cumulative(take_alog10(bin[i])*M_SOL/h_Hubble,
+                                            MF_ST)*pow(Mpc_inv_h,3.0);
+     double n_theory_1=mass_function_cumulative(take_alog10(bin[i])*M_sol_inv_h,
                                                 redshift,
                                                 &cosmo,
-                                                MF_ST)*pow(M_PER_MPC,3.0)*inv_h3;
-     double dn_dlogM_theory_2=mass_function(take_alog10(bin_median[i])*M_SOL/h_Hubble,
+                                                MF_ST)*pow(Mpc_inv_h,3.0);
+     double dn_dlogM_theory_2=mass_function(take_alog10(bin_median[i])*M_sol_inv_h,
                                             redshift,
                                             &cosmo,
-                                            MF_WATSON)*pow(M_PER_MPC,3.0)*inv_h3;
-     double n_theory_2=mass_function_cumulative(take_alog10(bin[i])*M_SOL/h_Hubble,
+                                            MF_WATSON)*pow(Mpc_inv_h,3.0);
+     double n_theory_2=mass_function_cumulative(take_alog10(bin[i])*M_sol_inv_h,
                                                 redshift,
                                                 &cosmo,
-                                                MF_WATSON)*pow(M_PER_MPC,3.0)*inv_h3;
+                                                MF_WATSON)*pow(Mpc_inv_h,3.0);
      // Compute cumulative histogram
      int cumulative_hist=0;
      for(int j_bin=i;j_bin<n_bins;j_bin++)
