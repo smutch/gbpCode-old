@@ -20,8 +20,8 @@ void read_image(image_info *image,const char *filename_dir,const char *filename_
   fclose(fp);
 
   // To Do: Add .png image read here
-  sprintf(filename,"%s/%s.png",filename_dir,filename_root);
-  fp=fopen(filename,"r");
-  fclose(fp);
+  //sprintf(filename,"%s/%s.png",filename_dir,filename_root);
+  //fp=fopen(filename,"r");
+  //fclose(fp);
 
 }

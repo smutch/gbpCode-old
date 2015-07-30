@@ -18,6 +18,8 @@ int set_render_state(render_info *render,int frame,int mode){
   int               i_snap,j_snap,snap_best;
   double            snap_diff,snap_diff_best;
 
+  (render->mode)=mode;
+
   if(!render->sealed)
     seal_render(render);
 
@@ -58,7 +60,7 @@ int set_render_state(render_info *render,int frame,int mode){
                             pow(perspective->p_o[2]-perspective->p_c[2],2));
 
   // Perform snapshot and smooth-file reading
-  if(!check_mode_for_flag(mode,SET_RENDER_RESCALE)){
+  if(!check_mode_for_flag(render->mode,SET_RENDER_RESCALE)){
     int *snap_list;
     snap_list=(int *)SID_malloc(sizeof(int)*render->n_interpolate);
     // Determine which snapshot(s) to use

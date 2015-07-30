@@ -230,6 +230,7 @@ struct process_halo_info{
 
 typedef struct render_info render_info;
 struct render_info{
+  int             mode;
   double         *kernel_radius;
   double         *kernel_table;
   double         *kernel_table_3d;
@@ -293,6 +294,7 @@ void seal_render(render_info *render);
 int  set_render_state(render_info *render,int frame,int mode);
 void parse_render_file(render_info **render, char *filename);
 void write_frame(render_info *render,int frame,int mode);
+void write_path_file(render_info *render,int frame);
 void read_frame(render_info *render,int frame);
 void set_frame(camera_info *camera);
 void set_render_scale(render_info *render,double RGB_min,double RGB_max,double Y_min,double Y_max,double Z_min,double Z_max);

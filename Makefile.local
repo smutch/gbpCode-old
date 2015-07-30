@@ -30,6 +30,7 @@ OBJFILES  = close_movie.o               \
 	        parse_render_file.o         \
 	        read_frame.o                \
 	        write_frame.o               \
+	        write_path_file.o           \
 	        set_frame.o                 \
             set_render_scale.o          \
             set_sph_kernel.o            \
@@ -46,6 +47,7 @@ OBJFILES  = close_movie.o               \
 	        set_image_RGBY_3CHANNEL.o   \
             write_image.o               \
             write_image_to_movie.o
+DATAFILES = rgb.txt
 LIBFILE   = libgbpRender.a
 BINFILES  = make_colour_bar render
 SCRIPTS   = make_movie

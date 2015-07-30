@@ -26,9 +26,13 @@ void write_frame(render_info *render,int frame,int mode){
   mkdir(render->filename_out_dir,02755);
   mkdir(filename_out_dir_raw,    02755);
 
-  // Write mono-images
   set_frame(render->camera);
 
+  // Write a set of files describing the details of the rendering
+  if(!check_mode_for_flag(render->mode,SET_RENDER_RESCALE))
+     write_path_file(render,frame);
+
+  // Write mono-images
   for(int i_set=0;i_set<3;i_set++){
      // Set image set filesnames
      image_info *image_RGB          =NULL;

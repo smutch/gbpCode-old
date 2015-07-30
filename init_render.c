@@ -24,6 +24,7 @@ void init_render(render_info **render){
   (*render)->first_scene=(*render)->scenes;
   (*render)->last_scene =(*render)->scenes;
 
+  (*render)->mode               = SET_RENDER_DEFAULT;
   (*render)->n_frames           = 0;
   (*render)->n_interpolate      = 1;
   (*render)->n_snap_a_list      = 0;

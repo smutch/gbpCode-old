@@ -1097,7 +1097,7 @@ void init_make_map_noabs(render_info *render,
          n_particles_species=((size_t *)ADaPS_fetch(render->plist_list[0]->data,"n_%s",render->plist_list[0]->species[i_type]))[0];
          for(i_particle=rank_to,k_particle=j_particle+rank_to;i_particle<n_particles_species;i_particle+=SID.n_proc,k_particle+=SID.n_proc){
             if(check_if_particle_marked(mark,i_type,i_particle,&c_i)){
-               // Set the preoperties of the particle to be mapped 
+               // Set the properties of the particle to be mapped 
                set_particle_map_quantities(render,&mq,TRUE,k_particle,box_size_float,half_box,&x_i,&y_i,&z_i,&h_i,&v_i,&w_i);
    
                // Transform particle to render-coordinates
