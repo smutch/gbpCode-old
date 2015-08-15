@@ -30,18 +30,14 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
    tree_horizontal_extended_info            *groups_extended;
    tree_horizontal_extended_info            *subgroups_extended;
    tree_horizontal_extended_info           **subgroups_extended_all;
-   tree_horizontal_ghost_group_info     *groups_ghost;
-   tree_horizontal_ghost_subgroup_info  *subgroups_ghost;
-   tree_horizontal_ghost_subgroup_info **subgroups_ghost_all;
-   int flag_read_extended;
-   int flag_store_extended;
-   int flag_store_ghosts;
-   flag_read_extended=check_mode_for_flag(mode,TREE_HORIZONTAL_READ_EXTENDED);
    if(check_mode_for_flag(mode,TREE_HORIZONTAL_STORE_EXTENDED) &&
       check_mode_for_flag(mode,TREE_HORIZONTAL_STORE_GHOSTS))
       SID_trap_error("Too many storage modes chosen in read_trees_horizontal.",ERROR_LOGIC);
-   flag_store_extended=check_mode_for_flag(mode,TREE_HORIZONTAL_STORE_EXTENDED);
-   flag_store_ghosts  =check_mode_for_flag(mode,TREE_HORIZONTAL_STORE_GHOSTS);
+   int flag_read_extended =check_mode_for_flag(mode,TREE_HORIZONTAL_READ_EXTENDED);
+   int flag_store_extended=check_mode_for_flag(mode,TREE_HORIZONTAL_STORE_EXTENDED);
+   int flag_store_ghosts  =check_mode_for_flag(mode,TREE_HORIZONTAL_STORE_GHOSTS);
+   if(flag_store_ghosts)
+      SID_trap_error("Ghost processing not supported in read_trees_horizontal().",ERROR_LOGIC);
 
    // Set filename and open file
    strcpy(filename_output_file_root,filename_output_dir);
@@ -72,11 +68,6 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
       subgroups_extended    =(tree_horizontal_extended_info  *)subgroups_in[i_file%n_wrap];
       subgroups_extended_all=(tree_horizontal_extended_info **)subgroups_in;
    }
-   if(flag_store_ghosts){
-      groups_ghost       =(tree_horizontal_ghost_group_info     *)groups_in[i_file%n_wrap];
-      subgroups_ghost    =(tree_horizontal_ghost_subgroup_info  *)subgroups_in[i_file%n_wrap];
-      subgroups_ghost_all=(tree_horizontal_ghost_subgroup_info **)subgroups_in;
-   }
 
    // Perform read
    int i_group;
@@ -106,24 +97,6 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
          groups_extended[i_group].tree_id      =group_tree_id;
          groups_extended[i_group].file_offset  =group_file_offset;
          groups_extended[i_group].index        =group_index;
-      }
-      if(flag_store_ghosts){
-         groups_ghost[i_group].halo_index        =i_group;
-         groups_ghost[i_group].id                =group_id;
-         groups_ghost[i_group].type              =group_type;
-         groups_ghost[i_group].descendant_id     =group_descendant_id;
-         groups_ghost[i_group].tree_id           =group_tree_id;
-         groups_ghost[i_group].file_offset       =group_file_offset;
-         groups_ghost[i_group].file_index        =group_index;
-         groups_ghost[i_group].n_subgroups       =0;
-         groups_ghost[i_group].interp.file_start =0;
-         groups_ghost[i_group].interp.index_start=0;
-         groups_ghost[i_group].interp.file_stop  =0;
-         groups_ghost[i_group].interp.index_stop =0;
-         groups_ghost[i_group].interp.time_start =0.;
-         groups_ghost[i_group].interp.time_stop  =0.;
-         groups_ghost[i_group].first_substructure=NULL;
-         groups_ghost[i_group].last_substructure =NULL;
       }
       if(flag_read_extended){
          int   group_n_particles;
@@ -188,36 +161,6 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
             subgroups_extended[i_subgroup].file_offset  =subgroup_file_offset;
             subgroups_extended[i_subgroup].index        =subgroup_index;
          }
-         if(flag_store_ghosts){
-            subgroups_ghost[i_subgroup].halo_index        =i_subgroup;
-            subgroups_ghost[i_subgroup].id                =subgroup_id;
-            subgroups_ghost[i_subgroup].type              =subgroup_type;
-            subgroups_ghost[i_subgroup].descendant_id     =subgroup_descendant_id;
-            subgroups_ghost[i_subgroup].tree_id           =subgroup_tree_id;
-            subgroups_ghost[i_subgroup].file_offset       =subgroup_file_offset;
-            subgroups_ghost[i_subgroup].file_index        =subgroup_index;
-            subgroups_ghost[i_subgroup].interp.file_start =0;
-            subgroups_ghost[i_subgroup].interp.index_start=0;
-            subgroups_ghost[i_subgroup].interp.file_stop  =0;
-            subgroups_ghost[i_subgroup].interp.index_stop =0;
-            subgroups_ghost[i_subgroup].interp.time_start =0.;
-            subgroups_ghost[i_subgroup].interp.time_stop  =0.;
-            subgroups_ghost[i_subgroup].descendant        =NULL;
-            subgroups_ghost[i_subgroup].next_substructure =NULL;
-
-            // Add this substructure to it's group's link list of substructures.  This
-            //   list is used to keep track of ghost halos and is needed when the trees
-            //   are written for computing halo indices.  For subgroups that will form
-            //   the base of a chain of ghosts, the descendant pointer will have to be set later.
-            if(subgroup_file_offset==1 && subgroup_index>=0)
-               add_substructure_to_horizontal_tree_group(&(groups_ghost[i_group]),
-                                                         &(subgroups_ghost_all[(i_file+subgroup_file_offset)%n_wrap][subgroup_index]),
-                                                         &(subgroups_ghost[i_subgroup]));
-            else
-               add_substructure_to_horizontal_tree_group(&(groups_ghost[i_group]),
-                                                         NULL,
-                                                         &(subgroups_ghost[i_subgroup]));
-         }
          if(flag_read_extended){
             int   subgroup_n_particles;
             int   subgroup_n_particles_parent;
@@ -254,13 +197,11 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
          }
       }
    }
-   for(;i_group<n_groups_max_in;i_group++){
-      if(flag_store_extended)    groups_extended[i_group].type=TREE_CASE_INVALID;
-      else if(flag_store_ghosts) groups_ghost[i_group].type   =TREE_CASE_INVALID;
-   }
-   for(;i_subgroup<n_subgroups_max_in;i_subgroup++){
-      if(flag_store_extended)    subgroups_extended[i_subgroup].type=TREE_CASE_INVALID;
-      else if(flag_store_ghosts) subgroups_ghost[i_subgroup].type   =TREE_CASE_INVALID;
+   if(flag_store_extended){
+      for(;i_group<n_groups_max_in;i_group++)
+         groups_extended[i_group].type=TREE_CASE_INVALID;
+      for(;i_subgroup<n_subgroups_max_in;i_subgroup++)
+         subgroups_extended[i_subgroup].type=TREE_CASE_INVALID;
    }
    SID_fclose(&fp_in);
    SID_log("Done.",SID_LOG_CLOSE);

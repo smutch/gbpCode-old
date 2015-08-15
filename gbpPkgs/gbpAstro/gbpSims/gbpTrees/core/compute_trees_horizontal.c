@@ -533,31 +533,6 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                                          cosmo,
                                          filename_output_dir);
 
-  // Compute ghost-populated trees if we're asked to
-  if(flag_compute_ghosts)
-     compute_trees_horizontal_ghosts(n_groups,
-                                     n_subgroups,
-                                     n_subgroups_group,
-                                     i_read_start,
-                                     i_file_start,
-                                     i_write_last,
-                                     j_write_last,
-                                     l_write_last,
-                                     i_read_stop,
-                                     i_read_step,
-                                     max_tree_id_subgroup,
-                                     max_tree_id_group,
-                                     n_subgroups_max,
-                                     n_groups_max,
-                                     n_search,
-                                     n_files,
-                                     n_wrap,
-                                     n_k_match,
-                                     a_list,
-                                     cosmo,
-                                     filename_cat_root_in,
-                                     filename_output_dir);
-
   // If extended horizontal tree files were written for fragmented
   //    halo propagation or ghost tree construction, remove them.
   if(flag_compute_ghosts || flag_compute_fragmented){

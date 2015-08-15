@@ -30,11 +30,10 @@
 
 // If any of these are changed, don't forget to modify parse_match_type.c (TTTPXX means "two-to-the-power-XX")
 #define TREE_CASE_NO_PROGENITORS                TTTP00  // Set for halos that have no progenitors.
-#define TREE_CASE_MAIN_PROGENITOR               TTTP01  // Set for the progenitor with the highest match score. (propagated for ghosts)
+#define TREE_CASE_MAIN_PROGENITOR               TTTP01  // Set for the progenitor with the highest match score. 
 #define TREE_CASE_STRAYED                       TTTP02  // Set for halos for which a descendant was not found
 #define TREE_CASE_REMNANT                       TTTP03  // Set for halos with more than one progenitor.
 #define TREE_CASE_MERGER                        TTTP04  // Set when new IDs are created (ie. last point the halo was seen).
-                                                        //    Set only for the last ghost in ghost-populated trees for mergers w/ offset>1.
 #define TREE_CASE_DROPPED                       TTTP05  // Set if file_offset>1 and TREE_CASE_MATCHED_TO_BRIDGE is not set
 #define TREE_CASE_BRIDGED                       TTTP06  // Set for halos with multiple unique back-matches from halos with unique IDs
 #define TREE_CASE_EMERGED                       TTTP07  // Set when a match is made identifying this halo as emerged
@@ -42,12 +41,12 @@
                                                         //    (unless it's the backmatch with the most massive descendant; that halo is considered
                                                         //     to be the source of any fragmented halos)
 #define TREE_CASE_FRAGMENTED_STRAYED            TTTP09  // Set for halos that are marked TREE_CASE_FRAGMENTED (see below), and whose 
-                                                        //    decendant_id!=a valid id (ie they are not a progenitor of anything). (propagated for ghosts)
+                                                        //    decendant_id!=a valid id (ie they are not a progenitor of anything). 
 #define TREE_CASE_FRAGMENTED_RETURNED           TTTP10  // Set for halos that are marked TREE_CASE_FRAGMENTED (see below), and whose 
-                                                        //    decendant_id==the id of the halo they are emerged from. (propagated for ghosts)
+                                                        //    decendant_id==the id of the halo they are emerged from. 
 #define TREE_CASE_FRAGMENTED_EXCHANGED          TTTP11  // Set for halos that are marked TREE_CASE_FRAGMENTED (see below), and whose 
                                                         //    decendant_id!=the id of the halo they are emerged but is nevertheless valid 
-                                                        //    (ie. they are still a progenitor of something). (propagated for ghosts)
+                                                        //    (ie. they are still a progenitor of something). 
 #define TREE_CASE_EMERGED_CANDIDATE             TTTP12  // Set when a halo is identified as a unique back-match to a halo marked TREE_CASE_BRIDGED 
                                                         //    and is not identified as the BRIDGE's main descendant
 #define TREE_CASE_MATCHED_TO_EMERGED            TTTP13  // Set when a halo is matched to an emerged halo
@@ -235,45 +234,6 @@ struct tree_horizontal_extended_info{
   int          index_bridge;       // Index of any bridge this halo may be back-matched to
   int          id_bridge;          // ID of any bridge this halo may be back-matched to
   int          index;              // This halo's index in the halo catalog
-};
-
-typedef struct tree_horizontal_ghost_interp_info tree_horizontal_ghost_interp_info;
-struct tree_horizontal_ghost_interp_info{
-  int    file_start;
-  int    index_start;
-  int    file_stop;
-  int    index_stop;
-  double time_start;
-  double time_stop;
-};
-
-typedef struct tree_horizontal_ghost_subgroup_info tree_horizontal_ghost_subgroup_info;
-struct tree_horizontal_ghost_subgroup_info{
-  int          halo_index;                                // This halo's file index (populated after all the ghosts are added)
-  int          id;                                        // This halo's id
-  int          type;                                      // A bit-wise switch characterising this halo's matching
-  int          descendant_id;                             // This halo's main progenitor id
-  int          tree_id;                                   // This halo's tree id
-  int          file_offset;                               // This halo's descendant file offset (pre-ghost-populating)
-  int          file_index;                                // This halo's descendant index
-  tree_horizontal_ghost_interp_info    interp;
-  tree_horizontal_ghost_subgroup_info *descendant;        // Used to figure out 'file_index' once ghosts have been created for the next snap
-  tree_horizontal_ghost_subgroup_info *next_substructure; // Used for substructure linked lists
-};
-
-typedef struct tree_horizontal_ghost_group_info tree_horizontal_ghost_group_info;
-struct tree_horizontal_ghost_group_info{
-  int          halo_index;                                 // This halo's file index (populated after all the ghosts are added)
-  int          id;                                         // This halo's id
-  int          type;                                       // A bit-wise switch characterising this halo's matching
-  int          descendant_id;                              // This halo's main progenitor id
-  int          tree_id;                                    // This halo's tree id
-  int          file_offset;                                // This halo's descendant file offset (pre-ghost-populating)
-  int          file_index;                                 // This halo's descendant index
-  int          n_subgroups;                                // Number of substructures in this group
-  tree_horizontal_ghost_interp_info    interp;
-  tree_horizontal_ghost_subgroup_info *first_substructure; // Used for substructure linked lists
-  tree_horizontal_ghost_subgroup_info *last_substructure;  // Used for substructure linked lists
 };
 
 // Data structures for vertical tree construction
@@ -578,28 +538,6 @@ void compute_trees_horizontal_fragmented(int         *n_groups,
                                          double      *a_list,
                                          cosmo_info **cosmo,
                                          char        *filename_output_dir);
-void compute_trees_horizontal_ghosts(int         *n_groups,
-                                     int         *n_subgroups,
-                                     int        **n_subgroups_group,
-                                     int          i_read_start,
-                                     int          i_file_start,
-                                     int          i_write_last,
-                                     int          j_write_last,
-                                     int          l_write_last,
-                                     int          i_read_stop,
-                                     int          i_read_step,
-                                     int          max_tree_id_subgroup,
-                                     int          max_tree_id_group,
-                                     int          n_subgroups_max,
-                                     int          n_groups_max,
-                                     int          n_search,
-                                     int          n_files,
-                                     int          n_wrap,
-                                     int          n_k_match,
-                                     double      *a_list,
-                                     cosmo_info **cosmo,
-                                     char        *filename_cat_root_in,
-                                     char        *filename_output_dir);
 
 int   set_match_id         (match_info *match);
 int   set_match_file       (match_info *match);
@@ -831,53 +769,6 @@ void add_progenitor_to_halo(tree_horizontal_info **halos,
                             float                  score,
                             int                   *max_id,
                             int                    n_wrap);
-void process_ghosts(tree_horizontal_ghost_group_info    **groups,
-                    tree_horizontal_ghost_subgroup_info **subgroups,
-                    int        *n_groups,
-                    int        *n_subgroups,
-                    int       **n_subgroups_group,
-                    int        *n_group_ghosts,
-                    int        *n_subgroup_ghosts,
-                    int        *n_group_ghosts_used,
-                    int        *n_subgroup_ghosts_used,
-                    int         i_read,
-                    int         l_read,
-                    int         j_file,
-                    int         i_file_start,
-                    int         n_search,
-                    int         n_wrap,
-                    int         n_files,
-                    double     *a_list,
-                    cosmo_info **cosmo);
-void add_substructure_to_horizontal_tree_group(tree_horizontal_ghost_group_info    *group,
-                                               tree_horizontal_ghost_subgroup_info *subgroup_descendant,
-                                               tree_horizontal_ghost_subgroup_info *subgroup);
-void read_catalog_ghost_interpolation(tree_horizontal_ghost_group_info     *groups,
-                                      halo_properties_info                **group_properties,
-                                      int                                   n_groups,
-                                      tree_horizontal_ghost_subgroup_info  *subgroups,
-                                      halo_properties_info                **subgroup_properties,
-                                      int                                   n_subgroups,
-                                      char                                 *filename_cat_root_in,
-                                      int                                   i_read,
-                                      int                                   j_read,
-                                      int                                   n_wrap);
-void write_ghost_catalog(tree_horizontal_ghost_group_info      *groups,
-                         halo_properties_info                ***group_properties,
-                         int                                    n_group_ghosts,
-                         int                                    n_groups,
-                         tree_horizontal_ghost_subgroup_info   *subgroups,
-                         halo_properties_info                ***subgroup_properties,
-                         int                                    n_subgroup_ghosts,
-                         int                                    n_subgroups,
-                         char                                  *filename_output_dir,
-                         char                                  *filename_cat,
-                         int                                    i_read,
-                         int                                    j_read,
-                         int                                    l_read,
-                         int                                    n_wrap,
-                         double                                *a_list,
-                         cosmo_info                           **cosmo);
 void compute_trees_horizontal(char   *filename_halos_root_in,
                               char   *filename_cat_root_in,
                               char   *filename_snap_list_in,
