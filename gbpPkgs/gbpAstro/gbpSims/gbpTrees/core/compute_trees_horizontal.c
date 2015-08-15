@@ -509,29 +509,34 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
   SID_free(SID_FARG n_particles_subgroups);
   SID_log("Done.",SID_LOG_CLOSE);
 
+  // Any information that needs to be communicated up the trees from the
+  //    roots will be done here.  This includes any information needed
+  //    for tracking mergers and fragmented halos.
+  // Because fragmented halos might persist longer than the search interval, we have to
+  //    walk the trees forward in time to propagate the TREE_CASE_FRAGMENTED_* flags.
   // At this point, fragmented halos are only labeled when they appear.
   //    This will propagate the fragmented halo flags forward in time.
-  if(flag_compute_fragmented)
-     compute_trees_horizontal_fragmented(n_groups,
-                                         n_subgroups,
-                                         n_subgroups_group,
-                                         i_file_start,
-                                         i_write_last,
-                                         j_write_last,
-                                         l_write_last,
-                                         i_read_stop,
-                                         i_read_step,
-                                         max_tree_id_subgroup,
-                                         max_tree_id_group,
-                                         n_subgroups_max,
-                                         n_groups_max,
-                                         n_search,
-                                         n_files,
-                                         n_wrap,
-                                         n_k_match,
-                                         a_list,
-                                         cosmo,
-                                         filename_output_dir);
+  propagate_progenitor_information(n_groups,
+                                   n_subgroups,
+                                   n_subgroups_group,
+                                   i_file_start,
+                                   i_write_last,
+                                   j_write_last,
+                                   l_write_last,
+                                   i_read_stop,
+                                   i_read_step,
+                                   max_tree_id_subgroup,
+                                   max_tree_id_group,
+                                   n_subgroups_max,
+                                   n_groups_max,
+                                   n_search,
+                                   n_files,
+                                   n_wrap,
+                                   n_k_match,
+                                   a_list,
+                                   cosmo,
+                                   filename_output_dir,
+                                   flag_compute_fragmented);
 
   // If extended horizontal tree files were written for fragmented
   //    halo propagation or ghost tree construction, remove them.

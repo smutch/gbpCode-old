@@ -3,28 +3,32 @@
 #include <gbpHalos.h>
 #include <gbpTrees_build.h>
 
-void compute_trees_horizontal_fragmented(int         *n_groups,
-                                         int         *n_subgroups,
-                                         int        **n_subgroups_group,
-                                         int          i_file_start,
-                                         int          i_write_last,
-                                         int          j_write_last,
-                                         int          l_write_last,
-                                         int          i_read_stop,
-                                         int          i_read_step,
-                                         int          max_tree_id_subgroup,
-                                         int          max_tree_id_group,
-                                         int          n_subgroups_max,
-                                         int          n_groups_max,
-                                         int          n_search,
-                                         int          n_files,
-                                         int          n_wrap,
-                                         int          n_k_match,
-                                         double      *a_list,
-                                         cosmo_info **cosmo,
-                                         char        *filename_output_dir){
+void propagate_progenitor_information(int         *n_groups,
+                                      int         *n_subgroups,
+                                      int        **n_subgroups_group,
+                                      int          i_file_start,
+                                      int          i_write_last,
+                                      int          j_write_last,
+                                      int          l_write_last,
+                                      int          i_read_stop,
+                                      int          i_read_step,
+                                      int          max_tree_id_subgroup,
+                                      int          max_tree_id_group,
+                                      int          n_subgroups_max,
+                                      int          n_groups_max,
+                                      int          n_search,
+                                      int          n_files,
+                                      int          n_wrap,
+                                      int          n_k_match,
+                                      double      *a_list,
+                                      cosmo_info **cosmo,
+                                      char        *filename_output_dir,
+                                      int          flag_compute_fragmented){
 
-  // Allocate new data structures for propagating the fragmented halos
+  SID_log("Propagating progenitor information...",SID_LOG_OPEN|SID_LOG_TIMER);
+  SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
+
+  // Allocate new data structures for propagating information
   int i_search;
   tree_horizontal_extended_info **subgroups_read;
   tree_horizontal_extended_info **groups_read;
@@ -34,13 +38,6 @@ void compute_trees_horizontal_fragmented(int         *n_groups,
      subgroups_read[i_search]=(tree_horizontal_extended_info *)SID_calloc(sizeof(tree_horizontal_extended_info)*n_subgroups_max);
      groups_read[i_search]   =(tree_horizontal_extended_info *)SID_calloc(sizeof(tree_horizontal_extended_info)*n_groups_max);
   }
-
-  // Because fragmented halos might persist longer than the search interval, we have to
-  //    walk the trees forward in time to propagate the TREE_CASE_FRAGMENTED_* flags.
-  //    We will also change other flags (such as TREE_CASE_MERGER) as well.  This
-  //    will require a rewrite of the horizontal tree files and of the log files.
-  SID_log("Propagating fragmented halo information forward...",SID_LOG_OPEN|SID_LOG_TIMER);
-  SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
 
   // Loop over all the used snapshots (first set write counters to last-used values)
   int i_read;
@@ -85,14 +82,15 @@ void compute_trees_horizontal_fragmented(int         *n_groups,
 
      // Write updated tree files
      if(j_file>n_search){
-        propagate_fragmented_halos(groups_read,   n_groups,
-                                   subgroups_read,n_subgroups,
-                                   n_subgroups_group,
-                                   i_write, // tree index
-                                   j_write, // actual snapshot number
-                                   l_write,
-                                   i_read_step,
-                                   n_wrap);
+        if(flag_compute_fragmented)
+           propagate_fragmented_halos(groups_read,   n_groups,
+                                      subgroups_read,n_subgroups,
+                                      n_subgroups_group,
+                                      i_write, // tree index
+                                      j_write, // actual snapshot number
+                                      l_write,
+                                      i_read_step,
+                                      n_wrap);
         write_trees_horizontal((void **)groups_read,
                                (void **)subgroups_read,
                                n_groups[l_write],   n_groups_max,   
