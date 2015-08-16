@@ -26,7 +26,6 @@ void write_trees_horizontal_log_file(char *filename_log,int l_write,int j_write,
          fprintf(fp,"# (%02d): # of strayed       %sgroups\n",              i_column++,group_text_prefix);
          fprintf(fp,"# (%02d): # of dropped       %sgroups\n",              i_column++,group_text_prefix);
          fprintf(fp,"# (%02d): # of bridged       %sgroups\n",              i_column++,group_text_prefix);
-         fprintf(fp,"# (%02d): # of matches to    %sgroup  bridges\n",      i_column++,group_text_prefix);
          fprintf(fp,"# (%02d): # of emerged       %sgroups\n",              i_column++,group_text_prefix);
          fprintf(fp,"# (%02d): # of fragmented    %sgroups strayed\n",      i_column++,group_text_prefix);
          fprintf(fp,"# (%02d): # of fragmented    %sgroups returned\n",     i_column++,group_text_prefix);
@@ -43,7 +42,6 @@ void write_trees_horizontal_log_file(char *filename_log,int l_write,int j_write,
       }
       fclose(fp);
    }
-
    switch(i_k_match){
       case 0:
       sprintf(group_text_prefix,"sub");
@@ -52,7 +50,6 @@ void write_trees_horizontal_log_file(char *filename_log,int l_write,int j_write,
       sprintf(group_text_prefix,"");
       break;
    }
-
    fp=fopen(filename_log,"a");
    if(i_k_match==0){
       if(l_write>0)

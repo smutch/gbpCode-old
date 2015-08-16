@@ -33,7 +33,7 @@ void init_trees_horizontal_snapshot(tree_horizontal_info *halos_i,int n_halos_i,
       halos_i[i_halo].bridge_backmatch.flag_two_way =FALSE;
       SID_free(SID_FARG halos_i[i_halo].back_matches);
       if(i_halo<n_halos_i)
-         halos_i[i_halo].type=TREE_CASE_UNPROCESSED|TREE_CASE_NO_PROGENITORS;
+         halos_i[i_halo].type=TREE_CASE_UNPROCESSED|TREE_CASE_MAIN_PROGENITOR|TREE_CASE_NO_PROGENITORS;
       else
          halos_i[i_halo].type=TREE_CASE_INVALID;
       halos_i[i_halo].id                =-1;

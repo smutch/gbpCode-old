@@ -33,6 +33,7 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    check_validity_of_main_progenitor.o           \
 	    check_if_halo_is_descendant.o                 \
 	    check_if_descendant_is_back_matched.o         \
+	    check_validity_of_tree_case_flag.o            \
 	    init_trees_data.o                             \
 	    free_trees_data.o                             \
 	    change_horizontal_ID_recursive.o              \
@@ -89,8 +90,10 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    write_trees_horizontal_log_file.o             \
 	    write_trees_horizontal_report.o               \
 	    write_trees_horizontal.o                      \
-	    propagate_progenitor_information.o            \
-	    propagate_fragmented_halos.o                  \
+	    propagate_progenitor_info.o                   \
+	    propagate_bridge_info.o                       \
+	    propagate_fragmented_info.o                   \
+	    propagate_merger_info.o                       \
 	    add_progenitor_to_halo.o                      \
 	    assign_group_subgroup_order_vertical.o 
 LIBFILE   = 

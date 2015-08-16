@@ -87,7 +87,7 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
       SID_fread_all(&group_tree_id,       sizeof(int),1,&fp_in);
       SID_fread_all(&group_file_offset,   sizeof(int),1,&fp_in);
       SID_fread_all(&group_index,         sizeof(int),1,&fp_in);
-      if(group_type<=0) 
+      if(!check_validity_of_tree_case_flag(group_type)) 
          SID_trap_error("Invalid match type (%d) for i_group=%d",ERROR_LOGIC,
                         group_type,i_group);
       if(flag_store_extended){
@@ -150,7 +150,7 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
          SID_fread_all(&subgroup_tree_id,      sizeof(int),1,&fp_in);
          SID_fread_all(&subgroup_file_offset,  sizeof(int),1,&fp_in);
          SID_fread_all(&subgroup_index,        sizeof(int),1,&fp_in);
-         if(subgroup_type<=0) 
+         if(!check_validity_of_tree_case_flag(subgroup_type)) 
             SID_trap_error("Invalid match type (%d) for i_group,j_subgroup,i_subgroup=%d,%d,%d",ERROR_LOGIC,
                            subgroup_type,i_group,j_subgroup,i_subgroup);
          if(flag_store_extended){

@@ -40,7 +40,6 @@ void add_progenitor_to_halo(tree_horizontal_info **halos,
       new_progenitor.halo->id=halos_j[j_halo].id;
       // ... set initial progenitor type ...
       new_progenitor.halo->type|=  TREE_CASE_MAIN_PROGENITOR;
-      new_progenitor.halo->type&=(~TREE_CASE_MERGER);
    }
    // ... else add a next progenitor ...
    else{
@@ -56,9 +55,7 @@ void add_progenitor_to_halo(tree_horizontal_info **halos,
          // ... and give the old main progenitor the new id ...
          change_horizontal_ID_recursive(old_progenitor.halo,old_progenitor.halo->id,(*max_id)++);
          // ... set new main progenitor type ...
-         old_progenitor.halo->type|=  TREE_CASE_MERGER;
          old_progenitor.halo->type&=(~TREE_CASE_MAIN_PROGENITOR);
-         new_progenitor.halo->type&=(~TREE_CASE_MERGER);
          new_progenitor.halo->type|=  TREE_CASE_MAIN_PROGENITOR;
          // ... set new main progenitor ...
          memcpy(&(halos_j[j_halo].first_progenitor),                      &new_progenitor,sizeof(match_info));
@@ -74,7 +71,6 @@ void add_progenitor_to_halo(tree_horizontal_info **halos,
          else
             halos_i[i_halo].id=halos_j[j_halo].id;
          // ... set new non-main progenitor type ...
-         halos_i[i_halo].type|=  TREE_CASE_MERGER;
          halos_i[i_halo].type&=(~TREE_CASE_MAIN_PROGENITOR);
       }
    }

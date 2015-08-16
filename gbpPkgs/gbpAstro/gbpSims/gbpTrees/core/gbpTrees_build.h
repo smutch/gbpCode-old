@@ -494,6 +494,7 @@ int check_validity_of_emerged_match(tree_horizontal_info *halo_i,
                                     back_match_info      *back_match,
                                     char                  match_flag_two_way,
                                     int                   n_search);
+int check_validity_of_tree_case_flag(int flag);
 int compute_cross_catalog_matches(char   *filename_root_in_1,
                                   char   *filename_root_in_2,
                                   char   *filename_root_out,
@@ -517,28 +518,6 @@ void write_match_results(char       *filename_out_dir,
                          int         k_match,
                          int         mode);
 void compute_trees_horizontal_stats(void *halos_in,int n_halos,int n_halos_max,tree_horizontal_stats_info *stats,int flag_write_cases);
-
-void propagate_progenitor_information(int         *n_groups,
-                                      int         *n_subgroups,
-                                      int        **n_subgroups_group,
-                                      int          i_file_start,
-                                      int          i_write_last,
-                                      int          j_write_last,
-                                      int          l_write_last,
-                                      int          i_read_stop,
-                                      int          i_read_step,
-                                      int          max_tree_id_subgroup,
-                                      int          max_tree_id_group,
-                                      int          n_subgroups_max,
-                                      int          n_groups_max,
-                                      int          n_search,
-                                      int          n_files,
-                                      int          n_wrap,
-                                      int          n_k_match,
-                                      double      *a_list,
-                                      cosmo_info **cosmo,
-                                      char        *filename_output_dir,
-                                      int          flag_compute_fragmented);
 
 int   set_match_id         (match_info *match);
 int   set_match_file       (match_info *match);
@@ -754,14 +733,51 @@ void read_trees_horizontal(void **groups,   int *n_groups_in,
                            int    n_wrap,
                            char  *filename_output_dir,
                            int    mode);
-void propagate_fragmented_halos(tree_horizontal_extended_info **groups,   int *n_groups,
-                                tree_horizontal_extended_info **subgroups,int *n_subgroups,
-                                int        **n_subgroups_group,
-                                int          i_read, // tree snapshot index
-                                int          j_read,
-                                int          l_read,
-                                int          i_read_step,
-                                int          n_wrap);
+void propagate_progenitor_info(int         *n_groups,
+                               int         *n_subgroups,
+                               int        **n_subgroups_group,
+                               int          i_file_start,
+                               int          i_write_last,
+                               int          j_write_last,
+                               int          l_write_last,
+                               int          i_read_stop,
+                               int          i_read_step,
+                               int          max_tree_id_subgroup,
+                               int          max_tree_id_group,
+                               int          n_subgroups_max,
+                               int          n_groups_max,
+                               int          n_search,
+                               int          n_files,
+                               int          n_wrap,
+                               int          n_k_match,
+                               double      *a_list,
+                               cosmo_info **cosmo,
+                               char        *filename_output_dir,
+                               int          flag_compute_fragmented);
+void propagate_bridge_info(tree_horizontal_extended_info **groups,   int *n_groups,
+                           tree_horizontal_extended_info **subgroups,int *n_subgroups,
+                           int        **n_subgroups_group,
+                           int          i_read, // tree snapshot index
+                           int          j_read,
+                           int          l_read,
+                           int          i_read_step,
+                           int          n_wrap);
+void propagate_fragmented_info(tree_horizontal_extended_info **groups,   int *n_groups,
+                               tree_horizontal_extended_info **subgroups,int *n_subgroups,
+                               int        **n_subgroups_group,
+                               int          i_read, // tree snapshot index
+                               int          j_read,
+                               int          l_read,
+                               int          i_read_step,
+                               int          n_wrap);
+void propagate_merger_info(tree_horizontal_extended_info **groups,   int *n_groups,
+                           tree_horizontal_extended_info **subgroups,int *n_subgroups,
+                           int        **n_subgroups_group,
+                           int          i_read, // tree snapshot index
+                           int          j_read,
+                           int          l_read,
+                           int          i_read_step,
+                           int          n_wrap);
 void add_progenitor_to_halo(tree_horizontal_info **halos,
                             int                    i_file,
                             int                    i_halo,
