@@ -200,6 +200,13 @@ void write_trees_horizontal(void  **groups_in,
         int   group_id_backmatch;
         float group_score_desc;
         float group_score_prog;
+        int   group_first_progenitor_file;
+        int   group_first_progenitor_index;
+        int   group_next_progenitor_file;
+        int   group_next_progenitor_index;
+
+        // Parse the input.  If we are writing extended files,
+        //    then the input is not extended, and vice versa
         if(flag_write_extended || flag_write_pointers){
            tree_horizontal_info **groups;
            groups             =(tree_horizontal_info **)groups_in;
@@ -239,6 +246,10 @@ void write_trees_horizontal(void  **groups_in,
            group_snap_forematch =set_match_snapshot(&(groups[i_write%n_wrap][i_group].forematch_first));
            group_file_forematch =set_match_file(    &(groups[i_write%n_wrap][i_group].forematch_first));
            group_index_forematch=set_match_index(   &(groups[i_write%n_wrap][i_group].forematch_first));
+           group_first_progenitor_file =set_match_file( &(groups[i_write%n_wrap][i_group].first_progenitor));
+           group_first_progenitor_index=set_match_index(&(groups[i_write%n_wrap][i_group].first_progenitor));
+           group_next_progenitor_file  =set_match_file( &(groups[i_write%n_wrap][i_group].next_progenitor));
+           group_next_progenitor_index =set_match_index(&(groups[i_write%n_wrap][i_group].next_progenitor));
         }
         else{
            tree_horizontal_extended_info **groups;
@@ -259,16 +270,20 @@ void write_trees_horizontal(void  **groups_in,
         SID_fwrite(&group_file_offset,  sizeof(int),1,&fp_trees_out);
         SID_fwrite(&group_file_index,   sizeof(int),1,&fp_trees_out);
         if(flag_write_extended){
-           SID_fwrite(&group_n_particles,       sizeof(int),  1,&fp_trees_out);
-           SID_fwrite(&group_n_particles_parent,sizeof(int),  1,&fp_trees_out);
-           SID_fwrite(&group_n_particles_desc,  sizeof(int),  1,&fp_trees_out);
-           SID_fwrite(&group_n_particles_proj,  sizeof(int),  1,&fp_trees_out);
-           SID_fwrite(&group_score_desc,        sizeof(float),1,&fp_trees_out);
-           SID_fwrite(&group_score_prog,        sizeof(float),1,&fp_trees_out);
-           SID_fwrite(&group_snap_backmatch,    sizeof(int),  1,&fp_trees_out);
-           SID_fwrite(&group_file_backmatch,    sizeof(int),  1,&fp_trees_out);
-           SID_fwrite(&group_index_backmatch,   sizeof(int),  1,&fp_trees_out);
-           SID_fwrite(&group_id_backmatch,      sizeof(int),  1,&fp_trees_out);
+           SID_fwrite(&group_n_particles,           sizeof(int),  1,&fp_trees_out);
+           SID_fwrite(&group_n_particles_parent,    sizeof(int),  1,&fp_trees_out);
+           SID_fwrite(&group_n_particles_desc,      sizeof(int),  1,&fp_trees_out);
+           SID_fwrite(&group_n_particles_proj,      sizeof(int),  1,&fp_trees_out);
+           SID_fwrite(&group_score_desc,            sizeof(float),1,&fp_trees_out);
+           SID_fwrite(&group_score_prog,            sizeof(float),1,&fp_trees_out);
+           SID_fwrite(&group_snap_backmatch,        sizeof(int),  1,&fp_trees_out);
+           SID_fwrite(&group_file_backmatch,        sizeof(int),  1,&fp_trees_out);
+           SID_fwrite(&group_index_backmatch,       sizeof(int),  1,&fp_trees_out);
+           SID_fwrite(&group_id_backmatch,          sizeof(int),  1,&fp_trees_out);
+           SID_fwrite(&group_first_progenitor_file, sizeof(int),  1,&fp_trees_out);  
+           SID_fwrite(&group_first_progenitor_index,sizeof(int),  1,&fp_trees_out);
+           SID_fwrite(&group_next_progenitor_file,  sizeof(int),  1,&fp_trees_out);
+           SID_fwrite(&group_next_progenitor_index, sizeof(int),  1,&fp_trees_out);
         }
         SID_fwrite(&(n_subgroups_group[i_write%n_wrap][i_group]),sizeof(int),1,&fp_trees_out);
 
@@ -309,6 +324,13 @@ void write_trees_horizontal(void  **groups_in,
            int   subgroup_index_forematch;
            float subgroup_score_desc;
            float subgroup_score_prog;
+           int   subgroup_first_progenitor_file;
+           int   subgroup_first_progenitor_index;
+           int   subgroup_next_progenitor_file;
+           int   subgroup_next_progenitor_index;
+
+           // Parse the input.  If we are writing extended files,
+           //    then the input is not extended, and vice versa
            if(flag_write_extended || flag_write_pointers){
               tree_horizontal_info **subgroups;
               subgroups                  =(tree_horizontal_info **)subgroups_in;
@@ -348,6 +370,10 @@ void write_trees_horizontal(void  **groups_in,
               subgroup_snap_forematch =set_match_snapshot(&(subgroups[i_write%n_wrap][i_subgroup].forematch_first));
               subgroup_file_forematch =set_match_file(    &(subgroups[i_write%n_wrap][i_subgroup].forematch_first));
               subgroup_index_forematch=set_match_index(   &(subgroups[i_write%n_wrap][i_subgroup].forematch_first));
+              subgroup_first_progenitor_file =set_match_file( &(subgroups[i_write%n_wrap][i_subgroup].first_progenitor));
+              subgroup_first_progenitor_index=set_match_index(&(subgroups[i_write%n_wrap][i_subgroup].first_progenitor));
+              subgroup_next_progenitor_file  =set_match_file( &(subgroups[i_write%n_wrap][i_subgroup].next_progenitor));
+              subgroup_next_progenitor_index =set_match_index(&(subgroups[i_write%n_wrap][i_subgroup].next_progenitor));
            }
            else{
               tree_horizontal_extended_info **subgroups;
@@ -368,16 +394,20 @@ void write_trees_horizontal(void  **groups_in,
            SID_fwrite(&subgroup_file_offset,  sizeof(int),1,&fp_trees_out);
            SID_fwrite(&subgroup_file_index,   sizeof(int),1,&fp_trees_out);
            if(flag_write_extended){
-              SID_fwrite(&subgroup_n_particles,       sizeof(int),  1,&fp_trees_out);
-              SID_fwrite(&subgroup_n_particles_parent,sizeof(int),  1,&fp_trees_out);
-              SID_fwrite(&subgroup_n_particles_desc,  sizeof(int),  1,&fp_trees_out);
-              SID_fwrite(&subgroup_n_particles_proj,  sizeof(int),  1,&fp_trees_out);
-              SID_fwrite(&subgroup_score_desc,        sizeof(float),1,&fp_trees_out);
-              SID_fwrite(&subgroup_score_prog,        sizeof(float),1,&fp_trees_out);
-              SID_fwrite(&subgroup_snap_backmatch,    sizeof(int),  1,&fp_trees_out);
-              SID_fwrite(&subgroup_file_backmatch,    sizeof(int),  1,&fp_trees_out);
-              SID_fwrite(&subgroup_index_backmatch,   sizeof(int),  1,&fp_trees_out);
-              SID_fwrite(&subgroup_id_backmatch,      sizeof(int),  1,&fp_trees_out);
+              SID_fwrite(&subgroup_n_particles,           sizeof(int),  1,&fp_trees_out);
+              SID_fwrite(&subgroup_n_particles_parent,    sizeof(int),  1,&fp_trees_out);
+              SID_fwrite(&subgroup_n_particles_desc,      sizeof(int),  1,&fp_trees_out);
+              SID_fwrite(&subgroup_n_particles_proj,      sizeof(int),  1,&fp_trees_out);
+              SID_fwrite(&subgroup_score_desc,            sizeof(float),1,&fp_trees_out);
+              SID_fwrite(&subgroup_score_prog,            sizeof(float),1,&fp_trees_out);
+              SID_fwrite(&subgroup_snap_backmatch,        sizeof(int),  1,&fp_trees_out);
+              SID_fwrite(&subgroup_file_backmatch,        sizeof(int),  1,&fp_trees_out);
+              SID_fwrite(&subgroup_index_backmatch,       sizeof(int),  1,&fp_trees_out);
+              SID_fwrite(&subgroup_id_backmatch,          sizeof(int),  1,&fp_trees_out);
+              SID_fwrite(&subgroup_first_progenitor_file, sizeof(int),  1,&fp_trees_out);  
+              SID_fwrite(&subgroup_first_progenitor_index,sizeof(int),  1,&fp_trees_out);
+              SID_fwrite(&subgroup_next_progenitor_file,  sizeof(int),  1,&fp_trees_out);
+              SID_fwrite(&subgroup_next_progenitor_index, sizeof(int),  1,&fp_trees_out);
            }
 
            // Write the forward and back-match pointers

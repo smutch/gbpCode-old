@@ -57,9 +57,10 @@
                                                         //    it's subgroups isn't.
 #define TREE_CASE_UNPROCESSED                   TTTP17  // For internal use.  This should never be seen in the output.
 #define TREE_CASE_INVALID                       TTTP18  // For internal use.  This should never be seen in the output.
+#define TREE_CASE_DOMINANT                      TTTP19  // Marks the dominant substructure.  Generally the most massive but not necessarily.
 
 #ifdef _MAIN
-   int   n_tree_case_flag_list=19;
+   int   n_tree_case_flag_list=20;
    int   tree_case_flag_list[]={
                   TREE_CASE_NO_PROGENITORS,
                   TREE_CASE_FRAGMENTED_NEW,
@@ -67,6 +68,7 @@
                   TREE_CASE_FRAGMENTED_RETURNED,
                   TREE_CASE_FRAGMENTED_EXCHANGED,
                   TREE_CASE_MAIN_PROGENITOR,
+                  TREE_CASE_DOMINANT,
                   TREE_CASE_2WAY_MATCH,
                   TREE_CASE_MERGER,
                   TREE_CASE_BRIDGED,
@@ -87,6 +89,7 @@
                         "FRAGMENTED_RETURNED",
                         "FRAGMENTED_EXCHANGED",
                         "MAIN_PROGENITOR",
+                        "DOMINANT",
                         "2WAY",
                         "MERGER",
                         "BRIDGED",
@@ -218,22 +221,26 @@ struct tree_horizontal_info{
 
 typedef struct tree_horizontal_extended_info tree_horizontal_extended_info;
 struct tree_horizontal_extended_info{
-  int          id;                 // This halo's id
-  int          n_particles;        // Number of particles in this halo
-  int          tree_id;            // This halo's tree id
-  int          descendant_id;      // This halo's main progenitor id
-  int          type;               // A bit-wise switch characterising this halo's matching
-  int          file_offset;        // This halo's snapshot index (ie. 0->n_snaps_used_in_trees-1)
-  int          n_particles_parent; // Number of particles in this halo's parent
-  int          n_particles_desc;   // Number of particles in this halo's descendant
-  int          n_particles_proj;   // Number of particles in this halo's progenitor
-  int          score_desc;         // Matching score of this halo to it's descendant
-  int          score_prog;         // Matching score of this halo to it's descendant
-  int          snap_bridge;        // Snapshot of any halo that this halo may be back-matched to
-  int          file_bridge;        // File index of any halo that this halo may be back-matched to
-  int          index_bridge;       // Index of any bridge this halo may be back-matched to
-  int          id_bridge;          // ID of any bridge this halo may be back-matched to
-  int          index;              // This halo's index in the halo catalog
+  int id;                     // This halo's id
+  int n_particles;            // Number of particles in this halo
+  int tree_id;                // This halo's tree id
+  int descendant_id;          // This halo's main progenitor id
+  int type;                   // A bit-wise switch characterising this halo's matching
+  int file_offset;            // This halo's snapshot index (ie. 0->n_snaps_used_in_trees-1)
+  int n_particles_parent;     // Number of particles in this halo's parent
+  int n_particles_desc;       // Number of particles in this halo's descendant
+  int n_particles_proj;       // Number of particles in this halo's progenitor
+  int score_desc;             // Matching score of this halo to it's descendant
+  int score_prog;             // Matching score of this halo to it's progenitor
+  int snap_bridge;            // Snapshot of any halo that this halo may be back-matched to
+  int file_bridge;            // File index of any halo that this halo may be back-matched to
+  int index_bridge;           // Index of any bridge this halo may be back-matched to
+  int id_bridge;              // ID of any bridge this halo may be back-matched to
+  int index;                  // This halo's index in the halo catalog
+  int first_progenitor_file;  // Pointer to this halo's first progenitor
+  int first_progenitor_index; // Pointer to this halo's first progenitor
+  int next_progenitor_file;   // Pointer to this halo's next  progenitor
+  int next_progenitor_index;  // Pointer to this halo's next  progenitor
 };
 
 // Data structures for vertical tree construction
