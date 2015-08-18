@@ -42,11 +42,11 @@ void propagate_fragmented_info(tree_horizontal_extended_info **groups,   int *n_
          if(group_index>=0){ // Important for strayed cases
             // Add the propagated type.  The check for TREE_CASE_MAIN_PROGENITOR is also
             //    needed so that we don't propagate this type into any halos this one merges with.
-            if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_STRAYED)   && check_mode_for_flag(group_type,TREE_CASE_MAIN_PROGENITOR))
+            if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_STRAYED)   && !check_if_halo_is_merger(group_type))
                groups[(i_read+group_file_offset)%n_wrap][group_index].type|=TREE_CASE_FRAGMENTED_STRAYED;
-            if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_RETURNED)  && check_mode_for_flag(group_type,TREE_CASE_MAIN_PROGENITOR))
+            if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_RETURNED)  && !check_if_halo_is_merger(group_type))
                groups[(i_read+group_file_offset)%n_wrap][group_index].type|=TREE_CASE_FRAGMENTED_RETURNED;
-            if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_EXCHANGED) && check_mode_for_flag(group_type,TREE_CASE_MAIN_PROGENITOR))
+            if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_EXCHANGED) && !check_if_halo_is_merger(group_type))
                groups[(i_read+group_file_offset)%n_wrap][group_index].type|=TREE_CASE_FRAGMENTED_EXCHANGED;
             // Count the number of flags the descendant already has switched on
             int i_count=0;
@@ -95,11 +95,11 @@ void propagate_fragmented_info(tree_horizontal_extended_info **groups,   int *n_
             if(subgroup_index>=0){ // Important for strayed cases
                // Add the propagated type.  The check for TREE_CASE_MAIN_PROGENITOR is also
                //    needed so that we don't propagate this type into any halos this one merges with.
-               if(check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_STRAYED)   && check_mode_for_flag(subgroup_type,TREE_CASE_MAIN_PROGENITOR))
+               if(check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_STRAYED)   && !check_if_halo_is_merger(subgroup_type))
                   subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type|=TREE_CASE_FRAGMENTED_STRAYED;
-               if(check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_RETURNED)  && check_mode_for_flag(subgroup_type,TREE_CASE_MAIN_PROGENITOR))
+               if(check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_RETURNED)  && !check_if_halo_is_merger(subgroup_type))
                   subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type|=TREE_CASE_FRAGMENTED_RETURNED;
-               if(check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_EXCHANGED) && check_mode_for_flag(subgroup_type,TREE_CASE_MAIN_PROGENITOR))
+               if(check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_EXCHANGED) && !check_if_halo_is_merger(subgroup_type))
                   subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type|=TREE_CASE_FRAGMENTED_EXCHANGED;
                // Count the number of flags the descendant already has switched on
                int i_count=0;

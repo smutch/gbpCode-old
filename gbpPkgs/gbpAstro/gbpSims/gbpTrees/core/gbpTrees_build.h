@@ -486,10 +486,12 @@ int check_goodness_of_match(int n_particles_in,float match_score,double f_goodne
 int check_if_halo_is_descendant(tree_horizontal_info *possible_progenitor,
                                 tree_horizontal_info *possible_descendant,
                                 int n_search);
+int check_if_halo_is_merger(int type);
 int check_if_descendant_is_back_matched(tree_horizontal_info *halo,
                                         tree_horizontal_info *halo_to_check);
-int check_validity_of_main_progenitor(match_info *old_MP,
-                                      match_info *new_MP);
+int check_validity_of_main_progenitor(tree_horizontal_info *descendant_halo,
+                                      match_info           *old_MP,
+                                      match_info           *new_MP);
 int check_validity_of_emerged_match(tree_horizontal_info *halo_i,
                                     back_match_info      *back_match,
                                     char                  match_flag_two_way,

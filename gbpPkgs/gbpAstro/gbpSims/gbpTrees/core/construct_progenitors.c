@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <gbpLib.h>
 #include <gbpTrees_build.h>
 
@@ -68,7 +71,7 @@ void construct_progenitors(tree_horizontal_info **halos,
       // Perform matching for all the halos in i_file_1.  This loop first tries to identify a
       //   first/default match for each halo in this snapshot, ultimately dealing with all simple 
       //   matches and dropped halos.  Matches to emerged halos (either coming from the default match, or to 
-      //   emerged candidates of bridged halos in it's descendant line), get dealt with subsequently.
+      //   emerged candidates of bridged halos in it's descendant line) get dealt with subsequently.
       tree_horizontal_info *halos_i=halos[j_file_1%n_wrap];
       tree_horizontal_info *halos_j=halos[j_file_2%n_wrap];
       for(i_halo=0;i_halo<(*n_halos_1_matches);i_halo++){
@@ -88,12 +91,19 @@ void construct_progenitors(tree_horizontal_info **halos,
                   halos_i[i_halo].forematch_default.score       =match_score[i_halo];
                   halos_i[i_halo].forematch_default.flag_two_way=match_flag_two_way[i_halo];
                   // Set the best match to the target halo.  This is used to make sure
-                  //    that every bridged halo matched to in this snapshot gets a progenitor.
-                  if(check_validity_of_main_progenitor(&(halos_j[my_descendant_index].forematch_best),&(halos_i[i_halo].forematch_first)) &&
-                     halos_j[my_descendant_index].n_progenitors==0){
-                     halos_j[my_descendant_index].forematch_best.halo        =&(halos_i[i_halo]);
-                     halos_j[my_descendant_index].forematch_best.score       =match_score[i_halo];
-                     halos_j[my_descendant_index].forematch_best.flag_two_way=match_flag_two_way[i_halo];
+                  //    that every bridged halo matched to in this snapshot gets the
+                  //    best possible main progenitor.
+                  if(halos_j[my_descendant_index].n_progenitors==0){
+                     match_info forematch_new;
+                     forematch_new.halo        =&(halos_i[i_halo]);
+                     forematch_new.score       =match_score[i_halo];
+                     forematch_new.flag_two_way=match_flag_two_way[i_halo];
+                     if(halos_j[my_descendant_index].forematch_best.halo==NULL)
+                        memcpy(&(halos_j[my_descendant_index].forematch_best),&forematch_new,sizeof(match_info));
+                     else if(check_validity_of_main_progenitor(&(halos_j[my_descendant_index]),
+                                                               &(halos_j[my_descendant_index].forematch_best),
+                                                               &forematch_new))
+                        memcpy(&(halos_j[my_descendant_index].forematch_best),&forematch_new,sizeof(match_info));
                   }
                }
                else

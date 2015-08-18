@@ -422,9 +422,9 @@ void write_trees_horizontal(void  **groups_in,
          else
             sprintf(filename_log,"%s/log.txt",filename_output_dir_horizontal);
          if(flag_init_write && i_k_match==0)
-            write_trees_horizontal_log_file(filename_log,l_write,j_write,i_k_match,n_k_match,&stats,a_list,cosmo,TRUE);
+            write_trees_horizontal_log_file(filename_log,i_write,j_write,i_k_match,n_k_match,&stats,a_list,cosmo,TRUE);
          else
-            write_trees_horizontal_log_file(filename_log,l_write,j_write,i_k_match,n_k_match,&stats,a_list,cosmo,FALSE);
+            write_trees_horizontal_log_file(filename_log,i_write,j_write,i_k_match,n_k_match,&stats,a_list,cosmo,FALSE);
       }
    }
    SID_log("Done.",SID_LOG_CLOSE);
