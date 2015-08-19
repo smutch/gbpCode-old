@@ -17,81 +17,87 @@ void propagate_merger_info(tree_horizontal_extended_info **groups,   int *n_grou
    int j_subgroup;
    int flag_returned;
    for(i_group=0,i_subgroup=0;i_group<n_groups[l_read];i_group++){
-      tree_horizontal_extended_info *this_group=&(groups[i_read%n_wrap][i_group]);
-      int group_id                  =this_group->id;
-      int group_n_particles         =this_group->n_particles;
-      int group_tree_id             =this_group->tree_id;
-      int group_descendant_id       =this_group->descendant_id;
-      int group_file_offset         =this_group->file_offset;
-      int group_index               =this_group->index;
-      int group_n_particles_parent  =this_group->n_particles_parent;
-      int group_n_particles_desc    =this_group->n_particles_desc;
-      int group_n_particles_proj    =this_group->n_particles_proj;
-      int group_score_desc          =this_group->score_desc;
-      int group_score_prog          =this_group->score_prog;
-      int group_snap_bridge         =this_group->snap_bridge;
-      int group_file_bridge         =this_group->file_bridge;
-      int group_index_bridge        =this_group->index_bridge;
-      int group_id_bridge           =this_group->id_bridge;
-      tree_horizontal_extended_info *this_desc =&(groups[(i_read+group_file_offset)%n_wrap][group_index]);
-
-      // Set dominant halo flag
-/*
-      if(check_mode_for_flag(this_group->type,TREE_CASE_NO_PROGENITOR))
-         this_group->type|=TREE_CASE_DOMINANT;
-
-      // Propagate dominant halo flags
-      if(check_mode_for_flag(this_group->type,TREE_CASE_DOMINANT))
-         this_desc->type|=TREE_CASE_DOMINANT;
-
-      // Set merger flags...
-      //    ... first, find the primary halo ...
-      tree_horizontal_extended_info *primary_group         =this_group;
-      int                            primary_group_dominant=check_mode_for_flag(primary_group->type,TREE_CASE_DOMINANT);
-      match_info *current_progenitor=&(this_desc->first_progenitor);
-      while(current_progenitor->halo!=NULL){
-         if(current_progenitor->halo!=this_group){
-            int current_progenitor_dominant=check_mode_for_flag(current_progenitor->halo->type,TREE_CASE_DOMINANT);
-            int set_new_primary            =FALSE;
-            // Decide if this halo is a better primary
-            if(current_progenitor_dominant){
-               if(!primary_group_dominant)
+      tree_horizontal_extended_info *this_group     =&(groups[i_read%n_wrap][i_group]);
+      tree_horizontal_extended_info *this_group_desc=set_extended_descendant(groups,this_group,i_read,n_wrap);
+      if(this_group_desc!=NULL){
+         // Set merger flags...
+         //    ... first, find the primary halo ...
+         tree_horizontal_extended_info *primary_group=this_group;
+         tree_horizontal_extended_info *current_group=set_extended_first_progenitor(groups,this_group_desc,n_wrap);
+         int primary_group_dominant=check_mode_for_flag(primary_group->type,TREE_CASE_DOMINANT);
+         int current_group_dominant=primary_group_dominant;
+         int n_progenitors=0;
+         while(current_group!=NULL){
+            current_group_dominant=check_mode_for_flag(current_group->type,TREE_CASE_DOMINANT);
+            if(current_group!=this_group){
+               // Decide if this halo is a better primary
+               int set_new_primary=FALSE;
+               if(current_group_dominant){
+                  if(!primary_group_dominant || (current_group->n_particles_peak)>(primary_group->n_particles_peak))
+                     set_new_primary=TRUE;
+               }
+               else if(!primary_group_dominant && (current_group->n_particles_peak)>(primary_group->n_particles_peak))
                   set_new_primary=TRUE;
-               else if()
-                  set_new_primary=TRUE;
+               // ... set the new primary if so.
+               if(set_new_primary){
+                  primary_group         =current_group;
+                  primary_group_dominant=current_group_dominant;
+               }
             }
-            else if(!primary_group_dominant){
-            }
-            // ... set the new primary if so.
-            if(set_new_primary){
-            }
+            current_group=set_extended_next_progenitor(groups,current_group,n_wrap);
+            n_progenitors++;
          }
-         current_progenitor=current_progenitor->halo.next_progenitor;
+
+         //    ... set the appopriate merger flags.
+         if(n_progenitors>1){
+            if(this_group==primary_group)
+               this_group->type|=TREE_CASE_MERGER_PRIMARY;
+            else 
+               this_group->type|=TREE_CASE_MERGER_SECONDARY;
+         }
       }
 
-      //    ... if this halo is not the primary, set it's merger flag.
-      if(this_group!=primary_group)
-         this_group->type|=TREE_CASE_MERGER;
-*/
-
       // Process subgroups
-      for(j_subgroup=0;j_subgroup<n_subgroups_group[i_read%n_wrap][i_group];i_subgroup++,j_subgroup++){
-         int subgroup_id                =subgroups[i_read%n_wrap][i_subgroup].id;
-         int subgroup_n_particles       =subgroups[i_read%n_wrap][i_subgroup].n_particles;
-         int subgroup_tree_id           =subgroups[i_read%n_wrap][i_subgroup].tree_id;
-         int subgroup_descendant_id     =subgroups[i_read%n_wrap][i_subgroup].descendant_id;
-         int subgroup_type              =subgroups[i_read%n_wrap][i_subgroup].type;
-         int subgroup_file_offset       =subgroups[i_read%n_wrap][i_subgroup].file_offset;
-         int subgroup_index             =subgroups[i_read%n_wrap][i_subgroup].index;
-         int subgroup_n_particles_parent=subgroups[i_read%n_wrap][i_subgroup].n_particles_parent;
-         int subgroup_n_particles_desc  =subgroups[i_read%n_wrap][i_subgroup].n_particles_desc;
-         int subgroup_n_particles_proj  =subgroups[i_read%n_wrap][i_subgroup].n_particles_proj;
-         int subgroup_score_desc        =subgroups[i_read%n_wrap][i_subgroup].score_desc;
-         int subgroup_score_prog        =subgroups[i_read%n_wrap][i_subgroup].score_prog;
-         int subgroup_snap_bridge       =subgroups[i_read%n_wrap][i_subgroup].snap_bridge;
-         int subgroup_file_bridge       =subgroups[i_read%n_wrap][i_subgroup].file_bridge;
-         int subgroup_index_bridge      =subgroups[i_read%n_wrap][i_subgroup].index_bridge;
-         int subgroup_id_bridge         =subgroups[i_read%n_wrap][i_subgroup].id_bridge;
+      for(j_subgroup=0;j_subgroup<n_subgroups_group[i_read%n_wrap][i_subgroup];i_subgroup++,j_subgroup++){
+         tree_horizontal_extended_info *this_subgroup     =&(subgroups[i_read%n_wrap][i_subgroup]);
+         tree_horizontal_extended_info *this_subgroup_desc=set_extended_descendant(subgroups,this_subgroup,i_read,n_wrap);
+         if(this_subgroup_desc!=NULL){
+            // Set merger flags...
+            //    ... first, find the primary halo ...
+            tree_horizontal_extended_info *primary_subgroup=this_subgroup;
+            tree_horizontal_extended_info *current_subgroup=set_extended_first_progenitor(subgroups,this_subgroup_desc,n_wrap);
+            int primary_subgroup_dominant=check_mode_for_flag(primary_subgroup->type,TREE_CASE_DOMINANT);
+            int current_subgroup_dominant=primary_subgroup_dominant;
+            int n_progenitors=0;
+            while(current_subgroup!=NULL){
+               current_subgroup_dominant=check_mode_for_flag(current_subgroup->type,TREE_CASE_DOMINANT);
+               if(current_subgroup!=this_subgroup){
+                  // Decide if this halo is a better primary
+                  int set_new_primary=FALSE;
+                  if(current_subgroup_dominant){
+                     if(!primary_subgroup_dominant || (current_subgroup->n_particles_peak)>(primary_subgroup->n_particles_peak))
+                        set_new_primary=TRUE;
+                  }
+                  else if(!primary_subgroup_dominant && (current_subgroup->n_particles_peak)>(primary_subgroup->n_particles_peak))
+                     set_new_primary=TRUE;
+                  // ... set the new primary if so.
+                  if(set_new_primary){
+                     primary_subgroup         =current_subgroup;
+                     primary_subgroup_dominant=current_subgroup_dominant;
+                  }
+               }
+               current_subgroup=set_extended_next_progenitor(subgroups,current_subgroup,n_wrap);
+               n_progenitors++;
+            }
+
+            //    ... set the appopriate merger flags.
+            if(n_progenitors>1){
+               if(this_subgroup==primary_subgroup)
+                  this_subgroup->type|=TREE_CASE_MERGER_PRIMARY;
+               else 
+                  this_subgroup->type|=TREE_CASE_MERGER_SECONDARY;
+            }
+         }
 
       }
    }

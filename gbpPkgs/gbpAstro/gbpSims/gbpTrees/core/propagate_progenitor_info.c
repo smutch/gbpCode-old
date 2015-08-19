@@ -81,7 +81,9 @@ void propagate_progenitor_info(int         *n_groups,
 
      // Write updated tree files
      if(j_file>n_search){
-        if(flag_compute_fragmented)
+        // If bridge fixing is on...
+        if(flag_compute_fragmented){
+           // ... propagate bridged halo information 
            propagate_bridge_info(groups_read,   n_groups,
                                  subgroups_read,n_subgroups,
                                  n_subgroups_group,
@@ -90,15 +92,7 @@ void propagate_progenitor_info(int         *n_groups,
                                  l_write,
                                  i_read_step,
                                  n_wrap);
-        propagate_merger_info(groups_read,   n_groups,
-                              subgroups_read,n_subgroups,
-                              n_subgroups_group,
-                              i_write, // tree index
-                              j_write, // actual snapshot number
-                              l_write,
-                              i_read_step,
-                              n_wrap);
-        if(flag_compute_fragmented)
+           // ... propagate fragmented halo flags
            propagate_fragmented_info(groups_read,   n_groups,
                                      subgroups_read,n_subgroups,
                                      n_subgroups_group,
@@ -107,6 +101,28 @@ void propagate_progenitor_info(int         *n_groups,
                                      l_write,
                                      i_read_step,
                                      n_wrap);
+        }
+        // Propigate the dominant halo and n_particle_peak
+        //    info.  THis needs to be done for all halos 
+        //    before the merger information can be propagated.
+        propagate_dominant_halo_info(groups_read,   n_groups,
+                                     subgroups_read,n_subgroups,
+                                     n_subgroups_group,
+                                     i_write, // tree index
+                                     j_write, // actual snapshot number
+                                     l_write,
+                                     i_read_step,
+                                     n_wrap);
+        // Decide which halos are primaries and secondaries in merger events.
+        propagate_merger_info(groups_read,   n_groups,
+                              subgroups_read,n_subgroups,
+                              n_subgroups_group,
+                              i_write, // tree index
+                              j_write, // actual snapshot number
+                              l_write,
+                              i_read_step,
+                              n_wrap);
+        // Write the results
         write_trees_horizontal((void **)groups_read,
                                (void **)subgroups_read,
                                n_groups[l_write],   n_groups_max,   
