@@ -553,6 +553,8 @@ float set_back_match_score      (back_match_info *back_match);
 tree_horizontal_extended_info *set_extended_descendant      (tree_horizontal_extended_info **halos,tree_horizontal_extended_info *halo,int i_file,int n_wrap);
 tree_horizontal_extended_info *set_extended_first_progenitor(tree_horizontal_extended_info **halos,tree_horizontal_extended_info *halo,int n_wrap);
 tree_horizontal_extended_info *set_extended_next_progenitor (tree_horizontal_extended_info **halos,tree_horizontal_extended_info *halo,int n_wrap);
+void set_extended_n_particles_peak(tree_horizontal_extended_info *this_halo,tree_horizontal_extended_info *this_halo_desc);
+void set_extended_dominant_flags  (tree_horizontal_extended_info *this_halo,tree_horizontal_extended_info *this_halo_desc);
 
 void check_for_fragmented_halos(int k_match,tree_horizontal_info **groups,int n_groups,
                                 int i_write,int j_write,int l_write,int n_wrap);

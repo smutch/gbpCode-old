@@ -80,6 +80,8 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    set_extended_descendant.o                     \
 	    set_extended_first_progenitor.o               \
 	    set_extended_next_progenitor.o                \
+	    set_extended_n_particles_peak.o               \
+	    set_extended_dominant_flags.o                 \
 	    check_for_fragmented_halos.o                  \
 	    add_to_trees_horizontal_stats.o               \
 	    init_trees_horizontal_roots.o                 \
