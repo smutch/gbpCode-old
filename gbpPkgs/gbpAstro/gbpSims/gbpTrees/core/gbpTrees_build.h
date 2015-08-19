@@ -828,13 +828,6 @@ void compute_trees_horizontal(char   *filename_halos_root_in,
                               int     flag_fix_bridges,
                               int    *flag_clean);
 void compute_forests(char *filename_root_out,int n_search_forests);
-void compute_trees_vertical_old(char *filename_root_out,
-                                char *filename_cat_root_in,
-                                char *filename_snap_list_in,
-                                int   n_files_groups,
-                                int   n_files_subgroups,
-                                int   n_search_forests,
-                                int  *flag_clean);
 void compute_trees_vertical(char   *filename_SSimPL_dir,
                             char   *filename_halo_version_root,
                             char   *filename_trees_name,
