@@ -2,6 +2,10 @@
 #include <gbpMath.h>
 #include <gbpTrees_build.h>
 
+// Note that this function is a quite inefficient.  The scan over a descendant's progenitors
+//   has a lot of redundant calculations, since the exact same calculation gets repeated by all 
+//   its progenitors.  It would be better if this calculation was done once for the 
+//   descendants and the information passed down to the progenitors.
 void propagate_merger_info(tree_horizontal_extended_info **groups,   int *n_groups,
                            tree_horizontal_extended_info **subgroups,int *n_subgroups,
                            int        **n_subgroups_group,
@@ -72,12 +76,15 @@ void propagate_merger_info(tree_horizontal_extended_info **groups,   int *n_grou
             while(current_subgroup!=NULL){
                current_subgroup_dominant=check_mode_for_flag(current_subgroup->type,TREE_CASE_DOMINANT);
                if(current_subgroup!=this_subgroup){
-                  // Decide if this halo is a better primary
+                  // Decide if this halo is a better primary ...
                   int set_new_primary=FALSE;
+                  // ... if the trial subgroup is marked dominant ...
                   if(current_subgroup_dominant){
+                     // ... and the current primary is not or is smaller ...
                      if(!primary_subgroup_dominant || (current_subgroup->n_particles_peak)>(primary_subgroup->n_particles_peak))
                         set_new_primary=TRUE;
                   }
+                  // ... or the current primary is not dominant and the trial is larger ...
                   else if(!primary_subgroup_dominant && (current_subgroup->n_particles_peak)>(primary_subgroup->n_particles_peak))
                      set_new_primary=TRUE;
                   // ... set the new primary if so.
