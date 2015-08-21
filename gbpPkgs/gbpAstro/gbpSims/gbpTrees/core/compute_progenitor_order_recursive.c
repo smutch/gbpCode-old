@@ -86,7 +86,7 @@ void compute_progenitor_order_recursive(tree_info *trees,tree_node_info *descend
         (*score_descendant)=MAX(N_i,max_M_iN);
      else
         SID_trap_error("Invalid mode (%d) in assign_progenitor_order_recursive().",ERROR_LOGIC,mode);
-   }
+  }
 
 }
 

@@ -51,9 +51,9 @@ void propagate_merger_info(tree_horizontal_extended_info **groups,   int *n_grou
          //    ... set the appopriate merger flags.
          if(n_progenitors>1){
             if(this_group==primary_group)
-               this_group->type|=TREE_CASE_MERGER_PRIMARY;
+               this_group->type|=TREE_CASE_MERGER_DOMINANT;
             else 
-               this_group->type|=TREE_CASE_MERGER_SECONDARY;
+               this_group->type|=TREE_CASE_MERGER;
          }
       }
 
@@ -93,9 +93,9 @@ void propagate_merger_info(tree_horizontal_extended_info **groups,   int *n_grou
             //    ... set the appopriate merger flags.
             if(n_progenitors>1){
                if(this_subgroup==primary_subgroup)
-                  this_subgroup->type|=TREE_CASE_MERGER_PRIMARY;
+                  this_subgroup->type|=TREE_CASE_MERGER_DOMINANT;
                else 
-                  this_subgroup->type|=TREE_CASE_MERGER_SECONDARY;
+                  this_subgroup->type|=TREE_CASE_MERGER;
             }
          }
 

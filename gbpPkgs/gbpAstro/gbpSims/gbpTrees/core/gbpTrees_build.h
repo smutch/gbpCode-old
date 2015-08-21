@@ -33,8 +33,8 @@
 #define TREE_CASE_MAIN_PROGENITOR               TTTP01  // Set for the progenitor with the highest match score. 
 #define TREE_CASE_DOMINANT                      TTTP02  // Marks the dominant substructure.  Generally the most massive but not necessarily.
 #define TREE_CASE_REMNANT                       TTTP03  // Set for halos with more than one progenitor.
-#define TREE_CASE_MERGER_PRIMARY                TTTP04  // Set when a halo is deemed to be the primary   progenitor of a merger
-#define TREE_CASE_MERGER_SECONDARY              TTTP05  // Set when a halo is deemed to be the secondary progenitor of a merger
+#define TREE_CASE_MERGER_DOMINANT               TTTP04  // Set when a halo is deemed to be the primary   progenitor of a merger
+#define TREE_CASE_MERGER                        TTTP05  // Set when a halo is deemed to be the secondary progenitor of a merger
 #define TREE_CASE_STRAYED                       TTTP06  // Set for halos for which a descendant was not found
 #define TREE_CASE_DROPPED                       TTTP07  // Set if file_offset>1 and TREE_CASE_MATCHED_TO_BRIDGE is not set
 #define TREE_CASE_BRIDGED                       TTTP08  // Set for halos with multiple unique back-matches from halos with unique IDs
@@ -69,10 +69,10 @@
                   TREE_CASE_FRAGMENTED_RETURNED,
                   TREE_CASE_FRAGMENTED_EXCHANGED,
                   TREE_CASE_MAIN_PROGENITOR,
-                  TREE_CASE_DOMINANT,
                   TREE_CASE_2WAY_MATCH,
-                  TREE_CASE_MERGER_PRIMARY,
-                  TREE_CASE_MERGER_SECONDARY,
+                  TREE_CASE_DOMINANT,
+                  TREE_CASE_MERGER_DOMINANT,
+                  TREE_CASE_MERGER,
                   TREE_CASE_BRIDGED,
                   TREE_CASE_MATCHED_TO_EMERGED,
                   TREE_CASE_REMNANT,
@@ -91,10 +91,10 @@
                         "FRAGMENTED_RETURNED",
                         "FRAGMENTED_EXCHANGED",
                         "MAIN_PROGENITOR",
-                        "DOMINANT",
                         "2WAY",
-                        "MERGER_PRIMARY",
-                        "MERGER_SECONDARY",
+                        "DOMINANT",
+                        "MERGER_DOMINANT",
+                        "MERGER",
                         "BRIDGED",
                         "MATCHED_TO_EMERGED",
                         "REMNANT",
