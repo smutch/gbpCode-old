@@ -127,10 +127,12 @@ int    find_treenode_snap_equals_given(tree_info *trees,tree_node_info *halo,int
 int    find_treenode_main_progenitor(tree_info *trees,tree_node_info *halo,tree_node_info **main_progenitor);
 int    find_treenode_branch_root(tree_info *trees,tree_node_info *halo,tree_node_info **branch_root);
 int    find_treenode_branch_leaf(tree_info *trees,tree_node_info *halo,tree_node_info **branch_leaf);
+int    find_treenode_Mpeak(tree_info       *trees,
+                           tree_node_info  *halo,
+                           tree_node_info **halo_peak);
 int    find_treenode_formation(tree_info       *trees,
                                tree_node_info  *halo,
                                double           f,
-                               tree_node_info **peak_mass,
                                tree_node_info **fraction_of_peak_mass);
 int find_treenode_last_merger(tree_info       *trees,
                               tree_node_info  *halo,
@@ -148,6 +150,7 @@ int    init_precompute_treenode_markers(tree_info *trees,int mode);
 int    free_precompute_treenode_markers(tree_info *trees,int mode);
 void   write_treenode_markers(tree_info *trees,const char *filename_output_root,int mode);
 void   read_treenode_markers(tree_info *trees,const char *filename_input_root,int mode);
+int find_treenode_peak_mass_recursive(tree_info *trees,tree_markers_info **markers_array,tree_node_info *halo,int *halo_type_return,double *M_peak_return);
 int    find_treenode_markers_recursive(tree_info          *trees,
                                        tree_markers_info **markers_array,
                                        tree_node_info     *halo,

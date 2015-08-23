@@ -19,7 +19,6 @@ int precompute_treenode_markers(tree_info *trees,int mode){
    // Initialize the marker array
    init_precompute_treenode_markers(trees,mode);
 
-   // We're gonna generate subgroup markers only
    char                group_text[32];
    int                 flag_process_groups;
    int                *n_halos_snap_local   =NULL;
@@ -48,8 +47,10 @@ int precompute_treenode_markers(tree_info *trees,int mode){
       SID_log("Processing snapshot #%03d of %03d...",SID_LOG_OPEN|SID_LOG_TIMER,i_snap+1,trees->n_snaps);
       tree_node_info *halo_current=first_neighbours[i_snap];
       while(halo_current!=NULL){
-         if(halo_current->descendant==NULL)
-            find_treenode_markers_recursive(trees,markers,halo_current,TRUE,NULL,NULL);
+         if(halo_current->descendant==NULL){
+            find_treenode_peak_mass_recursive(trees,markers,halo_current,NULL,NULL);
+            find_treenode_markers_recursive  (trees,markers,halo_current,TRUE,NULL,NULL);
+         }
          halo_current=halo_current->next_neighbour;
       }
       SID_log("Done.",SID_LOG_CLOSE);

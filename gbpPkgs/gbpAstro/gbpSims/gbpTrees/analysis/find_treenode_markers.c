@@ -16,8 +16,8 @@ int find_treenode_markers(tree_info *trees,tree_node_info *halo,tree_markers_inf
       find_treenode_main_progenitor(trees,halo,&(markers->main_progenitor));
       find_treenode_accretion      (trees,halo,&(markers->first_became_satellite),
                                                &(markers->joined_current_parent));
+      find_treenode_Mpeak          (trees,halo,&(markers->peak_mass));
       find_treenode_formation      (trees,halo,0.5,
-                                               &(markers->peak_mass),
                                                &(markers->half_peak_mass));
       find_treenode_last_merger    (trees,halo,0.33,
                                                &(markers->merger_33pc_remnant),

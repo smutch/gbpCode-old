@@ -12,6 +12,7 @@
 int find_treenode_markers_recursive(tree_info *trees,tree_markers_info **markers_array,tree_node_info *halo,int flag_is_main_progenitor,double *M_return,tree_markers_info **markers_descendant){
    // note: - markers_exchange arrives as the descendat halo's markers but is used to return back a progenitor's markers
    //       - the initial call of this recursive function should be only on halos where halo->descendant==NULL
+   //       - ** the values of M_peak MUST be calculated before this function is called.
 
    double             M_halo      =0.;
    tree_markers_info *markers_halo=NULL;
@@ -64,7 +65,6 @@ int find_treenode_markers_recursive(tree_info *trees,tree_markers_info **markers
       markers_halo->merger_10pc_remnant   =NULL;
       markers_halo->merger_10pc_host      =NULL;
       markers_halo->merger_10pc_merger    =NULL;
-      markers_halo->M_peak                =0.;
 
       // Inititialize some things if this is a leaf
       tree_node_info *first_progenitor=halo->progenitor_first;
@@ -86,7 +86,6 @@ int find_treenode_markers_recursive(tree_info *trees,tree_markers_info **markers
          markers_halo->merger_10pc_remnant   =NULL;
          markers_halo->merger_10pc_host      =NULL;
          markers_halo->merger_10pc_merger    =NULL;
-         markers_halo->M_peak                =M_halo;
       }
       else{   
          // Walk the tree
@@ -124,12 +123,8 @@ int find_treenode_markers_recursive(tree_info *trees,tree_markers_info **markers
             current_progenitor=current_progenitor->progenitor_next;
          }
 
-         // Set M_peak and related pointers
-         find_treenode_formation(trees,halo,0.5,&(markers_halo->peak_mass),&(markers_halo->half_peak_mass));
-         if(M_halo>(markers_MP->M_peak))
-            markers_halo->M_peak=M_halo;
-         else
-            markers_halo->M_peak=markers_MP->M_peak;
+         // Set formation pointers 
+         find_treenode_formation(trees,halo,0.5,&(markers_halo->half_peak_mass));
 
          // Set leaf marker 
          markers_halo->branch_leaf=markers_MP->branch_leaf;
@@ -184,7 +179,7 @@ int find_treenode_markers_recursive(tree_info *trees,tree_markers_info **markers
       } // If halo is/is-not leaf
    }
 
-   // Send a pointer to this halo's markers back tot he calling function
+   // Send a pointer to this halo's markers back to the calling function
    if(M_return!=NULL)           (*M_return)          =M_halo;
    if(markers_descendant!=NULL) (*markers_descendant)=markers_halo; 
 

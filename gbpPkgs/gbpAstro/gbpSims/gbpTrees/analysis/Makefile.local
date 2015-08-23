@@ -5,6 +5,7 @@ INCFILES  = gbpTrees_analysis.h
 OBJFILES  = average_tree_branches.o              \
 	    init_precompute_treenode_markers.o       \
 	    free_precompute_treenode_markers.o       \
+	    precompute_treenode_markers.o            \
 	    init_treenode_trend.o                    \
 	    init_treenode_trend_coordinate.o         \
 	    init_treenode_trend_functions.o          \
@@ -84,14 +85,15 @@ OBJFILES  = average_tree_branches.o              \
 	    fetch_treenode_progenitor_rank.o         \
 	    set_treenode_hist_index.o                \
 	    find_treenode_markers.o                  \
-	    precompute_treenode_markers.o            \
 	    write_treenode_markers.o                 \
 	    read_treenode_markers.o                  \
+	    find_treenode_peak_mass_recursive.o      \
 	    find_treenode_markers_recursive.o        \
 	    find_treenode_snap_equals_given.o        \
 	    find_treenode_main_progenitor.o          \
 	    find_treenode_branch_root.o              \
 	    find_treenode_branch_leaf.o              \
+	    find_treenode_Mpeak.o                    \
 	    find_treenode_formation.o                \
 	    find_treenode_last_merger.o              \
 	    find_treenode_accretion.o                \

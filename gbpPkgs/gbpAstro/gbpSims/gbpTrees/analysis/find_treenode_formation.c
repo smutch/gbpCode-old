@@ -12,30 +12,21 @@
 int find_treenode_formation(tree_info       *trees,
                             tree_node_info  *halo,
                             double           fraction,
-                            tree_node_info **peak_mass,
-                            tree_node_info **fraction_of_peak_mass){
+                            tree_node_info **halo_formation){
+   (*halo_formation)=halo;
    if(halo!=NULL){
-      double M_vir   =0.;
-      double M_peak  =0.;
-      double M_target=0.;
+      double M_peak_halo=fetch_treenode_Mpeak(trees,halo);
+      double M_target   =fraction*M_peak_halo;
       tree_node_info *current_halo=halo;
-      (*peak_mass)                =current_halo;
-      (*fraction_of_peak_mass)    =current_halo;
       while(current_halo!=NULL){
-         halo_properties_info *properties=fetch_treenode_properties(trees,current_halo);
-         M_vir=properties->M_vir;
-         if(M_vir>M_peak){
-            (*peak_mass)=current_halo;
-            M_peak      =M_vir;
-            M_target    =fraction*M_peak;
-         }
-         if(M_vir>M_target)
-            (*fraction_of_peak_mass)=current_halo;
+         double M_peak_current=fetch_treenode_Mpeak(trees,current_halo);
+         if(M_peak_halo>M_target)
+            (*halo_formation)=current_halo;
+         else break;
          current_halo=current_halo->progenitor_first;
       }
       return(TRUE);
    }
-   (*fraction_of_peak_mass)=NULL;
    return(FALSE);
 }
 

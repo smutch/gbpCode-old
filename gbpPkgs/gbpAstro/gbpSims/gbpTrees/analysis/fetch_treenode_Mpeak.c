@@ -16,16 +16,11 @@ double fetch_treenode_Mpeak(tree_info *trees_in,tree_node_info *halo_in){
       tree_node_info *halo =fetch_treenode_reference(trees_in,halo_in);
       // Fetch the peak mass marker
       tree_markers_info *markers  =fetch_treenode_precomputed_markers(trees,halo);
-      tree_node_info    *peak_mass=NULL;
       if(markers!=NULL)
-         peak_mass=markers->peak_mass;
-      // Fetch the mass
-      if(peak_mass==NULL)
-         return(fetch_treenode_Mvir(trees,halo));
-      else
-         return(fetch_treenode_Mvir(trees,peak_mass));
+         return(markers->M_peak);
+      //else
+      //   return(fetch_treenode_Mvir(trees,halo));
    }
-   else
-      return(0.);
+   return(0.);
 }
 
