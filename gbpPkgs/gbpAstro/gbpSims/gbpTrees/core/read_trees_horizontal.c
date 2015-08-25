@@ -91,12 +91,12 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
          SID_trap_error("Invalid match type (%d) for i_group=%d",ERROR_LOGIC,
                         group_type,i_group);
       if(flag_store_extended){
-         groups_extended[i_group].id           =group_id;
-         groups_extended[i_group].type         =group_type;
-         groups_extended[i_group].descendant_id=group_descendant_id;
-         groups_extended[i_group].tree_id      =group_tree_id;
-         groups_extended[i_group].file_offset  =group_file_offset;
-         groups_extended[i_group].index        =group_index;
+         groups_extended[i_group].id                    =group_id;
+         groups_extended[i_group].type                  =group_type;
+         groups_extended[i_group].descendant_id         =group_descendant_id;
+         groups_extended[i_group].tree_id               =group_tree_id;
+         groups_extended[i_group].descendant_file_offset=group_file_offset;
+         groups_extended[i_group].descendant_index      =group_index;
       }
       if(flag_read_extended){
          int   group_n_particles;
@@ -169,12 +169,12 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
             SID_trap_error("Invalid match type (%d) for i_group,j_subgroup,i_subgroup=%d,%d,%d",ERROR_LOGIC,
                            subgroup_type,i_group,j_subgroup,i_subgroup);
          if(flag_store_extended){
-            subgroups_extended[i_subgroup].id           =subgroup_id;
-            subgroups_extended[i_subgroup].type         =subgroup_type;
-            subgroups_extended[i_subgroup].descendant_id=subgroup_descendant_id;
-            subgroups_extended[i_subgroup].tree_id      =subgroup_tree_id;
-            subgroups_extended[i_subgroup].file_offset  =subgroup_file_offset;
-            subgroups_extended[i_subgroup].index        =subgroup_index;
+            subgroups_extended[i_subgroup].id                    =subgroup_id;
+            subgroups_extended[i_subgroup].type                  =subgroup_type;
+            subgroups_extended[i_subgroup].descendant_id         =subgroup_descendant_id;
+            subgroups_extended[i_subgroup].tree_id               =subgroup_tree_id;
+            subgroups_extended[i_subgroup].descendant_file_offset=subgroup_file_offset;
+            subgroups_extended[i_subgroup].descendant_index      =subgroup_index;
          }
          if(flag_read_extended){
             int   subgroup_n_particles;
