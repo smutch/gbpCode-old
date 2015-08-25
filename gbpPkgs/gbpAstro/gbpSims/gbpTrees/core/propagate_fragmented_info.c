@@ -22,8 +22,8 @@ void propagate_fragmented_info(tree_horizontal_extended_info **groups,   int *n_
       int group_tree_id           =groups[i_read%n_wrap][i_group].tree_id;
       int group_descendant_id     =groups[i_read%n_wrap][i_group].descendant_id;
       int group_type              =groups[i_read%n_wrap][i_group].type;
-      int group_file_offset       =groups[i_read%n_wrap][i_group].file_offset;
-      int group_index             =groups[i_read%n_wrap][i_group].index;
+      int group_file_offset       =groups[i_read%n_wrap][i_group].descendant_file_offset;
+      int group_index             =groups[i_read%n_wrap][i_group].descendant_index;
       int group_n_particles_parent=groups[i_read%n_wrap][i_group].n_particles_parent;
       int group_n_particles_desc  =groups[i_read%n_wrap][i_group].n_particles_desc;
       int group_n_particles_proj  =groups[i_read%n_wrap][i_group].n_particles_proj;
@@ -75,7 +75,6 @@ void propagate_fragmented_info(tree_horizontal_extended_info **groups,   int *n_
          int subgroup_tree_id           =subgroups[i_read%n_wrap][i_subgroup].tree_id;
          int subgroup_descendant_id     =subgroups[i_read%n_wrap][i_subgroup].descendant_id;
          int subgroup_type              =subgroups[i_read%n_wrap][i_subgroup].type;
-         int subgroup_file_offset       =subgroups[i_read%n_wrap][i_subgroup].file_offset;
          int subgroup_n_particles_parent=subgroups[i_read%n_wrap][i_subgroup].n_particles_parent;
          int subgroup_n_particles_desc  =subgroups[i_read%n_wrap][i_subgroup].n_particles_desc;
          int subgroup_n_particles_proj  =subgroups[i_read%n_wrap][i_subgroup].n_particles_proj;
@@ -85,7 +84,8 @@ void propagate_fragmented_info(tree_horizontal_extended_info **groups,   int *n_
          int subgroup_file_bridge       =subgroups[i_read%n_wrap][i_subgroup].file_bridge;
          int subgroup_index_bridge      =subgroups[i_read%n_wrap][i_subgroup].index_bridge;
          int subgroup_id_bridge         =subgroups[i_read%n_wrap][i_subgroup].id_bridge;
-         int subgroup_index             =subgroups[i_read%n_wrap][i_subgroup].index;
+         int subgroup_file_offset       =subgroups[i_read%n_wrap][i_subgroup].descendant_file_offset;
+         int subgroup_index             =subgroups[i_read%n_wrap][i_subgroup].descendant_index;
 
          // Check if the subgroup has returned to it's bridge (if fragmented)
          flag_returned=(subgroup_file_bridge==i_read && subgroup_index_bridge==i_subgroup);

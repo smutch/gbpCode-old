@@ -31,37 +31,38 @@
 // If any of these are changed, don't forget to modify parse_match_type.c (TTTPXX means "two-to-the-power-XX")
 #define TREE_CASE_NO_PROGENITORS                TTTP00  // Set for halos that have no progenitors.
 #define TREE_CASE_MAIN_PROGENITOR               TTTP01  // Set for the progenitor with the highest match score. 
-#define TREE_CASE_DOMINANT                      TTTP02  // Marks the dominant substructure.  Generally the most massive but not necessarily.
-#define TREE_CASE_REMNANT                       TTTP03  // Set for halos with more than one progenitor.
-#define TREE_CASE_MERGER_DOMINANT               TTTP04  // Set when a halo is deemed to be the primary   progenitor of a merger
-#define TREE_CASE_MERGER                        TTTP05  // Set when a halo is deemed to be the secondary progenitor of a merger
-#define TREE_CASE_STRAYED                       TTTP06  // Set for halos for which a descendant was not found
-#define TREE_CASE_DROPPED                       TTTP07  // Set if file_offset>1 and TREE_CASE_MATCHED_TO_BRIDGE is not set
-#define TREE_CASE_BRIDGED                       TTTP08  // Set for halos with multiple unique back-matches from halos with unique IDs
-#define TREE_CASE_EMERGED                       TTTP09  // Set when a match is made identifying this halo as emerged
-#define TREE_CASE_FRAGMENTED_NEW                TTTP10  // Set for halos that have been marked TREE_CASE_EMERGED_CANDIDATE but not TREE_CASE_EMERGED
+#define TREE_CASE_MOST_MASSIVE                  TTTP02  // Marks the most massive substructure.
+#define TREE_CASE_DOMINANT                      TTTP03  // Marks the dominant substructure.  Generally the most massive but not necessarily.
+#define TREE_CASE_REMNANT                       TTTP04  // Set for halos with more than one progenitor.
+#define TREE_CASE_MERGER_DOMINANT               TTTP05  // Set when a halo is deemed to be the primary   progenitor of a merger
+#define TREE_CASE_MERGER                        TTTP06  // Set when a halo is deemed to be the secondary progenitor of a merger
+#define TREE_CASE_STRAYED                       TTTP07  // Set for halos for which a descendant was not found
+#define TREE_CASE_DROPPED                       TTTP08  // Set if file_offset>1 and TREE_CASE_MATCHED_TO_BRIDGE is not set
+#define TREE_CASE_BRIDGED                       TTTP09  // Set for halos with multiple unique back-matches from halos with unique IDs
+#define TREE_CASE_EMERGED                       TTTP10  // Set when a match is made identifying this halo as emerged
+#define TREE_CASE_FRAGMENTED_NEW                TTTP11  // Set for halos that have been marked TREE_CASE_EMERGED_CANDIDATE but not TREE_CASE_EMERGED
                                                         //    (unless it's the backmatch with the most massive descendant; that halo is considered
                                                         //     to be the source of any fragmented halos)
-#define TREE_CASE_FRAGMENTED_STRAYED            TTTP11  // Set for halos that are marked TREE_CASE_FRAGMENTED (see below), and whose 
+#define TREE_CASE_FRAGMENTED_STRAYED            TTTP12  // Set for halos that are marked TREE_CASE_FRAGMENTED (see below), and whose 
                                                         //    decendant_id!=a valid id (ie they are not a progenitor of anything). 
-#define TREE_CASE_FRAGMENTED_RETURNED           TTTP12  // Set for halos that are marked TREE_CASE_FRAGMENTED (see below), and whose 
+#define TREE_CASE_FRAGMENTED_RETURNED           TTTP13  // Set for halos that are marked TREE_CASE_FRAGMENTED (see below), and whose 
                                                         //    decendant_id==the id of the halo they are emerged from. 
-#define TREE_CASE_FRAGMENTED_EXCHANGED          TTTP13  // Set for halos that are marked TREE_CASE_FRAGMENTED (see below), and whose 
+#define TREE_CASE_FRAGMENTED_EXCHANGED          TTTP14  // Set for halos that are marked TREE_CASE_FRAGMENTED (see below), and whose 
                                                         //    decendant_id!=the id of the halo they are emerged but is nevertheless valid 
                                                         //    (ie. they are still a progenitor of something). 
-#define TREE_CASE_EMERGED_CANDIDATE             TTTP14  // Set when a halo is identified as a unique back-match to a halo marked TREE_CASE_BRIDGED 
+#define TREE_CASE_EMERGED_CANDIDATE             TTTP15  // Set when a halo is identified as a unique back-match to a halo marked TREE_CASE_BRIDGED 
                                                         //    and is not identified as the BRIDGE's main descendant
-#define TREE_CASE_MATCHED_TO_EMERGED            TTTP15  // Set when a halo is matched to an emerged halo
-#define TREE_CASE_2WAY_MATCH                    TTTP16  // Set when the match between a halo and it's descendant is mutual
-#define TREE_CASE_GHOST                         TTTP17  // Marks ghost halos in ghost-populated trees
-#define TREE_CASE_GHOST_NULL                    TTTP18  // Marks a ghost halo where a subgroup is it's own group.
+#define TREE_CASE_MATCHED_TO_EMERGED            TTTP16  // Set when a halo is matched to an emerged halo
+#define TREE_CASE_2WAY_MATCH                    TTTP17  // Set when the match between a halo and it's descendant is mutual
+#define TREE_CASE_GHOST                         TTTP18  // Marks ghost halos in ghost-populated trees
+#define TREE_CASE_GHOST_NULL                    TTTP19  // Marks a ghost halo where a subgroup is it's own group.
                                                         //    This is a default behaviour that occurs when a group is strayed but one of 
                                                         //    it's subgroups isn't.
-#define TREE_CASE_UNPROCESSED                   TTTP19  // For internal use.  This should never be seen in the output.
-#define TREE_CASE_INVALID                       TTTP20  // For internal use.  This should never be seen in the output.
+#define TREE_CASE_UNPROCESSED                   TTTP20  // For internal use.  This should never be seen in the output.
+#define TREE_CASE_INVALID                       TTTP21  // For internal use.  This should never be seen in the output.
 
 #ifdef _MAIN
-   int   n_tree_case_flag_list=21;
+   int   n_tree_case_flag_list=22;
    int   tree_case_flag_list[]={
                   TREE_CASE_NO_PROGENITORS,
                   TREE_CASE_FRAGMENTED_NEW,
@@ -70,6 +71,7 @@
                   TREE_CASE_FRAGMENTED_EXCHANGED,
                   TREE_CASE_MAIN_PROGENITOR,
                   TREE_CASE_2WAY_MATCH,
+                  TREE_CASE_MOST_MASSIVE,
                   TREE_CASE_DOMINANT,
                   TREE_CASE_MERGER_DOMINANT,
                   TREE_CASE_MERGER,
@@ -92,6 +94,7 @@
                         "FRAGMENTED_EXCHANGED",
                         "MAIN_PROGENITOR",
                         "2WAY",
+                        "MOST_MASSIVE",
                         "DOMINANT",
                         "MERGER_DOMINANT",
                         "MERGER",
@@ -224,29 +227,31 @@ struct tree_horizontal_info{
 
 typedef struct tree_horizontal_extended_info tree_horizontal_extended_info;
 struct tree_horizontal_extended_info{
-  int id;                     // This halo's id
-  int n_particles;            // Number of particles in this halo
-  int tree_id;                // This halo's tree id
-  int descendant_id;          // This halo's main progenitor id
-  int parent_id;              // This halo's parent's main progenitor id
-  int type;                   // A bit-wise switch characterising this halo's matching
-  int file_offset;            // This halo's snapshot index (ie. 0->n_snaps_used_in_trees-1)
-  int n_particles_peak;       // Peak number of particles in this halo's progenitor line
-  int n_particles_parent;     // Number of particles in this halo's parent
-  int n_particles_desc;       // Number of particles in this halo's descendant
-  int n_particles_proj;       // Number of particles in this halo's progenitor
-  int score_desc;             // Matching score of this halo to it's descendant
-  int score_prog;             // Matching score of this halo to it's progenitor
-  int snap_bridge;            // Snapshot of any halo that this halo may be back-matched to
-  int file_bridge;            // File index of any halo that this halo may be back-matched to
-  int index_bridge;           // Index of any bridge this halo may be back-matched to
-  int id_bridge;              // ID of any bridge this halo may be back-matched to
-  int index;                  // This halo's index in the halo catalog
-  int substructure_index;     // This halo's substructure index 
-  int first_progenitor_file;  // Pointer to this halo's first progenitor
-  int first_progenitor_index; // Pointer to this halo's first progenitor
-  int next_progenitor_file;   // Pointer to this halo's next  progenitor
-  int next_progenitor_index;  // Pointer to this halo's next  progenitor
+  int id;                        // This halo's id
+  int tree_id;                   // This halo's tree id
+  int descendant_id;             // This halo's main progenitor id
+  int parent_id;                 // This halo's parent's main progenitor id
+  int type;                      // A bit-wise switch characterising this halo's matching
+  int n_particles;               // Number of particles in this halo
+  int n_particles_peak;          // Peak number of particles in this halo's progenitor line
+  int n_particles_parent;        // Number of particles in this halo's parent
+  int n_particles_desc;          // Number of particles in this halo's descendant
+  int n_particles_proj;          // Number of particles in this halo's progenitor
+  int score_desc;                // Matching score of this halo to it's descendant
+  int score_prog;                // Matching score of this halo to it's progenitor
+  int snap_bridge;               // Snapshot of any halo that this halo may be back-matched to
+  int file_bridge;               // File index of any halo that this halo may be back-matched to
+  int index_bridge;              // Index of any bridge this halo may be back-matched to
+  int id_bridge;                 // ID of any bridge this halo may be back-matched to
+  int substructure_index;        // This halo's substructure index 
+  int descendant_file_offset;    // Pointer to this halo's descendant (ie. 0->n_snaps_used_in_trees-1)
+  int descendant_index;          // Pointer to this halo's descendant
+  int first_progenitor_file;     // Pointer to this halo's first progenitor
+  int first_progenitor_index;    // Pointer to this halo's first progenitor
+  int next_progenitor_file;      // Pointer to this halo's next  progenitor
+  int next_progenitor_index;     // Pointer to this halo's next  progenitor
+  int dominant_progenitor_file;  // Pointer to this halo's next  progenitor
+  int dominant_progenitor_index; // Pointer to this halo's next  progenitor
 };
 
 // Data structures for vertical tree construction
@@ -550,15 +555,21 @@ int   set_back_match_n_particles(back_match_info *back_match);
 int   set_back_match_index      (back_match_info *back_match);
 float set_back_match_score      (back_match_info *back_match);
 
-tree_horizontal_extended_info *set_extended_descendant      (tree_horizontal_extended_info **halos,tree_horizontal_extended_info *halo,int i_file,int n_wrap);
+tree_horizontal_extended_info *set_extended_descendant(tree_horizontal_extended_info **halos,tree_horizontal_extended_info *halo,int i_file,int n_wrap);
+tree_horizontal_extended_info *set_extended_dominant_progenitor(tree_horizontal_extended_info **halos,tree_horizontal_extended_info *halo,int n_wrap);
 tree_horizontal_extended_info *set_extended_first_progenitor(tree_horizontal_extended_info **halos,tree_horizontal_extended_info *halo,int n_wrap);
 tree_horizontal_extended_info *set_extended_next_progenitor (tree_horizontal_extended_info **halos,tree_horizontal_extended_info *halo,int n_wrap);
-void set_extended_n_particles_peak(tree_horizontal_extended_info *this_halo,tree_horizontal_extended_info *this_halo_desc);
-void set_extended_dominant_flags(tree_horizontal_extended_info *this_halo,
-                                 tree_horizontal_extended_info *this_halo_desc,
-                                 int subgroup_index,
-                                 int flag_parent_has_dominant);
-
+void set_extended_dominant_info(tree_horizontal_extended_info **halos,
+                                tree_horizontal_extended_info  *this_halo,
+                                int flag_parent_has_dominant,
+                                int i_file,
+                                int index,
+                                int n_wrap);
+int set_extended_new_dominant_progenitor(tree_horizontal_extended_info **halos,
+                                         tree_horizontal_extended_info  *halo,
+                                         int i_file,
+                                         int index,
+                                         int n_wrap);
 void check_for_fragmented_halos(int k_match,tree_horizontal_info **groups,int n_groups,
                                 int i_write,int j_write,int l_write,int n_wrap);
 void add_to_trees_horizontal_stats(tree_horizontal_stats_info *stats,int id,int type,int n_particles);
@@ -584,7 +595,15 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
                                  int    *max_tree_id_group,
                                  int    *max_id_subgroup,
                                  int    *max_tree_id_subgroup);
-void init_trees_horizontal_snapshot(tree_horizontal_info *halos_i,int n_halos_i,int i_read,int i_file,int n_halos_max);
+void init_trees_horizontal_snapshot(tree_horizontal_info *halos,
+                                    int                   i_read,
+                                    int                   i_file,
+                                    int                   n_groups,
+                                    int                   n_groups_max,
+                                    int                   n_subgroups,
+                                    int                   n_subgroups_max,
+                                    int                  *n_subgroups_group,
+                                    int                   flag_match_subgroups);
 void read_halo_sizes(tree_horizontal_info **halos,
                      int     n_halos_i,
                      int    *match_id,

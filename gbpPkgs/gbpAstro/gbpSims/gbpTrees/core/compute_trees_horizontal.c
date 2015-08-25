@@ -317,7 +317,15 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
        SID_log("Processing %d %sgroups...",SID_LOG_OPEN|SID_LOG_TIMER,n_halos_i,group_text_prefix);
 
        // Initialize tree pointer-arrays with dummy values
-       init_trees_horizontal_snapshot(halos_i,n_halos_i,i_read,i_file,n_halos_max);
+       init_trees_horizontal_snapshot(halos_i,
+                                      i_read,
+                                      i_file,
+                                      n_groups[j_file],
+                                      n_groups_max,
+                                      n_subgroups[j_file],
+                                      n_subgroups_max,
+                                      n_subgroups_group[i_file%n_wrap],
+                                      flag_match_subgroups);
 
        // Use back-matching to identify bridged and fragmented halos (also, read current snapshot halo sizes here)...
        if(flag_fix_bridges)

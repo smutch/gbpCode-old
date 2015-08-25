@@ -53,36 +53,23 @@ int add_node_to_trees(tree_info        *trees,            // The tree datastruct
 
   // Process descendants
   if(descendant_snap>=0){
-     if(descendant_snap==halo_snap && descendant_snap>=0){
-        if(flag_processing_group)
-           SID_trap_error("This group halo (snap=%d;idx=%d) has the same snap as its descenant (snap=%d;idx=%d)!",ERROR_LOGIC,
-                          halo_snap,halo_index,descendant_snap,descendant_index);
-        else
-           SID_trap_error("This subgroup halo (snap=%d;idx=%d) has the same snap as its descenant (snap=%d;idx=%d)!",ERROR_LOGIC,
-                          halo_snap,halo_index,descendant_snap,descendant_index);
-     }
+     // Sanity check
+     if(descendant_snap==halo_snap && descendant_snap>=0)
+        SID_trap_error("A halo (snap=%d;idx=%d;flag_processing_group=%d) has the same snap as its descenant (snap=%d;idx=%d)!",ERROR_LOGIC,
+                       halo_snap,halo_index,flag_processing_group,descendant_snap,descendant_index);
      if(descendant_index>=0){
         int             index_index;
         tree_node_info *descendant;
-        // Find the descendant
-        if(!find_tree_node(trees,descendant_snap,descendant_index,flag_processing_group,&descendant)){
-          if(flag_processing_group)
-             SID_trap_error("Could not find descendant group (snap=%d->%d, index=%d->%d)",ERROR_LOGIC,
-                            halo_snap,descendant_snap,halo_index,descendant_index);
-          else
-             SID_trap_error("Could not find descendant subgroup (snap=%d->%d, index=%d->%d)",ERROR_LOGIC,
-                            halo_snap,descendant_snap,halo_index,descendant_index);
-        }
-        if(descendant==NULL){
-           if(flag_processing_group)
-              SID_trap_error("A group (snap=%d;idx=%d) has been found to have an undefined descendant (snap=%d;idx=%d)!",ERROR_LOGIC,
-                             halo_snap,halo_index,descendant_snap,descendant_index);
-           else
-              SID_trap_error("A subgroup (snap=%d;idx=%d) has been found to have an undefined descendant (snap=%d;idx=%d)!",ERROR_LOGIC,
-                             halo_snap,halo_index,descendant_snap,descendant_index);
-        }
+        // Find the descendant...
+        if(!find_tree_node(trees,descendant_snap,descendant_index,flag_processing_group,&descendant))
+          SID_trap_error("Could not find descendant group (snap=%d->%d;idx=%d->%d;flag_processing_group=%d)",ERROR_LOGIC,
+                         halo_snap,descendant_snap,halo_index,descendant_index,flag_processing_group);
+        if(descendant==NULL)
+           SID_trap_error("A group (snap=%d;idx=%d;flag_processing_group=%d) has been found to have an undefined descendant (snap=%d;idx=%d)!",ERROR_LOGIC,
+                          halo_snap,halo_index,flag_processing_group,descendant_snap,descendant_index);
+        // ... set it ...
         (*new_node)->descendant=descendant;
-        // Update its info, pointers, etc
+        // ... and update it.
         descendant->n_progenitors++;
         if(descendant->progenitor_first==NULL)
           descendant->progenitor_first=(*new_node);

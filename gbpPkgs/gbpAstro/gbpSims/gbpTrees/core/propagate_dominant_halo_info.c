@@ -17,14 +17,9 @@ void propagate_dominant_halo_info(tree_horizontal_extended_info **groups,   int 
    int j_subgroup;
    int flag_returned;
    for(i_group=0,i_subgroup=0;i_group<n_groups[l_read];i_group++){
-      tree_horizontal_extended_info *this_group     =&(groups[i_read%n_wrap][i_group]);
-      tree_horizontal_extended_info *this_group_desc=set_extended_descendant(groups,this_group,i_read,n_wrap);
-
-      // Set dominant halo flags
-      set_extended_dominant_flags(this_group,this_group_desc,0,FALSE);
-
-      // Set n_particles_peak
-      set_extended_n_particles_peak(this_group,this_group_desc);
+      // Set dominant halo info
+      tree_horizontal_extended_info *this_group=&(groups[i_read%n_wrap][i_group]);
+      set_extended_dominant_info(groups,this_group,FALSE,i_read,i_group,n_wrap);
 
       // Check if there are any subgroups in the group that have a dominant flag already
       int flag_parent_has_dominant=FALSE;
@@ -34,14 +29,9 @@ void propagate_dominant_halo_info(tree_horizontal_extended_info **groups,   int 
 
       // Process subgroups
       for(j_subgroup=0;j_subgroup<n_subgroups_group[i_read%n_wrap][i_group];i_subgroup++,j_subgroup++){
-         tree_horizontal_extended_info *this_subgroup     =&(subgroups[i_read%n_wrap][i_subgroup]);
-         tree_horizontal_extended_info *this_subgroup_desc=set_extended_descendant(subgroups,this_subgroup,i_read,n_wrap);
-
          // Set dominant halo flags
-         set_extended_dominant_flags(this_subgroup,this_subgroup_desc,i_subgroup,flag_parent_has_dominant);
-
-         // Set n_particles_peak
-         set_extended_n_particles_peak(this_subgroup,this_subgroup_desc);
+         tree_horizontal_extended_info *this_subgroup=&(subgroups[i_read%n_wrap][i_subgroup]);
+         set_extended_dominant_info(subgroups,this_subgroup,flag_parent_has_dominant,i_read,i_subgroup,n_wrap);
       }
    }
    SID_log("Done.",SID_LOG_CLOSE);
