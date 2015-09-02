@@ -325,8 +325,10 @@ void write_trees_horizontal(void  **groups_in,
 
         // Write dominant progenitor files
         if(flag_write_dom_prog){
+           SID_fwrite(&group_tree_id,                  sizeof(int),1,&fp_dom_prog_out);
            SID_fwrite(&group_dominant_progenitor_file, sizeof(int),1,&fp_dom_prog_out);
            SID_fwrite(&group_dominant_progenitor_index,sizeof(int),1,&fp_dom_prog_out);
+           SID_fwrite(&(n_subgroups_group[i_write%n_wrap][i_group]),sizeof(int),1,&fp_dom_prog_out);
         }
 
         // Write the subgroup information to the horizontal tree files
@@ -456,6 +458,7 @@ void write_trees_horizontal(void  **groups_in,
 
            //Write the dominanant progenitor pointers
            if(flag_write_dom_prog){
+              SID_fwrite(&subgroup_tree_id,                  sizeof(int),1,&fp_dom_prog_out);
               SID_fwrite(&subgroup_dominant_progenitor_file, sizeof(int),1,&fp_dom_prog_out);
               SID_fwrite(&subgroup_dominant_progenitor_index,sizeof(int),1,&fp_dom_prog_out);
            }

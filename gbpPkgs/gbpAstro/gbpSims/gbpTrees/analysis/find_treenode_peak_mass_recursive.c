@@ -53,7 +53,7 @@ int find_treenode_peak_mass_recursive(tree_info *trees,tree_markers_info **marke
       else
          markers_halo->M_peak=M_halo;
 
-      // Send a pointer to this halo's markers back tot he calling function
+      // Send this halo's information back to its descendant
       if(halo_type_return!=NULL) (*halo_type_return)=halo->tree_case;
       if(M_peak_return!=NULL)    (*M_peak_return)   =markers_halo->M_peak;
    }

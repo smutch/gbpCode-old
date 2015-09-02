@@ -10,6 +10,7 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    read_trees_data.o                             \
 	    read_trees_catalogs.o                         \
 	    read_trees_pointers.o                         \
+	    read_trees_dominant_progenitors.o             \
 	    read_trees_final_totals.o                     \
 	    read_matches_header.o                         \
 	    read_AHF_for_trees.o                          \
@@ -77,6 +78,7 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    set_back_match_n_particles.o                  \
 	    set_back_match_index.o                        \
 	    set_back_match_score.o                        \
+	    set_n_particles_peak.o                        \
 	    set_extended_descendant.o                     \
 	    set_extended_dominant_progenitor.o            \
 	    set_extended_dominant_info.o                  \

@@ -12,20 +12,16 @@
 int find_treenode_Mpeak(tree_info       *trees,
                         tree_node_info  *halo,
                         tree_node_info **halo_peak){
-   SID_trap_error("find_treenode_Mpeak() not working.",ERROR_LOGIC);
-   /*
    (*halo_peak)=halo;
    if(halo!=NULL){
       tree_node_info *current_halo=halo;
       // Scan to the halo's leaf
-      while((current_halo->progenitor_first)!=NULL){
+      while((current_halo->progenitor_dominant)!=NULL){
          current_halo=current_halo->progenitor_first;
       }
-      // Follow the dominant halo line back.  Wait, this wont bring us 
-      //    back to halo in general ... need to think about this ...
+      // Follow the main progenitor line back.
       return(TRUE);
    }
-   */
    return(FALSE);
 }
 

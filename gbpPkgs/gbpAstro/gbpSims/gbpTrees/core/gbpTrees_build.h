@@ -305,6 +305,7 @@ struct tree_node_info{
   tree_node_info *progenitor_first;
   tree_node_info *progenitor_last;
   tree_node_info *progenitor_next;
+  tree_node_info *progenitor_dominant;
   // Bulk processing pointers
   tree_node_info *next_neighbour;  // This halo's snapshot
   tree_node_info *next_in_forest;  // This halo's forest
@@ -465,6 +466,10 @@ void free_trees_data(void **tree_data,void *params);
 void read_trees_match_scores(tree_info *trees,
                              char      *filename_SSimPL_dir,
                              int        mode);
+void read_trees_dominant_progenitors(tree_info        *trees,
+                                     const char       *filename_input_dir_horizontal_trees,
+                                     int               i_file_ptrs,
+                                     int               i_read_ptrs);
 void read_trees_pointers(tree_info        *trees,
                          const char       *filename_input_dir_horizontal_trees,
                          int               i_file_ptrs,
@@ -554,6 +559,8 @@ int   set_back_match_type       (back_match_info *back_match);
 int   set_back_match_n_particles(back_match_info *back_match);
 int   set_back_match_index      (back_match_info *back_match);
 float set_back_match_score      (back_match_info *back_match);
+
+void set_n_particles_peak(int type,int n_particles_halo,int *n_particles_peak);
 
 tree_horizontal_extended_info *set_extended_descendant(tree_horizontal_extended_info **halos,tree_horizontal_extended_info *halo,int i_file,int n_wrap);
 tree_horizontal_extended_info *set_extended_dominant_progenitor(tree_horizontal_extended_info **halos,tree_horizontal_extended_info *halo,int n_wrap);

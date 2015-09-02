@@ -26,13 +26,8 @@ void set_extended_dominant_info(tree_horizontal_extended_info **halos,
       }
    }
 
-   // Set peak halo size 
-   if(check_mode_for_flag(this_halo->type,TREE_CASE_NO_PROGENITORS))
-      this_halo->n_particles_peak=this_halo->n_particles;
-
-   // ... increment inherited value unless a most massive substructure is not dominant
-   else if(!(!check_mode_for_flag(this_halo->type,TREE_CASE_DOMINANT) && check_mode_for_flag(this_halo->type,TREE_CASE_MOST_MASSIVE)))
-      this_halo->n_particles_peak=MAX(this_halo->n_particles_peak,this_halo->n_particles);
+   // Set this halo's peak size 
+   set_n_particles_peak(this_halo->type,this_halo->n_particles,&(this_halo->n_particles_peak));
 
    // Set descendant's dominant progenitor.  Descendant inherits this halo's peak size if it is the dominant progenitor
    if(set_extended_new_dominant_progenitor(halos,this_halo,i_file,index,n_wrap)){
@@ -40,3 +35,4 @@ void set_extended_dominant_info(tree_horizontal_extended_info **halos,
       this_halo_desc->n_particles_peak=this_halo->n_particles_peak;
    }
 }
+

@@ -98,20 +98,24 @@ void read_trees(char       *filename_SSimPL_root,
   //    we have to wait until (n_search+1) snapshots have been processed before we start reading those files.
   SID_log("Reading trees...",SID_LOG_OPEN|SID_LOG_TIMER);
   int n_subgroups_orphaned=0;
-  int i_read          =i_read_stop;
-  int i_file          =n_snaps-1;
-  int i_read_bridge   =i_read_stop;
-  int i_read_backmatch=i_read_stop+n_search*i_read_step;
-  int i_file_bridge   =n_snaps-1;
-  int i_file_backmatch=n_snaps-1+n_search;
+  int i_read           =i_read_stop;
+  int i_read_bridge    =i_read_stop;
+  int i_read_backmatch =i_read_stop+n_search*i_read_step;
+  int i_read_progenitor=i_read_stop+n_search*i_read_step;
+  int i_file           =n_snaps-1;
+  int i_file_bridge    =n_snaps-1;
+  int i_file_backmatch =n_snaps-1+n_search;
+  int i_file_progenitor=n_snaps-1+n_search;
   for(;
       i_read>=i_read_start;
-      i_read          -=i_read_step,
-      i_read_bridge   -=i_read_step,
-      i_read_backmatch-=i_read_step,
+      i_read           -=i_read_step,
+      i_read_bridge    -=i_read_step,
+      i_read_backmatch -=i_read_step,
+      i_read_progenitor-=i_read_step,
       i_file--,
       i_file_bridge--,
-      i_file_backmatch--){
+      i_file_backmatch--,
+      i_file_progenitor--){
     SID_log("Processing snapshot %03d (%03d of %03d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read,i_file+1,n_snaps);
 
     // Open horizontal tree file
@@ -283,10 +287,17 @@ void read_trees(char       *filename_SSimPL_root,
 
     // Update the temporary look-up arrays
     update_trees_lookup((*trees),i_file);
+
+    // Read and set the dominant progenitor pointers
+//    SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
+    if(i_file_progenitor>=0 && i_file_progenitor<n_snaps)
+       read_trees_dominant_progenitors((*trees),
+                                       filename_input_dir_horizontal_trees,
+                                       i_file_progenitor,
+                                       i_read_progenitor);
  
     // Read extended pointer set (optional)
     if(flag_read_extended_pointers){
-       SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
        // Read bridge pointers
        if(i_file_bridge>=0 && i_file_bridge<n_snaps)
           read_trees_pointers((*trees),
@@ -305,8 +316,8 @@ void read_trees(char       *filename_SSimPL_root,
                               backmatch_pointers_groups_local,
                               backmatch_pointers_subgroups_local,
                               READ_TREES_POINTERS_BRIDGE_BACKMATCH);
-       SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
     }
+//    SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
     // Report some group statistics
     if(n_groups_unused>0)
@@ -317,10 +328,15 @@ void read_trees(char       *filename_SSimPL_root,
     SID_log("Done.",SID_LOG_CLOSE);
   } // i_read
 
-  // Finish back-match pointers (if being read)
+  // Finish reading pointers 
+  SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
+  for(;i_read_progenitor>=i_read_start;i_read_progenitor-=i_read_step,i_file_progenitor--)
+     read_trees_dominant_progenitors((*trees),
+                                     filename_input_dir_horizontal_trees,
+                                     i_file_progenitor,
+                                     i_read_progenitor);
   if(flag_read_extended_pointers){
-     SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
-     for(;i_read_backmatch>=i_read_start;i_read_backmatch-=i_read_step,i_file_backmatch--)
+     for(;i_read_backmatch>=i_read_start;i_read_backmatch-=i_read_step,i_file_backmatch--){
         read_trees_pointers((*trees),
                             filename_input_dir_horizontal_trees,
                             i_file_backmatch,
@@ -328,8 +344,9 @@ void read_trees(char       *filename_SSimPL_root,
                             backmatch_pointers_groups_local,
                             backmatch_pointers_subgroups_local,
                             READ_TREES_POINTERS_BRIDGE_BACKMATCH);
-     SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+     }
   }
+  SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
   SID_log("Done.",SID_LOG_CLOSE);
 
   // Create halo sums
