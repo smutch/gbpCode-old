@@ -288,15 +288,8 @@ void read_trees(char       *filename_SSimPL_root,
     // Update the temporary look-up arrays
     update_trees_lookup((*trees),i_file);
 
-    // Read and set the dominant progenitor pointers
-//    SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
-    if(i_file_progenitor>=0 && i_file_progenitor<n_snaps)
-       read_trees_dominant_progenitors((*trees),
-                                       filename_input_dir_horizontal_trees,
-                                       i_file_progenitor,
-                                       i_read_progenitor);
- 
     // Read extended pointer set (optional)
+    SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
     if(flag_read_extended_pointers){
        // Read bridge pointers
        if(i_file_bridge>=0 && i_file_bridge<n_snaps)
@@ -317,7 +310,7 @@ void read_trees(char       *filename_SSimPL_root,
                               backmatch_pointers_subgroups_local,
                               READ_TREES_POINTERS_BRIDGE_BACKMATCH);
     }
-//    SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
+    SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
     // Report some group statistics
     if(n_groups_unused>0)
@@ -330,11 +323,6 @@ void read_trees(char       *filename_SSimPL_root,
 
   // Finish reading pointers 
   SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
-  for(;i_read_progenitor>=i_read_start;i_read_progenitor-=i_read_step,i_file_progenitor--)
-     read_trees_dominant_progenitors((*trees),
-                                     filename_input_dir_horizontal_trees,
-                                     i_file_progenitor,
-                                     i_read_progenitor);
   if(flag_read_extended_pointers){
      for(;i_read_backmatch>=i_read_start;i_read_backmatch-=i_read_step,i_file_backmatch--){
         read_trees_pointers((*trees),

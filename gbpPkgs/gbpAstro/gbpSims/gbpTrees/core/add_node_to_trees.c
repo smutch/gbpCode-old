@@ -45,7 +45,6 @@ int add_node_to_trees(tree_info        *trees,            // The tree datastruct
   (*new_node)->progenitor_first   =        NULL;
   (*new_node)->progenitor_last    =        NULL;
   (*new_node)->progenitor_next    =        NULL;
-  (*new_node)->progenitor_dominant=        NULL;
   (*new_node)->next_neighbour     =        NULL;
   (*new_node)->next_in_forest     =        NULL;
 

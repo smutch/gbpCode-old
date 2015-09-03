@@ -37,7 +37,7 @@ int find_treenode_peak_mass_recursive(tree_info *trees,tree_markers_info **marke
             find_treenode_peak_mass_recursive(trees,markers_array,current_progenitor,&progenitor_type,&M_peak_progenitor);
 
             // Propagate the dominant halo's peak mass
-            if(check_mode_for_flag(progenitor_type,TREE_CASE_MERGER_DOMINANT)){
+            if(check_mode_for_flag(progenitor_type,TREE_CASE_MERGER_PRIMARY)){
                primary_halo  =current_progenitor;
                M_peak_primary=M_peak_progenitor;
             }
