@@ -51,7 +51,7 @@ int add_node_to_trees(tree_info        *trees,            // The tree datastruct
   // Are we processing a group?
   int flag_processing_group=(group_node==NULL);
 
-  // Process descendants
+  // Process descendants.  Progenitor will be in the order they're read.  Usually changed later in finalize_trees() (ordering given by mode).
   if(descendant_snap>=0){
      // Sanity check
      if(descendant_snap==halo_snap && descendant_snap>=0)

@@ -50,6 +50,7 @@ void compute_forests(char *filename_root_out,int n_search_forests){
   int         subgroup_descendant_id;
   int         group_file_offset;
   int         group_file_index;
+  int         group_n_particles_peak;
   int         forest_lo_rank;
   int         n_groups;
   int         n_subgroups;
@@ -109,6 +110,7 @@ void compute_forests(char *filename_root_out,int n_search_forests){
   int  n_trees_group_local;
   int  subgroup_file_offset;
   int  subgroup_file_index;
+  int  subgroup_n_particles_peak;
   char group_text_prefix[4];
   int  n_conjoined;
   int  n_conjoined_total;
@@ -236,14 +238,15 @@ void compute_forests(char *filename_root_out,int n_search_forests){
        // Loop over groups
        for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
           // Read group
-          SID_fread_all(tree_read_buffer,7*sizeof(int),1,&fp_in);
-          group_id           =tree_read_buffer[0];
-          group_type         =tree_read_buffer[1];
-          group_descendant_id=tree_read_buffer[2];
-          group_tree_id      =tree_read_buffer[3];
-          group_file_offset  =tree_read_buffer[4];
-          group_file_index   =tree_read_buffer[5];
-          n_subgroups_group  =tree_read_buffer[6];
+          SID_fread_all(tree_read_buffer,8*sizeof(int),1,&fp_in);
+          group_id              =tree_read_buffer[0];
+          group_type            =tree_read_buffer[1];
+          group_descendant_id   =tree_read_buffer[2];
+          group_tree_id         =tree_read_buffer[3];
+          group_file_offset     =tree_read_buffer[4];
+          group_file_index      =tree_read_buffer[5];
+          group_n_particles_peak=tree_read_buffer[6];
+          n_subgroups_group     =tree_read_buffer[7];
 
           // Count groups and decide if this group is valid for forest building
           int flag_valid_group=TRUE;
@@ -263,13 +266,14 @@ void compute_forests(char *filename_root_out,int n_search_forests){
           // Loop over subgroups
           for(j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
             // Read subgroup
-            SID_fread_all(tree_read_buffer,6*sizeof(int),1,&fp_in);
-            subgroup_id           =tree_read_buffer[0];
-            subgroup_type         =tree_read_buffer[1];
-            subgroup_descendant_id=tree_read_buffer[2];
-            subgroup_tree_id      =tree_read_buffer[3];
-            subgroup_file_offset  =tree_read_buffer[4];
-            subgroup_file_index   =tree_read_buffer[5];
+            SID_fread_all(tree_read_buffer,7*sizeof(int),1,&fp_in);
+            subgroup_id              =tree_read_buffer[0];
+            subgroup_type            =tree_read_buffer[1];
+            subgroup_descendant_id   =tree_read_buffer[2];
+            subgroup_tree_id         =tree_read_buffer[3];
+            subgroup_file_offset     =tree_read_buffer[4];
+            subgroup_file_index      =tree_read_buffer[5];
+            subgroup_n_particles_peak=tree_read_buffer[6];
             if(subgroup_id>=0 && subgroup_tree_id>=0){
               n_halos_tree_subgroup[subgroup_tree_id]++;
               n_halos_subgroups++;
@@ -442,9 +446,9 @@ void compute_forests(char *filename_root_out,int n_search_forests){
        // Loop over groups
        for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
           // Read group
-          SID_fread_all(tree_read_buffer,7*sizeof(int),1,&fp_in);
+          SID_fread_all(tree_read_buffer,8*sizeof(int),1,&fp_in);
           group_tree_id    =tree_read_buffer[3];
-          n_subgroups_group=tree_read_buffer[6];
+          n_subgroups_group=tree_read_buffer[7];
 
           // Count groups
           int flag_valid_group=TRUE;
@@ -460,7 +464,7 @@ void compute_forests(char *filename_root_out,int n_search_forests){
           // Loop over subgroups
           for(j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
             // Read subgroup
-            SID_fread_all(tree_read_buffer,6*sizeof(int),1,&fp_in);
+            SID_fread_all(tree_read_buffer,7*sizeof(int),1,&fp_in);
             subgroup_tree_id=tree_read_buffer[3];
             if(subgroup_id>=0 && subgroup_tree_id>=0){
               // Count subgroups

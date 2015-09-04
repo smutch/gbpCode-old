@@ -168,14 +168,16 @@ int main(int argc,char *argv[]){
        int group_tree_id;
        int group_file_offset;
        int group_file_index;
+       int group_n_particles_peak;
        int n_subgroups_group;
-       SID_fread(&(group_id),           sizeof(int),1,&fp_in);
-       SID_fread(&(group_type),         sizeof(int),1,&fp_in);
-       SID_fread(&(group_descendant_id),sizeof(int),1,&fp_in);
-       SID_fread(&(group_tree_id),      sizeof(int),1,&fp_in);
-       SID_fread(&(group_file_offset),  sizeof(int),1,&fp_in);
-       SID_fread(&(group_file_index),   sizeof(int),1,&fp_in);
-       SID_fread(&(n_subgroups_group),  sizeof(int),1,&fp_in);
+       SID_fread(&(group_id),              sizeof(int),1,&fp_in);
+       SID_fread(&(group_type),            sizeof(int),1,&fp_in);
+       SID_fread(&(group_descendant_id),   sizeof(int),1,&fp_in);
+       SID_fread(&(group_tree_id),         sizeof(int),1,&fp_in);
+       SID_fread(&(group_file_offset),     sizeof(int),1,&fp_in);
+       SID_fread(&(group_file_index),      sizeof(int),1,&fp_in);
+       SID_fread(&(group_n_particles_peak),sizeof(int),1,&fp_in);
+       SID_fread(&(n_subgroups_group),     sizeof(int),1,&fp_in);
        int subgroup_tree_id_min=n_trees_subgroup_total+1;
        int subgroup_tree_id_max=0;
        for(j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
@@ -188,12 +190,14 @@ int main(int argc,char *argv[]){
          int subgroup_tree_id;
          int subgroup_file_offset;
          int subgroup_file_index;
-         SID_fread(&(subgroup_id),           sizeof(int),1,&fp_in);
-         SID_fread(&(subgroup_type),         sizeof(int),1,&fp_in);
-         SID_fread(&(subgroup_descendant_id),sizeof(int),1,&fp_in);
-         SID_fread(&(subgroup_tree_id),      sizeof(int),1,&fp_in);
-         SID_fread(&(subgroup_file_offset),  sizeof(int),1,&fp_in);
-         SID_fread(&(subgroup_file_index),   sizeof(int),1,&fp_in);
+         int subgroup_n_particles_peak;
+         SID_fread(&(subgroup_id),              sizeof(int),1,&fp_in);
+         SID_fread(&(subgroup_type),            sizeof(int),1,&fp_in);
+         SID_fread(&(subgroup_descendant_id),   sizeof(int),1,&fp_in);
+         SID_fread(&(subgroup_tree_id),         sizeof(int),1,&fp_in);
+         SID_fread(&(subgroup_file_offset),     sizeof(int),1,&fp_in);
+         SID_fread(&(subgroup_file_index),      sizeof(int),1,&fp_in);
+         SID_fread(&(subgroup_n_particles_peak),sizeof(int),1,&fp_in);
          if(i_forest_subgroups[subgroup_tree_id]>n_trees_subgroup_total){
             i_forest_subgroups_start[subgroup_tree_id]=i_read;
             i_forest_subgroups[subgroup_tree_id]      =group_tree_id;

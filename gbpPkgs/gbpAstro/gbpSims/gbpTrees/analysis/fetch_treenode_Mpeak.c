@@ -18,8 +18,6 @@ double fetch_treenode_Mpeak(tree_info *trees_in,tree_node_info *halo_in){
       tree_markers_info *markers  =fetch_treenode_precomputed_markers(trees,halo);
       if(markers!=NULL)
          return(markers->M_peak);
-      //else
-      //   return(fetch_treenode_Mvir(trees,halo));
    }
    return(0.);
 }

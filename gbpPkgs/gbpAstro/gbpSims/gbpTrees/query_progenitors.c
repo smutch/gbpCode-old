@@ -199,6 +199,7 @@ int main(int argc, char *argv[]){
     int halo_descendant_id    =0;
     int halo_tree_id          =0;
     int halo_index            =0;
+    int halo_n_particles_peak =0;
     int bridge_forematch_id   =0;
     int bridge_forematch_file =0;
     int bridge_forematch_index=0;
@@ -254,6 +255,7 @@ int main(int argc, char *argv[]){
           SID_fread_all(&halo_tree_id,          sizeof(int),1,&fp_in_trees);
           SID_fread_all(&halo_file_offset,      sizeof(int),1,&fp_in_trees);
           SID_fread_all(&halo_index,            sizeof(int),1,&fp_in_trees);
+          SID_fread_all(&halo_n_particles_peak, sizeof(int),1,&fp_in_trees);
           SID_fread_all(&bridge_forematch_id,   sizeof(int),1,&fp_in_bridge_forematch);
           SID_fread_all(&bridge_forematch_file, sizeof(int),1,&fp_in_bridge_forematch);
           SID_fread_all(&bridge_forematch_index,sizeof(int),1,&fp_in_bridge_forematch);
@@ -309,7 +311,7 @@ int main(int argc, char *argv[]){
           }
        }
        else{
-          SID_fskip(sizeof(int),6,&fp_in_trees);
+          SID_fskip(sizeof(int),7,&fp_in_trees);
           SID_fskip(sizeof(int),4,&fp_in_bridge_forematch); // 3+1 'casue we're skipping n_subgroups_group too
           SID_fskip(sizeof(int),4,&fp_in_bridge_backmatch); // 3+1 'casue we're skipping n_subgroups_group too
        }
@@ -324,6 +326,7 @@ int main(int argc, char *argv[]){
              SID_fread_all(&halo_tree_id,          sizeof(int),1,&fp_in_trees);
              SID_fread_all(&halo_file_offset,      sizeof(int),1,&fp_in_trees);
              SID_fread_all(&halo_index,            sizeof(int),1,&fp_in_trees);
+             SID_fread_all(&halo_n_particles_peak, sizeof(int),1,&fp_in_trees);
              SID_fread_all(&bridge_forematch_id,   sizeof(int),1,&fp_in_bridge_forematch);
              SID_fread_all(&bridge_forematch_file, sizeof(int),1,&fp_in_bridge_forematch);
              SID_fread_all(&bridge_forematch_index,sizeof(int),1,&fp_in_bridge_forematch);
@@ -379,7 +382,7 @@ int main(int argc, char *argv[]){
           }
        }
        else{
-          SID_fskip(sizeof(int),6*n_subgroups_group,&fp_in_trees);
+          SID_fskip(sizeof(int),7*n_subgroups_group,&fp_in_trees);
           SID_fskip(sizeof(int),3*n_subgroups_group,&fp_in_bridge_forematch); 
           SID_fskip(sizeof(int),3*n_subgroups_group,&fp_in_bridge_backmatch); 
        }

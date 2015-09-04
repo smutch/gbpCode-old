@@ -186,14 +186,15 @@ void read_trees(char       *filename_SSimPL_root,
     for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
 
       // Read horizontal trees for groups
-      int n_particles_group;  SID_fread_all_buffer(&n_particles_group,  sizeof(int),1,fp_groups_in_buffer);
-      int group_id;           SID_fread_all_buffer(&group_id,           sizeof(int),1,fp_trees_in_buffer);
-      int group_tree_case;    SID_fread_all_buffer(&group_tree_case,    sizeof(int),1,fp_trees_in_buffer);
-      int group_descendant_id;SID_fread_all_buffer(&group_descendant_id,sizeof(int),1,fp_trees_in_buffer);
-      int group_tree_id;      SID_fread_all_buffer(&group_tree_id,      sizeof(int),1,fp_trees_in_buffer);
-      int group_file_offset;  SID_fread_all_buffer(&group_file_offset,  sizeof(int),1,fp_trees_in_buffer);
-      int group_file_index;   SID_fread_all_buffer(&group_file_index,   sizeof(int),1,fp_trees_in_buffer);
-      int n_subgroups_group;  SID_fread_all_buffer(&n_subgroups_group,  sizeof(int),1,fp_trees_in_buffer);
+      int n_particles_group;     SID_fread_all_buffer(&n_particles_group,     sizeof(int),1,fp_groups_in_buffer);
+      int group_id;              SID_fread_all_buffer(&group_id,              sizeof(int),1,fp_trees_in_buffer);
+      int group_tree_case;       SID_fread_all_buffer(&group_tree_case,       sizeof(int),1,fp_trees_in_buffer);
+      int group_descendant_id;   SID_fread_all_buffer(&group_descendant_id,   sizeof(int),1,fp_trees_in_buffer);
+      int group_tree_id;         SID_fread_all_buffer(&group_tree_id,         sizeof(int),1,fp_trees_in_buffer);
+      int group_file_offset;     SID_fread_all_buffer(&group_file_offset,     sizeof(int),1,fp_trees_in_buffer);
+      int group_file_index;      SID_fread_all_buffer(&group_file_index,      sizeof(int),1,fp_trees_in_buffer);
+      int group_n_particles_peak;SID_fread_all_buffer(&group_n_particles_peak,sizeof(int),1,fp_trees_in_buffer);
+      int n_subgroups_group;     SID_fread_all_buffer(&n_subgroups_group,     sizeof(int),1,fp_trees_in_buffer);
 
       // Add offset to snap
       int group_descendant_snap;
@@ -209,13 +210,14 @@ void read_trees(char       *filename_SSimPL_root,
       tree_node_info *group_node;
       tree_node_info *subgroup_node;
       for(j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
-         int n_particles_subgroup;  SID_fread_all_buffer(&n_particles_subgroup,  sizeof(int),1,fp_subgroups_in_buffer);
-         int subgroup_id;           SID_fread_all_buffer(&subgroup_id,           sizeof(int),1,fp_trees_in_buffer);
-         int subgroup_tree_case;    SID_fread_all_buffer(&subgroup_tree_case,    sizeof(int),1,fp_trees_in_buffer);
-         int subgroup_descendant_id;SID_fread_all_buffer(&subgroup_descendant_id,sizeof(int),1,fp_trees_in_buffer);
-         int subgroup_tree_id;      SID_fread_all_buffer(&subgroup_tree_id,      sizeof(int),1,fp_trees_in_buffer);
-         int subgroup_file_offset;  SID_fread_all_buffer(&subgroup_file_offset,  sizeof(int),1,fp_trees_in_buffer);
-         int subgroup_file_index;   SID_fread_all_buffer(&subgroup_file_index,   sizeof(int),1,fp_trees_in_buffer);
+         int n_particles_subgroup;     SID_fread_all_buffer(&n_particles_subgroup,     sizeof(int),1,fp_subgroups_in_buffer);
+         int subgroup_id;              SID_fread_all_buffer(&subgroup_id,              sizeof(int),1,fp_trees_in_buffer);
+         int subgroup_tree_case;       SID_fread_all_buffer(&subgroup_tree_case,       sizeof(int),1,fp_trees_in_buffer);
+         int subgroup_descendant_id;   SID_fread_all_buffer(&subgroup_descendant_id,   sizeof(int),1,fp_trees_in_buffer);
+         int subgroup_tree_id;         SID_fread_all_buffer(&subgroup_tree_id,         sizeof(int),1,fp_trees_in_buffer);
+         int subgroup_file_offset;     SID_fread_all_buffer(&subgroup_file_offset,     sizeof(int),1,fp_trees_in_buffer);
+         int subgroup_file_index;      SID_fread_all_buffer(&subgroup_file_index,      sizeof(int),1,fp_trees_in_buffer);
+         int subgroup_n_particles_peak;SID_fread_all_buffer(&subgroup_n_particles_peak,sizeof(int),1,fp_trees_in_buffer);
 
          // Add offset to snap
          int subgroup_descendant_snap;
@@ -251,20 +253,22 @@ void read_trees(char       *filename_SSimPL_root,
                                  group_file_index,       // Descendant's index
                                  NULL,                   // Pointer to the new node's group
                                  &group_node);           // Pointer to the new node
+               group_node->n_particles_peak=group_n_particles_peak;
                flag_group_added=TRUE;
-           }
-           // ... add the subgroup ...
-           add_node_to_trees((*trees),                 // The tree datastructure
-                             i_forest,                 // Local forest index
-                             subgroup_tree_case,       // Halo's TREE_CASE BWS
-                             n_particles_subgroup,     // Number of particles
-                             subgroup_id,              // Halo's tree ID
-                             i_file,                   // Halo's tree snapshot number
-                             i_subgroup,               // Halo's file index
-                             subgroup_descendant_snap, // Descendant's snap
-                             subgroup_file_index,      // Descendant's index
-                             group_node,               // Pointer to the new node's group
-                             &subgroup_node);          // Pointer to the new node
+            }
+            // ... add the subgroup ...
+            add_node_to_trees((*trees),                 // The tree datastructure
+                              i_forest,                 // Local forest index
+                              subgroup_tree_case,       // Halo's TREE_CASE BWS
+                              n_particles_subgroup,     // Number of particles
+                              subgroup_id,              // Halo's tree ID
+                              i_file,                   // Halo's tree snapshot number
+                              i_subgroup,               // Halo's file index
+                              subgroup_descendant_snap, // Descendant's snap
+                              subgroup_file_index,      // Descendant's index
+                              group_node,               // Pointer to the new node's group
+                              &subgroup_node);          // Pointer to the new node
+            subgroup_node->n_particles_peak=subgroup_n_particles_peak;
          }
       }
 

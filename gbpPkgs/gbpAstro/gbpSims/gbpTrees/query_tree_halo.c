@@ -109,14 +109,15 @@ int main(int argc, char *argv[]){
     //if(i_read!=i_read_in){
     if(TRUE){
        SID_log("Processing snapshot %03d (%03d of %03d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read,i_file+1,trees->n_snaps);
-       int halo_id            =0;
-       int halo_type          =0;
-       int halo_descendant_id =0;
-       int halo_tree_id       =0;
-       int halo_index         =0;
-       int bridge_match_id    =0;
-       int bridge_match_file  =0;
-       int bridge_match_index =0;
+       int halo_id              =0;
+       int halo_type            =0;
+       int halo_descendant_id   =0;
+       int halo_tree_id         =0;
+       int halo_index           =0;
+       int halo_n_particles_peak=0;
+       int bridge_match_id      =0;
+       int bridge_match_file    =0;
+       int bridge_match_index   =0;
 
        // Open files
        fp_catalog_info      fp_properties;
@@ -173,15 +174,16 @@ int main(int argc, char *argv[]){
           // Read groups
           int n_subgroups_group;
           if(mode==MATCH_GROUPS){
-             SID_fread_all(&halo_id,           sizeof(int),1,&fp_in_trees);
-             SID_fread_all(&halo_type,         sizeof(int),1,&fp_in_trees);
-             SID_fread_all(&halo_descendant_id,sizeof(int),1,&fp_in_trees);
-             SID_fread_all(&halo_tree_id,      sizeof(int),1,&fp_in_trees);
-             SID_fread_all(&halo_file_offset,  sizeof(int),1,&fp_in_trees);
-             SID_fread_all(&halo_index,        sizeof(int),1,&fp_in_trees);
-             SID_fread_all(&bridge_match_id,   sizeof(int),1,&fp_in_bridge_match);
-             SID_fread_all(&bridge_match_file, sizeof(int),1,&fp_in_bridge_match);
-             SID_fread_all(&bridge_match_index,sizeof(int),1,&fp_in_bridge_match);
+             SID_fread_all(&halo_id,              sizeof(int),1,&fp_in_trees);
+             SID_fread_all(&halo_type,            sizeof(int),1,&fp_in_trees);
+             SID_fread_all(&halo_descendant_id,   sizeof(int),1,&fp_in_trees);
+             SID_fread_all(&halo_tree_id,         sizeof(int),1,&fp_in_trees);
+             SID_fread_all(&halo_file_offset,     sizeof(int),1,&fp_in_trees);
+             SID_fread_all(&halo_index,           sizeof(int),1,&fp_in_trees);
+             SID_fread_all(&halo_n_particles_peak,sizeof(int),1,&fp_in_trees);
+             SID_fread_all(&bridge_match_id,      sizeof(int),1,&fp_in_bridge_match);
+             SID_fread_all(&bridge_match_file,    sizeof(int),1,&fp_in_bridge_match);
+             SID_fread_all(&bridge_match_index,   sizeof(int),1,&fp_in_bridge_match);
              // Write match
              int flag_is_halo=(i_read==i_read_in && i_halo==i_group);
              if(trees->snap_list[bridge_match_file]==i_read_in && bridge_match_index==i_halo || flag_is_halo){
@@ -232,7 +234,7 @@ int main(int argc, char *argv[]){
              }
           }
           else{
-             SID_fskip(sizeof(int),6,&fp_in_trees);
+             SID_fskip(sizeof(int),7,&fp_in_trees);
              SID_fskip(sizeof(int),4,&fp_in_bridge_match); // 3+1 'casue we're skipping n_subgroups_group too
           }
           SID_fread_all(&n_subgroups_group,sizeof(int),1,&fp_in_trees);
@@ -240,15 +242,16 @@ int main(int argc, char *argv[]){
              int j_subgroup;
              for(j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
                 // Read subgroups
-                SID_fread_all(&halo_id,           sizeof(int),1,&fp_in_trees);
-                SID_fread_all(&halo_type,         sizeof(int),1,&fp_in_trees);
-                SID_fread_all(&halo_descendant_id,sizeof(int),1,&fp_in_trees);
-                SID_fread_all(&halo_tree_id,      sizeof(int),1,&fp_in_trees);
-                SID_fread_all(&halo_file_offset,  sizeof(int),1,&fp_in_trees);
-                SID_fread_all(&halo_index,        sizeof(int),1,&fp_in_trees);
-                SID_fread_all(&bridge_match_id,   sizeof(int),1,&fp_in_bridge_match);
-                SID_fread_all(&bridge_match_file, sizeof(int),1,&fp_in_bridge_match);
-                SID_fread_all(&bridge_match_index,sizeof(int),1,&fp_in_bridge_match);
+                SID_fread_all(&halo_id,              sizeof(int),1,&fp_in_trees);
+                SID_fread_all(&halo_type,            sizeof(int),1,&fp_in_trees);
+                SID_fread_all(&halo_descendant_id,   sizeof(int),1,&fp_in_trees);
+                SID_fread_all(&halo_tree_id,         sizeof(int),1,&fp_in_trees);
+                SID_fread_all(&halo_file_offset,     sizeof(int),1,&fp_in_trees);
+                SID_fread_all(&halo_index,           sizeof(int),1,&fp_in_trees);
+                SID_fread_all(&halo_n_particles_peak,sizeof(int),1,&fp_in_trees);
+                SID_fread_all(&bridge_match_id,      sizeof(int),1,&fp_in_bridge_match);
+                SID_fread_all(&bridge_match_file,    sizeof(int),1,&fp_in_bridge_match);
+                SID_fread_all(&bridge_match_index,   sizeof(int),1,&fp_in_bridge_match);
                 // Write match
                 int flag_is_halo=(i_read==i_read_in && i_halo==i_subgroup);
                 if(trees->snap_list[bridge_match_file]==i_read_in && bridge_match_index==i_halo || flag_is_halo){
@@ -300,7 +303,7 @@ int main(int argc, char *argv[]){
              }
           }
           else{
-             SID_fskip(sizeof(int),6*n_subgroups_group,&fp_in_trees);
+             SID_fskip(sizeof(int),7*n_subgroups_group,&fp_in_trees);
              SID_fskip(sizeof(int),3*n_subgroups_group,&fp_in_bridge_match); 
           }
        }
