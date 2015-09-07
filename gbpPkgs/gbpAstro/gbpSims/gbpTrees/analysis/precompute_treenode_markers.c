@@ -19,6 +19,10 @@ int precompute_treenode_markers(tree_info *trees,int mode){
    // Initialize the marker array
    init_precompute_treenode_markers(trees,mode);
 
+   // First, process the reference trees if present
+   if(trees->trees_reference!=NULL)
+      precompute_treenode_markers(trees->trees_reference,mode);
+
    char                group_text[32];
    int                 flag_process_groups;
    int                *n_halos_snap_local   =NULL;
@@ -58,8 +62,5 @@ int precompute_treenode_markers(tree_info *trees,int mode){
    SID_Barrier(SID.COMM_WORLD);
    SID_log("Done.",SID_LOG_CLOSE);
 
-   // Process reference trees if present
-   if(trees->trees_reference!=NULL)
-      precompute_treenode_markers(trees->trees_reference,mode);
 }
 

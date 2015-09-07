@@ -17,15 +17,17 @@ int find_treenode_Mpeak(tree_info       *trees,
 
    (*halo_peak)=halo;
    if(halo!=NULL){
-      int             n_p_peak_search =halo->n_particles_peak;
-      tree_node_info *current_halo    =halo->progenitor_first;
-      int             n_p_peak_current=current_halo->n_particles_peak;
-      while(current_halo!=NULL && n_p_peak_search==n_p_peak_current){
-         (*halo_peak)    =current_halo;
-         current_halo    =current_halo->progenitor_first;
-         n_p_peak_current=current_halo->n_particles_peak;
+      tree_node_info *current_halo=halo->progenitor_first;
+      if(current_halo!=NULL){
+         int n_p_peak_search =halo->n_particles_peak;
+         int n_p_peak_current=current_halo->n_particles_peak;
+         while(current_halo!=NULL && n_p_peak_search==n_p_peak_current){
+            (*halo_peak)    =current_halo;
+            current_halo    =current_halo->progenitor_first;
+            if(current_halo!=NULL)
+               n_p_peak_current=current_halo->n_particles_peak;
+         }
       }
-      // Follow the main progenitor line back.
       return(TRUE);
    }
    return(FALSE);

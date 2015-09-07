@@ -173,7 +173,7 @@ void read_trees(char       *filename_SSimPL_root,
     SID_fp_buffer *fp_subgroups_in_buffer=NULL;
     SID_fp_buffer *fp_groups_in_buffer   =NULL;
     SID_fp_buffer *fp_trees_in_buffer    =NULL;
-    size_t n_bytes_trees                 =sizeof(int)*((7*(size_t)n_groups)+(6*(size_t)n_subgroups));
+    size_t n_bytes_trees                 =sizeof(int)*((8*(size_t)n_groups)+(7*(size_t)n_subgroups));
     init_SID_fp_buffer(&fp_subgroups_in,(size_t)n_subgroups*sizeof(int),SIZE_OF_MEGABYTE,&fp_subgroups_in_buffer);
     init_SID_fp_buffer(&fp_groups_in,   (size_t)n_groups   *sizeof(int),SIZE_OF_MEGABYTE,&fp_groups_in_buffer);
     init_SID_fp_buffer(&fp_trees_in,    n_bytes_trees,                  SIZE_OF_MEGABYTE,&fp_trees_in_buffer);
