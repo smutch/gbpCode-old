@@ -99,14 +99,19 @@ int main(int argc, char *argv[]){
            char  filename_out[MAX_FILENAME_LENGTH];
            sprintf(filename_out,"%s_%09d.txt",filename_out_root,halo_list[i_list]);
            FILE *fp_out=fopen(filename_out,"w");
-           fprintf(fp_out,"# Column (%02d): Halo snapshot\n",               i_column++);
-           fprintf(fp_out,"#        (%02d): Halo expansion factor\n",       i_column++);
+           fprintf(fp_out,"# Column (%02d): Halo expansion factor\n",       i_column++);
            fprintf(fp_out,"#        (%02d): Halo redshift\n",               i_column++);
+           fprintf(fp_out,"#        (%02d): Halo snapshot\n",               i_column++);
            fprintf(fp_out,"#        (%02d): Halo index\n",                  i_column++);
            fprintf(fp_out,"#        (%02d): Halo ID\n",                     i_column++);
+           if(mode==MATCH_SUBGROUPS){
+              fprintf(fp_out,"#        (%02d): Group index\n",               i_column++);
+              fprintf(fp_out,"#        (%02d): Group ID\n",                  i_column++);
+              fprintf(fp_out,"#        (%02d): Subgroup index\n",              i_column++);
+           }
+           fprintf(fp_out,"#        (%02d): Halo log10(M_vir [M_sol/h])\n", i_column++);
            fprintf(fp_out,"#        (%02d): Halo n_particles\n",            i_column++);
            fprintf(fp_out,"#        (%02d): Halo n_particles_peak\n",       i_column++);
-           fprintf(fp_out,"#        (%02d): Halo log10(M_vir [M_sol/h])\n", i_column++);
            fprintf(fp_out,"#        (%02d): Halo x [Mpc/h])\n",             i_column++);
            fprintf(fp_out,"#        (%02d): Halo y [Mpc/h])\n",             i_column++);
            fprintf(fp_out,"#        (%02d): Halo z [Mpc/h])\n",             i_column++);
@@ -193,6 +198,13 @@ int main(int argc, char *argv[]){
            int halo_file_offset;
            int halo_index;
            int halo_n_particles_peak;
+           int group_id;
+           int group_type;
+           int group_descendant_id;
+           int group_tree_id;
+           int group_file_offset;
+           int group_index;
+           int group_n_particles_peak;
            int n_subgroups_group;
            int bridge_forematch_id;
            int bridge_forematch_file;
@@ -200,13 +212,13 @@ int main(int argc, char *argv[]){
            int bridge_backmatch_id;
            int bridge_backmatch_file;
            int bridge_backmatch_index;
-           SID_fread_all(&halo_id,               sizeof(int),1,&fp_in_trees);
-           SID_fread_all(&halo_type,             sizeof(int),1,&fp_in_trees);
-           SID_fread_all(&halo_descendant_id,    sizeof(int),1,&fp_in_trees);
-           SID_fread_all(&halo_tree_id,          sizeof(int),1,&fp_in_trees);
-           SID_fread_all(&halo_file_offset,      sizeof(int),1,&fp_in_trees);
-           SID_fread_all(&halo_index,            sizeof(int),1,&fp_in_trees);
-           SID_fread_all(&halo_n_particles_peak, sizeof(int),1,&fp_in_trees);
+           SID_fread_all(&group_id,              sizeof(int),1,&fp_in_trees);
+           SID_fread_all(&group_type,            sizeof(int),1,&fp_in_trees);
+           SID_fread_all(&group_descendant_id,   sizeof(int),1,&fp_in_trees);
+           SID_fread_all(&group_tree_id,         sizeof(int),1,&fp_in_trees);
+           SID_fread_all(&group_file_offset,     sizeof(int),1,&fp_in_trees);
+           SID_fread_all(&group_index,           sizeof(int),1,&fp_in_trees);
+           SID_fread_all(&group_n_particles_peak,sizeof(int),1,&fp_in_trees);
            SID_fread_all(&n_subgroups_group,     sizeof(int),1,&fp_in_trees);
            SID_fread_all(&bridge_forematch_id,   sizeof(int),1,&fp_in_bridge_forematch);
            SID_fread_all(&bridge_forematch_file, sizeof(int),1,&fp_in_bridge_forematch);
@@ -246,6 +258,13 @@ int main(int argc, char *argv[]){
                  flag_process=TRUE;
               }
               else{
+                 halo_id              =group_id;
+                 halo_type            =group_type;
+                 halo_descendant_id   =group_descendant_id;
+                 halo_tree_id         =group_tree_id;
+                 halo_file_offset     =group_file_offset;
+                 halo_index           =group_index;
+                 halo_n_particles_peak=group_n_particles_peak;
                  SID_fskip(sizeof(int),7,&fp_in_trees); 
                  SID_fskip(sizeof(int),3,&fp_in_bridge_forematch); 
                  SID_fskip(sizeof(int),3,&fp_in_bridge_backmatch); 
@@ -269,29 +288,57 @@ int main(int argc, char *argv[]){
                        if(bridge_backmatch_file>=0)
                           bridge_backmatch_snap=trees->snap_list[bridge_backmatch_file];
                        tree_case_flags_text(halo_type,"+",&halo_type_string);
-                       fprintf(fp_out,"%3d %le %7.3lf %7d %7d %5.2lf %6d %6d %5.2lf %5.2lf %5.2lf %7d %3d %3d %7d %7d %3d %7d %3d %7d %7d %s\n",
-                                      trees->snap_list[i_snap],
-                                      trees->a_list[i_snap],
-                                      trees->z_list[i_snap],
-                                      i_halo,
-                                      halo_id,
-                                      take_log10(properties.M_vir),
-                                      properties.n_particles,
-                                      halo_n_particles_peak,
-                                      properties.position_MBP[0],
-                                      properties.position_MBP[1],
-                                      properties.position_MBP[2],
-                                      halo_tree_id,
-                                      halo_file_offset,
-                                      descendant_snap,
-                                      halo_index,
-                                      halo_descendant_id,
-                                      bridge_forematch_snap,
-                                      bridge_forematch_index,
-                                      bridge_backmatch_snap,
-                                      bridge_backmatch_index,
-                                      halo_type,
-                                      halo_type_string);
+                       if(mode==MATCH_SUBGROUPS)
+                          fprintf(fp_out,"%le %7.3lf %3d %7d %7d %7d %7d %4d %5.2lf %6d %6d %5.2lf %5.2lf %5.2lf %7d %3d %3d %7d %7d %3d %7d %3d %7d %7d %s\n",
+                                         trees->a_list[i_snap],
+                                         trees->z_list[i_snap],
+                                         trees->snap_list[i_snap],
+                                         i_halo,
+                                         halo_id,
+                                         i_group,
+                                         group_id,
+                                         j_subgroup,
+                                         take_log10(properties.M_vir),
+                                         properties.n_particles,
+                                         halo_n_particles_peak,
+                                         properties.position_MBP[0],
+                                         properties.position_MBP[1],
+                                         properties.position_MBP[2],
+                                         halo_tree_id,
+                                         halo_file_offset,
+                                         descendant_snap,
+                                         halo_index,
+                                         halo_descendant_id,
+                                         bridge_forematch_snap,
+                                         bridge_forematch_index,
+                                         bridge_backmatch_snap,
+                                         bridge_backmatch_index,
+                                         halo_type,
+                                         halo_type_string);
+                       else
+                          fprintf(fp_out,"%le %7.3lf %3d %7d %7d %5.2lf %6d %6d %5.2lf %5.2lf %5.2lf %7d %3d %3d %7d %7d %3d %7d %3d %7d %7d %s\n",
+                                         trees->a_list[i_snap],
+                                         trees->z_list[i_snap],
+                                         trees->snap_list[i_snap],
+                                         i_halo,
+                                         halo_id,
+                                         take_log10(properties.M_vir),
+                                         properties.n_particles,
+                                         halo_n_particles_peak,
+                                         properties.position_MBP[0],
+                                         properties.position_MBP[1],
+                                         properties.position_MBP[2],
+                                         halo_tree_id,
+                                         halo_file_offset,
+                                         descendant_snap,
+                                         halo_index,
+                                         halo_descendant_id,
+                                         bridge_forematch_snap,
+                                         bridge_forematch_index,
+                                         bridge_backmatch_snap,
+                                         bridge_backmatch_index,
+                                         halo_type,
+                                         halo_type_string);
                        fclose(fp_out);
                     }
                  }
@@ -308,6 +355,7 @@ int main(int argc, char *argv[]){
                     }
                  }
               }
+              // This is needed so we print results for groups only once
               flag_process=FALSE;
            }
         }

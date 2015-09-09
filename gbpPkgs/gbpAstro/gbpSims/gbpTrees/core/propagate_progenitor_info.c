@@ -74,15 +74,15 @@ void propagate_progenitor_info(int         *n_groups,
 
         // *** Progenitor propagation that only references progenitors and not descendants can be done here ***
 
-        // Propigate the identy of the dominant substructures of each group.
+        // Set the identy of the dominant substructures of each group.
         //    This needs to be complete for all descendants before propagate_n_particles_peak() 
         //    is called, so we have to do it here.
         propagate_dominant_substructures(groups_read,   n_groups,
                                          subgroups_read,n_subgroups,
                                          n_subgroups_group,
-                                         i_write, // tree index
-                                         j_write, // actual snapshot number
-                                         l_write,
+                                         i_read, // tree index
+                                         j_read, // actual snapshot number
+                                         l_read,
                                          i_read_step,
                                          n_wrap);
         if(n_groups_in!=n_groups[l_read])

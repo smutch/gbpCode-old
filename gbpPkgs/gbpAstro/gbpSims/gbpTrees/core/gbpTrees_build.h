@@ -64,13 +64,13 @@
 #ifdef _MAIN
    int   n_tree_case_flag_list=22;
    int   tree_case_flag_list[]={
+                  TREE_CASE_2WAY_MATCH,
                   TREE_CASE_NO_PROGENITORS,
                   TREE_CASE_FRAGMENTED_NEW,
                   TREE_CASE_FRAGMENTED_STRAYED,
                   TREE_CASE_FRAGMENTED_RETURNED,
                   TREE_CASE_FRAGMENTED_EXCHANGED,
                   TREE_CASE_MAIN_PROGENITOR,
-                  TREE_CASE_2WAY_MATCH,
                   TREE_CASE_MOST_MASSIVE,
                   TREE_CASE_DOMINANT,
                   TREE_CASE_MERGER_PRIMARY,
@@ -87,13 +87,13 @@
                   TREE_CASE_UNPROCESSED,
                   TREE_CASE_INVALID};
    const char *tree_case_flag_list_text[]={
+                        "2WAY",
                         "NO_PROGENITORS",
                         "FRAGMENTED_NEW",
                         "FRAGMENTED_STRAYED",
                         "FRAGMENTED_RETURNED",
                         "FRAGMENTED_EXCHANGED",
                         "MAIN_PROGENITOR",
-                        "2WAY",
                         "MOST_MASSIVE",
                         "DOMINANT",
                         "MERGER_PRIMARY",
@@ -591,8 +591,13 @@ void init_trees_horizontal_snapshot(tree_horizontal_info *halos,
                                     int                   n_groups_max,
                                     int                   n_subgroups,
                                     int                   n_subgroups_max,
-                                    int                  *n_subgroups_group,
                                     int                   flag_match_subgroups);
+void add_substructure_info(tree_horizontal_info *halos,
+                           int                  *n_subgroups_group,
+                           int                  *n_particles_groups,
+                           int                   n_groups,
+                           int                   n_subgroups,
+                           int                   flag_match_halos);
 void read_halo_sizes(tree_horizontal_info **halos,
                      int     n_halos_i,
                      int    *match_id,

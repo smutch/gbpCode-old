@@ -240,7 +240,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
   SID_log("Done.",SID_LOG_CLOSE);
 
   // Process the first file separately
-  //   (just give everything ids from a running index) ...
+  //   (just give everything ids from a running index.  Also adds MMS flags.) ...
   init_trees_horizontal_roots(groups,
                               subgroups,
                               match_id,
@@ -288,19 +288,11 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
     for(k_match=0;k_match<n_k_match;k_match++){
 
        // Initialize a bunch of stuff which depends on whether
-       //   we are processing groups or subgroups
+       //   we are processing groups or subgroups.
+       // Do the groups first, so that we have access to n_subgroups_group,
+       //   which we need for setting MOST_MASSIVE flags, etc
        switch(k_match){
           case 0:
-          sprintf(group_text_prefix,"sub");
-          flag_match_subgroups=MATCH_SUBGROUPS;
-          halos               =subgroups;
-          n_halos             =n_subgroups;
-          n_halos_max         =n_subgroups_max;
-          max_id              =max_id_subgroup;
-          max_tree_id         =max_tree_id_subgroup;
-          n_particles         =n_particles_subgroups;
-          break;
-          case 1:
           sprintf(group_text_prefix,"");
           flag_match_subgroups=MATCH_GROUPS;
           halos               =groups;
@@ -309,6 +301,16 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
           max_id              =max_id_group;
           max_tree_id         =max_tree_id_group;
           n_particles         =n_particles_groups;
+          break;
+          case 1:
+          sprintf(group_text_prefix,"sub");
+          flag_match_subgroups=MATCH_SUBGROUPS;
+          halos               =subgroups;
+          n_halos             =n_subgroups;
+          n_halos_max         =n_subgroups_max;
+          max_id              =max_id_subgroup;
+          max_tree_id         =max_tree_id_subgroup;
+          n_particles         =n_particles_subgroups;
           break;
        }
        halos_i  =halos[i_file%n_wrap];
@@ -324,7 +326,6 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                                       n_groups_max,
                                       n_subgroups[j_file],
                                       n_subgroups_max,
-                                      n_subgroups_group[i_file%n_wrap],
                                       flag_match_subgroups);
 
        // Use back-matching to identify bridged and fragmented halos (also, read current snapshot halo sizes here)...
@@ -375,6 +376,15 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                              filename_root_matches,
                              group_text_prefix,
                              flag_match_subgroups);
+
+       // Add MOST_MASSIVE substructure flags
+       if(flag_match_subgroups==MATCH_SUBGROUPS)
+          add_substructure_info(subgroups[i_file%n_wrap],
+                                n_subgroups_group[i_file%n_wrap],
+                                n_particles_groups,
+                                n_groups[j_file],
+                                n_subgroups[j_file],
+                                flag_match_subgroups);
       
        // Finalize matches to unprocessed halos.  In particular,
        //    resolve matches to bridged halos that were not matched

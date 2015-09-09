@@ -16,26 +16,39 @@ void propagate_dominant_substructures(tree_horizontal_extended_info **groups,   
    for(int i_group=0;i_group<n_groups[l_read];i_group++){
       tree_horizontal_extended_info *this_group     =&(groups[i_read%n_wrap][i_group]);
       tree_horizontal_extended_info *this_group_desc=set_extended_descendant(groups,this_group,i_read,n_wrap);
+      int this_group_id=this_group->id;
       // Don't bother if there are no substructures in the group
-      if(n_subgroups_group[i_read%n_wrap][i_group]>0){
-         // Find the group's dominant progenitor (if there is one)
-         int i_subgroup_dominant=i_subgroup; // default to the first/most-massive 
-         int flag_found         =FALSE;
-         for(int j_subgroup=0;j_subgroup<n_subgroups_group[i_read%n_wrap][i_group] && !flag_found;i_subgroup++,j_subgroup++){
-            // Loop over all of the substructure's progenitors looking for halos with dominant flags set
-            tree_horizontal_extended_info *current_subgroup     =&(subgroups[i_read%n_wrap][i_subgroup]);
-            tree_horizontal_extended_info *current_subgroup_prog=set_extended_first_progenitor(subgroups,current_subgroup,n_wrap);
-            while(current_subgroup_prog!=NULL && !flag_found){
-               if(check_mode_for_flag(current_subgroup_prog->type,TREE_CASE_DOMINANT)){
-                  i_subgroup_dominant=i_subgroup;
-                  flag_found         =TRUE; // This way, if two dominant halos come in, we choose the most massive
+      int n_subgroups_group_i=n_subgroups_group[i_read%n_wrap][i_group];
+      if(n_subgroups_group_i>0){
+         tree_horizontal_extended_info *subgroup_dominant=NULL;
+         // Loop over all of the group's substructures, looking for a better dominant substructure than the (default) most massive one
+         int flag_stop=FALSE; // Turn on this flag if we've found the dominant halo we want and want to stop the search immediately.
+         for(int j_subgroup=0;j_subgroup<n_subgroups_group_i && !flag_stop;i_subgroup++,j_subgroup++){
+            tree_horizontal_extended_info *subgroup_current=&(subgroups[i_read%n_wrap][i_subgroup]);
+            // Ignore fragmented halos
+            if(!check_mode_for_flag(subgroup_current->type,TREE_CASE_FRAGMENTED_STRAYED)  &&
+               !check_mode_for_flag(subgroup_current->type,TREE_CASE_FRAGMENTED_RETURNED) &&
+               !check_mode_for_flag(subgroup_current->type,TREE_CASE_FRAGMENTED_EXCHANGED)){
+               // Loop over all of the substructure's progenitors looking for halos with dominant flags set
+               tree_horizontal_extended_info *subgroup_current_progenitor=set_extended_first_progenitor(subgroups,subgroup_current,n_wrap);
+               int flag_has_dom_prog=FALSE;
+               while(subgroup_current_progenitor!=NULL && !flag_has_dom_prog){
+                  if(check_mode_for_flag(subgroup_current_progenitor->type,TREE_CASE_DOMINANT))
+                     flag_has_dom_prog=TRUE;
+                  else
+                     subgroup_current_progenitor=set_extended_next_progenitor(subgroups,subgroup_current_progenitor,n_wrap);
                }
-               current_subgroup_prog=set_extended_next_progenitor(subgroups,current_subgroup_prog,n_wrap);
+               // If this subgroup has a dominant progenitor ...
+               if(flag_has_dom_prog){
+                  // ... which was a member of this group's main progenitor line, then use it instead of the default.
+                  if((subgroup_current_progenitor->parent_id)==this_group_id)
+                     subgroup_dominant=&(subgroups[i_read%n_wrap][i_subgroup]);
+               }
             }
          }
-         // We've chosen a dominant substructure.  Add the flag.
-         tree_horizontal_extended_info *subgroup_dominant=&(subgroups[i_read%n_wrap][i_subgroup_dominant]);
-         subgroup_dominant->type|=TREE_CASE_DOMINANT;
+         // If we've chosen a dominant substructure.  Add the flag.
+         if(subgroup_dominant!=NULL)
+            subgroup_dominant->type|=TREE_CASE_DOMINANT;
       }
    }
    SID_log("Done.",SID_LOG_CLOSE);
