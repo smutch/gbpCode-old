@@ -58,8 +58,9 @@
 #define TREE_CASE_GHOST_NULL                   TTTP19  // Marks a ghost halo where a subgroup is it's own group.
                                                        //    This is a default behaviour that occurs when a group is strayed but one of 
                                                        //    it's subgroups isn't.
-#define TREE_CASE_UNPROCESSED                  TTTP20  // For internal use.  This should never be seen in the output.
-#define TREE_CASE_INVALID                      TTTP21  // For internal use.  This should never be seen in the output.
+#define TREE_CASE_REINIT_DOMINANT              TTTP20  // For internal use.  This should never be seen in the output.
+#define TREE_CASE_UNPROCESSED                  TTTP21  // For internal use.  This should never be seen in the output.
+#define TREE_CASE_INVALID                      TTTP22  // For internal use.  This should never be seen in the output.
 
 #ifdef _MAIN
    int   n_tree_case_flag_list=22;

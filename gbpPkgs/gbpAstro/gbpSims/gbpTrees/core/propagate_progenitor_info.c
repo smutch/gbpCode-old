@@ -74,17 +74,7 @@ void propagate_progenitor_info(int         *n_groups,
 
         // *** Progenitor propagation that only references progenitors and not descendants can be done here ***
 
-        // Set the identy of the dominant substructures of each group.
-        //    This needs to be complete for all descendants before propagate_n_particles_peak() 
-        //    is called, so we have to do it here.
-        propagate_dominant_substructures(groups_read,   n_groups,
-                                         subgroups_read,n_subgroups,
-                                         n_subgroups_group,
-                                         i_read, // tree index
-                                         j_read, // actual snapshot number
-                                         l_read,
-                                         i_read_step,
-                                         n_wrap);
+        // Sanity checks
         if(n_groups_in!=n_groups[l_read])
            SID_trap_error("n_groups!=what it should be (ie.%d!=%d).  This might be a problem with the snapshot indexing.",ERROR_LOGIC,
                           n_groups_in,n_groups[l_read]);
@@ -116,6 +106,17 @@ void propagate_progenitor_info(int         *n_groups,
                                      i_read_step,
                                      n_wrap);
         }
+        // Set the identy of the dominant substructures of each group.
+        //    This needs to be complete for all descendants before propagate_n_particles_peak() 
+        //    is called, so we have to do it here.
+        propagate_dominant_substructures(groups_read,   n_groups,
+                                         subgroups_read,n_subgroups,
+                                         n_subgroups_group,
+                                         i_write, // tree index
+                                         j_write, // actual snapshot number
+                                         l_write,
+                                         i_read_step,
+                                         n_wrap);
         // Propigate the peak halo size info. This 
         //    needs to be done for all halos before
         //    the merger information can be propagated.
