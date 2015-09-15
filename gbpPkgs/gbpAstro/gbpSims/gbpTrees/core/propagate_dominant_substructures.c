@@ -14,6 +14,7 @@ void propagate_dominant_substructures(tree_horizontal_extended_info **groups,   
    // Process groups
    int i_subgroup=0;
    for(int i_group=0;i_group<n_groups[l_read];i_group++){
+      int                            flag_none_set=TRUE;
       tree_horizontal_extended_info *dominant_desc=NULL;
       // Set some group information
       tree_horizontal_extended_info *this_group=&(groups[i_read%n_wrap][i_group]);
@@ -26,6 +27,7 @@ void propagate_dominant_substructures(tree_horizontal_extended_info **groups,   
          if(check_mode_for_flag(this_group->type,TREE_CASE_NO_PROGENITORS) || 
             check_mode_for_flag(this_group->type,TREE_CASE_REINIT_DOMINANT)){
             subgroup_MMS->type|=TREE_CASE_DOMINANT;
+            flag_none_set      =FALSE;
          }
          // Propagate: Loop over all of the group's substructures, looking for a dominant descendant
          int this_group_id=this_group->id;
@@ -43,17 +45,19 @@ void propagate_dominant_substructures(tree_horizontal_extended_info **groups,   
             }
          } // loop over j_subgroup
       }
-      if(dominant_desc!=NULL)
+      if(dominant_desc!=NULL){
          dominant_desc->type|=TREE_CASE_DOMINANT;
+         flag_none_set       =FALSE;
+      }
       // Turn-on the re-initialize flag for the group descendant if we failed to propagate a dominant substructure or if
       //    this halo was marked as needing to be initialized but doesn't have any substructures.  Do so though,
       //    only if the descendant group is part of this group's main progenitor line.
       tree_horizontal_extended_info *this_group_desc=set_extended_descendant(groups,this_group,i_read,n_wrap);
       if(this_group_desc!=NULL){
          if((this_group->id==this_group_desc->id) && 
-            (dominant_desc==NULL || 
-             (check_mode_for_flag(this_group->type,TREE_CASE_REINIT_DOMINANT) && n_subgroups_group_i<=0)))
+            (flag_none_set || (check_mode_for_flag(this_group->type,TREE_CASE_REINIT_DOMINANT) && n_subgroups_group_i<=0))){
             this_group_desc->type|=TREE_CASE_REINIT_DOMINANT;
+         }
       }
       // Turn-off all re-initialize flags.  All groups have been processed now and we don't want it to be present in the final output at all.
       this_group->type&=(~TREE_CASE_REINIT_DOMINANT);
