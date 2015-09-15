@@ -9,7 +9,8 @@
 #include <gbpTrees_build.h>
 #include <gbpTrees_analysis.h>
 
-int find_treenode_snap_equals_given(tree_info *trees,tree_node_info *halo,int snap_tree_given,tree_node_info **treenode_return){
+tree_node_info *find_treenode_snap_equals_given(tree_info *trees,tree_node_info *halo,int snap_tree_given){
+   tree_node_info *treenode_return=NULL;
    if(halo!=NULL){
       tree_node_info *treenode_current=halo;
       if(treenode_current->snap_tree>snap_tree_given){
@@ -20,12 +21,9 @@ int find_treenode_snap_equals_given(tree_info *trees,tree_node_info *halo,int sn
          while(treenode_current!=NULL && treenode_current->snap_tree<snap_tree_given)
             treenode_current=treenode_current->descendant;
       }
-      if(check_treenode_if_snap_equals_given(treenode_current,snap_tree_given)){
-         (*treenode_return)=treenode_current;
-         return(TRUE);
-      }
+      if(check_treenode_if_snap_equals_given(treenode_current,snap_tree_given))
+         treenode_return=treenode_current;
    }
-   (*treenode_return)=NULL;
-   return(FALSE);
+   return(treenode_return);
 }
 

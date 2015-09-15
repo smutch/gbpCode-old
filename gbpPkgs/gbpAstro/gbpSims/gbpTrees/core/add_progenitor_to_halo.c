@@ -87,6 +87,13 @@ void add_progenitor_to_halo(tree_horizontal_info **halos,
    if(check_mode_for_flag(halos_j[j_halo].type,TREE_CASE_STRAYED))
       halos_i[i_halo].type|=TREE_CASE_STRAYED;
 
+   // ... turn-off emerged candidate flags if we have
+   //     found an immediate main progenitor.  This needs
+   //     to be done to prevent a halo from being marked
+   //     as emerged when the match is not two-way.
+   if(file_offset==1)
+      halos_j[j_halo].type&=(~TREE_CASE_EMERGED_CANDIDATE);
+
    // ... set the flags for emerged halo matches
    if(check_mode_for_flag(halos_j[j_halo].type,TREE_CASE_EMERGED_CANDIDATE)){
       halos_i[i_halo].type|=TREE_CASE_MATCHED_TO_EMERGED;
