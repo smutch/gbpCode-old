@@ -228,6 +228,7 @@ int main(int argc, char *argv[]){
         if(n_profs_all!=n_props_all)
            SID_trap_error("The properties and profiles halo counts don't agree (ie. %d!=%d)",ERROR_LOGIC,n_profs_all,n_props_all);
         int n_halos_all=n_props_all;
+        SID_log("(%d halos)...",SID_LOG_CONTINUE,n_halos_all);
 
         // SO files are defined only for groups
         int n_files_SO;
@@ -284,7 +285,7 @@ int main(int argc, char *argv[]){
         // Perform rewrites
         int n_rewrite=2;
         if(i_run==1 && flag_SO_present) n_rewrite=3;
-        for(int i_rewrite=2;i_rewrite<n_rewrite;i_rewrite++){
+        for(int i_rewrite=0;i_rewrite<n_rewrite;i_rewrite++){
            char *buffer  =NULL;
            FILE *fp_read =NULL;
            FILE *fp_write=NULL;
@@ -385,6 +386,7 @@ int main(int argc, char *argv[]){
                     n_halos_write=n_halos_left;
                  if(fp_write!=NULL)
                     fclose(fp_write);
+                 //SID_log("Opening {%s} for write.",SID_LOG_COMMENT,filename_out);
                  if((fp_write=fopen(filename_out,"w"))!=NULL){
                     fwrite(&i_file_write, sizeof(int),1,fp_write);
                     fwrite(&n_files_out,  sizeof(int),1,fp_write);
@@ -455,6 +457,7 @@ int main(int argc, char *argv[]){
                  n_halos_write=n_halos_left;
               if(fp_write!=NULL)
                  fclose(fp_write);
+              //SID_log("Opening {%s} for write.",SID_LOG_COMMENT,filename_out);
               if((fp_write=fopen(filename_out,"w"))!=NULL){
                  fwrite(&i_file_write, sizeof(int),1,fp_write);
                  fwrite(&n_files_out,  sizeof(int),1,fp_write);
