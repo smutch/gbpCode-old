@@ -66,10 +66,10 @@ void compute_trees_merger_analysis(tree_info *trees,char *filename_out_root_in,i
   treenode_list_info *list_halos_nofrags;
   treenode_list_info *list_halos_nofrags_central;
   treenode_list_info *list_halos_nofrags_substructure;
-  double             *zeta;
-  double             *zeta_nofrags;
   init_treenode_list("mergers_all",        n_mergers,        &list_halos);
   init_treenode_list("mergers_nofrags_all",n_mergers_nofrags,&list_halos_nofrags);
+  double *zeta;
+  double *zeta_nofrags;
   init_treenode_info_data(list_halos,        SID_FARG zeta,        SID_DOUBLE,"zeta");
   init_treenode_info_data(list_halos_nofrags,SID_FARG zeta_nofrags,SID_DOUBLE,"zeta");
   if(i_type==1){

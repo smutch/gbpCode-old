@@ -35,20 +35,20 @@ void find_treenode_peak_mass_recursive(tree_info *trees,tree_markers_info **mark
             double          M_peak_prog;
             find_treenode_peak_mass_recursive(trees,markers_array,current_progenitor,&halo_peak_prog,&n_particles_peak_prog,&M_peak_prog);
 
-            // Propagate along the first progenitor line
-            if(first_progenitor==current_progenitor){
-               if(n_particles_peak==n_particles_peak_prog){
-                  markers_halo->peak_mass=halo_peak_prog;
-                  markers_halo->M_peak   =M_peak_prog;
-               }
-               else{
-                  markers_halo->peak_mass=halo;
-                  markers_halo->M_peak   =M_halo;
-               }
+            // Propagate along the line of the first progenitor to have the peak particle count.
+            //    keep looking over the progenitors though, since we have to walk all the trees.
+            if(markers_halo->peak_mass==NULL && n_particles_peak==n_particles_peak_prog){
+               markers_halo->peak_mass=halo_peak_prog;
+               markers_halo->M_peak   =M_peak_prog;
             }
 
             // Move to the next progenitor
             current_progenitor=current_progenitor->progenitor_next;
+         }
+         // If one of the progenitors isn't the peak halo, the current one must be
+         if(markers_halo->peak_mass==NULL){
+            markers_halo->peak_mass=halo;
+            markers_halo->M_peak   =M_halo;
          }
       }
       // If this halo is a leaf, initialize M_peak to be M_halo

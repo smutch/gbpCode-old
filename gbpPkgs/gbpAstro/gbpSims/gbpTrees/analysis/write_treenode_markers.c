@@ -64,7 +64,7 @@ void write_treenode_markers(tree_info *trees,const char *filename_output_root,in
       int buffered_count_local;
       int invalid_entry=-100;
       int n_marker_write   =12;
-      int n_buffer_per_halo=1+2*n_marker_write;
+      int n_buffer_per_halo=2*n_marker_write;
       int n_buffer_halos;
       int n_buffer_halos_max=1024*1024;
       int n_buffer;
@@ -89,7 +89,6 @@ void write_treenode_markers(tree_info *trees,const char *filename_output_root,in
             if(index_test>=0 && index_test<n_buffer_halos){
                int i_block=0;
                tree_markers_info *markers_i=&(markers[i_snap][j_halo]);
-               buffer[index_test*n_buffer_per_halo+(i_block++)]=markers_i->flag_halo_is_main_progenitor;
                for(int i_marker=0;i_marker<n_marker_write;i_marker++){
                   tree_node_info *marker;
                   switch(i_marker){

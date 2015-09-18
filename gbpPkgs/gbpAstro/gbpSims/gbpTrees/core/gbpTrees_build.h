@@ -312,7 +312,6 @@ struct tree_node_info{
 
 typedef struct tree_markers_info tree_markers_info;
 struct tree_markers_info{
-  int             flag_halo_is_main_progenitor;
   tree_node_info *branch_leaf;
   tree_node_info *branch_root;
   tree_node_info *descendant;

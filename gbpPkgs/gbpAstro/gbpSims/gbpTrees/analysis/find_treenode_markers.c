@@ -31,7 +31,6 @@ int find_treenode_markers(tree_info *trees,tree_node_info *halo,tree_markers_inf
          markers->descendant=markers->branch_root->descendant;
       else
          markers->descendant=NULL;
-      markers->flag_halo_is_main_progenitor=check_treenode_if_main_progenitor(halo);
    }
    else
       memcpy(markers,&(markers_all[halo->snap_tree][halo->neighbour_index]),sizeof(tree_markers_info));

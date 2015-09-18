@@ -110,8 +110,8 @@ void compute_trees_dropped_halo_analysis(tree_info *trees,char *filename_out_roo
 
   // Write the files
   //write_treenode_list_properties(trees,filename_out_root,list_halos);
-  write_treenode_list_data      (trees,filename_out_root,list_halos);
-  write_treenode_list_hist      (trees,filename_out_root,list_halos,logM_min,dlogM,n_logM);
+  write_treenode_list_data(trees,filename_out_root,list_halos);
+  write_treenode_list_hist(trees,filename_out_root,list_halos,logM_min,dlogM,n_logM);
   if(i_type==1){
      write_treenode_list_hist(trees,filename_out_root,list_halos_central,     logM_min,dlogM,n_logM);
      write_treenode_list_hist(trees,filename_out_root,list_halos_substructure,logM_min,dlogM,n_logM);

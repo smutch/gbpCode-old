@@ -15,12 +15,11 @@ int find_treenode_formation(tree_info       *trees,
                             tree_node_info **halo_formation){
    (*halo_formation)=halo;
    if(halo!=NULL){
-      double M_peak_halo=fetch_treenode_Mpeak(trees,halo);
-      double M_target   =fraction*M_peak_halo;
+      int n_p_peak_halo=halo->n_particles_peak;
+      int n_p_target   =(int)(fraction*(double)n_p_peak_halo);
       tree_node_info *current_halo=halo;
       while(current_halo!=NULL){
-         double M_peak_current=fetch_treenode_Mpeak(trees,current_halo);
-         if(M_peak_halo>M_target)
+         if(current_halo->n_particles_peak>n_p_target)
             (*halo_formation)=current_halo;
          else break;
          current_halo=current_halo->progenitor_first;

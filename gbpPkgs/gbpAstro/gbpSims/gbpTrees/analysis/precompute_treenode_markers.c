@@ -53,7 +53,7 @@ int precompute_treenode_markers(tree_info *trees,int mode){
       while(halo_current!=NULL){
          if(halo_current->descendant==NULL){
             find_treenode_peak_mass_recursive(trees,markers,halo_current,NULL,NULL,NULL);
-            find_treenode_markers_recursive  (trees,markers,halo_current,TRUE,NULL,NULL);
+            find_treenode_markers_recursive  (trees,markers,halo_current,NULL);
          }
          halo_current=halo_current->next_neighbour;
       }

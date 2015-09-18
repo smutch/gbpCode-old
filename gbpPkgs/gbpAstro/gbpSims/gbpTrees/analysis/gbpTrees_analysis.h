@@ -154,8 +154,6 @@ void   find_treenode_peak_mass_recursive(tree_info *trees,tree_markers_info **ma
 int    find_treenode_markers_recursive(tree_info          *trees,
                                        tree_markers_info **markers_array,
                                        tree_node_info     *halo,
-                                       int                 flag_is_main_progenitor,
-                                       double             *M_return,
                                        tree_markers_info **markers_descendant);
 void compute_treenode_list_marker_stats(tree_info                *trees,
                                         treenode_list_info       *list,
