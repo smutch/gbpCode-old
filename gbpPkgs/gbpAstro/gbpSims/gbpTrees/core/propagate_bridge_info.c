@@ -51,13 +51,13 @@ void propagate_bridge_info(tree_horizontal_extended_info **groups,   int *n_grou
 
       // Process subgroups
       for(j_subgroup=0;j_subgroup<n_subgroups_group[i_read%n_wrap][i_group];i_subgroup++,j_subgroup++){
-         int subgroup_type              =subgroups[i_read%n_wrap][i_subgroup].type;
-         int subgroup_file_offset       =subgroups[i_read%n_wrap][i_subgroup].descendant_file_offset;
-         int subgroup_index             =subgroups[i_read%n_wrap][i_subgroup].descendant_index;
-         int subgroup_snap_bridge       =subgroups[i_read%n_wrap][i_subgroup].snap_bridge;
-         int subgroup_file_bridge       =subgroups[i_read%n_wrap][i_subgroup].file_bridge;
-         int subgroup_index_bridge      =subgroups[i_read%n_wrap][i_subgroup].index_bridge;
-         int subgroup_id_bridge         =subgroups[i_read%n_wrap][i_subgroup].id_bridge;
+         int subgroup_type        =subgroups[i_read%n_wrap][i_subgroup].type;
+         int subgroup_file_offset =subgroups[i_read%n_wrap][i_subgroup].descendant_file_offset;
+         int subgroup_index       =subgroups[i_read%n_wrap][i_subgroup].descendant_index;
+         int subgroup_snap_bridge =subgroups[i_read%n_wrap][i_subgroup].snap_bridge;
+         int subgroup_file_bridge =subgroups[i_read%n_wrap][i_subgroup].file_bridge;
+         int subgroup_index_bridge=subgroups[i_read%n_wrap][i_subgroup].index_bridge;
+         int subgroup_id_bridge   =subgroups[i_read%n_wrap][i_subgroup].id_bridge;
 
          // Advance the bridge to it's current-time descendant. Note that n_wrap needs to be
          //   at least 2*n_search+2 so that we are sure to have the bridged halo as well

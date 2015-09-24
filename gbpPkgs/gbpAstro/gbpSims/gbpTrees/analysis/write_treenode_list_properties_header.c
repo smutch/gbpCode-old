@@ -14,15 +14,19 @@ void write_treenode_list_properties_header(tree_info *trees,treenode_list_info *
   int              flag_groups_list=list->flag_groups_list;
   char            *catalog_name    =list->catalog_name;
 
+  // Count the number of entries in the output file
+  int n_properties=0;
+  while(write_treenode_list_properties_set_ith(trees,n_properties,NULL,NULL,NULL,NULL,NULL)) n_properties++;
+
   // Master Rank does all the writing
   if(SID.I_am_Master){
      // Write header for props file
      int i_column=1;
-     for(int i_write=0;i_write<WRITE_TREENODE_LIST_PROPERTIES_N;i_write++){
+     for(int i_write=0;i_write<n_properties;i_write++){
         char write_name[128];
         write_treenode_list_properties_set_ith(trees,
-                                               NULL,
                                                i_write,
+                                               NULL,
                                                write_name,
                                                NULL,
                                                NULL,

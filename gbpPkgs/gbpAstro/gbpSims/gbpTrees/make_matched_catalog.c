@@ -140,8 +140,9 @@ int main(int argc, char *argv[]){
            current_properties         =current_subgroup_properties;
         }
         if(current_properties->M_vir>=M_cut_min){
-           tree_node_info *matched=find_treenode_snap_equals_given(trees,current,i_z_lo);
-           if(matched!=NULL){
+           tree_node_info *matched;
+           int             flag_exact=find_treenode_snap_equals_given(trees,current,i_z_lo,&matched);
+           if(matched!=NULL && flag_exact){
               int n_sub_lo;
               int n_sub_hi;
               tree_node_info *matched_group;

@@ -52,7 +52,6 @@ int main(int argc, char *argv[]){
         mode=PRECOMPUTE_TREENODE_MARKER_GROUPS;
      else
         mode=PRECOMPUTE_TREENODE_MARKER_SUBGROUPS;
-
      // Compute markers
      precompute_treenode_markers(trees,mode);
      // Write markers

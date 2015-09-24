@@ -100,8 +100,8 @@ void write_treenode_list_data(tree_info *trees,const char *filename_out_root,tre
               for(int i_buffer=0;i_buffer<n_buffer_i;i_buffer++,j_list++){
                  fprintf(fp_props_out,"%4d",j_list);
                  for(int i_data=0;i_data<n_data;i_data++){
-                    if     (typ_data[i_data]==SID_INT)    fprintf(fp_props_out," %4d",((int    *)(buffer[i_data]))[i_buffer]);
-                    else if(typ_data[i_data]==SID_DOUBLE) fprintf(fp_props_out," %le",((double *)(buffer[i_data]))[i_buffer]);
+                    if     (typ_data[i_data]==SID_INT)    fprintf(fp_props_out," %4d",    ((int    *)(buffer[i_data]))[i_buffer]);
+                    else if(typ_data[i_data]==SID_DOUBLE) fprintf(fp_props_out," %11.4le",((double *)(buffer[i_data]))[i_buffer]);
                     else SID_trap_error("Unsupported data type in write_treenode_list_data() (2).",ERROR_LOGIC);
                  }
                  fprintf(fp_props_out,"\n");

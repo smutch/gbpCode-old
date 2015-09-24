@@ -83,7 +83,8 @@ void add_progenitor_to_halo(tree_horizontal_info **halos,
    halos_i[i_halo].descendant.score=score;
 
    // Set match-type flags ...                   
-   //   Propagate strayed halo flags ...
+   //   Propagate strayed halo flags (needed for identifying 
+   //   strayed fragmented halos later, for example)...
    if(check_mode_for_flag(halos_j[j_halo].type,TREE_CASE_STRAYED))
       halos_i[i_halo].type|=TREE_CASE_STRAYED;
 

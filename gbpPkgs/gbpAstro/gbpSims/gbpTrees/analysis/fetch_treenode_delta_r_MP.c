@@ -13,7 +13,7 @@
 double fetch_treenode_delta_r_MP(tree_info *trees,tree_node_info *halo){
    if(halo!=NULL){
       tree_node_info *main_progenitor=NULL;
-      find_treenode_main_progenitor(trees,halo,&main_progenitor);
+      int flag_found=find_treenode_main_progenitor(trees,halo,&main_progenitor);
       if(main_progenitor!=NULL){
          // Set the halo properties
          halo_properties_info *properties_halo=fetch_treenode_properties(trees,halo);
@@ -24,6 +24,9 @@ double fetch_treenode_delta_r_MP(tree_info *trees,tree_node_info *halo){
          double dz=d_periodic((double)properties_halo->position_MBP[2]-(double)properties_MP->position_MBP[2],(double)trees->box_size);
          return(a_of_z(trees->z_list[halo->snap_tree])*sqrt(dx*dx+dy*dy+dz*dz)/properties_MP->R_vir);
       }
+      // In this case, a halo is it's own main progenitor
+      else if(flag_found)
+         return(0.);
    }
    return(-1.);
 }

@@ -20,7 +20,6 @@ BINFILES  = make_match_score_table         \
 	        extract_tree_horizontal        \
 	        most_massive_subgroup_analysis \
             tree_stats_horizontal          \
-	        branch2ascii_ID_select         \
             validate_ghost_trees           \
             parse_tree_case                \
             matchfile2ascii                \

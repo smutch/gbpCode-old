@@ -317,8 +317,8 @@ void read_trees(char       *filename_SSimPL_root,
     SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
     // Report some group statistics
-    if(n_groups_unused>0)
-       SID_log("%d groups unused...",SID_LOG_CONTINUE,n_groups_unused);
+    //if(n_groups_unused>0)
+    //   SID_log("%d groups unused...",SID_LOG_CONTINUE,n_groups_unused);
     if(n_groups_added_multiply>0)
        SID_log("%d groups used by multiple cores...",SID_LOG_CONTINUE,n_groups_added_multiply);
 

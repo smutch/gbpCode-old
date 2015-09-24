@@ -42,11 +42,18 @@ int add_node_to_trees(tree_info        *trees,            // The tree datastruct
   (*new_node)->substructure_last  =        NULL; 
   (*new_node)->substructure_next  =        NULL; 
   (*new_node)->descendant         =        NULL;
+  (*new_node)->progenitor_primary =        NULL;
   (*new_node)->progenitor_first   =        NULL;
   (*new_node)->progenitor_last    =        NULL;
   (*new_node)->progenitor_next    =        NULL;
   (*new_node)->next_neighbour     =        NULL;
   (*new_node)->next_in_forest     =        NULL;
+
+  // Set some merger flags
+  int flag_primary  =check_mode_for_flag(tree_case,TREE_CASE_MERGER_PRIMARY);
+  int flag_secondary=check_mode_for_flag(tree_case,TREE_CASE_MERGER);
+  if(flag_primary && flag_secondary)
+     SID_trap_error("Both primary and secondary flags have been switched on for halo (snap=%d;idx=%d;case=%d).",ERROR_LOGIC,halo_snap,halo_index,tree_case);
 
   // Are we processing a group?
   int flag_processing_group=(group_node==NULL);
@@ -76,6 +83,13 @@ int add_node_to_trees(tree_info        *trees,            // The tree datastruct
         else
           descendant->progenitor_last->progenitor_next=(*new_node);
         descendant->progenitor_last=(*new_node);
+        if(flag_primary){
+           if(descendant->progenitor_primary!=NULL)
+              SID_trap_error("Multiple primary halos have been set for a descendant (snap=%d;idx=%d other is snap=%d;idx=%d).",ERROR_LOGIC,
+                             (*new_node)->snap_tree,                    (*new_node)->file_index,
+                             descendant ->progenitor_primary->snap_tree,descendant->progenitor_primary->file_index);
+           descendant->progenitor_primary=(*new_node);
+        }
      }
   }
 

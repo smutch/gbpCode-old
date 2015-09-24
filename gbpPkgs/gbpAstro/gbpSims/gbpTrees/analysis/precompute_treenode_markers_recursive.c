@@ -9,7 +9,7 @@
 #include <gbpTrees_build.h>
 #include <gbpTrees_analysis.h>
 
-int find_treenode_markers_recursive(tree_info *trees,tree_markers_info **markers_array,tree_node_info *halo,tree_markers_info **markers_descendant){
+int precompute_treenode_markers_recursive(tree_info *trees,tree_markers_info **markers_array,tree_node_info *halo,tree_markers_info **markers_descendant){
    // note: - "markers_descendant" arrives as the descendat halo's markers but is used to return back a progenitor's markers
    //       - the initial call of this recursive function should be only on halos where halo->descendant==NULL
    //       - ** the values of M_peak MUST be calculated before this function is called.
@@ -52,6 +52,7 @@ int find_treenode_markers_recursive(tree_info *trees,tree_markers_info **markers
       markers_halo->branch_leaf           =NULL;
       markers_halo->first_became_satellite=NULL;
       markers_halo->joined_current_parent =NULL;
+      markers_halo->half_peak_mass        =NULL;
       markers_halo->merger_33pc_remnant   =NULL;
       markers_halo->merger_33pc_host      =NULL;
       markers_halo->merger_33pc_merger    =NULL;
@@ -70,6 +71,7 @@ int find_treenode_markers_recursive(tree_info *trees,tree_markers_info **markers
             markers_halo->first_became_satellite=NULL;
             markers_halo->joined_current_parent =halo;
          }
+         markers_halo->half_peak_mass        =halo;
          markers_halo->branch_leaf           =halo;
          markers_halo->merger_33pc_remnant   =NULL;
          markers_halo->merger_33pc_host      =NULL;
@@ -81,21 +83,20 @@ int find_treenode_markers_recursive(tree_info *trees,tree_markers_info **markers
       // Process halos that are not leaves
       else{   
          int                flag_is_a_merger       =FALSE;
+         int                flag_has_a_primary     =FALSE;
          tree_node_info    *halo_main_progenitor   =NULL; // Main progenitor
-         tree_node_info    *halo_secondary         =NULL; // Secondary halo in a merger
-         tree_node_info    *halo_primary           =NULL; // Primary halo in a merger
+         tree_node_info    *halo_secondary         =NULL; // Secondary halo of a merger
+         tree_node_info    *halo_primary           =NULL; // Primary   halo of a merger
          tree_markers_info *markers_main_progenitor=NULL;
-         tree_markers_info *markers_primary        =NULL;
-         tree_markers_info *markers_secondary      =NULL;
          int                n_p_peak_primary       =0;
          int                n_p_peak_secondary     =0;
 
-         // Walk the tree
+         // Walk the tree and scan all the progenitors of this halo
          tree_node_info *current_progenitor=halo->progenitor_first;
          while(current_progenitor!=NULL){
             // Descend down the tree
             tree_markers_info *markers_exchange=markers_halo;
-            find_treenode_markers_recursive(trees,markers_array,current_progenitor,&markers_exchange);
+            precompute_treenode_markers_recursive(trees,markers_array,current_progenitor,&markers_exchange);
             tree_markers_info *markers_progenitor=markers_exchange;
 
             // Find the main progenitor (not necessarily the first progenitor,
@@ -107,15 +108,15 @@ int find_treenode_markers_recursive(tree_info *trees,tree_markers_info **markers
 
             // Find the primary halo if this is a merger
             if(check_mode_for_flag(current_progenitor->tree_case,TREE_CASE_MERGER_PRIMARY)){
-               markers_primary =markers_progenitor;
-               halo_primary    =current_progenitor;
-               n_p_peak_primary=current_progenitor->n_particles_peak;
+               halo_primary      =current_progenitor;
+               n_p_peak_primary  =current_progenitor->n_particles_peak;
+               flag_has_a_primary=TRUE;
             }
+
             // Find the most massive secondary if this is a merger
             else if(check_mode_for_flag(current_progenitor->tree_case,TREE_CASE_MERGER)){
                int n_p_peak_current=current_progenitor->n_particles_peak;
                if(n_p_peak_current>n_p_peak_secondary){
-                  markers_secondary =markers_progenitor;
                   halo_secondary    =current_progenitor;
                   n_p_peak_secondary=n_p_peak_current;
                }
@@ -126,62 +127,61 @@ int find_treenode_markers_recursive(tree_info *trees,tree_markers_info **markers
             current_progenitor=current_progenitor->progenitor_next;
          }
 
+         // Sanity check
+         if(flag_is_a_merger && ! flag_has_a_primary)
+            SID_trap_error("A halo has been found to have a merger but a primary has not been marked.",ERROR_LOGIC);
+
          // Set formation pointers 
          find_treenode_formation(trees,halo,0.5,&(markers_halo->half_peak_mass));
 
          // Set leaf marker 
-         markers_halo->branch_leaf=markers_primary->branch_leaf;
+         markers_halo->branch_leaf=markers_main_progenitor->branch_leaf;
 
          // Set accretion markers
-         if(markers_primary->first_became_satellite==NULL && check_treenode_if_satellite(halo))
+         if(markers_main_progenitor->first_became_satellite==NULL && check_treenode_if_satellite(halo))
             markers_halo->first_became_satellite=halo;
          else
             markers_halo->first_became_satellite=NULL;
-         if(markers_primary->joined_current_parent==NULL  && (halo->parent)==(markers_halo->branch_root->parent))
+         if(markers_main_progenitor->joined_current_parent==NULL  && (halo->parent)==(markers_halo->branch_root->parent))
             markers_halo->joined_current_parent=halo;
          else
             markers_halo->joined_current_parent=NULL;
 
          // Set merger pointers
          if(flag_is_a_merger){
-            // Measure merger ratio (zeta) using the particle counts at the time
-            //    when the secondary reaches its peak size.
-            halo_secondary=markers_secondary->peak_mass;
-            halo_primary  =find_treenode_snap_equals_given(trees,halo_primary,halo_secondary->snap_tree);
-            if(halo_secondary!=NULL)
-               n_p_peak_secondary=halo_secondary->n_particles_peak;
-            else
-               n_p_peak_secondary=0;
-            if(halo_primary!=NULL)
-               n_p_peak_primary=halo_primary->n_particles_peak;
-            else
-               n_p_peak_primary=1;
-            double zeta=(double)n_p_peak_secondary/(double)n_p_peak_primary;
+            // Note: we do not check the return value of fetch_treenode_merger_info() 
+            //    since errors from skips can generally be tollerated here.
+            double zeta;
+            fetch_treenode_merger_info(trees,&halo_secondary,&halo_primary,&zeta);
+            if(halo_secondary!=NULL && halo_primary!=NULL){
+               // Set new 3:1+ merger marker ...
+               if(zeta>ONE_THIRD){
+                  markers_halo->merger_33pc_remnant=halo;           // Time of remnant
+                  markers_halo->merger_33pc_merger =halo_secondary; // Time of secondary peak mass
+                  markers_halo->merger_33pc_host   =halo_primary;   // Time of secondary peak mass
+               }
+               // ... else if this is not a 3:1+ merger, propagate past 10:1 merger markers.
+               else{
+                  markers_halo->merger_33pc_remnant=markers_main_progenitor->merger_33pc_remnant;
+                  markers_halo->merger_33pc_merger =markers_main_progenitor->merger_33pc_merger;
+                  markers_halo->merger_33pc_host   =markers_main_progenitor->merger_33pc_host;
+               }
 
-            // ... set last 3:1 merger marker ...
-            if(zeta>ONE_THIRD){
-               markers_halo->merger_33pc_remnant=halo;
-               markers_halo->merger_33pc_merger =halo_secondary;
-               markers_halo->merger_33pc_host   =halo_primary;
-            }
-            else{
-               markers_halo->merger_33pc_remnant=markers_main_progenitor->merger_33pc_remnant;
-               markers_halo->merger_33pc_merger =markers_main_progenitor->merger_33pc_merger;
-               markers_halo->merger_33pc_host   =markers_main_progenitor->merger_33pc_host;
-            }
-
-            // ... set last 10:1 merger marker ...
-            if(zeta>0.1){
-               markers_halo->merger_10pc_remnant=halo;
-               markers_halo->merger_10pc_merger =halo_secondary;
-               markers_halo->merger_10pc_host   =halo_primary;
-            }
-            else{
-               markers_halo->merger_10pc_remnant=markers_main_progenitor->merger_10pc_remnant;
-               markers_halo->merger_10pc_merger =markers_main_progenitor->merger_10pc_merger;
-               markers_halo->merger_10pc_host   =markers_main_progenitor->merger_10pc_host;
+               // Set new 10:1+ merger marker ...
+               if(zeta>0.1){
+                  markers_halo->merger_10pc_remnant=halo;
+                  markers_halo->merger_10pc_merger =halo_secondary;
+                  markers_halo->merger_10pc_host   =halo_primary;
+               }
+               // ... else if this is not a 10:1+ merger, propagate past 10:1 merger markers.
+               else{
+                  markers_halo->merger_10pc_remnant=markers_main_progenitor->merger_10pc_remnant;
+                  markers_halo->merger_10pc_merger =markers_main_progenitor->merger_10pc_merger;
+                  markers_halo->merger_10pc_host   =markers_main_progenitor->merger_10pc_host;
+               }
             }
          }
+         // ... else if this is not a merger, propagate past merger markers.
          else{
             markers_halo->merger_33pc_remnant=markers_main_progenitor->merger_33pc_remnant;
             markers_halo->merger_33pc_merger =markers_main_progenitor->merger_33pc_merger;

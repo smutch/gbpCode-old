@@ -62,13 +62,12 @@ void write_treenode_list_markers(tree_info *trees,const char *filename_out_root,
         }
         for(int i_list=0;i_list<n_list_i;i_list++,j_list++){
            // Point to the halo to be processed 
-           tree_markers_info  markers;
+           tree_markers_info *markers;
            tree_node_info    *current_halo;
            if(i_rank==SID.My_rank){
               current_halo=list_in[i_list];
-
               // Find some special nodes for this listed halo
-              find_treenode_markers(trees,current_halo,NULL,&markers);
+              markers=fetch_treenode_precomputed_markers(trees,current_halo);
            }
 
            // Write properties
@@ -89,60 +88,60 @@ void write_treenode_list_markers(tree_info *trees,const char *filename_out_root,
               double M_node_parent;
               int    n_p_node;
               if(SID.My_rank==i_rank){
-                 tree_node_info *node_write;
+                 tree_node_info *node_write=NULL;
                  char write_name[32];
                  switch(i_write){
                     case 0:
                        sprintf(write_name,"halo");
-                       node_write=current_halo;
+                       if(current_halo!=NULL) node_write=current_halo;
                        break;
                     case 1:
                        sprintf(write_name,"descendant");
-                       node_write=current_halo->descendant;
+                       if(current_halo!=NULL) node_write=current_halo->descendant;
                        break;
                     case 2:
                        sprintf(write_name,"progenitor");
-                       node_write=current_halo->progenitor_first;
+                       if(current_halo!=NULL) node_write=current_halo->progenitor_first;
                        break;
                     case 3:
                        sprintf(write_name,"main_progenitor");
-                       node_write=markers.main_progenitor;
+                       if(markers!=NULL) node_write=markers->main_progenitor;
                        break;
                     case 4:
                        sprintf(write_name,"peak_mass");
-                       node_write=markers.peak_mass;
+                       if(markers!=NULL) node_write=markers->peak_mass;
                        break;
                     case 5:
                        sprintf(write_name,"half_peak_mass");
-                       node_write=markers.half_peak_mass;
+                       if(markers!=NULL) node_write=markers->half_peak_mass;
                        break;
                     case 6:
                        sprintf(write_name,"root");
-                       node_write=markers.branch_root;
+                       if(markers!=NULL) node_write=markers->branch_root;
                        break;
                     case 7:
                        sprintf(write_name,"leaf");
-                       node_write=markers.branch_leaf;
+                       if(markers!=NULL) node_write=markers->branch_leaf;
                        break;
                     case 8:
                        sprintf(write_name,"merger_remnant_33pc");
-                       node_write=markers.merger_33pc_remnant;
+                       if(markers!=NULL) node_write=markers->merger_33pc_remnant;
                        break;
                     case 9:
                        sprintf(write_name,"merger_remnant_10pc");
-                       node_write=markers.merger_10pc_remnant;
+                       if(markers!=NULL) node_write=markers->merger_10pc_remnant;
                        break;
                     case 10:
                        sprintf(write_name,"parent");
-                       node_write=current_halo->parent;
+                       if(current_halo!=NULL) node_write=current_halo->parent;
                        break;
                     case 11:
                        sprintf(write_name,"first_became_satellite");
-                       node_write=markers.first_became_satellite;
+                       if(markers!=NULL) node_write=markers->first_became_satellite;
                        break;
                     case 12:
                        sprintf(write_name,"joined_current_parent");
-                       node_write=markers.joined_current_parent;
+                       if(markers!=NULL) node_write=markers->joined_current_parent;
                        break;
                  }
 

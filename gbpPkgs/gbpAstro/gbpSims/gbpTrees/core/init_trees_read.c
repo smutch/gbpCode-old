@@ -122,7 +122,6 @@ void init_trees_read(const char  *filename_SSimPL_dir,
   char filename_cosmology[MAX_FILENAME_LENGTH];
   sprintf(filename_cosmology,"%s/run",filename_SSimPL_dir);
   read_gbpCosmo_file(&((*tree)->cosmo),filename_cosmology);
-  cosmo_info *cosmo=(*tree)->cosmo;
 
   // Read snapshot expansion factor list
   char        filename_alist_in[MAX_FILENAME_LENGTH];
@@ -140,7 +139,7 @@ void init_trees_read(const char  *filename_SSimPL_dir,
      grab_double(line,1,&a_in);
      (*tree)->a_list[i_alist]=a_in;
      (*tree)->z_list[i_alist]=z_of_a(a_in);
-     (*tree)->t_list[i_alist]=t_age_a(a_in,&cosmo);
+     (*tree)->t_list[i_alist]=t_age_a(a_in,&((*tree)->cosmo));
   }
   fclose(fp_alist_in);
   SID_free(SID_FARG line);

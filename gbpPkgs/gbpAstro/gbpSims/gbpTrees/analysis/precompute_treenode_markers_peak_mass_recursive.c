@@ -9,9 +9,9 @@
 #include <gbpTrees_build.h>
 #include <gbpTrees_analysis.h>
 
-void find_treenode_peak_mass_recursive(tree_info *trees,tree_markers_info **markers_array,tree_node_info *halo,tree_node_info **halo_peak_return,int *n_particles_peak_return,double *M_peak_return){
+void precompute_treenode_markers_peak_mass_recursive(tree_info *trees,tree_markers_info **markers_array,tree_node_info *halo,tree_node_info **halo_peak_return,int *n_particles_peak_return,double *M_peak_return){
    if(!check_mode_for_flag(trees->mode,TREE_PROGENITOR_ORDER_N_PARTICLES_PEAK))
-      SID_trap_error("Trees need to have their progenitors ordered by peak particle count for find_treenode_Mpeak() to work.",ERROR_LOGIC);
+      SID_trap_error("Trees need to have their progenitors ordered by peak particle count for this routine to work.",ERROR_LOGIC);
    if(halo!=NULL){
       // Fetch pointer to this halo's markers
       tree_markers_info *markers_halo=&(markers_array[halo->snap_tree][halo->neighbour_index]);
@@ -33,10 +33,10 @@ void find_treenode_peak_mass_recursive(tree_info *trees,tree_markers_info **mark
             tree_node_info *halo_peak_prog;
             int             n_particles_peak_prog;
             double          M_peak_prog;
-            find_treenode_peak_mass_recursive(trees,markers_array,current_progenitor,&halo_peak_prog,&n_particles_peak_prog,&M_peak_prog);
+            precompute_treenode_markers_peak_mass_recursive(trees,markers_array,current_progenitor,&halo_peak_prog,&n_particles_peak_prog,&M_peak_prog);
 
-            // Propagate along the line of the first progenitor to have the peak particle count.
-            //    keep looking over the progenitors though, since we have to walk all the trees.
+            // Propagate along the line of the progenitor that has the halo's peak particle count.
+            //    Keep looking over the progenitors, since we have to walk all the trees.
             if(markers_halo->peak_mass==NULL && n_particles_peak==n_particles_peak_prog){
                markers_halo->peak_mass=halo_peak_prog;
                markers_halo->M_peak   =M_peak_prog;
@@ -45,7 +45,7 @@ void find_treenode_peak_mass_recursive(tree_info *trees,tree_markers_info **mark
             // Move to the next progenitor
             current_progenitor=current_progenitor->progenitor_next;
          }
-         // If one of the progenitors isn't the peak halo, the current one must be
+         // If one of the progenitors isn't matched to, then the current must be a new peak
          if(markers_halo->peak_mass==NULL){
             markers_halo->peak_mass=halo;
             markers_halo->M_peak   =M_halo;

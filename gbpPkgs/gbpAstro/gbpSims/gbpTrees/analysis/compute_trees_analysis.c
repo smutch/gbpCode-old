@@ -16,6 +16,7 @@ void compute_trees_analysis(tree_info *trees,double logM_min,double dlogM,int n_
   sprintf(filename_out_root,"%s/treenode",trees->filename_root_analysis);
   mkdir(trees->filename_root_analysis,02755);
 
+  // Loop twice; once for groups and once for subgroups
   for(int i_type=0;i_type<2;i_type++){
 
      // Precompute marker statistics
@@ -25,13 +26,14 @@ void compute_trees_analysis(tree_info *trees,double logM_min,double dlogM,int n_
         precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_SUBGROUPS);
 
      // Compute merger tree statistics
-     write_treenode_all_hist               (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
-     compute_trees_strayed_halo_analysis   (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
-     compute_trees_dropped_halo_analysis   (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
-     compute_trees_emerged_halo_analysis   (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
-     compute_trees_fragmented_halo_analysis(trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
-     compute_trees_merger_analysis         (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
+     write_treenode_all_hist                (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
+     compute_trees_analysis_strayed_halos   (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
+     compute_trees_analysis_dropped_halos   (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
+     compute_trees_analysis_emerged_halos   (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
+     compute_trees_analysis_fragmented_halos(trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
+     compute_trees_analysis_mergers         (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
 
+     // Free precomputed markers
      if(i_type==0)
         free_precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_GROUPS);
      else

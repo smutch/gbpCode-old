@@ -302,6 +302,7 @@ struct tree_node_info{
   tree_node_info *substructure_next;    // for substructure in this halo's parent
   // Merger tree pointers
   tree_node_info *descendant;
+  tree_node_info *progenitor_primary;   // Marks the primary halo for mergers
   tree_node_info *progenitor_first;
   tree_node_info *progenitor_last;
   tree_node_info *progenitor_next;
@@ -320,12 +321,12 @@ struct tree_markers_info{
   tree_node_info *joined_current_parent;
   tree_node_info *peak_mass;
   tree_node_info *half_peak_mass;
-  tree_node_info *merger_33pc_remnant;
-  tree_node_info *merger_33pc_host;
-  tree_node_info *merger_33pc_merger;
-  tree_node_info *merger_10pc_remnant;
-  tree_node_info *merger_10pc_host;
-  tree_node_info *merger_10pc_merger;
+  tree_node_info *merger_33pc_remnant; // Placed at the time of the remnant
+  tree_node_info *merger_33pc_host;    // Placed at the point when the secondary's peak mass is reached
+  tree_node_info *merger_33pc_merger;  // Placed at the point when the secondary's peak mass is reached
+  tree_node_info *merger_10pc_remnant; // Placed at the time of the remnant
+  tree_node_info *merger_10pc_host;    // Placed at the point when the secondary's peak mass is reached
+  tree_node_info *merger_10pc_merger;  // Placed at the point when the secondary's peak mass is reached
   double          M_peak;
 };
 

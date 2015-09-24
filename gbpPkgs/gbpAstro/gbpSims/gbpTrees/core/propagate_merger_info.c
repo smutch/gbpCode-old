@@ -26,25 +26,30 @@ void propagate_merger_info(tree_horizontal_extended_info **groups,   int *n_grou
       if(this_group_desc!=NULL){
          // Set merger flags...
          //    ... first, find the primary halo ...
-         tree_horizontal_extended_info *primary_group=this_group;
-         tree_horizontal_extended_info *current_group=set_extended_first_progenitor(groups,this_group_desc,n_wrap);
+         tree_horizontal_extended_info *current_group;
+         tree_horizontal_extended_info *primary_group;
+         current_group=set_extended_first_progenitor(groups,this_group_desc,n_wrap);
+         primary_group=current_group;
          int n_progenitors=0;
          while(current_group!=NULL){
-            if(current_group!=this_group){
-               // Decide if this halo is a better primary
-               if((current_group->n_particles_peak)>(primary_group->n_particles_peak))
-                  primary_group=current_group;
-            }
+            // Decide if this halo is a better primary
+            if((current_group->n_particles_peak)>(primary_group->n_particles_peak))
+               primary_group=current_group;
             current_group=set_extended_next_progenitor(groups,current_group,n_wrap);
             n_progenitors++;
          }
 
          //    ... set the appopriate merger flags.
          if(n_progenitors>1){
-            if(this_group==primary_group)
-               this_group->type|=TREE_CASE_MERGER_PRIMARY;
-            else 
-               this_group->type|=TREE_CASE_MERGER;
+            current_group=set_extended_first_progenitor(groups,this_group_desc,n_wrap);
+            primary_group=current_group;
+            while(current_group!=NULL){
+               if(current_group==primary_group)
+                  current_group->type|=TREE_CASE_MERGER_PRIMARY;
+               else 
+                  current_group->type|=TREE_CASE_MERGER;
+               current_group=set_extended_next_progenitor(groups,current_group,n_wrap);
+            }
          }
       }
 
@@ -55,28 +60,32 @@ void propagate_merger_info(tree_horizontal_extended_info **groups,   int *n_grou
          if(this_subgroup_desc!=NULL){
             // Set merger flags...
             //    ... first, find the primary halo ...
-            tree_horizontal_extended_info *primary_subgroup=this_subgroup;
-            tree_horizontal_extended_info *current_subgroup=set_extended_first_progenitor(subgroups,this_subgroup_desc,n_wrap);
+            tree_horizontal_extended_info *current_subgroup;
+            tree_horizontal_extended_info *primary_subgroup;
+            current_subgroup=set_extended_first_progenitor(subgroups,this_subgroup_desc,n_wrap);
+            primary_subgroup=current_subgroup;
             int n_progenitors=0;
             while(current_subgroup!=NULL){
-               if(current_subgroup!=this_subgroup){
-                  // Decide if this halo is a better primary
-                  if((current_subgroup->n_particles_peak)>(primary_subgroup->n_particles_peak))
-                     primary_subgroup=current_subgroup;
-               }
+               // Decide if this halo is a better primary
+               if((current_subgroup->n_particles_peak)>(primary_subgroup->n_particles_peak))
+                  primary_subgroup=current_subgroup;
                current_subgroup=set_extended_next_progenitor(subgroups,current_subgroup,n_wrap);
                n_progenitors++;
             }
 
             //    ... set the appopriate merger flags.
             if(n_progenitors>1){
-               if(this_subgroup==primary_subgroup)
-                  this_subgroup->type|=TREE_CASE_MERGER_PRIMARY;
-               else 
-                  this_subgroup->type|=TREE_CASE_MERGER;
+               current_subgroup=set_extended_first_progenitor(subgroups,this_subgroup_desc,n_wrap);
+               primary_subgroup=current_subgroup;
+               while(current_subgroup!=NULL){
+                  if(current_subgroup==primary_subgroup)
+                     current_subgroup->type|=TREE_CASE_MERGER_PRIMARY;
+                  else
+                     current_subgroup->type|=TREE_CASE_MERGER;
+                  current_subgroup=set_extended_next_progenitor(subgroups,current_subgroup,n_wrap);
+               }
             }
          }
-
       }
    }
    SID_log("Done.",SID_LOG_CLOSE);

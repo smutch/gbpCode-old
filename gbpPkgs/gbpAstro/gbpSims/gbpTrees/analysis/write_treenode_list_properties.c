@@ -40,6 +40,9 @@ void write_treenode_list_properties(tree_info *trees,const char *filename_out_ro
         SID_trap_error("Subgroup properties are not defined.  They probably have not been read.",ERROR_LOGIC);
   }
 
+  // Count the number of entries in the output file
+  int n_properties=0;
+  while(write_treenode_list_properties_set_ith(trees,n_properties,NULL,NULL,NULL,NULL,NULL)) n_properties++;
 
   // Perform rank-ordered write
   int j_list=0;
@@ -73,15 +76,15 @@ void write_treenode_list_properties(tree_info *trees,const char *filename_out_ro
            int n_write;
            if(i_rank==0)
               fprintf(fp_props_out,"%4d",j_list);
-           for(int i_write=0;i_write<WRITE_TREENODE_LIST_PROPERTIES_N;i_write++){
+           for(int i_write=0;i_write<n_properties;i_write++){
               // Set the i_write'th data
               SID_Datatype  data_type;
               int           data_i;
               double        data_d;
               if(i_rank==SID.My_rank)
                  write_treenode_list_properties_set_ith(trees,
-                                                        current_halo,
                                                         i_write,
+                                                        current_halo,
                                                         NULL,
                                                         &data_type,
                                                         &data_i,
@@ -97,8 +100,8 @@ void write_treenode_list_properties(tree_info *trees,const char *filename_out_ro
 
               // Write the data with the master rank
               if(SID.I_am_Master){
-                 if(data_type==SID_INT)         fprintf(fp_props_out," %4d",data_i);
-                 else if(data_type==SID_DOUBLE) fprintf(fp_props_out," %le",data_d);
+                 if(data_type==SID_INT)         fprintf(fp_props_out," %4d",    data_i);
+                 else if(data_type==SID_DOUBLE) fprintf(fp_props_out," %11.4le",data_d);
                  else                           SID_trap_error("Unsupported data type in write_treenode_list_data() (2).",ERROR_LOGIC);
               }
            } // i_write
