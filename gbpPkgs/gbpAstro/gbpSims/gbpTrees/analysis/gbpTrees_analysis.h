@@ -235,6 +235,7 @@ double fetch_treenode_delta_t_leaf(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_delta_t_form(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_snapshot(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_snap_tree(tree_info *trees,tree_node_info *halo);
+int    fetch_treenode_halo_ID(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_file_index(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_Mvir(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_Rvir(tree_info *trees,tree_node_info *halo);
