@@ -32,7 +32,8 @@ int  fetch_treenode_merger_info(tree_info *trees,tree_node_info **halo_secondary
    flag_success=find_treenode_snap_equals_given(trees,
                                                 (*halo_primary),
                                                 (*halo_secondary)->snap_tree,
-                                                halo_primary);
+                                                halo_primary,
+                                                TREE_PROGENITOR_ORDER_N_PARTICLES_PEAK);
 
    // Compute merger ratio (zeta)
    if((*halo_secondary)!=NULL && (*halo_primary)!=NULL){

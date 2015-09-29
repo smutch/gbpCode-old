@@ -141,7 +141,7 @@ int main(int argc, char *argv[]){
         }
         if(current_properties->M_vir>=M_cut_min){
            tree_node_info *matched;
-           int             flag_exact=find_treenode_snap_equals_given(trees,current,i_z_lo,&matched);
+           int             flag_exact=find_treenode_snap_equals_given(trees,current,i_z_lo,&matched,TREE_PROGENITOR_ORDER_N_PARTICLES_PEAK);
            if(matched!=NULL && flag_exact){
               int n_sub_lo;
               int n_sub_hi;

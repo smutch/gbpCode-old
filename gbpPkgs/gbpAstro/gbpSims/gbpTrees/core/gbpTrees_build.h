@@ -17,7 +17,7 @@
 #define K_MATCH_GROUPS    1
 
 // Tree finalization and reading modes
-#define TREE_READ_DEFAULT                 0
+#define TREE_READ_DEFAULT                      0
 #define TREE_SUBSTRUCTURE_ORDER_DEFAULT        TTTP00
 #define TREE_PROGENITOR_ORDER_DELUCIA          TTTP01
 #define TREE_PROGENITOR_ORDER_N_PARTICLES      TTTP02
