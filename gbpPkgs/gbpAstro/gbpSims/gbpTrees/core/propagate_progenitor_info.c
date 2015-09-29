@@ -90,10 +90,52 @@ void propagate_progenitor_info(int         *n_groups,
      // Wait until we've loaded n_search+1 snapshots
      //    before starting to process or write results.
      if(j_file>n_search){
-        // If bridge fixing is on...
-        if(flag_compute_fragmented){
-           // ... propagate bridged halo information 
-           propagate_bridge_info(groups_read,   n_groups,
+        if(j_process<=i_read_stop){
+           // If bridge fixing is on...
+           if(flag_compute_fragmented){
+              // ... propagate bridged halo information 
+              propagate_bridge_info(groups_read,   n_groups,
+                                    subgroups_read,n_subgroups,
+                                    n_subgroups_group,
+                                    i_process, // tree index
+                                    j_process, // actual snapshot number
+                                    l_process,
+                                    i_read_step,
+                                    n_wrap);
+              // ... propagate fragmented halo flags
+              propagate_fragmented_info(groups_read,   n_groups,
+                                        subgroups_read,n_subgroups,
+                                        n_subgroups_group,
+                                        i_process, // tree index
+                                        j_process, // actual snapshot number
+                                        l_process,
+                                        i_read_step,
+                                        n_wrap);
+           }
+           // Set the identy of the dominant substructures of each group.
+           //    This needs to be complete for all descendants before propagate_n_particles_peak() 
+           //    is called, so we have to do it here.
+           propagate_dominant_substructures(groups_read,   n_groups,
+                                            subgroups_read,n_subgroups,
+                                            n_subgroups_group,
+                                            i_process, // tree index
+                                            j_process, // actual snapshot number
+                                            l_process,
+                                            i_read_step,
+                                            n_wrap);
+           // Propagate the peak halo size info. This 
+           //    needs to be done for all halos before
+           //    the merger information can be propagated.
+           propagate_n_particles_peak(groups_read,   n_groups,
+                                      subgroups_read,n_subgroups,
+                                      n_subgroups_group,
+                                      i_process, // tree index
+                                      j_process, // actual snapshot number
+                                      l_process,
+                                      i_read_step,
+                                      n_wrap);
+           // Decide which halos are primaries and secondaries in merger events.
+           propagate_merger_info(groups_read,   n_groups,
                                  subgroups_read,n_subgroups,
                                  n_subgroups_group,
                                  i_process, // tree index
@@ -101,54 +143,18 @@ void propagate_progenitor_info(int         *n_groups,
                                  l_process,
                                  i_read_step,
                                  n_wrap);
-           // ... propagate fragmented halo flags
-           propagate_fragmented_info(groups_read,   n_groups,
-                                     subgroups_read,n_subgroups,
-                                     n_subgroups_group,
-                                     i_process, // tree index
-                                     j_process, // actual snapshot number
-                                     l_process,
-                                     i_read_step,
-                                     n_wrap);
         }
-        // Set the identy of the dominant substructures of each group.
-        //    This needs to be complete for all descendants before propagate_n_particles_peak() 
-        //    is called, so we have to do it here.
-        propagate_dominant_substructures(groups_read,   n_groups,
-                                         subgroups_read,n_subgroups,
-                                         n_subgroups_group,
-                                         i_process, // tree index
-                                         j_process, // actual snapshot number
-                                         l_process,
-                                         i_read_step,
-                                         n_wrap);
-        // Propagate the peak halo size info. This 
-        //    needs to be done for all halos before
-        //    the merger information can be propagated.
-        propagate_n_particles_peak(groups_read,   n_groups,
-                                   subgroups_read,n_subgroups,
-                                   n_subgroups_group,
-                                   i_process, // tree index
-                                   j_process, // actual snapshot number
-                                   l_process,
-                                   i_read_step,
-                                   n_wrap);
-        // Decide which halos are primaries and secondaries in merger events.
-        propagate_merger_info(groups_read,   n_groups,
-                              subgroups_read,n_subgroups,
-                              n_subgroups_group,
-                              i_process, // tree index
-                              j_process, // actual snapshot number
-                              l_process,
-                              i_read_step,
-                              n_wrap);
-        // Write the results.  Wait until all of the first n_wrap snapshots
-        //    have been read before performing the write to make sure
-        //    that any changes that need to be made, not just to descendants
+        i_process++;
+        l_process--;
+        j_process+=i_read_step;
+
+        // Write the results.  Wait until another n_search snapshots
+        //    have been read/processed before performing the write, to make sure
+        //    that any changes that need to be made -- not just to descendants --
         //    but also to progenitors of descendants (such as what happens in
         //    propagate_merger_info(), where progenitors are changed but
-        //    nothing can be done until peak halo sizes are set).
-        if(j_file>=(n_wrap-1)){
+        //    nothing can be done until peak halo sizes are set) are complete.
+        if(j_file>(2*n_search)){
            write_trees_horizontal((void **)groups_read,
                                   (void **)subgroups_read,
                                   n_groups[l_write],   n_groups_max,   
@@ -175,9 +181,6 @@ void propagate_progenitor_info(int         *n_groups,
            j_write+=i_read_step;
            flag_init_write=FALSE;
         }
-        i_process++;
-        l_process--;
-        j_process+=i_read_step;
      }
   }
 
