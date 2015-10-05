@@ -71,6 +71,7 @@ void compute_trees_analysis_fragmented_halos(tree_info *trees,char *filename_out
   int i_list_all=0;
   for(int i_snap=0;i_snap<trees->n_snaps;i_snap++){
      tree_node_info *current_halo=neighbour_list_start[i_snap];
+     double                     z=(double)trees->z_list[i_snap];
      while(current_halo!=NULL){
         // Process each new branch
         if(check_treenode_if_fragmented(current_halo)){
