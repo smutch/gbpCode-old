@@ -71,9 +71,12 @@ void write_treenode_hist(tree_info *trees,const char *filename_out_root,treenode
                 bin_i=trees->z_list[MIN(i_min+i_bin*di-1,trees->n_snaps-1)];
              break;
            }
-           case 1: // M
-           case 2: // M
-           case 3:{ // N
+           case 1:  // M_vir
+           case 2:  // M_peak
+           case 3:  // N
+           case 4:  // N_peak
+           case 5:  // M_descendant
+           case 6:{ // zeta
              double d_min=args_d[0];
              double dd   =args_d[1];
              bin_i       =d_min+((double)i_bin)*dd;

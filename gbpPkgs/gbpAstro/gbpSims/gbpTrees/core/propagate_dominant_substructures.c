@@ -18,7 +18,7 @@ void propagate_dominant_substructures(tree_horizontal_extended_info **groups,   
       // Set some group information
       tree_horizontal_extended_info *this_group=&(groups[i_read%n_wrap][i_group]);
       int n_subgroups_group_i =n_subgroups_group[i_read%n_wrap][i_group];
-      int flag_none_propagated=FALSE;
+      int flag_none_propagated=TRUE;
       // Don't bother if there are no substructures in the group
       if(n_subgroups_group_i>0){
          // Initialize: if this group needs to have it's dominant substructure initialized, 

@@ -58,6 +58,7 @@ void compute_trees_analysis_fragmented_halos(tree_info *trees,char *filename_out
   init_treenode_list("fragmented_new",n_fragmented_new,&list_halos_new);
   init_treenode_list("fragmented",    n_fragmented,    &list_halos);
   int    *frag_length;     init_treenode_info_data(list_halos_new,SID_FARG frag_length,     SID_INT,   "Fragment length (snapshots)");
+  double *delta_frag_norm; init_treenode_info_data(list_halos_new,SID_FARG delta_frag_norm, SID_DOUBLE,"delta_fragmented/t_dyn(z)");
   double *delta_fragmented;init_treenode_info_data(list_halos_new,SID_FARG delta_fragmented,SID_DOUBLE,"delta_fragmented [Gyrs]");
   int    *stop_index;      init_treenode_info_data(list_halos_new,SID_FARG stop_index,      SID_INT,   "Fragment's stopping index");
   int    *stop_snapshot;   init_treenode_info_data(list_halos_new,SID_FARG stop_snapshot,   SID_INT,   "Fragment's stopping snapshot");
@@ -82,6 +83,7 @@ void compute_trees_analysis_fragmented_halos(tree_info *trees,char *filename_out
            if(flag_new){
               add_to_treenode_list(list_halos_new,current_halo);
               frag_length[i_list]     =fetch_treenode_snapshot(trees,markers->branch_root)-fetch_treenode_snapshot(trees,current_halo);
+              delta_frag_norm[i_list] =fetch_treenode_delta_t(trees,markers->branch_root,current_halo)/t_dyn_z(z,trees->cosmo);
               delta_fragmented[i_list]=fetch_treenode_delta_t(trees,markers->branch_root,current_halo)/S_PER_GYR;
               stop_index[i_list]      =markers->branch_root->file_index;
               stop_snapshot[i_list]   =trees->snap_list[markers->branch_root->snap_tree];
@@ -107,8 +109,8 @@ void compute_trees_analysis_fragmented_halos(tree_info *trees,char *filename_out
   write_treenode_list_properties(trees,filename_out_root,list_halos);
 
   // Write histograms
-  write_treenode_list_hist(trees,filename_out_root,list_halos_new,logM_min,dlogM,n_logM);
-  write_treenode_list_hist(trees,filename_out_root,list_halos,    logM_min,dlogM,n_logM);
+  //write_treenode_list_hist(trees,filename_out_root,list_halos_new,logM_min,dlogM,n_logM);
+  //write_treenode_list_hist(trees,filename_out_root,list_halos,    logM_min,dlogM,n_logM);
 
   // Clean-up
   free_treenode_list(&list_halos);

@@ -157,7 +157,7 @@ void compute_trees_analysis_emerged_halos(tree_info *trees,char *filename_out_ro
   // Write the files
   write_treenode_list_properties(trees,filename_out_root,list_halos);
   write_treenode_list_data      (trees,filename_out_root,list_halos);
-  write_treenode_list_hist      (trees,filename_out_root,list_halos,logM_min,dlogM,n_logM);
+  //write_treenode_list_hist      (trees,filename_out_root,list_halos,logM_min,dlogM,n_logM);
 
   // Clean-up
   free_treenode_list(&list_halos);

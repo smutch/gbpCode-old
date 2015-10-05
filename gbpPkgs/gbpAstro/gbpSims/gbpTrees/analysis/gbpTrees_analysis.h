@@ -44,7 +44,7 @@ struct treenode_list_info{
 #define TREENODE_HIST_LOG_Y       2
 #define TREENODE_HIST_DEFAULT     0
 #define TREENODE_HIST_N_ARGS_MAX  3
-#define TREENODE_HIST_N_PROPS     6
+#define TREENODE_HIST_N_PROPS     7
 #define TREENODE_HIST_NAME_LENGTH 128
 typedef struct treenode_hist_info treenode_hist_info;
 struct treenode_hist_info{
@@ -70,11 +70,12 @@ struct treenode_hist_props_info{
    SID_Datatype arg_type[TREENODE_HIST_N_PROPS][TREENODE_HIST_N_ARGS_MAX];
 };
 #ifdef _MAIN
-treenode_hist_props_info treenode_hist_props={{"z","M","Mpeak","N","M0","zeta"},
-                                              {"$z$","$M_{\\rm{vir}}[h^{-1} M_\\odot]$","$M_{\\rm{peak}}[h^{-1} M_\\odot]$","$\\rm{n_p}$","$M_{\\rm{0}}[h^{-1} M_\\odot]$","$\\zeta$"},
-                                              {"$\\log_{10}{z}$","$\\log_{10}{\\rm{M}_{\\rm{vir}}[h^{-1} \\rm{M}_\\odot]}$","$\\log_{10}{\\rm{M}_{\\rm{peak}}[h^{-1} \\rm{M}_\\odot]}$","$\\log_{10}{\\rm{n_p}}$","$\\log_{10}{\\rm{M}_{\\rm{0}}[h^{-1} \\rm{M}_\\odot]}$","$\\log_{10}{\\zeta}$"},
-                                              {  1,  3,  3,  3,  3,  3},
+treenode_hist_props_info treenode_hist_props={{"z","M","M_peak","N","N_peak","M0","zeta"},
+                                              {"$z$","$M_{\\rm{vir}}[h^{-1} M_\\odot]$","$M_{\\rm{peak}}[h^{-1} M_\\odot]$","$\\rm{n_p}$","$\\rm{n_{peak}}$","$M_{\\rm{0}}[h^{-1} M_\\odot]$","$\\zeta$"},
+                                              {"$\\log_{10}{z}$","$\\log_{10}{\\rm{M}_{\\rm{vir}}[h^{-1} \\rm{M}_\\odot]}$","$\\log_{10}{\\rm{M}_{\\rm{peak}}[h^{-1} \\rm{M}_\\odot]}$","$\\log_{10}{\\rm{n_p}}$","$\\log_{10}{\\rm{n_{peak}}}$","$\\log_{10}{\\rm{M}_{\\rm{0}}[h^{-1} \\rm{M}_\\odot]}$","$\\log_{10}{\\zeta}$"},
+                                              {  1,  3,  3,  3,  3,  3,  3},
                                               {{SID_INT,   SID_INT,   SID_INT},
+                                               {SID_DOUBLE,SID_DOUBLE,SID_INT},
                                                {SID_DOUBLE,SID_DOUBLE,SID_INT},
                                                {SID_DOUBLE,SID_DOUBLE,SID_INT},
                                                {SID_DOUBLE,SID_DOUBLE,SID_INT},

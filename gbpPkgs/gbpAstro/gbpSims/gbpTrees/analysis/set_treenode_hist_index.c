@@ -67,7 +67,16 @@ int set_treenode_hist_index(tree_info *trees,treenode_hist_info *hist,tree_node_
         i_d=(int)((d-d_min)/dd);
         break;
       }
-      case 4:{ // M_descendant
+      case 4:{ // N_peak
+        double d_min=args_d[0];
+        double dd   =args_d[1];
+        double d    =(double)fetch_treenode_n_particles_peak(trees,current_halo);
+        if(flag_log)
+           d=take_log10(d);
+        i_d=(int)((d-d_min)/dd);
+        break;
+      }
+      case 5:{ // M_descendant
         double d_min=args_d[0];
         double dd   =args_d[1];
         double d    =fetch_treenode_Mvir(trees,current_halo->descendant);
@@ -76,7 +85,7 @@ int set_treenode_hist_index(tree_info *trees,treenode_hist_info *hist,tree_node_
         i_d=(int)((d-d_min)/dd);
         break;
       }
-      case 5:{ // zeta=merger_ratio
+      case 6:{ // zeta=merger_ratio
         double d_min=args_d[0];
         double dd   =args_d[1];
         double d    =(double)fetch_treenode_zeta(trees,current_halo);
