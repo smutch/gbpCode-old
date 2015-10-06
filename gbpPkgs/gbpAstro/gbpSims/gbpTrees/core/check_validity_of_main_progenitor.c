@@ -18,7 +18,7 @@ int check_validity_of_main_progenitor(tree_horizontal_info *descendant_halo,
             // Always keep main progenitors as close to the descendant as possible
             if(file_offset_new>file_offset_old)
                flag_valid=FALSE;
-            // This works better for more centrally weighted matches
+            // This works well for centrally weighted matches
             else if((old_MP->score)>(new_MP->score))
                flag_valid=FALSE;
          }

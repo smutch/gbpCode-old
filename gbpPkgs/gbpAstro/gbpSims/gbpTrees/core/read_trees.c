@@ -77,19 +77,47 @@ void read_trees(char       *filename_SSimPL_root,
   init_trees_lookup((*trees));
 
   // Initialize the extended tree pointers if we are reading them
-  int               flag_read_extended_pointers       =FALSE;
-  tree_node_info ***bridge_pointers_groups_local      =NULL;
-  tree_node_info ***backmatch_pointers_groups_local   =NULL;
-  tree_node_info ***bridge_pointers_subgroups_local   =NULL;
-  tree_node_info ***backmatch_pointers_subgroups_local=NULL;
+  int               flag_read_extended_pointers        =FALSE;
+  tree_node_info ***forematch_pointers_groups_local    =NULL;
+  tree_node_info ***backmatch_pointers_groups_local    =NULL;
+  tree_node_info ***forematch_pointers_subgroups_local =NULL;
+  tree_node_info ***backmatch_pointers_subgroups_local =NULL;
+  float           **descendant_pointers_groups_score   =NULL;
+  float           **progenitor_pointers_groups_score   =NULL;
+  float           **forematch_pointers_groups_score    =NULL;
+  float           **backmatch_pointers_groups_score    =NULL;
+  float           **descendant_pointers_subgroups_score=NULL;
+  float           **progenitor_pointers_subgroups_score=NULL;
+  float           **forematch_pointers_subgroups_score =NULL;
+  float           **backmatch_pointers_subgroups_score =NULL;
   if(check_mode_for_flag(read_mode,TREE_READ_EXTENDED_POINTERS)){
      // Since the halo counts for each snap haven't been set yet, each of these
      //    just allocate an array of pointers, with one element per snap set to NULL.
-     //    The arrays for ach snap will need to be allocated later.
-     init_trees_data((*trees),(void ***)(&bridge_pointers_groups_local),      0,INIT_TREE_DATA_GROUPS,   "bridge_pointers_groups_local");
-     init_trees_data((*trees),(void ***)(&backmatch_pointers_groups_local),   0,INIT_TREE_DATA_GROUPS,   "backmatch_pointers_groups_local");
-     init_trees_data((*trees),(void ***)(&bridge_pointers_subgroups_local),   0,INIT_TREE_DATA_SUBGROUPS,"bridge_pointers_subgroups_local");
-     init_trees_data((*trees),(void ***)(&backmatch_pointers_subgroups_local),0,INIT_TREE_DATA_SUBGROUPS,"backmatch_pointers_subgroups_local");
+     //    The arrays for each snap will need to be allocated later.
+     init_trees_data((*trees),(void ***)(&forematch_pointers_groups_local),    0,INIT_TREE_DATA_GROUPS,   "forematch_pointers_groups_local");
+     init_trees_data((*trees),(void ***)(&backmatch_pointers_groups_local),    0,INIT_TREE_DATA_GROUPS,   "backmatch_pointers_groups_local");
+     init_trees_data((*trees),(void ***)(&forematch_pointers_subgroups_local), 0,INIT_TREE_DATA_SUBGROUPS,"forematch_pointers_subgroups_local");
+     init_trees_data((*trees),(void ***)(&backmatch_pointers_subgroups_local), 0,INIT_TREE_DATA_SUBGROUPS,"backmatch_pointers_subgroups_local");
+     init_trees_data((*trees),(void ***)(&descendant_pointers_groups_score),   0,INIT_TREE_DATA_GROUPS,   "descendant_pointers_groups_score");
+     init_trees_data((*trees),(void ***)(&progenitor_pointers_groups_score),   0,INIT_TREE_DATA_GROUPS,   "progenitor_pointers_groups_score");
+     init_trees_data((*trees),(void ***)(&forematch_pointers_groups_score),    0,INIT_TREE_DATA_GROUPS,   "forematch_pointers_groups_score");
+     init_trees_data((*trees),(void ***)(&backmatch_pointers_groups_score),    0,INIT_TREE_DATA_GROUPS,   "backmatch_pointers_groups_score");
+     init_trees_data((*trees),(void ***)(&descendant_pointers_subgroups_score),0,INIT_TREE_DATA_SUBGROUPS,"descendant_pointers_subgroups_score");
+     init_trees_data((*trees),(void ***)(&progenitor_pointers_subgroups_score),0,INIT_TREE_DATA_SUBGROUPS,"progenitor_pointers_subgroups_score");
+     init_trees_data((*trees),(void ***)(&forematch_pointers_subgroups_score), 0,INIT_TREE_DATA_SUBGROUPS,"forematch_pointers_subgroups_score");
+     init_trees_data((*trees),(void ***)(&backmatch_pointers_subgroups_score), 0,INIT_TREE_DATA_SUBGROUPS,"backmatch_pointers_subgroups_score");
+     (*trees)->group_backmatch_pointers   =backmatch_pointers_groups_local;
+     (*trees)->subgroup_backmatch_pointers=backmatch_pointers_subgroups_local;
+     (*trees)->group_forematch_pointers   =forematch_pointers_groups_local;
+     (*trees)->subgroup_forematch_pointers=forematch_pointers_subgroups_local;
+     (*trees)->group_descendant_score     =descendant_pointers_groups_score;
+     (*trees)->subgroup_descendant_score  =descendant_pointers_subgroups_score;
+     (*trees)->group_progenitor_score     =progenitor_pointers_groups_score;
+     (*trees)->subgroup_progenitor_score  =progenitor_pointers_subgroups_score;
+     (*trees)->group_backmatch_score      =backmatch_pointers_groups_score;
+     (*trees)->subgroup_backmatch_score   =backmatch_pointers_subgroups_score;
+     (*trees)->group_forematch_score      =forematch_pointers_groups_score;
+     (*trees)->subgroup_forematch_score   =forematch_pointers_subgroups_score;
      flag_read_extended_pointers=TRUE;
   }
   
@@ -295,14 +323,12 @@ void read_trees(char       *filename_SSimPL_root,
     // Read extended pointer set (optional)
     SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
     if(flag_read_extended_pointers){
-       // Read bridge pointers
+       // Read forematch pointers
        if(i_file_bridge>=0 && i_file_bridge<n_snaps)
           read_trees_pointers((*trees),
                               filename_input_dir_horizontal_trees,
                               i_file_bridge,
                               i_read_bridge,
-                              bridge_pointers_groups_local,
-                              bridge_pointers_subgroups_local,
                               READ_TREES_POINTERS_BRIDGE_FOREMATCH);
        // Read backmatch pointers
        if(i_file_backmatch>=0 && i_file_backmatch<n_snaps)
@@ -310,8 +336,6 @@ void read_trees(char       *filename_SSimPL_root,
                               filename_input_dir_horizontal_trees,
                               i_file_backmatch,
                               i_read_backmatch,
-                              backmatch_pointers_groups_local,
-                              backmatch_pointers_subgroups_local,
                               READ_TREES_POINTERS_BRIDGE_BACKMATCH);
     }
     SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
@@ -333,8 +357,6 @@ void read_trees(char       *filename_SSimPL_root,
                             filename_input_dir_horizontal_trees,
                             i_file_backmatch,
                             i_read_backmatch,
-                            backmatch_pointers_groups_local,
-                            backmatch_pointers_subgroups_local,
                             READ_TREES_POINTERS_BRIDGE_BACKMATCH);
      }
   }

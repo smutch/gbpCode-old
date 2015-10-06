@@ -159,7 +159,15 @@ int    precompute_treenode_markers_recursive(tree_info          *trees,
                                              tree_markers_info **markers_array,
                                              tree_node_info     *halo,
                                              tree_markers_info **markers_descendant);
-tree_markers_info *fetch_treenode_precomputed_markers(tree_info *trees,tree_node_info *halo);
+
+tree_markers_info *fetch_treenode_precomputed_markers  (tree_info *trees,tree_node_info *halo);
+tree_node_info    *fetch_treenode_backmatch            (tree_info *trees,tree_node_info *halo);
+float              fetch_treenode_backmatch_score      (tree_info *trees,tree_node_info *halo);
+float              fetch_treenode_backmatch_f_goodness (tree_info *trees,tree_node_info *halo);
+float              fetch_treenode_progenitor_score     (tree_info *trees,tree_node_info *halo);
+float              fetch_treenode_descendant_score     (tree_info *trees,tree_node_info *halo);
+float              fetch_treenode_progenitor_f_goodness(tree_info *trees,tree_node_info *halo);
+float              fetch_treenode_descendant_f_goodness(tree_info *trees,tree_node_info *halo);
 
 int    find_treenode_markers(tree_info *trees,tree_node_info *halo,tree_markers_info **markers_all,tree_markers_info *markers);
 void   write_treenode_markers(tree_info *trees,const char *filename_output_root,int mode);
@@ -238,6 +246,7 @@ int    fetch_treenode_snapshot(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_snap_tree(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_halo_ID(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_file_index(tree_info *trees,tree_node_info *halo);
+int    fetch_treenode_tree_case(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_Mvir(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_Rvir(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_sigmav(tree_info *trees,tree_node_info *halo);

@@ -171,9 +171,9 @@ void identify_bridges(tree_horizontal_info **halos,
                 }
                 // ... if not, add it
                 if(flag_continue){
-                   back_matches[halos_i[i_halo].n_back_matches].score=match_score[match_index[j_halo]];
-                   back_matches[halos_i[i_halo].n_back_matches].file =j_file_1;
                    back_matches[halos_i[i_halo].n_back_matches].halo =&(halos[j_file_1%n_wrap][match_index[j_halo]]);
+                   back_matches[halos_i[i_halo].n_back_matches].file =j_file_1;
+                   back_matches[halos_i[i_halo].n_back_matches].score=match_score[match_index[j_halo]];
                    (halos_i[i_halo].n_back_matches)++;
                 }
                 j_halo++;

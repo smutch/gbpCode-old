@@ -57,13 +57,19 @@ void compute_trees_analysis_fragmented_halos(tree_info *trees,char *filename_out
   treenode_list_info *list_halos_new;
   init_treenode_list("fragmented_new",n_fragmented_new,&list_halos_new);
   init_treenode_list("fragmented",    n_fragmented,    &list_halos);
-  int    *frag_length;     init_treenode_info_data(list_halos_new,SID_FARG frag_length,     SID_INT,   "Fragment length (snapshots)");
-  double *delta_frag_norm; init_treenode_info_data(list_halos_new,SID_FARG delta_frag_norm, SID_DOUBLE,"delta_fragmented/t_dyn(z)");
-  double *delta_fragmented;init_treenode_info_data(list_halos_new,SID_FARG delta_fragmented,SID_DOUBLE,"delta_fragmented [Gyrs]");
-  int    *stop_index;      init_treenode_info_data(list_halos_new,SID_FARG stop_index,      SID_INT,   "Fragment's stopping index");
-  int    *stop_snapshot;   init_treenode_info_data(list_halos_new,SID_FARG stop_snapshot,   SID_INT,   "Fragment's stopping snapshot");
-  int    *start_index;     init_treenode_info_data(list_halos_new,SID_FARG start_index,     SID_INT,   "Fragment's starting index");
-  int    *start_snapshot;  init_treenode_info_data(list_halos_new,SID_FARG start_snapshot,  SID_INT,   "Fragment's starting snapshot");
+  double *backmatch_score_norm;init_treenode_info_data(list_halos_new,SID_FARG backmatch_score_norm,SID_DOUBLE,"Backmatch f_goodness");
+  double *backmatch_score;     init_treenode_info_data(list_halos_new,SID_FARG backmatch_score,     SID_DOUBLE,"Backmatch score");
+  int    *backmatch_type;      init_treenode_info_data(list_halos_new,SID_FARG backmatch_type,      SID_INT,   "Backmatch tree case");
+  int    *backmatch_index;     init_treenode_info_data(list_halos_new,SID_FARG backmatch_index,     SID_INT,   "Backmatch index");
+  int    *backmatch_snapshot;  init_treenode_info_data(list_halos_new,SID_FARG backmatch_snapshot,  SID_INT,   "Backmatch snapshot");
+  int    *backmatch_n_p;       init_treenode_info_data(list_halos_new,SID_FARG backmatch_n_p,       SID_INT,   "Backmatch n_particles");
+  int    *frag_length;         init_treenode_info_data(list_halos_new,SID_FARG frag_length,         SID_INT,   "Fragment length (snapshots)");
+  double *delta_frag_norm;     init_treenode_info_data(list_halos_new,SID_FARG delta_frag_norm,     SID_DOUBLE,"delta_fragmented/t_dyn(z)");
+  double *delta_fragmented;    init_treenode_info_data(list_halos_new,SID_FARG delta_fragmented,    SID_DOUBLE,"delta_fragmented [Gyrs]");
+  int    *stop_index;          init_treenode_info_data(list_halos_new,SID_FARG stop_index,          SID_INT,   "Fragment's stopping index");
+  int    *stop_snapshot;       init_treenode_info_data(list_halos_new,SID_FARG stop_snapshot,       SID_INT,   "Fragment's stopping snapshot");
+  int    *start_index;         init_treenode_info_data(list_halos_new,SID_FARG start_index,         SID_INT,   "Fragment's starting index");
+  int    *start_snapshot;      init_treenode_info_data(list_halos_new,SID_FARG start_snapshot,      SID_INT,   "Fragment's starting snapshot");
 
   // Create the list
   SID_log("Creating lists...",SID_LOG_OPEN|SID_LOG_TIMER);
@@ -83,6 +89,17 @@ void compute_trees_analysis_fragmented_halos(tree_info *trees,char *filename_out
            int flag_satellite_i=check_treenode_if_satellite(current_halo);
            if(flag_new){
               add_to_treenode_list(list_halos_new,current_halo);
+              // Set backmatch data
+              int             current_halo_n_p=fetch_treenode_n_particles(trees,current_halo);
+              tree_node_info *backmatch_halo  =fetch_treenode_backmatch  (trees,current_halo);
+              backmatch_score_norm[i_list]=(double)(fetch_treenode_backmatch_f_goodness(trees,current_halo));
+              backmatch_score     [i_list]=(double)(fetch_treenode_backmatch_score     (trees,current_halo));
+              backmatch_type      [i_list]=fetch_treenode_tree_case      (trees,backmatch_halo);
+              backmatch_index     [i_list]=fetch_treenode_file_index     (trees,backmatch_halo);
+              backmatch_snapshot  [i_list]=fetch_treenode_snapshot       (trees,backmatch_halo);
+              backmatch_n_p       [i_list]=fetch_treenode_n_particles    (trees,backmatch_halo);
+
+              // Set fragment branch data
               frag_length[i_list]     =fetch_treenode_snapshot(trees,markers->branch_root)-fetch_treenode_snapshot(trees,current_halo);
               delta_frag_norm[i_list] =fetch_treenode_delta_t(trees,markers->branch_root,current_halo)/t_dyn_z(z,trees->cosmo);
               delta_fragmented[i_list]=fetch_treenode_delta_t(trees,markers->branch_root,current_halo)/S_PER_GYR;

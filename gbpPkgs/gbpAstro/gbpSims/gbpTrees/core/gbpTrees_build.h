@@ -414,14 +414,26 @@ struct tree_info{
   cosmo_info       *cosmo;
   double            box_size;
   // Short-cuts to some common stuff added to data
-  float                     **group_match_scores;
-  float                     **subgroup_match_scores;
-  tree_markers_info         **group_markers;
-  tree_markers_info         **subgroup_markers;
-  halo_properties_info      **group_properties;
-  halo_properties_info      **subgroup_properties;
-  halo_properties_SAGE_info **group_properties_SAGE;
-  halo_properties_SAGE_info **subgroup_properties_SAGE;
+  float                      **group_match_scores;
+  float                      **subgroup_match_scores;
+  tree_markers_info          **group_markers;
+  tree_markers_info          **subgroup_markers;
+  halo_properties_info       **group_properties;
+  halo_properties_info       **subgroup_properties;
+  halo_properties_SAGE_info  **group_properties_SAGE;
+  halo_properties_SAGE_info  **subgroup_properties_SAGE;
+  tree_node_info            ***group_backmatch_pointers;
+  tree_node_info            ***subgroup_backmatch_pointers;
+  tree_node_info            ***group_forematch_pointers;
+  tree_node_info            ***subgroup_forematch_pointers;
+  float                      **group_descendant_score;
+  float                      **subgroup_descendant_score;
+  float                      **group_progenitor_score;
+  float                      **subgroup_progenitor_score;
+  float                      **group_backmatch_score;
+  float                      **subgroup_backmatch_score;
+  float                      **group_forematch_score;
+  float                      **subgroup_forematch_score;
   // Reference trees pointer permitting communication between difference tree versions
   tree_info *trees_reference;
 };
@@ -469,8 +481,6 @@ void read_trees_pointers(tree_info        *trees,
                          const char       *filename_input_dir_horizontal_trees,
                          int               i_file_ptrs,
                          int               i_read_ptrs,
-                         tree_node_info ***pointers_groups_local,
-                         tree_node_info ***pointers_subgroups_local,
                          int               mode);
 void read_trees_catalogs(tree_info              *trees,
                          char                   *filename_SSimPL_dir,
@@ -498,9 +508,12 @@ void read_matches(char    *filename_root_matches,
                   char    *match_flag_two_way,
                   double   f_goodness_of_match);
 int check_for_matching_input_files(const char *filename_root_in,int i_read);
+
 float maximum_match_score(double n_particles);
 float minimum_match_score(double n_particles);
+float match_score_f_goodness(float match_score,int n_particles_in);
 int check_goodness_of_match(int n_particles_in,float match_score,double f_goodness_of_match);
+
 int check_if_halo_is_descendant(tree_horizontal_info *possible_progenitor,
                                 tree_horizontal_info *possible_descendant,
                                 int n_search);

@@ -124,6 +124,26 @@ int write_treenode_list_properties_set_ith(tree_info *trees,int i_write,tree_nod
       if(data_d!=NULL)    *data_d   =fetch_treenode_delta_t_form(trees,current_halo)/S_PER_GYR;
    }
    else if(i_write==(i_item++)){
+      if(data_name!=NULL) sprintf(data_name,"Descendant match score");
+      if(data_type!=NULL) *data_type=SID_DOUBLE;
+      if(data_d!=NULL)    *data_d   =(double)fetch_treenode_descendant_score(trees,current_halo);
+   }
+   else if(i_write==(i_item++)){
+      if(data_name!=NULL) sprintf(data_name,"Progenitor match score");
+      if(data_type!=NULL) *data_type=SID_DOUBLE;
+      if(data_d!=NULL)    *data_d   =(double)fetch_treenode_progenitor_score(trees,current_halo);
+   }
+   else if(i_write==(i_item++)){
+      if(data_name!=NULL) sprintf(data_name,"Descendant f_goodness");
+      if(data_type!=NULL) *data_type=SID_DOUBLE;
+      if(data_d!=NULL)    *data_d   =(double)fetch_treenode_descendant_f_goodness(trees,current_halo);
+   }
+   else if(i_write==(i_item++)){
+      if(data_name!=NULL) sprintf(data_name,"Progenitor f_goodness");
+      if(data_type!=NULL) *data_type=SID_DOUBLE;
+      if(data_d!=NULL)    *data_d   =(double)fetch_treenode_progenitor_f_goodness(trees,current_halo);
+   }
+   else if(i_write==(i_item++)){
       if(data_name!=NULL) sprintf(data_name,"Fragmented?");
       if(data_type!=NULL) *data_type=SID_INT;
       if(data_i!=NULL)    *data_i   =check_treenode_if_fragmented(current_halo);

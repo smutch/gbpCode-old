@@ -27,9 +27,7 @@ void check_for_fragmented_halos(int k_match,
 
       // Perform checks for fragmented halos here
       match_info *back_match =&(halos[i_write%n_wrap][i_halo].bridge_backmatch);
-      if(check_mode_for_flag(halos[i_write%n_wrap][i_halo].type,TREE_CASE_NO_PROGENITORS) &&
-         (back_match->halo)!=NULL &&
-         l_write!=0){ 
+      if(check_mode_for_flag(halos[i_write%n_wrap][i_halo].type,TREE_CASE_NO_PROGENITORS) && (back_match->halo)!=NULL && l_write!=0){ 
 
          // Decide if this is a fragmented halo or a fragmented halo source
          int                   n_bridge_back_matches=back_match->halo->n_back_matches;

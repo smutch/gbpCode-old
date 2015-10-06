@@ -230,7 +230,7 @@ void read_matches(char    *filename_in_dir,
       else
          sprintf(filename_in,"%s_%sgroup_matches_%s_%s.dat",filename_in_name,    group_text_prefix,filename_cat2,filename_cat1);
 
-      // Open three files, one for reading each block of the matching file
+      // Open two files, one for reading the IDs and one for matching the scores of the matching file
       int i_read_file_check;
       int j_read_file_check;
       int n_groups_i_check;
@@ -273,8 +273,8 @@ void read_matches(char    *filename_in_dir,
       float  *buffer_score=(float *)SID_malloc(sizeof(float)*n_buffer);
       for(int j_halo=0;n_remaining>0;n_remaining-=n_chunk){
          n_chunk=MIN(n_remaining,n_buffer);
-         SID_fread(buffer_ids,  sizeof(int),   n_chunk,&fp_check_ids);
-         SID_fread(buffer_score,sizeof(float), n_chunk,&fp_check_score);
+         SID_fread(buffer_ids,  sizeof(int),  n_chunk,&fp_check_ids);
+         SID_fread(buffer_score,sizeof(float),n_chunk,&fp_check_score);
          for(int k_halo=0;k_halo<n_chunk;k_halo++,j_halo++){
             int id_i=buffer_ids[k_halo];
             if(id_i>=0){

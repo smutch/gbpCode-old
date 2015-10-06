@@ -58,6 +58,13 @@ OBJFILES  = average_tree_branches.o              \
 	    fetch_treenode_delta_t_leaf.o             \
 	    fetch_treenode_delta_t_form.o             \
 	    fetch_treenode_properties.o               \
+	    fetch_treenode_backmatch.o                \
+	    fetch_treenode_backmatch_score.o          \
+	    fetch_treenode_backmatch_f_goodness.o     \
+	    fetch_treenode_progenitor_f_goodness.o    \
+	    fetch_treenode_descendant_f_goodness.o    \
+	    fetch_treenode_progenitor_score.o         \
+	    fetch_treenode_descendant_score.o         \
 	    fetch_treenode_Mvir.o                     \
 	    fetch_treenode_Rvir.o                     \
 	    fetch_treenode_sigmav.o                   \
@@ -85,6 +92,7 @@ OBJFILES  = average_tree_branches.o              \
 	    fetch_treenode_snapshot.o                 \
 	    fetch_treenode_snap_tree.o                \
 	    fetch_treenode_halo_ID.o                  \
+	    fetch_treenode_tree_case.o                \
 	    fetch_treenode_file_index.o               \
 	    fetch_treenode_progenitor_rank.o          \
 	    set_treenode_hist_index.o                 \
