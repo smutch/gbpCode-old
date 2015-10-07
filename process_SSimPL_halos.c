@@ -117,7 +117,7 @@ void process_SSimPL_halos(render_info *render,
   SID_fp_buffer *fp_groups_length_buffer   =NULL;
   SID_fp_buffer *fp_groups_offset_buffer   =NULL;
   SID_fp_buffer *fp_trees_in_buffer        =NULL;
-  size_t n_bytes_trees                     =sizeof(int)*((7*(size_t)n_groups)+(6*(size_t)n_subgroups));
+  size_t n_bytes_trees                     =sizeof(int)*((8*(size_t)n_groups)+(7*(size_t)n_subgroups));
   init_SID_fp_buffer(&fp_subgroups_length,(size_t)n_subgroups*sizeof(int),SIZE_OF_MEGABYTE,&fp_subgroups_length_buffer);
   init_SID_fp_buffer(&fp_subgroups_offset,(size_t)n_subgroups*offset_size,SIZE_OF_MEGABYTE,&fp_subgroups_offset_buffer);
   init_SID_fp_buffer(&fp_groups_length,   (size_t)n_groups   *sizeof(int),SIZE_OF_MEGABYTE,&fp_groups_length_buffer);
@@ -173,14 +173,15 @@ void process_SSimPL_halos(render_info *render,
   int    i_subgroup;
   for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
     // Read horizontal trees for groups
-    SID_fread_all_buffer(&(group_i.n_particles),  sizeof(int),1,fp_groups_length_buffer);
-    SID_fread_all_buffer(&(group_i.id),           sizeof(int),1,fp_trees_in_buffer);
-    SID_fread_all_buffer(&(group_i.tree_case),    sizeof(int),1,fp_trees_in_buffer);
-    SID_fread_all_buffer(&(group_i.descendant_id),sizeof(int),1,fp_trees_in_buffer);
-    SID_fread_all_buffer(&(group_i.tree_id),      sizeof(int),1,fp_trees_in_buffer);
-    SID_fread_all_buffer(&(group_i.file_offset),  sizeof(int),1,fp_trees_in_buffer);
-    SID_fread_all_buffer(&(group_i.file_index),   sizeof(int),1,fp_trees_in_buffer);
-    SID_fread_all_buffer(&(group_i.n_subgroups),  sizeof(int),1,fp_trees_in_buffer);
+    SID_fread_all_buffer(&(group_i.n_particles),     sizeof(int),1,fp_groups_length_buffer);
+    SID_fread_all_buffer(&(group_i.id),              sizeof(int),1,fp_trees_in_buffer);
+    SID_fread_all_buffer(&(group_i.tree_case),       sizeof(int),1,fp_trees_in_buffer);
+    SID_fread_all_buffer(&(group_i.descendant_id),   sizeof(int),1,fp_trees_in_buffer);
+    SID_fread_all_buffer(&(group_i.tree_id),         sizeof(int),1,fp_trees_in_buffer);
+    SID_fread_all_buffer(&(group_i.file_offset),     sizeof(int),1,fp_trees_in_buffer);
+    SID_fread_all_buffer(&(group_i.file_index),      sizeof(int),1,fp_trees_in_buffer);
+    SID_fread_all_buffer(&(group_i.n_particles_peak),sizeof(int),1,fp_trees_in_buffer);
+    SID_fread_all_buffer(&(group_i.n_subgroups),     sizeof(int),1,fp_trees_in_buffer);
     switch(flag_long_ids){
        case TRUE:
           SID_fread_all_buffer(&(group_i.offset),offset_size,1,fp_groups_offset_buffer);
@@ -200,13 +201,14 @@ void process_SSimPL_halos(render_info *render,
     tree_node_info *subgroup_node;
     for(j_subgroup=0;j_subgroup<group_i.n_subgroups;i_subgroup++,j_subgroup++){
        // Read horizontal trees for subgroups
-       SID_fread_all_buffer(&(subgroup_i.n_particles),  sizeof(int),1,fp_subgroups_length_buffer);
-       SID_fread_all_buffer(&(subgroup_i.id),           sizeof(int),1,fp_trees_in_buffer);
-       SID_fread_all_buffer(&(subgroup_i.tree_case),    sizeof(int),1,fp_trees_in_buffer);
-       SID_fread_all_buffer(&(subgroup_i.descendant_id),sizeof(int),1,fp_trees_in_buffer);
-       SID_fread_all_buffer(&(subgroup_i.tree_id),      sizeof(int),1,fp_trees_in_buffer);
-       SID_fread_all_buffer(&(subgroup_i.file_offset),  sizeof(int),1,fp_trees_in_buffer);
-       SID_fread_all_buffer(&(subgroup_i.file_index),   sizeof(int),1,fp_trees_in_buffer);
+       SID_fread_all_buffer(&(subgroup_i.n_particles),     sizeof(int),1,fp_subgroups_length_buffer);
+       SID_fread_all_buffer(&(subgroup_i.id),              sizeof(int),1,fp_trees_in_buffer);
+       SID_fread_all_buffer(&(subgroup_i.tree_case),       sizeof(int),1,fp_trees_in_buffer);
+       SID_fread_all_buffer(&(subgroup_i.descendant_id),   sizeof(int),1,fp_trees_in_buffer);
+       SID_fread_all_buffer(&(subgroup_i.tree_id),         sizeof(int),1,fp_trees_in_buffer);
+       SID_fread_all_buffer(&(subgroup_i.file_offset),     sizeof(int),1,fp_trees_in_buffer);
+       SID_fread_all_buffer(&(subgroup_i.file_index),      sizeof(int),1,fp_trees_in_buffer);
+       SID_fread_all_buffer(&(subgroup_i.n_particles_peak),sizeof(int),1,fp_trees_in_buffer);
        switch(flag_long_ids){
           case TRUE:
              SID_fread_all_buffer(&(subgroup_i.offset),offset_size,1,fp_subgroups_offset_buffer);
