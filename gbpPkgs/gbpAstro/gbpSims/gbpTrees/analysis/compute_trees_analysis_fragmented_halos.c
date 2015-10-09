@@ -60,6 +60,7 @@ void compute_trees_analysis_fragmented_halos(tree_info *trees,char *filename_out
   double *backmatch_score_norm;init_treenode_info_data(list_halos_new,SID_FARG backmatch_score_norm,SID_DOUBLE,"Backmatch f_goodness");
   double *backmatch_score;     init_treenode_info_data(list_halos_new,SID_FARG backmatch_score,     SID_DOUBLE,"Backmatch score");
   int    *backmatch_type;      init_treenode_info_data(list_halos_new,SID_FARG backmatch_type,      SID_INT,   "Backmatch tree case");
+  int    *backmatch_id;        init_treenode_info_data(list_halos_new,SID_FARG backmatch_id,        SID_INT,   "Backmatch id");
   int    *backmatch_index;     init_treenode_info_data(list_halos_new,SID_FARG backmatch_index,     SID_INT,   "Backmatch index");
   int    *backmatch_snapshot;  init_treenode_info_data(list_halos_new,SID_FARG backmatch_snapshot,  SID_INT,   "Backmatch snapshot");
   int    *backmatch_n_p;       init_treenode_info_data(list_halos_new,SID_FARG backmatch_n_p,       SID_INT,   "Backmatch n_particles");
@@ -95,6 +96,7 @@ void compute_trees_analysis_fragmented_halos(tree_info *trees,char *filename_out
               backmatch_score_norm[i_list]=(double)(fetch_treenode_backmatch_f_goodness(trees,current_halo));
               backmatch_score     [i_list]=(double)(fetch_treenode_backmatch_score     (trees,current_halo));
               backmatch_type      [i_list]=fetch_treenode_tree_case      (trees,backmatch_halo);
+              backmatch_id        [i_list]=fetch_treenode_halo_ID        (trees,backmatch_halo);
               backmatch_index     [i_list]=fetch_treenode_file_index     (trees,backmatch_halo);
               backmatch_snapshot  [i_list]=fetch_treenode_snapshot       (trees,backmatch_halo);
               backmatch_n_p       [i_list]=fetch_treenode_n_particles    (trees,backmatch_halo);
