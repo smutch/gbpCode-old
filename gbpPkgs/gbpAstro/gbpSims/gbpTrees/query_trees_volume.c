@@ -159,10 +159,10 @@ int main(int argc, char *argv[]){
         char filename_in[MAX_FILENAME_LENGTH];
         sprintf(filename_in,"%s/trees/%s/horizontal/trees/horizontal_trees_%03d.dat",filename_SSimPL_root,filename_trees_root,snapshot);
         SID_fopen(filename_in,"r",&fp_in_trees);
-        sprintf(filename_in,"%s/trees/%s/horizontal/trees/horizontal_trees_bridge_forematch_pointers_%03d.dat",
+        sprintf(filename_in,"%s/trees/%s/horizontal/trees/horizontal_trees_forematch_pointers_%03d.dat",
                             filename_SSimPL_root,filename_trees_root,snapshot);
         SID_fopen(filename_in,"r",&fp_in_bridge_forematch);
-        sprintf(filename_in,"%s/trees/%s/horizontal/trees/horizontal_trees_bridge_backmatch_pointers_%03d.dat",
+        sprintf(filename_in,"%s/trees/%s/horizontal/trees/horizontal_trees_backmatch_pointers_%03d.dat",
                             filename_SSimPL_root,filename_trees_root,snapshot);
         SID_fopen(filename_in,"r",&fp_in_bridge_backmatch);
 
@@ -209,23 +209,31 @@ int main(int argc, char *argv[]){
            int bridge_forematch_id;
            int bridge_forematch_file;
            int bridge_forematch_index;
+           float bridge_forematch_score;
+           float bridge_forematch_score_prog;
            int bridge_backmatch_id;
            int bridge_backmatch_file;
            int bridge_backmatch_index;
-           SID_fread_all(&group_id,              sizeof(int),1,&fp_in_trees);
-           SID_fread_all(&group_type,            sizeof(int),1,&fp_in_trees);
-           SID_fread_all(&group_descendant_id,   sizeof(int),1,&fp_in_trees);
-           SID_fread_all(&group_tree_id,         sizeof(int),1,&fp_in_trees);
-           SID_fread_all(&group_file_offset,     sizeof(int),1,&fp_in_trees);
-           SID_fread_all(&group_index,           sizeof(int),1,&fp_in_trees);
-           SID_fread_all(&group_n_particles_peak,sizeof(int),1,&fp_in_trees);
-           SID_fread_all(&n_subgroups_group,     sizeof(int),1,&fp_in_trees);
-           SID_fread_all(&bridge_forematch_id,   sizeof(int),1,&fp_in_bridge_forematch);
-           SID_fread_all(&bridge_forematch_file, sizeof(int),1,&fp_in_bridge_forematch);
-           SID_fread_all(&bridge_forematch_index,sizeof(int),1,&fp_in_bridge_forematch);
-           SID_fread_all(&bridge_backmatch_id,   sizeof(int),1,&fp_in_bridge_backmatch);
-           SID_fread_all(&bridge_backmatch_file, sizeof(int),1,&fp_in_bridge_backmatch);
-           SID_fread_all(&bridge_backmatch_index,sizeof(int),1,&fp_in_bridge_backmatch);
+           float bridge_backmatch_score;
+           float bridge_backmatch_score_prog;
+           SID_fread_all(&group_id,                   sizeof(int),  1,&fp_in_trees);
+           SID_fread_all(&group_type,                 sizeof(int),  1,&fp_in_trees);
+           SID_fread_all(&group_descendant_id,        sizeof(int),  1,&fp_in_trees);
+           SID_fread_all(&group_tree_id,              sizeof(int),  1,&fp_in_trees);
+           SID_fread_all(&group_file_offset,          sizeof(int),  1,&fp_in_trees);
+           SID_fread_all(&group_index,                sizeof(int),  1,&fp_in_trees);
+           SID_fread_all(&group_n_particles_peak,     sizeof(int),  1,&fp_in_trees);
+           SID_fread_all(&n_subgroups_group,          sizeof(int),  1,&fp_in_trees);
+           SID_fread_all(&bridge_forematch_id,        sizeof(int),  1,&fp_in_bridge_forematch);
+           SID_fread_all(&bridge_forematch_file,      sizeof(int),  1,&fp_in_bridge_forematch);
+           SID_fread_all(&bridge_forematch_index,     sizeof(int),  1,&fp_in_bridge_forematch);
+           SID_fread_all(&bridge_forematch_score,     sizeof(float),1,&fp_in_bridge_forematch);
+           SID_fread_all(&bridge_forematch_score_prog,sizeof(float),1,&fp_in_bridge_forematch);
+           SID_fread_all(&bridge_backmatch_id,        sizeof(int),  1,&fp_in_bridge_backmatch);
+           SID_fread_all(&bridge_backmatch_file,      sizeof(int),  1,&fp_in_bridge_backmatch);
+           SID_fread_all(&bridge_backmatch_index,     sizeof(int),  1,&fp_in_bridge_backmatch);
+           SID_fread_all(&bridge_backmatch_score,     sizeof(float),1,&fp_in_bridge_backmatch);
+           SID_fread_all(&bridge_backmatch_score_prog,sizeof(float),1,&fp_in_bridge_backmatch);
            SID_fskip(sizeof(int),1,&fp_in_bridge_forematch); 
            SID_fskip(sizeof(int),1,&fp_in_bridge_backmatch); 
 
@@ -240,19 +248,23 @@ int main(int argc, char *argv[]){
            for(int j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
               // Read subgroups
               if(mode==MATCH_SUBGROUPS){
-                 SID_fread_all(&halo_id,               sizeof(int),1,&fp_in_trees);
-                 SID_fread_all(&halo_type,             sizeof(int),1,&fp_in_trees);
-                 SID_fread_all(&halo_descendant_id,    sizeof(int),1,&fp_in_trees);
-                 SID_fread_all(&halo_tree_id,          sizeof(int),1,&fp_in_trees);
-                 SID_fread_all(&halo_file_offset,      sizeof(int),1,&fp_in_trees);
-                 SID_fread_all(&halo_index,            sizeof(int),1,&fp_in_trees);
-                 SID_fread_all(&halo_n_particles_peak, sizeof(int),1,&fp_in_trees);
-                 SID_fread_all(&bridge_forematch_id,   sizeof(int),1,&fp_in_bridge_forematch);
-                 SID_fread_all(&bridge_forematch_file, sizeof(int),1,&fp_in_bridge_forematch);
-                 SID_fread_all(&bridge_forematch_index,sizeof(int),1,&fp_in_bridge_forematch);
-                 SID_fread_all(&bridge_backmatch_id,   sizeof(int),1,&fp_in_bridge_backmatch);
-                 SID_fread_all(&bridge_backmatch_file, sizeof(int),1,&fp_in_bridge_backmatch);
-                 SID_fread_all(&bridge_backmatch_index,sizeof(int),1,&fp_in_bridge_backmatch);
+                 SID_fread_all(&halo_id,                    sizeof(int),  1,&fp_in_trees);
+                 SID_fread_all(&halo_type,                  sizeof(int),  1,&fp_in_trees);
+                 SID_fread_all(&halo_descendant_id,         sizeof(int),  1,&fp_in_trees);
+                 SID_fread_all(&halo_tree_id,               sizeof(int),  1,&fp_in_trees);
+                 SID_fread_all(&halo_file_offset,           sizeof(int),  1,&fp_in_trees);
+                 SID_fread_all(&halo_index,                 sizeof(int),  1,&fp_in_trees);
+                 SID_fread_all(&halo_n_particles_peak,      sizeof(int),  1,&fp_in_trees);
+                 SID_fread_all(&bridge_forematch_id,        sizeof(int),  1,&fp_in_bridge_forematch);
+                 SID_fread_all(&bridge_forematch_file,      sizeof(int),  1,&fp_in_bridge_forematch);
+                 SID_fread_all(&bridge_forematch_index,     sizeof(int),  1,&fp_in_bridge_forematch);
+                 SID_fread_all(&bridge_forematch_score,     sizeof(float),1,&fp_in_bridge_forematch);
+                 SID_fread_all(&bridge_forematch_score_prog,sizeof(float),1,&fp_in_bridge_forematch);
+                 SID_fread_all(&bridge_backmatch_id,        sizeof(int),  1,&fp_in_bridge_backmatch);
+                 SID_fread_all(&bridge_backmatch_file,      sizeof(int),  1,&fp_in_bridge_backmatch);
+                 SID_fread_all(&bridge_backmatch_index,     sizeof(int),  1,&fp_in_bridge_backmatch);
+                 SID_fread_all(&bridge_backmatch_score,     sizeof(float),1,&fp_in_bridge_backmatch);
+                 SID_fread_all(&bridge_backmatch_score_prog,sizeof(float),1,&fp_in_bridge_backmatch);
                  fread_catalog_file(&fp_properties,NULL,&properties,NULL,i_subgroup);
                  i_halo=i_subgroup;
                  flag_process=TRUE;
@@ -265,9 +277,11 @@ int main(int argc, char *argv[]){
                  halo_file_offset     =group_file_offset;
                  halo_index           =group_index;
                  halo_n_particles_peak=group_n_particles_peak;
-                 SID_fskip(sizeof(int),7,&fp_in_trees); 
-                 SID_fskip(sizeof(int),3,&fp_in_bridge_forematch); 
-                 SID_fskip(sizeof(int),3,&fp_in_bridge_backmatch); 
+                 SID_fskip(sizeof(int),  7,&fp_in_trees); 
+                 SID_fskip(sizeof(int),  3,&fp_in_bridge_forematch); 
+                 SID_fskip(sizeof(int),  3,&fp_in_bridge_backmatch); 
+                 SID_fskip(sizeof(float),2,&fp_in_bridge_forematch); 
+                 SID_fskip(sizeof(float),2,&fp_in_bridge_backmatch); 
               }
 
               if(flag_process){

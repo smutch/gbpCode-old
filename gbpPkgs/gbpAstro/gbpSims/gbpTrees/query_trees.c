@@ -120,10 +120,10 @@ int main(int argc, char *argv[]){
     SID_fp fp_in_bridge_backmatch;
     sprintf(filename_in,"%s/trees/%s/horizontal/trees/horizontal_trees_%03d.dat",filename_SSimPL_root,filename_trees_root,i_read);
     SID_fopen(filename_in,"r",&fp_in_trees);
-    sprintf(filename_in,"%s/trees/%s/horizontal/trees/horizontal_trees_bridge_forematch_pointers_%03d.dat",
+    sprintf(filename_in,"%s/trees/%s/horizontal/trees/horizontal_trees_forematch_pointers_%03d.dat",
                         filename_SSimPL_root,filename_trees_root,i_read);
     SID_fopen(filename_in,"r",&fp_in_bridge_forematch);
-    sprintf(filename_in,"%s/trees/%s/horizontal/trees/horizontal_trees_bridge_backmatch_pointers_%03d.dat",
+    sprintf(filename_in,"%s/trees/%s/horizontal/trees/horizontal_trees_backmatch_pointers_%03d.dat",
                         filename_SSimPL_root,filename_trees_root,i_read);
     SID_fopen(filename_in,"r",&fp_in_bridge_backmatch);
     int n_groups;
