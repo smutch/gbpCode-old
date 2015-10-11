@@ -14,7 +14,11 @@ int check_validity_of_emerged_match(tree_horizontal_info *halo_i,
    flag_valid=check_mode_for_flag(back_match->halo->type,TREE_CASE_EMERGED_CANDIDATE);
 
    // 2) Demand that the match be two-way
-   if(!match_flag_two_way) flag_valid=FALSE;
+   // Currently this is turned off because at times when
+   //   halos are highly disturbed, the emerged halo matches
+   //   are not two way, and a fragmented halo gets created 
+   //   unnecessarily.
+   //if(!match_flag_two_way) flag_valid=FALSE;
 
    // 3) Because we may be recursively finding emerged halos, make sure we haven't
    //    exceeded the search interval.  If so, invalidate the match.
