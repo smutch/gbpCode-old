@@ -28,7 +28,7 @@ float match_score_f_goodness(float match_score,int n_particles_in){
    do{ 
       f_goodness=0.5*(f_goodness_lo+f_goodness_hi);
       float test_score=maximum_match_score(f_goodness*n_particles);
-      difference=(match_score-test_score)/match_score;
+      difference=(match_score-test_score);
       if(difference<0.){
          f_goodness_hi=f_goodness;
          difference*=-1;

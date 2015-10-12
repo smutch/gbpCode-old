@@ -23,9 +23,9 @@ void write_treenode_list_data_header(tree_info *trees,treenode_list_info *list,F
      while(current!=NULL){
         if(i_write==0){
            if(flag_groups_list)
-              fprintf(fp_props_out,"# Properties for group catalog {%s}\n",catalog_name);
+              fprintf(fp_props_out,"# Data for group catalog {%s}\n",catalog_name);
            else
-              fprintf(fp_props_out,"# Properties for subgroup catalog {%s}\n",catalog_name);
+              fprintf(fp_props_out,"# Data for subgroup catalog {%s}\n",catalog_name);
            fprintf(fp_props_out,"#\n");
            fprintf(fp_props_out,"# Column (%02d): Catalog item number\n",i_column);i_column++;
         }

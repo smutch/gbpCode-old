@@ -14,6 +14,11 @@ int write_treenode_list_properties_set_ith(tree_info *trees,int i_write,tree_nod
    if(i_write==(i_item++)){
       // We always need to check pointers first for the case when we're calling this function
       //    to count entries or to write the header 
+      if(data_name!=NULL) sprintf(data_name,"Expansion factor");
+      if(data_type!=NULL) *data_type=SID_DOUBLE;
+      if(data_i!=NULL)    *data_d   =trees->a_list[current_halo->snap_tree];
+   }
+   else if(i_write==(i_item++)){
       if(data_name!=NULL) sprintf(data_name,"Redshift");
       if(data_type!=NULL) *data_type=SID_DOUBLE;
       if(data_i!=NULL)    *data_d   =trees->z_list[current_halo->snap_tree];
@@ -24,6 +29,11 @@ int write_treenode_list_properties_set_ith(tree_info *trees,int i_write,tree_nod
       if(data_i!=NULL)    *data_i   =trees->snap_list[current_halo->snap_tree];
    }
    else if(i_write==(i_item++)){
+      if(data_name!=NULL) sprintf(data_name,"File index");
+      if(data_type!=NULL) *data_type=SID_INT;
+      if(data_i!=NULL)    *data_i   =current_halo->file_index;
+   }
+   else if(i_write==(i_item++)){
       if(data_name!=NULL) sprintf(data_name,"Halo ID");
       if(data_type!=NULL) *data_type=SID_INT;
       if(data_i!=NULL)    *data_i   =fetch_treenode_halo_ID(trees,current_halo);
@@ -32,11 +42,6 @@ int write_treenode_list_properties_set_ith(tree_info *trees,int i_write,tree_nod
       if(data_name!=NULL) sprintf(data_name,"Descendant ID");
       if(data_type!=NULL) *data_type=SID_INT;
       if(data_i!=NULL)    *data_i   =fetch_treenode_halo_ID(trees,current_halo->descendant);
-   }
-   else if(i_write==(i_item++)){
-      if(data_name!=NULL) sprintf(data_name,"File index");
-      if(data_type!=NULL) *data_type=SID_INT;
-      if(data_i!=NULL)    *data_i   =current_halo->file_index;
    }
    else if(i_write==(i_item++)){
       if(data_name!=NULL) sprintf(data_name,"No. of particles");
@@ -92,21 +97,6 @@ int write_treenode_list_properties_set_ith(tree_info *trees,int i_write,tree_nod
       if(data_name!=NULL) sprintf(data_name,"z-position [h^{-1} Mpc]");
       if(data_type!=NULL) *data_type=SID_DOUBLE;
       if(data_d!=NULL)    *data_d   =fetch_treenode_z(trees,current_halo);
-   }
-   else if(i_write==(i_item++)){
-      if(data_name!=NULL) sprintf(data_name,"x-velocity [km/s]");
-      if(data_type!=NULL) *data_type=SID_DOUBLE;
-      if(data_d!=NULL)    *data_d   =fetch_treenode_vx(trees,current_halo);
-   }
-   else if(i_write==(i_item++)){
-      if(data_name!=NULL) sprintf(data_name,"y-velocity [km/s]");
-      if(data_type!=NULL) *data_type=SID_DOUBLE;
-      if(data_d!=NULL)    *data_d   =fetch_treenode_vy(trees,current_halo);
-   }
-   else if(i_write==(i_item++)){
-      if(data_name!=NULL) sprintf(data_name,"z-velocity [km/s]");
-      if(data_type!=NULL) *data_type=SID_DOUBLE;
-      if(data_d!=NULL)    *data_d   =fetch_treenode_vz(trees,current_halo);
    }
    else if(i_write==(i_item++)){
       if(data_name!=NULL) sprintf(data_name,"Separation from main progenitor [units of main progenitor R_vir]");

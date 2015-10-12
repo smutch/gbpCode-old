@@ -113,7 +113,7 @@ int main(int argc, char *argv[]){
   fprintf(fp_out,"#        (%02d): Matched to index\n",        i_column++);
   fprintf(fp_out,"#        (%02d): Matched to No. particles\n",i_column++);
   fprintf(fp_out,"#        (%02d): Match score\n",             i_column++);
-  fprintf(fp_out,"#        (%02d): Max match score\n",         i_column++);
+  fprintf(fp_out,"#        (%02d): Match score f_goodness\n",  i_column++);
   fprintf(fp_out,"#        (%02d): Match sort index\n",        i_column++);
   fprintf(fp_out,"#        (%02d): 2-way or 1-way match?\n",   i_column++);
   fprintf(fp_out,"#        (%02d): Good or bad match?\n",      i_column++);
@@ -142,7 +142,10 @@ int main(int argc, char *argv[]){
 
         // Check for goodness of match
         char goodness_of_match_text[5];
-        if(check_goodness_of_match(n_particles_i[i_halo],match_score[i_halo],F_GOODNESS_OF_MATCH))
+        int n_particles_j_i=0;
+        if(match_ids[i_halo]>=0)
+           n_particles_j_i=n_particles_j[match_ids[i_halo]];
+        if(check_goodness_of_match(n_particles_i[i_halo],n_particles_j_i,match_score[i_halo],F_GOODNESS_OF_MATCH))
            sprintf(goodness_of_match_text,"good");
         else
            sprintf(goodness_of_match_text,"bad");
@@ -162,7 +165,8 @@ int main(int argc, char *argv[]){
                          n_particles_i[i_halo],
                          j_read,match,
                          n_particles_j[match],
-                         match_score[i_halo],maximum_match_score((double)n_particles_i[i_halo]),
+                         match_score[i_halo],
+                         match_score_f_goodness(match_score[i_halo],n_particles_i[i_halo]),
                          match_index[i_halo],
                          twoway_match_text,
                          goodness_of_match_text);
@@ -171,7 +175,8 @@ int main(int argc, char *argv[]){
                          i_read,i_halo,
                          n_particles_i[i_halo],
                          j_read,match,-1,
-                         match_score[i_halo],maximum_match_score((double)n_particles_i[i_halo]),
+                         match_score[i_halo],
+                         match_score_f_goodness(match_score[i_halo],n_particles_i[i_halo]),
                          match_index[i_halo],
                          twoway_match_text,
                          goodness_of_match_text);
@@ -206,7 +211,10 @@ int main(int argc, char *argv[]){
 
             // Check for goodness of match
             char goodness_of_match_text[5];
-            if(check_goodness_of_match(n_particles_i[i_halo],match_score[i_halo],F_GOODNESS_OF_MATCH))
+            int n_particles_j_i=0;
+            if(match_ids[i_halo]>=0)
+               n_particles_j_i=n_particles_j[j_halo];
+            if(check_goodness_of_match(n_particles_i[i_halo],n_particles_j_i,match_score[i_halo],F_GOODNESS_OF_MATCH))
                sprintf(goodness_of_match_text,"good");
             else
                sprintf(goodness_of_match_text,"bad");
@@ -223,7 +231,8 @@ int main(int argc, char *argv[]){
                            n_particles_i[i_halo],
                            j_read,j_halo,
                            n_particles_j[j_halo],
-                           match_score[i_halo],maximum_match_score((double)n_particles_i[i_halo]),
+                           match_score[i_halo],
+                           match_score_f_goodness(match_score[i_halo],n_particles_i[i_halo]),
                            match_index[i_halo],
                            twoway_match_text,
                            goodness_of_match_text);

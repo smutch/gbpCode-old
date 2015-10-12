@@ -80,6 +80,8 @@ void read_matches(char    *filename_in_dir,
    int  flag_alloc_n_particles_j=FALSE;
    if(n_particles_i==NULL)
       flag_alloc_n_particles_i=TRUE;
+   if(n_particles_j==NULL)
+      flag_alloc_n_particles_j=TRUE;
    // 2) We need n_particles_j if doing 2-way checks
    if(match_flag_two_way!=NULL && n_particles_j==NULL)
       flag_alloc_n_particles_j=TRUE;
@@ -175,131 +177,145 @@ void read_matches(char    *filename_in_dir,
    SID_fread(match_score,sizeof(float), (*n_groups_i),&fp_in);
    SID_fclose(&fp_in);
 
-   // If we are reading groups, nullify all matches
-   //    between halos with no substructures.
-   int i_halo;
-   if(mode==MATCH_GROUPS){
-      size_t *match_index_temp;
-      for(i_halo=0;i_halo<(*n_groups_i);i_halo++){
-         if(n_sub_group_i[i_halo]<=0){
-            match_ids[i_halo]  =-1;
-            match_score[i_halo]= 0.;
-         }
-         else if(match_ids[i_halo]>=0 && (*n_groups_j)>0){
-            if(n_sub_group_j[match_ids[i_halo]]<=0){
+   // If one of the catalogs is empty, set to no-match defaults
+   if((*n_groups_i)<=0 || (*n_groups_j)<=0){
+      for(int i_halo=0;i_halo<(*n_groups_i);i_halo++){
+         match_ids[i_halo]  =-1;
+         match_score[i_halo]= 0.;
+      }
+      if(match_flag_two_way!=NULL){
+         for(int i_halo=0;i_halo<(*n_groups_i);i_halo++)
+            match_flag_two_way[i_halo]=FALSE;
+      }
+   }
+   else{
+      // If we are reading groups, nullify all matches
+      //    between halos with no substructures.
+      int i_halo;
+      if(mode==MATCH_GROUPS){
+         size_t *match_index_temp;
+         for(i_halo=0;i_halo<(*n_groups_i);i_halo++){
+            if(n_sub_group_i[i_halo]<=0){
                match_ids[i_halo]  =-1;
                match_score[i_halo]= 0.;
             }
-         }
-      }
-      merge_sort(match_ids,(size_t)(*n_groups_i),&match_index_temp,SID_INT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
-      memcpy(match_index,match_index_temp,(*n_groups_i)*sizeof(size_t));
-      SID_free(SID_FARG match_index_temp);
-      if(flag_alloc_n_sub_i)
-         SID_free(SID_FARG n_sub_group_i);
-      if(flag_alloc_n_sub_j)
-         SID_free(SID_FARG n_sub_group_j);
-   }
-
-   // Apply a goodness-of-fit criterion and check that the maximum allowed score has not been exceeded
-   for(i_halo=0;i_halo<(*n_groups_i);i_halo++){
-      if(match_ids[i_halo]>=0){
-         if(!check_goodness_of_match(n_particles_i[i_halo],match_score[i_halo],f_goodness_of_match))
-            match_ids[i_halo]=-1;
-      }
-   }
-
-   // Since we may have changed some matches with the goodness 
-   //    of fit criterion, we need to re-perform the sort
-   size_t *match_index_temp=NULL;
-   merge_sort(match_ids,(size_t)(*n_groups_i),&match_index_temp,SID_INT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
-   memcpy(match_index,match_index_temp,(*n_groups_i)*sizeof(size_t));
-   SID_free(SID_FARG match_index_temp);
-
-   // Determine if the matches are two-way if we have been asked to check this
-   if(match_flag_two_way!=NULL && (*n_groups_i)>0){
-
-      // We're going to need the particle counts in the target catalog for checking the goodness of return matches.  Make sure we have them.
-      if(n_particles_j==NULL)
-         SID_trap_error("Target catalog halo sizes are not defined in read_matches() but are needed for checking two-way match flags.",ERROR_LOGIC);
-
-      // Flip the file names for reading the return matches
-      sprintf(filename_in_dir_snap,"%s/%s",filename_in_dir,filename_cat2);
-      if(filename_in_dir!=NULL)
-         sprintf(filename_in,"%s/%sgroup_matches_%s_%s.dat",filename_in_dir_snap,group_text_prefix,filename_cat2,filename_cat1);
-      else
-         sprintf(filename_in,"%s_%sgroup_matches_%s_%s.dat",filename_in_name,    group_text_prefix,filename_cat2,filename_cat1);
-
-      // Open two files, one for reading the IDs and one for matching the scores of the matching file
-      int i_read_file_check;
-      int j_read_file_check;
-      int n_groups_i_check;
-      int n_groups_j_check;
-      SID_fp fp_check_ids;
-      SID_fp fp_check_score;
-      SID_fopen(filename_in,"r",&fp_check_ids);
-      SID_fopen(filename_in,"r",&fp_check_score);
-      SID_fread(&j_read_file_check,sizeof(int),1,&fp_check_ids);
-      SID_fread(&i_read_file_check,sizeof(int),1,&fp_check_ids);
-      SID_fread(&n_groups_j_check, sizeof(int),1,&fp_check_ids);
-      SID_fread(&n_groups_i_check, sizeof(int),1,&fp_check_ids);
-
-      // Check that we have the right files
-      if(n_groups_i_check!=(*n_groups_i))
-         SID_trap_error("Source halo counts don't match (ie. %d!=%d) in two-way check in read_matches().",ERROR_LOGIC,n_groups_i_check,(*n_groups_i));
-      if(n_groups_j_check!=(*n_groups_j))
-         SID_trap_error("Target halo counts don't match (ie. %d!=%d) in two-way check in read_matches().",ERROR_LOGIC,n_groups_j_check,(*n_groups_j));
-      if(i_read_file_check!=i_read_file)
-         SID_trap_error("Source file numbers don't match (ie. %d!=%d) in two-way check in read_matches().",ERROR_LOGIC,i_read_file_check,i_read_file);
-      if(j_read_file_check!=j_read_file)
-         SID_trap_error("Target file numbers don't match (ie. %d!=%d) in two-way check in read_matches().",ERROR_LOGIC,j_read_file_check,j_read_file);
-
-      // Skip to the beginning of the relevant block for the score-reading file pointer
-      SID_fskip(sizeof(int),   4,            &fp_check_score); // header
-      SID_fskip(sizeof(int),   (*n_groups_j),&fp_check_score); // ids
-      SID_fskip(sizeof(size_t),(*n_groups_j),&fp_check_score); // indices
-
-      // Set everything to being a one-way match unless subsequently changed
-      for(i_halo=0;i_halo<(*n_groups_i);i_halo++) 
-         match_flag_two_way[i_halo]=FALSE;
-
-      // Read matching data in buffered chunks
-      int     n_good      =0;
-      int     n_2way      =0;
-      int     n_buffer    =1024*1024;
-      int     n_chunk     =0;
-      int     n_remaining =(*n_groups_j);
-      int    *buffer_ids  =(int   *)SID_malloc(sizeof(int)  *n_buffer);
-      float  *buffer_score=(float *)SID_malloc(sizeof(float)*n_buffer);
-      for(int j_halo=0;n_remaining>0;n_remaining-=n_chunk){
-         n_chunk=MIN(n_remaining,n_buffer);
-         SID_fread(buffer_ids,  sizeof(int),  n_chunk,&fp_check_ids);
-         SID_fread(buffer_score,sizeof(float),n_chunk,&fp_check_score);
-         for(int k_halo=0;k_halo<n_chunk;k_halo++,j_halo++){
-            int id_i=buffer_ids[k_halo];
-            if(id_i>=0){
-               if(id_i>=(*n_groups_i))
-                  SID_trap_error("Allowed matching index has been exceeded i(ie %d>=%d) while determining two-way match flags.",
-                                 ERROR_LOGIC,id_i,(*n_groups_i));
-               if(check_goodness_of_match(n_particles_j[j_halo],buffer_score[k_halo],f_goodness_of_match)){
-                  int id_j=match_ids[id_i];
-                  if(id_j==j_halo){
-                     match_flag_two_way[id_i]=TRUE; 
-                     n_2way++;
-                  }
-                  n_good++;
+            else if(match_ids[i_halo]>=0 && (*n_groups_j)>0){
+               if(n_sub_group_j[match_ids[i_halo]]<=0){
+                  match_ids[i_halo]  =-1;
+                  match_score[i_halo]= 0.;
                }
             }
          }
+         merge_sort(match_ids,(size_t)(*n_groups_i),&match_index_temp,SID_INT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
+         memcpy(match_index,match_index_temp,(*n_groups_i)*sizeof(size_t));
+         SID_free(SID_FARG match_index_temp);
       }
-      //SID_log("n_good=%d n_2way=%d",SID_LOG_COMMENT,n_good,n_2way);
-      SID_fclose(&fp_check_ids);
-      SID_fclose(&fp_check_score);
-      SID_free(SID_FARG buffer_ids);
-      SID_free(SID_FARG buffer_score);
+
+      // Apply a goodness-of-fit criterion and check that the maximum allowed score has not been exceeded
+      for(i_halo=0;i_halo<(*n_groups_i);i_halo++){
+         if(match_ids[i_halo]>=0){
+            if(!check_goodness_of_match(n_particles_i[i_halo],n_particles_j[match_ids[i_halo]],match_score[i_halo],f_goodness_of_match))
+               match_ids[i_halo]=-1;
+         }
+      }
+
+      // Since we may have changed some matches with the goodness 
+      //    of fit criterion, we need to re-perform the sort
+      size_t *match_index_temp=NULL;
+      merge_sort(match_ids,(size_t)(*n_groups_i),&match_index_temp,SID_INT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
+      memcpy(match_index,match_index_temp,(*n_groups_i)*sizeof(size_t));
+      SID_free(SID_FARG match_index_temp);
+
+      // Determine if the matches are two-way if we have been asked to check this
+      if(match_flag_two_way!=NULL && (*n_groups_i)>0){
+
+         // We're going to need the particle counts in the target catalog for checking the goodness of return matches.  Make sure we have them.
+         if(n_particles_j==NULL)
+            SID_trap_error("Target catalog halo sizes are not defined in read_matches() but are needed for checking two-way match flags.",ERROR_LOGIC);
+
+         // Flip the file names for reading the return matches
+         sprintf(filename_in_dir_snap,"%s/%s",filename_in_dir,filename_cat2);
+         if(filename_in_dir!=NULL)
+            sprintf(filename_in,"%s/%sgroup_matches_%s_%s.dat",filename_in_dir_snap,group_text_prefix,filename_cat2,filename_cat1);
+         else
+            sprintf(filename_in,"%s_%sgroup_matches_%s_%s.dat",filename_in_name,    group_text_prefix,filename_cat2,filename_cat1);
+
+         // Open two files, one for reading the IDs and one for matching the scores of the matching file
+         int i_read_file_check;
+         int j_read_file_check;
+         int n_groups_i_check;
+         int n_groups_j_check;
+         SID_fp fp_check_ids;
+         SID_fp fp_check_score;
+         SID_fopen(filename_in,"r",&fp_check_ids);
+         SID_fopen(filename_in,"r",&fp_check_score);
+         SID_fread(&j_read_file_check,sizeof(int),1,&fp_check_ids);
+         SID_fread(&i_read_file_check,sizeof(int),1,&fp_check_ids);
+         SID_fread(&n_groups_j_check, sizeof(int),1,&fp_check_ids);
+         SID_fread(&n_groups_i_check, sizeof(int),1,&fp_check_ids);
+
+         // Check that we have the right files
+         if(n_groups_i_check!=(*n_groups_i))
+            SID_trap_error("Source halo counts don't match (ie. %d!=%d) in two-way check in read_matches().",ERROR_LOGIC,n_groups_i_check,(*n_groups_i));
+         if(n_groups_j_check!=(*n_groups_j))
+            SID_trap_error("Target halo counts don't match (ie. %d!=%d) in two-way check in read_matches().",ERROR_LOGIC,n_groups_j_check,(*n_groups_j));
+         if(i_read_file_check!=i_read_file)
+            SID_trap_error("Source file numbers don't match (ie. %d!=%d) in two-way check in read_matches().",ERROR_LOGIC,i_read_file_check,i_read_file);
+         if(j_read_file_check!=j_read_file)
+            SID_trap_error("Target file numbers don't match (ie. %d!=%d) in two-way check in read_matches().",ERROR_LOGIC,j_read_file_check,j_read_file);
+
+         // Skip to the beginning of the relevant block for the score-reading file pointer
+         SID_fskip(sizeof(int),   4,            &fp_check_score); // header
+         SID_fskip(sizeof(int),   (*n_groups_j),&fp_check_score); // ids
+         SID_fskip(sizeof(size_t),(*n_groups_j),&fp_check_score); // indices
+
+         // Set everything to being a one-way match unless subsequently changed
+         for(i_halo=0;i_halo<(*n_groups_i);i_halo++) 
+            match_flag_two_way[i_halo]=FALSE;
+
+         // Read matching data in buffered chunks 
+         int     n_good      =0;
+         int     n_2way      =0;
+         int     n_buffer    =1024*1024;
+         int     n_chunk     =0;
+         int     n_remaining =(*n_groups_j);
+         int    *buffer_ids  =(int   *)SID_malloc(sizeof(int)  *n_buffer);
+         float  *buffer_score=(float *)SID_malloc(sizeof(float)*n_buffer);
+         for(int j_halo=0;n_remaining>0;n_remaining-=n_chunk){
+            n_chunk=MIN(n_remaining,n_buffer);
+            SID_fread(buffer_ids,  sizeof(int),  n_chunk,&fp_check_ids);
+            SID_fread(buffer_score,sizeof(float),n_chunk,&fp_check_score);
+            for(int k_halo=0;k_halo<n_chunk;k_halo++,j_halo++){
+               int id_i=buffer_ids[k_halo];
+               if(id_i>=0){
+                  if(id_i>=(*n_groups_i))
+                     SID_trap_error("Allowed matching index has been exceeded i(ie %d>=%d) while determining two-way match flags.",
+                                    ERROR_LOGIC,id_i,(*n_groups_i));
+                  // Do this check first to avoid having to check if both needed n_particles_* references are defined
+                  int id_j=match_ids[id_i];
+                  if(id_j==j_halo){
+                     if(check_goodness_of_match(n_particles_j[j_halo],n_particles_i[id_i],buffer_score[k_halo],f_goodness_of_match)){
+                        match_flag_two_way[id_i]=TRUE; 
+                        n_2way++;
+                     }
+                     n_good++;
+                  }
+               }
+            }
+         }
+         //SID_log("n_good=%d n_2way=%d",SID_LOG_COMMENT,n_good,n_2way);
+         SID_fclose(&fp_check_ids);
+         SID_fclose(&fp_check_score);
+         SID_free(SID_FARG buffer_ids);
+         SID_free(SID_FARG buffer_score);
+      }
    }
 
-   // If the n_particles_i array is a temporary array, free it
+   // If any of these arrays are temporary, free them.
+   if(flag_alloc_n_sub_i)
+      SID_free(SID_FARG n_sub_group_i);
+   if(flag_alloc_n_sub_j)
+      SID_free(SID_FARG n_sub_group_j);
    if(flag_alloc_n_particles_i)
       SID_free(SID_FARG n_particles_i);
    if(flag_alloc_n_particles_j)

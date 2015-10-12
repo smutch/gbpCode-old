@@ -60,7 +60,6 @@ void compute_trees_analysis_fragmented_halos(tree_info *trees,char *filename_out
   double *backmatch_score_norm;init_treenode_info_data(list_halos_new,SID_FARG backmatch_score_norm,SID_DOUBLE,"Backmatch f_goodness");
   double *backmatch_score;     init_treenode_info_data(list_halos_new,SID_FARG backmatch_score,     SID_DOUBLE,"Backmatch score");
   int    *backmatch_type;      init_treenode_info_data(list_halos_new,SID_FARG backmatch_type,      SID_INT,   "Backmatch tree case");
-  int    *backmatch_id;        init_treenode_info_data(list_halos_new,SID_FARG backmatch_id,        SID_INT,   "Backmatch id");
   int    *backmatch_index;     init_treenode_info_data(list_halos_new,SID_FARG backmatch_index,     SID_INT,   "Backmatch index");
   int    *backmatch_snapshot;  init_treenode_info_data(list_halos_new,SID_FARG backmatch_snapshot,  SID_INT,   "Backmatch snapshot");
   int    *backmatch_n_p;       init_treenode_info_data(list_halos_new,SID_FARG backmatch_n_p,       SID_INT,   "Backmatch n_particles");
@@ -71,6 +70,7 @@ void compute_trees_analysis_fragmented_halos(tree_info *trees,char *filename_out
   int    *stop_snapshot;       init_treenode_info_data(list_halos_new,SID_FARG stop_snapshot,       SID_INT,   "Fragment's stopping snapshot");
   int    *start_index;         init_treenode_info_data(list_halos_new,SID_FARG start_index,         SID_INT,   "Fragment's starting index");
   int    *start_snapshot;      init_treenode_info_data(list_halos_new,SID_FARG start_snapshot,      SID_INT,   "Fragment's starting snapshot");
+  int    *backmatch_id;        init_treenode_info_data(list_halos_new,SID_FARG backmatch_id,        SID_INT,   "Backmatch id");
 
   // Create the list
   SID_log("Creating lists...",SID_LOG_OPEN|SID_LOG_TIMER);

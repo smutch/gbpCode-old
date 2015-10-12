@@ -11,7 +11,7 @@
 // This defines the minimum and minimum fraction of the 
 //    max score needed to be considered a good match
 #define F_MAX_MATCH_SCORE_MIN 0.0
-#define MIN_MATCH_SCORE       3.0
+#define MIN_MATCH_SCORE       1.0
 
 #define K_MATCH_SUBGROUPS 0
 #define K_MATCH_GROUPS    1
@@ -512,7 +512,7 @@ int check_for_matching_input_files(const char *filename_root_in,int i_read);
 float maximum_match_score(double n_particles);
 float minimum_match_score(double n_particles);
 float match_score_f_goodness(float match_score,int n_particles_in);
-int check_goodness_of_match(int n_particles_in,float match_score,double f_goodness_of_match);
+int check_goodness_of_match(int n_particles_i,int n_particles_j,float match_score,double f_goodness_of_match);
 
 int check_if_halo_is_descendant(tree_horizontal_info *possible_progenitor,
                                 tree_horizontal_info *possible_descendant,

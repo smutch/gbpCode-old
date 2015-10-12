@@ -47,6 +47,8 @@ int precompute_treenode_markers_recursive(tree_info *trees,tree_markers_info **m
       markers_halo->main_progenitor=halo->progenitor_first;
       if(halo->descendant==NULL || (*markers_descendant)==NULL) 
          markers_halo->branch_root=halo;
+      else if(halo->halo_ID!=halo->descendant->halo_ID)
+         markers_halo->branch_root=halo;
       else
          markers_halo->branch_root=(*markers_descendant)->branch_root;
       markers_halo->branch_leaf           =NULL;

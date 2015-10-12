@@ -109,9 +109,13 @@ int main(int argc, char *argv[]){
     int bridge_forematch_id   =0;
     int bridge_forematch_file =0;
     int bridge_forematch_index=0;
+    float bridge_forematch_score     =0.;
+    float bridge_forematch_score_prog=0.;
     int bridge_backmatch_id   =0;
     int bridge_backmatch_file =0;
     int bridge_backmatch_index=0;
+    float bridge_backmatch_score     =0.;
+    float bridge_backmatch_score_prog=0.;
 
     // Read tree entry
     char filename_in[MAX_FILENAME_LENGTH];
@@ -165,18 +169,24 @@ int main(int argc, char *argv[]){
           SID_fread_all(&bridge_forematch_id,   sizeof(int),1,&fp_in_bridge_forematch);
           SID_fread_all(&bridge_forematch_file, sizeof(int),1,&fp_in_bridge_forematch);
           SID_fread_all(&bridge_forematch_index,sizeof(int),1,&fp_in_bridge_forematch);
+          SID_fread_all(&bridge_forematch_score,     sizeof(float),1,&fp_in_bridge_forematch);
+          SID_fread_all(&bridge_forematch_score_prog,sizeof(float),1,&fp_in_bridge_forematch);
           SID_fread_all(&bridge_backmatch_id,   sizeof(int),1,&fp_in_bridge_backmatch);
           SID_fread_all(&bridge_backmatch_file, sizeof(int),1,&fp_in_bridge_backmatch);
           SID_fread_all(&bridge_backmatch_index,sizeof(int),1,&fp_in_bridge_backmatch);
+          SID_fread_all(&bridge_backmatch_score,     sizeof(float),1,&fp_in_bridge_backmatch);
+          SID_fread_all(&bridge_backmatch_score_prog,sizeof(float),1,&fp_in_bridge_backmatch);
           if((find_mode==0 && halo_id==halo_id_find) || (find_mode==1 && i_halo==i_group)){
              if(find_mode==0) i_halo=i_group;
              flag_done=TRUE;
           }
        }
        else{
-          SID_fskip(sizeof(int),7,&fp_in_trees);
-          SID_fskip(sizeof(int),4,&fp_in_bridge_forematch); // 3+1 'casue we're skipping n_subgroups_group too
-          SID_fskip(sizeof(int),4,&fp_in_bridge_backmatch); // 3+1 'casue we're skipping n_subgroups_group too
+          SID_fskip(sizeof(int),  7,&fp_in_trees);
+          SID_fskip(sizeof(int),  4,&fp_in_bridge_forematch); // 3+1 'casue we're skipping n_subgroups_group too
+          SID_fskip(sizeof(float),2,&fp_in_bridge_forematch);
+          SID_fskip(sizeof(int),  4,&fp_in_bridge_backmatch); // 3+1 'casue we're skipping n_subgroups_group too
+          SID_fskip(sizeof(float),2,&fp_in_bridge_backmatch); 
        }
        SID_fread_all(&n_subgroups_group,sizeof(int),1,&fp_in_trees);
        if(mode==MATCH_SUBGROUPS){
@@ -193,9 +203,13 @@ int main(int argc, char *argv[]){
              SID_fread_all(&bridge_forematch_id,   sizeof(int),1,&fp_in_bridge_forematch);
              SID_fread_all(&bridge_forematch_file, sizeof(int),1,&fp_in_bridge_forematch);
              SID_fread_all(&bridge_forematch_index,sizeof(int),1,&fp_in_bridge_forematch);
+             SID_fread_all(&bridge_forematch_score,     sizeof(float),1,&fp_in_bridge_forematch);
+             SID_fread_all(&bridge_forematch_score_prog,sizeof(float),1,&fp_in_bridge_forematch);
              SID_fread_all(&bridge_backmatch_id,   sizeof(int),1,&fp_in_bridge_backmatch);
              SID_fread_all(&bridge_backmatch_file, sizeof(int),1,&fp_in_bridge_backmatch);
              SID_fread_all(&bridge_backmatch_index,sizeof(int),1,&fp_in_bridge_backmatch);
+             SID_fread_all(&bridge_backmatch_score,     sizeof(float),1,&fp_in_bridge_backmatch);
+             SID_fread_all(&bridge_backmatch_score_prog,sizeof(float),1,&fp_in_bridge_backmatch);
              if((find_mode==0 && halo_id==halo_id_find) || (find_mode==1 && i_halo==i_subgroup)){
                 if(find_mode==0) i_halo=i_subgroup;
                 flag_done=TRUE;
@@ -203,9 +217,11 @@ int main(int argc, char *argv[]){
           }
        }
        else{
-          SID_fskip(sizeof(int),7*n_subgroups_group,&fp_in_trees);
-          SID_fskip(sizeof(int),3*n_subgroups_group,&fp_in_bridge_forematch); 
-          SID_fskip(sizeof(int),3*n_subgroups_group,&fp_in_bridge_backmatch); 
+          SID_fskip(sizeof(int),  7*n_subgroups_group,&fp_in_trees);
+          SID_fskip(sizeof(int),  3*n_subgroups_group,&fp_in_bridge_forematch); 
+          SID_fskip(sizeof(float),2*n_subgroups_group,&fp_in_bridge_forematch); 
+          SID_fskip(sizeof(int),  3*n_subgroups_group,&fp_in_bridge_backmatch); 
+          SID_fskip(sizeof(float),2*n_subgroups_group,&fp_in_bridge_backmatch); 
        }
     }
     SID_fclose(&fp_in_trees);
@@ -237,11 +253,13 @@ int main(int argc, char *argv[]){
        tree_case_flags_text(halo_type,"+",&halo_type_string);
        if(flag_write_header){
           int i_column=1;
-          fprintf(fp_out,"# Column (%02d): Halo snapshot\n",               i_column++);
-          fprintf(fp_out,"#        (%02d): Halo expansion factor\n",       i_column++);
+          fprintf(fp_out,"# Column (%02d): Halo expansion factor\n",       i_column++);
           fprintf(fp_out,"#        (%02d): Halo redshift\n",               i_column++);
+          fprintf(fp_out,"#        (%02d): Halo snapshot\n",               i_column++);
           fprintf(fp_out,"#        (%02d): Halo index\n",                  i_column++);
           fprintf(fp_out,"#        (%02d): Halo ID\n",                     i_column++);
+          fprintf(fp_out,"#        (%02d): Halo n_particles\n",            i_column++);
+          fprintf(fp_out,"#        (%02d): Halo n_particles_peak\n",       i_column++);
           fprintf(fp_out,"#        (%02d): Halo log10(M_vir [M_sol/h])\n", i_column++);
           fprintf(fp_out,"#        (%02d): Halo x [Mpc/h])\n",             i_column++);
           fprintf(fp_out,"#        (%02d): Halo y [Mpc/h])\n",             i_column++);
@@ -274,12 +292,14 @@ int main(int argc, char *argv[]){
           bridge_backmatch_snap=trees->snap_list[bridge_backmatch_file];
        else
           bridge_backmatch_snap=-1;
-       fprintf(fp_out,"%3d %le %7.3lf %7d %7d %5.2lf %5.2lf %5.2lf %5.2lf %7d %3d %3d %7d %7d %3d %7d %3d %7d %7d %s\n",
-                      i_read,
+       fprintf(fp_out,"%le %7.3lf %3d %7d %7d %5d %5d %5.2lf %5.2lf %5.2lf %5.2lf %7d %3d %3d %7d %7d %3d %7d %3d %7d %7d %s\n",
                       trees->a_list[i_file],
                       trees->z_list[i_file],
+                      i_read,
                       i_halo,
                       halo_id,
+                      properties.n_particles,
+                      halo_n_particles_peak,
                       take_log10(properties.M_vir),
                       properties.position_COM[0],
                       properties.position_COM[1],
