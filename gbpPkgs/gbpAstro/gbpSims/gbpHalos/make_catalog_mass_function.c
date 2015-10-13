@@ -39,6 +39,7 @@ int main(int argc, char *argv[]){
 
   // Read parameter file
   double box_size;
+  double m_dark;
   char   filename_run[MAX_FILENAME_LENGTH];
   sprintf(filename_run,"%s/run/run.txt",filename_SSimPL);
   parameter_list_info *parameter_list=NULL;
@@ -48,6 +49,7 @@ int main(int argc, char *argv[]){
   add_parameter_to_list(parameter_list,"m_dark",  SID_DOUBLE,   PARAMETER_MODE_DEFAULT);
   read_parameter_file(filename_run,parameter_list);
   fetch_parameter_data(parameter_list,"box_size",&box_size);
+  fetch_parameter_data(parameter_list,"m_dark",  &m_dark);
   free_parameter_list(&parameter_list);
   SID_log("Box size     = %.2lf Mpc/h",SID_LOG_COMMENT,box_size);
 
@@ -145,14 +147,18 @@ int main(int argc, char *argv[]){
             if(group_SO_data!=NULL)
                fread_multifile(&fp_SO,group_SO_data,i_group);
             // Process group information
-            data[i_group]=take_log10(properties_group->M_vir);
+            //double M_vir_FoF=properties_group->M_vir;
+            double M_vir_FoF=m_dark*(double)properties_subgroup->n_particles*(1.-pow((double)properties_subgroup->n_particles,-0.6));
+            data[i_group]=take_log10(M_vir_FoF);
 
             // Loop over subgroups
             for(int j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
                // Read subgroup properties
                fread_catalog_file(&fp_catalog_subgroups,NULL,properties_subgroup,profile_subgroup,i_subgroup);
                // Process subgroup information
-               data_s[i_group]+=properties_subgroup->M_vir;
+               double M_vir_sub=properties_subgroup->M_vir;
+               //double M_vir_sub=m_dark*(double)properties_subgroup->n_particles*(1.-pow((double)properties_subgroup->n_particles,-0.6));
+               data_s[i_group]+=M_vir_sub;
             }
             data_s[i_group]=take_log10(data_s[i_group]);
          }
@@ -174,8 +180,8 @@ int main(int argc, char *argv[]){
          int     i_data_hi=-1;
          int     i_bin =0;
          int     i_data=0;
-         
-         while(data[i_data]<lM_min && i_data<n_data) i_data++;
+
+         if(n_data>0) while(data[i_data]<lM_min && i_data<n_data) i_data++;
 
          for(i_bin=0;i_bin<n_bins;i_bin++){
            lM_bin_min=lM_bin_max;
