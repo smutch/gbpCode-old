@@ -97,7 +97,7 @@ ifneq ($(USE_GSL),0)
     CPPFLAGS := $(CPPFLAGS) -I$(GBP_GSL_DIR)/include/
     LDFLAGS := $(LDFLAGS) -L$(GBP_GSL_DIR)/lib/ 
   endif
-  LIBS    := $(LIBS) -lm -lgsl -lgslcblas
+  LIBS    := $(LIBS) -lgslcblas -lgsl -lm -lcblas
 endif
 CPPFLAGS := $(CPPFLAGS) -DUSE_GSL=$(USE_GSL)
 export USE_GSL

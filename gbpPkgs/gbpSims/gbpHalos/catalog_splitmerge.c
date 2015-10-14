@@ -405,7 +405,7 @@ int main(int argc, char *argv[]){
                     fwrite      (buffer,sizeof(halo_properties_info),1,fp_write);
                     break;
                  // Rewrite profiles
-                 case 1:
+                 case 1:{
                     int n_bins;
                     fread_verify(&n_bins,sizeof(int),1,fp_read);
                     fwrite      (&n_bins,sizeof(int),1,fp_write);
@@ -414,6 +414,7 @@ int main(int argc, char *argv[]){
                        fwrite      (buffer,sizeof(halo_profile_bin_info),1,fp_write);
                     }
                     break;
+                 }
                  // Rewrite SOs
                  case 2:
                     fread_verify(buffer,sizeof(float),6,fp_read);

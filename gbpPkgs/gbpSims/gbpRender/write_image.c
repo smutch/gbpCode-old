@@ -18,7 +18,7 @@ void write_image(image_info *image,const char *filename_dir,const char *filename
         for(int i_h=0;i_h<image->height;i_h++){
            double image_i=image->values[i_h*image->width+i_w];
            if(image_i>image_max) image_max=image_i;
-           if(image_i<image_min and image_i!=LOG_ZERO) image_min=image_i;
+           if(image_i<image_min && image_i!=LOG_ZERO) image_min=image_i;
         }
      }
      //SID_log("Image range =%le -> %le",SID_LOG_COMMENT,image_min,image_max);

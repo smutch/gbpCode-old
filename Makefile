@@ -7,14 +7,22 @@
 ############################################
 
 # Executables (use C99 standard so we have the trunc() function)
-CC_NO_MPI  = gcc -std=c99
-CC_NO_MPI  = icc 
-CC_NO_MPI  = g++ -std=c++98
-ifdef GBP_MPI
-  CC_USE_MPI = $(GBP_MPI)/bin/mpic++
+ifdef GBP_USE_XLC
+   CC_NO_MPI  = xlc
+   ifdef GBP_MPI
+     CC_USE_MPI = $(GBP_MPI)/bin/mpic++
+   else
+     CC_USE_MPI = mpixlc -std=gnu99 
+   endif
 else
-  CC_USE_MPI = mpic++
+   CC_NO_MPI  = g++ -std=c++98
+   ifdef GBP_MPI
+     CC_USE_MPI = $(GBP_MPI)/bin/mpic++
+   else
+     CC_USE_MPI = mpic++
+   endif
 endif
+
 MAKE       = make
 
 # This ensures that we use standard (what is used in interactive shells) version of echo.

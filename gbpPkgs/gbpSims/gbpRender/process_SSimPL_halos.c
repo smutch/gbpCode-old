@@ -186,11 +186,12 @@ void process_SSimPL_halos(render_info *render,
        case TRUE:
           SID_fread_all_buffer(&(group_i.offset),offset_size,1,fp_groups_offset_buffer);
           break;
-       case FALSE:
+       case FALSE:{
           int offset_i;
           SID_fread_all_buffer(&offset_i,offset_size,1,fp_groups_offset_buffer);
           group_i.offset=(size_t)offset_i;
           break;
+       }
     }
 
     // Read each subgroup in turn
@@ -213,11 +214,12 @@ void process_SSimPL_halos(render_info *render,
           case TRUE:
              SID_fread_all_buffer(&(subgroup_i.offset),offset_size,1,fp_subgroups_offset_buffer);
              break;
-          case FALSE:
+          case FALSE:{
              int offset_i;
              SID_fread_all_buffer(&offset_i,offset_size,1,fp_subgroups_offset_buffer);
              subgroup_i.offset=(size_t)offset_i;
              break;
+          }
        }
        // Perform selection and action
        if(select_function(i_group,
