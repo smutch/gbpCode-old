@@ -5,7 +5,6 @@
 #include <math.h>
 #include <gbpLib.h>
 #include <gbpMath.h>
-#include <gbpClustering.h>
 #include <gbpHalos.h>
 #include <gbpSims_Swap_Endian.h>
 

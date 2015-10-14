@@ -8,5 +8,5 @@ BINFILES  =
 SCRIPTS   =
 DATAFILES =
 LIBS      =
-SUBDIRS   = gbpSPH gbpHalos gbpTrees gbpSims_Swap_Endian
+SUBDIRS   = gbpSPH gbpHalos gbpTrees
 #############################

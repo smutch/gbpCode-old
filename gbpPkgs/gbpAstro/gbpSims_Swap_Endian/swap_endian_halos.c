@@ -4,7 +4,6 @@
 #include <math.h>
 #include <gbpLib.h>
 #include <gbpMath.h>
-#include <gbpClustering.h>
 #include <gbpSims_Swap_Endian.h>
 
 void swap_endian_halos_groups_local(const char *filename_in_root,const char *filename_out_root,const char *filename_halo_type,int snap_number,int mode);
