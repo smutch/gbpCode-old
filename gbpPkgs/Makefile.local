@@ -8,5 +8,5 @@ BINFILES  =
 SCRIPTS   =
 DATAFILES =
 LIBS      =
-SUBDIRS   = gbpAstro
+SUBDIRS   = gbpCosmo gbpSims gbpClustering gbpSims_Swap_Endian
 #############################
