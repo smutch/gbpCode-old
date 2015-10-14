@@ -4,7 +4,7 @@
 #include <gbpMath.h>
 #include <gbpHalos.h>
 
-void init_halo_trend(void *trend_data,trend_info **trend,const char *name){
+void init_halo_trend(halo_trend_info *trend_data,trend_info **trend,const char *name){
   if(!strcmp(name,"z"))
      init_trend(trend,name,trend_data,init_halo_trend_property_z,free_halo_trend_property_z,calc_halo_trend_property_index_z);
   else if(!strcmp(name,"logM_FoF"))
