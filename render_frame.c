@@ -7,107 +7,6 @@
 #include <gbpCosmo.h>
 #include <gbpRender.h>
 
-double RGB_lookup(int colour,int channel);
-double RGB_lookup(int colour,int channel){
-   double r_val=0.;
-   switch(colour){
-      // Red
-      case 2:
-         switch(channel){
-            case 0:
-               r_val=1.;
-               break;
-            default:
-               r_val=0.;
-               break;
-         }
-         break;
-      // Green
-      case 3:
-         switch(channel){
-            case 1:
-               r_val=1.;
-               break;
-            default:
-               r_val=0.;
-               break;
-         }
-         break;
-      // Blue
-      case 4:
-         switch(channel){
-            case 2:
-               r_val=1.;
-               break;
-            default:
-               r_val=0.;
-               break;
-         }
-         break;
-      // Yellow
-      case 5:
-         switch(channel){
-            case 0:
-               r_val=1.;
-            case 1:
-               r_val=1.;
-               break;
-            case 2:
-               r_val=0.;
-               break;
-         }
-         break;
-      // Cyan
-      case 6:
-         switch(channel){
-            case 0:
-               r_val=0.;
-            case 1:
-               r_val=1.;
-               break;
-            case 2:
-               r_val=1.;
-               break;
-         }
-         break;
-      // Magenta
-      case 7:
-         switch(channel){
-            case 0:
-               r_val=1.;
-            case 1:
-               r_val=0.;
-               break;
-            case 2:
-               r_val=1.;
-               break;
-         }
-         break;
-      // Orange
-      case 8:
-         switch(channel){
-            case 0:
-               r_val=1.;
-            case 1:
-               r_val=0.4;
-               break;
-            case 2:
-               r_val=0.;
-               break;
-         }
-         break;
-      // Black.  Don't change this.
-      case 0:
-         break;
-      // White.  Don't change this.
-      case 1:
-      default:
-         r_val=1.;
-         break;
-   }
-   return(r_val);
-}
-
 void rotate_particle(double   x_hat,
                      double   y_hat,
                      double   z_hat,
@@ -2335,9 +2234,9 @@ void render_frame(render_info  *render){
         double G_i =1.;
         double B_i =1.;
         if(colour!=NULL){
-           R_i =RGB_lookup(colour[i_particle],0);
-           G_i =RGB_lookup(colour[i_particle],1);
-           B_i =RGB_lookup(colour[i_particle],2);
+           R_i =RGB_lookup(render,colour[i_particle],0);
+           G_i =RGB_lookup(render,colour[i_particle],1);
+           B_i =RGB_lookup(render,colour[i_particle],2);
         }
         double vw_i=v_i*w_i;
         double zw_i=z_i*w_i;

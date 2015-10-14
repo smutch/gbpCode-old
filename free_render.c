@@ -28,6 +28,18 @@ void free_render(render_info **render){
   SID_free(SID_FARG (*render)->kernel_table);
   SID_free(SID_FARG (*render)->kernel_table_3d);
   free_mark_arguments(&((*render)->mark_arg_first));
+
+  // Free colour information
+  for(int i=0;i<(*render)->n_colour_list;i++){;
+     SID_free(SID_FARG (*render)->colour_name[i]);
+     SID_free(SID_FARG (*render)->colour_RGB[i]);
+     SID_free(SID_FARG (*render)->colour_f_RGB[i]);
+  }
+  SID_free(SID_FARG (*render)->colour_name);
+  SID_free(SID_FARG (*render)->colour_RGB);
+  SID_free(SID_FARG (*render)->colour_f_RGB);
+  (*render)->n_colour_list=0; 
+
   SID_free(SID_FARG (*render));
   SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
   SID_log("Done.",SID_LOG_CLOSE);

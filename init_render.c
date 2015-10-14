@@ -50,6 +50,14 @@ void init_render(render_info **render){
   (*render)->kernel_table_avg   = 0.;
   (*render)->f_interpolate      = 0.;
 
+  // Initialize colour information
+  (*render)->n_colour_list=0;
+  (*render)->colour_name  =NULL;
+  (*render)->colour_RGB   =NULL;
+  (*render)->colour_f_RGB =NULL;
+  (*render)->colour_index_black=fetch_render_colour_index(*render,"black"); 
+  (*render)->colour_index_white=fetch_render_colour_index(*render,"white"); 
+
   // Initialize SSimPL directory to something invalid
   sprintf((*render)->filename_SSimPL_root,"%s",RENDER_INVALID_SSIMPL_DIR);
 

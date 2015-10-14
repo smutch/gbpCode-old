@@ -225,6 +225,7 @@ struct process_halo_info{
     int    file_offset;
     int    file_index;
     int    n_subgroups;
+    int    n_particles_peak;
     void  *ids;
 };
 
@@ -268,6 +269,14 @@ struct render_info{
   double          f_absorption;
   int             w_mode;
   int             v_mode;
+  // Colour info
+  int             n_colour_list;
+  char          **colour_name;
+  int           **colour_RGB;
+  float         **colour_f_RGB;
+  int             colour_index_black;
+  int             colour_index_white;
+
   int             sealed; // TRUE if the render is fully initialized
 };
 
@@ -275,6 +284,10 @@ struct render_info{
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+double RGB_lookup(render_info *render,char colour,int channel);
+char   fetch_render_colour_index(render_info *render,const char *name);
+
 void init_perspective(perspective_info **perspective,int mode);
 void free_perspective(perspective_info **perspective);
 void copy_perspective(perspective_info *from,perspective_info *to);

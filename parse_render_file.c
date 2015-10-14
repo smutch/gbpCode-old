@@ -51,9 +51,11 @@ void parse_render_file(render_info **render, char *filename){
         grab_word(line,i_word++,parameter);
         if(!strcmp(parameter,"mark")){
            char mark_species[32];
+           char mark_colour[32];
            int  mark_value;
-           grab_int(line,i_word++, &mark_value);
+           grab_word(line,i_word++,mark_colour);
            grab_word(line,i_word++,mark_species);
+           mark_value=fetch_render_colour_index((*render),mark_colour);
            if(i_word>count_words(line))
               add_mark_argument((*render),mark_species,mark_value,"");
            else{
