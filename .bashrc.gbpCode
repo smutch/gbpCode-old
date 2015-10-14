@@ -108,6 +108,6 @@ fi
 if [ $?PATH ]; then
   export PATH=${PATH}:${GBP_BIN}
 else
-  export LD_LIBRARY_PATH=${GBP_BIN}
+  export PATH=${GBP_BIN}
 fi
 
