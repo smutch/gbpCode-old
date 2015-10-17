@@ -83,8 +83,12 @@ void set_sph_kernel(double **kernel_radius,
       kernel_radius_temp=(double *)SID_malloc(sizeof(double)*(N_KERNEL_TABLE+1));
       (*kernel_table_2d_average)=0.;
       for(i_table=0;i_table<=N_KERNEL_TABLE;i_table++){
-        for(j_table=i_table,n_temp=0;j_table<=N_KERNEL_TABLE;j_table++,n_temp++)
-          kernel_radius_temp[n_temp]=sqrt((*kernel_radius)[j_table]*(*kernel_radius)[j_table]-(*kernel_radius)[i_table]*(*kernel_radius)[i_table]);
+        for(j_table=i_table,n_temp=0;j_table<=N_KERNEL_TABLE;j_table++,n_temp++){
+          if(n_temp==0)
+             kernel_radius_temp[n_temp]=0.;
+          else
+             kernel_radius_temp[n_temp]=sqrt((*kernel_radius)[j_table]*(*kernel_radius)[j_table]-(*kernel_radius)[i_table]*(*kernel_radius)[i_table]);
+        }
         if(n_temp<=1)
           (*kernel_table_2d)[i_table]=0.;
         else if(n_temp<=3){
