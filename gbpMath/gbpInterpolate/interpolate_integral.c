@@ -37,7 +37,7 @@ double interpolate_integral(interp_info *interp,
     x_lo_tmp=x_lo;
     x_hi_tmp=MIN(x_hi,x_min);
     alpha=interpolate_derivative(interp,((interp_info *)interp)->x[0]);
-    if(alpha<0. && x_lo_tmp*x_hi_tmp==0.){
+    if(alpha<-1. && x_lo_tmp*x_hi_tmp==0.){
       fprintf(stderr,"ERROR: integration extrapolation to low-x is divergent! (alpha=%lf)\n",alpha);
       flag_error=TRUE;
     }
