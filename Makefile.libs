@@ -55,7 +55,7 @@ ifneq ($(USE_GDLIB),0)
     CPPFLAGS := $(CPPFLAGS) -I$(GBP_GDLIB_DIR)/include/
     LDFLAGS := $(LDFLAGS) -L$(GBP_GDLIB_DIR)/lib/
   endif
-  LIBS    := $(LIBS) -lgd
+  LIBS    := $(LIBS) -lgd -lpng -lz
 endif
 CPPFLAGS := $(CPPFLAGS) -DUSE_GDLIB=$(USE_GDLIB)
 export USE_GDLIB
@@ -97,7 +97,7 @@ ifneq ($(USE_GSL),0)
     CPPFLAGS := $(CPPFLAGS) -I$(GBP_GSL_DIR)/include/
     LDFLAGS := $(LDFLAGS) -L$(GBP_GSL_DIR)/lib/ 
   endif
-  LIBS    := $(LIBS) -lgslcblas -lgsl -lm -lcblas
+  LIBS    := $(LIBS) -lgsl -lgslcblas -lm 
 endif
 CPPFLAGS := $(CPPFLAGS) -DUSE_GSL=$(USE_GSL)
 export USE_GSL
