@@ -130,7 +130,9 @@ void read_smooth(plist_info *plist,
 
      // Read each file in turn
      pcounter_info pcounter;
-     size_t n_particles_read=0;
+     size_t n_particles_read =0;
+     int    n_files_not_found=0;
+     int    flag_file_not_found;
      SID_log("Performing read...",SID_LOG_OPEN|SID_LOG_TIMER);
      SID_init_pcounter(&pcounter,n_particles_total,10);
      for(i_file=0;i_file<n_files;i_file++){
@@ -140,135 +142,142 @@ void read_smooth(plist_info *plist,
           fread_verify(&(header.offset),           sizeof(int),      1,fp);
           fread_verify(&(header.n_particles_total),sizeof(long long),1,fp);
           fread_verify(&(header.n_files),          sizeof(int),      1,fp);
-       }
-       else
-          SID_trap_error("Could not open smooth file {%s}",ERROR_IO_OPEN,filename);
-       n_particles_file =header.n_particles_file;
-       offset           =header.offset;
-       n_particles_total=header.n_particles_total;
-       n_files          =MAX(1,header.n_files);
-       SID_Bcast(&n_particles_file, (int)sizeof(int),      read_rank,SID.COMM_WORLD);
-       SID_Bcast(&offset,           (int)sizeof(int),      read_rank,SID.COMM_WORLD);
-       SID_Bcast(&n_particles_total,(int)sizeof(long long),read_rank,SID.COMM_WORLD);
-       SID_Bcast(&n_files,          (int)sizeof(int),      read_rank,SID.COMM_WORLD);
-
-       // Read IDs
-       if(flag_LONGIDs){
-         if(i_file==0) SID_log("(long long) IDs...",SID_LOG_CONTINUE);
-         id_buf  =SID_malloc(sizeof(long long)*n_particles_file);
-         id_buf_L=(long long *)id_buf;
-         if(SID.My_rank==read_rank){
-           fseeko(fp,(size_t)(3*n_particles_file*sizeof(float)),SEEK_CUR);
-           fread_verify(id_buf,sizeof(long long),n_particles_file,fp);
-         }
-         SID_Barrier(SID.COMM_WORLD);
-         SID_Bcast(id_buf_L,(int)(n_particles_file*sizeof(long long)),read_rank,SID.COMM_WORLD);
-         merge_sort(id_buf_L,(size_t)n_particles_file,&id_buf_index,SID_SIZE_T,SORT_COMPUTE_INDEX,FALSE);
+          flag_file_not_found=FALSE;
        }
        else{
-         if(i_file==0) SID_log("(int) IDs...",SID_LOG_CONTINUE);
-         id_buf  =SID_malloc(sizeof(int)*n_particles_file);
-         id_buf_i=(int *)id_buf;
-         if(SID.My_rank==read_rank){
-           fseeko(fp,(size_t)(3*n_particles_file*sizeof(float)),SEEK_CUR);
-           fread_verify(id_buf,sizeof(int),n_particles_file,fp);
-         }
-         SID_Barrier(SID.COMM_WORLD);
-         SID_Bcast(id_buf_i,(int)(n_particles_file*sizeof(int)),read_rank,SID.COMM_WORLD);
-         merge_sort(id_buf_i,(size_t)n_particles_file,&id_buf_index,SID_INT,SORT_COMPUTE_INDEX,FALSE);
+          flag_file_not_found=TRUE;
+          n_files_not_found++;
        }
+       if(!flag_file_not_found){
+          n_particles_file =header.n_particles_file;
+          offset           =header.offset;
+          n_particles_total=header.n_particles_total;
+          n_files          =MAX(1,header.n_files);
+          SID_Bcast(&n_particles_file, (int)sizeof(int),      read_rank,SID.COMM_WORLD);
+          SID_Bcast(&offset,           (int)sizeof(int),      read_rank,SID.COMM_WORLD);
+          SID_Bcast(&n_particles_total,(int)sizeof(long long),read_rank,SID.COMM_WORLD);
+          SID_Bcast(&n_files,          (int)sizeof(int),      read_rank,SID.COMM_WORLD);
 
-       // Create local particle mapping
-       int n_mark_i=0;
-       mark=(long long *)SID_malloc(sizeof(long long)*n_particles_file);
-       for(i_particle=0;i_particle<n_particles_file;i_particle++) 
-         mark[i_particle]=-1;
-       if(flag_LONGIDs){
-         for(i_particle=0,j_particle=0,n_mark=0;i_particle<n_particles_file && j_particle<n_particles_local;i_particle++){
-           while(j_particle<n_particles_local-1 && ids[ids_index[j_particle]]<id_buf_L[id_buf_index[i_particle]]) j_particle++;
-           if(ids[ids_index[j_particle]]==id_buf_L[id_buf_index[i_particle]]){
-             mark[id_buf_index[i_particle]]=(long long)ids_index[j_particle];
-             n_mark++;
-             n_mark_i++;
-           }
-         }
-       }
-       else{
-         for(i_particle=0,j_particle=0,n_mark=0;i_particle<n_particles_file && j_particle<n_particles_local;i_particle++){
-           while(j_particle<n_particles_local-1 && ids[ids_index[j_particle]]<id_buf_i[id_buf_index[i_particle]]) j_particle++;
-           if(ids[ids_index[j_particle]]==id_buf_i[id_buf_index[i_particle]]){
-             mark[id_buf_index[i_particle]]=(long long)ids_index[j_particle];
-             n_mark++;
-             n_mark_i++;
-           }
-         }
-       }
-       SID_free(SID_FARG id_buf);
-       SID_free(SID_FARG id_buf_index);
+          // Read IDs
+          if(flag_LONGIDs){
+            if(i_file==0) SID_log("(long long) IDs...",SID_LOG_CONTINUE);
+            id_buf  =SID_malloc(sizeof(long long)*n_particles_file);
+            id_buf_L=(long long *)id_buf;
+            if(SID.My_rank==read_rank){
+              fseeko(fp,(size_t)(3*n_particles_file*sizeof(float)),SEEK_CUR);
+              fread_verify(id_buf,sizeof(long long),n_particles_file,fp);
+            }
+            SID_Barrier(SID.COMM_WORLD);
+            SID_Bcast(id_buf_L,(int)(n_particles_file*sizeof(long long)),read_rank,SID.COMM_WORLD);
+            merge_sort(id_buf_L,(size_t)n_particles_file,&id_buf_index,SID_SIZE_T,SORT_COMPUTE_INDEX,FALSE);
+          }
+          else{
+            if(i_file==0) SID_log("(int) IDs...",SID_LOG_CONTINUE);
+            id_buf  =SID_malloc(sizeof(int)*n_particles_file);
+            id_buf_i=(int *)id_buf;
+            if(SID.My_rank==read_rank){
+              fseeko(fp,(size_t)(3*n_particles_file*sizeof(float)),SEEK_CUR);
+              fread_verify(id_buf,sizeof(int),n_particles_file,fp);
+            }
+            SID_Barrier(SID.COMM_WORLD);
+            SID_Bcast(id_buf_i,(int)(n_particles_file*sizeof(int)),read_rank,SID.COMM_WORLD);
+            merge_sort(id_buf_i,(size_t)n_particles_file,&id_buf_index,SID_INT,SORT_COMPUTE_INDEX,FALSE);
+          }
 
-       // Move to the start of the particle quantities
-       if(SID.My_rank==read_rank){
-         rewind(fp);
-         fread_verify(&n_particles_file, sizeof(int),      1,fp);
-         fread_verify(&offset,           sizeof(int),      1,fp);
-         fread_verify(&n_particles_total,sizeof(long long),1,fp);
-         fread_verify(&n_files,          sizeof(int),      1,fp);
-         n_files=MAX(1,n_files);
-       }
-       SID_Bcast(&n_particles_file, (int)sizeof(int),      read_rank,SID.COMM_WORLD);
-       SID_Bcast(&offset,           (int)sizeof(int),      read_rank,SID.COMM_WORLD);
-       SID_Bcast(&n_particles_total,(int)sizeof(long long),read_rank,SID.COMM_WORLD);
-       SID_Bcast(&n_files,          (int)sizeof(int),      read_rank,SID.COMM_WORLD);
-       buffer=SID_malloc(sizeof(float)*n_particles_file);
-       for(i_quantity=0;i_quantity<n_quantities;i_quantity++){
-         int flag_log_quantity;
-         switch(i_quantity){
-         case 0:
-           sprintf(var_name,"r_smooth_%s",species_name);
-           sprintf(unit_name,"Mpc");
-           unit_factor=plist->length_unit/h_Hubble;
-           local_array=r_smooth_array;
-           break;
-         case 1:
-           sprintf(var_name,"rho_%s",species_name);
-           sprintf(unit_name,"Msol/Mpc^3");
-           unit_factor=h_Hubble*h_Hubble*plist->mass_unit/pow(plist->length_unit,3.);
-           local_array=rho_array;
-           break;
-         case 2:
-           sprintf(var_name,"sigma_v_%s",species_name);
-           sprintf(unit_name,"km/s");
-           unit_factor=sqrt(expansion_factor)*plist->velocity_unit;
-           local_array=sigma_v_array;
-           break;
-         }
+          // Create local particle mapping
+          int n_mark_i=0;
+          mark=(long long *)SID_malloc(sizeof(long long)*n_particles_file);
+          for(i_particle=0;i_particle<n_particles_file;i_particle++) 
+            mark[i_particle]=-1;
+          if(flag_LONGIDs){
+            for(i_particle=0,j_particle=0,n_mark=0;i_particle<n_particles_file && j_particle<n_particles_local;i_particle++){
+              while(j_particle<n_particles_local-1 && ids[ids_index[j_particle]]<id_buf_L[id_buf_index[i_particle]]) j_particle++;
+              if(ids[ids_index[j_particle]]==id_buf_L[id_buf_index[i_particle]]){
+                mark[id_buf_index[i_particle]]=(long long)ids_index[j_particle];
+                n_mark++;
+                n_mark_i++;
+              }
+            }
+          }
+          else{
+            for(i_particle=0,j_particle=0,n_mark=0;i_particle<n_particles_file && j_particle<n_particles_local;i_particle++){
+              while(j_particle<n_particles_local-1 && ids[ids_index[j_particle]]<id_buf_i[id_buf_index[i_particle]]) j_particle++;
+              if(ids[ids_index[j_particle]]==id_buf_i[id_buf_index[i_particle]]){
+                mark[id_buf_index[i_particle]]=(long long)ids_index[j_particle];
+                n_mark++;
+                n_mark_i++;
+              }
+            }
+          }
+          SID_free(SID_FARG id_buf);
+          SID_free(SID_FARG id_buf_index);
 
-         // Read next quantity
-         if(SID.My_rank==read_rank)
-           fread_verify(buffer,sizeof(float),n_particles_file,fp);
-         SID_Barrier(SID.COMM_WORLD);
-         SID_Bcast(buffer,(int)(n_particles_file*sizeof(float)),read_rank,SID.COMM_WORLD);
+          // Move to the start of the particle quantities
+          if(SID.My_rank==read_rank){
+            rewind(fp);
+            fread_verify(&n_particles_file, sizeof(int),      1,fp);
+            fread_verify(&offset,           sizeof(int),      1,fp);
+            fread_verify(&n_particles_total,sizeof(long long),1,fp);
+            fread_verify(&n_files,          sizeof(int),      1,fp);
+            n_files=MAX(1,n_files);
+          }
+          SID_Bcast(&n_particles_file, (int)sizeof(int),      read_rank,SID.COMM_WORLD);
+          SID_Bcast(&offset,           (int)sizeof(int),      read_rank,SID.COMM_WORLD);
+          SID_Bcast(&n_particles_total,(int)sizeof(long long),read_rank,SID.COMM_WORLD);
+          SID_Bcast(&n_files,          (int)sizeof(int),      read_rank,SID.COMM_WORLD);
+          buffer=SID_malloc(sizeof(float)*n_particles_file);
+          for(i_quantity=0;i_quantity<n_quantities;i_quantity++){
+            int flag_log_quantity;
+            switch(i_quantity){
+            case 0:
+              sprintf(var_name,"r_smooth_%s",species_name);
+              sprintf(unit_name,"Mpc");
+              unit_factor=plist->length_unit/h_Hubble;
+              local_array=r_smooth_array;
+              break;
+            case 1:
+              sprintf(var_name,"rho_%s",species_name);
+              sprintf(unit_name,"Msol/Mpc^3");
+              unit_factor=h_Hubble*h_Hubble*plist->mass_unit/pow(plist->length_unit,3.);
+              local_array=rho_array;
+              break;
+            case 2:
+              sprintf(var_name,"sigma_v_%s",species_name);
+              sprintf(unit_name,"km/s");
+              unit_factor=sqrt(expansion_factor)*plist->velocity_unit;
+              local_array=sigma_v_array;
+              break;
+            }
 
-         // Place in final array
-         if(n_mark_i>0){
-           if(i_quantity==0){
-             for(i_particle=0;i_particle<n_particles_file;i_particle++)
-               if(mark[i_particle]>=0) read_array[mark[i_particle]]=TRUE;
-           }
-           for(i_particle=0;i_particle<n_particles_file;i_particle++)
-             if(mark[i_particle]>=0) local_array[mark[i_particle]]=((float *)buffer)[i_particle]*unit_factor;
-         }
+            // Read next quantity
+            if(SID.My_rank==read_rank)
+              fread_verify(buffer,sizeof(float),n_particles_file,fp);
+            SID_Barrier(SID.COMM_WORLD);
+            SID_Bcast(buffer,(int)(n_particles_file*sizeof(float)),read_rank,SID.COMM_WORLD);
+
+            // Place in final array
+            if(n_mark_i>0){
+              if(i_quantity==0){
+                for(i_particle=0;i_particle<n_particles_file;i_particle++)
+                  if(mark[i_particle]>=0) read_array[mark[i_particle]]=TRUE;
+              }
+              for(i_particle=0;i_particle<n_particles_file;i_particle++)
+                if(mark[i_particle]>=0) local_array[mark[i_particle]]=((float *)buffer)[i_particle]*unit_factor;
+            }
+          }
+          SID_free(SID_FARG mark);
+          SID_free(SID_FARG buffer);
+          if(SID.My_rank==read_rank)
+            fclose(fp);
+          n_particles_read+=n_particles_file;
        }
-       SID_free(SID_FARG mark);
-       SID_free(SID_FARG buffer);
-       if(SID.My_rank==read_rank)
-         fclose(fp);
-       n_particles_read+=n_particles_file;
        if(n_files>1)
           SID_check_pcounter(&pcounter,n_particles_read);
      } // i_file
      SID_free(SID_FARG ids_index);
      SID_Barrier(SID.COMM_WORLD);
+     if(n_files_not_found>0)
+        SID_log("(%d files not present)...",SID_LOG_CONTINUE,n_files_not_found);
      SID_log("Done.",SID_LOG_CLOSE);
 
      // Check that all particles have been treated

@@ -31,7 +31,7 @@ void set_sph_kernel(double **kernel_radius,
     
     // Read it if so ...
     int   flag_recompute=TRUE;
-    FILE *fp_in=fopen(filename_kernel,"w");
+    FILE *fp_in=fopen(filename_kernel,"r");
     if(fp_in!=NULL){
        int n_k_in;
        int mode_in;
@@ -142,6 +142,7 @@ void set_sph_kernel(double **kernel_radius,
        FILE *fp_out =fopen(filename_kernel,"w");
        int   n_k_out=N_KERNEL_TABLE;
        fwrite(&n_k_out,                  sizeof(int),   1,               fp_out);
+       fwrite(&mode,                     sizeof(int),   1,               fp_out);
        fwrite((*kernel_radius),          sizeof(double),N_KERNEL_TABLE+1,fp_out);
        fwrite((*kernel_table_3d),        sizeof(double),N_KERNEL_TABLE+1,fp_out);
        if(check_mode_for_flag(mode,SPH_KERNEL_2D)){
