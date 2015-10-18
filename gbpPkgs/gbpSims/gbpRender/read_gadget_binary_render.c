@@ -248,8 +248,9 @@ void read_gadget_binary_render(char       *filename_root_in,
          // Count the number of particles that will be scattered to each rank
          size_t k_particle;
          SID_log("Counting the number of particles that will be scattered to each rank...",SID_LOG_OPEN|SID_LOG_TIMER);
-         RNG_info *RNG=(RNG_info *)SID_malloc(sizeof(RNG_info));
-         init_RNG(&seed,RNG,RNG_GLOBAL);
+         RNG_info RNG;
+         init_RNG(&seed,&RNG,RNG_GLOBAL);
+         int n_file_missing   =0;
          for(i_file=0,k_particle=0;i_file<n_files;i_file++){
             read_rank=i_file%SID.n_proc;
             read_rank=0;
@@ -257,31 +258,42 @@ void read_gadget_binary_render(char       *filename_root_in,
             set_gadget_filename(&read_info,i_file,filename);
   
             // Open file and read header
+            int flag_file_missing=FALSE;
             gadget_header_info header;
             if(SID.My_rank==read_rank){
                fp=fopen(filename,"r");
-               fread(&record_length_open,4,1,fp);
-               fread(&header,sizeof(gadget_header_info),1,fp);
-               fread(&record_length_close,4,1,fp);
-               if(record_length_open!=record_length_close)
-                  SID_log_warning("Problem with GADGET record size (close of header)",ERROR_LOGIC);
-               fclose(fp);
+               if(fp!=NULL){
+                  fread(&record_length_open,4,1,fp);
+                  fread(&header,sizeof(gadget_header_info),1,fp);
+                  fread(&record_length_close,4,1,fp);
+                  if(record_length_open!=record_length_close)
+                     SID_log_warning("Problem with GADGET record size (close of header)",ERROR_LOGIC);
+                  fclose(fp);
+               }
+               else{
+                  flag_file_missing=TRUE;
+                  n_file_missing++;
+               }
             }
-            SID_Bcast(&header,(int)sizeof(gadget_header_info),read_rank,SID.COMM_WORLD);
-            for(i=0;i<N_GADGET_TYPE;i++){
-               for(i_particle=0;i_particle<header.n_file[i];i_particle++,k_particle++){
-                  scatter_rank=(int)(random_number(RNG)*(GBPREAL)SID.n_proc);
-                  if(scatter_rank<0)
-                     scatter_rank=0;
-                  else if(scatter_rank>=SID.n_proc)
-                     scatter_rank=SID.n_proc-1;
-                  if(scatter_rank==SID.My_rank)
-                     n_of_type_rank[i]++;
+            SID_Bcast(&flag_file_missing,(int)sizeof(gadget_header_info),read_rank,SID.COMM_WORLD);
+            if(!flag_file_missing){
+               SID_Bcast(&header,(int)sizeof(gadget_header_info),read_rank,SID.COMM_WORLD);
+               for(i=0;i<N_GADGET_TYPE;i++){
+                  for(i_particle=0;i_particle<header.n_file[i];i_particle++,k_particle++){
+                     scatter_rank=(int)(random_number(&RNG)*(GBPREAL)SID.n_proc);
+                     if(scatter_rank<0)
+                        scatter_rank=0;
+                     else if(scatter_rank>=SID.n_proc)
+                        scatter_rank=SID.n_proc-1;
+                     if(scatter_rank==SID.My_rank)
+                        n_of_type_rank[i]++;
+                  }
                }
             }
          }
-         free_RNG(RNG);
-         SID_free(SID_FARG RNG);
+         free_RNG(&RNG);
+         if(n_file_missing>0)
+            SID_log("(%d files missing)...",SID_LOG_CONTINUE,n_file_missing);
          SID_log("Done.",SID_LOG_CLOSE);
       }
       // In this case we store the particles in the order of their IDs.
@@ -377,10 +389,11 @@ void read_gadget_binary_render(char       *filename_root_in,
       // Read data
       pcounter_info pcounter;
       size_t        n_particles_read=0;
-      RNG_info     *RNG=(RNG_info *)SID_malloc(sizeof(RNG_info));
-      init_RNG(&seed,RNG,RNG_GLOBAL);
+      RNG_info      RNG;
+      init_RNG(&seed,&RNG,RNG_GLOBAL);
       SID_init_pcounter(&pcounter,n_particles_all,10);
       SID_log("Performing read...",SID_LOG_OPEN|SID_LOG_TIMER);
+      int n_file_missing   =0;
       for(i_file=0,n_particles_kept=0;i_file<n_files;i_file++){
          read_rank=i_file%SID.n_proc;
          read_rank=0;
@@ -390,34 +403,42 @@ void read_gadget_binary_render(char       *filename_root_in,
          // Open file and read header
          size_t n_particles_file       =0;
          int    flag_file_empty        =FALSE;
+         int    flag_file_missing      =FALSE;
          int    record_length_positions=0;
          gadget_header_info header;
          if(SID.My_rank==read_rank){
             fp=fopen(filename,"r");
-            fread(&record_length_open,4,1,fp);
-            fread(&header,sizeof(gadget_header_info),1,fp);
-            fread(&record_length_close,4,1,fp);
-            // In the case of a file with no particles, it may be the case that no
-            //   record lengths are written for the positions, etc.  We need to
-            //   check for this case and make sure we don't bother reading them if so.
-            for(i=0;i<N_GADGET_TYPE;i++)
-               n_particles_file+=(size_t)header.n_file[i];
-            if(n_particles_file<=0)
-               flag_file_empty=TRUE;
-            if(!flag_file_empty){
-               if(record_length_open!=record_length_close)
-                  SID_log_warning("Problem with GADGET record size (close of header)",ERROR_LOGIC);
+            if(fp!=NULL){
                fread(&record_length_open,4,1,fp);
-               record_length_positions=record_length_open;
+               fread(&header,sizeof(gadget_header_info),1,fp);
+               fread(&record_length_close,4,1,fp);
+               // In the case of a file with no particles, it may be the case that no
+               //   record lengths are written for the positions, etc.  We need to
+               //   check for this case and make sure we don't bother reading them if so.
+               for(i=0;i<N_GADGET_TYPE;i++)
+                  n_particles_file+=(size_t)header.n_file[i];
+               if(n_particles_file<=0)
+                  flag_file_empty=TRUE;
+               if(!flag_file_empty){
+                  if(record_length_open!=record_length_close)
+                     SID_log_warning("Problem with GADGET record size (close of header)",ERROR_LOGIC);
+                  fread(&record_length_open,4,1,fp);
+                  record_length_positions=record_length_open;
+               }
+               fseeko(fp,(off_t)(2*sizeof(int)+sizeof(gadget_header_info)),SEEK_SET);
             }
-            fseeko(fp,(off_t)(2*sizeof(int)+sizeof(gadget_header_info)),SEEK_SET);
+            else{
+               flag_file_missing=TRUE;
+               n_file_missing++;
+            }
          }
-         SID_Bcast(&record_length_positions,4,                       read_rank,SID.COMM_WORLD);
-         SID_Bcast(&header,          (int)sizeof(gadget_header_info),read_rank,SID.COMM_WORLD);
-         SID_Bcast(&n_particles_file,(int)sizeof(size_t),            read_rank,SID.COMM_WORLD);
-         SID_Bcast(&flag_file_empty, (int)sizeof(int),               read_rank,SID.COMM_WORLD);
+         SID_Bcast(&n_particles_file, (int)sizeof(size_t),read_rank,SID.COMM_WORLD);
+         SID_Bcast(&flag_file_empty,  (int)sizeof(int),   read_rank,SID.COMM_WORLD);
+         SID_Bcast(&flag_file_missing,(int)sizeof(int),   read_rank,SID.COMM_WORLD);
 
-         if(!flag_file_empty){
+         if(!flag_file_empty && !flag_file_missing){
+            SID_Bcast(&record_length_positions,4,                        read_rank,SID.COMM_WORLD);
+            SID_Bcast(&header,           (int)sizeof(gadget_header_info),read_rank,SID.COMM_WORLD);
             // Initialize buffer
             buffer=SID_malloc((size_t)record_length_positions); // This is large enough to hold any of the blocks
             if(check_mode_for_flag(mode,READ_GADGET_RENDER_SCATTER)){
@@ -426,7 +447,7 @@ void read_gadget_binary_render(char       *filename_root_in,
                for(i=0,jj=0;i<N_GADGET_TYPE;i++){
                   n_keep[i]=0;
                   for(j=0,k=0;j<header.n_file[i];j++,jj++){
-                     scatter_rank=(int)(random_number(RNG)*(GBPREAL)SID.n_proc);
+                     scatter_rank=(int)(random_number(&RNG)*(GBPREAL)SID.n_proc);
                      if(scatter_rank<0)
                         scatter_rank=0;
                      else if(scatter_rank>=SID.n_proc)
@@ -764,8 +785,9 @@ void read_gadget_binary_render(char       *filename_root_in,
          if(n_files>1)
             SID_check_pcounter(&pcounter,n_particles_read);
       } // loop over i_file
-      free_RNG(RNG);
-      SID_free(SID_FARG RNG);
+      free_RNG(&RNG);
+      if(n_file_missing>0)
+         SID_log("(%d files missing)...",SID_LOG_CONTINUE,n_file_missing);
       SID_log("Done.",SID_LOG_CLOSE);
 
       // Check that all particles have been properly initialized if ID-rank-decomposing 
