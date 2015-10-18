@@ -18,7 +18,6 @@ void read_gadget_binary_render(char       *filename_root_in,
    char     *read_catalog;
    size_t    i,j,k,l,jj;
    size_t    k_offset[N_GADGET_TYPE];
-   size_t    n_particles_file;
    size_t    n_particles_kept;
    size_t    n_particles_kept_all;
    size_t    n_of_type_rank[N_GADGET_TYPE];
@@ -389,30 +388,41 @@ void read_gadget_binary_render(char       *filename_root_in,
          set_gadget_filename(&read_info,i_file,filename);
 
          // Open file and read header
-         int record_length_positions;
+         size_t n_particles_file       =0;
+         int    flag_file_empty        =FALSE;
+         int    record_length_positions=0;
          gadget_header_info header;
          if(SID.My_rank==read_rank){
             fp=fopen(filename,"r");
             fread(&record_length_open,4,1,fp);
             fread(&header,sizeof(gadget_header_info),1,fp);
             fread(&record_length_close,4,1,fp);
-            if(record_length_open!=record_length_close)
-               SID_log_warning("Problem with GADGET record size (close of header)",ERROR_LOGIC);
-            fread(&record_length_open,4,1,fp);
-            record_length_positions=record_length_open;
+            // In the case of a file with no particles, it may be the case that no
+            //   record lengths are written for the positions, etc.  We need to
+            //   check for this case and make sure we don't bother reading them if so.
+            for(i=0;i<N_GADGET_TYPE;i++)
+               n_particles_file+=(size_t)header.n_file[i];
+            if(n_particles_file<=0)
+               flag_file_empty=TRUE;
+            if(!flag_file_empty){
+               if(record_length_open!=record_length_close)
+                  SID_log_warning("Problem with GADGET record size (close of header)",ERROR_LOGIC);
+               fread(&record_length_open,4,1,fp);
+               record_length_positions=record_length_open;
+            }
             fseeko(fp,(off_t)(2*sizeof(int)+sizeof(gadget_header_info)),SEEK_SET);
          }
-         SID_Bcast(&record_length_positions,4,             read_rank,SID.COMM_WORLD);
-         SID_Bcast(&header,(int)sizeof(gadget_header_info),read_rank,SID.COMM_WORLD);
-         for(i=0,n_particles_file=0;i<N_GADGET_TYPE;i++)
-            n_particles_file+=(size_t)header.n_file[i];
+         SID_Bcast(&record_length_positions,4,                       read_rank,SID.COMM_WORLD);
+         SID_Bcast(&header,          (int)sizeof(gadget_header_info),read_rank,SID.COMM_WORLD);
+         SID_Bcast(&n_particles_file,(int)sizeof(size_t),            read_rank,SID.COMM_WORLD);
+         SID_Bcast(&flag_file_empty, (int)sizeof(int),               read_rank,SID.COMM_WORLD);
 
-         if(n_particles_file>0){
+         if(!flag_file_empty){
             // Initialize buffer
             buffer=SID_malloc((size_t)record_length_positions); // This is large enough to hold any of the blocks
             if(check_mode_for_flag(mode,READ_GADGET_RENDER_SCATTER)){
                flag_alloc_keep=TRUE;
-               keep=(char *)SID_malloc(sizeof(char)*n_particles_file);
+               keep=(char *)SID_malloc(sizeof(char)*(n_particles_file));
                for(i=0,jj=0;i<N_GADGET_TYPE;i++){
                   n_keep[i]=0;
                   for(j=0,k=0;j<header.n_file[i];j++,jj++){
@@ -456,7 +466,7 @@ void read_gadget_binary_render(char       *filename_root_in,
                SID_Barrier(SID.COMM_WORLD);
                SID_Bcast(&record_length_open,4,    read_rank,SID.COMM_WORLD);
                SID_Bcast(buffer,record_length_open,read_rank,SID.COMM_WORLD);
-               if(record_length_open/(int)n_particles_file==sizeof(long long)){
+               if(record_length_open/(int)(n_particles_file)==sizeof(long long)){
                   flag_LONGIDs=TRUE;
                   ids_long    =(long long *)buffer;
                }
@@ -580,7 +590,7 @@ void read_gadget_binary_render(char       *filename_root_in,
             }
             else{
                if(i_file==0) SID_log("Skipping positions.",SID_LOG_COMMENT);
-               size_t record_length=3*sizeof(GBPREAL)*n_particles_file;
+               size_t record_length=3*sizeof(GBPREAL)*(n_particles_file);
                if(SID.My_rank==read_rank){
                   fread(&record_length_open,4,1,fp);
                   fseeko(fp,(size_t)record_length_open,SEEK_CUR);
@@ -658,7 +668,7 @@ void read_gadget_binary_render(char       *filename_root_in,
             else{
                if(i_file==0) SID_log("Skipping velocities.",SID_LOG_COMMENT);
                if(SID.My_rank==read_rank){
-                  size_t record_length=3*sizeof(GBPREAL)*n_particles_file;
+                  size_t record_length=3*sizeof(GBPREAL)*(n_particles_file);
                   fread(&record_length_open,4,1,fp);
                   fseeko(fp,(size_t)record_length_open,SEEK_CUR);
                   fread(&record_length_close,4,1,fp);
@@ -681,7 +691,7 @@ void read_gadget_binary_render(char       *filename_root_in,
                SID_Bcast(buffer2,(int)record_length_open,read_rank,SID.COMM_WORLD);
 
                // Decide what kind of IDs we have
-               if(record_length_open/(int)n_particles_file==sizeof(long long)){
+               if(record_length_open/(int)(n_particles_file)==sizeof(long long)){
                   if(i_file==0) SID_log("(long long) IDs...",SID_LOG_CONTINUE);
                   flag_LONGIDs=TRUE;
                }
