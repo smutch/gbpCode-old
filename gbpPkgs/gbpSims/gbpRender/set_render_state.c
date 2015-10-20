@@ -61,8 +61,7 @@ int set_render_state(render_info *render,int frame,int mode){
 
   // Perform snapshot and smooth-file reading
   if(!check_mode_for_flag(render->mode,SET_RENDER_RESCALE)){
-    int *snap_list;
-    snap_list=(int *)SID_malloc(sizeof(int)*render->n_interpolate);
+    int *snap_list=(int *)SID_malloc(sizeof(int)*render->n_interpolate);
     // Determine which snapshot(s) to use
     if(render->snap_a_list!=NULL && render->n_snap_a_list>0){
       if(render->n_interpolate>1)
@@ -105,6 +104,7 @@ int set_render_state(render_info *render,int frame,int mode){
 
     // Initialize the array of pointers used to hold the snapshots
     if(render->plist_list==NULL){
+       SID_log("Initializing particle list...",SID_LOG_OPEN);
        render->plist_list=(plist_info **)SID_malloc(sizeof(plist_info *)*(render->n_interpolate));
        render->snap_list =(int *)SID_calloc(sizeof(int)*(render->n_interpolate));
        for(i_snap=0;i_snap<render->n_interpolate;i_snap++){
@@ -112,6 +112,7 @@ int set_render_state(render_info *render,int frame,int mode){
           render->plist_list[i_snap]=(plist_info *)SID_malloc(sizeof(plist_info));
           init_plist(render->plist_list[i_snap],NULL,GADGET_LENGTH,GADGET_MASS,GADGET_VELOCITY);
        }
+       SID_log("Done.",SID_LOG_CLOSE);
     }
 
     // Move currently loaded snapshots to new locations in the list if necessary

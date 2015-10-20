@@ -20,12 +20,10 @@ void read_gadget_binary_render(char       *filename_root_in,
    size_t    k_offset[N_GADGET_TYPE];
    size_t    n_particles_kept;
    size_t    n_particles_kept_all;
-   size_t    n_of_type_rank[N_GADGET_TYPE];
    size_t    i_particle;
    int       n_type_used;
    int       n_particles_all_in_groups;
    int       n_particles_in_groups;
-   size_t    n_particles_rank;
    size_t    n_particles_all;
    size_t    i_p,i_p_temp;
    size_t    id_min,id_max;
@@ -233,6 +231,7 @@ void read_gadget_binary_render(char       *filename_root_in,
       else
          flag_gas=FALSE;
 
+      long long n_of_type_rank[N_GADGET_TYPE];
       for(i=0;i<N_GADGET_TYPE;i++)
          n_of_type_rank[i]=0;
 
@@ -248,9 +247,9 @@ void read_gadget_binary_render(char       *filename_root_in,
          // Count the number of particles that will be scattered to each rank
          size_t k_particle;
          SID_log("Counting the number of particles that will be scattered to each rank...",SID_LOG_OPEN|SID_LOG_TIMER);
-         RNG_info RNG;
-         init_RNG(&seed,&RNG,RNG_GLOBAL);
-         int n_file_missing   =0;
+         RNG_info *RNG=(RNG_info *)SID_malloc(sizeof(RNG_info));
+         init_RNG(&seed,RNG,RNG_GLOBAL);
+         int n_file_missing=0;
          for(i_file=0,k_particle=0;i_file<n_files;i_file++){
             read_rank=i_file%SID.n_proc;
             read_rank=0;
@@ -275,12 +274,12 @@ void read_gadget_binary_render(char       *filename_root_in,
                   n_file_missing++;
                }
             }
-            SID_Bcast(&flag_file_missing,(int)sizeof(gadget_header_info),read_rank,SID.COMM_WORLD);
+            SID_Bcast(&flag_file_missing,(int)sizeof(int),read_rank,SID.COMM_WORLD);
             if(!flag_file_missing){
                SID_Bcast(&header,(int)sizeof(gadget_header_info),read_rank,SID.COMM_WORLD);
                for(i=0;i<N_GADGET_TYPE;i++){
                   for(i_particle=0;i_particle<header.n_file[i];i_particle++,k_particle++){
-                     scatter_rank=(int)(random_number(&RNG)*(GBPREAL)SID.n_proc);
+                     scatter_rank=(int)(random_number(RNG)*(GBPREAL)SID.n_proc);
                      if(scatter_rank<0)
                         scatter_rank=0;
                      else if(scatter_rank>=SID.n_proc)
@@ -291,11 +290,14 @@ void read_gadget_binary_render(char       *filename_root_in,
                }
             }
          }
-         free_RNG(&RNG);
+         free_RNG(RNG);
+         SID_free(SID_FARG RNG);
+         
          if(n_file_missing>0)
             SID_log("(%d files missing)...",SID_LOG_CONTINUE,n_file_missing);
          SID_log("Done.",SID_LOG_CLOSE);
       }
+
       // In this case we store the particles in the order of their IDs.
       // WARNING: This assumes that all IDs are represented between 0 and n_particles_all-1
       else if(check_mode_for_flag(mode,READ_GADGET_RENDER_ID_ORDERED)){
@@ -348,12 +350,13 @@ void read_gadget_binary_render(char       *filename_root_in,
       else
          SID_trap_error("Valid read_gadget mode not specified.",ERROR_LOGIC);
 
-      for(i=0,n_particles_rank=0;i<N_GADGET_TYPE;i++)
+      long long n_particles_rank=0;
+      for(i=0;i<N_GADGET_TYPE;i++)
          n_particles_rank+=n_of_type_rank[i];
 
       // Perform a particle count check
-      size_t n_particles_check;
-      SID_Allreduce(&n_particles_rank,&n_particles_check,1,SID_SIZE_T,SID_SUM,SID.COMM_WORLD);
+      long long n_particles_check=0;
+      SID_Allreduce(&n_particles_rank,&n_particles_check,1,SID_LONG_LONG,SID_SUM,SID.COMM_WORLD);
       if(n_particles_check!=n_particles_all)
          SID_trap_error("Rank-allocated particle counts don't sum to the total (ie. %zd!=%zd).",ERROR_LOGIC,n_particles_check,n_particles_all);
 

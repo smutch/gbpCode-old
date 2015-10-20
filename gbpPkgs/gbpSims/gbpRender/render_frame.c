@@ -2192,56 +2192,56 @@ void render_frame(render_info  *render){
       i_particle=z_index[n_particles-1-ii_particle];
       z_i       =(double)z[i_particle];
 
-      part_h_z=(double)h_smooth[i_particle];
-
       if(z_i>d_near_field){
         n_particles_used_local++;
 
         // Set pixel space ranges and positions
+        part_h_z     =(double)h_smooth[i_particle];
         part_h_xy    =part_h_z*f_stretch[i_particle];
-        radius2_norm =1./(part_h_xy*part_h_xy);
-        part_pos_x   =(double)(x[i_particle]*f_stretch[i_particle]);
-        part_pos_y   =(double)(y[i_particle]*f_stretch[i_particle]);
         radius_kernel=part_h_xy;
-        kx_min=(int)((part_pos_x-radius_kernel-xmin)/pixel_size_x);
-        kx_max=(int)((part_pos_x+radius_kernel-xmin)/pixel_size_x+ONE_HALF);
-        ky_min=(int)((part_pos_y-radius_kernel-ymin)/pixel_size_y);
-        ky_max=(int)((part_pos_y+radius_kernel-ymin)/pixel_size_y+ONE_HALF);
+        if(fpclassify(radius_kernel)==FP_NORMAL){
+           radius2_norm =1./(part_h_xy*part_h_xy);
+           part_pos_x   =(double)(x[i_particle]*f_stretch[i_particle]);
+           part_pos_y   =(double)(y[i_particle]*f_stretch[i_particle]);
+           kx_min=(int)((part_pos_x-radius_kernel-xmin)/pixel_size_x);
+           kx_max=(int)((part_pos_x+radius_kernel-xmin)/pixel_size_x+ONE_HALF);
+           ky_min=(int)((part_pos_y-radius_kernel-ymin)/pixel_size_y);
+           ky_max=(int)((part_pos_y+radius_kernel-ymin)/pixel_size_y+ONE_HALF);
 
-        // Compute any potential fading
-        // alpha_fade=2 for normal inverse-square fading past the image plane
-        double f_fade;
-        if(flag_fade && z_i>d_o)
-           f_fade=pow(d_image_plane/z_i,-alpha_fade);
-        else
-           f_fade=1;
+           // Compute any potential fading
+           // alpha_fade=2 for normal inverse-square fading past the image plane
+           double f_fade;
+           if(flag_fade && z_i>d_o)
+              f_fade=pow(d_image_plane/z_i,-alpha_fade);
+           else
+              f_fade=1;
 
-        // Compute any potential tapering
-        double f_taper;
-        if(taper_width>0. && z_i<d_taper_field)
-           f_taper=(z_i-d_near_field)/taper_width;
-        else
-           f_taper=1;
+           // Compute any potential tapering
+           double f_taper;
+           if(taper_width>0. && z_i<d_taper_field)
+              f_taper=(z_i-d_near_field)/taper_width;
+           else
+              f_taper=1;
 
-        // Combine dimming factors into one
-        double f_dim;
-        f_dim=f_taper*f_fade;
+           // Combine dimming factors into one
+           double f_dim;
+           f_dim=f_taper*f_fade;
 
-        // Set the particle values and weights
-        double v_i =(double)value[i_particle];
-        double w_i =(double)weight[i_particle];
-        double R_i =1.;
-        double G_i =1.;
-        double B_i =1.;
-        if(colour!=NULL){
-           R_i =RGB_lookup(render,colour[i_particle],0);
-           G_i =RGB_lookup(render,colour[i_particle],1);
-           B_i =RGB_lookup(render,colour[i_particle],2);
-        }
-        double vw_i=v_i*w_i;
-        double zw_i=z_i*w_i;
+           // Set the particle values and weights
+           double v_i =(double)value[i_particle];
+           double w_i =(double)weight[i_particle];
+           double R_i =1.;
+           double G_i =1.;
+           double B_i =1.;
+           if(colour!=NULL){
+              R_i =RGB_lookup(render,colour[i_particle],0);
+              G_i =RGB_lookup(render,colour[i_particle],1);
+              B_i =RGB_lookup(render,colour[i_particle],2);
+           }
+           double vw_i=v_i*w_i;
+           double zw_i=z_i*w_i;
 
-        // Loop over the kernal
+           // Loop over the kernal
 //printf("%le %d\n",
 //printf("%f %f %f -- %le %le -- %le %le -- %le %le %le -- %4d %4d %4d %4d -- %le %le %le\n",
 //       part_pos_x,part_pos_y,f_stretch[i_particle],
@@ -2251,36 +2251,37 @@ void render_frame(render_info  *render){
 //       kx_min,kx_max-kx_min,ky_min,ky_max-ky_min,
 //       w_i,v_i,kernel);
 //if(n_particles_used_local>=10) SID_exit(ERROR_NONE);
-        for(kx=kx_min,pixel_pos_x=xmin+(kx_min+0.5)*pixel_size_x;kx<=kx_max;kx++,pixel_pos_x+=pixel_size_x){
-          if(kx>=0 && kx<nx){
-            for(ky=ky_min,pixel_pos_y=ymin+(ky_min+0.5)*pixel_size_y;ky<=ky_max;ky++,pixel_pos_y+=pixel_size_y){
-              if(ky>=0 && ky<ny){
-                radius2=
-                  (pixel_pos_x-part_pos_x)*(pixel_pos_x-part_pos_x)+
-                  (pixel_pos_y-part_pos_y)*(pixel_pos_y-part_pos_y);
-                radius2*=radius2_norm;
-                // Construct images here
-                if(radius2<radius_kernel_max2){
-                  pos    =ky+kx*ny;
-                  f_table=sqrt(radius2)/radius_kernel_max;
-                  i_table=(int)(f_table*(double)N_KERNEL_TABLE);
-                  kernel =kernel_table[i_table]+
-                    (kernel_table[i_table+1]-kernel_table[i_table])*
-                    (f_table-kernel_radius[i_table])*(double)N_KERNEL_TABLE;
-                  double w_k=w_i*kernel;
-                  // Perform addition
-                  if(Y_image!=NULL)    Y_image[pos]   +=(f_dim    -f_absorption*   Y_image[pos])*w_k;
-                  if(temp_image!=NULL) temp_image[pos]+=(f_dim*v_i-f_absorption*temp_image[pos])*w_k;
-                  if(z_image!=NULL)    z_image[pos]   +=(f_dim*z_i-f_absorption*   z_image[pos])*w_k;
-                  if(RY_image!=NULL)   RY_image[pos]  +=(f_dim*R_i-f_absorption*  RY_image[pos])*w_k;
-                  if(GY_image!=NULL)   GY_image[pos]  +=(f_dim*G_i-f_absorption*  GY_image[pos])*w_k;
-                  if(BY_image!=NULL)   BY_image[pos]  +=(f_dim*B_i-f_absorption*  BY_image[pos])*w_k;
-                  mask[pos]=TRUE;
-                }
-              }
-            } // loop over kernel
-          } 
-        } // loop over kernel
+           for(kx=kx_min,pixel_pos_x=xmin+(kx_min+0.5)*pixel_size_x;kx<=kx_max;kx++,pixel_pos_x+=pixel_size_x){
+             if(kx>=0 && kx<nx){
+               for(ky=ky_min,pixel_pos_y=ymin+(ky_min+0.5)*pixel_size_y;ky<=ky_max;ky++,pixel_pos_y+=pixel_size_y){
+                 if(ky>=0 && ky<ny){
+                   radius2=
+                     (pixel_pos_x-part_pos_x)*(pixel_pos_x-part_pos_x)+
+                     (pixel_pos_y-part_pos_y)*(pixel_pos_y-part_pos_y);
+                   radius2*=radius2_norm;
+                   // Construct images here
+                   if(radius2<radius_kernel_max2){
+                     pos    =ky+kx*ny;
+                     f_table=sqrt(radius2)/radius_kernel_max;
+                     i_table=(int)(f_table*(double)N_KERNEL_TABLE);
+                     kernel =kernel_table[i_table]+
+                       (kernel_table[i_table+1]-kernel_table[i_table])*
+                       (f_table-kernel_radius[i_table])*(double)N_KERNEL_TABLE;
+                     double w_k=w_i*kernel;
+                     // Perform addition
+                     if(Y_image!=NULL)    Y_image[pos]   +=(f_dim    -f_absorption*   Y_image[pos])*w_k;
+                     if(temp_image!=NULL) temp_image[pos]+=(f_dim*v_i-f_absorption*temp_image[pos])*w_k;
+                     if(z_image!=NULL)    z_image[pos]   +=(f_dim*z_i-f_absorption*   z_image[pos])*w_k;
+                     if(RY_image!=NULL)   RY_image[pos]  +=(f_dim*R_i-f_absorption*  RY_image[pos])*w_k;
+                     if(GY_image!=NULL)   GY_image[pos]  +=(f_dim*G_i-f_absorption*  GY_image[pos])*w_k;
+                     if(BY_image!=NULL)   BY_image[pos]  +=(f_dim*B_i-f_absorption*  BY_image[pos])*w_k;
+                     mask[pos]=TRUE;
+                   }
+                 }
+               } // loop over kernel
+             } 
+           } // loop over kernel
+         } // check on fp_classify
       } // near-field selection
       SID_check_pcounter(&pcounter,ii_particle);
     } // loop over particles
