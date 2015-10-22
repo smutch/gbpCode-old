@@ -26,18 +26,20 @@ void init_render(render_info **render){
 
   (*render)->mode               = SET_RENDER_DEFAULT;
   (*render)->n_frames           = 0;
+  (*render)->f_interpolate      = 0.;
   (*render)->n_interpolate      = 1;
   (*render)->n_snap_a_list      = 0;
   (*render)->snap_a_list        = NULL;
+  (*render)->snap_list          = NULL;
+  (*render)->snap_number        =-1;
   (*render)->h_Hubble           = 1.;
   (*render)->f_absorption       =-1.;
   (*render)->flag_read_marked   = FALSE;
   (*render)->flag_comoving      = TRUE;
   (*render)->flag_fade          = FALSE;
-  (*render)->alpha_fade         = 2.;
   (*render)->flag_force_periodic= FALSE;
   (*render)->flag_add_absorption= FALSE;
-  (*render)->sealed             = FALSE;
+  (*render)->alpha_fade         = 2.;
   (*render)->v_mode             = MAKE_MAP_DEFAULT;
   (*render)->w_mode             = MAKE_MAP_DEFAULT;
   (*render)->plist_list         = NULL;
@@ -59,7 +61,18 @@ void init_render(render_info **render){
   (*render)->colour_index_white=fetch_render_colour_index(*render,"white"); 
 
   // Initialize SSimPL directory to something invalid
-  sprintf((*render)->filename_SSimPL_root,"%s",RENDER_INVALID_SSIMPL_DIR);
+  sprintf((*render)->filename_SSimPL_root,  "%s",RENDER_INVALID_SSIMPL_DIR);
+  sprintf((*render)->filename_SSimPL_root,  "none");
+  sprintf((*render)->filename_halos_version,"none");
+  sprintf((*render)->filename_trees_version,"none");
+  sprintf((*render)->filename_out_dir,      "none");
+  sprintf((*render)->snap_filename_root,    "none");
+  sprintf((*render)->mark_filename_root,    "none");
+  sprintf((*render)->smooth_filename_root,  "none");
+  sprintf((*render)->snap_a_list_filename,  "none");
+
+  // Indicates that we haven't finalized this structure yet
+  (*render)->sealed = FALSE;
 
   SID_log("Done.",SID_LOG_CLOSE);
 }

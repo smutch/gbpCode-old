@@ -49,6 +49,7 @@ char fetch_render_colour_index(render_info *render,const char *name){
         }
      }
      fclose(fp);
+     SID_free(SID_FARG line);
      if(!flag_success)
         SID_trap_error("Could not initialize colour {%s} in fetch_render_colour_index.",ERROR_LOGIC,name);
      else{

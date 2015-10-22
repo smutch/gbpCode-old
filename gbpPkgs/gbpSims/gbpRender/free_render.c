@@ -15,8 +15,10 @@ void free_render(render_info **render){
   free_camera(&((*render)->camera));
   free_scenes(&((*render)->scenes));
   if((*render)->plist_list!=NULL){
-     for(i_snap=0;i_snap<(*render)->n_interpolate;i_snap++)
+     for(i_snap=0;i_snap<(*render)->n_interpolate;i_snap++){
         free_plist((*render)->plist_list[i_snap]);
+        SID_free(SID_FARG (*render)->plist_list[i_snap]);
+     }
      SID_free(SID_FARG (*render)->plist_list);
      SID_free(SID_FARG (*render)->snap_list);
   }

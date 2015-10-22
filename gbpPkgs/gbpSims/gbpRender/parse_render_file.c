@@ -147,6 +147,10 @@ void parse_render_file(render_info **render, char *filename){
              sprintf((*render)->filename_trees_version,"version_nominal_res");
           else
              grab_word(line,i_word++,(*render)->filename_trees_version);
+          // Set a bunch of defaults (can be changed afterwards if desired)
+          sprintf((*render)->snap_filename_root,  "%s/snapshots/snapshot",(*render)->filename_SSimPL_root);
+          sprintf((*render)->smooth_filename_root,"%s/smooth/smooth",     (*render)->filename_SSimPL_root);
+          sprintf((*render)->snap_a_list_filename,"%s/run/a_list.txt",    (*render)->filename_SSimPL_root);
         }
         else if(!strcmp(parameter,"snap_file"))
           grab_word(line,i_word++,(*render)->snap_filename_root);

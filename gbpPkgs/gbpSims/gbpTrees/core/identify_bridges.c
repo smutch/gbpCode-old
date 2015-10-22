@@ -185,7 +185,7 @@ void identify_bridges(tree_horizontal_info **halos,
 
     // ... lastly, reorder the back-matched halos by the sizes of their most massive descendants.  Keep only 
     //        the most immediate bridge descendants and finalize the list ...
-    SID_log("Re-ordering back_matches...",SID_LOG_OPEN);
+    SID_log("Re-ordering back_matches...",SID_LOG_OPEN|SID_LOG_TIMER);
     for(i_halo=0;i_halo<n_halos_i;i_halo++){
        // We may need to remove several halos from the list.  This array will keep track of this.
        size_t *back_match_index=NULL;
