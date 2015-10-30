@@ -51,7 +51,8 @@ int main(int argc, char *argv[]){
   fetch_parameter_data(parameter_list,"box_size",&box_size);
   fetch_parameter_data(parameter_list,"m_dark",  &m_dark);
   free_parameter_list(&parameter_list);
-  SID_log("Box size     = %.2lf Mpc/h",SID_LOG_COMMENT,box_size);
+  SID_log("Box size      = %.2lf Mpc/h", SID_LOG_COMMENT,box_size);
+  SID_log("Particle mass = %.2le Msol/h",SID_LOG_COMMENT,m_dark);
 
   // Read list of redshifts
   char   filename_alist[MAX_FILENAME_LENGTH];
@@ -69,7 +70,7 @@ int main(int argc, char *argv[]){
   }
   SID_free(SID_FARG line);
   fclose(fp_snaps);
-  SID_log("No. of snaps = %d (z=%.2lf to %.2lf)",SID_LOG_COMMENT,n_snaps,z_list[0],z_list[n_snaps-1]);
+  SID_log("No. of snaps  = %d (z=%.2lf to %.2lf)",SID_LOG_COMMENT,n_snaps,z_list[0],z_list[n_snaps-1]);
 
   int flag_use_profiles=FALSE;
 
@@ -80,7 +81,7 @@ int main(int argc, char *argv[]){
          SID_log("Processing snap #%03d (z=%.2lf)...",SID_LOG_OPEN,snap_number,redshift);
 
          // Open halos
-         SID_log("Reading...",SID_LOG_OPEN|SID_LOG_TIMER,snap_number,redshift);
+         SID_log("Reading...",SID_LOG_OPEN|SID_LOG_TIMER);
          char filename_halos[256];
          sprintf(filename_halos,"%s/halos/%s_%03d.catalog_groups",filename_SSimPL,filename_halo_type,snap_number);
          FILE *fp_halos=NULL;
@@ -148,7 +149,7 @@ int main(int argc, char *argv[]){
                fread_multifile(&fp_SO,group_SO_data,i_group);
             // Process group information
             //double M_vir_FoF=properties_group->M_vir;
-            double M_vir_FoF=m_dark*(double)properties_subgroup->n_particles*(1.-pow((double)properties_subgroup->n_particles,-0.6));
+            double M_vir_FoF=m_dark*(double)properties_group->n_particles*(1.-pow((double)properties_group->n_particles,-0.6));
             data[i_group]=take_log10(M_vir_FoF);
 
             // Loop over subgroups
@@ -156,8 +157,8 @@ int main(int argc, char *argv[]){
                // Read subgroup properties
                fread_catalog_file(&fp_catalog_subgroups,NULL,properties_subgroup,profile_subgroup,i_subgroup);
                // Process subgroup information
-               double M_vir_sub=properties_subgroup->M_vir;
-               //double M_vir_sub=m_dark*(double)properties_subgroup->n_particles*(1.-pow((double)properties_subgroup->n_particles,-0.6));
+               //double M_vir_sub=properties_subgroup->M_vir;
+               double M_vir_sub=m_dark*(double)properties_subgroup->n_particles*(1.-pow((double)properties_subgroup->n_particles,-0.6));
                data_s[i_group]+=M_vir_sub;
             }
             data_s[i_group]=take_log10(data_s[i_group]);
