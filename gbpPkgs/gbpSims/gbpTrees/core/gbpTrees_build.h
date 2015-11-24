@@ -50,8 +50,8 @@
 #define TREE_CASE_FRAGMENTED_EXCHANGED         TTTP14  // Set for halos that are marked TREE_CASE_FRAGMENTED (see below), and whose 
                                                        //    decendant_id!=the id of the halo they are emerged but is nevertheless valid 
                                                        //    (ie. they are still a progenitor of something). 
-#define TREE_CASE_EMERGED_CANDIDATE            TTTP15  // Set when a halo is identified as a unique back-match to a halo marked TREE_CASE_BRIDGED 
-                                                       //    and is not identified as the BRIDGE's main descendant
+#define TREE_CASE_EMERGED_CANDIDATE            TTTP15  // Set when a halo is identified as a unique back-match to a halo marked TREE_CASE_BRIDGED. 
+                                                       //    Turned off if the halo is marked TREE_CASE_EMERGED or TREE_CASE_FRAGMENTED_NEW.
 #define TREE_CASE_MATCHED_TO_EMERGED           TTTP16  // Set when a halo is matched to an emerged halo
 #define TREE_CASE_2WAY_MATCH                   TTTP17  // Set when the match between a halo and it's descendant is mutual
 #define TREE_CASE_SET_BY_BACKMATCH             TTTP18  // Set in cases where a descendant was set using backmatch information, rather
@@ -70,51 +70,51 @@
    int   tree_case_flag_list[]={
                   TREE_CASE_NO_PROGENITORS,
                   TREE_CASE_STRAYED,
-                  TREE_CASE_DROPPED,
-                  TREE_CASE_EMERGED,
-                  TREE_CASE_EMERGED_CANDIDATE,
-                  TREE_CASE_MATCHED_TO_EMERGED,
-                  TREE_CASE_MAIN_PROGENITOR,
-                  TREE_CASE_2WAY_MATCH,
-                  TREE_CASE_SET_BY_BACKMATCH,
-                  TREE_CASE_MOST_MASSIVE,
-                  TREE_CASE_DOMINANT,
-                  TREE_CASE_BRIDGED,
+                  TREE_CASE_MERGER,
                   TREE_CASE_FRAGMENTED_NEW,
                   TREE_CASE_FRAGMENTED_STRAYED,
                   TREE_CASE_FRAGMENTED_RETURNED,
                   TREE_CASE_FRAGMENTED_EXCHANGED,
+                  TREE_CASE_MAIN_PROGENITOR,
+                  TREE_CASE_2WAY_MATCH,
+                  TREE_CASE_MOST_MASSIVE,
+                  TREE_CASE_DOMINANT,
+                  TREE_CASE_BRIDGED,
+                  TREE_CASE_DROPPED,
+                  TREE_CASE_EMERGED,
+                  TREE_CASE_EMERGED_CANDIDATE,
+                  TREE_CASE_MATCHED_TO_EMERGED,
                   TREE_CASE_MERGER_PRIMARY,
-                  TREE_CASE_MERGER,
                   TREE_CASE_REMNANT,
+                  TREE_CASE_SET_BY_BACKMATCH,
                   TREE_CASE_GHOST,
                   TREE_CASE_GHOST_NULL,
                   TREE_CASE_UNPROCESSED,
                   TREE_CASE_INVALID};
    const char *tree_case_flag_list_text[]={
-                        "NO_PROGENITORS",
-                        "STRAYED",
-                        "DROPPED",
-                        "EMERGED",
-                        "EMERGED_CANDIDATE",
-                        "MATCHED_TO_EMERGED",
-                        "MAIN_PROGENITOR",
-                        "2WAY",
-                        "SET_BY_BACKMATCH",
-                        "MOST_MASSIVE",
-                        "DOMINANT",
-                        "BRIDGED",
-                        "FRAGMENTED_NEW",
-                        "FRAGMENTED_STRAYED",
-                        "FRAGMENTED_RETURNED",
-                        "FRAGMENTED_EXCHANGED",
-                        "MERGER_PRIMARY",
-                        "MERGER",
-                        "REMNANT",
-                        "GHOST",
-                        "GHOST_NULL",
-                        "UNPROCESSED",
-                        "INVALID"};
+                  "NO_PROGENITORS",
+                  "STRAYED",
+                  "MERGER",
+                  "FRAGMENTED_NEW",
+                  "FRAGMENTED_STRAYED",
+                  "FRAGMENTED_RETURNED",
+                  "FRAGMENTED_EXCHANGED",
+                  "MAIN_PROGENITOR",
+                  "2WAY",
+                  "MOST_MASSIVE",
+                  "DOMINANT",
+                  "BRIDGED",
+                  "DROPPED",
+                  "EMERGED",
+                  "EMERGED_CANDIDATE",
+                  "MATCHED_TO_EMERGED",
+                  "MERGER_PRIMARY",
+                  "REMNANT",
+                  "SET_BY_BACKMATCH",
+                  "GHOST",
+                  "GHOST_NULL",
+                  "UNPROCESSED",
+                  "INVALID"};
 #else
    extern int n_tree_case_flag_list;
    extern int tree_case_flag_list[];
