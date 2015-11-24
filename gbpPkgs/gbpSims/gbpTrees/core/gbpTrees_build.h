@@ -50,8 +50,9 @@
 #define TREE_CASE_FRAGMENTED_EXCHANGED         TTTP14  // Set for halos that are marked TREE_CASE_FRAGMENTED (see below), and whose 
                                                        //    decendant_id!=the id of the halo they are emerged but is nevertheless valid 
                                                        //    (ie. they are still a progenitor of something). 
-#define TREE_CASE_EMERGED_CANDIDATE            TTTP15  // Set when a halo is identified as a unique back-match to a halo marked TREE_CASE_BRIDGED. 
-                                                       //    Turned off if the halo is marked TREE_CASE_EMERGED or TREE_CASE_FRAGMENTED_NEW.
+#define TREE_CASE_EMERGED_CANDIDATE            TTTP15  // Set when a halo is identified as a unique back-match to a halo marked TREE_CASE_BRIDGED and
+                                                       //    is not selected as the bridged halo's descendant.  This switch is turned off if the halo
+                                                       //    is marked TREE_CASE_EMERGED or TREE_CASE_FRAGMENTED_NEW.
 #define TREE_CASE_MATCHED_TO_EMERGED           TTTP16  // Set when a halo is matched to an emerged halo
 #define TREE_CASE_2WAY_MATCH                   TTTP17  // Set when the match between a halo and it's descendant is mutual
 #define TREE_CASE_SET_BY_BACKMATCH             TTTP18  // Set in cases where a descendant was set using backmatch information, rather

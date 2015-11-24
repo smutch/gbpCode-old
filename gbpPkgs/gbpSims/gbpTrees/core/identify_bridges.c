@@ -140,8 +140,8 @@ void identify_bridges(tree_horizontal_info **halos,
              j_halo =find_index_int(match_id,i_halo,n_halos_1_matches,match_index);
              // Loop over all but the last halo in the list ...
              while(match_id[match_index[j_halo]]==i_halo && j_halo<(n_halos_1_matches-1)){
-                // Check to see if this halo ID is already in the back match list (keep all -ve ID halos as well;
-                //   a tree-walk descendant cull will be done below as well) ...
+                // Check to see if this halo ID is already in the back match list (keep all -ve ID halos;
+                //   a tree-walk descendant cull will be done) ...
                 flag_continue=TRUE;
                 if(halos[j_file_1%n_wrap][match_index[j_halo]].id>=0){
                    for(k_halo=0;k_halo<halos_i[i_halo].n_back_matches && flag_continue;k_halo++){
@@ -161,8 +161,8 @@ void identify_bridges(tree_horizontal_info **halos,
              }
              // ... then do the last halo in the list ...
              if(match_id[match_index[j_halo]]==i_halo && j_halo==(n_halos_1_matches-1)){
-                // Check to see if this halo ID is already in the back match list (keep all -ve ID halos as well;
-                //   a tree-walk descendant cull will be done below as well) ...
+                // Check to see if this halo ID is already in the back match list (keep all -ve ID halos;
+                //   a tree-walk descendant cull will be done) ...
                 flag_continue=TRUE;
                 if(halos[j_file_1%n_wrap][match_index[j_halo]].id>=0){
                    for(k_halo=0;k_halo<halos_i[i_halo].n_back_matches && flag_continue;k_halo++){
@@ -193,19 +193,20 @@ void identify_bridges(tree_horizontal_info **halos,
        size_t *back_match_index=NULL;
        int    *backmatch_keep  =(int *)SID_malloc(sizeof(int)*halos_i[i_halo].n_back_matches);
 
-       // Reorder the back_matches by the size of their most massive descendant.  We make a temporary copy of the list 
+       // Reorder the back_matches by size.  We make a temporary copy of the list 
        //   to do this and initially set all back_matches as halos to keep..
        back_matches=(back_match_info *)SID_calloc(sizeof(back_match_info)*(halos_i[i_halo].n_back_matches));
        for(j_halo=0;j_halo<halos_i[i_halo].n_back_matches;j_halo++){
           back_match=&(halos_i[i_halo].back_matches[j_halo]);
           memcpy(&(back_matches[j_halo]),back_match,sizeof(back_match_info));
-          match_score[j_halo]   =(float)(back_match->halo->n_particles_largest_descendant);
+          match_score[j_halo]   =(float)(back_match->halo->n_particles);
           backmatch_keep[j_halo]=TRUE;
        }
        merge_sort((void *)match_score,(size_t)(halos_i[i_halo].n_back_matches),&back_match_index,SID_FLOAT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
 
        // Remove any mutual descendants from the list
-       //   (since they may have different IDs and passed the test above)
+       //   (since they may have different IDs and passed the test above).
+       //   Keep the most immediate instance.
        for(j_halo=0;j_halo<halos_i[i_halo].n_back_matches;j_halo++){
           int k_file;
           int l_file;
@@ -233,6 +234,8 @@ void identify_bridges(tree_horizontal_info **halos,
 
        // Remove any back matches which have already been assigned to a halo.  This makes
        //    sure that the backmatch is uniquely set to the most immediate backmatched halo.
+       //    This is important (for example) in cases where a halo is repeatedly emerging from a bridge.
+       //    We only want to use this as an emerged candidate for the most recent instance.
        for(j_halo=0;j_halo<halos_i[i_halo].n_back_matches;j_halo++){
           if(backmatch_keep[j_halo]){
              int backmatch_file =back_matches[j_halo].halo->file;
@@ -269,19 +272,6 @@ void identify_bridges(tree_horizontal_info **halos,
                 back_matches[j_halo_sorted].score;
              l_halo++;
           }
-       }
-
-       // For bridged halos, set the main progenitor now to be the most massive back match.
-       //   This is the prefered choice (vs the back match with the best match score for example)
-       //   because it minimizes errors that get made later when estimating peak halo sizes, 
-       //   particularly when bridged halos are satellites, rather than centrals, of a system.
-       if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGED)){
-          halos_i[i_halo].forematch_first.halo          =halos_i[i_halo].back_matches[0].halo;
-          halos_i[i_halo].forematch_first.score         =halos_i[i_halo].back_matches[0].score;
-          halos_i[i_halo].forematch_first.flag_two_way  =halos_i[i_halo].back_matches[0].flag_two_way;
-          memcpy(&(halos_i[i_halo].forematch_default),&(halos_i[i_halo].forematch_first.halo),sizeof(match_info));
-          halos_i[i_halo].type&=(~TREE_CASE_UNPROCESSED);
-          halos_i[i_halo].type|=  TREE_CASE_SET_BY_BACKMATCH;
        }
 
        // Clean-up

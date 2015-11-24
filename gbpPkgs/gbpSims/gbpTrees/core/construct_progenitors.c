@@ -76,10 +76,22 @@ void construct_progenitors(tree_horizontal_info **halos,
       tree_horizontal_info *halos_i=halos[j_file_1%n_wrap];
       tree_horizontal_info *halos_j=halos[j_file_2%n_wrap];
       for(i_halo=0;i_halo<(*n_halos_1_matches);i_halo++){
-         // Check for and set first matches
          tree_horizontal_info *forematch_i=halos_i[i_halo].forematch_default.halo;
-         // If this halo hasn't been forward-matched to anything yet ...
-         if(forematch_i==NULL){
+         // For bridged halos, initialize the first match to be the largest and most immediate back match to it.
+         //   This is the prefered choice (vs the back match with the best match score for example)
+         //   because it minimizes errors that get made later when estimating peak halo sizes, 
+         //   particularly when bridged halos are satellites of a system and the DOMINANT halo
+         //   mechanism can not be used to prevent large mass excursions.
+         if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGED)){
+            int i_best=0;
+            halos_i[i_halo].forematch_first.halo          =halos_i[i_halo].back_matches[i_best].halo;
+            halos_i[i_halo].forematch_first.score         =halos_i[i_halo].back_matches[i_best].score;
+            halos_i[i_halo].forematch_first.flag_two_way  =halos_i[i_halo].back_matches[i_best].flag_two_way;
+            memcpy(&(halos_i[i_halo].forematch_default),&(halos_i[i_halo].forematch_first.halo),sizeof(match_info));
+            halos_i[i_halo].type|=TREE_CASE_SET_BY_BACKMATCH; // later, turn this off if default match != first match is used
+         }
+         // ... else, if this halo hasn't been forward-matched to anything yet ...
+         else if(forematch_i==NULL){
             int my_descendant_index;
             my_descendant_index=match_id[i_halo];
             // If this halo has been matched to something in i_file_2 ...
@@ -95,8 +107,8 @@ void construct_progenitors(tree_horizontal_info **halos,
                                   SID_WARNING_DEFAULT,my_descendant_index,(*n_halos_2_matches)-1,j_read_1,j_read_2,group_text_prefix,i_halo);
             }
          }
-         // Once a halo has passed the previous check, after having formed an
-         //    initial match, scan the candidate emerged halos in the descendant 
+         // Once a halo has passed one of the previous checks, after having formed 
+         //    a first match, scan the candidate emerged halos in the descendant 
          //    line of the current default match. We don't have to address
          //    bridged halos matched above in this iteration of the loop
          //    since all emerged halos will be from the match files we will
@@ -150,15 +162,18 @@ void construct_progenitors(tree_horizontal_info **halos,
    //    that don't have a progenitor yet.  This is done to make sure
    //    that every bridged halo matched to gets a main progenitor.  
    //    Importantly, this must be in agreement with the choices that have
-   //    already been made for the main progenitor exiting a bridged halo.  
+   //    already been made regarding the main progenitor exiting a bridged halo.  
    //    To acheive this in a robust way, we will exclude here (if possible)
    //    any halos which have default forematch pointers that arent't their 
    //    first forematch pointer (reflecting a halo that has been successfully 
    //    matched in later snapshots to an emerged candidate).  Such a halo
-   //    would not have been made the main progenitor upon exiting a bridged
-   //    system, since it and all its descendants would have been removed
-   //    from candidate emerged halo lists otherwise.  The need for these
-   //    pointers is why we need to do this as a seperate subsequent loop.
+   //    would not have been chosen as the main progenitor exiting the bridged
+   //    system, since it and all its descendants would have been excluded
+   //    when candidate emerged halo lists were constructed.  We need to wait
+   //    for both the first and default pointers to be properly set to do this,
+   //    so we need to do this now as a seperate and subsequent loop.  When
+   //    matches are finalized, these best pointers will be the first choice
+   //    for constructing the trees.
    for(i_halo=0;i_halo<(*n_halos_1_matches);i_halo++){
       tree_horizontal_info *halo_i=&(halos_i[i_halo]);
       tree_horizontal_info *halo_j=halo_i->forematch_first.halo;
