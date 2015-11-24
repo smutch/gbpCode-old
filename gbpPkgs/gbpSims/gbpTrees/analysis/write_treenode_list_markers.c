@@ -150,8 +150,8 @@ void write_treenode_list_markers(tree_info *trees,const char *filename_out_root,
                     idx_node     =node_write->neighbour_index;
                     t_node       =trees->t_list[i_z_node];
                     z_node       =trees->z_list[i_z_node];
-                    M_node       =fetch_treenode_Mvir(trees,node_write);
-                    M_node_parent=fetch_treenode_Mvir(trees,node_write->parent);
+                    M_node       =fetch_treenode_M_vir(trees,node_write);
+                    M_node_parent=fetch_treenode_M_vir(trees,node_write->parent);
                     n_p_node     =fetch_treenode_n_particles(trees,node_write);
                  }
                  else{

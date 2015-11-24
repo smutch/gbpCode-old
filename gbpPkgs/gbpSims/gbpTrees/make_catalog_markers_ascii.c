@@ -152,7 +152,7 @@ void process_trees_fctn_analyze_local(tree_info *trees,void *params_in,int mode,
     double tau_form =fetch_treenode_tau_form (trees,halo);
     double tau_3to1 =fetch_treenode_tau_3to1 (trees,halo);
     double tau_10to1=fetch_treenode_tau_10to1(trees,halo);
-    double M_peak   =fetch_treenode_Mpeak(trees,halo);
+    double M_peak   =fetch_treenode_M_peak(trees,halo);
     fprintf(params->fp_out,"  %10.5le %11.5lf  %11.5lf  %11.5lf",M_peak,tau_form,tau_3to1,tau_10to1);
     fprintf(params->fp_out,"\n");
 }

@@ -127,9 +127,9 @@ int  find_treenode_snap_equals_given(tree_info *trees,tree_node_info *halo,int s
 int  find_treenode_main_progenitor(tree_info *trees,tree_node_info *halo,tree_node_info **main_progenitor);
 int  find_treenode_branch_root(tree_info *trees,tree_node_info *halo,tree_node_info **branch_root);
 int  find_treenode_branch_leaf(tree_info *trees,tree_node_info *halo,tree_node_info **branch_leaf);
-int  find_treenode_Mpeak(tree_info       *trees,
-                         tree_node_info  *halo,
-                         tree_node_info **halo_peak);
+int  find_treenode_M_peak(tree_info       *trees,
+                          tree_node_info  *halo,
+                          tree_node_info **halo_peak);
 int  find_treenode_formation(tree_info       *trees,
                              tree_node_info  *halo,
                              double           f,
@@ -247,11 +247,11 @@ int    fetch_treenode_snap_tree(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_halo_ID(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_file_index(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_tree_case(tree_info *trees,tree_node_info *halo);
-double fetch_treenode_Mvir(tree_info *trees,tree_node_info *halo);
-double fetch_treenode_Rvir(tree_info *trees,tree_node_info *halo);
+double fetch_treenode_M_vir(tree_info *trees,tree_node_info *halo);
+double fetch_treenode_R_vir(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_sigmav(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_c_NFW(tree_info *trees,tree_node_info *halo);
-double fetch_treenode_Mpeak(tree_info *trees,tree_node_info *halo);
+double fetch_treenode_M_peak(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_x_off(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_SSFctn(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_Vir_ratio(tree_info *trees,tree_node_info *halo);

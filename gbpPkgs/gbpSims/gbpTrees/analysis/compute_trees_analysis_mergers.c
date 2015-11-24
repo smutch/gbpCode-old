@@ -103,9 +103,9 @@ void compute_trees_analysis_mergers(tree_info *trees,char *filename_out_root_in,
            remnant_idx        [i_list]=fetch_treenode_file_index      (trees,remnant_halo);
            remnant_file       [i_list]=fetch_treenode_snap_tree       (trees,remnant_halo);
            zeta               [i_list]=zeta_i; 
-           secondary_peak_Mvir[i_list]=fetch_treenode_Mvir            (trees,secondary_halo_peak);
-           primary_peak_Mvir  [i_list]=fetch_treenode_Mvir            (trees,primary_halo_peak);
-           remnant_Mvir       [i_list]=fetch_treenode_Mvir            (trees,remnant_halo);
+           secondary_peak_Mvir[i_list]=fetch_treenode_M_vir           (trees,secondary_halo_peak);
+           primary_peak_Mvir  [i_list]=fetch_treenode_M_vir           (trees,primary_halo_peak);
+           remnant_Mvir       [i_list]=fetch_treenode_M_vir           (trees,remnant_halo);
            secondary_peak_n_p [i_list]=fetch_treenode_n_particles_peak(trees,secondary_halo_peak);
            primary_peak_n_p   [i_list]=fetch_treenode_n_particles_peak(trees,primary_halo_peak);
            remnant_n_p        [i_list]=fetch_treenode_n_particles_peak(trees,remnant_halo);

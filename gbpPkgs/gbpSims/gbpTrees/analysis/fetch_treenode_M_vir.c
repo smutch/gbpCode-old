@@ -9,7 +9,7 @@
 #include <gbpTrees_build.h>
 #include <gbpTrees_analysis.h>
 
-double fetch_treenode_Mvir(tree_info *trees,tree_node_info *halo){
+double fetch_treenode_M_vir(tree_info *trees,tree_node_info *halo){
    if(halo!=NULL){
       halo_properties_info *properties;
       if(halo->parent==NULL){

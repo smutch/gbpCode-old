@@ -2242,15 +2242,6 @@ void render_frame(render_info  *render){
            double zw_i=z_i*w_i;
 
            // Loop over the kernal
-//printf("%le %d\n",
-//printf("%f %f %f -- %le %le -- %le %le -- %le %le %le -- %4d %4d %4d %4d -- %le %le %le\n",
-//       part_pos_x,part_pos_y,f_stretch[i_particle],
-//       radius_kernel,f_table,
-//       pixel_size_x,pixel_size_y,
-//       xmin,ymin,FOV,
-//       kx_min,kx_max-kx_min,ky_min,ky_max-ky_min,
-//       w_i,v_i,kernel);
-//if(n_particles_used_local>=10) SID_exit(ERROR_NONE);
            for(kx=kx_min,pixel_pos_x=xmin+(kx_min+0.5)*pixel_size_x;kx<=kx_max;kx++,pixel_pos_x+=pixel_size_x){
              if(kx>=0 && kx<nx){
                for(ky=ky_min,pixel_pos_y=ymin+(ky_min+0.5)*pixel_size_y;ky<=ky_max;ky++,pixel_pos_y+=pixel_size_y){

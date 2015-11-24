@@ -42,7 +42,7 @@ void compute_marker_analysis(tree_info *trees,tree_markers_info **markers,hist_i
      for(i_bin=0;i_bin<n_bins;i_bin++)
         n_bin[i_bin]=0;
      while(current_halo!=NULL){
-        double logM_i=take_log10(fetch_treenode_Mvir(trees,current_halo));
+        double logM_i=take_log10(fetch_treenode_M_vir(trees,current_halo));
         int    bin   =(int)((logM_i-logM_min)/dlogM);
         if(bin>=0 && bin<n_bins)
            n_bin[bin]++;
@@ -60,7 +60,7 @@ void compute_marker_analysis(tree_info *trees,tree_markers_info **markers,hist_i
      else if(check_mode_for_flag(mode,COMPUTE_ACCRETION_ANALYSIS_SUBGROUPS))
         current_halo=trees->first_neighbour_subgroups[i_snap];
      while(current_halo!=NULL){
-        double logM_i=take_log10(fetch_treenode_Mvir(trees,current_halo));
+        double logM_i=take_log10(fetch_treenode_M_vir(trees,current_halo));
         int    bin   =(int)((logM_i-logM_min)/dlogM);
         if(bin>=0 && bin<n_bins)
            add_to_treenode_list(lists[bin],current_halo);

@@ -22,7 +22,7 @@ void precompute_treenode_markers_peak_mass_recursive(tree_info *trees,tree_marke
 
       // Fetch needed properties of the halo
       int    n_particles_peak=halo->n_particles_peak;
-      double M_halo          =fetch_treenode_Mvir(trees,halo);
+      double M_halo          =fetch_treenode_M_vir(trees,halo);
 
       // Walk the tree
       tree_node_info *first_progenitor=halo->progenitor_first;

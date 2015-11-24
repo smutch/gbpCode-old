@@ -42,7 +42,7 @@ void free_tree_property_logM(trend_property_info *property,void *trees_in,int i_
 int calc_tree_property_index_logM(trend_property_info *property,hist_info *hist,void *halo_in){
    tree_info      *trees=(tree_info      *)(property->params);
    tree_node_info *halo =(tree_node_info *)(halo_in);
-   return(calc_histogram_index(hist,take_log10(fetch_treenode_Mvir(trees,halo))));
+   return(calc_histogram_index(hist,take_log10(fetch_treenode_M_vir(trees,halo))));
 }
 
 void init_tree_property_xoff(trend_property_info *property,void *trees_in,int i_hist,int *mode,gbp_va_list *vargs){

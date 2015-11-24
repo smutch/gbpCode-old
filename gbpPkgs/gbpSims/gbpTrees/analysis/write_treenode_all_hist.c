@@ -90,10 +90,10 @@ void write_treenode_all_hist(tree_info *trees,const char *filename_out_root_in,i
   SID_Allreduce(SID_IN_PLACE,(hist_all_M->array),    (hist_all_M->n_x*hist_all_M->n_y),        SID_INT,SID_SUM,SID.COMM_WORLD);
   SID_Allreduce(SID_IN_PLACE,(hist_all_Mpeak->array),(hist_all_Mpeak->n_x*hist_all_Mpeak->n_y),SID_INT,SID_SUM,SID.COMM_WORLD);
   if(i_type==1){
-     SID_Allreduce(SID_IN_PLACE,(hist_centrals_N->array),    (hist_centrals_N->n_x*hist_centrals_N->n_y),        SID_INT,SID_SUM,SID.COMM_WORLD);
-     SID_Allreduce(SID_IN_PLACE,(hist_centrals_Npeak->array),(hist_centrals_Npeak->n_x*hist_centrals_Npeak->n_y),SID_INT,SID_SUM,SID.COMM_WORLD);
-     SID_Allreduce(SID_IN_PLACE,(hist_centrals_M->array),    (hist_centrals_M->n_x*hist_centrals_M->n_y),        SID_INT,SID_SUM,SID.COMM_WORLD);
-     SID_Allreduce(SID_IN_PLACE,(hist_centrals_Mpeak->array),(hist_centrals_Mpeak->n_x*hist_centrals_Mpeak->n_y),SID_INT,SID_SUM,SID.COMM_WORLD);
+     SID_Allreduce(SID_IN_PLACE,(hist_centrals_N->array),        (hist_centrals_N->n_x*hist_centrals_N->n_y),                SID_INT,SID_SUM,SID.COMM_WORLD);
+     SID_Allreduce(SID_IN_PLACE,(hist_centrals_Npeak->array),    (hist_centrals_Npeak->n_x*hist_centrals_Npeak->n_y),        SID_INT,SID_SUM,SID.COMM_WORLD);
+     SID_Allreduce(SID_IN_PLACE,(hist_centrals_M->array),        (hist_centrals_M->n_x*hist_centrals_M->n_y),                SID_INT,SID_SUM,SID.COMM_WORLD);
+     SID_Allreduce(SID_IN_PLACE,(hist_centrals_Mpeak->array),    (hist_centrals_Mpeak->n_x*hist_centrals_Mpeak->n_y),        SID_INT,SID_SUM,SID.COMM_WORLD);
      SID_Allreduce(SID_IN_PLACE,(hist_substructure_N->array),    (hist_substructure_N->n_x*hist_substructure_N->n_y),        SID_INT,SID_SUM,SID.COMM_WORLD);
      SID_Allreduce(SID_IN_PLACE,(hist_substructure_Npeak->array),(hist_substructure_Npeak->n_x*hist_substructure_Npeak->n_y),SID_INT,SID_SUM,SID.COMM_WORLD);
      SID_Allreduce(SID_IN_PLACE,(hist_substructure_M->array),    (hist_substructure_M->n_x*hist_substructure_M->n_y),        SID_INT,SID_SUM,SID.COMM_WORLD);

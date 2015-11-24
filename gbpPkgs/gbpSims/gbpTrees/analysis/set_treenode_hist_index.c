@@ -43,7 +43,7 @@ int set_treenode_hist_index(tree_info *trees,treenode_hist_info *hist,tree_node_
       case 1:{ // M_vir
         double d_min=args_d[0];
         double dd   =args_d[1];
-        double d    =fetch_treenode_Mvir(trees,current_halo);
+        double d    =fetch_treenode_M_vir(trees,current_halo);
         if(flag_log)
            d=take_log10(d);
         i_d=(int)((d-d_min)/dd);
@@ -52,7 +52,7 @@ int set_treenode_hist_index(tree_info *trees,treenode_hist_info *hist,tree_node_
       case 2:{ // M_peak
         double d_min=args_d[0];
         double dd   =args_d[1];
-        double d    =fetch_treenode_Mpeak(trees,current_halo);
+        double d    =fetch_treenode_M_peak(trees,current_halo);
         if(flag_log)
            d=take_log10(d);
         i_d=(int)((d-d_min)/dd);
@@ -79,7 +79,7 @@ int set_treenode_hist_index(tree_info *trees,treenode_hist_info *hist,tree_node_
       case 5:{ // M_descendant
         double d_min=args_d[0];
         double dd   =args_d[1];
-        double d    =fetch_treenode_Mvir(trees,current_halo->descendant);
+        double d    =fetch_treenode_M_vir(trees,current_halo->descendant);
         if(flag_log)
            d=take_log10(d);
         i_d=(int)((d-d_min)/dd);

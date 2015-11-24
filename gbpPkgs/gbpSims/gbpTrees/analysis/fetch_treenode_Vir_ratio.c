@@ -12,13 +12,13 @@
 double fetch_treenode_Vir_ratio(tree_info *trees,tree_node_info *halo){
    double virial_ratio=-1.;
    if(halo!=NULL){
-      double R_vir=fetch_treenode_Rvir (trees,halo);
+      double R_vir=fetch_treenode_R_vir(trees,halo);
       double r_s  =fetch_treenode_c_NFW(trees,halo);
       double c    =R_vir/r_s;
       if(c>0. && r_s>0.){
          R_vir*=M_PER_MPC;
          r_s  *=M_PER_MPC;
-         double M_vir  =fetch_treenode_Mvir(trees,halo)*M_SOL;
+         double M_vir  =fetch_treenode_M_vir(trees,halo)*M_SOL;
          double sigma_v=1e3*fetch_treenode_sigmav(trees,halo);
          double g      =1./(take_ln(1.+c)-c/(1.+c));
          double pot_fac=c*g*g*G_NEWTON*M_vir*M_vir/2.0/R_vir;

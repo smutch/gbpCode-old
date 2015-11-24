@@ -65,13 +65,13 @@ OBJFILES  = average_tree_branches.o              \
 	    fetch_treenode_descendant_f_goodness.o    \
 	    fetch_treenode_progenitor_score.o         \
 	    fetch_treenode_descendant_score.o         \
-	    fetch_treenode_Mvir.o                     \
-	    fetch_treenode_Rvir.o                     \
+	    fetch_treenode_M_vir.o                    \
+	    fetch_treenode_R_vir.o                    \
 	    fetch_treenode_sigmav.o                   \
 	    fetch_treenode_c_NFW.o                    \
 	    fetch_treenode_merger_info.o              \
 	    fetch_treenode_zeta.o                     \
-	    fetch_treenode_Mpeak.o                    \
+	    fetch_treenode_M_peak.o                   \
 	    fetch_treenode_Vir_ratio.o                \
 	    fetch_treenode_x_off.o                    \
 	    fetch_treenode_SSFctn.o                   \
@@ -102,7 +102,7 @@ OBJFILES  = average_tree_branches.o              \
 	    find_treenode_main_progenitor.o           \
 	    find_treenode_branch_root.o               \
 	    find_treenode_branch_leaf.o               \
-	    find_treenode_Mpeak.o                     \
+	    find_treenode_M_peak.o                    \
 	    find_treenode_formation.o                 \
 	    find_treenode_last_merger.o               \
 	    find_treenode_accretion.o                 \

@@ -9,7 +9,7 @@
 #include <gbpTrees_build.h>
 #include <gbpTrees_analysis.h>
 
-double fetch_treenode_Mpeak(tree_info *trees_in,tree_node_info *halo_in){
+double fetch_treenode_M_peak(tree_info *trees_in,tree_node_info *halo_in){
    if(halo_in!=NULL){
       // Use reference trees if present
       tree_info      *trees=fetch_trees_reference   (trees_in);

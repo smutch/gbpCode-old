@@ -71,12 +71,12 @@ int write_treenode_list_properties_set_ith(tree_info *trees,int i_write,tree_nod
    else if(i_write==(i_item++)){
       if(data_name!=NULL) sprintf(data_name,"M_vir [h^{-1} M_sol]");
       if(data_type!=NULL) *data_type=SID_DOUBLE;
-      if(data_d!=NULL)    *data_d   =fetch_treenode_Mvir(trees,current_halo);
+      if(data_d!=NULL)    *data_d   =fetch_treenode_M_vir(trees,current_halo);
    }
    else if(i_write==(i_item++)){
       if(data_name!=NULL) sprintf(data_name,"M_peak [h^{-1} M_sol]");
       if(data_type!=NULL) *data_type=SID_DOUBLE;
-      if(data_d!=NULL)    *data_d   =fetch_treenode_Mpeak(trees,current_halo);
+      if(data_d!=NULL)    *data_d   =fetch_treenode_M_peak(trees,current_halo);
    }
    else if(i_write==(i_item++)){
       if(data_name!=NULL) sprintf(data_name,"Progenitor rank");

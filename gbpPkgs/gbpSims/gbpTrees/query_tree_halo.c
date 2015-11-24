@@ -175,14 +175,14 @@ int main(int argc, char *argv[]){
        for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
           // Read groups
           int n_subgroups_group;
+          SID_fread_all(&halo_id,              sizeof(int),1,&fp_in_trees);
+          SID_fread_all(&halo_type,            sizeof(int),1,&fp_in_trees);
+          SID_fread_all(&halo_descendant_id,   sizeof(int),1,&fp_in_trees);
+          SID_fread_all(&halo_tree_id,         sizeof(int),1,&fp_in_trees);
+          SID_fread_all(&halo_file_offset,     sizeof(int),1,&fp_in_trees);
+          SID_fread_all(&halo_index,           sizeof(int),1,&fp_in_trees);
+          SID_fread_all(&halo_n_particles_peak,sizeof(int),1,&fp_in_trees);
           if(mode==MATCH_GROUPS){
-             SID_fread_all(&halo_id,                sizeof(int),  1,&fp_in_trees);
-             SID_fread_all(&halo_type,              sizeof(int),  1,&fp_in_trees);
-             SID_fread_all(&halo_descendant_id,     sizeof(int),  1,&fp_in_trees);
-             SID_fread_all(&halo_tree_id,           sizeof(int),  1,&fp_in_trees);
-             SID_fread_all(&halo_file_offset,       sizeof(int),  1,&fp_in_trees);
-             SID_fread_all(&halo_index,             sizeof(int),  1,&fp_in_trees);
-             SID_fread_all(&halo_n_particles_peak,  sizeof(int),  1,&fp_in_trees);
              SID_fread_all(&bridge_match_id,        sizeof(int),  1,&fp_in_bridge_match);
              SID_fread_all(&bridge_match_file,      sizeof(int),  1,&fp_in_bridge_match);
              SID_fread_all(&bridge_match_index,     sizeof(int),  1,&fp_in_bridge_match);
@@ -205,11 +205,13 @@ int main(int argc, char *argv[]){
                 else
                    bridge_match_snap=-1;
                 if(flag_is_halo)
-                   fprintf(fp_out,"%3d %7d %7d %5.2lf %7d %3d %3d %7d %7d %3s %7s %7d %s\n",
+                   fprintf(fp_out,"%3d %7d %7d %7d %5.2lf %7d %7d %3d %3d %7d %7d %3s %7s %7d %s\n",
                                   i_read,
                                   i_group,
                                   halo_id,
+                                  halo_id,
                                   take_log10(properties.M_vir),
+                                  halo_n_particles_peak,
                                   halo_tree_id,
                                   halo_file_offset,
                                   descendant_snap,
@@ -220,11 +222,13 @@ int main(int argc, char *argv[]){
                                   halo_type,
                                   halo_type_string);
                 else
-                   fprintf(fp_out,"%3d %7d %7d %5.2lf %7d %3d %3d %7d %7d %3d %7d %7d %s\n",
+                   fprintf(fp_out,"%3d %7d %7d %7d %5.2lf %7d %7d %3d %3d %7d %7d %3s %7s %7d %s\n",
                                   i_read,
                                   i_group,
                                   halo_id,
+                                  halo_id,
                                   take_log10(properties.M_vir),
+                                  halo_n_particles_peak,
                                   halo_tree_id,
                                   halo_file_offset,
                                   descendant_snap,
@@ -238,13 +242,13 @@ int main(int argc, char *argv[]){
              }
           }
           else{
-             SID_fskip(sizeof(int),  7,&fp_in_trees);
              SID_fskip(sizeof(int),  4,&fp_in_bridge_match); // 3+1 'casue we're skipping n_subgroups_group too
              SID_fskip(sizeof(float),2,&fp_in_bridge_match); 
           }
           SID_fread_all(&n_subgroups_group,sizeof(int),1,&fp_in_trees);
           if(mode==MATCH_SUBGROUPS){
              int j_subgroup;
+             int group_id=halo_id;
              for(j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
                 // Read subgroups
                 SID_fread_all(&halo_id,                sizeof(int),  1,&fp_in_trees);
@@ -261,7 +265,11 @@ int main(int argc, char *argv[]){
                 SID_fread_all(&bridge_match_score_prog,sizeof(float),1,&fp_in_bridge_match);
                 // Write match
                 int flag_is_halo=(i_read==i_read_in && i_halo==i_subgroup);
-                if(trees->snap_list[bridge_match_file]==i_read_in && bridge_match_index==i_halo || flag_is_halo){
+                if(bridge_match_file>=0){
+                   if(trees->snap_list[bridge_match_file]==i_read_in && bridge_match_index==i_halo)
+                      flag_is_halo=TRUE;
+                }
+                if(flag_is_halo){
                    char *halo_type_string=NULL;
                    tree_case_flags_text(halo_type,"+",&halo_type_string);
                    fread_catalog_file(&fp_properties,NULL,&properties,NULL,i_subgroup);
@@ -276,11 +284,13 @@ int main(int argc, char *argv[]){
                    else
                       bridge_match_snap=-1;
                    if(flag_is_halo)
-                      fprintf(fp_out,"%3d %7d %7d %5.2lf %7d %3d %3d %7d %7d %3s %7s %7d %s\n",
+                      fprintf(fp_out,"%3d %7d %7d %7d %5.2lf %7d %7d %3d %3d %7d %7d %3s %7s %7d %s\n",
                                      i_read,
                                      i_subgroup,
                                      halo_id,
+                                     group_id,
                                      take_log10(properties.M_vir),
+                                     halo_n_particles_peak,
                                      halo_tree_id,
                                      halo_file_offset,
                                      descendant_snap,
@@ -291,11 +301,13 @@ int main(int argc, char *argv[]){
                                      halo_type,
                                      halo_type_string);
                    else
-                      fprintf(fp_out,"%3d %7d %7d %5.2lf %7d %3d %3d %7d %7d %3d %7d %7d %s\n",
+                      fprintf(fp_out,"%3d %7d %7d %7d %5.2lf %7d %7d %3d %3d %7d %7d %3s %7s %7d %s\n",
                                      i_read,
                                      i_subgroup,
                                      halo_id,
+                                     group_id,
                                      take_log10(properties.M_vir),
+                                     halo_n_particles_peak,
                                      halo_tree_id,
                                      halo_file_offset,
                                      descendant_snap,
