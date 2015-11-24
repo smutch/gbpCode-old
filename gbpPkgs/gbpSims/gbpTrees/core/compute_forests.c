@@ -213,7 +213,7 @@ void compute_forests(char *filename_root_out,int n_search_forests){
      int n_trees_subgroup_i;
      int n_halos_groups_unused=0;
      int n_halos_subgroups_unused=0;
-     int tree_read_buffer[7];
+     int tree_read_buffer[8];
      SID_log("Generating mapping of trees to forests...",SID_LOG_OPEN|SID_LOG_TIMER);
      SID_log("Joining trees into forests...",SID_LOG_OPEN|SID_LOG_TIMER);
      for(i_read=i_read_stop,n_halos_groups=0,n_halos_subgroups=0,j_read=0;
