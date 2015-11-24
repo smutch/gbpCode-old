@@ -328,7 +328,8 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                                       n_subgroups_max,
                                       flag_match_subgroups);
 
-       // Use back-matching to identify bridged and fragmented halos (also, read current snapshot halo sizes here)...
+       // Use back-matching to identify bridged halos.  Main progenitors of bridges are dealt
+       //    with and current-snapshot halo sizes are read as well.
        if(flag_fix_bridges)
           identify_bridges(halos,
                            halos_i,
