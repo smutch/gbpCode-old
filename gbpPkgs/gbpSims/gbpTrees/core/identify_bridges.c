@@ -127,7 +127,7 @@ void identify_bridges(tree_horizontal_info **halos,
                     match_id,
                     match_score,
                     match_index,
-                    NULL,
+                    match_flag_two_way,
                     F_GOODNESS_OF_MATCH);
 
        // For all the halos in i_file_1 with back-matches ...
@@ -151,9 +151,10 @@ void identify_bridges(tree_horizontal_info **halos,
                 }
                 // ... if not, add it
                 if(flag_continue){
-                   back_matches[halos_i[i_halo].n_back_matches].halo =&(halos[j_file_1%n_wrap][match_index[j_halo]]);
-                   back_matches[halos_i[i_halo].n_back_matches].file =j_file_1;
-                   back_matches[halos_i[i_halo].n_back_matches].score=match_score[match_index[j_halo]];
+                   back_matches[halos_i[i_halo].n_back_matches].halo        =&(halos[j_file_1%n_wrap][match_index[j_halo]]);
+                   back_matches[halos_i[i_halo].n_back_matches].score       =match_score[match_index[j_halo]];
+                   back_matches[halos_i[i_halo].n_back_matches].flag_two_way=match_flag_two_way[match_index[j_halo]];
+                   back_matches[halos_i[i_halo].n_back_matches].file        =j_file_1;
                    (halos_i[i_halo].n_back_matches)++;
                 }
                 j_halo++;
@@ -171,9 +172,10 @@ void identify_bridges(tree_horizontal_info **halos,
                 }
                 // ... if not, add it
                 if(flag_continue){
-                   back_matches[halos_i[i_halo].n_back_matches].halo =&(halos[j_file_1%n_wrap][match_index[j_halo]]);
-                   back_matches[halos_i[i_halo].n_back_matches].file =j_file_1;
-                   back_matches[halos_i[i_halo].n_back_matches].score=match_score[match_index[j_halo]];
+                   back_matches[halos_i[i_halo].n_back_matches].halo        =&(halos[j_file_1%n_wrap][match_index[j_halo]]);
+                   back_matches[halos_i[i_halo].n_back_matches].score       =match_score[match_index[j_halo]];
+                   back_matches[halos_i[i_halo].n_back_matches].flag_two_way=match_flag_two_way[match_index[j_halo]];
+                   back_matches[halos_i[i_halo].n_back_matches].file        =j_file_1;
                    (halos_i[i_halo].n_back_matches)++;
                 }
                 j_halo++;
@@ -267,6 +269,19 @@ void identify_bridges(tree_horizontal_info **halos,
                 back_matches[j_halo_sorted].score;
              l_halo++;
           }
+       }
+
+       // For bridged halos, set the main progenitor now to be the most massive back match.
+       //   This is the prefered choice (vs the back match with the best match score for example)
+       //   because it minimizes errors that get made later when estimating peak halo sizes, 
+       //   particularly when bridged halos are satellites, rather than centrals, of a system.
+       if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGED)){
+          halos_i[i_halo].forematch_first.halo          =halos_i[i_halo].back_matches[0].halo;
+          halos_i[i_halo].forematch_first.score         =halos_i[i_halo].back_matches[0].score;
+          halos_i[i_halo].forematch_first.flag_two_way  =halos_i[i_halo].back_matches[0].flag_two_way;
+          memcpy(&(halos_i[i_halo].forematch_default),&(halos_i[i_halo].forematch_first.halo),sizeof(match_info));
+          halos_i[i_halo].type&=(~TREE_CASE_UNPROCESSED);
+          halos_i[i_halo].type|=  TREE_CASE_SET_BY_BACKMATCH;
        }
 
        // Clean-up

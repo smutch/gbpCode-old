@@ -62,7 +62,7 @@ void construct_progenitors(tree_horizontal_info **halos,
                    match_flag_two_way,
                    F_GOODNESS_OF_MATCH);
 
-      // Store halo sizes
+      // Store halo sizes.  If flag_fix_bridges is on, then this was already done before.
       if(!flag_fix_bridges && i_search==0){
          for(i_halo=0;i_halo<(*n_halos_1_matches);i_halo++)
             halos[i_file%n_wrap][i_halo].n_particles=n_particles[i_halo];
@@ -117,7 +117,7 @@ void construct_progenitors(tree_horizontal_info **halos,
                      tree_horizontal_info *current_back_match=back_matches[k_halo].halo;
                      // If this back match is in the snapshot we are currently checking
                      if(current_back_match->file==j_file_2 && current_back_match->index==match_id[i_halo]){
-                        // If this is a good match to an emerged halo, then set a new default.  Do not set the UNPROCESSED flag
+                        // If this is a good match to an emerged halo, then set a new default.  Do not remove the UNPROCESSED flag
                         //    though, because we still want to check emerged halo candidates in the descendant line of the new match
                         if(check_validity_of_emerged_match(&(halos_i[i_halo]),&(back_matches[k_halo]),match_flag_two_way[i_halo],n_search)){
                            halos_i[i_halo].forematch_default.halo        =&(halos[j_file_2%n_wrap][current_back_match->index]);

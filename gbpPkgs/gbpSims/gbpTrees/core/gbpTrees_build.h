@@ -54,60 +54,65 @@
                                                        //    and is not identified as the BRIDGE's main descendant
 #define TREE_CASE_MATCHED_TO_EMERGED           TTTP16  // Set when a halo is matched to an emerged halo
 #define TREE_CASE_2WAY_MATCH                   TTTP17  // Set when the match between a halo and it's descendant is mutual
-#define TREE_CASE_GHOST                        TTTP18  // Marks ghost halos in ghost-populated trees
-#define TREE_CASE_GHOST_NULL                   TTTP19  // Marks a ghost halo where a subgroup is it's own group.
+#define TREE_CASE_SET_BY_BACKMATCH             TTTP18  // Set in cases where a descendant was set using backmatch information, rather
+                                                       //    than forematch information.  In these cases, the halo's given matching score and
+                                                       //    2way flag are from the back match info, not the forematch info.
+#define TREE_CASE_GHOST                        TTTP19  // Marks ghost halos in ghost-populated trees
+#define TREE_CASE_GHOST_NULL                   TTTP20  // Marks a ghost halo where a subgroup is it's own group.
                                                        //    This is a default behaviour that occurs when a group is strayed but one of 
                                                        //    it's subgroups isn't.
-#define TREE_CASE_REINIT_DOMINANT              TTTP20  // For internal use.  This should never be seen in the output.
-#define TREE_CASE_UNPROCESSED                  TTTP21  // For internal use.  This should never be seen in the output.
-#define TREE_CASE_INVALID                      TTTP22  // For internal use.  This should never be seen in the output.
+#define TREE_CASE_REINIT_DOMINANT              TTTP21  // For internal use.  This should never be seen in the output.
+#define TREE_CASE_UNPROCESSED                  TTTP22  // For internal use.  This should never be seen in the output.
+#define TREE_CASE_INVALID                      TTTP23  // For internal use.  This should never be seen in the output.
 
 #ifdef _MAIN
-   int   n_tree_case_flag_list=22;
+   int   n_tree_case_flag_list=23;
    int   tree_case_flag_list[]={
-                  TREE_CASE_2WAY_MATCH,
                   TREE_CASE_NO_PROGENITORS,
+                  TREE_CASE_STRAYED,
+                  TREE_CASE_DROPPED,
+                  TREE_CASE_EMERGED,
+                  TREE_CASE_EMERGED_CANDIDATE,
+                  TREE_CASE_MATCHED_TO_EMERGED,
+                  TREE_CASE_MAIN_PROGENITOR,
+                  TREE_CASE_2WAY_MATCH,
+                  TREE_CASE_SET_BY_BACKMATCH,
+                  TREE_CASE_MOST_MASSIVE,
+                  TREE_CASE_DOMINANT,
+                  TREE_CASE_BRIDGED,
                   TREE_CASE_FRAGMENTED_NEW,
                   TREE_CASE_FRAGMENTED_STRAYED,
                   TREE_CASE_FRAGMENTED_RETURNED,
                   TREE_CASE_FRAGMENTED_EXCHANGED,
-                  TREE_CASE_MAIN_PROGENITOR,
-                  TREE_CASE_MOST_MASSIVE,
-                  TREE_CASE_DOMINANT,
                   TREE_CASE_MERGER_PRIMARY,
                   TREE_CASE_MERGER,
-                  TREE_CASE_BRIDGED,
-                  TREE_CASE_MATCHED_TO_EMERGED,
                   TREE_CASE_REMNANT,
-                  TREE_CASE_DROPPED,
-                  TREE_CASE_EMERGED,
-                  TREE_CASE_EMERGED_CANDIDATE,
                   TREE_CASE_GHOST,
                   TREE_CASE_GHOST_NULL,
-                  TREE_CASE_STRAYED,
                   TREE_CASE_UNPROCESSED,
                   TREE_CASE_INVALID};
    const char *tree_case_flag_list_text[]={
-                        "2WAY",
                         "NO_PROGENITORS",
+                        "STRAYED",
+                        "DROPPED",
+                        "EMERGED",
+                        "EMERGED_CANDIDATE",
+                        "MATCHED_TO_EMERGED",
+                        "MAIN_PROGENITOR",
+                        "2WAY",
+                        "SET_BY_BACKMATCH",
+                        "MOST_MASSIVE",
+                        "DOMINANT",
+                        "BRIDGED",
                         "FRAGMENTED_NEW",
                         "FRAGMENTED_STRAYED",
                         "FRAGMENTED_RETURNED",
                         "FRAGMENTED_EXCHANGED",
-                        "MAIN_PROGENITOR",
-                        "MOST_MASSIVE",
-                        "DOMINANT",
                         "MERGER_PRIMARY",
                         "MERGER",
-                        "BRIDGED",
-                        "MATCHED_TO_EMERGED",
                         "REMNANT",
-                        "DROPPED",
-                        "EMERGED",
-                        "EMERGED_CANDIDATE",
                         "GHOST",
                         "GHOST_NULL",
-                        "STRAYED",
                         "UNPROCESSED",
                         "INVALID"};
 #else
@@ -195,6 +200,7 @@ typedef struct back_match_info back_match_info;
 struct back_match_info{
   tree_horizontal_info *halo;
   float                 score;
+  int                   flag_two_way;
   int                   file;
 };
 
