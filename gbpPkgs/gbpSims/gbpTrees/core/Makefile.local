@@ -89,7 +89,7 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    add_substructure_info.o                       \
 	    identify_bridges.o                            \
 	    identify_emerged_halo_candidates.o            \
-	    construct_progenitors.o                       \
+	    identify_progenitors.o                        \
 	    set_largest_descendants.o                     \
 	    finalize_trees_horizontal.o                   \
 	    init_trees_horizontal_stats.o                 \

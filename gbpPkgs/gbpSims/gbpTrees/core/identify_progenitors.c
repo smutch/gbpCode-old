@@ -4,32 +4,32 @@
 #include <gbpLib.h>
 #include <gbpTrees_build.h>
 
-void construct_progenitors(tree_horizontal_info **halos,
-                           tree_horizontal_info  *halos_i,
-                           int   **n_subgroups_group,
-                           int     n_halos_i,
-                           int    *match_id,
-                           float  *match_score,
-                           size_t *match_index,
-                           char   *match_flag_two_way,
-                           int    *n_particles,
-                           int     i_file,
-                           int     i_read,
-                           int     i_read_start,
-                           int     i_read_stop,
-                           int     i_read_step,
-                           int     n_search,
-                           int     n_wrap,
-                           int     n_halos_max,
-                           int     n_files,
-                           int     flag_fix_bridges,
-                           int    *max_id,
-                           int    *n_halos_1_matches,
-                           int    *n_halos_2_matches,
-                           char   *filename_root_matches,
-                           char   *group_text_prefix,
-                           int     flag_match_subgroups){
-   SID_log("Constructing progenitors...",SID_LOG_OPEN|SID_LOG_TIMER);
+void identify_progenitors(tree_horizontal_info **halos,
+                          tree_horizontal_info  *halos_i,
+                          int   **n_subgroups_group,
+                          int     n_halos_i,
+                          int    *match_id,
+                          float  *match_score,
+                          size_t *match_index,
+                          char   *match_flag_two_way,
+                          int    *n_particles,
+                          int     i_file,
+                          int     i_read,
+                          int     i_read_start,
+                          int     i_read_stop,
+                          int     i_read_step,
+                          int     n_search,
+                          int     n_wrap,
+                          int     n_halos_max,
+                          int     n_files,
+                          int     flag_fix_bridges,
+                          int    *max_id,
+                          int    *n_halos_1_matches,
+                          int    *n_halos_2_matches,
+                          char   *filename_root_matches,
+                          char   *group_text_prefix,
+                          int     flag_match_subgroups){
+   SID_log("Identifying progenitors...",SID_LOG_OPEN|SID_LOG_TIMER);
    int j_file_1;
    int j_file_2;
    int j_read_1;

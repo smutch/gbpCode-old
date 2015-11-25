@@ -58,7 +58,7 @@ void finalize_trees_horizontal(int                    n_halos_1_matches,
 
    // ... then assign flags for halos not successfully processed.  Call them strays.
    //     These will include halos which have stopped existing without merging with
-   //     anything over the search range.  Do some other final cleaning of the flags as well.
+   //     anything over the search range.  Do some other adjustments of the flags as well.
    for(int i_halo=0;i_halo<n_halos_i;i_halo++){
       if(halos_i[i_halo].descendant.halo==NULL){
          halos_i[i_halo].type   |=TREE_CASE_STRAYED;

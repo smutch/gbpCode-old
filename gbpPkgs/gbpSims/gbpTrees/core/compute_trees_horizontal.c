@@ -352,31 +352,31 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                            flag_match_subgroups);
 
        // Perform forward-matching
-       construct_progenitors(halos,
-                             halos_i,
-                             n_subgroups_group,
-                             n_halos_i,
-                             match_id,
-                             match_score,
-                             match_index,
-                             match_flag_two_way,
-                             n_particles,
-                             i_file,
-                             i_read,
-                             i_read_start,
-                             i_read_stop,
-                             i_read_step,
-                             n_search,
-                             n_wrap,
-                             n_halos_max,
-                             n_files,
-                             flag_fix_bridges,
-                             &max_id,
-                             &n_halos_1_matches,
-                             &n_halos_2_matches,
-                             filename_root_matches,
-                             group_text_prefix,
-                             flag_match_subgroups);
+       identify_progenitors(halos,
+                            halos_i,
+                            n_subgroups_group,
+                            n_halos_i,
+                            match_id,
+                            match_score,
+                            match_index,
+                            match_flag_two_way,
+                            n_particles,
+                            i_file,
+                            i_read,
+                            i_read_start,
+                            i_read_stop,
+                            i_read_step,
+                            n_search,
+                            n_wrap,
+                            n_halos_max,
+                            n_files,
+                            flag_fix_bridges,
+                            &max_id,
+                            &n_halos_1_matches,
+                            &n_halos_2_matches,
+                            filename_root_matches,
+                            group_text_prefix,
+                            flag_match_subgroups);
 
        // Add MOST_MASSIVE substructure flags
        if(flag_match_subgroups==MATCH_SUBGROUPS)
@@ -400,7 +400,8 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                                  &max_id,
                                  &max_tree_id);
  
-       // Now that we know which halos are main progenitors, we can set the n_partices_largest_descendant values.
+       // Now that we know which halos are main progenitors, we
+       //    can set the n_partices_largest_descendant values.
        set_largest_descendants(halos_i,n_halos_i);
 
        // Now that we know which halos are the main progenitors of this
