@@ -83,12 +83,15 @@ void identify_progenitors(tree_horizontal_info **halos,
          //   particularly when bridged halos are satellites of a system and the DOMINANT halo
          //   mechanism can not be used to prevent large mass excursions.
          if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGED)){
-            int i_best=0;
-            halos_i[i_halo].forematch_first.halo          =halos_i[i_halo].back_matches[i_best].halo;
-            halos_i[i_halo].forematch_first.score         =halos_i[i_halo].back_matches[i_best].score;
-            halos_i[i_halo].forematch_first.flag_two_way  =halos_i[i_halo].back_matches[i_best].flag_two_way;
-            memcpy(&(halos_i[i_halo].forematch_default),&(halos_i[i_halo].forematch_first.halo),sizeof(match_info));
-            halos_i[i_halo].type|=TREE_CASE_SET_BY_BACKMATCH; // later, turn this off if default match != first match is used
+            if(!check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_UNPROCESSED)){
+               int i_best=0; // should this be changed if another back match is more immediate?
+               halos_i[i_halo].forematch_first.halo          =halos_i[i_halo].back_matches[i_best].halo;
+               halos_i[i_halo].forematch_first.score         =halos_i[i_halo].back_matches[i_best].score;
+               halos_i[i_halo].forematch_first.flag_two_way  =halos_i[i_halo].back_matches[i_best].flag_two_way;
+               memcpy(&(halos_i[i_halo].forematch_default),&(halos_i[i_halo].forematch_first.halo),sizeof(match_info));
+               halos_i[i_halo].type|=  TREE_CASE_SET_BY_BACKMATCH; // later, turn this off if default match != first match is used
+               halos_i[i_halo].type&=(~TREE_CASE_UNPROCESSED); 
+            }
          }
          // ... else, if this halo hasn't been forward-matched to anything yet ...
          else if(forematch_i==NULL){
