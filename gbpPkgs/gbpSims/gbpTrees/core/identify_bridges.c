@@ -233,9 +233,9 @@ void identify_bridges(tree_horizontal_info **halos,
        }
 
        // Remove any back matches which have already been assigned to a halo.  This makes
-       //    sure that the backmatch is uniquely set to the most immediate backmatched halo.
-       //    This is important (for example) in cases where a halo is repeatedly emerging from a bridge.
-       //    We only want to use this as an emerged candidate for the most recent instance.
+       //   sure that the backmatch is uniquely set to the most immediate backmatched halo.
+       //   This is important (for example) in cases where a halo is repeatedly emerging from a bridge.
+       //   We only want to use this as an emerged candidate for the most recent instance.
        for(j_halo=0;j_halo<halos_i[i_halo].n_back_matches;j_halo++){
           if(backmatch_keep[j_halo]){
              int backmatch_file =back_matches[j_halo].halo->file;
@@ -284,4 +284,3 @@ void identify_bridges(tree_horizontal_info **halos,
     SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
     SID_log("Done.",SID_LOG_CLOSE);
 }
-

@@ -7,6 +7,7 @@
 #include <gbpMath.h>
 #include <gbpTrees_build.h>
 
+// This must not be called until the main progenitors for this snapshot have been finalized.
 void identify_emerged_halo_candidates(tree_horizontal_info *halos_i,
                                       int                   n_halos_i,
                                       int                   n_search){
@@ -22,7 +23,7 @@ void identify_emerged_halo_candidates(tree_horizontal_info *halos_i,
             // ... all but the one identified as it's main progenitor are candidate emerged halos.
             if(back_match_i_halo->id!=halos_i[i_halo].id){
                // Check that this backmatch does not have an immediate progenitor from this snapshot.
-               //    This can happen when that progenitor is not a 2way match.
+               //    This can happen when that halo is not a 2way match with it's progenitor.
                int flag_pass=TRUE;
                if(back_match_i_halo->first_progenitor.halo!=NULL){
                   int offset=(back_match_i_halo->file)-(back_match_i_halo->first_progenitor.halo->file);
