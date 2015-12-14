@@ -29,7 +29,7 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    minimum_match_score.o                         \
 	    maximum_match_score.o                         \
 	    match_score_f_goodness.o                      \
-	    check_goodness_of_match.o                     \
+	    check_validity_of_match.o                     \
 	    check_validity_of_emerged_match.o             \
 	    check_validity_of_main_progenitor.o           \
 	    check_if_halo_is_descendant.o                 \

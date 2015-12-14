@@ -519,7 +519,7 @@ int check_for_matching_input_files(const char *filename_root_in,int i_read);
 float maximum_match_score(double n_particles);
 float minimum_match_score(double n_particles);
 float match_score_f_goodness(float match_score,int n_particles_in);
-int check_goodness_of_match(int n_particles_i,int n_particles_j,float match_score,double f_goodness_of_match);
+int check_validity_of_match(int n_particles_i,int n_particles_j,float match_score,double f_goodness_of_match);
 
 int check_if_halo_is_descendant(tree_horizontal_info *possible_progenitor,
                                 tree_horizontal_info *possible_descendant,
