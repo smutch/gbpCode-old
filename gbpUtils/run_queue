@@ -2,7 +2,7 @@
 
 if ($#argv < 4) then
   echo
-  echo 'Syntax: run_mpi wall_time_in_hrs pmem mpi_command ...'
+  echo 'Syntax: run_mpi wall_time_in_hrs pmem [queue] mpi_command ...'
   echo '------'
   echo
   exit(1)
