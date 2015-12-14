@@ -22,8 +22,7 @@ int find_treenode_main_progenitor(tree_info *trees,tree_node_info *halo,tree_nod
          }
          if(track_halo!=NULL){
             if(track_halo->snap_tree==target_snap){
-               // return NULL if the halo is it's own main progenitor
-               if(track_halo!=halo)
+               //if(track_halo!=halo) // return NULL if the halo is it's own main progenitor
                   (*main_progenitor)=track_halo;
                return(TRUE);
             }

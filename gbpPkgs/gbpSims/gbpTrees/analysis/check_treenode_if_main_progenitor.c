@@ -21,4 +21,3 @@ int check_treenode_if_main_progenitor(tree_node_info *halo){
    }
    return(FALSE);
 }
-

@@ -12,7 +12,7 @@
 void analyze_halos_and_N_subhalos(tree_info  *trees,
                                   const char *filename_out_root,
                                   const char *catalog_root,
-                                  double      z_obs_exact,
+                                  double      z_select_exact,
                                   double      M_cut_lo,
                                   double      M_cut_hi,
                                   int         n_subgroups_track_max){
@@ -24,27 +24,27 @@ void analyze_halos_and_N_subhalos(tree_info  *trees,
   halo_properties_info **group_properties   =(halo_properties_info **)ADaPS_fetch(trees->data,"properties_groups");
   halo_properties_info **subgroup_properties=(halo_properties_info **)ADaPS_fetch(trees->data,"properties_subgroups");
 
-  // Determine the best z_obs snapshot
-  int    i_z_obs=find_treesnap_z(trees,z_obs_exact);
-  int    i_z_0  =trees->n_snaps-1;
-  double z_obs  =trees->z_list[i_z_obs];
-  double t_obs  =trees->t_list[i_z_obs];
-  SID_log("The snapshot corresponding best to z=%4.2f is #%03d (z=%4.2f).",SID_LOG_COMMENT,z_obs_exact,trees->snap_list[i_z_obs],z_obs);
+  // Determine the best z_select snapshot
+  int    i_z_select=find_treesnap_z(trees,z_select_exact);
+  int    i_z_0     =trees->n_snaps-1;
+  double z_select  =trees->z_list[i_z_select];
+  double t_select  =trees->t_list[i_z_select];
+  SID_log("The snapshot corresponding best to z=%4.2f is #%03d (z=%4.2f).",SID_LOG_COMMENT,z_select_exact,trees->snap_list[i_z_select],z_select);
 
   // Allocate the list arrays
-  tree_node_info  **list_groups       =(tree_node_info  **)SID_malloc(sizeof(tree_node_info  *)*trees->n_groups_snap_local[i_z_obs]);
-  tree_node_info  **list_subgroups_all=(tree_node_info  **)SID_malloc(sizeof(tree_node_info  *)*trees->n_groups_snap_local[i_z_obs]);
+  tree_node_info  **list_groups       =(tree_node_info  **)SID_malloc(sizeof(tree_node_info  *)*trees->n_groups_snap_local[i_z_select]);
+  tree_node_info  **list_subgroups_all=(tree_node_info  **)SID_malloc(sizeof(tree_node_info  *)*trees->n_groups_snap_local[i_z_select]);
   tree_node_info ***list_subgroups    =(tree_node_info ***)SID_malloc(sizeof(tree_node_info **)*n_subgroups_track_max);
   for(int i_track=0;i_track<n_subgroups_track_max;i_track++)
-     list_subgroups[i_track]=(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*trees->n_groups_snap_local[i_z_obs]);
+     list_subgroups[i_track]=(tree_node_info **)SID_malloc(sizeof(tree_node_info *)*trees->n_groups_snap_local[i_z_select]);
 
-  // Select z_obs systems
+  // Select z_select systems
   tree_node_info *current_group;
   int  n_list_groups       =0;
   int  n_list_subgroups_all=0;
   int *n_list_subgroups    =(int *)SID_calloc(sizeof(int)*n_subgroups_track_max);
-  SID_log("Selecting z=%4.2f systems...",SID_LOG_OPEN,trees->z_list[i_z_obs]);
-  current_group=trees->first_neighbour_groups[i_z_obs];
+  SID_log("Selecting z=%4.2f systems...",SID_LOG_OPEN,trees->z_list[i_z_select]);
+  current_group=trees->first_neighbour_groups[i_z_select];
   while(current_group!=NULL){
      halo_properties_info *current_group_properties=&(group_properties[current_group->snap_tree][current_group->neighbour_index]);
      if(current_group_properties->M_vir>=M_cut_lo && current_group_properties->M_vir<=M_cut_hi){
@@ -68,7 +68,7 @@ void analyze_halos_and_N_subhalos(tree_info  *trees,
   SID_log("%d groups found...",SID_LOG_CONTINUE,n_list_groups);
   SID_log("Done.",SID_LOG_CLOSE);
 
-  // Write properties and tracks for selected z_obs groups and subgroups
+  // Write properties and tracks for selected z_select groups and subgroups
   char catalog_name[32];
   sprintf(catalog_name,"%s_groups",catalog_root);
   write_tree_branches(trees,list_groups,n_list_groups,TRUE,filename_out_root,catalog_name);

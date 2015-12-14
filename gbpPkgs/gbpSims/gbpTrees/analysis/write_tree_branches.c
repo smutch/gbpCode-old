@@ -106,7 +106,7 @@ void write_tree_branches(tree_info *trees,tree_node_info **list_in,int n_list_in
         char write_name[32];
         switch(i_write){
            case 0:
-              sprintf(write_name,"obs");
+              sprintf(write_name,"select");
               break;
            case 1:
               sprintf(write_name,"main_progenitor");
@@ -142,10 +142,10 @@ void write_tree_branches(tree_info *trees,tree_node_info **list_in,int n_list_in
         fprintf(fp_props_out,"#        (%02d): t_%s\n",                               i_column,write_name);i_column++;
         fprintf(fp_props_out,"#        (%02d): z_%s\n",                               i_column,write_name);i_column++;
         fprintf(fp_props_out,"#        (%02d): log_10(M_%s(z=z_%s) [M_sol])\n",       i_column,write_name,write_name);i_column++;
+        fprintf(fp_props_out,"#        (%02d): n_p(z=z_%s)\n",                        i_column,write_name);i_column++;
         if(!flag_processing_groups){
         fprintf(fp_props_out,"#        (%02d): log_10(M_parent_%s(z=z_%s) [M_sol])\n",i_column,write_name,write_name);i_column++;
         }
-        fprintf(fp_props_out,"#        (%02d): n_p(z=z_%s)\n",                        i_column,write_name);i_column++;
      }
   }
 
@@ -185,17 +185,17 @@ void write_tree_branches(tree_info *trees,tree_node_info **list_in,int n_list_in
            tree_node_info *current_halo=list_in[i_list];
 
            // Find some special nodes for this listed halo
-           tree_node_info *descendant_last;
-           tree_node_info *progenitor_main;
-           tree_node_info *progenitor_peak_mass;
-           tree_node_info *progenitor_formation;
-           tree_node_info *progenitor_first_accretion;
-           tree_node_info *progenitor_last_accretion;
-           find_treenode_branch_root    (trees,current_halo,&descendant_last);
-           find_treenode_main_progenitor(trees,current_halo,&progenitor_main);
-           find_treenode_accretion      (trees,current_halo,&progenitor_first_accretion,&progenitor_last_accretion);
-           find_treenode_M_peak         (trees,current_halo,&progenitor_peak_mass);
-           find_treenode_formation      (trees,current_halo,0.5,&progenitor_formation);
+           tree_node_info *descendant_last           =NULL;
+           tree_node_info *progenitor_main           =NULL;
+           tree_node_info *progenitor_peak_mass      =NULL;
+           tree_node_info *progenitor_formation      =NULL;
+           tree_node_info *progenitor_first_accretion=NULL;
+           tree_node_info *progenitor_last_accretion =NULL;
+           find_treenode_branch_root    (trees,current_halo,            &descendant_last);
+           find_treenode_main_progenitor(trees,current_halo,            &progenitor_main);
+           find_treenode_accretion      (trees,current_halo,            &progenitor_first_accretion,&progenitor_last_accretion);
+           find_treenode_M_peak         (trees,descendant_last,         &progenitor_peak_mass);
+           find_treenode_formation      (trees,progenitor_peak_mass,0.5,&progenitor_formation);
 
            if(descendant_last->snap_tree==(trees->n_snaps-1))
               descendant_last=NULL;
@@ -223,7 +223,7 @@ void write_tree_branches(tree_info *trees,tree_node_info **list_in,int n_list_in
                  char write_name[32];
                  switch(i_write){
                     case 0:
-                       sprintf(write_name,"obs");
+                       sprintf(write_name,"select");
                        node_write=current_halo;
                        break;
                     case 1:
@@ -338,7 +338,10 @@ void write_tree_branches(tree_info *trees,tree_node_info **list_in,int n_list_in
                  vx_track[n_track] =halo_properties[i_z_track[n_track]][idx_track[n_track]].velocity_COM[0];
                  vy_track[n_track] =halo_properties[i_z_track[n_track]][idx_track[n_track]].velocity_COM[1];
                  vz_track[n_track] =halo_properties[i_z_track[n_track]][idx_track[n_track]].velocity_COM[2];
-                 M_track[n_track]  =halo_properties[i_z_track[n_track]][idx_track[n_track]].M_vir;
+                 if(!check_mode_for_flag(current_track->tree_case,TREE_CASE_MOST_MASSIVE) || check_mode_for_flag(current_track->tree_case,TREE_CASE_DOMINANT))
+                    M_track[n_track]  =halo_properties[i_z_track[n_track]][idx_track[n_track]].M_vir;
+                 else
+                    M_track[n_track]  =-1.;
                  n_track++;
                  current_track=current_track->descendant;
               }

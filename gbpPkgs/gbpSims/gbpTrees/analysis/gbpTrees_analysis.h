@@ -269,6 +269,8 @@ int    fetch_treenode_n_particles(tree_info *trees,tree_node_info *halo);
 int    fetch_treenode_n_particles_peak(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_list_local_log_sigma_vx(tree_info *trees,treenode_list_info *list);
 int    fetch_treenode_progenitor_rank(tree_info *trees,tree_node_info *halo);
+double fetch_treenode_redshift(tree_info *trees,tree_node_info *halo);
+
 int    find_treesnap_z(tree_info *trees,double z_exact);
 int    find_treesnap_snap(tree_info *trees,int snap);
 void   write_treenode_list_markers           (tree_info *trees,const char *filename_out_root,treenode_list_info *list);

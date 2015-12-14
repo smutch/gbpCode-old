@@ -16,9 +16,10 @@ void average_tree_branches(const char *catalog_name){
   FILE *fp_tracks_in=NULL;
   if(SID.I_am_Master){
      // Create and open the output files
-     char   filename_tracks_out[MAX_FILENAME_LENGTH];
-     sprintf(filename_tracks_out,"%s_tracks.dat",catalog_name);
-     fp_tracks_in=fopen(filename_tracks_out,"r");
+     char   filename_tracks_in[MAX_FILENAME_LENGTH];
+     sprintf(filename_tracks_in,"%s_tracks.dat",catalog_name);
+     SID_log("Processing {%s}...",SID_LOG_OPEN,filename_tracks_in);
+     fp_tracks_in=fopen(filename_tracks_in,"r");
 
      // Write header for tracks file
      int n_list;
@@ -145,6 +146,7 @@ void average_tree_branches(const char *catalog_name){
      SID_free(SID_FARG snap_list);
      SID_free(SID_FARG z_list);
      SID_free(SID_FARG t_list);
+     SID_log("Done.",SID_LOG_CLOSE);
   } // if I_am_Master
   SID_Barrier(SID.COMM_WORLD);
 

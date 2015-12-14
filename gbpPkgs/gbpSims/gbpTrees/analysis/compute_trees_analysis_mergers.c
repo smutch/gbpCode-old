@@ -52,6 +52,7 @@ void compute_trees_analysis_mergers(tree_info *trees,char *filename_out_root_in,
   init_treenode_list("mergers",n_mergers,&list_halos);
   int    *secondary_peak_idx; init_treenode_info_data(list_halos,SID_FARG secondary_peak_idx, SID_INT,   "Secondary peak index");
   int    *secondary_peak_file;init_treenode_info_data(list_halos,SID_FARG secondary_peak_file,SID_INT,   "Secondary peak file");
+  int    *primary_peak_id;    init_treenode_info_data(list_halos,SID_FARG primary_peak_id,    SID_INT,   "Primary   peak id");
   int    *primary_peak_idx;   init_treenode_info_data(list_halos,SID_FARG primary_peak_idx,   SID_INT,   "Primary   peak index");
   int    *primary_peak_file;  init_treenode_info_data(list_halos,SID_FARG primary_peak_file,  SID_INT,   "Primary   peak file");
   int    *secondary_id;       init_treenode_info_data(list_halos,SID_FARG secondary_id,       SID_INT,   "Secondary      id");
@@ -70,6 +71,7 @@ void compute_trees_analysis_mergers(tree_info *trees,char *filename_out_root_in,
   int    *secondary_peak_n_p; init_treenode_info_data(list_halos,SID_FARG secondary_peak_n_p, SID_INT,   "Secondary peak n_p");
   int    *primary_peak_n_p;   init_treenode_info_data(list_halos,SID_FARG primary_peak_n_p,   SID_INT,   "Primary   peak n_p");
   int    *remnant_n_p;        init_treenode_info_data(list_halos,SID_FARG remnant_n_p,        SID_INT,   "Remnant   peak n_p");
+  double *z_merge;            init_treenode_info_data(list_halos,SID_FARG z_merge,            SID_DOUBLE,"z_merge");
 
   // Create the list
   SID_log("Creating lists...",SID_LOG_OPEN|SID_LOG_TIMER);
@@ -91,6 +93,7 @@ void compute_trees_analysis_mergers(tree_info *trees,char *filename_out_root_in,
            // Set merger data
            secondary_peak_idx [i_list]=fetch_treenode_file_index      (trees,secondary_halo_peak);
            secondary_peak_file[i_list]=fetch_treenode_snap_tree       (trees,secondary_halo_peak);
+           primary_peak_id    [i_list]=fetch_treenode_halo_ID         (trees,primary_halo_peak);
            primary_peak_idx   [i_list]=fetch_treenode_file_index      (trees,primary_halo_peak);
            primary_peak_file  [i_list]=fetch_treenode_snap_tree       (trees,primary_halo_peak);
            secondary_id       [i_list]=fetch_treenode_halo_ID         (trees,secondary_halo);
@@ -109,6 +112,7 @@ void compute_trees_analysis_mergers(tree_info *trees,char *filename_out_root_in,
            secondary_peak_n_p [i_list]=fetch_treenode_n_particles_peak(trees,secondary_halo_peak);
            primary_peak_n_p   [i_list]=fetch_treenode_n_particles_peak(trees,primary_halo_peak);
            remnant_n_p        [i_list]=fetch_treenode_n_particles_peak(trees,remnant_halo);
+           z_merge            [i_list]=fetch_treenode_redshift        (trees,secondary_halo_peak);
 
            // Add halos to lists
            add_to_treenode_list(list_halos,current_halo);
