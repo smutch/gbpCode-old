@@ -18,10 +18,10 @@ void finalize_trees_horizontal(int                    n_halos_1_matches,
          // First, if this halo's initial match is the best from this
          //   snapshot to a halo with no progenitors yet, use it to
          //   make sure that every halo with a match gets a progenitor 
-         //   (rather then let all matches get converted to emerged 
+         //   (rather than let all matches get converted to emerged 
          //   halos later).  If a halo has a default match, it must
          //   have a first match (by construction) so no need to check
-         //   for it.
+         //   for it (since we have already done so above).
          if((halos_i[i_halo].forematch_first.halo->forematch_best.halo)==(&(halos_i[i_halo]))){
             add_progenitor_to_halo(halos,
                                    i_file,
@@ -49,16 +49,14 @@ void finalize_trees_horizontal(int                    n_halos_1_matches,
             if(halos_i[i_halo].forematch_default.flag_two_way)
                halos_i[i_halo].type|=TREE_CASE_2WAY_MATCH;
 
-            // Turn off TREE_CASE_SET_BY_BACKMATCH if the default match used != first match 
-            if(halos_i[i_halo].forematch_default.halo!=halos_i[i_halo].forematch_first.halo)
-               halos_i[i_halo].type&=(~TREE_CASE_SET_BY_BACKMATCH);
          }
       }
    }
 
    // ... then assign flags for halos not successfully processed.  Call them strays.
    //     These will include halos which have stopped existing without merging with
-   //     anything over the search range.  Do some other adjustments of the flags as well.
+   //     anything over the search range.  Do some other miscellaneous adjustments 
+   //     of the flags as well.
    for(int i_halo=0;i_halo<n_halos_i;i_halo++){
       if(halos_i[i_halo].descendant.halo==NULL){
          halos_i[i_halo].type   |=TREE_CASE_STRAYED;

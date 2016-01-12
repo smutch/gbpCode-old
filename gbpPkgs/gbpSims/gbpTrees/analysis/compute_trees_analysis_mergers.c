@@ -32,16 +32,12 @@ void compute_trees_analysis_mergers(tree_info *trees,char *filename_out_root_in,
   // Count the number of mergers 
   SID_log("Counting mergers...",SID_LOG_OPEN|SID_LOG_TIMER);
   int n_mergers        =0;
-  int n_mergers_nofrags=0;
   for(int i_snap=0;i_snap<trees->n_snaps;i_snap++){
      tree_node_info *current_halo=neighbour_list_start[i_snap];
      while(current_halo!=NULL){
         // Process each new merger
-        if(check_treenode_if_merger(current_halo)){
-           if(!check_treenode_if_fragmented(current_halo))
-             n_mergers_nofrags++;
+        if(check_treenode_if_merger(current_halo))
            n_mergers++;
-        }
         current_halo=current_halo->next_neighbour;
      }
   }

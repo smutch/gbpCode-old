@@ -40,9 +40,13 @@ void compute_trees_analysis_emerged_halos(tree_info *trees,char *filename_out_ro
         // Process each new branch
         if(check_mode_for_flag(current_halo->tree_case,TREE_CASE_EMERGED)){
            // Scan the branch ...
-           // ... first, find out how many emerged instances are in the descendant line.  This
-           //     is done so we can avoid double (or triple, etc) counting branches.  This will
-           //     be a bit slow, since we will be rescanning halos up to n_snap times.
+           // We are going to write all the emerged halos in a branch together.  This involves starting
+           //    with an emerged halo and then scanning along it's *progenitor* line, counting and writing 
+           //    all the emerged halos we find.  This must only be done if there are no emerged halos in the
+           //    *descendant* line, so we must first find out how many emerged instances are in the 
+           //    descendant line.  We proceed with the scan and write along the progenitor line only if
+           //    this count yeilds zero.  This will be a bit slow, since we will be rescanning halos up 
+           //    to n_snap times.
            int n_emerged_i=0;
            tree_node_info *current_progenitor=current_halo->descendant;
            while(current_progenitor!=NULL){
@@ -105,9 +109,13 @@ void compute_trees_analysis_emerged_halos(tree_info *trees,char *filename_out_ro
         // Process each new branch
         if(check_mode_for_flag(current_halo->tree_case,TREE_CASE_EMERGED)){
            // Scan the branch ...
-           // ... first, find out how many emerged instances are in the descendant line.  This
-           //     is done so we can avoid double (or triple, etc) counting branches.  This will
-           //     be a bit slow, since we will be rescanning halos up to n_snap times.
+           // We are going to write all the emerged halos in a branch together.  This involves starting
+           //    with an emerged halo and then scanning along it's *progenitor* line, counting and writing 
+           //    all the emerged halos we find.  This must only be done if there are no emerged halos in the
+           //    *descendant* line, so we must first find out how many emerged instances are in the 
+           //    descendant line.  We proceed with the scan and write along the progenitor line only if
+           //    this count yeilds zero.  This will be a bit slow, since we will be rescanning halos up 
+           //    to n_snap times.
            int n_emerged_i=0;
            tree_node_info *current_progenitor=current_halo->descendant;
            while(current_progenitor!=NULL){
@@ -157,7 +165,6 @@ void compute_trees_analysis_emerged_halos(tree_info *trees,char *filename_out_ro
   // Write the files
   write_treenode_list_properties(trees,filename_out_root,list_halos);
   write_treenode_list_data      (trees,filename_out_root,list_halos);
-  //write_treenode_list_hist      (trees,filename_out_root,list_halos,logM_min,dlogM,n_logM);
 
   // Clean-up
   free_treenode_list(&list_halos);

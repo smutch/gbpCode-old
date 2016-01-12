@@ -204,22 +204,30 @@ void identify_bridges(tree_horizontal_info **halos,
        }
        merge_sort((void *)match_score,(size_t)(halos_i[i_halo].n_back_matches),&back_match_index,SID_FLOAT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
 
-       // Remove any mutual descendants from the list
+       // IMPORTANT: Remove any mutual descendants from the list
        //   (since they may have different IDs and passed the test above).
        //   Keep the most immediate instance.
+       // n.b.: As it stands, this is a order-N^2 process.  Sorting by snapshot
+       //       here (and then resorting by mass later) could turn this into an 
+       //       order-NlogN process.
        for(j_halo=0;j_halo<halos_i[i_halo].n_back_matches;j_halo++){
           int k_file;
           int l_file;
-          // ... walk the tree upwards for each back matched halo...
+          // ... start with each back match's descendant...
           tree_horizontal_info *current;
           back_match = &(back_matches[j_halo]);
           current=back_match->halo->descendant.halo;
           if(current!=NULL)
              k_file=current->file;
           l_file=k_file;
+          // ... walk the tree upwards for each back matched halo...
           while(current!=NULL && k_file>=l_file && k_file<MIN(n_files,i_file+(n_search+1))){
+             // ... loop over the other back matches ...
              for(k_halo=0;k_halo<halos_i[i_halo].n_back_matches;k_halo++){
-                if(j_halo!=k_halo){ // Don't waste time checking a halo against itself
+                // ... don't waste time checking a halo against itself or against one already removed
+                if(j_halo!=k_halo && backmatch_keep[k_halo]){ 
+                   // ... if we've walked into another back match, remove it.  This
+                   //     ensures that we are removing the least immediate instances.
                    back_match = &(back_matches[k_halo]);
                    if(back_match->halo==current)
                       backmatch_keep[k_halo]=FALSE;
@@ -234,8 +242,9 @@ void identify_bridges(tree_horizontal_info **halos,
 
        // Remove any back matches which have already been assigned to a halo.  This makes
        //   sure that the backmatch is uniquely set to the most immediate backmatched halo.
-       //   This is important (for example) in cases where a halo is repeatedly emerging from a bridge.
-       //   We only want to use this as an emerged candidate for the most recent instance.
+       //   This is important (for example) in cases where a halo is repeatedly emerging from a bridge
+       //   or (even more importantly) when an emerged halo is lost for several snapshots.
+       //   We only want to use this as an emerged candidate for one (the most immediate) instance.
        for(j_halo=0;j_halo<halos_i[i_halo].n_back_matches;j_halo++){
           if(backmatch_keep[j_halo]){
              int backmatch_file =back_matches[j_halo].halo->file;

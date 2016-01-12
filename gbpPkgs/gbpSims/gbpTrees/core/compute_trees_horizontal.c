@@ -351,7 +351,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                            filename_root_matches,
                            flag_match_subgroups);
 
-       // Perform forward-matching
+       // Perform forward-matching (and read halo sizes if flag_fix_bridges is off).
        identify_progenitors(halos,
                             halos_i,
                             n_subgroups_group,

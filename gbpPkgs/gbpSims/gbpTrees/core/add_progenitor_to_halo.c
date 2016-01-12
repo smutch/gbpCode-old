@@ -104,4 +104,3 @@ void add_progenitor_to_halo(tree_horizontal_info **halos,
    // Mark the halo as processed
    halos_i[i_halo].type&=(~(TREE_CASE_UNPROCESSED));
 }
-

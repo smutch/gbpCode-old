@@ -53,7 +53,7 @@ void propagate_fragmented_info(tree_horizontal_extended_info **groups,   int *n_
             if(check_mode_for_flag(groups[(i_read+group_file_offset)%n_wrap][group_index].type,TREE_CASE_FRAGMENTED_STRAYED))   i_count++;
             if(check_mode_for_flag(groups[(i_read+group_file_offset)%n_wrap][group_index].type,TREE_CASE_FRAGMENTED_RETURNED))  i_count++;
             if(check_mode_for_flag(groups[(i_read+group_file_offset)%n_wrap][group_index].type,TREE_CASE_FRAGMENTED_EXCHANGED)) i_count++;
-            // Check that the affected halo does not have more than one fragmented halo flags turned on
+            // Check that the affected halo does not have more than one fragmented halo flag turned on
             if(i_count>1)
                SID_trap_error("Multiple (%d) TREE_CASE_FRAGMENT switches present (type=%d) for i_snap/i_group=%d/%d when a max of one is alowed. Progenitor info: i_snap/i_halo/type=%d/%d/%d",
                               ERROR_LOGIC,

@@ -12,7 +12,7 @@ void identify_emerged_halo_candidates(tree_horizontal_info *halos_i,
                                       int                   n_halos_i,
                                       int                   n_search){
    SID_log("Identify candidate emerged halos...",SID_LOG_OPEN|SID_LOG_TIMER);
-   // Check all the halos in this snapshot ...
+   // Check each halo in this snapshot ...
    for(int i_halo=0;i_halo<n_halos_i;i_halo++){
       int n_back_matches=halos_i[i_halo].n_back_matches;
       if(n_back_matches>1){

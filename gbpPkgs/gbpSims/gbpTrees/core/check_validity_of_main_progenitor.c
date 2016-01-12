@@ -18,10 +18,12 @@ int check_validity_of_main_progenitor(tree_horizontal_info *descendant_halo,
             // Always keep main progenitors as close to the descendant as possible
             if(file_offset_new>file_offset_old)
                flag_valid=FALSE;
-            // We use n_particles here instead of score, because otherwise small merging halos
-            //    can be tagged as the main progenitor if they sink efficiently to the centre
-            //    of a large system and the matching is weighted strongly to the centre.
-            else if((old_MP->halo->n_particles)>(new_MP->halo->n_particles))
+            // This works well for centrally weighted matches.  Using n_particles instead
+            //    has been checked but does not work as well.  Unfortunately, this choice
+            //    comes at the expense of sometimes selecting a small substructure, that 
+            //    sinks quickly to (or passes transiently through) the middle of a larger 
+            //    halo, as the main progenitor.
+            else if((old_MP->score)>(new_MP->score))
                flag_valid=FALSE;
          }
       }

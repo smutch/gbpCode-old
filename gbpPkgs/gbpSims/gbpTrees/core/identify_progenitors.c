@@ -68,42 +68,85 @@ void identify_progenitors(tree_horizontal_info **halos,
             halos[i_file%n_wrap][i_halo].n_particles=n_particles[i_halo];
       }
 
-      // Perform matching for all the halos in i_file_1.  This loop first tries to identify a
-      //   first/default match for each halo in this snapshot, ultimately dealing with all simple 
+      // Examine the matching for all the halos in i_file_1.  This loop initially identifies a
+      //   'first' match for each halo in this snapshot, ultimately dealing with all simple 
       //   matches and dropped halos (finalized later).  Matches to emerged halos (either coming 
-      //   from the default match, or to emerged candidates of bridged halos in it's descendant 
-      //   line) get dealt with subsequently.
+      //   from emerged candidates of the first match, or to emerged candidates of bridged halos 
+      //   in it's descendant line) get dealt with subsequently and will be called the 'default'
+      //   match.  Decisions about whether to use the 'first' match or the 'default' match
+      //   get made later.
       tree_horizontal_info *halos_i=halos[j_file_1%n_wrap];
       tree_horizontal_info *halos_j=halos[j_file_2%n_wrap];
+
       for(i_halo=0;i_halo<(*n_halos_1_matches);i_halo++){
          tree_horizontal_info *forematch_i=halos_i[i_halo].forematch_default.halo;
-         // For bridged halos, initialize the first match to be the largest and most immediate back match to it.
-         //   This is the prefered choice (vs the back match with the best match score for example)
-         //   because it minimizes errors that get made later when estimating peak halo sizes, 
-         //   particularly when bridged halos are satellites of a system and the DOMINANT halo
-         //   mechanism can not be used to prevent large mass excursions.
-         if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGED)){
-            if(!check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_UNPROCESSED)){
-               int i_best=0; // should this be changed if another back match is more immediate?
+         // Bridged halos get special treatment here.  For these cases, we will pick the larger
+         //   and most immediate of the back matches to the halo or the halo forward matched to.
+         //   This protects against cases where matches are not two-way on the descendant side of
+         //   a bridged halo.  The largest immediate back match is considered (in part) to protect against 
+         //   errors that get made later when estimating peak halo sizes, particularly when bridged halos 
+         //   are satellites of a system and the DOMINANT halo mechanism can not be used to prevent 
+         //   large mass excursions.
+         //   This consideration of both back and forward matches ensures that the progenitor lines
+         //   of bridged halos run through the largest halo possible.
+         if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGED) && check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_UNPROCESSED)){
+            // Check the backmatches first.  Initialize match to be best backmatch.  We check TREE_CASE_SET_BY_BACKMATCH 
+            //   as a way of checking if this has already been done.  Continue to check forward matches afterwards.
+            if(!check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_SET_BY_BACKMATCH)){
+               // Make sure the choice is as large and as immediate as possible
+               // n.b.: back matches have already been sorted in descending order of n_particles
+               int i_best=0;
+               int i_diff=halos_i[i_halo].back_matches[i_best].halo->file-halos_i[i_halo].file;
+               for(int i_backmatch=1;i_backmatch<halos_i[i_halo].n_back_matches;i_backmatch++){
+                  int j_diff=halos_i[i_halo].back_matches[i_backmatch].halo->file-halos_i[i_halo].file;
+                  if(j_diff<i_diff){
+                     i_diff=j_diff;
+                     i_best=i_backmatch;
+                  }
+               }
                halos_i[i_halo].forematch_first.halo          =halos_i[i_halo].back_matches[i_best].halo;
                halos_i[i_halo].forematch_first.score         =halos_i[i_halo].back_matches[i_best].score;
                halos_i[i_halo].forematch_first.flag_two_way  =halos_i[i_halo].back_matches[i_best].flag_two_way;
-               memcpy(&(halos_i[i_halo].forematch_default),&(halos_i[i_halo].forematch_first.halo),sizeof(match_info));
-               halos_i[i_halo].type|=  TREE_CASE_SET_BY_BACKMATCH; // later, turn this off if default match != first match is used
-               halos_i[i_halo].type&=(~TREE_CASE_UNPROCESSED); 
+               memcpy(&(halos_i[i_halo].forematch_default),&(halos_i[i_halo].forematch_first),sizeof(match_info));
+               halos_i[i_halo].type|=  TREE_CASE_SET_BY_BACKMATCH; // later, turn this off if the forward match is used instead
+            }
+            if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_UNPROCESSED)){
+               // This is the interval of the best choice from the back matches
+               int i_diff=halos_i[i_halo].forematch_first.halo->file-halos_i[i_halo].file;
+               // This is the interval of the forward match 
+               int j_diff=j_file_2-j_file_1;
+               // If the forward match is at least as immediate
+               if(j_diff<=i_diff){
+                  int my_descendant_index=match_id[i_halo];
+                  if(my_descendant_index>=0){
+                     // ... and is larger, use it.
+                     if(halos_i[i_halo].forematch_first.halo->n_particles<=halos_j[my_descendant_index].n_particles){
+                        halos_i[i_halo].forematch_first.halo        =&(halos_j[my_descendant_index]);
+                        halos_i[i_halo].forematch_first.score       =match_score[i_halo];
+                        halos_i[i_halo].forematch_first.flag_two_way=match_flag_two_way[i_halo];
+                        memcpy(&(halos_i[i_halo].forematch_default),&(halos_i[i_halo].forematch_first),sizeof(match_info));
+                        halos_i[i_halo].type&=(~TREE_CASE_SET_BY_BACKMATCH); 
+                        halos_i[i_halo].type&=(~TREE_CASE_UNPROCESSED); // This must be the most immediate case, so stop now.
+                     }
+                  }
+               }
+               // Once j_diff is bigger than i_diff, we should stop searching
+               //    the forward matches, because they are now less immediate
+               //    than the best back match
+               else
+                  halos_i[i_halo].type&=(~TREE_CASE_UNPROCESSED);
             }
          }
-         // ... else, if this halo hasn't been forward-matched to anything yet ...
+         // ... else, if this halo isn't a bridge and hasn't been forward-matched to anything yet ...
          else if(forematch_i==NULL){
-            int my_descendant_index;
-            my_descendant_index=match_id[i_halo];
             // If this halo has been matched to something in i_file_2 ...
+            int my_descendant_index=match_id[i_halo];
             if(my_descendant_index>=0){
                if(my_descendant_index<(*n_halos_2_matches)){
-                  halos_i[i_halo].forematch_first.halo          =&(halos_j[my_descendant_index]);
-                  halos_i[i_halo].forematch_first.score         =match_score[i_halo];
-                  halos_i[i_halo].forematch_first.flag_two_way  =match_flag_two_way[i_halo];
-                  memcpy(&(halos_i[i_halo].forematch_default),&(halos_i[i_halo].forematch_first.halo),sizeof(match_info));
+                  halos_i[i_halo].forematch_first.halo        =&(halos_j[my_descendant_index]);
+                  halos_i[i_halo].forematch_first.score       =match_score[i_halo];
+                  halos_i[i_halo].forematch_first.flag_two_way=match_flag_two_way[i_halo];
+                  memcpy(&(halos_i[i_halo].forematch_default),&(halos_i[i_halo].forematch_first),sizeof(match_info));
                }
                else
                   SID_log_warning("descendant ID out of bounds (ie. %d>%d) in snapshot %03d -> snapshot %03d %sgroup matching for i_halo=%d.",
@@ -120,8 +163,9 @@ void identify_progenitors(tree_horizontal_info **halos,
          //    the possible emerged candidates (and emerged candidates of 
          //    good emerged matches, etc) for this halo.
          else if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_UNPROCESSED)){
-            int n_unchecked=0;
+            int n_unchecked   =0;
             int flag_unchanged=TRUE;
+            // Walk the descendant line of the default match until a change happens (or we reach the extent of the search interval)
             while(forematch_i!=NULL && flag_unchanged){
                if(check_mode_for_flag(forematch_i->type,TREE_CASE_BRIDGED)){
                   back_match_info *back_matches  =halos[(forematch_i->file)%n_wrap][forematch_i->index].back_matches;
@@ -147,6 +191,7 @@ void identify_progenitors(tree_horizontal_info **halos,
                   }
                }
                forematch_i=forematch_i->descendant.halo;
+               // Check if we've reached the extent of the search interval
                if(forematch_i!=NULL){
                   if((forematch_i->file-i_file)>=n_search || forematch_i->snap==i_read_stop)
                      forematch_i=NULL;
