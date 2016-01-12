@@ -186,7 +186,7 @@ void identify_bridges(tree_horizontal_info **halos,
     }
 
     // ... lastly, reorder the back-matched halos by the sizes of their most massive descendants.  Keep only 
-    //        the most immediate bridge descendants and finalize the list ...
+    //     the most immediate bridge descendants and finalize the list ...
     SID_log("Re-ordering back_matches...",SID_LOG_OPEN|SID_LOG_TIMER);
     for(i_halo=0;i_halo<n_halos_i;i_halo++){
        // We may need to remove several halos from the list.  This array will keep track of this.
@@ -199,7 +199,7 @@ void identify_bridges(tree_horizontal_info **halos,
        for(j_halo=0;j_halo<halos_i[i_halo].n_back_matches;j_halo++){
           back_match=&(halos_i[i_halo].back_matches[j_halo]);
           memcpy(&(back_matches[j_halo]),back_match,sizeof(back_match_info));
-          match_score[j_halo]   =(float)(back_match->halo->n_particles);
+          match_score[j_halo]   =(float)(back_match->halo->n_particles_largest_descendant);
           backmatch_keep[j_halo]=TRUE;
        }
        merge_sort((void *)match_score,(size_t)(halos_i[i_halo].n_back_matches),&back_match_index,SID_FLOAT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
@@ -208,7 +208,7 @@ void identify_bridges(tree_horizontal_info **halos,
        //   (since they may have different IDs and passed the test above).
        //   Keep the most immediate instance.
        // n.b.: As it stands, this is a order-N^2 process.  Sorting by snapshot
-       //       here (and then resorting by mass later) could turn this into an 
+       //       here (and then resorting by size later) could turn this into an 
        //       order-NlogN process.
        for(j_halo=0;j_halo<halos_i[i_halo].n_back_matches;j_halo++){
           int k_file;
@@ -289,6 +289,11 @@ void identify_bridges(tree_horizontal_info **halos,
        SID_free(SID_FARG back_matches);
     }
     SID_log("Done.",SID_LOG_CLOSE);
+
+    // !! n.b.: The TREE_CASE_EMERGED_CANDIDATE flag will be set later in identify_emerged_halo_candidates(), 
+    //          once all main progenitor decisions have been made for this snapshot.  The chosen main progenitor 
+    //          will not be given this flag and only subsequent matches to the others will be considered as 
+    //          possible emerged halos.
 
     SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
     SID_log("Done.",SID_LOG_CLOSE);

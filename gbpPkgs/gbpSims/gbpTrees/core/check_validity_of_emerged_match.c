@@ -9,12 +9,9 @@ int check_validity_of_emerged_match(tree_horizontal_info *halo_i,
    // Perform some checks to see if we want to make a match to this candidate emerged halo
    int flag_valid=TRUE;
 
-   // 1) The TREE_CASE_EMERGED_CANDIDATE or TREE_CASE_EMERGED flag must be set (we need to check
-   //    for both, since CANDIDATE gets turned off once a halo is identified as EMERGED) for the 
-   //    back-matched halo.  This isn't the case if this back match is in the main progenitor 
-   //    line of it's bridge.
-   flag_valid=check_mode_for_flag(back_match->halo->type,TREE_CASE_EMERGED_CANDIDATE)||
-              check_mode_for_flag(back_match->halo->type,TREE_CASE_EMERGED);
+   // 1) The TREE_CASE_EMERGED_CANDIDATE flag must be set for the back-matched halo.
+   //    This isn't the case if this back match is in the main progenitor line of it's bridge.
+   flag_valid=check_mode_for_flag(back_match->halo->type,TREE_CASE_EMERGED_CANDIDATE);
 
    // 2) Because we may be recursively finding emerged halos, make sure we haven't
    //    exceeded the search interval.  If so, invalidate the match.

@@ -94,7 +94,7 @@ void identify_progenitors(tree_horizontal_info **halos,
             //   as a way of checking if this has already been done.  Continue to check forward matches afterwards.
             if(!check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_SET_BY_BACKMATCH)){
                // Make sure the choice is as large and as immediate as possible
-               // n.b.: back matches have already been sorted in descending order of n_particles
+               // n.b.: back matches have already been sorted in descending order of n_particles_largest_descendant
                int i_best=0;
                int i_diff=halos_i[i_halo].back_matches[i_best].halo->file-halos_i[i_halo].file;
                for(int i_backmatch=1;i_backmatch<halos_i[i_halo].n_back_matches;i_backmatch++){
@@ -119,8 +119,8 @@ void identify_progenitors(tree_horizontal_info **halos,
                if(j_diff<=i_diff){
                   int my_descendant_index=match_id[i_halo];
                   if(my_descendant_index>=0){
-                     // ... and is larger, use it.
-                     if(halos_i[i_halo].forematch_first.halo->n_particles<=halos_j[my_descendant_index].n_particles){
+                     // ... if the forward match is more immediate or is at least equally large, use it.
+                     if(j_diff<i_diff || (halos_i[i_halo].forematch_first.halo->n_particles<=halos_j[my_descendant_index].n_particles)){
                         halos_i[i_halo].forematch_first.halo        =&(halos_j[my_descendant_index]);
                         halos_i[i_halo].forematch_first.score       =match_score[i_halo];
                         halos_i[i_halo].forematch_first.flag_two_way=match_flag_two_way[i_halo];
@@ -245,7 +245,8 @@ void identify_progenitors(tree_horizontal_info **halos,
                int flag_matched_to_emerged_old=(!((halo_k->forematch_first.halo)==(halo_k->forematch_default.halo)));
                if(!flag_matched_to_emerged_new && flag_matched_to_emerged_old)
                   memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
-               // ... else do a check on validity if neither-or-both the new and previous best matches have a match to an emerged candidate
+               // ... else, keep the best main progenitor if neither-or-both the new and 
+               //     previous best matches have a match to an emerged candidate
                else if((flag_matched_to_emerged_new==flag_matched_to_emerged_old) && 
                        check_validity_of_main_progenitor(halo_j,
                                                          &(halo_j->forematch_best),

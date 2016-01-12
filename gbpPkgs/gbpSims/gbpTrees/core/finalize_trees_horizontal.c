@@ -64,9 +64,6 @@ void finalize_trees_horizontal(int                    n_halos_1_matches,
          halos_i[i_halo].id      =(*max_id)++;
          halos_i[i_halo].tree_id =(*max_tree_id)++;
       }
-      // Turn off TREE_CASE_EMERGED_CANDIDATE if TREE_CASE_EMERGED or TREE_CASE_FRAGMENTED_NEW are on.
-      if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_EMERGED) || check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_FRAGMENTED_NEW))
-         halos_i[i_halo].type&=(~TREE_CASE_EMERGED_CANDIDATE);
    }
 
    SID_log("Done.",SID_LOG_CLOSE);
