@@ -527,9 +527,9 @@ int check_if_halo_is_descendant(tree_horizontal_info *possible_progenitor,
 int check_if_halo_is_merger(int type);
 int check_if_descendant_is_back_matched(tree_horizontal_info *halo,
                                         tree_horizontal_info *halo_to_check);
-int check_validity_of_main_progenitor(tree_horizontal_info *descendant_halo,
-                                      match_info           *old_MP,
-                                      match_info           *new_MP);
+int check_if_better_match(tree_horizontal_info *target_halo,
+                          match_info           *old_match,
+                          match_info           *new_match);
 int check_validity_of_emerged_match(tree_horizontal_info *halo_i,
                                     back_match_info      *back_match,
                                     char                  match_flag_two_way,

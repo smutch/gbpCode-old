@@ -15,10 +15,10 @@ void finalize_trees_horizontal(int                    n_halos_1_matches,
    // ... finalize the sucessful matches ...
    for(int i_halo=0;i_halo<n_halos_1_matches;i_halo++){
       if((halos_i[i_halo].forematch_default.halo)!=NULL){
-         // First, if this halo's initial match is the best from this
-         //   snapshot to a halo with no progenitors yet, use it to
-         //   make sure that every halo with a match gets a progenitor 
-         //   (rather than let all matches get converted to emerged 
+         // First, if this halo's initial match has been identified
+         //   as the best match to a halo with no progenitors yet, use it to make
+         //   sure that every halo with a match gets a progenitor 
+         //   (rather than letting too many matches get converted to emerged 
          //   halos later).  If a halo has a default match, it must
          //   have a first match (by construction) so no need to check
          //   for it (since we have already done so above).

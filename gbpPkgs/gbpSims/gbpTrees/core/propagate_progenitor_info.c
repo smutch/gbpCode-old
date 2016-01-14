@@ -91,27 +91,6 @@ void propagate_progenitor_info(int         *n_groups,
      //    before starting to process or write results.
      if(j_file>n_search){
         if(j_process<=i_read_stop){
-           // If bridge fixing is on...
-           if(flag_compute_fragmented){
-              // ... propagate bridged halo information 
-              propagate_bridge_info(groups_read,   n_groups,
-                                    subgroups_read,n_subgroups,
-                                    n_subgroups_group,
-                                    i_process, // tree index
-                                    j_process, // actual snapshot number
-                                    l_process,
-                                    i_read_step,
-                                    n_wrap);
-              // ... propagate fragmented halo flags
-              propagate_fragmented_info(groups_read,   n_groups,
-                                        subgroups_read,n_subgroups,
-                                        n_subgroups_group,
-                                        i_process, // tree index
-                                        j_process, // actual snapshot number
-                                        l_process,
-                                        i_read_step,
-                                        n_wrap);
-           }
            // Set the identy of the dominant substructures of each group.
            //    This needs to be complete for all descendants before propagate_n_particles_peak() 
            //    is called, so we have to do it here.
@@ -143,6 +122,28 @@ void propagate_progenitor_info(int         *n_groups,
                                  l_process,
                                  i_read_step,
                                  n_wrap);
+           // Propagate fragmented halo information...
+           //    (n.b.: mergers need to be done before this because we will use those flags here)
+           if(flag_compute_fragmented){
+              // ... propagate bridged halo information 
+              propagate_bridge_info(groups_read,   n_groups,
+                                    subgroups_read,n_subgroups,
+                                    n_subgroups_group,
+                                    i_process, // tree index
+                                    j_process, // actual snapshot number
+                                    l_process,
+                                    i_read_step,
+                                    n_wrap);
+              // ... propagate fragmented halo flags
+              propagate_fragmented_info(groups_read,   n_groups,
+                                        subgroups_read,n_subgroups,
+                                        n_subgroups_group,
+                                        i_process, // tree index
+                                        j_process, // actual snapshot number
+                                        l_process,
+                                        i_read_step,
+                                        n_wrap);
+           }
         }
         i_process++;
         l_process--;

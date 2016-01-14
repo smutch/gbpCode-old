@@ -185,7 +185,7 @@ void identify_bridges(tree_horizontal_info **halos,
        SID_log("Done.",SID_LOG_CLOSE);
     }
 
-    // ... lastly, reorder the back-matched halos by the sizes of their most massive descendants.  Keep only 
+    // ... lastly, reorder the back-matched halos by size.  Keep only 
     //     the most immediate bridge descendants and finalize the list ...
     SID_log("Re-ordering back_matches...",SID_LOG_OPEN|SID_LOG_TIMER);
     for(i_halo=0;i_halo<n_halos_i;i_halo++){
@@ -199,7 +199,7 @@ void identify_bridges(tree_horizontal_info **halos,
        for(j_halo=0;j_halo<halos_i[i_halo].n_back_matches;j_halo++){
           back_match=&(halos_i[i_halo].back_matches[j_halo]);
           memcpy(&(back_matches[j_halo]),back_match,sizeof(back_match_info));
-          match_score[j_halo]   =(float)(back_match->halo->n_particles_largest_descendant);
+          match_score[j_halo]   =(float)(back_match->halo->n_particles);
           backmatch_keep[j_halo]=TRUE;
        }
        merge_sort((void *)match_score,(size_t)(halos_i[i_halo].n_back_matches),&back_match_index,SID_FLOAT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);

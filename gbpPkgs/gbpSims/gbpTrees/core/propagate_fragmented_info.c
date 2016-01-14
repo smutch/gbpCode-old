@@ -88,7 +88,7 @@ void propagate_fragmented_info(tree_horizontal_extended_info **groups,   int *n_
          int subgroup_index             =subgroups[i_read%n_wrap][i_subgroup].descendant_index;
 
          // Check if the subgroup has returned to it's bridge (if fragmented)
-         flag_returned=(subgroup_file_bridge==(i_read+subgroup_file_offset) && subgroup_index_bridge==i_subgroup);
+         flag_returned=(subgroup_file_bridge==(i_read+subgroup_file_offset) && subgroup_index_bridge==subgroup_index);
 
          // Propagate type.  Stop when the fragmented halo merges with something or returns to it's bridge.
          if(subgroup_id==subgroup_descendant_id && !flag_returned){

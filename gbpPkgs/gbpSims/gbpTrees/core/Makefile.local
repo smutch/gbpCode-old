@@ -31,7 +31,7 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    match_score_f_goodness.o                      \
 	    check_validity_of_match.o                     \
 	    check_validity_of_emerged_match.o             \
-	    check_validity_of_main_progenitor.o           \
+	    check_if_better_match.o                       \
 	    check_if_halo_is_descendant.o                 \
 	    check_if_halo_is_merger.o                     \
 	    check_if_descendant_is_back_matched.o         \
