@@ -78,6 +78,7 @@ void identify_progenitors(tree_horizontal_info **halos,
       tree_horizontal_info *halos_i=halos[j_file_1%n_wrap];
       tree_horizontal_info *halos_j=halos[j_file_2%n_wrap];
       for(i_halo=0;i_halo<(*n_halos_1_matches);i_halo++){
+         int my_descendant_index=match_id[i_halo];
          // Bridged halos get special treatment here.  For these cases, we will pick the largest
          //   and most immediate between the halo's back matches and it's forward match.  With this we
          //   are trying to ensure that it is the small halos in bridges which get classified as emerged.
@@ -133,7 +134,6 @@ void identify_progenitors(tree_horizontal_info **halos,
          tree_horizontal_info *forematch_i=halos_i[i_halo].forematch_default.halo;
          if(forematch_i==NULL){
             // If this halo has been matched to something in i_file_2 ...
-            int my_descendant_index=match_id[i_halo];
             if(my_descendant_index>=0){
                if(my_descendant_index<(*n_halos_2_matches)){
                   halos_i[i_halo].forematch_first.halo        =&(halos_j[my_descendant_index]);
