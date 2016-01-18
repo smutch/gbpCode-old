@@ -47,9 +47,20 @@ void add_progenitor_to_halo(tree_horizontal_info **halos,
       halos_j[j_halo].type|=TREE_CASE_REMNANT;
       // If we have a better main-progenitor, insert it at the 
       //   beginning of the list and swap IDs with the main progenitor so that
-      //   the correct halo gets the main progenitor ID and all others get a new one ...
+      //   the correct halo gets the main progenitor ID and all others get a 
+      //   new one.  Progenitor order can be decided many ways.  Here we choose
+      //   to rank by immediacy and n_particles.  We choose this to minimize the cases of
+      //   a small halo becoming the main progenitor due only to a good centrally
+      //   weighted match.  One advanage of this is that we minimize the cases
+      //   of fragmented halos being identified as 'exchanged' or of being
+      //   propagated past the point where they merge.
       memcpy(&old_progenitor,&(halos_j[j_halo].first_progenitor),sizeof(match_info));
-      if(check_if_better_match(&(halos_j[j_halo]),&old_progenitor,&new_progenitor)){
+      int file_offset_new=(halos_j[j_halo].file)-(new_progenitor.halo->file);
+      int file_offset_old=(halos_j[j_halo].file)-(old_progenitor.halo->file);
+      if(file_offset_new<=0 || file_offset_old<=0)
+         SID_trap_error("Progenitor file offset is invalid (ie either %d<=0 or %d<=0).",ERROR_LOGIC,file_offset_new,file_offset_old);
+      //if(check_if_better_match(&(halos_j[j_halo]),&old_progenitor,&new_progenitor)){
+      if(file_offset_new<file_offset_old || (file_offset_new==file_offset_old && new_progenitor.halo->n_particles>old_progenitor.halo->n_particles)){
          // ... let the new main progenitor inherit the descendant's id ...
          halos_i[i_halo].id=halos_j[j_halo].id;
          // ... and give the old main progenitor the new id ...
