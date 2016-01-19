@@ -34,6 +34,7 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    check_if_better_match.o                       \
 	    check_if_halo_is_descendant.o                 \
 	    check_if_halo_is_merger.o                     \
+	    check_if_halo_is_fragmented.o                 \
 	    check_if_descendant_is_back_matched.o         \
 	    check_validity_of_tree_case_flag.o            \
 	    init_trees_data.o                             \
