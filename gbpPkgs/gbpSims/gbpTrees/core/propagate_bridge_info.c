@@ -86,4 +86,3 @@ void propagate_bridge_info(tree_horizontal_extended_info **groups,   int *n_grou
    }
    SID_log("Done.",SID_LOG_CLOSE);
 }
-

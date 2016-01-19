@@ -148,11 +148,17 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
             //    TREE_CASE_FRAGMENTED_NEW.  This prevents us from overwriting 
             //    the bridge info we need to propagate in order to check for 
             //    when a fragmented halo returns to its bridge.
-            if(!check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_NEW)){
-               groups_extended[i_group].snap_bridge           =group_snap_bridge;
-               groups_extended[i_group].file_bridge           =group_file_bridge;
-               groups_extended[i_group].index_bridge          =group_index_bridge;
-               groups_extended[i_group].id_bridge             =group_id_bridge;
+            if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_NEW)){
+               groups_extended[i_group].snap_bridge =group_snap_bridge;
+               groups_extended[i_group].file_bridge =group_file_bridge;
+               groups_extended[i_group].index_bridge=group_index_bridge;
+               groups_extended[i_group].id_bridge   =group_id_bridge;
+            }
+            else{
+               groups_extended[i_group].snap_bridge =-1;
+               groups_extended[i_group].file_bridge =-1;
+               groups_extended[i_group].index_bridge=-1;
+               groups_extended[i_group].id_bridge   =-1;
             }
             groups_extended[i_group].first_progenitor_file =group_first_progenitor_file;  
             groups_extended[i_group].first_progenitor_index=group_first_progenitor_index; 
@@ -236,11 +242,17 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
                //    TREE_CASE_FRAGMENTED_NEW.  This prevents us from overwriting 
                //    the bridge info we need to propagate in order to check for 
                //    when a fragmented halo returns to its bridge.
-               if(!check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_NEW)){
-                  subgroups_extended[i_subgroup].snap_bridge           =subgroup_snap_bridge;
-                  subgroups_extended[i_subgroup].file_bridge           =subgroup_file_bridge;
-                  subgroups_extended[i_subgroup].index_bridge          =subgroup_index_bridge;
-                  subgroups_extended[i_subgroup].id_bridge             =subgroup_id_bridge;
+               if(check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_NEW)){
+                  subgroups_extended[i_subgroup].snap_bridge =subgroup_snap_bridge;
+                  subgroups_extended[i_subgroup].file_bridge =subgroup_file_bridge;
+                  subgroups_extended[i_subgroup].index_bridge=subgroup_index_bridge;
+                  subgroups_extended[i_subgroup].id_bridge   =subgroup_id_bridge;
+               }
+               else{
+                  subgroups_extended[i_subgroup].snap_bridge =-1;
+                  subgroups_extended[i_subgroup].file_bridge =-1;
+                  subgroups_extended[i_subgroup].index_bridge=-1;
+                  subgroups_extended[i_subgroup].id_bridge   =-1;
                }
                subgroups_extended[i_subgroup].first_progenitor_file =subgroup_first_progenitor_file;  
                subgroups_extended[i_subgroup].first_progenitor_index=subgroup_first_progenitor_index; 

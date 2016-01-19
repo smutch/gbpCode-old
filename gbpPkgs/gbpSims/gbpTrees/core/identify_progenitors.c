@@ -146,14 +146,14 @@ void identify_progenitors(tree_horizontal_info **halos,
                                   SID_WARNING_DEFAULT,my_descendant_index,(*n_halos_2_matches)-1,j_read_1,j_read_2,group_text_prefix,i_halo);
             }
          }
-         // Once a halo has failed the previous check, having already been assigned a first
-         //    (and initially default) match, scan the candidate emerged halos in the 
-         //    descendant line of the current default match. We don't have to address
-         //    bridged halos matched above in this iteration of the loop since
-         //    all emerged halos will be from the match files we will subsequently
-         //    read (hence the 'else' is ok).  The check on TREE_CASE_UNPROCESSED
-         //    will fail if/once we have scanned all the possible emerged candidates
-         //    (and emerged candidates of good emerged matches, etc) for this halo.
+         // If a halo fails the previous check, it means it has already been assigned a 
+         //    first (and initially default) match.  Now we scan the candidate emerged halos 
+         //    in the descendant line of the current default match. We don't have to address
+         //    bridged halos matched above in this iteration of the loop since all emerged
+         //    halos will be from the match files we will subsequently read (hence the 'else'
+         //    is ok).  The check on TREE_CASE_UNPROCESSED will fail if/once we have scanned
+         //    all the possible emerged candidates (and emerged candidates of good emerged 
+         //    matches, etc) for this halo.
          else if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_UNPROCESSED)){
             int n_unchecked   =0;
             int flag_unchanged=TRUE;

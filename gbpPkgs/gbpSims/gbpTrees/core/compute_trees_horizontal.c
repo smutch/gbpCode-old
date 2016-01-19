@@ -467,7 +467,6 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
        j_write-=i_read_step;
     }
     SID_log("Done.",SID_LOG_CLOSE);
-
   } // loop over snaps
 
   // Write the remaining snapshots

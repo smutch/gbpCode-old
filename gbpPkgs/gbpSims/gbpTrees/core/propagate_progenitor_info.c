@@ -58,6 +58,7 @@ void propagate_progenitor_info(int         *n_groups,
       j_write<=i_read_stop;
       i_read++,j_read+=i_read_step,l_read--,j_file++){
 
+fprintf(stderr,"i_read=%d\n",i_read);
      // Read temporary tree files
      if(j_read<=i_read_stop){
         int n_groups_in;
