@@ -328,28 +328,27 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                                       n_subgroups_max,
                                       flag_match_subgroups);
 
-       // Use back-matching to identify bridged halos.  Main progenitors of bridges are dealt
-       //    with and current-snapshot halo sizes are read as well.
+       // Identify back matches (and read halo sizes).
        if(flag_fix_bridges)
-          identify_bridges(halos,
-                           halos_i,
-                           n_halos_i,
-                           match_id,
-                           match_score,
-                           match_index,
-                           match_flag_two_way,
-                           n_particles,
-                           i_file,
-                           i_read,
-                           i_read_start,
-                           i_read_stop,
-                           i_read_step,
-                           n_search,
-                           n_wrap,
-                           n_halos_max,
-                           n_files,
-                           filename_root_matches,
-                           flag_match_subgroups);
+          identify_back_matches(halos,
+                                halos_i,
+                                n_halos_i,
+                                match_id,
+                                match_score,
+                                match_index,
+                                match_flag_two_way,
+                                n_particles,
+                                i_file,
+                                i_read,
+                                i_read_start,
+                                i_read_stop,
+                                i_read_step,
+                                n_search,
+                                n_wrap,
+                                n_halos_max,
+                                n_files,
+                                filename_root_matches,
+                                flag_match_subgroups);
 
        // Perform forward-matching (and read halo sizes if flag_fix_bridges is off).
        identify_progenitors(halos,
@@ -405,14 +404,10 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
        set_largest_descendants(halos_i,n_halos_i);
 
        // Now that we know which halos are the main progenitors of this
-       //    snapshot's bridged halos, we can mark the other back matches
-       //    as candidate emerged halos
+       //    snapshot's bridged halos, we can mark any other back matches
+       //    as candidate emerged halos and identify bridges.
        if(flag_fix_bridges)
-          identify_emerged_halo_candidates(halos_i,n_halos_i,n_search);
-
-       // This has to be written right after a snapshot is read and processed (because it needs all forward scan information), 
-       //    so it is separate from the rest of the log output code.
-       //write_trees_horizontal_emerged_candidates(i_read,n_halos_i,halos_i,group_text_prefix,filename_output_dir,j_file==1);
+          identify_bridges(halos_i,n_halos_i,n_search);
 
        // Report some statistics
        //   n.b.: This is only an estimate in some cases, since subsequent snapshots may alter this snapshot.  
