@@ -15,7 +15,7 @@ void identify_bridges(tree_horizontal_info *halos_i,
    // Check each halo in this snapshot ...
    for(int i_halo=0;i_halo<n_halos_i;i_halo++){
       int n_back_matches=halos_i[i_halo].n_back_matches;
-      if(n_back_matches>1){
+      if(n_back_matches>0){
          // ... check all the halos back-matched to it ...
          back_match_info *back_matches       =halos_i[i_halo].back_matches;
          int              n_emerged_candidate=0;

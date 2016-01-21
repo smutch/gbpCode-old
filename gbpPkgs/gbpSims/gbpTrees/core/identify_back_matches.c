@@ -260,12 +260,6 @@ void identify_back_matches(tree_horizontal_info **halos,
              halos_i[i_halo].n_back_matches++;
        }
 
-       // Set bridge halo flag
-       if(halos_i[i_halo].n_back_matches>1)
-          halos_i[i_halo].type|=TREE_CASE_BRIDGED;
-       else
-          halos_i[i_halo].type&=(~TREE_CASE_BRIDGED);
-
        // Because we've overallocated previously, reallocate the back matched list here to save RAM ...
        SID_free(SID_FARG halos_i[i_halo].back_matches);
        (halos_i[i_halo].back_matches)=(back_match_info *)SID_calloc(sizeof(back_match_info)*(halos_i[i_halo].n_back_matches));
