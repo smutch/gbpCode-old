@@ -177,6 +177,9 @@ void identify_progenitors(tree_horizontal_info **halos,
          if(halo_j->forematch_best.halo==NULL)
             memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
          // ... else, if this is a subsequent match, decide if it is better ...
+         else if(check_if_better_match(halo_j,&(halo_j->forematch_best),&forematch_new))
+            memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
+         /*
          else{
             // First, do the important check for subsequent emerged halo matches ...
             tree_horizontal_info *halo_k=halo_j->forematch_best.halo;
@@ -193,6 +196,7 @@ void identify_progenitors(tree_horizontal_info **halos,
                memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
             }
          }
+         */
       }
    }
    SID_log("Done.",SID_LOG_CLOSE);
