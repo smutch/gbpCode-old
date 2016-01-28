@@ -163,42 +163,30 @@ void identify_progenitors(tree_horizontal_info **halos,
    //    so we need to do this now as a seperate and subsequent loop.  When
    //    matches are finalized, these best pointers will be the first choice
    //    for constructing the trees.  The default pointers get used otherwise.
+   // n.b.: The halo pointer for forematch_best is in the opposite sense than it is
+   //       for forematch_first and forematch_default.  Instead of being the halo
+   //       pointed to, it is the halo pointed from in this case.  This is the
+   //       sense needed by check_if_better_match().
    // Loop over all halos ...
    for(i_halo=0;i_halo<(*n_halos_1_matches);i_halo++){
       tree_horizontal_info *halo_i=&(halos_i[i_halo]);
       tree_horizontal_info *halo_j=halo_i->forematch_first.halo;
       // ... if this halo has a first match ...
       if(halo_j!=NULL){
-         match_info forematch_new;
-         forematch_new.halo        =halo_i;
-         forematch_new.score       =halo_i->forematch_first.score;
-         forematch_new.flag_two_way=halo_i->forematch_first.flag_two_way;
+         match_info forematch_best_check;
+         forematch_best_check.halo        =halo_i;
+         forematch_best_check.score       =halo_i->forematch_first.score;
+         forematch_best_check.flag_two_way=halo_i->forematch_first.flag_two_way;
          // If this is the first match, choose it by default ...
          if(halo_j->forematch_best.halo==NULL)
-            memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
+            memcpy(&(halo_j->forematch_best),&forematch_best_check,sizeof(match_info));
          // ... else, if this is a subsequent match, decide if it is better ...
-         else if(check_if_better_match(halo_j,&(halo_j->forematch_best),&forematch_new))
-            memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
-         /*
          else{
-            // First, do the important check for subsequent emerged halo matches ...
-            tree_horizontal_info *halo_k=halo_j->forematch_best.halo;
-            int flag_matched_to_emerged_new=(!((halo_i->forematch_first.halo)==(halo_i->forematch_default.halo)));
-            int flag_matched_to_emerged_old=(!((halo_k->forematch_first.halo)==(halo_k->forematch_default.halo)));
-            // If the new match is not matched to an emerged candidate but the old one is, keep it ...
-            if(!flag_matched_to_emerged_new && flag_matched_to_emerged_old)
-               memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
-            // ... else, keep the best match if neither-or-both the new and 
-            //     previous best matches have a match to an emerged candidate
-            //     and the new match is better.
-            else if((flag_matched_to_emerged_new==flag_matched_to_emerged_old) && 
-                    check_if_better_match(halo_j,&(halo_j->forematch_best),&forematch_new)){
-               memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
-            }
+            match_info *match_best_old=&(halo_j->forematch_best);
+            if(check_if_better_match(halo_j,match_best_old,&forematch_best_check))
+               memcpy(&(halo_j->forematch_best),&forematch_best_check,sizeof(match_info));
          }
-         */
       }
    }
    SID_log("Done.",SID_LOG_CLOSE);
 }
-

@@ -2,6 +2,9 @@
 #include <gbpMath.h>
 #include <gbpTrees_build.h>
 
+// Note that the halo pointers in the match_info pointers sent to this
+//   function must point to the halos matched FROM, not the target
+//   halo matched TO.
 int check_if_better_match(tree_horizontal_info *target_halo,
                           match_info           *old_match,
                           match_info           *new_match){
@@ -23,7 +26,8 @@ int check_if_better_match(tree_horizontal_info *target_halo,
             }
             // Sanity check
             if(file_offset_new<=0 || file_offset_old<=0)
-               SID_trap_error("There is something odd about the file offsets (%d->%d and %d->%d) in check_if_better_match().",ERROR_LOGIC,new_match->halo->file,target_halo->file,old_match->halo->file,target_halo->file);
+               SID_trap_error("There is something odd about the file offsets (%d->%d and %d->%d) in check_if_better_match().",ERROR_LOGIC,
+                              new_match->halo->file,target_halo->file,old_match->halo->file,target_halo->file);
             // The best match is always the most immediate
             if(file_offset_new>file_offset_old)
                flag_valid=FALSE;

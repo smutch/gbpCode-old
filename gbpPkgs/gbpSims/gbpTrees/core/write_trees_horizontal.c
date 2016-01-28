@@ -194,14 +194,22 @@ void write_trees_horizontal(void  **groups_in,
         int   group_snap_backmatch;
         int   group_file_backmatch;
         int   group_index_backmatch;
-        int   group_snap_forematch;
-        int   group_file_forematch;
-        int   group_index_forematch;
+        int   group_snap_forematch_first;
+        int   group_file_forematch_first;
+        int   group_index_forematch_first;
+        float group_score_forematch_first;
+        int   group_snap_forematch_default;
+        int   group_file_forematch_default;
+        int   group_index_forematch_default;
+        float group_score_forematch_default;
+        int   group_snap_forematch_best;
+        int   group_file_forematch_best;
+        int   group_index_forematch_best;
+        float group_score_forematch_best;
         int   group_id_backmatch;
         float group_score_desc;
         float group_score_prog;
         float group_score_backmatch;
-        float group_score_forematch;
         int   group_first_progenitor_file;
         int   group_first_progenitor_index;
         int   group_next_progenitor_file;
@@ -240,22 +248,30 @@ void write_trees_horizontal(void  **groups_in,
               group_n_particles_proj=set_match_n_particles(&(groups[i_write%n_wrap][i_group].descendant.halo->first_progenitor));
            else
               group_n_particles_proj=-1;
-           group_score_desc     =set_match_score(   &(groups[i_write%n_wrap][i_group].descendant));
-           group_score_prog     =set_match_score(   &(groups[i_write%n_wrap][i_group].first_progenitor));
-           group_score_backmatch=set_match_score(   &(groups[i_write%n_wrap][i_group].bridge_backmatch));
-           group_score_forematch=set_match_score(   &(groups[i_write%n_wrap][i_group].forematch_first));
-           group_snap_backmatch =set_match_snapshot(&(groups[i_write%n_wrap][i_group].bridge_backmatch));
-           group_file_backmatch =set_match_file(    &(groups[i_write%n_wrap][i_group].bridge_backmatch));
-           group_index_backmatch=set_match_index(   &(groups[i_write%n_wrap][i_group].bridge_backmatch));
-           group_id_backmatch   =set_match_id(      &(groups[i_write%n_wrap][i_group].bridge_backmatch));
-           group_snap_forematch =set_match_snapshot(&(groups[i_write%n_wrap][i_group].forematch_first));
-           group_file_forematch =set_match_file(    &(groups[i_write%n_wrap][i_group].forematch_first));
-           group_index_forematch=set_match_index(   &(groups[i_write%n_wrap][i_group].forematch_first));
-           group_first_progenitor_file =set_match_file( &(groups[i_write%n_wrap][i_group].first_progenitor));
-           group_first_progenitor_index=set_match_index(&(groups[i_write%n_wrap][i_group].first_progenitor));
-           group_next_progenitor_file  =set_match_file( &(groups[i_write%n_wrap][i_group].next_progenitor));
-           group_next_progenitor_index =set_match_index(&(groups[i_write%n_wrap][i_group].next_progenitor));
-           group_n_particles_peak      =0;
+           group_score_desc             =set_match_score(   &(groups[i_write%n_wrap][i_group].descendant));
+           group_score_prog             =set_match_score(   &(groups[i_write%n_wrap][i_group].first_progenitor));
+           group_score_backmatch        =set_match_score(   &(groups[i_write%n_wrap][i_group].bridge_backmatch));
+           group_snap_backmatch         =set_match_snapshot(&(groups[i_write%n_wrap][i_group].bridge_backmatch));
+           group_file_backmatch         =set_match_file(    &(groups[i_write%n_wrap][i_group].bridge_backmatch));
+           group_index_backmatch        =set_match_index(   &(groups[i_write%n_wrap][i_group].bridge_backmatch));
+           group_id_backmatch           =set_match_id(      &(groups[i_write%n_wrap][i_group].bridge_backmatch));
+           group_snap_forematch_first   =set_match_snapshot(&(groups[i_write%n_wrap][i_group].forematch_first));
+           group_file_forematch_first   =set_match_file(    &(groups[i_write%n_wrap][i_group].forematch_first));
+           group_index_forematch_first  =set_match_index(   &(groups[i_write%n_wrap][i_group].forematch_first));
+           group_score_forematch_first  =set_match_score(   &(groups[i_write%n_wrap][i_group].forematch_first));
+           group_snap_forematch_default =set_match_snapshot(&(groups[i_write%n_wrap][i_group].forematch_default));
+           group_file_forematch_default =set_match_file(    &(groups[i_write%n_wrap][i_group].forematch_default));
+           group_index_forematch_default=set_match_index(   &(groups[i_write%n_wrap][i_group].forematch_default));
+           group_score_forematch_default=set_match_score(   &(groups[i_write%n_wrap][i_group].forematch_default));
+           group_snap_forematch_best    =set_match_snapshot(&(groups[i_write%n_wrap][i_group].forematch_best));
+           group_file_forematch_best    =set_match_file(    &(groups[i_write%n_wrap][i_group].forematch_best));
+           group_index_forematch_best   =set_match_index(   &(groups[i_write%n_wrap][i_group].forematch_best));
+           group_score_forematch_best   =set_match_score(   &(groups[i_write%n_wrap][i_group].forematch_best));
+           group_first_progenitor_file  =set_match_file( &(groups[i_write%n_wrap][i_group].first_progenitor));
+           group_first_progenitor_index =set_match_index(&(groups[i_write%n_wrap][i_group].first_progenitor));
+           group_next_progenitor_file   =set_match_file( &(groups[i_write%n_wrap][i_group].next_progenitor));
+           group_next_progenitor_index  =set_match_index(&(groups[i_write%n_wrap][i_group].next_progenitor));
+           group_n_particles_peak       =0;
         }
         else{
            tree_horizontal_extended_info **groups;
@@ -301,17 +317,23 @@ void write_trees_horizontal(void  **groups_in,
         //   needed, for example, to investigate
         //   emerged and fragmented halos
         if(flag_write_pointers){
-           SID_fwrite(&group_tree_id,        sizeof(int),  1,&fp_backmatch_ptrs_out);
-           SID_fwrite(&group_file_backmatch, sizeof(int),  1,&fp_backmatch_ptrs_out);
-           SID_fwrite(&group_index_backmatch,sizeof(int),  1,&fp_backmatch_ptrs_out);
-           SID_fwrite(&group_score_backmatch,sizeof(float),1,&fp_backmatch_ptrs_out);
-           SID_fwrite(&group_score_prog,     sizeof(float),1,&fp_backmatch_ptrs_out);
+           SID_fwrite(&group_tree_id,        sizeof(int),  1,                     &fp_backmatch_ptrs_out);
+           SID_fwrite(&group_file_backmatch, sizeof(int),  1,                     &fp_backmatch_ptrs_out);
+           SID_fwrite(&group_index_backmatch,sizeof(int),  1,                     &fp_backmatch_ptrs_out);
+           SID_fwrite(&group_score_backmatch,sizeof(float),1,                     &fp_backmatch_ptrs_out);
+           SID_fwrite(&group_score_prog,     sizeof(float),1,                     &fp_backmatch_ptrs_out);
            SID_fwrite(&(n_subgroups_group[i_write%n_wrap][i_group]),sizeof(int),1,&fp_backmatch_ptrs_out);
-           SID_fwrite(&group_tree_id,        sizeof(int),  1,&fp_bridge_ptrs_out);
-           SID_fwrite(&group_file_forematch, sizeof(int),  1,&fp_bridge_ptrs_out);
-           SID_fwrite(&group_index_forematch,sizeof(int),  1,&fp_bridge_ptrs_out);
-           SID_fwrite(&group_score_forematch,sizeof(float),1,&fp_bridge_ptrs_out);
-           SID_fwrite(&group_score_desc,     sizeof(float),1,&fp_bridge_ptrs_out);
+           SID_fwrite(&group_tree_id,        sizeof(int),  1,                     &fp_bridge_ptrs_out);
+           SID_fwrite(&group_file_forematch_first, sizeof(int),  1,               &fp_bridge_ptrs_out);
+           SID_fwrite(&group_index_forematch_first,sizeof(int),  1,               &fp_bridge_ptrs_out);
+           SID_fwrite(&group_score_forematch_first,sizeof(float),1,               &fp_bridge_ptrs_out);
+           SID_fwrite(&group_file_forematch_default, sizeof(int),  1,             &fp_bridge_ptrs_out);
+           SID_fwrite(&group_index_forematch_default,sizeof(int),  1,             &fp_bridge_ptrs_out);
+           SID_fwrite(&group_score_forematch_default,sizeof(float),1,             &fp_bridge_ptrs_out);
+           SID_fwrite(&group_file_forematch_best, sizeof(int),  1,                &fp_bridge_ptrs_out);
+           SID_fwrite(&group_index_forematch_best,sizeof(int),  1,                &fp_bridge_ptrs_out);
+           SID_fwrite(&group_score_forematch_best,sizeof(float),1,                &fp_bridge_ptrs_out);
+           SID_fwrite(&group_score_desc,     sizeof(float),1,                     &fp_bridge_ptrs_out);
            SID_fwrite(&(n_subgroups_group[i_write%n_wrap][i_group]),sizeof(int),1,&fp_bridge_ptrs_out);
         }
 
@@ -333,13 +355,21 @@ void write_trees_horizontal(void  **groups_in,
            int   subgroup_file_backmatch;
            int   subgroup_index_backmatch;
            int   subgroup_id_backmatch;
-           int   subgroup_snap_forematch;
-           int   subgroup_file_forematch;
-           int   subgroup_index_forematch;
+           int   subgroup_snap_forematch_first;
+           int   subgroup_file_forematch_first;
+           int   subgroup_index_forematch_first;
+           float subgroup_score_forematch_first;
+           int   subgroup_snap_forematch_default;
+           int   subgroup_file_forematch_default;
+           int   subgroup_index_forematch_default;
+           float subgroup_score_forematch_default;
+           int   subgroup_snap_forematch_best;
+           int   subgroup_file_forematch_best;
+           int   subgroup_index_forematch_best;
+           float subgroup_score_forematch_best;
            float subgroup_score_desc;
            float subgroup_score_prog;
            float subgroup_score_backmatch;
-           float subgroup_score_forematch;
            int   subgroup_first_progenitor_file;
            int   subgroup_first_progenitor_index;
            int   subgroup_next_progenitor_file;
@@ -378,22 +408,30 @@ void write_trees_horizontal(void  **groups_in,
                  subgroup_n_particles_proj=set_match_n_particles(&(subgroups[i_write%n_wrap][i_subgroup].descendant.halo->first_progenitor));
               else
                  subgroup_n_particles_proj=-1;
-              subgroup_score_desc     =set_match_score(   &(subgroups[i_write%n_wrap][i_subgroup].descendant));
-              subgroup_score_prog     =set_match_score(   &(subgroups[i_write%n_wrap][i_subgroup].first_progenitor));
-              subgroup_score_backmatch=set_match_score(   &(subgroups[i_write%n_wrap][i_subgroup].bridge_backmatch));
-              subgroup_score_forematch=set_match_score(   &(subgroups[i_write%n_wrap][i_subgroup].forematch_first));
-              subgroup_snap_backmatch =set_match_snapshot(&(subgroups[i_write%n_wrap][i_subgroup].bridge_backmatch));
-              subgroup_file_backmatch =set_match_file(    &(subgroups[i_write%n_wrap][i_subgroup].bridge_backmatch));
-              subgroup_index_backmatch=set_match_index(   &(subgroups[i_write%n_wrap][i_subgroup].bridge_backmatch));
-              subgroup_id_backmatch   =set_match_id(      &(subgroups[i_write%n_wrap][i_subgroup].bridge_backmatch));
-              subgroup_snap_forematch =set_match_snapshot(&(subgroups[i_write%n_wrap][i_subgroup].forematch_first));
-              subgroup_file_forematch =set_match_file(    &(subgroups[i_write%n_wrap][i_subgroup].forematch_first));
-              subgroup_index_forematch=set_match_index(   &(subgroups[i_write%n_wrap][i_subgroup].forematch_first));
-              subgroup_first_progenitor_file =set_match_file( &(subgroups[i_write%n_wrap][i_subgroup].first_progenitor));
-              subgroup_first_progenitor_index=set_match_index(&(subgroups[i_write%n_wrap][i_subgroup].first_progenitor));
-              subgroup_next_progenitor_file  =set_match_file( &(subgroups[i_write%n_wrap][i_subgroup].next_progenitor));
-              subgroup_next_progenitor_index =set_match_index(&(subgroups[i_write%n_wrap][i_subgroup].next_progenitor));
-              subgroup_n_particles_peak      =0;
+              subgroup_score_desc             =set_match_score(   &(subgroups[i_write%n_wrap][i_subgroup].descendant));
+              subgroup_score_prog             =set_match_score(   &(subgroups[i_write%n_wrap][i_subgroup].first_progenitor));
+              subgroup_score_backmatch        =set_match_score(   &(subgroups[i_write%n_wrap][i_subgroup].bridge_backmatch));
+              subgroup_snap_backmatch         =set_match_snapshot(&(subgroups[i_write%n_wrap][i_subgroup].bridge_backmatch));
+              subgroup_file_backmatch         =set_match_file(    &(subgroups[i_write%n_wrap][i_subgroup].bridge_backmatch));
+              subgroup_index_backmatch        =set_match_index(   &(subgroups[i_write%n_wrap][i_subgroup].bridge_backmatch));
+              subgroup_id_backmatch           =set_match_id(      &(subgroups[i_write%n_wrap][i_subgroup].bridge_backmatch));
+              subgroup_snap_forematch_first   =set_match_snapshot(&(subgroups[i_write%n_wrap][i_subgroup].forematch_first));
+              subgroup_file_forematch_first   =set_match_file(    &(subgroups[i_write%n_wrap][i_subgroup].forematch_first));
+              subgroup_index_forematch_first  =set_match_index(   &(subgroups[i_write%n_wrap][i_subgroup].forematch_first));
+              subgroup_score_forematch_first  =set_match_score(   &(subgroups[i_write%n_wrap][i_subgroup].forematch_first));
+              subgroup_snap_forematch_default =set_match_snapshot(&(subgroups[i_write%n_wrap][i_subgroup].forematch_default));
+              subgroup_file_forematch_default =set_match_file(    &(subgroups[i_write%n_wrap][i_subgroup].forematch_default));
+              subgroup_index_forematch_default=set_match_index(   &(subgroups[i_write%n_wrap][i_subgroup].forematch_default));
+              subgroup_score_forematch_default=set_match_score(   &(subgroups[i_write%n_wrap][i_subgroup].forematch_default));
+              subgroup_snap_forematch_best    =set_match_snapshot(&(subgroups[i_write%n_wrap][i_subgroup].forematch_best));
+              subgroup_file_forematch_best    =set_match_file(    &(subgroups[i_write%n_wrap][i_subgroup].forematch_best));
+              subgroup_index_forematch_best   =set_match_index(   &(subgroups[i_write%n_wrap][i_subgroup].forematch_best));
+              subgroup_score_forematch_best   =set_match_score(   &(subgroups[i_write%n_wrap][i_subgroup].forematch_best));
+              subgroup_first_progenitor_file  =set_match_file( &(subgroups[i_write%n_wrap][i_subgroup].first_progenitor));
+              subgroup_first_progenitor_index =set_match_index(&(subgroups[i_write%n_wrap][i_subgroup].first_progenitor));
+              subgroup_next_progenitor_file   =set_match_file( &(subgroups[i_write%n_wrap][i_subgroup].next_progenitor));
+              subgroup_next_progenitor_index  =set_match_index(&(subgroups[i_write%n_wrap][i_subgroup].next_progenitor));
+              subgroup_n_particles_peak       =0;
            }
            else{
               tree_horizontal_extended_info **subgroups;
@@ -438,16 +476,22 @@ void write_trees_horizontal(void  **groups_in,
            //   needed, for example, to investigate
            //   emerged and fragmented halos
            if(flag_write_pointers){
-              SID_fwrite(&subgroup_tree_id,        sizeof(int),  1,&fp_backmatch_ptrs_out);
-              SID_fwrite(&subgroup_file_backmatch, sizeof(int),  1,&fp_backmatch_ptrs_out);
-              SID_fwrite(&subgroup_index_backmatch,sizeof(int),  1,&fp_backmatch_ptrs_out);
-              SID_fwrite(&subgroup_score_backmatch,sizeof(float),1,&fp_backmatch_ptrs_out);
-              SID_fwrite(&subgroup_score_prog,     sizeof(float),1,&fp_backmatch_ptrs_out);
-              SID_fwrite(&subgroup_tree_id,        sizeof(int),  1,&fp_bridge_ptrs_out);
-              SID_fwrite(&subgroup_file_forematch, sizeof(int),  1,&fp_bridge_ptrs_out);
-              SID_fwrite(&subgroup_index_forematch,sizeof(int),  1,&fp_bridge_ptrs_out);
-              SID_fwrite(&subgroup_score_forematch,sizeof(float),1,&fp_bridge_ptrs_out);
-              SID_fwrite(&subgroup_score_desc,     sizeof(float),1,&fp_bridge_ptrs_out);
+              SID_fwrite(&subgroup_tree_id,                sizeof(int),  1,&fp_backmatch_ptrs_out);
+              SID_fwrite(&subgroup_file_backmatch,         sizeof(int),  1,&fp_backmatch_ptrs_out);
+              SID_fwrite(&subgroup_index_backmatch,        sizeof(int),  1,&fp_backmatch_ptrs_out);
+              SID_fwrite(&subgroup_score_backmatch,        sizeof(float),1,&fp_backmatch_ptrs_out);
+              SID_fwrite(&subgroup_score_prog,             sizeof(float),1,&fp_backmatch_ptrs_out);
+              SID_fwrite(&subgroup_tree_id,                sizeof(int),  1,&fp_bridge_ptrs_out);
+              SID_fwrite(&subgroup_file_forematch_first,   sizeof(int),  1,&fp_bridge_ptrs_out);
+              SID_fwrite(&subgroup_index_forematch_first,  sizeof(int),  1,&fp_bridge_ptrs_out);
+              SID_fwrite(&subgroup_score_forematch_first,  sizeof(float),1,&fp_bridge_ptrs_out);
+              SID_fwrite(&subgroup_file_forematch_default, sizeof(int),  1,&fp_bridge_ptrs_out);
+              SID_fwrite(&subgroup_index_forematch_default,sizeof(int),  1,&fp_bridge_ptrs_out);
+              SID_fwrite(&subgroup_score_forematch_default,sizeof(float),1,&fp_bridge_ptrs_out);
+              SID_fwrite(&subgroup_file_forematch_best,    sizeof(int),  1,&fp_bridge_ptrs_out);
+              SID_fwrite(&subgroup_index_forematch_best,   sizeof(int),  1,&fp_bridge_ptrs_out);
+              SID_fwrite(&subgroup_score_forematch_best,   sizeof(float),1,&fp_bridge_ptrs_out);
+              SID_fwrite(&subgroup_score_desc,             sizeof(float),1,&fp_bridge_ptrs_out);
            }
         }
      }

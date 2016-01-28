@@ -22,6 +22,7 @@ int find_treenode_formation(tree_info       *trees,
             (*halo_formation)=current_halo;
          else break;
          // Because progenitors could be ordered many ways, find the most massive one
+         //    and scan along that
          tree_node_info *most_massive_progenitor=current_halo->progenitor_first;
          if(most_massive_progenitor!=NULL){
             int n_p_mm=most_massive_progenitor->n_particles_peak;
