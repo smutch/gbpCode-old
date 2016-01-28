@@ -323,17 +323,17 @@ void write_trees_horizontal(void  **groups_in,
            SID_fwrite(&group_score_backmatch,sizeof(float),1,                     &fp_backmatch_ptrs_out);
            SID_fwrite(&group_score_prog,     sizeof(float),1,                     &fp_backmatch_ptrs_out);
            SID_fwrite(&(n_subgroups_group[i_write%n_wrap][i_group]),sizeof(int),1,&fp_backmatch_ptrs_out);
-           SID_fwrite(&group_tree_id,        sizeof(int),  1,                     &fp_bridge_ptrs_out);
-           SID_fwrite(&group_file_forematch_first, sizeof(int),  1,               &fp_bridge_ptrs_out);
-           SID_fwrite(&group_index_forematch_first,sizeof(int),  1,               &fp_bridge_ptrs_out);
-           SID_fwrite(&group_score_forematch_first,sizeof(float),1,               &fp_bridge_ptrs_out);
+           SID_fwrite(&group_tree_id,                sizeof(int),  1,             &fp_bridge_ptrs_out);
+           SID_fwrite(&group_file_forematch_first,   sizeof(int),  1,             &fp_bridge_ptrs_out);
+           SID_fwrite(&group_index_forematch_first,  sizeof(int),  1,             &fp_bridge_ptrs_out);
+           SID_fwrite(&group_score_forematch_first,  sizeof(float),1,             &fp_bridge_ptrs_out);
            SID_fwrite(&group_file_forematch_default, sizeof(int),  1,             &fp_bridge_ptrs_out);
            SID_fwrite(&group_index_forematch_default,sizeof(int),  1,             &fp_bridge_ptrs_out);
            SID_fwrite(&group_score_forematch_default,sizeof(float),1,             &fp_bridge_ptrs_out);
-           SID_fwrite(&group_file_forematch_best, sizeof(int),  1,                &fp_bridge_ptrs_out);
-           SID_fwrite(&group_index_forematch_best,sizeof(int),  1,                &fp_bridge_ptrs_out);
-           SID_fwrite(&group_score_forematch_best,sizeof(float),1,                &fp_bridge_ptrs_out);
-           SID_fwrite(&group_score_desc,     sizeof(float),1,                     &fp_bridge_ptrs_out);
+           SID_fwrite(&group_file_forematch_best,    sizeof(int),  1,             &fp_bridge_ptrs_out);
+           SID_fwrite(&group_index_forematch_best,   sizeof(int),  1,             &fp_bridge_ptrs_out);
+           SID_fwrite(&group_score_forematch_best,   sizeof(float),1,             &fp_bridge_ptrs_out);
+           SID_fwrite(&group_score_desc,             sizeof(float),1,             &fp_bridge_ptrs_out);
            SID_fwrite(&(n_subgroups_group[i_write%n_wrap][i_group]),sizeof(int),1,&fp_bridge_ptrs_out);
         }
 

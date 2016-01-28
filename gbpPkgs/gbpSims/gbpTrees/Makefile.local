@@ -15,7 +15,6 @@ BINFILES  = make_match_score_table         \
 	        query_matches                  \
 	        query_progenitors              \
 	        query_trees                    \
-	        query_tree_halo                \
 	        query_forest_trees_IDs         \
 	        extract_tree_horizontal        \
 	        most_massive_subgroup_analysis \
