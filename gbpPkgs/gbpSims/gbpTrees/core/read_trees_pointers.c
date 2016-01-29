@@ -87,6 +87,11 @@ void read_trees_pointers(tree_info        *trees,
 
    SID_log("Reading %s pointers for snapshot %03d...",SID_LOG_OPEN,pointer_type_text,trees->snap_list[i_file_ptrs]);
 
+   // Back and forematch pointer files have a different number of pointers stored in them.  Read the first for both.
+   int n_pointers=3; //Forematch
+   if(flag_bridge_backmatch)
+      n_pointers=1;
+
    // Allocate array
    pointers_groups_local[i_file_ptrs]=
       (tree_node_info **)SID_malloc(sizeof(tree_node_info *)*trees->n_groups_snap_local[i_file_ptrs]);
@@ -103,8 +108,8 @@ void read_trees_pointers(tree_info        *trees,
 
    // Open file and read header
    char   filename_ptrs_in[MAX_FILENAME_LENGTH];
-   int    n_buffer_group   =4*sizeof(int)+2*sizeof(float);
-   int    n_buffer_subgroup=3*sizeof(int)+2*sizeof(float);
+   int    n_buffer_group   =(2+2*n_pointers)*sizeof(int)+(1+n_pointers)*sizeof(float);
+   int    n_buffer_subgroup=(1+2*n_pointers)*sizeof(int)+(1+n_pointers)*sizeof(float);
    int    n_buffer_alloc   =MAX(n_buffer_group,n_buffer_subgroup);
    char  *tree_read_buffer =(char *)SID_malloc(n_buffer_alloc);
    SID_fp fp_ptrs_in;
@@ -148,6 +153,7 @@ void read_trees_pointers(tree_info        *trees,
      group_snap       =((int   *)(&(tree_read_buffer[i_buffer])))[0];i_buffer+=sizeof(int);
      group_index      =((int   *)(&(tree_read_buffer[i_buffer])))[0];i_buffer+=sizeof(int);
      group_score      =((float *)(&(tree_read_buffer[i_buffer])))[0];i_buffer+=sizeof(float);
+     i_buffer+=(n_pointers-1)*((2*sizeof(int))+sizeof(float));
      group_score_prog =((float *)(&(tree_read_buffer[i_buffer])))[0];i_buffer+=sizeof(float);
      n_subgroups_group=((int   *)(&(tree_read_buffer[i_buffer])))[0];i_buffer+=sizeof(int);
      
@@ -164,6 +170,7 @@ void read_trees_pointers(tree_info        *trees,
        subgroup_snap      =((int   *)(&(tree_read_buffer[i_buffer])))[0];i_buffer+=sizeof(int);
        subgroup_index     =((int   *)(&(tree_read_buffer[i_buffer])))[0];i_buffer+=sizeof(int);
        subgroup_score     =((float *)(&(tree_read_buffer[i_buffer])))[0];i_buffer+=sizeof(float);
+       i_buffer+=(n_pointers-1)*((2*sizeof(int))+sizeof(float));
        subgroup_score_prog=((float *)(&(tree_read_buffer[i_buffer])))[0];i_buffer+=sizeof(float);
 
        // Ignore halos with undefined tree_ids

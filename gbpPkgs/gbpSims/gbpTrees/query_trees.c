@@ -160,9 +160,9 @@ int main(int argc, char *argv[]){
      halo_id_find=halo_id;
 
      // Create filename
-     SID_log("Halo's ID is %d.",SID_LOG_COMMENT,halo_id_find);
-     sprintf(filename_out,     "%s_%d_%d_%d.txt",     filename_trees_root,halo_id_find,i_read,i_halo);
-     sprintf(filename_out_ptrs,"%s_%d_%d_%d_ptrs.txt",filename_trees_root,halo_id_find,i_read,i_halo);
+     SID_log("Selected halo's ID is %d.",SID_LOG_COMMENT,halo_id_find);
+     sprintf(filename_out,     "%s_%d_%d_%d.txt",     filename_trees_root,i_read,i_halo,halo_id_find);
+     sprintf(filename_out_ptrs,"%s_%d_%d_%d_ptrs.txt",filename_trees_root,i_read,i_halo,halo_id_find);
   }
   find_mode=0;
 
@@ -286,7 +286,7 @@ int main(int argc, char *argv[]){
        }
        else{
           SID_fskip(sizeof(int),  7,&fp_in_trees);
-          SID_fskip(sizeof(int),  7,&fp_in_bridge_forematch); // 6+1 'casue we're skipping n_subgroups_group too
+          SID_fskip(sizeof(int),  8,&fp_in_bridge_forematch); // 7+1 'casue we're skipping n_subgroups_group too
           SID_fskip(sizeof(float),4,&fp_in_bridge_forematch);
           SID_fskip(sizeof(int),  4,&fp_in_bridge_backmatch); // 3+1 'casue we're skipping n_subgroups_group too
           SID_fskip(sizeof(float),2,&fp_in_bridge_backmatch); 
@@ -440,12 +440,13 @@ int main(int argc, char *argv[]){
                       halo_tree_id,
                       halo_type,
                       halo_type_string);
-       fprintf(fp_out_ptrs,"%le %7.3lf %3d %7d %7d %3d %7d %7d %3d %7d %3d %7d %3d %7d %3d %7d %7d %s\n",
+       fprintf(fp_out_ptrs,"%le %7.3lf %3d %7d %7d %3d %6d %6d %6d %6d %6d %6d %6d %6d %6d %6d %6d\n",
                       trees->a_list[i_file],
                       trees->z_list[i_file],
                       i_read,
                       i_halo,
                       halo_id,
+                      halo_file_offset,
                       descendant_snap,
                       halo_index,
                       halo_descendant_id,
@@ -456,9 +457,7 @@ int main(int argc, char *argv[]){
                       bridge_forematch_best_snap,
                       bridge_forematch_best_index,
                       bridge_backmatch_snap,
-                      bridge_backmatch_index,
-                      halo_type,
-                      halo_type_string);
+                      bridge_backmatch_index);
        SID_free(SID_FARG halo_type_string);
 
        // Set descendant
