@@ -34,6 +34,9 @@ void finalize_trees_horizontal(int                    n_halos_1_matches,
             // Add 2WAY match flags
             if(halos_i[i_halo].forematch_first.flag_two_way)
                halos_i[i_halo].type|=TREE_CASE_2WAY_MATCH;
+            // Add set-by-back-match flags
+            if(halos_i[i_halo].forematch_first.flag_back_match)
+               halos_i[i_halo].type|=TREE_CASE_SET_BY_BACKMATCH;
          }
          // ... else, use the default pointer.
          else{
@@ -48,7 +51,9 @@ void finalize_trees_horizontal(int                    n_halos_1_matches,
             // Add 2WAY match flags
             if(halos_i[i_halo].forematch_default.flag_two_way)
                halos_i[i_halo].type|=TREE_CASE_2WAY_MATCH;
-
+            // Add set-by-back-match flags
+            if(halos_i[i_halo].forematch_default.flag_back_match)
+               halos_i[i_halo].type|=TREE_CASE_SET_BY_BACKMATCH;
          }
       }
    }

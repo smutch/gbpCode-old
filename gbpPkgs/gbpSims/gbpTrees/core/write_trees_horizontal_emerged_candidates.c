@@ -56,8 +56,7 @@ void write_trees_horizontal_emerged_candidates(int                   i_read,
       if(check_mode_for_flag(halos_i[i_halo].type,TREE_CASE_BRIDGED)){
          int j_halo;
          for(j_halo=0;j_halo<halos_i[i_halo].n_back_matches;j_halo++){
-            back_match_info *back_match;
-            back_match=&(halos_i[i_halo].back_matches[j_halo]);
+            match_info *back_match=&(halos_i[i_halo].back_matches[j_halo]);
             fprintf(fp_matching_out,"%4d %7d %7d   %4d %7d %7d   %3d   %4d %7d %7d   %10.4f %10.4f   %7d %7d %7d\n",
                     i_read,
                     i_halo,
@@ -66,14 +65,14 @@ void write_trees_horizontal_emerged_candidates(int                   i_read,
                     set_match_index(   &(halos_i[i_halo].descendant)),
                     set_match_id(      &(halos_i[i_halo].descendant)),
                     j_halo,
-                    set_back_match_snapshot(back_match),
-                    set_back_match_index(   back_match),
-                    set_back_match_id(      back_match),
+                    set_match_snapshot(back_match),
+                    set_match_index(   back_match),
+                    set_match_id(      back_match),
                     set_match_score(&(halos_i[i_halo].descendant)),
-                    set_back_match_score(back_match),
+                    set_match_score(back_match),
                     halos_i[i_halo].n_particles,
                     set_match_n_particles(&(halos_i[i_halo].descendant)),
-                    set_back_match_n_particles(back_match));
+                    set_match_n_particles(back_match));
          }
       }
    }

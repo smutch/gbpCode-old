@@ -5,8 +5,7 @@
 
 // This defines the minimum effective fraction of
 //    mass needed to be considered a good match
-#define F_GOODNESS_OF_MATCH   0.0
-//#define F_GOODNESS_OF_MATCH   0.05
+#define F_GOODNESS_OF_MATCH   0.2
 
 // This defines the minimum and minimum fraction of the 
 //    max score needed to be considered a good match
@@ -67,7 +66,7 @@
 #define TREE_CASE_INVALID                      TTTP23  // For internal use.  This should never be seen in the output.
 
 #ifdef _MAIN
-   int   n_tree_case_flag_list=23;
+   int   n_tree_case_flag_list=22;
    int   tree_case_flag_list[]={
                   TREE_CASE_NO_PROGENITORS,
                   TREE_CASE_STRAYED,
@@ -76,7 +75,6 @@
                   TREE_CASE_FRAGMENTED_STRAYED,
                   TREE_CASE_FRAGMENTED_RETURNED,
                   TREE_CASE_FRAGMENTED_EXCHANGED,
-                  TREE_CASE_MAIN_PROGENITOR,
                   TREE_CASE_2WAY_MATCH,
                   TREE_CASE_MOST_MASSIVE,
                   TREE_CASE_DOMINANT,
@@ -100,7 +98,6 @@
                   "FRAGMENTED_STRAYED",
                   "FRAGMENTED_RETURNED",
                   "FRAGMENTED_EXCHANGED",
-                  "MAIN_PROGENITOR",
                   "2WAY",
                   "MOST_MASSIVE",
                   "DOMINANT",
@@ -196,13 +193,7 @@ struct match_info{
   tree_horizontal_info *halo;
   float                 score;
   int                   flag_two_way;
-};
-typedef struct back_match_info back_match_info;
-struct back_match_info{
-  tree_horizontal_info *halo;
-  float                 score;
-  int                   flag_two_way;
-  int                   file;
+  int                   flag_back_match;
 };
 
 struct tree_horizontal_info{
@@ -221,12 +212,14 @@ struct tree_horizontal_info{
   match_info       first_progenitor;               // Pointer to this halo's first progenitor
   match_info       last_progenitor;                // Pointer to this halo's last  progenitor
   match_info       next_progenitor;                // Pointer to this halo's next  progenitor
-  back_match_info *back_matches;                   // Contains the pointer information for all of the back-matches to this halo
-  match_info       forematch_first;                // Pointer to the first bridged halo matched to.
-  match_info       forematch_default;              // Pointer to the default halo matched to.  Starts with an initial match but may change
+  match_info      *back_matches;                   // Contains the pointer information for all of the back-matches to this halo
+  match_info       forematch_first;                // Initially used (in identify_back_matches) as a pointer to the most immediate forematched halo,
+                                                   //    then used (in identify_progenitors) as the first and best option for a descendant from
+                                                   //    the back match list.
+  match_info       forematch_default;              // Pointer to the default halo matched to.  Starts with the initial 'first' match but may change
                                                    //    if we manage to match to one-or-more emerged halo(s).  When we finish scanning, 
                                                    //    this becomes the match.
-  match_info       forematch_best;                 // The best match to this halo generated in 'identify_progenitors'.  Used
+  match_info       forematch_best;                 // The best fore match to this halo generated in 'identify_progenitors'.  Used
                                                    //    to ensure that a bridged halo gets at least one progenitor, rather
                                                    //    than have all matches to it end-up as later matches to emerged halos.
   match_info       bridge_backmatch;               // Pointer to a possible back-matched bridged halo
@@ -519,7 +512,7 @@ int check_for_matching_input_files(const char *filename_root_in,int i_read);
 float maximum_match_score(double n_particles);
 float minimum_match_score(double n_particles);
 float match_score_f_goodness(float match_score,int n_particles_in);
-int check_validity_of_match(int n_particles_i,int n_particles_j,float match_score,double f_goodness_of_match);
+int check_validity_of_match(int n_particles_use,float match_score,double f_goodness_of_match);
 
 int check_if_halo_is_descendant(tree_horizontal_info *possible_progenitor,
                                 tree_horizontal_info *possible_descendant,
@@ -528,12 +521,15 @@ int check_if_halo_is_merger(int type);
 int check_if_halo_is_fragmented(int type);
 int check_if_descendant_is_back_matched(tree_horizontal_info *halo,
                                         tree_horizontal_info *halo_to_check);
-int check_if_better_match(tree_horizontal_info *target_halo,
-                          match_info           *old_match,
-                          match_info           *new_match);
+int check_if_match_is_better(tree_horizontal_info *target_halo,
+                             match_info           *old_match,
+                             match_info           *new_match);
+int check_if_match_is_simple(tree_horizontal_info *target_halo,
+                             match_info           *match);
+int check_if_match_is_immediate(tree_horizontal_info *target_halo,
+                                match_info           *match);
 int check_validity_of_emerged_match(tree_horizontal_info *halo_i,
-                                    back_match_info      *back_match,
-                                    char                  match_flag_two_way,
+                                    match_info           *back_match,
                                     int                   n_search);
 int check_validity_of_tree_case_flag(int flag);
 int compute_cross_catalog_matches(char   *filename_root_in_1,
@@ -560,6 +556,8 @@ void write_match_results(char       *filename_out_dir,
                          int         mode);
 void compute_trees_horizontal_stats(void *halos_in,int n_halos,int n_halos_max,tree_horizontal_stats_info *stats,int flag_write_cases);
 
+int   set_halo_offset(tree_horizontal_info *halo,tree_horizontal_info *target_halo);
+
 int   set_match_id         (match_info *match);
 int   set_match_file       (match_info *match);
 int   set_match_snapshot   (match_info *match);
@@ -568,14 +566,6 @@ int   set_match_n_particles(match_info *match);
 int   set_match_index      (match_info *match);
 float set_match_score      (match_info *match);
 
-int   set_back_match_id         (back_match_info *back_match);
-int   set_back_match_file       (back_match_info *back_match);
-int   set_back_match_snapshot   (back_match_info *back_match);
-int   set_back_match_type       (back_match_info *back_match);
-int   set_back_match_n_particles(back_match_info *back_match);
-int   set_back_match_index      (back_match_info *back_match);
-float set_back_match_score      (back_match_info *back_match);
-
 void set_n_particles_peak(int type,int n_particles_halo,int *n_particles_peak);
 
 tree_horizontal_extended_info *set_extended_descendant(tree_horizontal_extended_info **halos,tree_horizontal_extended_info *halo,int i_file,int n_wrap);
@@ -583,7 +573,7 @@ tree_horizontal_extended_info *set_extended_first_progenitor(tree_horizontal_ext
 tree_horizontal_extended_info *set_extended_next_progenitor (tree_horizontal_extended_info **halos,tree_horizontal_extended_info *halo,int n_wrap);
 void check_for_fragmented_halos(int k_match,tree_horizontal_info **groups,int n_groups,
                                 int i_write,int j_write,int l_write,int n_wrap);
-void add_to_trees_horizontal_stats(tree_horizontal_stats_info *stats,int id,int type,int n_particles);
+void add_to_trees_horizontal_stats(tree_horizontal_stats_info *stats,tree_horizontal_info *halo);
 void init_trees_horizontal_roots(tree_horizontal_info **groups,
                                  tree_horizontal_info **subgroups,
                                  int    *match_id,

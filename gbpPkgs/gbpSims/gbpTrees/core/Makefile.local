@@ -31,7 +31,9 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    match_score_f_goodness.o                      \
 	    check_validity_of_match.o                     \
 	    check_validity_of_emerged_match.o             \
-	    check_if_better_match.o                       \
+	    check_if_match_is_better.o                    \
+	    check_if_match_is_simple.o                    \
+	    check_if_match_is_immediate.o                 \
 	    check_if_halo_is_descendant.o                 \
 	    check_if_halo_is_merger.o                     \
 	    check_if_halo_is_fragmented.o                 \
@@ -65,6 +67,7 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    compute_forests.o                             \
 	    compute_trees_horizontal_stats.o              \
 	    compute_trees_horizontal.o                    \
+	    set_halo_offset.o                             \
 	    set_match_id.o                                \
 	    set_match_file.o                              \
 	    set_match_snapshot.o                          \
@@ -72,13 +75,6 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    set_match_n_particles.o                       \
 	    set_match_index.o                             \
 	    set_match_score.o                             \
-	    set_back_match_id.o                           \
-	    set_back_match_file.o                         \
-	    set_back_match_snapshot.o                     \
-	    set_back_match_type.o                         \
-	    set_back_match_n_particles.o                  \
-	    set_back_match_index.o                        \
-	    set_back_match_score.o                        \
 	    set_n_particles_peak.o                        \
 	    set_extended_descendant.o                     \
 	    set_extended_first_progenitor.o               \

@@ -13,14 +13,14 @@ void compute_trees_horizontal_stats(void *halos_in,int n_halos,int n_halos_max,t
          tree_horizontal_info *halos;
          halos=(tree_horizontal_info *)halos_in;
          for(i_halo=0;i_halo<n_halos_max;i_halo++)
-            add_to_trees_horizontal_stats(stats,halos[i_halo].id,halos[i_halo].type,halos[i_halo].n_particles);
+            add_to_trees_horizontal_stats(stats,&(halos[i_halo]));
          }
          break;
       case FALSE:{
          tree_horizontal_extended_info *halos;
          halos=(tree_horizontal_extended_info *)halos_in;
          for(i_halo=0;i_halo<n_halos_max;i_halo++)
-            add_to_trees_horizontal_stats(stats,halos[i_halo].id,halos[i_halo].type,halos[i_halo].n_particles);
+            add_to_trees_horizontal_stats(stats,&(halos[i_halo]));
          }
          break;
    }

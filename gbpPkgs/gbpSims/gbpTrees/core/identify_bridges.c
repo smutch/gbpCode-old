@@ -17,14 +17,19 @@ void identify_bridges(tree_horizontal_info *halos_i,
       int n_back_matches=halos_i[i_halo].n_back_matches;
       if(n_back_matches>0){
          // ... check all the halos back-matched to it ...
-         back_match_info *back_matches       =halos_i[i_halo].back_matches;
-         int              n_emerged_candidate=0;
+         match_info *back_matches       =halos_i[i_halo].back_matches;
+         int         n_emerged_candidate=0;
          for(int i_back_match=0;i_back_match<n_back_matches;i_back_match++){
             tree_horizontal_info *back_match_i_halo=back_matches[i_back_match].halo;
             // ... only consider back matches which have not been placed 
-            //     in the bridged halo's main progenitor line ...
-            if(back_match_i_halo->id!=halos_i[i_halo].id){
-               back_matches[i_back_match].halo->type|=TREE_CASE_EMERGED_CANDIDATE;
+            //     in the bridged halo's main progenitor line, or which
+            //     have not been given progenitors (possible in asymetric
+            //     matches, where a halo is a back match to one halo,
+            //     but has a fore match from another, for example).
+            //     Both of these cases can be checked for by just seeing
+            //     if the halo does not have a progenitor.
+            if(back_match_i_halo->first_progenitor.halo==NULL){
+               back_match_i_halo->type|=TREE_CASE_EMERGED_CANDIDATE;
                n_emerged_candidate++;
             }
          }
