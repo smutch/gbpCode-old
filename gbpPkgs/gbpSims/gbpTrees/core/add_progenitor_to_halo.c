@@ -14,6 +14,8 @@ void add_progenitor_to_halo(tree_horizontal_info **halos,
                             int                    j_file,
                             int                    j_halo,
                             float                  score,
+                            int                    flag_two_way,
+                            int                    flag_back_match,
                             int                   *max_id,
                             int                    n_wrap){
    tree_horizontal_info *halos_i=halos[i_file%n_wrap];
@@ -24,8 +26,10 @@ void add_progenitor_to_halo(tree_horizontal_info **halos,
    match_info old_progenitor;
    match_info new_progenitor;
    // ... create new progenitor ...
-   new_progenitor.halo =&(halos_i[i_halo]);
-   new_progenitor.score=score;
+   new_progenitor.halo           =&(halos_i[i_halo]);
+   new_progenitor.score          =score;
+   new_progenitor.flag_two_way   =flag_two_way;
+   new_progenitor.flag_back_match=flag_back_match;
    // ... increment counter ...
    halos_j[j_halo].n_progenitors++;
    // ... set main progenitor id ...

@@ -29,6 +29,8 @@ void finalize_trees_horizontal(int                    n_halos_1_matches,
                                    halos_i[i_halo].forematch_first.halo->file,
                                    halos_i[i_halo].forematch_first.halo->index,
                                    halos_i[i_halo].forematch_first.score,
+                                   halos_i[i_halo].forematch_first.flag_two_way,
+                                   halos_i[i_halo].forematch_first.flag_back_match,
                                    max_id,
                                    n_wrap);
             // Add 2WAY match flags
@@ -46,6 +48,8 @@ void finalize_trees_horizontal(int                    n_halos_1_matches,
                                    halos_i[i_halo].forematch_default.halo->file,
                                    halos_i[i_halo].forematch_default.halo->index,
                                    halos_i[i_halo].forematch_default.score,
+                                   halos_i[i_halo].forematch_default.flag_two_way,
+                                   halos_i[i_halo].forematch_default.flag_back_match,
                                    max_id,
                                    n_wrap);
             // Add 2WAY match flags

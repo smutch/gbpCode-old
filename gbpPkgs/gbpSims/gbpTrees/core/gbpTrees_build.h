@@ -573,7 +573,7 @@ tree_horizontal_extended_info *set_extended_first_progenitor(tree_horizontal_ext
 tree_horizontal_extended_info *set_extended_next_progenitor (tree_horizontal_extended_info **halos,tree_horizontal_extended_info *halo,int n_wrap);
 void check_for_fragmented_halos(int k_match,tree_horizontal_info **groups,int n_groups,
                                 int i_write,int j_write,int l_write,int n_wrap);
-void add_to_trees_horizontal_stats(tree_horizontal_stats_info *stats,tree_horizontal_info *halo);
+void add_to_trees_horizontal_stats(tree_horizontal_stats_info *stats,int id,int descendant_id,int n_particles,int type);
 void init_trees_horizontal_roots(tree_horizontal_info **groups,
                                  tree_horizontal_info **subgroups,
                                  int    *match_id,
@@ -849,6 +849,8 @@ void add_progenitor_to_halo(tree_horizontal_info **halos,
                             int                    j_file,
                             int                    j_halo,
                             float                  score,
+                            int                    flag_two_way,
+                            int                    flag_back_match,
                             int                   *max_id,
                             int                    n_wrap);
 void compute_trees_horizontal(char   *filename_halos_root_in,
