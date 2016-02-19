@@ -2,6 +2,7 @@
 #include <gbpTrees_build.h>
 
 void init_trees_horizontal_snapshot(tree_horizontal_info *halos,
+                                    match_info          **back_matches,
                                     int                   i_read,
                                     int                   i_file,
                                     int                   n_groups,
@@ -50,7 +51,7 @@ void init_trees_horizontal_snapshot(tree_horizontal_info *halos,
       halos[i_halo].bridge_backmatch.halo         = NULL;
       halos[i_halo].bridge_backmatch.score        =   0.;
       halos[i_halo].bridge_backmatch.flag_two_way =FALSE;
-      SID_free(SID_FARG halos[i_halo].back_matches);
+      halos[i_halo].back_matches                  =NULL;
       if(i_halo<n_halos)
          halos[i_halo].type=TREE_CASE_UNPROCESSED|TREE_CASE_MAIN_PROGENITOR|TREE_CASE_NO_PROGENITORS;
       else
@@ -63,5 +64,7 @@ void init_trees_horizontal_snapshot(tree_horizontal_info *halos,
       halos[i_halo].n_particles_largest_descendant= 0;
       halos[i_halo].n_progenitors                 = 0;
    }
+   // Erase back-match array
+   SID_free(SID_FARG (*back_matches));
 }
 

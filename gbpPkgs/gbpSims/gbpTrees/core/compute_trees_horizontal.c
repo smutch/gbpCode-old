@@ -121,14 +121,17 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
   tree_horizontal_info **groups;
   tree_horizontal_info **halos;
   tree_horizontal_info  *halos_i;
+  match_info           **back_matches_groups;
+  match_info           **back_matches_subgroups;
+  match_info           **back_matches;
 
-  int  n_files;
-  int  n_subgroups_max;
-  int  n_groups_max;
-  int *n_halos;
-  int  n_halos_max;
-  int  n_halos_i;
-  int  i_halo;
+  int     n_files;
+  int     n_subgroups_max;
+  int     n_groups_max;
+  int    *n_halos;
+  int     n_halos_max;
+  int     n_halos_i;
+  int     i_halo;
   int     n_halos_1_matches;
   int     n_halos_2_matches;
   int     j_halo;
@@ -211,6 +214,10 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                       &n_groups_max,
                       &n_halos_max);
 
+fprintf(stderr,"\n");
+for(int i_test=0;i_test<n_files;i_test++) fprintf(stderr,"A:%d %d\n",i_test,n_subgroups[i_test]);
+fprintf(stderr,"\n");
+
   // We need these for allocating arrays
   calc_max(n_subgroups,&n_subgroups_max,n_files,SID_INT,CALC_MODE_DEFAULT);
   calc_max(n_groups,   &n_groups_max,   n_files,SID_INT,CALC_MODE_DEFAULT);
@@ -223,19 +230,23 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
      
   // Initialize arrays
   SID_log("Creating arrays...",SID_LOG_OPEN);
-  n_particles_groups   =(int    *)SID_malloc(sizeof(int)   *n_halos_max);
-  n_particles_subgroups=(int    *)SID_malloc(sizeof(int)   *n_halos_max);
-  match_id             =(int    *)SID_malloc(sizeof(int)   *n_halos_max);
-  match_score          =(float  *)SID_malloc(sizeof(float) *n_halos_max);
-  match_index          =(size_t *)SID_malloc(sizeof(size_t)*n_halos_max);
-  match_flag_two_way   =(char   *)SID_malloc(sizeof(char)  *n_halos_max);
-  subgroups            =(tree_horizontal_info **)SID_malloc(sizeof(tree_horizontal_info *)*n_wrap);
-  groups               =(tree_horizontal_info **)SID_malloc(sizeof(tree_horizontal_info *)*n_wrap);
-  n_subgroups_group    =(int                  **)SID_malloc(sizeof(int                  *)*n_wrap);
+  n_particles_groups    =(int    *)SID_malloc(sizeof(int)   *n_halos_max);
+  n_particles_subgroups =(int    *)SID_malloc(sizeof(int)   *n_halos_max);
+  match_id              =(int    *)SID_malloc(sizeof(int)   *n_halos_max);
+  match_score           =(float  *)SID_malloc(sizeof(float) *n_halos_max);
+  match_index           =(size_t *)SID_malloc(sizeof(size_t)*n_halos_max);
+  match_flag_two_way    =(char   *)SID_malloc(sizeof(char)  *n_halos_max);
+  subgroups             =(tree_horizontal_info **)SID_malloc(sizeof(tree_horizontal_info *)*n_wrap);
+  groups                =(tree_horizontal_info **)SID_malloc(sizeof(tree_horizontal_info *)*n_wrap);
+  n_subgroups_group     =(int                  **)SID_malloc(sizeof(int                  *)*n_wrap);
+  back_matches_subgroups=(match_info           **)SID_malloc(sizeof(match_info *)          *n_wrap);
+  back_matches_groups   =(match_info           **)SID_malloc(sizeof(match_info *)          *n_wrap);
   for(i_search=0;i_search<n_wrap;i_search++){
-     subgroups[i_search]            =(tree_horizontal_info *)SID_calloc(sizeof(tree_horizontal_info)*n_subgroups_max);
-     groups[i_search]               =(tree_horizontal_info *)SID_calloc(sizeof(tree_horizontal_info)*n_groups_max);       
-     n_subgroups_group[i_search]    =(int                  *)SID_malloc(sizeof(int)                 *n_groups_max);       
+     subgroups[i_search]             =(tree_horizontal_info *)SID_calloc(sizeof(tree_horizontal_info)*n_subgroups_max);
+     groups[i_search]                =(tree_horizontal_info *)SID_calloc(sizeof(tree_horizontal_info)*n_groups_max);       
+     n_subgroups_group[i_search]     =(int                  *)SID_malloc(sizeof(int)                 *n_groups_max);       
+     back_matches_subgroups[i_search]=NULL;
+     back_matches_groups[i_search]   =NULL;
   }
   SID_log("Done.",SID_LOG_CLOSE);
 
@@ -296,6 +307,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
           sprintf(group_text_prefix,"");
           flag_match_subgroups=MATCH_GROUPS;
           halos               =groups;
+          back_matches        =back_matches_groups;
           n_halos             =n_groups;
           n_halos_max         =n_groups_max;
           max_id              =max_id_group;
@@ -306,6 +318,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
           sprintf(group_text_prefix,"sub");
           flag_match_subgroups=MATCH_SUBGROUPS;
           halos               =subgroups;
+          back_matches        =back_matches_subgroups;
           n_halos             =n_subgroups;
           n_halos_max         =n_subgroups_max;
           max_id              =max_id_subgroup;
@@ -320,6 +333,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
 
        // Initialize tree pointer-arrays with dummy values
        init_trees_horizontal_snapshot(halos_i,
+                                      &(back_matches[i_file%n_wrap]),
                                       i_read,
                                       i_file,
                                       n_groups[j_file],
@@ -332,6 +346,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
        if(flag_fix_bridges)
           identify_back_matches(halos,
                                 halos_i,
+                                &(back_matches[i_file%n_wrap]),
                                 n_halos_i,
                                 match_id,
                                 match_score,
@@ -376,6 +391,14 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                             filename_root_matches,
                             group_text_prefix,
                             flag_match_subgroups);
+if(k_match==1){
+fprintf(stderr,"\n");
+int n_test=0;
+for(int i_test=0;i_test<n_groups[j_file];i_test++) n_test+=n_subgroups_group[i_file%n_wrap][i_test];
+fprintf(stderr,"B:%d %d %d\n",i_file,n_subgroups,n_test);
+fprintf(stderr,"\n");
+SID_exit(ERROR_NONE);
+}
 
        // Add MOST_MASSIVE substructure flags
        if(flag_match_subgroups==MATCH_SUBGROUPS)
@@ -504,17 +527,16 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
   SID_log("Freeing arrays...",SID_LOG_OPEN);
   for(i_search=0;i_search<n_wrap;i_search++){
      // Free subgroup information
-     for(i_halo=0;i_halo<n_subgroups_max;i_halo++)
-        SID_free(SID_FARG subgroups[i_search][i_halo].back_matches);
      SID_free(SID_FARG subgroups[i_search]);
-
+     SID_free(SID_FARG back_matches_subgroups[i_search]);
      // Free group information
-     for(i_halo=0;i_halo<n_groups_max;i_halo++)
-        SID_free(SID_FARG groups[i_search][i_halo].back_matches);
      SID_free(SID_FARG groups[i_search]);
+     SID_free(SID_FARG back_matches_groups[i_search]);
   }
   SID_free(SID_FARG subgroups);
   SID_free(SID_FARG groups);
+  SID_free(SID_FARG back_matches_subgroups);
+  SID_free(SID_FARG back_matches_groups);
   SID_free(SID_FARG match_id);
   SID_free(SID_FARG match_score);
   SID_free(SID_FARG match_index);
@@ -569,12 +591,14 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
   }
 
   // Some final clean-up
+  SID_log("Cleaning up...",SID_LOG_OPEN);
   SID_free(SID_FARG n_groups);
   SID_free(SID_FARG n_subgroups);
   for(i_search=0;i_search<n_wrap;i_search++)
      SID_free(SID_FARG n_subgroups_group[i_search]);
   SID_free(SID_FARG n_subgroups_group);
   SID_free(SID_FARG a_list);
+  SID_log("Done.",SID_LOG_CLOSE);
 
   // Force the forest construction to use all snapshots
   int n_search_forests=i_read_stop;

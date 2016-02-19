@@ -14,7 +14,7 @@ double fetch_treenode_zeta(tree_info *trees,tree_node_info *halo){
    if(halo!=NULL){
       tree_node_info *secondary=halo;
       tree_node_info *primary  =halo->descendant->progenitor_primary;
-      fetch_treenode_merger_info(trees,&secondary,&primary,&zeta);
+      fetch_treenode_merger_info(trees,&secondary,&primary,&zeta,NULL,NULL,NULL);
    }
    return(zeta);
 }

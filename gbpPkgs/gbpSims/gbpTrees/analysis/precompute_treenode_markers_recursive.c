@@ -154,7 +154,7 @@ int precompute_treenode_markers_recursive(tree_info *trees,tree_markers_info **m
             // Note: we do not check the return value of fetch_treenode_merger_info() 
             //    since errors from skips can generally be tollerated here.
             double zeta;
-            fetch_treenode_merger_info(trees,&halo_secondary,&halo_primary,&zeta);
+            fetch_treenode_merger_info(trees,&halo_secondary,&halo_primary,&zeta,NULL,NULL,NULL);
             if(halo_secondary!=NULL && halo_primary!=NULL){
                // Set new 3:1+ merger marker ...
                if(zeta>ONE_THIRD){

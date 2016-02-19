@@ -8,6 +8,7 @@
 
 void identify_back_matches(tree_horizontal_info **halos,
                            tree_horizontal_info  *halos_i,
+                           match_info           **back_matches_i,
                            int     n_halos_i,
                            int    *match_id,
                            float  *match_score,
@@ -41,8 +42,6 @@ void identify_back_matches(tree_horizontal_info **halos,
     int l_halo;
     int n_halos_1_matches;
     int n_halos_2_matches;
-    match_info *back_matches;
-    match_info *back_match;
     for(j_file_1  =i_file+1,
           j_file_2=i_file,
           j_read_1=i_read+i_read_step,
@@ -74,7 +73,7 @@ void identify_back_matches(tree_horizontal_info **halos,
        // Store halo sizes for the current snapshot's halos
        if(i_search==0){
           for(i_halo=0;i_halo<n_halos_2_matches;i_halo++)
-             halos[i_file%n_wrap][i_halo].n_particles=n_particles[i_halo];
+             halos_i[i_halo].n_particles=n_particles[i_halo];
        }
 
        // Perform initial back-match count
@@ -93,10 +92,16 @@ void identify_back_matches(tree_horizontal_info **halos,
     } // loop over snaps
 
     //    ... second, do a conservative allocation using the non-unique counts and reset the counter.
-    //        Add one ito the allocation for a possible forematch at well.  Re-zero the count so that
-    //        we can perform a more accurate count below.
-    for(i_halo=0;i_halo<n_halos_2_matches;i_halo++){
-       halos_i[i_halo].back_matches  =(match_info *)SID_calloc(sizeof(match_info)*(1+halos_i[i_halo].n_back_matches));
+    //        Add one to the allocation for a possible forematch at well.  Re-zero the count so that
+    //        we can perform a more accurate count below.  We use a temporary array for this since
+    //        we will have to reallocate after trimming the list.
+    int n_allocate_backmatch=0;
+    for(i_halo=0;i_halo<n_halos_2_matches;i_halo++)
+       n_allocate_backmatch+=(1+halos_i[i_halo].n_back_matches);
+    match_info *back_matches_i_temp=(match_info *)SID_calloc(sizeof(match_info)*n_allocate_backmatch);
+    for(i_halo=0,n_allocate_backmatch=0;i_halo<n_halos_2_matches;i_halo++){
+       halos_i[i_halo].back_matches  =&(back_matches_i_temp[n_allocate_backmatch]);
+       n_allocate_backmatch         +=(1+halos_i[i_halo].n_back_matches);
        halos_i[i_halo].n_back_matches=0;
     }
 
@@ -223,18 +228,29 @@ void identify_back_matches(tree_horizontal_info **halos,
     }
     SID_log("Done.",SID_LOG_CLOSE);
 
+    // Find the largest temporary back match count.  This will
+    //    be used for allocating a couple of temporary arrays.
+    int n_allocate_max=0;
+    for(i_halo=0;i_halo<n_halos_2_matches;i_halo++)
+       n_allocate_max=MAX(n_allocate_max,halos_i[i_halo].n_back_matches);
+
     // ... lastly, finalize the list, keeping only the most immediate descendants.
     SID_log("Finalizing list...",SID_LOG_OPEN|SID_LOG_TIMER);
+    int        *backmatch_keep=(int        *)SID_malloc(sizeof(int)       *n_allocate_max);
+    match_info *back_matches  =(match_info *)SID_calloc(sizeof(match_info)*n_allocate_max);
+    match_info *empty_match   =(match_info *)SID_calloc(sizeof(match_info));
     for(i_halo=0;i_halo<n_halos_2_matches;i_halo++){
-       // We may need to remove several halos from the list.  This array will keep track of this.
-       size_t *back_match_index=NULL;
-       int    *backmatch_keep  =(int *)SID_malloc(sizeof(int)*halos_i[i_halo].n_back_matches);
+       // Zero temporary arrays
+       for(j_halo=0;j_halo<halos_i[i_halo].n_back_matches;j_halo++){
+          backmatch_keep[j_halo]=FALSE;
+          back_matches[j_halo]  =empty_match[0];
+       }
 
        // Reorder the back_matches.  We make a temporary copy of the list 
        //   to do this and initially set all back_matches as halos to keep..
-       back_matches=(match_info *)SID_calloc(sizeof(match_info)*(halos_i[i_halo].n_back_matches));
+       size_t *back_match_index=NULL;
        for(j_halo=0;j_halo<halos_i[i_halo].n_back_matches;j_halo++){
-          back_match=&(halos_i[i_halo].back_matches[j_halo]);
+          match_info *back_match=&(halos_i[i_halo].back_matches[j_halo]);
           memcpy(&(back_matches[j_halo]),back_match,sizeof(match_info));
           // Set the criteria by which the halos will be sorted here
           match_score[j_halo]   =(float)(back_match->halo->n_particles);
@@ -246,14 +262,14 @@ void identify_back_matches(tree_horizontal_info **halos,
        //   (since they may have different IDs and passed the test above).
        //   Keep the most immediate instance.
        // n.b.: As it stands, this is a order-N^2 process.  Sorting by snapshot
-       //       here (and then resorting by size later) could turn this into an 
+       //       first (and then resorting by size later) could turn this into an 
        //       order-NlogN process.
        for(j_halo=0;j_halo<halos_i[i_halo].n_back_matches;j_halo++){
           int k_file;
           int l_file;
           // ... start with each back match's descendant...
-          tree_horizontal_info *current=back_match->halo->descendant.halo;
-          back_match = &(back_matches[j_halo]);
+          match_info           *back_match=&(back_matches[j_halo]);
+          tree_horizontal_info *current   =back_match->halo->descendant.halo;
           if(current!=NULL)
              k_file=current->file;
           l_file=k_file;
@@ -284,11 +300,7 @@ void identify_back_matches(tree_horizontal_info **halos,
              halos_i[i_halo].n_back_matches++;
        }
 
-       // Because we've overallocated previously, reallocate the back matched list here to save RAM ...
-       SID_free(SID_FARG halos_i[i_halo].back_matches);
-       (halos_i[i_halo].back_matches)=(match_info *)SID_calloc(sizeof(match_info)*(halos_i[i_halo].n_back_matches));
-
-       // ... and copy the sorted temporary list to the permanent list (DESCENDING ORDER!)
+       // Slide the sorted temporary list to the permanent list (DESCENDING ORDER!)
        for(j_halo=n_list-1,l_halo=0;j_halo>=0;j_halo--){
           int j_halo_sorted=back_match_index[j_halo];
           if(backmatch_keep[j_halo_sorted]){
@@ -312,10 +324,27 @@ void identify_back_matches(tree_horizontal_info **halos,
        }
 
        // Clean-up
-       SID_free(SID_FARG backmatch_keep);
        SID_free(SID_FARG back_match_index);
-       SID_free(SID_FARG back_matches);
     }
+    // Clean-up
+    SID_free(SID_FARG backmatch_keep);
+    SID_free(SID_FARG back_matches);
+    SID_free(SID_FARG empty_match);
+
+    // Because we've (likely) overallocated previously, reallocate and repopulate the back match array here to save RAM ...
+    n_allocate_backmatch=0;
+    for(i_halo=0;i_halo<n_halos_2_matches;i_halo++)
+       n_allocate_backmatch+=halos_i[i_halo].n_back_matches;
+    (*back_matches_i)=(match_info *)SID_calloc(sizeof(match_info)*n_allocate_backmatch);
+    for(i_halo=0,k_halo=0;i_halo<n_halos_2_matches;i_halo++){
+       l_halo=k_halo;
+       tree_horizontal_info *halo_i=&(halos_i[i_halo]);
+       for(j_halo=0;j_halo<halos_i[i_halo].n_back_matches;j_halo++,k_halo++)
+          memcpy(&((*back_matches_i)[k_halo]),&(halo_i->back_matches[j_halo]),sizeof(match_info));
+       halo_i->back_matches=&((*back_matches_i)[l_halo]);
+    }
+    SID_free(SID_FARG back_matches_i_temp);
+
     SID_log("Done.",SID_LOG_CLOSE);
 
     // !! n.b.: The TREE_CASE_BRIDGED and TREE_CASE_EMERGED_CANDIDATE flags will be set later in identify_bridges(), 

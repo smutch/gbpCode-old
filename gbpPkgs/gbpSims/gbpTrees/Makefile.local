@@ -21,6 +21,8 @@ BINFILES  = make_match_score_table         \
             tree_stats_horizontal          \
             validate_ghost_trees           \
             parse_tree_case                \
+	        crossmatches2ascii             \
+            check_match_files              \
             matchfile2ascii                \
             make_trees                     \
 	        make_trees_markers             \

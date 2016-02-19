@@ -129,6 +129,7 @@ void compute_forests(char *filename_root_out,int n_search_forests){
   int n_halos_written;
   int halo_snap,descendant_snap;
 
+  SID_log("Generating mapping of trees to forests...",SID_LOG_OPEN|SID_LOG_TIMER);
   if(SID.I_am_Master){
      // Read the tree search/scan parameters
      int i_read_start;
@@ -214,7 +215,6 @@ void compute_forests(char *filename_root_out,int n_search_forests){
      int n_halos_groups_unused=0;
      int n_halos_subgroups_unused=0;
      int tree_read_buffer[8];
-     SID_log("Generating mapping of trees to forests...",SID_LOG_OPEN|SID_LOG_TIMER);
      SID_log("Joining trees into forests...",SID_LOG_OPEN|SID_LOG_TIMER);
      for(i_read=i_read_stop,n_halos_groups=0,n_halos_subgroups=0,j_read=0;
          i_read>=i_read_start;
@@ -312,7 +312,6 @@ void compute_forests(char *filename_root_out,int n_search_forests){
        SID_fclose(&fp_in);
        SID_log("Done.",SID_LOG_CLOSE);
      }
-     SID_log("Done.",SID_LOG_CLOSE);
 
      // Due to linking, there may be gaps in the forrest arrays at this point. Collapse them to fix this.
      SID_log("Collapsing results...",SID_LOG_OPEN);
@@ -618,5 +617,6 @@ void compute_forests(char *filename_root_out,int n_search_forests){
 
      SID_log("Done.",SID_LOG_CLOSE);
   } // master rank only
+  SID_log("Done.",SID_LOG_CLOSE);
 }
 

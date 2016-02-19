@@ -350,8 +350,9 @@ void read_trees(char       *filename_SSimPL_root,
   } // i_read
 
   // Finish reading pointers 
-  SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
   if(flag_read_extended_pointers){
+     SID_log("Reading extended pointers...",SID_LOG_OPEN);
+     SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,-1);
      for(;i_read_backmatch>=i_read_start;i_read_backmatch-=i_read_step,i_file_backmatch--){
         read_trees_pointers((*trees),
                             filename_input_dir_horizontal_trees,
@@ -359,6 +360,7 @@ void read_trees(char       *filename_SSimPL_root,
                             i_read_backmatch,
                             READ_TREES_POINTERS_BRIDGE_BACKMATCH);
      }
+     SID_log("Done.",SID_LOG_CLOSE);
   }
   SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
   SID_log("Done.",SID_LOG_CLOSE);

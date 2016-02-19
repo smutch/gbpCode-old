@@ -236,7 +236,8 @@ int set_treenode_hist_index(tree_info *trees,treenode_hist_info *hist,tree_node_
 
 tree_info      *fetch_trees_reference   (tree_info *trees);
 tree_node_info *fetch_treenode_reference(tree_info *trees,tree_node_info *halo);
-int    fetch_treenode_merger_info(tree_info *trees,tree_node_info **halo_secondary,tree_node_info **halo_primary,double *zeta);
+int  fetch_treenode_merger_info(tree_info *trees,tree_node_info **halo_secondary,tree_node_info **halo_primary,
+                                double *zeta,double *v_rel,double *sig_v_p,double *sig_v_s);
 double fetch_treenode_zeta(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_match_score(tree_info *trees,tree_node_info *halo);
 double fetch_treenode_delta_t(tree_info *trees,tree_node_info *halo_1,tree_node_info *halo_2);

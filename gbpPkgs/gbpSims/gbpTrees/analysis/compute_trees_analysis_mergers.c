@@ -60,6 +60,9 @@ void compute_trees_analysis_mergers(tree_info *trees,char *filename_out_root_in,
   int    *remnant_id;         init_treenode_info_data(list_halos,SID_FARG remnant_id,         SID_INT,   "Remnant        id");
   int    *remnant_idx;        init_treenode_info_data(list_halos,SID_FARG remnant_idx,        SID_INT,   "Remnant        index");
   int    *remnant_file;       init_treenode_info_data(list_halos,SID_FARG remnant_file,       SID_INT,   "Remnant        file");
+  double *sig_v_s;            init_treenode_info_data(list_halos,SID_FARG sig_v_s,            SID_DOUBLE,"Secondary velocity dispersion [km/s]");
+  double *sig_v_p;            init_treenode_info_data(list_halos,SID_FARG sig_v_p,            SID_DOUBLE,"Primary   velocity dispersion [km/s]");
+  double *v_rel;              init_treenode_info_data(list_halos,SID_FARG v_rel,              SID_DOUBLE,"Relative  velocity [km/s]");
   double *zeta;               init_treenode_info_data(list_halos,SID_FARG zeta,               SID_DOUBLE,"zeta");
   double *secondary_peak_Mvir;init_treenode_info_data(list_halos,SID_FARG secondary_peak_Mvir,SID_DOUBLE,"Secondary peak M_vir [M_sol/h]");
   double *primary_peak_Mvir;  init_treenode_info_data(list_halos,SID_FARG primary_peak_Mvir,  SID_DOUBLE,"Primary   peak M_vir [M_sol/h]");
@@ -78,13 +81,16 @@ void compute_trees_analysis_mergers(tree_info *trees,char *filename_out_root_in,
         // Process each new merger
         if(check_treenode_if_merger(current_halo)){
            // Set the halos involved in the merger
+           double sig_v_p_i;
+           double sig_v_s_i;
+           double v_rel_i;
            double zeta_i;
            tree_node_info *remnant_halo       =current_halo->descendant;
            tree_node_info *secondary_halo     =current_halo;
            tree_node_info *primary_halo       =current_halo->descendant->progenitor_primary;
            tree_node_info *secondary_halo_peak=secondary_halo;
            tree_node_info *primary_halo_peak  =primary_halo;
-           fetch_treenode_merger_info(trees,&secondary_halo_peak,&primary_halo_peak,&zeta_i);
+           fetch_treenode_merger_info(trees,&secondary_halo_peak,&primary_halo_peak,&zeta_i,&v_rel_i,&sig_v_p_i,&sig_v_s_i);
 
            // Set merger data
            secondary_peak_idx [i_list]=fetch_treenode_file_index      (trees,secondary_halo_peak);
@@ -101,6 +107,9 @@ void compute_trees_analysis_mergers(tree_info *trees,char *filename_out_root_in,
            remnant_id         [i_list]=fetch_treenode_halo_ID         (trees,remnant_halo);
            remnant_idx        [i_list]=fetch_treenode_file_index      (trees,remnant_halo);
            remnant_file       [i_list]=fetch_treenode_snap_tree       (trees,remnant_halo);
+           sig_v_p            [i_list]=sig_v_p_i;
+           sig_v_s            [i_list]=sig_v_s_i;
+           v_rel              [i_list]=v_rel_i; 
            zeta               [i_list]=zeta_i; 
            secondary_peak_Mvir[i_list]=fetch_treenode_M_vir           (trees,secondary_halo_peak);
            primary_peak_Mvir  [i_list]=fetch_treenode_M_vir           (trees,primary_halo_peak);

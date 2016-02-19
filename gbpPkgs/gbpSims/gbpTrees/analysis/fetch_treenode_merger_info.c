@@ -13,7 +13,8 @@
 //    the secondary reaches its peak size.  Find the halos involved at that time.  Because
 //    of skips in the trees, etc. the halos may not be *exactly* contemporaneous, but we can
 //    usually tolerate that since the change of peak mass accross skips should be small.
-int  fetch_treenode_merger_info(tree_info *trees,tree_node_info **halo_secondary,tree_node_info **halo_primary,double *zeta){
+int  fetch_treenode_merger_info(tree_info *trees,tree_node_info **halo_secondary,tree_node_info **halo_primary,
+                                double *zeta,double *v_rel,double *sig_v_p,double *sig_v_s){
 
    // Sanity checks
    if((*halo_primary)==NULL)
@@ -37,18 +38,38 @@ int  fetch_treenode_merger_info(tree_info *trees,tree_node_info **halo_secondary
 
    // Compute merger ratio (zeta)
    if((*halo_secondary)!=NULL && (*halo_primary)!=NULL){
-      // Fetch peak particle counts for both halos
-      int n_p_peak_secondary=(*halo_secondary)->n_particles_peak;
-      int n_p_peak_primary  =(*halo_primary)->n_particles_peak;
+      if(zeta!=NULL){
+         // Fetch peak particle counts for both halos
+         int n_p_peak_secondary=(*halo_secondary)->n_particles_peak;
+         int n_p_peak_primary  =(*halo_primary)->n_particles_peak;
 
-      // Make sure zeta<=1
-      int n_p_lo=MIN(n_p_peak_primary,n_p_peak_secondary);
-      int n_p_hi=MAX(n_p_peak_primary,n_p_peak_secondary);
-      (*zeta)=(double)n_p_lo/(double)n_p_hi;
+         // Make sure zeta<=1
+         int n_p_lo=MIN(n_p_peak_primary,n_p_peak_secondary);
+         int n_p_hi=MAX(n_p_peak_primary,n_p_peak_secondary);
+         (*zeta)=(double)n_p_lo/(double)n_p_hi;
+      }
+
+      // Compute relative velocity
+      if(v_rel!=NULL){
+         double vx_primary  =fetch_treenode_vx(trees,(*halo_primary));
+         double vy_primary  =fetch_treenode_vy(trees,(*halo_primary));
+         double vz_primary  =fetch_treenode_vz(trees,(*halo_primary));
+         double vx_secondary=fetch_treenode_vx(trees,(*halo_secondary));
+         double vy_secondary=fetch_treenode_vy(trees,(*halo_secondary));
+         double vz_secondary=fetch_treenode_vz(trees,(*halo_secondary));
+         (*v_rel)    =sqrt(pow(vx_secondary-vx_primary,2.)+pow(vy_secondary-vy_primary,2.)+pow(vz_secondary-vz_primary,2.));
+      }
+
+      // Fetch velocity dispersions
+      if(sig_v_p!=NULL) (*sig_v_p)=fetch_treenode_sigmav(trees,(*halo_primary));
+      if(sig_v_s!=NULL) (*sig_v_s)=fetch_treenode_sigmav(trees,(*halo_secondary));
    }
    else{
       flag_success=FALSE;
-      (*zeta)     =-1;
+      if(zeta!=NULL)    (*zeta)   =-1;
+      if(v_rel!=NULL)   (*v_rel)  =0.;
+      if(sig_v_p!=NULL) (*sig_v_p)=0.;
+      if(sig_v_s!=NULL) (*sig_v_s)=0.;
    }
 
    return(flag_success);
