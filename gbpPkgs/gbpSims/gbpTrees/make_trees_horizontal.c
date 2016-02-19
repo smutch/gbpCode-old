@@ -49,7 +49,15 @@ int main(int argc, char *argv[]){
   n_search                    =atoi(argv[7]);
   flag_fix_bridges            =atoi(argv[8]);
 
-  SID_log("Constructing horizontal merger trees for snapshots #%d->#%d (step=%d, n_search=%d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read_start,i_read_stop,i_read_step,n_search);
+  // Report the run time parameters
+  SID_log("Constructing horizontal merger trees...",SID_LOG_OPEN|SID_LOG_TIMER);
+  SID_log("Run parameters:",SID_LOG_OPEN);
+  SID_log("Simulation root: {%s}",  SID_LOG_COMMENT,filename_SSimPL_dir);
+  SID_log("Halo version:    {%s}",  SID_LOG_COMMENT,filename_halo_version_root);
+  SID_log("Tree version:    {%s}",  SID_LOG_COMMENT,filename_trees_name);
+  SID_log("Snapshots:       %d->%d",SID_LOG_COMMENT,i_read_start,i_read_stop);
+  SID_log("Step/n_search:   %d/%d", SID_LOG_COMMENT,i_read_step,n_search);
+  SID_log("",SID_LOG_CLOSE|SID_LOG_NOPRINT);
 
   // Set some paths etc
   sprintf(filename_SSimPL_base,"%s",filename_SSimPL_dir);
