@@ -65,12 +65,12 @@ void read_gadget_binary_header(char        *filename_root_in,
     // Read header stuff...
 
     //  ...header record length...
-    fread(&record_length,4,1,fp);
+    fread_verify(&record_length,4,1,fp);
     s_load=0;
 
     //  ...particle numbers for each species...
     n_particles =0;
-    n_return    =fread(n_of_type_tmp,sizeof(unsigned int),N_GADGET_TYPE,fp); 
+    n_return    =fread_verify(n_of_type_tmp,sizeof(unsigned int),N_GADGET_TYPE,fp); 
     s_load     +=n_return*sizeof(unsigned int);
     for(i=0,n_type_used=0;i<N_GADGET_TYPE;i++) {
       n_of_type[i]=(size_t)n_of_type_tmp[i];
@@ -85,75 +85,75 @@ void read_gadget_binary_header(char        *filename_root_in,
     ADaPS_store(&(plist->data),(void *)(&n_particles),"n_particles",ADaPS_SCALAR_SIZE_T);
 
     //  ...particle mass array...
-    n_return =fread(mass_array,sizeof(double),N_GADGET_TYPE,fp); 
+    n_return =fread_verify(mass_array,sizeof(double),N_GADGET_TYPE,fp); 
     s_load  +=n_return*sizeof(double);
 
     //  ...expansion factor (or time)...
-    n_return=fread(&d_value,sizeof(double),1,fp);
+    n_return=fread_verify(&d_value,sizeof(double),1,fp);
     s_load+=n_return*sizeof(double);
     ADaPS_store(&(plist->data),(void *)(&d_value),"expansion_factor",ADaPS_SCALAR_DOUBLE);
     ADaPS_store(&(plist->data),(void *)(&d_value),"time",            ADaPS_SCALAR_DOUBLE);
 
     //  ...redshift...
-    n_return=fread(&d_value,sizeof(double),1,fp);
+    n_return=fread_verify(&d_value,sizeof(double),1,fp);
     s_load+=n_return*sizeof(double);
     ADaPS_store(&(plist->data),(void *)(&d_value),"redshift",ADaPS_SCALAR_DOUBLE);
 
     //  ...some flags...
-    n_return=fread(&i_value,sizeof(int),1,fp);
+    n_return=fread_verify(&i_value,sizeof(int),1,fp);
     s_load+=n_return*sizeof(int);
     ADaPS_store(&(plist->data),(void *)(&i_value),"flag_Sfr",ADaPS_SCALAR_INT);
-    n_return=fread(&i_value,sizeof(int),1,fp);
+    n_return=fread_verify(&i_value,sizeof(int),1,fp);
     s_load+=n_return*sizeof(int);
     ADaPS_store(&(plist->data),(void *)(&i_value),"flag_feedback",ADaPS_SCALAR_INT);
 
     //  ...number of particles in all files...
-    n_return=fread(n_all_tmp,sizeof(int),N_GADGET_TYPE,fp);
+    n_return=fread_verify(n_all_tmp,sizeof(int),N_GADGET_TYPE,fp);
     for(i=0;i<N_GADGET_TYPE;i++)
       n_all[i]=(size_t)n_all_tmp[i];
     s_load+=n_return*sizeof(int);
 
     //  ...another flag...
-    n_return=fread(&i_value,sizeof(int),1,fp);
+    n_return=fread_verify(&i_value,sizeof(int),1,fp);
     s_load+=n_return*sizeof(int);
     ADaPS_store(&(plist->data),(void *)(&i_value),"flag_cooling",ADaPS_SCALAR_INT);
 
     //  ...number of files per snapshot...
-    n_return=fread(&i_value,sizeof(int),1,fp);
+    n_return=fread_verify(&i_value,sizeof(int),1,fp);
     s_load+=n_return*sizeof(int);
     ADaPS_store(&(plist->data),(void *)(&i_value),"n_files",ADaPS_SCALAR_INT);
 
     //  ...box size (n.b.: we need h_Hubble before we can store box_size...do so later)...
-    n_return=fread(&box_size,sizeof(double),1,fp);
+    n_return=fread_verify(&box_size,sizeof(double),1,fp);
     s_load+=n_return*sizeof(double);
 
     // Cosmology
 
     //  ...Omega_o...
-    n_return=fread(&d_value,sizeof(double),1,fp);
+    n_return=fread_verify(&d_value,sizeof(double),1,fp);
     s_load+=n_return*sizeof(double);
     ADaPS_store(&(plist->data),(void *)(&d_value),"Omega_M",ADaPS_SCALAR_DOUBLE);
 
     //  ...Omega_Lambda...
-    n_return=fread(&d_value, sizeof(double),1,fp);
+    n_return=fread_verify(&d_value, sizeof(double),1,fp);
     s_load+=n_return*sizeof(double);
     ADaPS_store(&(plist->data),(void *)(&d_value),"Omega_Lambda",ADaPS_SCALAR_DOUBLE);
 
     //  ...Hubble parameter...
-    n_return=fread(&h_Hubble,sizeof(double),1,fp);
+    n_return=fread_verify(&h_Hubble,sizeof(double),1,fp);
     s_load+=n_return*sizeof(double);
     box_size*=GADGET_LENGTH/h_Hubble;
     ADaPS_store(&(plist->data),(void *)(&box_size),"box_size",ADaPS_SCALAR_DOUBLE);
     ADaPS_store(&(plist->data),(void *)(&h_Hubble),"h_Hubble",ADaPS_SCALAR_DOUBLE);
 
     // Last few things in the header
-    n_return=fread(&flag_metals,sizeof(int),1,fp);
+    n_return=fread_verify(&flag_metals,sizeof(int),1,fp);
     s_load+=n_return*sizeof(int);
-    n_return=fread(&flag_ages,sizeof(int),1,fp);
+    n_return=fread_verify(&flag_ages,sizeof(int),1,fp);
     s_load+=n_return*sizeof(int);
-    n_return=fread(&n_all_tmp,sizeof(int),N_GADGET_TYPE,fp);
+    n_return=fread_verify(&n_all_tmp,sizeof(int),N_GADGET_TYPE,fp);
     s_load+=n_return*sizeof(int);
-    n_return=fread(&flag_entropyICs,sizeof(int),1,fp);
+    n_return=fread_verify(&flag_entropyICs,sizeof(int),1,fp);
     s_load+=n_return*sizeof(int);
     for(i=0;i<N_GADGET_TYPE;i++)
       n_all[i]+=(((size_t)n_all_tmp[i]) << 32);

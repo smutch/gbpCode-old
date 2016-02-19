@@ -91,9 +91,9 @@ int main(int argc, char *argv[]){
      set_gadget_filename(&fp_gadget,i_file,filename_in);
      if((fp_in=fopen(filename_in,"r"))==NULL)
         SID_trap_error("Could not open {%s}.",ERROR_IO_OPEN,filename_in);
-     fread(&record_length_in,sizeof(int),1,fp_in);
-     fread(&header,sizeof(gadget_header_info),1,fp_in);
-     fread(&record_length_out,sizeof(int),1,fp_in);
+     fread_verify(&record_length_in,sizeof(int),1,fp_in);
+     fread_verify(&header,sizeof(gadget_header_info),1,fp_in);
+     fread_verify(&record_length_out,sizeof(int),1,fp_in);
      for(i_type=0;i_type<N_GADGET_TYPE;i_type++){
        n_in[i_type]      =header.n_file[i_type];
        n_in_total       +=header.n_file[i_type];
@@ -147,31 +147,31 @@ int main(int argc, char *argv[]){
         int record_length_write;
         record_length_write=3*sizeof(GBPREAL)*n_particles_i;
         fwrite(&record_length_write,sizeof(int),1,fp_out);
-        fread(&record_length_in,    sizeof(int),1,fp_in);
+        fread_verify(&record_length_in,    sizeof(int),1,fp_in);
         for(i_type=0;i_type<N_GADGET_TYPE;i_type++){
           fseeko(fp_in,3*sizeof(GBPREAL)*n_written[i_type],SEEK_CUR);
-          fread(buffer,3*header.n_file[i_type],sizeof(GBPREAL),fp_in);
+          fread_verify(buffer,3*header.n_file[i_type],sizeof(GBPREAL),fp_in);
           fseeko(fp_in,3*sizeof(GBPREAL)*(n_in[i_type]-n_written[i_type]-header.n_file[i_type]),SEEK_CUR);
           fwrite(buffer,3*sizeof(GBPREAL)*header.n_file[i_type],1,fp_out);
         }
-        fread(&record_length_out,sizeof(int),1,fp_in);
+        fread_verify(&record_length_out,sizeof(int),1,fp_in);
         fwrite(&record_length_write,sizeof(int),1,fp_out);
 
         // Read/Write Velocities
         fwrite(&record_length_write,sizeof(int),1,fp_out);
-        fread(&record_length_in,    sizeof(int),1,fp_in);
+        fread_verify(&record_length_in,    sizeof(int),1,fp_in);
         for(i_type=0;i_type<N_GADGET_TYPE;i_type++){
           fseeko(fp_in,3*sizeof(GBPREAL)*n_written[i_type],SEEK_CUR);
-          fread(buffer,3*header.n_file[i_type],sizeof(GBPREAL),fp_in);
+          fread_verify(buffer,3*header.n_file[i_type],sizeof(GBPREAL),fp_in);
           fseeko(fp_in,3*sizeof(GBPREAL)*(n_in[i_type]-n_written[i_type]-header.n_file[i_type]),SEEK_CUR);
           fwrite(buffer,3*sizeof(GBPREAL)*header.n_file[i_type],1,fp_out);
         }
-        fread(&record_length_out,sizeof(int),1,fp_in);
+        fread_verify(&record_length_out,sizeof(int),1,fp_in);
         fwrite(&record_length_write,sizeof(int),1,fp_out);
 
         // Read the IDs header length and use it's value to determine if IDs are long or short
         int id_byte_size;
-        fread(&record_length_in,sizeof(int),1,fp_in);
+        fread_verify(&record_length_in,sizeof(int),1,fp_in);
         if(record_length_in/sizeof(int)==n_in_total)
            id_byte_size=sizeof(int);
         else if(record_length_in/sizeof(long long)==n_in_total)
@@ -184,11 +184,11 @@ int main(int argc, char *argv[]){
         fwrite(&record_length_write,sizeof(int),1,fp_out);
         for(i_type=0;i_type<N_GADGET_TYPE;i_type++){
            fseeko(fp_in,id_byte_size*n_written[i_type],SEEK_CUR);
-           fread(buffer,header.n_file[i_type],id_byte_size,fp_in);
+           fread_verify(buffer,header.n_file[i_type],id_byte_size,fp_in);
            fseeko(fp_in,id_byte_size*(n_in[i_type]-n_written[i_type]-header.n_file[i_type]),SEEK_CUR);
            fwrite(buffer,id_byte_size*header.n_file[i_type],1,fp_out);
         }
-        fread(&record_length_out,   sizeof(int),1,fp_in);
+        fread_verify(&record_length_out,   sizeof(int),1,fp_in);
         fwrite(&record_length_write,sizeof(int),1,fp_out);
 
         // Update the particle counters

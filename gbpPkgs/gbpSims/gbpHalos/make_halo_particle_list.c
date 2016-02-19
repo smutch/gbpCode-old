@@ -54,18 +54,18 @@ int main(int argc, char *argv[]){
   int     offset_size;
   int     halo_length;
   size_t  halo_offset;
-  fread(&n_groups,   sizeof(int),1,fp_groups);
-  fread(&offset_size,sizeof(int),1,fp_groups);
+  fread_verify(&n_groups,   sizeof(int),1,fp_groups);
+  fread_verify(&offset_size,sizeof(int),1,fp_groups);
   fseeko(fp_groups,(off_t)(2*sizeof(int)+halo_index*sizeof(int)),SEEK_SET);
-  fread(&halo_length,sizeof(int),1,fp_groups);
+  fread_verify(&halo_length,sizeof(int),1,fp_groups);
   fseeko(fp_groups,(off_t)(2*sizeof(int)+n_groups*sizeof(int)+halo_index*offset_size),SEEK_SET);
   if(offset_size==sizeof(int)){
      int halo_offset_i;
-     fread(&halo_offset_i,offset_size,1,fp_groups);
+     fread_verify(&halo_offset_i,offset_size,1,fp_groups);
      halo_offset=(size_t)halo_offset_i;
   }
   else
-     fread(&halo_offset,offset_size,1,fp_groups);
+     fread_verify(&halo_offset,offset_size,1,fp_groups);
   fclose(fp_groups);
 
   char filename_ids[MAX_FILENAME_LENGTH];
@@ -73,15 +73,15 @@ int main(int argc, char *argv[]){
   FILE  *fp_ids=fopen(filename_ids,"r");
   int    id_byte_size;
   size_t n_ids;
-  fread(&id_byte_size,sizeof(int),1,fp_ids);
+  fread_verify(&id_byte_size,sizeof(int),1,fp_ids);
   SID_log("%d %d-byte IDs to be read (offset=%d)",SID_LOG_COMMENT,halo_length,id_byte_size,halo_offset);
   if(id_byte_size==sizeof(int)){
      int n_ids_i;
-     fread(&n_ids_i,sizeof(int),1,fp_ids);
+     fread_verify(&n_ids_i,sizeof(int),1,fp_ids);
      n_ids=(size_t)n_ids_i;
   }
   else
-     fread(&n_ids,sizeof(size_t),1,fp_ids);
+     fread_verify(&n_ids,sizeof(size_t),1,fp_ids);
   fseeko(fp_ids,(off_t)(sizeof(int)+id_byte_size+halo_offset*id_byte_size),SEEK_SET);
   params.n_ids  =halo_length;
   params.id_list          =(size_t *)SID_malloc(sizeof(size_t)*halo_length);
@@ -90,13 +90,13 @@ int main(int argc, char *argv[]){
   if(id_byte_size==sizeof(int)){
      flag_long_ids=FALSE;
      int *id_list_i=(int *)SID_malloc(sizeof(int)*halo_length);
-     fread(id_list_i,id_byte_size,halo_length,fp_ids);
+     fread_verify(id_list_i,id_byte_size,halo_length,fp_ids);
      for(int i_p=0;i_p<halo_length;i_p++)
         id_list_unsorted[i_p]=(size_t)id_list_i[i_p];
      SID_free(SID_FARG id_list_i);
   }
   else
-     fread(id_list_unsorted,id_byte_size,halo_length,fp_ids);
+     fread_verify(id_list_unsorted,id_byte_size,halo_length,fp_ids);
   fclose(fp_ids);
   memcpy(params.id_list,id_list_unsorted,sizeof(size_t)*halo_length);
   merge_sort(params.id_list,halo_length,NULL,SID_SIZE_T,SORT_INPLACE_ONLY,SORT_COMPUTE_INPLACE);

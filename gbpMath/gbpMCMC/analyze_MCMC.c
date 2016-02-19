@@ -444,8 +444,8 @@ void analyze_MCMC(MCMC_info *MCMC){
            // Read number of iterations
            if((fp_chain=fopen(filename_chain_config,"rb"))==NULL)
              SID_trap_error("Could not open chain configuration file {%s}.",ERROR_IO_OPEN,filename_chain_config);
-           fread(&n_iterations,     sizeof(int),1,fp_chain);
-           fread(&n_iterations_burn,sizeof(int),1,fp_chain);
+           fread_verify(&n_iterations,     sizeof(int),1,fp_chain);
+           fread_verify(&n_iterations_burn,sizeof(int),1,fp_chain);
            fclose(fp_chain);
 
            // Open chain file
@@ -473,12 +473,12 @@ void analyze_MCMC(MCMC_info *MCMC){
                  } 
                  break;
                default:
-                 fread(&flag_success,     sizeof(char),  1,  fp_chain);
-                 fread(&ln_likelihood_new,sizeof(double),1,  fp_chain);
-                 fread(P_new,             sizeof(double),n_P,fp_chain);
+                 fread_verify(&flag_success,     sizeof(char),  1,  fp_chain);
+                 fread_verify(&ln_likelihood_new,sizeof(double),1,  fp_chain);
+                 fread_verify(P_new,             sizeof(double),n_P,fp_chain);
                  if(!flag_no_map_write){
                    for(i_DS=0;i_DS<n_DS;i_DS++)
-                     fread(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
+                     fread_verify(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
                  }
                  break;
              }
@@ -561,8 +561,8 @@ void analyze_MCMC(MCMC_info *MCMC){
            // Read number of iterations
            if((fp_chain=fopen(filename_chain_config,"rb"))==NULL)
              SID_trap_error("Could not open chain configuration file {%s}.",ERROR_IO_OPEN,filename_chain);
-           fread(&n_iterations,     sizeof(int),1,fp_chain);
-           fread(&n_iterations_burn,sizeof(int),1,fp_chain);
+           fread_verify(&n_iterations,     sizeof(int),1,fp_chain);
+           fread_verify(&n_iterations_burn,sizeof(int),1,fp_chain);
            fclose(fp_chain);
 
            // Open chain file
@@ -589,12 +589,12 @@ void analyze_MCMC(MCMC_info *MCMC){
                  }
                  break;
                default:
-                 fread(&flag_success,     sizeof(char),  1,  fp_chain);
-                 fread(&ln_likelihood_new,sizeof(double),1,  fp_chain);
-                 fread(P_new,             sizeof(double),n_P,fp_chain);
+                 fread_verify(&flag_success,     sizeof(char),  1,  fp_chain);
+                 fread_verify(&ln_likelihood_new,sizeof(double),1,  fp_chain);
+                 fread_verify(P_new,             sizeof(double),n_P,fp_chain);
                  if(!flag_no_map_write){
                    for(i_DS=0;i_DS<n_DS;i_DS++)
-                     fread(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
+                     fread_verify(M_new[i_DS],sizeof(double),n_M[i_DS],fp_chain);
                  }
                  break;
              }

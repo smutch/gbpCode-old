@@ -58,7 +58,7 @@ int main(int argc, char *argv[]){
            flag_exists=FALSE;
         else{
            int n_trees_file;
-           fread(&n_trees_file,sizeof(int),1,fp_test);
+           fread_verify(&n_trees_file,sizeof(int),1,fp_test);
            n_trees_total+=n_trees_file;
            fclose(fp_test);
            n_in++;
@@ -98,15 +98,15 @@ int main(int argc, char *argv[]){
         sprintf(filename_in, "%s/vertical/%sgroup_trees_%03d.dat",filename_root_in,group_text_prefix,i_file);
         fp_in=fopen(filename_in,"r");
         // Read the input file's header
-        fread(&n_trees_file,sizeof(int),1,fp_in);
-        fread(&n_halos_file,sizeof(int),1,fp_in);
+        fread_verify(&n_trees_file,sizeof(int),1,fp_in);
+        fread_verify(&n_halos_file,sizeof(int),1,fp_in);
         n_halos_tree=(int *)SID_malloc(sizeof(int)*n_trees_file);
-        fread(n_halos_tree,sizeof(int),n_trees_file,fp_in);
+        fread_verify(n_halos_tree,sizeof(int),n_trees_file,fp_in);
         // Read the first halo of each tree to decide where it goes
         for(i_tree=0;i_tree<n_trees_file;i_tree++,k_tree++){
            int i_x,i_y,i_z,i_g;
            // Read the first halo and skip the rest
-           fread(halo,sizeof(halo_properties_SAGE_info),1,fp_in);
+           fread_verify(halo,sizeof(halo_properties_SAGE_info),1,fp_in);
            fseeko(fp_in,(size_t)(n_halos_tree[i_tree]-1)*sizeof(halo_properties_SAGE_info),SEEK_CUR);
            // Decide which grid cell it belongs to
            i_x=(int)((float)grid_size*(halo->pos[0]/box_size));i_x=MIN(i_x,grid_size-1);
@@ -153,15 +153,15 @@ int main(int argc, char *argv[]){
         sprintf(filename_in, "%s/vertical/%sgroup_trees_%03d.dat",filename_root_in,group_text_prefix,i_file);
         fp_in=fopen(filename_in,"r");
         // Read the input file's header
-        fread(&n_trees_file,sizeof(int),1,fp_in);
-        fread(&n_halos_file,sizeof(int),1,fp_in);
+        fread_verify(&n_trees_file,sizeof(int),1,fp_in);
+        fread_verify(&n_halos_file,sizeof(int),1,fp_in);
         n_halos_tree=(int *)SID_malloc(sizeof(int)*n_trees_file);
-        fread(n_halos_tree,sizeof(int),n_trees_file,fp_in);
+        fread_verify(n_halos_tree,sizeof(int),n_trees_file,fp_in);
         for(i_tree=0;i_tree<n_trees_file;i_tree++,k_tree++){
            if(n_halos_tree[i_tree]>0){
               int i_x,i_y,i_z,i_g;
               // Read the first halo and skip the rest
-              fread(halo,sizeof(halo_properties_SAGE_info),1,fp_in);
+              fread_verify(halo,sizeof(halo_properties_SAGE_info),1,fp_in);
               fseeko(fp_in,(size_t)(n_halos_tree[i_tree]-1)*sizeof(halo_properties_SAGE_info),SEEK_CUR);
               // Decide which grid cell it belongs to
               i_x=(int)((float)grid_size*(halo->pos[0]/box_size));i_x=MIN(i_x,grid_size-1);
@@ -223,15 +223,15 @@ int main(int argc, char *argv[]){
         sprintf(filename_in, "%s/vertical/%sgroup_trees_%03d.dat",filename_root_in,group_text_prefix,i_file);
         fp_in=fopen(filename_in,"r");
         // Read header
-        fread(&n_trees_file,sizeof(int),1,fp_in);
-        fread(&n_halos_file,sizeof(int),1,fp_in);
+        fread_verify(&n_trees_file,sizeof(int),1,fp_in);
+        fread_verify(&n_halos_file,sizeof(int),1,fp_in);
         n_halos_tree=(int *)SID_malloc(sizeof(int)*n_trees_file);
-        fread(n_halos_tree,sizeof(int),n_trees_file,fp_in);
+        fread_verify(n_halos_tree,sizeof(int),n_trees_file,fp_in);
         for(i_tree=0;i_tree<n_trees_file;i_tree++,k_tree++){
            if(n_halos_tree[i_tree]>0){
               int i_x,i_y,i_z,i_g;
               // Read this tree
-              fread(tree,sizeof(halo_properties_SAGE_info),n_halos_tree[i_tree],fp_in);
+              fread_verify(tree,sizeof(halo_properties_SAGE_info),n_halos_tree[i_tree],fp_in);
               // Decide which grid cell it belongs to
               i_x=(int)((float)grid_size*(halo->pos[0]/box_size));i_x=MIN(i_x,grid_size-1);
               i_y=(int)((float)grid_size*(halo->pos[1]/box_size));i_y=MIN(i_y,grid_size-1);

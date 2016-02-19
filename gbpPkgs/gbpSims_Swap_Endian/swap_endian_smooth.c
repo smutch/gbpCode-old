@@ -60,10 +60,10 @@ int swap_endian_smooth(const char *filename_in_root,const char *filename_out_roo
   int       offset;
   long long n_particles_total;
   int       n_files;
-  fread(&n_particles_file, sizeof(int),      1,fp_in);
-  fread(&offset,           sizeof(int),      1,fp_in);
-  fread(&n_particles_total,sizeof(long long),1,fp_in);
-  fread(&n_files,          sizeof(int),      1,fp_in);
+  fread_verify(&n_particles_file, sizeof(int),      1,fp_in);
+  fread_verify(&offset,           sizeof(int),      1,fp_in);
+  fread_verify(&n_particles_total,sizeof(long long),1,fp_in);
+  fread_verify(&n_files,          sizeof(int),      1,fp_in);
   if(check_mode_for_flag(mode,SWAP_SSIMPL_ENDIAN_TO_NATIVE)){
      swap_endian((char *)(&n_particles_file), 1,sizeof(int));
      swap_endian((char *)(&offset),           1,sizeof(int));
@@ -106,10 +106,10 @@ int swap_endian_smooth(const char *filename_in_root,const char *filename_out_roo
         SID_trap_error("Could not open {%s} for writing.",ERROR_IO_OPEN,filename_out);
 
      // Process the header
-     fread(&n_particles_file, sizeof(int),      1,fp_in);
-     fread(&offset,           sizeof(int),      1,fp_in);
-     fread(&n_particles_total,sizeof(long long),1,fp_in);
-     fread(&n_files,          sizeof(int),      1,fp_in);
+     fread_verify(&n_particles_file, sizeof(int),      1,fp_in);
+     fread_verify(&offset,           sizeof(int),      1,fp_in);
+     fread_verify(&n_particles_total,sizeof(long long),1,fp_in);
+     fread_verify(&n_files,          sizeof(int),      1,fp_in);
      if(check_mode_for_flag(mode,SWAP_SSIMPL_ENDIAN_TO_NATIVE)){
         swap_endian((char *)(&n_particles_file), 1,sizeof(int));
         swap_endian((char *)(&offset),           1,sizeof(int));

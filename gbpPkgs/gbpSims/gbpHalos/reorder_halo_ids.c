@@ -84,10 +84,10 @@ int main(int argc, char *argv[]){
      }
      else
         flag_indices_multifile=TRUE;
-     fread(&i_file_indices_in,      sizeof(int),1,fp_indices_in);
-     fread(&n_files_indices,        sizeof(int),1,fp_indices_in);
-     fread(&n_subgroups_indices_i,  sizeof(int),1,fp_indices_in);
-     fread(&n_subgroups_indices_all,sizeof(int),1,fp_indices_in);
+     fread_verify(&i_file_indices_in,      sizeof(int),1,fp_indices_in);
+     fread_verify(&n_files_indices,        sizeof(int),1,fp_indices_in);
+     fread_verify(&n_subgroups_indices_i,  sizeof(int),1,fp_indices_in);
+     fread_verify(&n_subgroups_indices_all,sizeof(int),1,fp_indices_in);
 
      // Read (or skip) headers
      int flag_long_ids;
@@ -99,22 +99,22 @@ int main(int argc, char *argv[]){
      int byte_size_group_offsets;
      int byte_size_subgroup_offsets;
      int n_particles;
-     fread(&n_groups,                  sizeof(int),1,fp_groups_size_in);
-     fread(&byte_size_group_offsets,   sizeof(int),1,fp_groups_size_in);
-     fread(&n_subgroups,               sizeof(int),1,fp_subgroups_size_in);
-     fread(&byte_size_subgroup_offsets,sizeof(int),1,fp_subgroups_size_in);
-     fread(&byte_size_ids,             sizeof(int),1,fp_ids_in);
+     fread_verify(&n_groups,                  sizeof(int),1,fp_groups_size_in);
+     fread_verify(&byte_size_group_offsets,   sizeof(int),1,fp_groups_size_in);
+     fread_verify(&n_subgroups,               sizeof(int),1,fp_subgroups_size_in);
+     fread_verify(&byte_size_subgroup_offsets,sizeof(int),1,fp_subgroups_size_in);
+     fread_verify(&byte_size_ids,             sizeof(int),1,fp_ids_in);
      if(byte_size_ids==sizeof(int)){
         SID_log("(int IDs)...",SID_LOG_CONTINUE);
         int n_particles_in;
         flag_long_ids=FALSE;
-        fread(&n_particles_in,sizeof(int),1,fp_ids_in);
+        fread_verify(&n_particles_in,sizeof(int),1,fp_ids_in);
         n_particles=(size_t)n_particles_in;
      }
      else if(byte_size_ids==sizeof(long long)){
         SID_log("(long long IDs)...",SID_LOG_CONTINUE);
         flag_long_ids=TRUE;
-        fread(&n_particles,sizeof(size_t),1,fp_ids_in);
+        fread_verify(&n_particles,sizeof(size_t),1,fp_ids_in);
      }
      else
         SID_trap_error("Invalid particle ID byte size (%d).",ERROR_LOGIC,byte_size_ids);
@@ -166,19 +166,19 @@ int main(int argc, char *argv[]){
         int     n_subs_i;
 
         // Read group size
-        fread(&n_particles_i,sizeof(int),1,fp_groups_size_in);
+        fread_verify(&n_particles_i,sizeof(int),1,fp_groups_size_in);
 
         // Read group offsets
         if(flag_long_group_offsets)
-           fread(&offset_i,byte_size_group_offsets,1,fp_groups_offset_in);
+           fread_verify(&offset_i,byte_size_group_offsets,1,fp_groups_offset_in);
         else{
            unsigned int offset_in;
-           fread(&offset_in,byte_size_subgroup_offsets,1,fp_groups_offset_in);
+           fread_verify(&offset_in,byte_size_subgroup_offsets,1,fp_groups_offset_in);
            offset_i=(int64_t)offset_in;
         }
 
         // Read the number of subgroups for this group
-        fread(&n_subs_i,sizeof(int),1,fp_groups_nsubs_in);
+        fread_verify(&n_subs_i,sizeof(int),1,fp_groups_nsubs_in);
 
         // Make sure the id and index array sizes are large enough
         while(n_particles_i>n_alloc){
@@ -189,7 +189,7 @@ int main(int argc, char *argv[]){
         }
 
         // Read ids
-        fread(ids_in,byte_size_ids,n_particles_i,fp_ids_in);
+        fread_verify(ids_in,byte_size_ids,n_particles_i,fp_ids_in);
         memcpy(ids_out,ids_in,byte_size_ids*n_particles_i);
        
         // Process this group's subgroups 
@@ -200,14 +200,14 @@ int main(int argc, char *argv[]){
            int     n_particles_sub_idx;
 
            // Read subgroup size
-           fread(&n_particles_sub,sizeof(int),1,fp_subgroups_size_in);
+           fread_verify(&n_particles_sub,sizeof(int),1,fp_subgroups_size_in);
 
            // Read subgroup offset
            if(flag_long_subgroup_offsets)
-              fread(&offset_sub,byte_size_subgroup_offsets,1,fp_subgroups_offset_in);
+              fread_verify(&offset_sub,byte_size_subgroup_offsets,1,fp_subgroups_offset_in);
            else{
               unsigned int offset_in;
-              fread(&offset_in,byte_size_subgroup_offsets,1,fp_subgroups_offset_in);
+              fread_verify(&offset_in,byte_size_subgroup_offsets,1,fp_subgroups_offset_in);
               offset_sub=(int64_t)offset_in;
            }
            offset_sub-=offset_i;
@@ -228,16 +228,16 @@ int main(int argc, char *argv[]){
               }
               else
                  flag_indices_multifile=TRUE;
-              fread(&i_file_indices_in,      sizeof(int),1,fp_indices_in);
-              fread(&n_files_indices,        sizeof(int),1,fp_indices_in);
-              fread(&n_subgroups_indices_i,  sizeof(int),1,fp_indices_in);
-              fread(&n_subgroups_indices_all,sizeof(int),1,fp_indices_in);
+              fread_verify(&i_file_indices_in,      sizeof(int),1,fp_indices_in);
+              fread_verify(&n_files_indices,        sizeof(int),1,fp_indices_in);
+              fread_verify(&n_subgroups_indices_i,  sizeof(int),1,fp_indices_in);
+              fread_verify(&n_subgroups_indices_all,sizeof(int),1,fp_indices_in);
               i_subgroup=0;
            }
-           fread(&n_particles_indices,sizeof(int),1,fp_indices_in);
+           fread_verify(&n_particles_indices,sizeof(int),1,fp_indices_in);
            if(n_particles_indices!=n_particles_sub)
               SID_trap_error("Subgroup sizes don't match between files (ie %d!=%d) for i_group=%d/k_subgroup=%d",ERROR_LOGIC,n_particles_indices,n_particles_sub,i_group,k_subgroup);
-           fread(indices_in,sizeof(size_t),n_particles_sub,fp_indices_in);
+           fread_verify(indices_in,sizeof(size_t),n_particles_sub,fp_indices_in);
 
            // Re-arrange subgroup indices
            size_t i_particle;

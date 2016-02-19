@@ -24,7 +24,7 @@ int fread_catalog_file(fp_catalog_info *fp_in,halo_properties_SAGE_info *propert
            int i_profile;
            int n_bins;
            for(i_profile=0;i_profile<n_skip;i_profile++){
-              fread(&n_bins,sizeof(int),1,fp_in->fp_profiles);
+              fread_verify(&n_bins,sizeof(int),1,fp_in->fp_profiles);
               fseeko(fp_in->fp_profiles,(off_t)(n_bins*sizeof(halo_profile_bin_info)),SEEK_CUR);
            }
         }
@@ -43,7 +43,7 @@ int fread_catalog_file(fp_catalog_info *fp_in,halo_properties_SAGE_info *propert
      // Perform Read
      halo_properties_info properties_in;
 
-     fread(&properties_in,sizeof(halo_properties_info),1,fp_in->fp_properties);
+     fread_verify(&properties_in,sizeof(halo_properties_info),1,fp_in->fp_properties);
      if(properties_all_out!=NULL)
         memcpy(properties_all_out,&properties_in,sizeof(halo_properties_info));
 
@@ -81,8 +81,8 @@ int fread_catalog_file(fp_catalog_info *fp_in,halo_properties_SAGE_info *propert
 
   // Read profiles
   if(fp_in->flag_read_profiles){
-     fread(&(profiles_out->n_bins),sizeof(int),                  1,                   fp_in->fp_profiles);
-     fread(&(profiles_out->bins),  sizeof(halo_profile_bin_info),profiles_out->n_bins,fp_in->fp_profiles);
+     fread_verify(&(profiles_out->n_bins),sizeof(int),                  1,                   fp_in->fp_profiles);
+     fread_verify(&(profiles_out->bins),  sizeof(halo_profile_bin_info),profiles_out->n_bins,fp_in->fp_profiles);
   }
   else if(fp_in->flag_read_profiles)
      SID_trap_error("File pointer not initialized while reading halo profiles.",ERROR_LOGIC);
@@ -113,7 +113,7 @@ int fread_catalog_raw(fp_catalog_info *fp_in,halo_properties_info *properties_ou
            int i_profile;
            int n_bins;
            for(i_profile=0;i_profile<n_skip;i_profile++){
-              fread(&n_bins,sizeof(int),1,fp_in->fp_profiles);
+              fread_verify(&n_bins,sizeof(int),1,fp_in->fp_profiles);
               fseeko(fp_in->fp_profiles,(off_t)(n_bins*sizeof(halo_profile_bin_info)),SEEK_CUR);
            }
         }
@@ -128,15 +128,15 @@ int fread_catalog_raw(fp_catalog_info *fp_in,halo_properties_info *properties_ou
   // Read properties
   if(fp_in->flag_read_properties){
      // Perform Read
-     fread(properties_out,sizeof(halo_properties_info),1,fp_in->fp_properties);
+     fread_verify(properties_out,sizeof(halo_properties_info),1,fp_in->fp_properties);
   }
   else if(fp_in->flag_read_properties)
      SID_trap_error("File pointer not initialized while reading halo properties.",ERROR_LOGIC);
 
   // Read profiles
   if(fp_in->flag_read_profiles){
-     fread(&(profiles_out->n_bins),sizeof(int),                  1,                   fp_in->fp_profiles);
-     fread(&(profiles_out->bins),  sizeof(halo_profile_bin_info),profiles_out->n_bins,fp_in->fp_profiles);
+     fread_verify(&(profiles_out->n_bins),sizeof(int),                  1,                   fp_in->fp_profiles);
+     fread_verify(&(profiles_out->bins),  sizeof(halo_profile_bin_info),profiles_out->n_bins,fp_in->fp_profiles);
   }
   else if(fp_in->flag_read_profiles)
      SID_trap_error("File pointer not initialized while reading halo profiles.",ERROR_LOGIC);

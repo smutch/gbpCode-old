@@ -69,8 +69,8 @@ int main(int argc, char *argv[]){
        fp_groups=fopen(filename_groups,"r");
     else
        fp_groups=fopen(filename_subgroups,"r");
-    fread(&n_groups_all,  sizeof(int),1,fp_groups);
-    fread(&n_bytes_groups,sizeof(int),1,fp_groups);
+    fread_verify(&n_groups_all,  sizeof(int),1,fp_groups);
+    fread_verify(&n_bytes_groups,sizeof(int),1,fp_groups);
     if(n_bytes_groups!=4 && n_bytes_groups!=8)
        SID_trap_error("Invalid group offset byte length (%d).",ERROR_LOGIC,n_bytes_groups);
 
@@ -81,19 +81,19 @@ int main(int argc, char *argv[]){
     // Find the group we want and get the needed info
     int particle_offset_i_int;
     fseeko(fp_groups,sizeof(int)*i_group_selected,SEEK_CUR);
-    fread(&n_particles_i,sizeof(int),1,fp_groups);
+    fread_verify(&n_particles_i,sizeof(int),1,fp_groups);
     fseeko(fp_groups,sizeof(int)*(n_groups_all-i_group_selected-1),SEEK_CUR);
     fseeko(fp_groups,n_bytes_groups*i_group_selected,SEEK_CUR);
     if(n_bytes_groups==sizeof(int)){
-       fread(&particle_offset_i_int,sizeof(int),1,fp_groups);
+       fread_verify(&particle_offset_i_int,sizeof(int),1,fp_groups);
        particle_offset_i=(size_t)particle_offset_i_int;
     }
     else
-       fread(&particle_offset_i,sizeof(size_t),1,fp_groups);
+       fread_verify(&particle_offset_i,sizeof(size_t),1,fp_groups);
     fseeko(fp_groups,n_bytes_groups*(n_groups_all-i_group_selected-1),SEEK_CUR);
     if(flag_process_group){
        fseeko(fp_groups,sizeof(int)*i_group_selected,SEEK_CUR);
-       fread(&n_sub_i,sizeof(int),1,fp_groups);
+       fread_verify(&n_sub_i,sizeof(int),1,fp_groups);
        fseeko(fp_groups,sizeof(int)*(n_groups_all-i_group_selected-1),SEEK_CUR);
     }
     else
@@ -102,22 +102,22 @@ int main(int argc, char *argv[]){
 
     // Fetch the MBP ID
     fp_particles=fopen(filename_particles,"r");
-    fread(&id_byte_size,sizeof(int),1,fp_particles);
+    fread_verify(&id_byte_size,sizeof(int),1,fp_particles);
     if(id_byte_size==sizeof(int)){
-       fread(&n_particles_int,sizeof(int),1,fp_particles);
+       fread_verify(&n_particles_int,sizeof(int),1,fp_particles);
        n_particles=(size_t)n_particles_int;
     }
     else
-       fread(&n_particles,sizeof(size_t),1,fp_particles);
+       fread_verify(&n_particles,sizeof(size_t),1,fp_particles);
     if(((size_t)particle_offset_i)>=n_particles)
        SID_trap_error("Invalid particle offset {%lld;n_particles=%lld}.",ERROR_LOGIC,particle_offset_i,n_particles);
     fseeko(fp_particles,id_byte_size*particle_offset_i,SEEK_CUR);
     if(id_byte_size==sizeof(int)){
-       fread(&MBP_ID_int,sizeof(int),1,fp_particles);
+       fread_verify(&MBP_ID_int,sizeof(int),1,fp_particles);
        MBP_ID=(size_t)MBP_ID_int;
     }
     else
-       fread(&MBP_ID,sizeof(size_t),1,fp_particles);
+       fread_verify(&MBP_ID,sizeof(size_t),1,fp_particles);
     fclose(fp_particles);
 
     SID_log("snapshot no.    = %d",SID_LOG_COMMENT,snap_number);

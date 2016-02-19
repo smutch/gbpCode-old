@@ -54,9 +54,9 @@ int main(int argc,char *argv[]){
         sprintf(filename,"%s/horizontal/ghost_catalogs/ghosts_%03d.catalog_subgroups_properties",filename_root,snap_i);
         if((fp_in=fopen(filename,"r"))==NULL)
            SID_trap_error("Could not open file {%s}",ERROR_IO_OPEN,filename);
-        fread(&i_file_group_ghosts,sizeof(int),1,fp_in);
-        fread(&n_file_group_ghosts,sizeof(int),1,fp_in);
-        fread(&n_group_ghosts,     sizeof(int),1,fp_in);
+        fread_verify(&i_file_group_ghosts,sizeof(int),1,fp_in);
+        fread_verify(&n_file_group_ghosts,sizeof(int),1,fp_in);
+        fread_verify(&n_group_ghosts,     sizeof(int),1,fp_in);
         fclose(fp_in);
 
         // Open ghost group catalog file
@@ -65,9 +65,9 @@ int main(int argc,char *argv[]){
         sprintf(filename,"%s/horizontal/ghost_catalogs/ghosts_%03d.catalog_groups_properties",filename_root,snap_i);
         if((fp_in=fopen(filename,"r"))==NULL)
            SID_trap_error("Could not open file {%s}",ERROR_IO_OPEN,filename);
-        fread(&i_file_subgroup_ghosts,sizeof(int),1,fp_in);
-        fread(&n_file_subgroup_ghosts,sizeof(int),1,fp_in);
-        fread(&n_subgroup_ghosts,     sizeof(int),1,fp_in);
+        fread_verify(&i_file_subgroup_ghosts,sizeof(int),1,fp_in);
+        fread_verify(&n_file_subgroup_ghosts,sizeof(int),1,fp_in);
+        fread_verify(&n_subgroup_ghosts,     sizeof(int),1,fp_in);
         fclose(fp_in);
      }
 
@@ -88,14 +88,14 @@ int main(int argc,char *argv[]){
      int n_subgroups_max; 
      int n_trees_subgroup;
      int n_trees_group;
-     fread(&n_step,          sizeof(int),1,fp_in);
-     fread(&n_search,        sizeof(int),1,fp_in);
-     fread(&n_groups,        sizeof(int),1,fp_in);
-     fread(&n_subgroups,     sizeof(int),1,fp_in);
-     fread(&n_groups_max,    sizeof(int),1,fp_in);
-     fread(&n_subgroups_max, sizeof(int),1,fp_in);
-     fread(&n_trees_subgroup,sizeof(int),1,fp_in);
-     fread(&n_trees_group,   sizeof(int),1,fp_in);
+     fread_verify(&n_step,          sizeof(int),1,fp_in);
+     fread_verify(&n_search,        sizeof(int),1,fp_in);
+     fread_verify(&n_groups,        sizeof(int),1,fp_in);
+     fread_verify(&n_subgroups,     sizeof(int),1,fp_in);
+     fread_verify(&n_groups_max,    sizeof(int),1,fp_in);
+     fread_verify(&n_subgroups_max, sizeof(int),1,fp_in);
+     fread_verify(&n_trees_subgroup,sizeof(int),1,fp_in);
+     fread_verify(&n_trees_group,   sizeof(int),1,fp_in);
      n_groups_snap[i_snap]   =n_groups;
      n_subgroups_snap[i_snap]=n_subgroups;
 
@@ -127,16 +127,16 @@ int main(int argc,char *argv[]){
         int group_file_offset;
         int group_index;
         int n_subgroups_group;
-        fread(&group_id,           sizeof(int),1,fp_in);
-        fread(&group_type,         sizeof(int),1,fp_in);
-        fread(&group_descendant_id,sizeof(int),1,fp_in);
-        fread(&group_tree_id,      sizeof(int),1,fp_in);
+        fread_verify(&group_id,           sizeof(int),1,fp_in);
+        fread_verify(&group_type,         sizeof(int),1,fp_in);
+        fread_verify(&group_descendant_id,sizeof(int),1,fp_in);
+        fread_verify(&group_tree_id,      sizeof(int),1,fp_in);
         if(tree_type==0)
-           fread(&group_file_offset,  sizeof(int),1,fp_in);
+           fread_verify(&group_file_offset,  sizeof(int),1,fp_in);
         else
            group_file_offset=1;
-        fread(&group_index,        sizeof(int),1,fp_in);
-        fread(&n_subgroups_group,  sizeof(int),1,fp_in);
+        fread_verify(&group_index,        sizeof(int),1,fp_in);
+        fread_verify(&n_subgroups_group,  sizeof(int),1,fp_in);
 
         // Perform check on groups
         n_group_descendant=n_groups_snap[i_snap-group_file_offset];
@@ -172,15 +172,15 @@ int main(int argc,char *argv[]){
            int subgroup_tree_id;
            int subgroup_file_offset;
            int subgroup_index;
-           fread(&subgroup_id,           sizeof(int),1,fp_in);
-           fread(&subgroup_type,         sizeof(int),1,fp_in);
-           fread(&subgroup_descendant_id,sizeof(int),1,fp_in);
-           fread(&subgroup_tree_id,      sizeof(int),1,fp_in);
+           fread_verify(&subgroup_id,           sizeof(int),1,fp_in);
+           fread_verify(&subgroup_type,         sizeof(int),1,fp_in);
+           fread_verify(&subgroup_descendant_id,sizeof(int),1,fp_in);
+           fread_verify(&subgroup_tree_id,      sizeof(int),1,fp_in);
            if(tree_type==0)
-              fread(&subgroup_file_offset,sizeof(int),1,fp_in);
+              fread_verify(&subgroup_file_offset,sizeof(int),1,fp_in);
            else
               subgroup_file_offset=1;
-           fread(&subgroup_index,sizeof(int),1,fp_in);
+           fread_verify(&subgroup_index,sizeof(int),1,fp_in);
 
            // Perform check on subgroups
            if(i_snap>0 && subgroup_file_offset>0){

@@ -34,29 +34,29 @@ void read_cfunc(cfunc_info *cfunc,char *filename_in_root,int j_run){
       SID_trap_error("Error opening {%s}.",ERROR_IO_OPEN,filename_in_1D);
    for(i_run=0;i_run<=j_run;i_run++){
       if(i_run==0){
-         fread(&(cfunc->n_1D),     sizeof(int),   1,fp_in);
-         fread(&(cfunc->n_jack),   sizeof(int),   1,fp_in);
-         fread(&(cfunc->r_min_l1D),sizeof(double),1,fp_in);
-         fread(&(cfunc->r_max_1D), sizeof(double),1,fp_in);
-         fread(&(cfunc->n_data),   sizeof(int),   1,fp_in);
-         fread(&(cfunc->n_random), sizeof(int),   1,fp_in);
+         fread_verify(&(cfunc->n_1D),     sizeof(int),   1,fp_in);
+         fread_verify(&(cfunc->n_jack),   sizeof(int),   1,fp_in);
+         fread_verify(&(cfunc->r_min_l1D),sizeof(double),1,fp_in);
+         fread_verify(&(cfunc->r_max_1D), sizeof(double),1,fp_in);
+         fread_verify(&(cfunc->n_data),   sizeof(int),   1,fp_in);
+         fread_verify(&(cfunc->n_random), sizeof(int),   1,fp_in);
       }
       if(i_run==j_run){
-         fread(cfunc->CFUNC_1D[i_run], sizeof(double),cfunc->n_1D,fp_in);
-         fread(cfunc->dCFUNC_1D[i_run],sizeof(double),cfunc->n_1D,fp_in);
-         fread(cfunc->COVMTX_1D[i_run],sizeof(double),cfunc->n_1D*cfunc->n_1D,fp_in);
+         fread_verify(cfunc->CFUNC_1D[i_run], sizeof(double),cfunc->n_1D,fp_in);
+         fread_verify(cfunc->dCFUNC_1D[i_run],sizeof(double),cfunc->n_1D,fp_in);
+         fread_verify(cfunc->COVMTX_1D[i_run],sizeof(double),cfunc->n_1D*cfunc->n_1D,fp_in);
          for(i_jack=0;i_jack<=cfunc->n_jack_total;i_jack++){
-            fread(cfunc->DD_1D[i_jack],sizeof(long long),cfunc->n_1D,fp_in);
-            fread(cfunc->DR_1D[i_jack],sizeof(long long),cfunc->n_1D,fp_in);
-            fread(cfunc->RR_1D[i_jack],sizeof(long long),cfunc->n_1D,fp_in);
+            fread_verify(cfunc->DD_1D[i_jack],sizeof(long long),cfunc->n_1D,fp_in);
+            fread_verify(cfunc->DR_1D[i_jack],sizeof(long long),cfunc->n_1D,fp_in);
+            fread_verify(cfunc->RR_1D[i_jack],sizeof(long long),cfunc->n_1D,fp_in);
          }
-         fread(cfunc->CFUNC_l1D[i_run], sizeof(double),cfunc->n_1D,fp_in);
-         fread(cfunc->dCFUNC_l1D[i_run],sizeof(double),cfunc->n_1D,fp_in);
-         fread(cfunc->COVMTX_l1D[i_run],sizeof(double),cfunc->n_1D*cfunc->n_1D,fp_in);
+         fread_verify(cfunc->CFUNC_l1D[i_run], sizeof(double),cfunc->n_1D,fp_in);
+         fread_verify(cfunc->dCFUNC_l1D[i_run],sizeof(double),cfunc->n_1D,fp_in);
+         fread_verify(cfunc->COVMTX_l1D[i_run],sizeof(double),cfunc->n_1D*cfunc->n_1D,fp_in);
          for(i_jack=0;i_jack<=cfunc->n_jack_total;i_jack++){
-            fread(cfunc->DD_l1D[i_jack],sizeof(long long),cfunc->n_1D,fp_in);
-            fread(cfunc->DR_l1D[i_jack],sizeof(long long),cfunc->n_1D,fp_in);
-            fread(cfunc->RR_l1D[i_jack],sizeof(long long),cfunc->n_1D,fp_in);
+            fread_verify(cfunc->DD_l1D[i_jack],sizeof(long long),cfunc->n_1D,fp_in);
+            fread_verify(cfunc->DR_l1D[i_jack],sizeof(long long),cfunc->n_1D,fp_in);
+            fread_verify(cfunc->RR_l1D[i_jack],sizeof(long long),cfunc->n_1D,fp_in);
          }
       }
       else{
@@ -85,21 +85,21 @@ void read_cfunc(cfunc_info *cfunc,char *filename_in_root,int j_run){
       SID_trap_error("Error opening {%s}.",ERROR_IO_OPEN,filename_in_2D);
    for(i_run=0;i_run<=j_run;i_run++){
       if(i_run==0){
-         fread(&(cfunc->n_2D),     sizeof(int),   1,fp_in);
-         fread(&(cfunc->n_jack),   sizeof(int),   1,fp_in);
-         fread(&(cfunc->r_min_2D), sizeof(double),1,fp_in);
-         fread(&(cfunc->r_max_2D), sizeof(double),1,fp_in);
-         fread(&(cfunc->n_data),   sizeof(int),   1,fp_in);
-         fread(&(cfunc->n_random), sizeof(int),   1,fp_in);
+         fread_verify(&(cfunc->n_2D),     sizeof(int),   1,fp_in);
+         fread_verify(&(cfunc->n_jack),   sizeof(int),   1,fp_in);
+         fread_verify(&(cfunc->r_min_2D), sizeof(double),1,fp_in);
+         fread_verify(&(cfunc->r_max_2D), sizeof(double),1,fp_in);
+         fread_verify(&(cfunc->n_data),   sizeof(int),   1,fp_in);
+         fread_verify(&(cfunc->n_random), sizeof(int),   1,fp_in);
       }
       if(i_run==j_run){
-         fread(cfunc->CFUNC_2D[i_run], sizeof(double),cfunc->n_2D_total,fp_in);
-         fread(cfunc->dCFUNC_2D[i_run],sizeof(double),cfunc->n_2D_total,fp_in);
-         fread(cfunc->COVMTX_2D[i_run],sizeof(double),cfunc->n_2D_total*cfunc->n_2D_total,fp_in);
+         fread_verify(cfunc->CFUNC_2D[i_run], sizeof(double),cfunc->n_2D_total,fp_in);
+         fread_verify(cfunc->dCFUNC_2D[i_run],sizeof(double),cfunc->n_2D_total,fp_in);
+         fread_verify(cfunc->COVMTX_2D[i_run],sizeof(double),cfunc->n_2D_total*cfunc->n_2D_total,fp_in);
          for(i_jack=0;i_jack<=cfunc->n_jack_total;i_jack++){
-            fread(cfunc->DD_2D[i_jack],sizeof(long long),cfunc->n_2D_total,fp_in);
-            fread(cfunc->DR_2D[i_jack],sizeof(long long),cfunc->n_2D_total,fp_in);
-            fread(cfunc->RR_2D[i_jack],sizeof(long long),cfunc->n_2D_total,fp_in);
+            fread_verify(cfunc->DD_2D[i_jack],sizeof(long long),cfunc->n_2D_total,fp_in);
+            fread_verify(cfunc->DR_2D[i_jack],sizeof(long long),cfunc->n_2D_total,fp_in);
+            fread_verify(cfunc->RR_2D[i_jack],sizeof(long long),cfunc->n_2D_total,fp_in);
          }
       }
       else{
@@ -116,4 +116,3 @@ void read_cfunc(cfunc_info *cfunc,char *filename_in_root,int j_run){
    fclose(fp_in);
    SID_log("Done.",SID_LOG_CLOSE);
 }
-

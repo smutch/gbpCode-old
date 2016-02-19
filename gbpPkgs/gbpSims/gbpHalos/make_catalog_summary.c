@@ -126,8 +126,8 @@ int main(int argc, char *argv[]){
      char filename_groups[MAX_FILENAME_LENGTH];
      sprintf(filename_groups,"%s/halos/%s_%03d.catalog_groups",filename_SSimPL_root,filename_halos_root,snap_number);
      FILE *fp_groups=fopen(filename_groups,"r");
-     fread(&n_groups_all,  sizeof(int),1,fp_groups);
-     fread(&n_bytes_groups,sizeof(int),1,fp_groups);
+     fread_verify(&n_groups_all,  sizeof(int),1,fp_groups);
+     fread_verify(&n_bytes_groups,sizeof(int),1,fp_groups);
 
      // Sanity checks
      if(n_bytes_groups!=4 && n_bytes_groups!=8)
@@ -152,7 +152,7 @@ int main(int argc, char *argv[]){
 
         // Read the number of subgroups for this group
         int n_subgroups;
-        fread(&n_subgroups,sizeof(int),1,fp_groups);
+        fread_verify(&n_subgroups,sizeof(int),1,fp_groups);
 
         // Loop over subgroups
         data.n_particles_group       =data.group.n_particles;

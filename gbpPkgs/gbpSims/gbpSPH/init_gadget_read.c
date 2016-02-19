@@ -60,8 +60,8 @@ int init_gadget_read(char *filename_root_in,int snapshot_number,gadget_read_info
 
      // Read the first header if we've found a file ok
      if(flag_filefound){
-        fread(&record_length_in,   sizeof(int),               1,fp);
-        fread(&(fp_gadget->header),sizeof(gadget_header_info),1,fp);
+        fread_verify(&record_length_in,   sizeof(int),               1,fp);
+        fread_verify(&(fp_gadget->header),sizeof(gadget_header_info),1,fp);
         fclose(fp);
      }
 

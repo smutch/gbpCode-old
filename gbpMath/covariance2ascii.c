@@ -29,9 +29,9 @@ int main(int argc, char *argv[]){
 
   // Skip chain config file's header
   if((fp_in1=fopen(filename_in1,"r"))!=NULL){
-    fread(&n_iterations_file_total,sizeof(int),   1,      fp_in1);
-    fread(&n_iterations_file_burn, sizeof(int),   1,      fp_in1);
-    fread(&temperature,            sizeof(double),1,      fp_in1);
+    fread_verify(&n_iterations_file_total,sizeof(int),   1,      fp_in1);
+    fread_verify(&n_iterations_file_burn, sizeof(int),   1,      fp_in1);
+    fread_verify(&temperature,            sizeof(double),1,      fp_in1);
     SID_log("n_iterations_file_total = %d", SID_LOG_COMMENT, n_iterations_file_total);
     SID_log("n_iterations_file_burn  = %d", SID_LOG_COMMENT, n_iterations_file_burn);
     SID_log("temperature             = %.3f", SID_LOG_COMMENT, temperature);
@@ -42,13 +42,13 @@ int main(int argc, char *argv[]){
   SID_log("Converting covariance matrix file to ascii format...",SID_LOG_OPEN);
   if((fp_in2=fopen(filename_in2,"r"))!=NULL){
     fp_out=fopen(filename_out,"w");
-    fread(&n_P,sizeof(int),1,fp_in2);
+    fread_verify(&n_P,sizeof(int),1,fp_in2);
     SID_log("n_P=%d",SID_LOG_COMMENT,n_P);
     for(i_P=0;i_P<n_P;i_P++){
       for(j_P=0;j_P<n_P;j_P++){
-        fread(&val,sizeof(double),1,fp_in1);
+        fread_verify(&val,sizeof(double),1,fp_in1);
         fprintf(fp_out,"%3d %3d %le ",i_P,j_P,val);
-        fread(&val,sizeof(double),1,fp_in2);
+        fread_verify(&val,sizeof(double),1,fp_in2);
         fprintf(fp_out,"%le\n",val);
       }
     }

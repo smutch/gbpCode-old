@@ -114,10 +114,10 @@ void read_trees_data(tree_info    *trees,
               int n_files;
               int n_halos_file;
               int n_halos_total;
-              fread(&i_file,       sizeof(int),1,fp_data);
-              fread(&n_files,      sizeof(int),1,fp_data);
-              fread(&n_halos_file, sizeof(int),1,fp_data);
-              fread(&n_halos_total,sizeof(int),1,fp_data);
+              fread_verify(&i_file,       sizeof(int),1,fp_data);
+              fread_verify(&n_files,      sizeof(int),1,fp_data);
+              fread_verify(&n_halos_file, sizeof(int),1,fp_data);
+              fread_verify(&n_halos_total,sizeof(int),1,fp_data);
 //              if(n_halos_total!=n_halos_all)
 //                 SID_trap_error("Count of halos in data file does not match trees (ie. %d!=%d).",ERROR_LOGIC,n_halos_total,n_halos_all);
 
@@ -125,7 +125,7 @@ void read_trees_data(tree_info    *trees,
               int k_read;
               int l_read;
               for(k_read=0,l_read=0;k_read<n_halos_total;k_read++){
-                 fread(data_read,data_type_size,1,fp_data);
+                 fread_verify(data_read,data_type_size,1,fp_data);
                  if(l_read<n_list_local){
                     if(k_read==file_idx_list_local[file_idx_list_local_index[l_read]]){
                        if(data_in!=NULL)

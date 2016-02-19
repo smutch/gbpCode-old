@@ -129,7 +129,7 @@ int main(int argc, char *argv[]){
 
         // Process n_groups
         int n_groups;
-        fread(&n_groups,    sizeof(int),1,fp_in);
+        fread_verify(&n_groups,    sizeof(int),1,fp_in);
         fwrite(&n_groups,   sizeof(int),1,fp_out);
         fwrite(&offset_size,sizeof(int),1,fp_out);
 
@@ -138,7 +138,7 @@ int main(int argc, char *argv[]){
         // Process group sizes
         int size;
         for(i_group=0;i_group<n_groups;i_group++){
-           fread(&size, sizeof(int),1,fp_in);
+           fread_verify(&size, sizeof(int),1,fp_in);
            fwrite(&size,sizeof(int),1,fp_out);
         }
 
@@ -146,7 +146,7 @@ int main(int argc, char *argv[]){
         int64_t offset_ll;
         for(i_group=0;i_group<n_groups;i_group++){
            unsigned int offset_in;
-           fread(&offset_in, sizeof(unsigned int),1,fp_in);
+           fread_verify(&offset_in, sizeof(unsigned int),1,fp_in);
            if(offset_size==sizeof(unsigned int)){
               fwrite(&offset_in,offset_size,1,fp_out);
            }
@@ -164,7 +164,7 @@ int main(int argc, char *argv[]){
            int n_sub;
            int n_sub_total;
            for(i_group=0,n_sub_total=0;i_group<n_groups;i_group++){
-              fread(&n_sub, sizeof(int),1,fp_in);
+              fread_verify(&n_sub, sizeof(int),1,fp_in);
               fwrite(&n_sub,sizeof(int),1,fp_out);
               n_sub_total+=n_sub;
            }

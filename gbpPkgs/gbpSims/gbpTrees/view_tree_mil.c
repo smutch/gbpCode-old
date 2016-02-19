@@ -67,20 +67,20 @@ int main(int argc, char *argv[]){
 
   SID_log("Displaying tree %d from {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,select_tree,filename_tree_in);
   fp=fopen(filename_tree_in,"r");
-  fread(&n_trees,      sizeof(int),1,fp);
-  fread(&n_halos_total,sizeof(int),1,fp);
+  fread_verify(&n_trees,      sizeof(int),1,fp);
+  fread_verify(&n_halos_total,sizeof(int),1,fp);
   SID_log("(%d trees and %d halos)...",SID_LOG_CONTINUE,n_trees,n_halos_total);
   n_halos=(int *)SID_malloc(sizeof(int)*n_trees);
-  fread(n_halos,sizeof(int),n_trees,fp);
+  fread_verify(n_halos,sizeof(int),n_trees,fp);
   for(i_tree=0;i_tree<select_tree;i_tree++){
     for(i_halo=0;i_halo<n_halos[i_tree];i_halo++)
-      fread(&halo,sizeof(halo_properties_SAGE_info_mil),1,fp);
+      fread_verify(&halo,sizeof(halo_properties_SAGE_info_mil),1,fp);
   }
   halos               =(halo_properties_SAGE_info_mil *)SID_malloc(sizeof(halo_properties_SAGE_info_mil)*n_halos[i_tree]);
   snap_num            =(int       *)SID_malloc(sizeof(int)*n_halos[i_tree]);
   snap_index          =(int       *)SID_malloc(sizeof(int)*n_halos[i_tree]);
   group_halo_first    =(int       *)SID_malloc(sizeof(int)*n_halos[i_tree]);
-  fread(halos,sizeof(halo_properties_SAGE_info_mil),n_halos[i_tree],fp);
+  fread_verify(halos,sizeof(halo_properties_SAGE_info_mil),n_halos[i_tree],fp);
   descendant_min      =10000;
   descendant_max      =    0;
   progenitor_first_min=10000;

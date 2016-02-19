@@ -117,9 +117,9 @@ void process_gadget_file(const char *status_message,
  
       // Initialize positions pointer and read header
       record_length=sizeof(gadget_header_info);
-      fread(&record_length_open,4,1,fp_pos);
-      fread(&header,sizeof(gadget_header_info),1,fp_pos);
-      fread(&record_length_close,4,1,fp_pos);
+      fread_verify(&record_length_open,4,1,fp_pos);
+      fread_verify(&header,sizeof(gadget_header_info),1,fp_pos);
+      fread_verify(&record_length_close,4,1,fp_pos);
       //if((size_t)record_length_open!=record_length_close)
       //  SID_log_warning("Problem with GADGET record size (close of header)",ERROR_LOGIC);
       //if((size_t)record_length_open!=sizeof(gadget_header_info))
@@ -135,9 +135,9 @@ void process_gadget_file(const char *status_message,
 
       // Initialize velocities pointer
       record_length=3*n_particles_file*sizeof(GBPREAL);
-      fread(&record_length_open,4,1,fp_vel);
+      fread_verify(&record_length_open,4,1,fp_vel);
       fseeko(fp_vel,(off_t)(record_length),SEEK_CUR);
-      fread(&record_length_close,4,1,fp_vel);
+      fread_verify(&record_length_close,4,1,fp_vel);
       //if(record_length_open!=record_length_close)
       //  SID_log_warning("Problem with GADGET record size (close of positions)",ERROR_LOGIC);
       fseeko(fp_vel,(off_t)(4),SEEK_CUR);
@@ -145,12 +145,12 @@ void process_gadget_file(const char *status_message,
 
       // Initialize IDs pointer
       record_length=3*n_particles_file*sizeof(GBPREAL);
-      fread(&record_length_open,4,1,fp_ids);
+      fread_verify(&record_length_open,4,1,fp_ids);
       fseeko(fp_ids,(off_t)(record_length),SEEK_CUR);
-      fread(&record_length_close,4,1,fp_ids);
+      fread_verify(&record_length_close,4,1,fp_ids);
       //if(record_length_open!=record_length_close)
       //  SID_log_warning("Problem with GADGET record size (close of velocities)",ERROR_LOGIC);
-      fread(&record_length_open,4,1,fp_ids);
+      fread_verify(&record_length_open,4,1,fp_ids);
 
       // Determine what kind of IDs we have
       size_t ID_byte_size;
@@ -182,9 +182,9 @@ void process_gadget_file(const char *status_message,
          for(size_t j_particle=0;j_particle<header.n_file[i_type];i_particle+=n_buffer,j_particle+=n_buffer){
             n_buffer=MIN(PROCESS_GADGET_FILE_BUFFER_SIZE,header.n_file[i_type]-j_particle);
             if(flag_I_am_reader){
-               fread(pos_buffer,sizeof(GBPREAL),3*n_buffer,fp_pos);
-               fread(vel_buffer,sizeof(GBPREAL),3*n_buffer,fp_vel);
-               fread(ids_buffer,ID_byte_size,     n_buffer,fp_ids);
+               fread_verify(pos_buffer,sizeof(GBPREAL),3*n_buffer,fp_pos);
+               fread_verify(vel_buffer,sizeof(GBPREAL),3*n_buffer,fp_vel);
+               fread_verify(ids_buffer,ID_byte_size,     n_buffer,fp_ids);
             }
             if(flag_all_to_all){
                SID_Bcast(pos_buffer,sizeof(GBPREAL)*3*n_buffer,all_to_all_reader_rank,SID.COMM_WORLD);

@@ -61,10 +61,10 @@ int fopen_nth_catalog_file(fp_catalog_info *fp_in,int n){
            r_val=TRUE;
          else{
             // Read header information
-            fread(&(fp_in->i_file),       sizeof(int),1,fp_in->fp_properties);
-            fread(&(fp_in->n_files),      sizeof(int),1,fp_in->fp_properties);
-            fread(&(fp_in->n_halos_file), sizeof(int),1,fp_in->fp_properties);
-            fread(&(fp_in->n_halos_total),sizeof(int),1,fp_in->fp_properties);
+            fread_verify(&(fp_in->i_file),       sizeof(int),1,fp_in->fp_properties);
+            fread_verify(&(fp_in->n_files),      sizeof(int),1,fp_in->fp_properties);
+            fread_verify(&(fp_in->n_halos_file), sizeof(int),1,fp_in->fp_properties);
+            fread_verify(&(fp_in->n_halos_total),sizeof(int),1,fp_in->fp_properties);
             // Check that the file number in the file is correct
             if(i_file!=fp_in->i_file)
                SID_trap_error("Invalid file number (ie. %d!=%d) in catalog {%s}.",ERROR_LOGIC,i_file,fp_in->i_file,fp_in->filename_properties_root);
@@ -77,10 +77,10 @@ int fopen_nth_catalog_file(fp_catalog_info *fp_in,int n){
            r_val=TRUE;
          else{
             // Read header information
-            fread(&(fp_in->i_file),       sizeof(int),1,fp_in->fp_profiles);
-            fread(&(fp_in->n_files),      sizeof(int),1,fp_in->fp_profiles);
-            fread(&(fp_in->n_halos_file), sizeof(int),1,fp_in->fp_profiles);
-            fread(&(fp_in->n_halos_total),sizeof(int),1,fp_in->fp_profiles);
+            fread_verify(&(fp_in->i_file),       sizeof(int),1,fp_in->fp_profiles);
+            fread_verify(&(fp_in->n_files),      sizeof(int),1,fp_in->fp_profiles);
+            fread_verify(&(fp_in->n_halos_file), sizeof(int),1,fp_in->fp_profiles);
+            fread_verify(&(fp_in->n_halos_total),sizeof(int),1,fp_in->fp_profiles);
             // Check that the file number in the file is correct
             if(i_file!=fp_in->i_file)
                SID_trap_error("Invalid file number (ie. %d!=%d) in catalog {%s}.",ERROR_LOGIC,i_file,fp_in->i_file,fp_in->filename_profiles_root);
@@ -187,10 +187,10 @@ int fopen_catalog(char            *filename_catalog_root,
 
       // Load/set header information
       if(fp_out->fp_properties!=NULL){
-         fread(&(fp_out->i_file),       sizeof(int),1,fp_out->fp_properties);
-         fread(&(fp_out->n_files),      sizeof(int),1,fp_out->fp_properties);
-         fread(&(fp_out->n_halos_file), sizeof(int),1,fp_out->fp_properties);
-         fread(&(fp_out->n_halos_total),sizeof(int),1,fp_out->fp_properties);
+         fread_verify(&(fp_out->i_file),       sizeof(int),1,fp_out->fp_properties);
+         fread_verify(&(fp_out->n_files),      sizeof(int),1,fp_out->fp_properties);
+         fread_verify(&(fp_out->n_halos_file), sizeof(int),1,fp_out->fp_properties);
+         fread_verify(&(fp_out->n_halos_total),sizeof(int),1,fp_out->fp_properties);
          fclose(fp_out->fp_properties);
          fp_out->fp_properties=NULL;
       }

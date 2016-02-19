@@ -13,10 +13,10 @@ void read_image(image_info *image,const char *filename_dir,const char *filename_
   sprintf(filename,"%s/raw/%s.raw",filename_dir,filename_root);
   if((fp=fopen(filename,"r"))==NULL)
      SID_trap_error("Could not open image {%s}.",ERROR_IO_OPEN,filename);
-  fread(&(image->width), sizeof(int),1,fp);
-  fread(&(image->height),sizeof(int),1,fp);
+  fread_verify(&(image->width), sizeof(int),1,fp);
+  fread_verify(&(image->height),sizeof(int),1,fp);
   image->n_pixels=image->width*image->height;
-  fread(image->values,sizeof(double),image->n_pixels,fp);
+  fread_verify(image->values,sizeof(double),image->n_pixels,fp);
   fclose(fp);
 
   // To Do: Add .png image read here

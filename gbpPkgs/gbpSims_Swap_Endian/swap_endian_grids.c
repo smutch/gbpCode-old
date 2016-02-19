@@ -29,14 +29,14 @@ void swap_endian_grids(const char *filename_in,const char *filename_out,int mode
      double L[3];
      int    n_grids;
      int    scheme;
-     fread(&(n[0]), sizeof(int),   1,fp_in);
-     fread(&(n[1]), sizeof(int),   1,fp_in);
-     fread(&(n[2]), sizeof(int),   1,fp_in);
-     fread(&(L[0]), sizeof(double),1,fp_in);
-     fread(&(L[1]), sizeof(double),1,fp_in);
-     fread(&(L[2]), sizeof(double),1,fp_in);
-     fread(&n_grids,sizeof(int),   1,fp_in);
-     fread(&scheme, sizeof(int),   1,fp_in);
+     fread_verify(&(n[0]), sizeof(int),   1,fp_in);
+     fread_verify(&(n[1]), sizeof(int),   1,fp_in);
+     fread_verify(&(n[2]), sizeof(int),   1,fp_in);
+     fread_verify(&(L[0]), sizeof(double),1,fp_in);
+     fread_verify(&(L[1]), sizeof(double),1,fp_in);
+     fread_verify(&(L[2]), sizeof(double),1,fp_in);
+     fread_verify(&n_grids,sizeof(int),   1,fp_in);
+     fread_verify(&scheme, sizeof(int),   1,fp_in);
      if(check_mode_for_flag(mode,SWAP_SSIMPL_ENDIAN_TO_NATIVE)){
         swap_endian((char *)(n),       3,sizeof(int));
         swap_endian((char *)(&n_grids),1,sizeof(int));

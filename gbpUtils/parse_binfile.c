@@ -32,25 +32,25 @@ int main(int argc, char *argv[]){
        strcpy(dtype,argv[i_arg++]);
        if(!strcmp(dtype,"int")){
           int buffer;
-          fread(&buffer,sizeof(int),1,fp);
+          fread_verify(&buffer,sizeof(int),1,fp);
           printf("%d\n",buffer);
           offset+=sizeof(int);
        }
        else if(!strcmp(dtype,"long")){
           long long buffer;
-          fread(&buffer,sizeof(long long),1,fp);
+          fread_verify(&buffer,sizeof(long long),1,fp);
           printf("%lld\n",buffer);
           offset+=sizeof(long long);
        }
        else if(!strcmp(dtype,"float")){
           float buffer;
-          fread(&buffer,sizeof(float),1,fp);
+          fread_verify(&buffer,sizeof(float),1,fp);
           printf("%f\n",buffer);
           offset+=sizeof(float);
        }
        else if(!strcmp(dtype,"double")){
           double buffer;
-          fread(&buffer,sizeof(double),1,fp);
+          fread_verify(&buffer,sizeof(double),1,fp);
           printf("%llf\n",buffer);
           offset+=sizeof(double);
        }

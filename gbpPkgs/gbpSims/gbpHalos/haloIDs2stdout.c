@@ -21,17 +21,17 @@ int main(int argc,char *argv[]){
 
    int    n_groups,group_offset_byte_size,n_subgroups,subgroup_offset_byte_size,n_ids_i,id_byte_size;
    size_t n_ids;
-   fread(&n_groups,                 sizeof(int),1,fp_groups);
-   fread(&group_offset_byte_size,   sizeof(int),1,fp_groups);
-   fread(&n_subgroups,              sizeof(int),1,fp_subgroups);
-   fread(&subgroup_offset_byte_size,sizeof(int),1,fp_subgroups);
-   fread(&id_byte_size,sizeof(int),1,fp_ids);
+   fread_verify(&n_groups,                 sizeof(int),1,fp_groups);
+   fread_verify(&group_offset_byte_size,   sizeof(int),1,fp_groups);
+   fread_verify(&n_subgroups,              sizeof(int),1,fp_subgroups);
+   fread_verify(&subgroup_offset_byte_size,sizeof(int),1,fp_subgroups);
+   fread_verify(&id_byte_size,sizeof(int),1,fp_ids);
    if(id_byte_size==sizeof(int)){
-      fread(&n_ids_i,sizeof(int),1,fp_ids);
+      fread_verify(&n_ids_i,sizeof(int),1,fp_ids);
       n_ids=(size_t)n_ids_i;
    }
    else
-      fread(&n_ids,sizeof(size_t),1,fp_ids);
+      fread_verify(&n_ids,sizeof(size_t),1,fp_ids);
 
    size_t i_group   =0;
    size_t i_subgroup=0;
@@ -39,11 +39,11 @@ int main(int argc,char *argv[]){
       long int id_i;
       if(id_byte_size==sizeof(int)){
          int id_i_int;
-         fread(&id_i_int,sizeof(int),1,fp_ids);
+         fread_verify(&id_i_int,sizeof(int),1,fp_ids);
          id_i=(long int)id_i_int;
       }
       else
-         fread(&id_i,sizeof(long int),1,fp_ids);
+         fread_verify(&id_i,sizeof(long int),1,fp_ids);
       fprintf(stdout,"%zd %zd %zd %lld\n",i_particle,i_group,i_subgroup,id_i);
    }
    fclose(fp_groups);

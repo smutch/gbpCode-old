@@ -42,8 +42,8 @@ void swap_endian_catalogs_properties_local(const char *filename_in_root,const ch
   // Read the needed header information
   int i_file_in;
   int n_files;
-  fread(&i_file_in,sizeof(int),1,fp_in);
-  fread(&n_files,  sizeof(int),1,fp_in);
+  fread_verify(&i_file_in,sizeof(int),1,fp_in);
+  fread_verify(&n_files,  sizeof(int),1,fp_in);
   if(check_mode_for_flag(mode,SWAP_SSIMPL_ENDIAN_TO_NATIVE))
      swap_endian((char *)(&n_files),1,sizeof(int));
   fclose(fp_in);
@@ -70,10 +70,10 @@ void swap_endian_catalogs_properties_local(const char *filename_in_root,const ch
      // Read the header and rewind
      int n_halos_file;
      int n_halos_total;
-     fread(&i_file_in,    sizeof(int),1,fp_in);
-     fread(&n_files,      sizeof(int),1,fp_in);
-     fread(&n_halos_file, sizeof(int),1,fp_in);
-     fread(&n_halos_total,sizeof(int),1,fp_in);
+     fread_verify(&i_file_in,    sizeof(int),1,fp_in);
+     fread_verify(&n_files,      sizeof(int),1,fp_in);
+     fread_verify(&n_halos_file, sizeof(int),1,fp_in);
+     fread_verify(&n_halos_total,sizeof(int),1,fp_in);
      if(check_mode_for_flag(mode,SWAP_SSIMPL_ENDIAN_TO_NATIVE)){
         swap_endian((char *)(&i_file_in),    1,sizeof(int));
         swap_endian((char *)(&n_files),      1,sizeof(int));
@@ -86,7 +86,7 @@ void swap_endian_catalogs_properties_local(const char *filename_in_root,const ch
      rewrite_swap_endian(fp_in,fp_out,4,sizeof(int),NULL);
      for(int i_halo=0;i_halo<n_halos_file;i_halo++){
         halo_properties_info properties;
-        fread(&properties,sizeof(halo_properties_info),1,fp_in);
+        fread_verify(&properties,sizeof(halo_properties_info),1,fp_in);
         swap_endian((char *)(&(properties.id_MBP)),             1,sizeof(long long));
         swap_endian((char *)(&(properties.M_vir)),              1,sizeof(double));
         swap_endian((char *)(&(properties.n_particles)),        1,sizeof(int));
@@ -148,8 +148,8 @@ void swap_endian_catalogs_profiles_local(const char *filename_in_root,const char
   // Read the needed header information
   int i_file_in;
   int n_files;
-  fread(&i_file_in,sizeof(int),1,fp_in);
-  fread(&n_files,  sizeof(int),1,fp_in);
+  fread_verify(&i_file_in,sizeof(int),1,fp_in);
+  fread_verify(&n_files,  sizeof(int),1,fp_in);
   if(check_mode_for_flag(mode,SWAP_SSIMPL_ENDIAN_TO_NATIVE))
      swap_endian((char *)(&n_files),1,sizeof(int));
   fclose(fp_in);
@@ -175,10 +175,10 @@ void swap_endian_catalogs_profiles_local(const char *filename_in_root,const char
      // Read the header and rewind
      int n_halos_file;
      int n_halos_total;
-     fread(&i_file_in,    sizeof(int),1,fp_in);
-     fread(&n_files,      sizeof(int),1,fp_in);
-     fread(&n_halos_file, sizeof(int),1,fp_in);
-     fread(&n_halos_total,sizeof(int),1,fp_in);
+     fread_verify(&i_file_in,    sizeof(int),1,fp_in);
+     fread_verify(&n_files,      sizeof(int),1,fp_in);
+     fread_verify(&n_halos_file, sizeof(int),1,fp_in);
+     fread_verify(&n_halos_total,sizeof(int),1,fp_in);
      if(check_mode_for_flag(mode,SWAP_SSIMPL_ENDIAN_TO_NATIVE)){
         swap_endian((char *)(&i_file_in),    1,sizeof(int));
         swap_endian((char *)(&n_files),      1,sizeof(int));
@@ -193,7 +193,7 @@ void swap_endian_catalogs_profiles_local(const char *filename_in_root,const char
         int n_bins;
         int n_bins_in;
         int n_bins_out;
-        fread(&n_bins_in,sizeof(int),1,fp_in);
+        fread_verify(&n_bins_in,sizeof(int),1,fp_in);
         n_bins    =n_bins_in;
         n_bins_out=n_bins_in;
         swap_endian((char *)(&n_bins_out),1,sizeof(int));
@@ -202,7 +202,7 @@ void swap_endian_catalogs_profiles_local(const char *filename_in_root,const char
         fwrite(&n_bins_out,sizeof(int),1,fp_out);
         for(int i_bin=0;i_bin<n_bins;i_bin++){
            halo_profile_bin_info profile_bin;
-           fread(&profile_bin,sizeof(halo_profile_bin_info),1,fp_in);
+           fread_verify(&profile_bin,sizeof(halo_profile_bin_info),1,fp_in);
            swap_endian((char *)(&(profile_bin.r_med)),              1,sizeof(float));
            swap_endian((char *)(&(profile_bin.r_max)),              1,sizeof(float));
            swap_endian((char *)(&(profile_bin.n_particles)),        1,sizeof(int));
@@ -265,8 +265,8 @@ int swap_endian_catalogs_SO_local(const char *filename_in_root,const char *filen
   // Read the needed header information
   int i_file_in;
   int n_files;
-  fread(&i_file_in,sizeof(int),1,fp_in);
-  fread(&n_files,  sizeof(int),1,fp_in);
+  fread_verify(&i_file_in,sizeof(int),1,fp_in);
+  fread_verify(&n_files,  sizeof(int),1,fp_in);
   if(check_mode_for_flag(mode,SWAP_SSIMPL_ENDIAN_TO_NATIVE))
      swap_endian((char *)(&n_files),1,sizeof(int));
   fclose(fp_in);
@@ -293,10 +293,10 @@ int swap_endian_catalogs_SO_local(const char *filename_in_root,const char *filen
      // Read the header and rewind
      int n_halos_file;
      int n_halos_total;
-     fread(&i_file_in,    sizeof(int),1,fp_in);
-     fread(&n_files,      sizeof(int),1,fp_in);
-     fread(&n_halos_file, sizeof(int),1,fp_in);
-     fread(&n_halos_total,sizeof(int),1,fp_in);
+     fread_verify(&i_file_in,    sizeof(int),1,fp_in);
+     fread_verify(&n_files,      sizeof(int),1,fp_in);
+     fread_verify(&n_halos_file, sizeof(int),1,fp_in);
+     fread_verify(&n_halos_total,sizeof(int),1,fp_in);
      if(check_mode_for_flag(mode,SWAP_SSIMPL_ENDIAN_TO_NATIVE)){
         swap_endian((char *)(&i_file_in),    1,sizeof(int));
         swap_endian((char *)(&n_files),      1,sizeof(int));

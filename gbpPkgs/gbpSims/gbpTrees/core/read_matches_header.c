@@ -104,7 +104,7 @@ int read_matches_header(char   *filename_root_in,
            int k_read;
            for(k_read=0;i_read>=i_read_start && k_read<i_read_step;i_read--,k_read++){
               fseek(fp_read_header,1*sizeof(int),SEEK_CUR);
-              fread(&n_groups_1,sizeof(int),1,fp_read_header);
+              fread_verify(&n_groups_1,sizeof(int),1,fp_read_header);
               fseek(fp_read_header,n_groups_1*sizeof(int),SEEK_CUR);
               if(k_match==1)
                  fseek(fp_read_header,n_groups_1*sizeof(int),SEEK_CUR);

@@ -798,12 +798,12 @@ void read_gadget_binary_local(char       *filename_root_in,
       FILE *fp_positions;
       if(SID.I_am_Master){
         fp_positions=fopen(filename,"r");
-        fread(&record_length_open, sizeof(int),1,               fp_positions);
-        fread(&header,             sizeof(gadget_header_info),1,fp_positions);
-        fread(&record_length_close,sizeof(int),1,               fp_positions);
+        fread_verify(&record_length_open, sizeof(int),1,               fp_positions);
+        fread_verify(&header,             sizeof(gadget_header_info),1,fp_positions);
+        fread_verify(&record_length_close,sizeof(int),1,               fp_positions);
         if(record_length_open!=record_length_close)
           SID_log_warning("Problem with GADGET record size (close of header)",ERROR_LOGIC);
-        fread(&record_length_open,sizeof(int),1,fp_positions);
+        fread_verify(&record_length_open,sizeof(int),1,fp_positions);
       }
       SID_Bcast(&header,sizeof(gadget_header_info),MASTER_RANK,SID.COMM_WORLD);
       for(i=0,n_particles_file=0;i<N_GADGET_TYPE;i++)
@@ -813,22 +813,22 @@ void read_gadget_binary_local(char       *filename_root_in,
       FILE *fp_IDs;
       if(SID.I_am_Master){
          fp_IDs=fopen(filename,"r");
-         fread(&record_length_open,sizeof(int),1,fp_IDs);
+         fread_verify(&record_length_open,sizeof(int),1,fp_IDs);
          fseeko(fp_IDs,(off_t)record_length_open,SEEK_CUR);
-         fread(&record_length_close,sizeof(int),1,fp_IDs);
+         fread_verify(&record_length_close,sizeof(int),1,fp_IDs);
          if(record_length_open!=record_length_close)
            SID_log_warning("Problem with GADGET record size (close of header)",ERROR_LOGIC);
-         fread(&record_length_open,sizeof(int),1,fp_IDs);
+         fread_verify(&record_length_open,sizeof(int),1,fp_IDs);
          fseeko(fp_IDs,(off_t)record_length_open,SEEK_CUR);
-         fread(&record_length_close,sizeof(int),1,fp_IDs);
+         fread_verify(&record_length_close,sizeof(int),1,fp_IDs);
          if(record_length_open!=record_length_close)
            SID_log_warning("Problem with GADGET record size (close of positions)",ERROR_LOGIC);
-         fread(&record_length_open,sizeof(int),1,fp_IDs);
+         fread_verify(&record_length_open,sizeof(int),1,fp_IDs);
          fseeko(fp_IDs,(off_t)record_length_open,SEEK_CUR);
-         fread(&record_length_close,sizeof(int),1,fp_IDs);
+         fread_verify(&record_length_close,sizeof(int),1,fp_IDs);
          if(record_length_open!=record_length_close)
            SID_log_warning("Problem with GADGET record size (close of velocities)",ERROR_LOGIC);
-         fread(&record_length_open,sizeof(int),1,fp_IDs);
+         fread_verify(&record_length_open,sizeof(int),1,fp_IDs);
          if((size_t)record_length_open/n_particles_file==sizeof(long long)){
             SID_log("(long long IDs)...",SID_LOG_CONTINUE);
             flag_LONGIDS=TRUE;
@@ -865,15 +865,15 @@ void read_gadget_binary_local(char       *filename_root_in,
                if(i_buffer>=n_buffer_max){
                   n_buffer=MIN(n_buffer_max,n_buffer_left);
                   if(SID.I_am_Master){
-                     fread(buffer_positions, sizeof(GBPREAL),3*n_buffer,fp_positions);
+                     fread_verify(buffer_positions, sizeof(GBPREAL),3*n_buffer,fp_positions);
                      if(!flag_LONGIDS){
                         int *buffer_IDs_int=(int *)buffer_IDs;
-                        fread(buffer_IDs_int,sizeof(int),n_buffer,fp_IDs);
+                        fread_verify(buffer_IDs_int,sizeof(int),n_buffer,fp_IDs);
                         for(j_particle=n_buffer-1;j_particle>=0;j_particle--)
                            buffer_IDs[j_particle]=(size_t)buffer_IDs_int[j_particle];
                      }
                      else
-                        fread(buffer_IDs,sizeof(size_t),n_buffer,fp_IDs);
+                        fread_verify(buffer_IDs,sizeof(size_t),n_buffer,fp_IDs);
                   }
                   SID_Bcast(buffer_positions, 3*n_buffer*sizeof(GBPREAL),MASTER_RANK,SID.COMM_WORLD);
                   SID_Bcast(buffer_IDs,         n_buffer*sizeof(size_t), MASTER_RANK,SID.COMM_WORLD);
@@ -1585,11 +1585,11 @@ int main(int argc, char *argv[]){
        fp_in_groups   =fopen(filename_in_groups,   "r");
        fp_in_subgroups=fopen(filename_in_subgroups,"r");
        fp_in_particles=fopen(filename_in_particles,"r");
-       fread(&n_groups_in,             sizeof(int),1,fp_in_groups);
-       fread(&n_byte_offsets_groups,   sizeof(int),1,fp_in_groups);
-       fread(&n_subgroups_in,          sizeof(int),1,fp_in_subgroups);
-       fread(&n_byte_offsets_subgroups,sizeof(int),1,fp_in_subgroups);
-       fread(&n_byte_ids,              sizeof(int),1,fp_in_particles);
+       fread_verify(&n_groups_in,             sizeof(int),1,fp_in_groups);
+       fread_verify(&n_byte_offsets_groups,   sizeof(int),1,fp_in_groups);
+       fread_verify(&n_subgroups_in,          sizeof(int),1,fp_in_subgroups);
+       fread_verify(&n_byte_offsets_subgroups,sizeof(int),1,fp_in_subgroups);
+       fread_verify(&n_byte_ids,              sizeof(int),1,fp_in_particles);
        fclose(fp_in_groups);
        fclose(fp_in_subgroups);
        fclose(fp_in_particles);

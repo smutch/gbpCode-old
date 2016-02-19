@@ -117,8 +117,8 @@ int main(int argc, char *argv[]){
          if((fp_halos=fopen(filename_halos,"r"))==NULL)
             SID_trap_error("Could not open halo file {%s} for reading.",ERROR_IO_OPEN,filename_halos);
          int n_groups_halos,group_offset_byte_size;
-         fread(&n_groups_halos,        sizeof(int),1,fp_halos);
-         fread(&group_offset_byte_size,sizeof(int),1,fp_halos);
+         fread_verify(&n_groups_halos,        sizeof(int),1,fp_halos);
+         fread_verify(&group_offset_byte_size,sizeof(int),1,fp_halos);
          // Skip group sizes and offsets
          fseeko(fp_halos,(off_t)(n_groups_halos*(sizeof(int)+group_offset_byte_size)),SEEK_CUR);
 
@@ -222,7 +222,7 @@ int main(int argc, char *argv[]){
             // Read group catalog
             fread_catalog_file(&fp_catalog_groups,NULL,properties_group,profile_group,i_group);
             // Read number of subgroups
-            fread(&n_subgroups_group,sizeof(int),1,fp_halos);
+            fread_verify(&n_subgroups_group,sizeof(int),1,fp_halos);
             // Read SO masses (if available)
             if(group_SO_data!=NULL)
                fread_multifile(&fp_SO,group_SO_data,i_group);

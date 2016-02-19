@@ -134,8 +134,8 @@ int main(int argc, char *argv[]){
       sprintf(filename_input_properties_temp,"%s/%s.catalog_%sgroups_properties.%d",filename_input_properties_dir,filename_base,group_text_prefix,j_file);
       if((fp_properties_temp=fopen(filename_input_properties_temp,"r"))==NULL)
          SID_trap_error("Can not open {%s}",ERROR_IO_OPEN,filename_output_properties_temp);
-      fread(&j_file,      sizeof(int),1,fp_properties_temp);
-      fread(&n_files,     sizeof(int),1,fp_properties_temp);
+      fread_verify(&j_file,      sizeof(int),1,fp_properties_temp);
+      fread_verify(&n_files,     sizeof(int),1,fp_properties_temp);
       fclose(fp_properties_temp);
 
       // Concatinate the temporary files together
@@ -151,10 +151,10 @@ int main(int argc, char *argv[]){
         // Cat properties
         if((fp_properties_temp=fopen(filename_input_properties_temp,"r"))==NULL)
            SID_trap_error("Can't open file {%s}",ERROR_IO_OPEN,filename_output_properties_temp);
-        fread(&j_file_in,   sizeof(int),1,fp_properties_temp);
-        fread(&n_files_i,   sizeof(int),1,fp_properties_temp);
-        fread(&n_groups,    sizeof(int),1,fp_properties_temp);
-        fread(&n_groups_all,sizeof(int),1,fp_properties_temp);
+        fread_verify(&j_file_in,   sizeof(int),1,fp_properties_temp);
+        fread_verify(&n_files_i,   sizeof(int),1,fp_properties_temp);
+        fread_verify(&n_groups,    sizeof(int),1,fp_properties_temp);
+        fread_verify(&n_groups_all,sizeof(int),1,fp_properties_temp);
         SID_log("Processing properties (%d of %d %sgroups)...",SID_LOG_OPEN,n_groups,n_groups_all,group_text_prefix);
         if(j_file==0){
           fwrite(&j_file,      sizeof(int),1,fp_properties);
@@ -163,7 +163,7 @@ int main(int argc, char *argv[]){
           fwrite(&n_groups_all,sizeof(int),1,fp_properties);
         }
         for(i_group=0;i_group<n_groups;i_group++){
-          fread( &properties,sizeof(halo_properties_info),1,fp_properties_temp);
+          fread_verify( &properties,sizeof(halo_properties_info),1,fp_properties_temp);
           fwrite(&properties,sizeof(halo_properties_info),1,fp_properties);                  
         }
         fclose(fp_properties_temp);
@@ -172,10 +172,10 @@ int main(int argc, char *argv[]){
         // Cat profiles
         if(flag_process_profiles){
           fp_profiles_temp=fopen(filename_output_profiles_temp,"r");
-          fread(&j_file_in,   sizeof(int),1,fp_profiles_temp);
-          fread(&n_files_i,   sizeof(int),1,fp_profiles_temp);
-          fread(&n_groups,    sizeof(int),1,fp_profiles_temp);
-          fread(&n_groups_all,sizeof(int),1,fp_profiles_temp);
+          fread_verify(&j_file_in,   sizeof(int),1,fp_profiles_temp);
+          fread_verify(&n_files_i,   sizeof(int),1,fp_profiles_temp);
+          fread_verify(&n_groups,    sizeof(int),1,fp_profiles_temp);
+          fread_verify(&n_groups_all,sizeof(int),1,fp_profiles_temp);
           SID_log("Processing profiles (%d of %d %sgroups)...",SID_LOG_OPEN,n_groups,n_groups_all,group_text_prefix);
           if(j_file==0){
             fwrite(&j_file,      sizeof(int),1,fp_profiles);
@@ -184,10 +184,10 @@ int main(int argc, char *argv[]){
             fwrite(&n_groups_all,sizeof(int),1,fp_profiles);
           }
           for(i_group=0;i_group<n_groups;i_group++){
-            fread( &(profile.n_bins),sizeof(int),1,fp_profiles_temp);
+            fread_verify( &(profile.n_bins),sizeof(int),1,fp_profiles_temp);
             fwrite(&(profile.n_bins),sizeof(int),1,fp_profiles);
             if(profile.n_bins>0){
-              fread( profile.bins,sizeof(halo_profile_bin_info),profile.n_bins,fp_profiles_temp);
+              fread_verify( profile.bins,sizeof(halo_profile_bin_info),profile.n_bins,fp_profiles_temp);
               fwrite(profile.bins,sizeof(halo_profile_bin_info),profile.n_bins,fp_profiles);
             }
           }
