@@ -8,5 +8,8 @@ BINFILES  =
 SCRIPTS   =
 DATAFILES =
 LIBS      =
-SUBDIRS   = gbpSPH gbpHalos gbpTrees gbpRender
+SUBDIRS   = gbpSPH gbpHalos gbpTrees 
+ifeq ($(USE_GDLIB),1)
+  SUBDIRS := $(SUBDIRS) gbpRender
+endif
 #############################
