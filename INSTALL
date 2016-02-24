@@ -48,7 +48,7 @@ Installing gbpCode
 
 All serial executables will end-up in ${GBP_SRC}/myBin by default. Libraries will end-up in ${GBP_SRC}/myLib
 
-5) gbpCode is designed to support fully MPI and serial compiles of the code.  If you want an mpi compile, you should then type:
+5) gbpCode is designed to seamlessly support both MPI and serial compiles of the code.  If you want an MPI compile, you should then type:
 
 > cd $GBP_SRC
 > make clean ; make USE_MPI=1
