@@ -6,7 +6,7 @@
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpHalos.h>
-#include <gbpSims_Swap_Endian.h>
+#include <gbpSwapEndian.h>
 
 void swap_endian_gadget_header_local(gadget_header_info *header);
 void swap_endian_gadget_header_local(gadget_header_info *header){

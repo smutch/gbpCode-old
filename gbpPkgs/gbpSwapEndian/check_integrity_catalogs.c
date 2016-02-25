@@ -6,7 +6,7 @@
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpHalos.h>
-#include <gbpSims_Swap_Endian.h>
+#include <gbpSwapEndian.h>
 
 void check_integrity_catalogs_properties_local(const char *filename_in_root,const char *filename_halo_type,const char *prefix,int snap_number);
 void check_integrity_catalogs_properties_local(const char *filename_in_root,const char *filename_halo_type,const char *prefix,int snap_number){

@@ -4,7 +4,7 @@
 #include <math.h>
 #include <gbpLib.h>
 #include <gbpMath.h>
-#include <gbpSims_Swap_Endian.h>
+#include <gbpSwapEndian.h>
 
 void check_integrity_halos_groups_local(const char *filename_in_root,const char *filename_halo_type,int snap_number);
 void check_integrity_halos_groups_local(const char *filename_in_root,const char *filename_halo_type,int snap_number){

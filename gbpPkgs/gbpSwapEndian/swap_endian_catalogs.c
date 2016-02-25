@@ -6,7 +6,7 @@
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpHalos.h>
-#include <gbpSims_Swap_Endian.h>
+#include <gbpSwapEndian.h>
 
 void swap_endian_catalogs_properties_local(const char *filename_in_root,const char *filename_out_root,const char *filename_halo_type,const char *prefix,int snap_number,int mode);
 void swap_endian_catalogs_properties_local(const char *filename_in_root,const char *filename_out_root,const char *filename_halo_type,const char *prefix,int snap_number,int mode){

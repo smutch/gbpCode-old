@@ -5,7 +5,7 @@
 #include <gbpLib.h>
 #include <gbpMath.h>
 #include <gbpClustering.h>
-#include <gbpSims_Swap_Endian.h>
+#include <gbpSwapEndian.h>
 
 void check_integrity_grids(const char *filename_in){
 
