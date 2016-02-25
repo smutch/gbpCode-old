@@ -41,7 +41,7 @@ void identify_progenitors(tree_horizontal_info **halos,
        j_read_2<=i_read_stop && i_search<n_search;
        j_file_2++,j_read_2+=i_read_step,i_search++){
 
-      // Read forward-matching
+      // Read forward-matching for searching for dropped and emerged matches
       read_matches(filename_root_matches,
                    j_read_1,j_read_2,n_halos_max,
                    flag_match_subgroups,

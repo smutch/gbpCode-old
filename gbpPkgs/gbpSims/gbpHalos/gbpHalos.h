@@ -253,7 +253,8 @@ void match_halos(plist_info  *plist_1_in,
                  int         *mark_list_2,
                  int          n_mark_2,
                  const char  *catalog_1to2,
-                 int          mode);
+                 int          mode,
+                 float        match_weight_rank_index);
 
 #ifdef __cplusplus
 }

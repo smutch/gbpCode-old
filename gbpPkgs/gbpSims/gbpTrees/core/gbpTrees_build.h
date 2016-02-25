@@ -536,7 +536,8 @@ int compute_cross_catalog_matches(char   *filename_root_in_1,
                                   char   *filename_root_in_2,
                                   char   *filename_root_out,
                                   int     i_read_1,
-                                  int     i_read_2);
+                                  int     i_read_2,
+                                  float   match_weight_rank_index);
 int compute_trees_matches(char   *filename_halo_root_in,
                           char   *filename_root_out,
                           int     i_read_stop,

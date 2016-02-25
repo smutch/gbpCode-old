@@ -14,15 +14,11 @@ int main(int argc, char *argv[]){
   char    group_text_prefix[4];
   int     n_files;
   int     k_read;
-  int     max_n_groups;
   int     l_read;
-  int     n_groups;
   int    *n_particles_i;
   int    *n_particles_j;
   int     j_read;
   int     mode;
-  int     n_groups_i;
-  int     n_groups_j;
   int     j_halo;
   int     i_read;
   int     i_read_start;
@@ -35,89 +31,116 @@ int main(int argc, char *argv[]){
   char filename_SSimPL_root[MAX_FILENAME_LENGTH];
   strcpy(filename_SSimPL_root,argv[1]);
   SID_log("Checking the integrity of the match files for {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_SSimPL_root);
-
-  // Convert filename_root to filename
-  switch(mode){
-     case MATCH_SUBGROUPS:
-     sprintf(group_text_prefix,"sub");
-     break;
-     case MATCH_GROUPS:
-     sprintf(group_text_prefix,"");
-     break;
-  }
-
-  // Set the standard SSiMPL match file path
-  char filename_root_in[MAX_FILENAME_LENGTH];
-  sprintf(filename_root_in,"%s/trees/matches/",filename_SSimPL_root);
-
-  // Read header information
-  int i_read_in;
-  int j_read_in;
-  int n_groups_1;
-  int n_groups_2;
-  sprintf(filename_in,"%s/%03d/%sgroup_matches_%03d_%03d.dat",filename_root_in,i_read,group_text_prefix,i_read,j_read);
-  SID_fopen(filename_in,"r",&fp_in);
-  SID_fread(&i_read_in, sizeof(int),1,&fp_in);SID_log("i_read    =%d",SID_LOG_COMMENT,i_read_in);
-  SID_fread(&j_read_in, sizeof(int),1,&fp_in);SID_log("j_read    =%d",SID_LOG_COMMENT,j_read_in);
-  SID_fread(&n_groups_i,sizeof(int),1,&fp_in);SID_log("n_groups_i=%d",SID_LOG_COMMENT,n_groups_i);
-  SID_fread(&n_groups_j,sizeof(int),1,&fp_in);SID_log("n_groups_j=%d",SID_LOG_COMMENT,n_groups_j);
-
-  // Read matches
-  int *match;
-  match=(int *)SID_malloc(sizeof(int)*n_groups_i);
-  for(k_read=0;k_read<n_groups_i;k_read++)
-     SID_fread(&(match[k_read]),sizeof(int),1,&fp_in);
-
-  // Read indices
-  size_t *indices;
-  indices=(size_t *)SID_malloc(sizeof(size_t)*n_groups_i);
-  for(k_read=0;k_read<n_groups_i;k_read++)
-     SID_fread(&(indices[k_read]),sizeof(size_t),1,&fp_in);
-
-  // Read scores
-  float *score;
-  score=(float *)SID_malloc(sizeof(float)*n_groups_i);
-  for(k_read=0;k_read<n_groups_i;k_read++)
-     SID_fread(&(score[k_read]),sizeof(float),1,&fp_in);
-
-  // Close file
-  SID_fclose(&fp_in);
-
-  // Read halo sizes from header file
-  SID_log("Reading halo sizes...",SID_LOG_OPEN);
-  sprintf(filename_in,"%s/%sgroup_matches_header.dat",filename_root_in,group_text_prefix);
-  SID_fopen(filename_in,"r",&fp_in);
-  SID_fread(&i_read_start,sizeof(int),1,&fp_in);SID_log("snap start  =%d",SID_LOG_COMMENT,i_read_start);
-  SID_fread(&i_read_stop, sizeof(int),1,&fp_in);SID_log("snap stop   =%d",SID_LOG_COMMENT,i_read_stop);
-  SID_fread(&n_search,    sizeof(int),1,&fp_in);SID_log("search range=%d",SID_LOG_COMMENT,n_search);
-  SID_fread(&n_files,     sizeof(int),1,&fp_in);SID_log("# of files  =%d",SID_LOG_COMMENT,n_files);
-  int *n_p=(int *)SID_malloc(sizeof(int)*n_groups_i);
-  for(k_read=0,max_n_groups=0;k_read<MAX(n_files,i_read);k_read++){
-     SID_fread(&l_read,  sizeof(int),1,&fp_in);
-     SID_fread(&n_groups,sizeof(int),1,&fp_in);
-     if(l_read==i_read){
-        if(n_groups!=n_groups_i)
-           SID_trap_error("Incorrect number of halos to be read (ie %d!=%d).",ERROR_LOGIC,n_groups,n_groups_i);
-        SID_fread(n_p,sizeof(int),n_groups,&fp_in);
+  int *n_groups   =NULL;
+  int *n_subgroups=NULL;
+  for(int i_type=0;i_type<2;i_type++){
+     // Convert filename_root to filename
+     switch(i_type){
+        case 0:
+        mode=MATCH_SUBGROUPS;
+        sprintf(group_text_prefix,"sub");
+        break;
+        case 1:
+        mode=MATCH_GROUPS;
+        sprintf(group_text_prefix,"");
+        break;
      }
-     else
-        SID_fseek(&fp_in,sizeof(int),n_groups,SID_SEEK_CUR);
-     if(mode==MATCH_GROUPS)
-        SID_fseek(&fp_in,sizeof(int),n_groups,SID_SEEK_CUR);
-  }
-  SID_fclose(&fp_in);
-  SID_log("Done.",SID_LOG_CLOSE);
-  
-  // Print results
-  for(k_read=0;k_read<n_groups_i;k_read++)
-     printf("%7d %7d %7d %7lld %10.3le\n",k_read,n_p[k_read],match[k_read],indices[k_read],score[k_read]);
+     SID_log("Processing %sgroups...",SID_LOG_OPEN|SID_LOG_TIMER,group_text_prefix);
 
-  // Clean-up
-  SID_free(SID_FARG match);
-  SID_free(SID_FARG indices);
-  SID_free(SID_FARG score);  
-  SID_free(SID_FARG n_p);  
-  
+     // Set the standard SSiMPL match file path
+     char filename_root_in[MAX_FILENAME_LENGTH];
+     sprintf(filename_root_in,"%s/trees/matches/",filename_SSimPL_root);
+
+     // Read halo sizes from header file
+     SID_log("Processing header file...",SID_LOG_OPEN|SID_LOG_TIMER);
+     sprintf(filename_in,"%s/%sgroup_matches_header.dat",filename_root_in,group_text_prefix);
+     SID_fopen(filename_in,"r",&fp_in);
+     SID_fread(&i_read_start,sizeof(int),1,&fp_in);
+     SID_fread(&i_read_stop, sizeof(int),1,&fp_in);
+     SID_fread(&n_search,    sizeof(int),1,&fp_in);
+     SID_fread(&n_files,     sizeof(int),1,&fp_in);
+     int *n_halos=NULL;
+     switch(mode){
+        case MATCH_SUBGROUPS:
+           n_subgroups=(int *)SID_malloc(sizeof(int)*n_files);
+           n_halos    =n_subgroups;
+           break;
+        case MATCH_GROUPS:
+           n_groups=(int *)SID_malloc(sizeof(int)*n_files);
+           n_halos =n_groups;
+           break;
+     }
+     if(mode==MATCH_GROUPS) SID_log("Halo counts (snap/No. groups/No. subgroups):",SID_LOG_OPEN);
+     for(k_read=0;k_read<n_files;k_read++){
+        SID_fread(&l_read,           sizeof(int),1,              &fp_in);
+        SID_fread(&(n_halos[k_read]),sizeof(int),1,              &fp_in);
+        SID_fskip(                   sizeof(int),n_halos[k_read],&fp_in);
+        if(mode==MATCH_GROUPS){
+           int *n_subgroups_group=(int *)SID_malloc(sizeof(int)*n_halos[k_read]);
+           SID_fread(n_subgroups_group,sizeof(int),n_halos[k_read],&fp_in);
+           int n_subgroups_test=0;
+           for(int i_test=0;i_test<n_halos[k_read];i_test++)
+              n_subgroups_test+=n_subgroups_group[i_test];
+           if(n_subgroups[k_read]!=n_subgroups_test)
+              SID_log("Error in %s header: l_read=%3d k_read=%3d n_subgroups: %d!=%d\n",SID_LOG_COMMENT,l_read,k_read,n_subgroups[k_read],n_subgroups_test);
+           SID_free(SID_FARG n_subgroups_group);
+        }
+        if(mode==MATCH_GROUPS) SID_log("%03d %d %d",SID_LOG_COMMENT,k_read,n_groups[k_read],n_subgroups[k_read]);
+     }
+     if(mode==MATCH_GROUPS) SID_log("",SID_LOG_CLOSE|SID_LOG_NOPRINT);
+     SID_fclose(&fp_in);
+     SID_log("Done.",SID_LOG_CLOSE);
+
+     SID_log("Processing match files...",SID_LOG_OPEN|SID_LOG_TIMER);
+     for(int i_read=i_read_start;i_read<i_read_stop;i_read++){
+        for(int j_read=MAX(0,i_read-n_search);j_read<MIN(i_read_stop,i_read+n_search);j_read++){
+           if(i_read!=j_read){
+              sprintf(filename_in,"%s/%03d/%sgroup_matches_%03d_%03d.dat",filename_root_in,i_read,group_text_prefix,i_read,j_read);
+              SID_log("Processing {%s}...",SID_LOG_OPEN,filename_in);
+
+              // Read header information
+              int i_read_in;
+              int j_read_in;
+              int n_groups_i;
+              int n_groups_j;
+              SID_fopen(filename_in,"r",&fp_in);
+              SID_fread(&i_read_in, sizeof(int),1,&fp_in);
+              SID_fread(&j_read_in, sizeof(int),1,&fp_in);
+              SID_fread(&n_groups_i,sizeof(int),1,&fp_in);
+              SID_fread(&n_groups_j,sizeof(int),1,&fp_in);
+
+              if(i_read_in!=i_read || j_read_in!=j_read || n_groups_i!=n_halos[n_files-i_read_in-1] || n_groups_j!=n_halos[n_files-j_read_in-1])
+                 SID_log("Error in matching file: i_read=%3d j_read=%3d n_i_in=%d n_i=%d n_j_in=%d n_j=%d\n",SID_LOG_COMMENT,i_read,j_read,n_groups_i,n_halos[n_files-i_read_in-1],n_groups_j,n_halos[n_files-j_read_in-1]);
+         
+              // Read matches
+              int match;
+              for(k_read=0;k_read<n_groups_i;k_read++)
+                 SID_fread(&match,sizeof(int),1,&fp_in);
+         
+              // Read indices
+              size_t indices;
+              for(k_read=0;k_read<n_groups_i;k_read++)
+                 SID_fread(&indices,sizeof(size_t),1,&fp_in);
+         
+              // Read scores
+              float score;
+              for(k_read=0;k_read<n_groups_i;k_read++)
+                 SID_fread(&score,sizeof(float),1,&fp_in);
+         
+              // Close file
+              SID_fclose(&fp_in);
+
+              SID_log("Done.",SID_LOG_CLOSE);
+           }
+        }
+     }
+     SID_log("Done.",SID_LOG_CLOSE);
+
+     SID_log("Done.",SID_LOG_CLOSE);
+  }
+  SID_free(SID_FARG n_groups);
+  SID_free(SID_FARG n_subgroups);
+
   SID_log("Done.",SID_LOG_CLOSE);
   SID_exit(ERROR_NONE);
 }

@@ -82,6 +82,7 @@ int read_matches_header(char   *filename_root_in,
 
   if(SID.I_am_Master){
      FILE *fp_read_header;
+     // Loop for subgroups and then groups
      for(k_match=0;k_match<2;k_match++){
         switch(k_match){
            case 0:
@@ -91,24 +92,34 @@ int read_matches_header(char   *filename_root_in,
            sprintf(group_text_prefix,"");
            break;
         }
-        for(i_read=i_read_stop,j_read=0;i_read>=i_read_start;j_read++){
-           // Open file and skip header           
-           if(i_read==i_read_stop){
-              sprintf(filename_out,"%s/%sgroup_matches_header.dat",filename_root_in,group_text_prefix);
-              if((fp_read_header=fopen(filename_out,"r"))==NULL)
-                 SID_trap_error("Could not open file {%s} when reading header information.",ERROR_IO_OPEN,filename_out);
-              fseek(fp_read_header,4*sizeof(int),SEEK_SET);
-           }
 
-           // Read-forward for the appropriate number of snapshots
-           int k_read;
-           for(k_read=0;i_read>=i_read_start && k_read<i_read_step;i_read--,k_read++){
-              fseek(fp_read_header,1*sizeof(int),SEEK_CUR);
+        // Open file and read header
+        int i_read_start_in;
+        int i_read_stop_in;
+        int n_search_total_in;
+        int n_files_in;
+        int i_read_in;
+        sprintf(filename_out,"%s/%sgroup_matches_header.dat",filename_root_in,group_text_prefix);
+        if((fp_read_header=fopen(filename_out,"r"))==NULL)
+           SID_trap_error("Could not open file {%s} when reading header information.",ERROR_IO_OPEN,filename_out);
+        fread_verify(&i_read_start_in,  sizeof(int),1,fp_read_header);
+        fread_verify(&i_read_stop_in,   sizeof(int),1,fp_read_header);
+        fread_verify(&n_search_total_in,sizeof(int),1,fp_read_header);
+        fread_verify(&n_files_in,       sizeof(int),1,fp_read_header);
+        i_read_in=i_read_stop_in+1;
+
+        // Loop for each snapshot we want to keep
+        int i_read_next;
+        for(j_read=0,i_read_next=i_read_stop;j_read<(*n_files_return);j_read++,i_read_next-=i_read_step){
+           // Read-forward to the desired snapshot
+           int flag_continue=TRUE;
+           while(flag_continue && i_read_in>i_read_start_in){
+              fread_verify(&i_read_in, sizeof(int),1,fp_read_header);
               fread_verify(&n_groups_1,sizeof(int),1,fp_read_header);
-              fseek(fp_read_header,n_groups_1*sizeof(int),SEEK_CUR);
+              fseek(fp_read_header,n_groups_1*sizeof(int),SEEK_CUR); // Skip halo sizes
               if(k_match==1)
-                 fseek(fp_read_header,n_groups_1*sizeof(int),SEEK_CUR);
-              if(k_read==0){
+                 fseek(fp_read_header,n_groups_1*sizeof(int),SEEK_CUR); // Skip n_sub_per_group 
+              if(i_read_in==i_read_next){
                  switch(k_match){
                     case 0:
                     (*n_subgroups_return)[j_read]=n_groups_1;
@@ -117,10 +128,13 @@ int read_matches_header(char   *filename_root_in,
                     (*n_groups_return)[j_read]   =n_groups_1;
                     break;
                  }
+                 flag_continue=FALSE;
               }
            }
         }
         fclose(fp_read_header);
+        if(j_read!=(*n_files_return))
+           SID_trap_error("Was not able to read the appriate number of group/subgroup sizes (i.e. %d!=%d)",ERROR_LOGIC,j_read,(*n_files_return));
      }
   }
   SID_Bcast((*n_subgroups_return),sizeof(int)*(*n_files_return),MASTER_RANK,SID.COMM_WORLD);

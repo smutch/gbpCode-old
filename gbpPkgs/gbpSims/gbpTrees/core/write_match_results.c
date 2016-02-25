@@ -109,8 +109,8 @@ void write_match_results(char       *filename_out_dir,
      fwrite(&n_groups_2,sizeof(int),1,fp_out);
   }
 
-  // Everything else only needs to be written if there are halos to match to and with
-  if(n_groups_1>0 && n_groups_2>0){
+  // Everything else only needs to be written if there are halos to match with
+  if(n_groups_1>0){
 
      // Fetch catalog and matching info ...
      n_groups_1_local=((int   *)ADaPS_fetch(plist1->data,"n_%sgroups_%s",         group_text_prefix,filename_cat1))[0];

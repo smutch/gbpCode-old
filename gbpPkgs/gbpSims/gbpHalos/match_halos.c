@@ -15,7 +15,8 @@ void match_halos(plist_info  *plist_1_in,
                  int         *mark_list_2_local,
                  int          n_mark_2_local,
                  const char  *catalog_1to2,
-                 int          mode){
+                 int          mode,
+                 float        match_weight_rank_index){
   plist_info  *plist_store;
   plist_info  *plist_1;
   int          i_file_1;
@@ -239,6 +240,25 @@ void match_halos(plist_info  *plist_1_in,
     n_match_1_all   =n_groups_1_all;
   }
 
+  // Check if we are storing the match score.
+  if(check_mode_for_flag(mode,MATCH_STORE_SCORE))
+    flag_store_score=TRUE;
+  else
+    flag_store_score=FALSE;
+
+  // Create the array that will hold the results and set values to a 
+  //   default of -1 for groups that don't get matched (for substructure 
+  //   matching, -1 means a group is matched only to itself).  We
+  //   need to allocate all of this even if the catalog being matched
+  //   to is empty, because the catalog being matched *from* may have
+  //   >0 halos.
+  match =(int *)SID_malloc(sizeof(int)*n_match_1);
+  for(i_mark=0;i_mark<n_match_1;i_mark++)
+    match[i_mark]=-1;
+
+  // Allocate array for match scores
+  match_score=(float *)SID_calloc(sizeof(float)*n_match_1);
+
   // Perform matching if there are groups to match
   if(n_groups_1_all>0 && n_groups_2_all>0){                
 
@@ -246,7 +266,7 @@ void match_halos(plist_info  *plist_1_in,
     n_score_lookup_table=512;
     score_lookup_table  =(float *)SID_malloc(sizeof(float)*n_score_lookup_table);
     for(i_lookup=0;i_lookup<n_score_lookup_table;i_lookup++)
-      score_lookup_table[i_lookup]=(float)pow((double)i_lookup,MATCH_SCORE_RANK_INDEX);
+      score_lookup_table[i_lookup]=(float)pow((double)i_lookup,match_weight_rank_index);
 
     // Fetch needed info for catalog_1
     n_particles_1_all  =((size_t *)ADaPS_fetch(plist_1->data,"n_particles_all_%s",catalog_1))[0];
@@ -352,20 +372,6 @@ void match_halos(plist_info  *plist_1_in,
       }
       SID_free(SID_FARG mark_list_index_2_local);
     }
-
-    // Create the array that will hold the results and set values to a 
-    //   default of -1 for groups that don't get matched
-    //   (for substructure matching, -1 means a group is matched only to itself)
-    match =(int *)SID_malloc(sizeof(int)*n_match_1);
-    for(i_mark=0;i_mark<n_match_1;i_mark++)
-      match[i_mark]=-1;
-
-    // Check if we are storing the match score.  Allocate array and set flag=TRUE if so.
-    match_score=(float *)SID_calloc(sizeof(float)*n_match_1);
-    if(check_mode_for_flag(mode,MATCH_STORE_SCORE))
-      flag_store_score=TRUE;
-    else
-      flag_store_score=FALSE;
 
     // Allocate some buffers for rank exchanges
     size_t  n_particles_2_max;
@@ -606,7 +612,7 @@ void match_halos(plist_info  *plist_1_in,
                                  hist_score[i_hist]+=score_lookup_table[particle_rank_1[idx_1]];
                                  break;
                               default:
-                                 hist_score[i_hist]+=(float)pow((double)(particle_rank_1[idx_1]),MATCH_SCORE_RANK_INDEX);
+                                 hist_score[i_hist]+=(float)pow((double)(particle_rank_1[idx_1]),match_weight_rank_index);
                                  break;
                             }
                             flag=FALSE;
@@ -655,7 +661,7 @@ void match_halos(plist_info  *plist_1_in,
                               hist_score[n_hist_array[i_group]]=score_lookup_table[particle_rank_1[idx_1]];
                               break;
                            default:
-                              hist_score[n_hist_array[i_group]]=(float)pow((double)(particle_rank_1[idx_1]),MATCH_SCORE_RANK_INDEX);
+                              hist_score[n_hist_array[i_group]]=(float)pow((double)(particle_rank_1[idx_1]),match_weight_rank_index);
                               break;
                          }
                          n_hist_array[i_group]++;
@@ -790,9 +796,15 @@ void match_halos(plist_info  *plist_1_in,
     n_match=0;
     if(check_mode_for_flag(mode,MATCH_BACK)){
       ADaPS_store(&(plist_store->data),(void *)(&n_match),"n_back_match_%s",ADaPS_SCALAR_INT,catalog_1to2);
+      ADaPS_store(&(plist_store->data),(void *)(match),   "back_match_%s",  ADaPS_DEFAULT,   catalog_1to2);
+      if(flag_store_score)
+        ADaPS_store(&(plist_store->data),(void *)(match_score),"back_match_score_%s",ADaPS_DEFAULT,catalog_1to2);
     }
     else{
       ADaPS_store(&(plist_store->data),(void *)(&n_match),"n_match_%s",ADaPS_SCALAR_INT,catalog_1to2);
+      ADaPS_store(&(plist_store->data),(void *)(match),   "match_%s",  ADaPS_DEFAULT,   catalog_1to2);
+      if(flag_store_score)
+        ADaPS_store(&(plist_store->data),(void *)(match_score),"match_score_%s",ADaPS_DEFAULT,catalog_1to2);
     }
     SID_log("NO GROUPS TO MATCH!",SID_LOG_COMMENT);
     SID_log("Done.",SID_LOG_CLOSE);

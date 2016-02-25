@@ -31,45 +31,71 @@ int main(int argc, char *argv[]){
   SID_init(&argc,&argv,NULL,NULL);
 
   // Fetch user inputs
-  char filename_in[MAX_FILENAME_LENGTH];
+  char filename_in[2][MAX_FILENAME_LENGTH];
   char filename_out[MAX_FILENAME_LENGTH];
-  strcpy(filename_in,argv[1]);
-  strcpy(filename_out,argv[2]);
+  strcpy(filename_in[0],argv[1]);
+  strcpy(filename_in[1],argv[2]);
+  strcpy(filename_out,  argv[3]);
   SID_log("Creating ascii version of {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_in);
 
-  // Read header information
-  SID_log("Reading...",SID_LOG_OPEN|SID_LOG_TIMER);
-  int i_read_in;
-  int j_read_in;
-  int n_groups_1;
-  int n_groups_2;
-  SID_fopen(filename_in,"r",&fp_in);
-  SID_fread(&i_read_in, sizeof(int),1,&fp_in);SID_log("i_read    =%d",SID_LOG_COMMENT,i_read_in);
-  SID_fread(&j_read_in, sizeof(int),1,&fp_in);SID_log("j_read    =%d",SID_LOG_COMMENT,j_read_in);
-  SID_fread(&n_groups_i,sizeof(int),1,&fp_in);SID_log("n_groups_i=%d",SID_LOG_COMMENT,n_groups_i);
-  SID_fread(&n_groups_j,sizeof(int),1,&fp_in);SID_log("n_groups_j=%d",SID_LOG_COMMENT,n_groups_j);
+  // Allocate arrays
+  int    **match    =(int    **)SID_malloc(2*sizeof(int *));
+  size_t **indices  =(size_t **)SID_malloc(2*sizeof(size_t *));
+  float  **score    =(float  **)SID_malloc(2*sizeof(float *));
 
-  // Read matches
-  int *match;
-  match=(int *)SID_malloc(sizeof(int)*n_groups_i);
-  for(k_read=0;k_read<n_groups_i;k_read++)
-     SID_fread(&(match[k_read]),sizeof(int),1,&fp_in);
+  for(int i_read=0;i_read<2;i_read++){
+     // Read header information
+     SID_log("Reading {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_in[i_read]);
+     int i_read_in;
+     int j_read_in;
+     int n_groups_1;
+     int n_groups_2;
+     SID_fopen(filename_in[i_read],"r",&fp_in);
+     SID_fread(&i_read_in, sizeof(int),1,&fp_in);SID_log("i_read    =%d",SID_LOG_COMMENT,i_read_in);
+     SID_fread(&j_read_in, sizeof(int),1,&fp_in);SID_log("j_read    =%d",SID_LOG_COMMENT,j_read_in);
+     SID_fread(&n_groups_1,sizeof(int),1,&fp_in);SID_log("n_groups_i=%d",SID_LOG_COMMENT,n_groups_1);
+     SID_fread(&n_groups_2,sizeof(int),1,&fp_in);SID_log("n_groups_j=%d",SID_LOG_COMMENT,n_groups_2);
+     if(i_read==0){
+        n_groups_i=n_groups_1;
+        n_groups_j=n_groups_2;
+     }
+     else if(n_groups_i!=n_groups_2 || n_groups_j!=n_groups_1)
+        SID_trap_error("Input match file halo counts are not symetric (ie %d!=%d or %d!=%d).",ERROR_LOGIC,n_groups_i,n_groups_1,n_groups_j,n_groups_2);
 
-  // Read indices
-  size_t *indices;
-  indices=(size_t *)SID_malloc(sizeof(size_t)*n_groups_i);
-  for(k_read=0;k_read<n_groups_i;k_read++)
-     SID_fread(&(indices[k_read]),sizeof(size_t),1,&fp_in);
+     // Allocate RAM
+     match[i_read]    =(int    *)SID_malloc(sizeof(int)   *n_groups_1);
+     indices[i_read]  =(size_t *)SID_malloc(sizeof(size_t)*n_groups_1);
+     score[i_read]    =(float  *)SID_malloc(sizeof(float) *n_groups_1);
 
-  // Read scores
-  float *score;
-  score=(float *)SID_malloc(sizeof(float)*n_groups_i);
-  for(k_read=0;k_read<n_groups_i;k_read++)
-     SID_fread(&(score[k_read]),sizeof(float),1,&fp_in);
+     // Read matches
+     for(k_read=0;k_read<n_groups_1;k_read++)
+        SID_fread(&(match[i_read][k_read]),sizeof(int),1,&fp_in);
 
-  // Close file
-  SID_fclose(&fp_in);
-  SID_log("Done.",SID_LOG_CLOSE);
+     // Read indices
+     for(k_read=0;k_read<n_groups_1;k_read++)
+        SID_fread(&(indices[i_read][k_read]),sizeof(size_t),1,&fp_in);
+
+     // Read scores
+     for(k_read=0;k_read<n_groups_1;k_read++)
+        SID_fread(&(score[i_read][k_read]),sizeof(float),1,&fp_in);
+
+     // Close file
+     SID_fclose(&fp_in);
+     SID_log("Done.",SID_LOG_CLOSE);
+  }
+
+  // Compute 2way match flags
+  int *flag_2way=(int *)SID_malloc(sizeof(int)*n_groups_i);
+  for(int i_group=0;i_group<n_groups_i;i_group++){
+     int match_i=match[0][i_group];
+     if(match_i>=0){
+        int match_j=match[1][match_i];
+        if(match_j==i_group) flag_2way[i_group]=TRUE;
+        else                 flag_2way[i_group]=FALSE;
+     }
+     else
+        flag_2way[i_group]=FALSE;
+  }
 
   // Print results
   SID_log("Writing to {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,filename_out);
@@ -81,15 +107,22 @@ int main(int argc, char *argv[]){
   fprintf(fp_out,"#        (%02d): Halo match in catalog B\n",i_column++);
   fprintf(fp_out,"#        (%02d): Halo match sort index\n",  i_column++);
   fprintf(fp_out,"#        (%02d): Halo match score\n",       i_column++);
+  fprintf(fp_out,"#        (%02d): 2-way match?\n",           i_column++);
   for(k_read=0;k_read<n_groups_i;k_read++)
-     fprintf(fp_out,"%7d %7d %7lld %10.3le\n",k_read,match[k_read],indices[k_read],score[k_read]);
+     fprintf(fp_out,"%7d %7d %7lld %10.3le %d\n",k_read,match[0][k_read],indices[0][k_read],score[0][k_read],flag_2way[k_read]);
   fclose(fp_out);
   SID_log("Done.",SID_LOG_CLOSE);
 
   // Clean-up
+  for(int i_read=0;i_read<2;i_read++){
+     SID_free(SID_FARG match[i_read]);
+     SID_free(SID_FARG indices[i_read]);
+     SID_free(SID_FARG score[i_read]); 
+  } 
   SID_free(SID_FARG match);
   SID_free(SID_FARG indices);
-  SID_free(SID_FARG score);  
+  SID_free(SID_FARG score); 
+  SID_free(SID_FARG flag_2way);  
   
   SID_log("Done.",SID_LOG_CLOSE);
   SID_exit(ERROR_NONE);

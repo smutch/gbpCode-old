@@ -34,15 +34,16 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
   int     n_halos_1_matches; 
   int     n_halos_2_matches; 
   read_matches(filename_root_matches,
-               i_read_stop,i_read_stop-i_read_step,
+               i_read_stop,
+               i_read_stop-i_read_step,
                n_halos_max,
                MATCH_GROUPS,
                &n_halos_1_matches,
                &n_halos_2_matches,
                n_particles_groups,
                NULL,
-               n_subgroups_group[0],
-               n_subgroups_group[1],
+               n_subgroups_group[i_file_start%n_wrap],
+               NULL,
                match_id,
                match_score,
                match_index,
@@ -50,8 +51,6 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
                F_GOODNESS_OF_MATCH);
 
   int  n_groups=n_halos_1_matches;
-  for(int i_search=1;i_search<n_wrap;i_search++)
-    memcpy(n_subgroups_group[i_search],n_subgroups_group[0],n_groups*sizeof(int));
 
   int i_group;
   for(i_group=0,(*max_id_group)=0,(*max_tree_id_group)=0;i_group<n_groups_max;i_group++){
@@ -154,11 +153,11 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
   int j_subgroup;
   for(i_group=i_subgroup=j_subgroup=(*max_id_subgroup)=(*max_tree_id_subgroup)=0;i_subgroup<n_subgroups_max;i_subgroup++,j_subgroup++){  
      if(i_group<n_groups){
-        while(j_subgroup==n_subgroups_group[0][i_group] && i_group<(n_groups-1)){
+        while(j_subgroup==n_subgroups_group[i_file_start%n_wrap][i_group] && i_group<(n_groups-1)){
            i_group++;
            j_subgroup=0;
         }
-        if(j_subgroup==n_subgroups_group[0][i_group]){
+        if(j_subgroup==n_subgroups_group[i_file_start%n_wrap][i_group]){
            i_group++;
            j_subgroup=0;
         }

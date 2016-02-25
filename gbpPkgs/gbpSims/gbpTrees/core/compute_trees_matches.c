@@ -92,7 +92,6 @@ int compute_trees_matches(char   *filename_root_in,
   SID_fp      fp_in;
   int         i_read,k_read,l_read;
   int         flag_go;
-  int        *flag_go_array=NULL;
   int         i_read_start_file;
   int         i_read_stop_file;
   int         i_read_step_file;
@@ -334,9 +333,9 @@ int compute_trees_matches(char   *filename_root_in,
 
   // Check to see if there are any matches needing to be completed
   i_read =i_read_stop;
-  //flag_go=TRUE;
-/**/
+  //flag_go=TRUE; // Uncomment this to force recalulation of header files
   flag_go=FALSE;
+  int *flag_go_array=NULL;
   SID_log("Checking for matching files...",SID_LOG_OPEN);
   SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
   for(;i_read>i_read_start && !flag_go;i_read--)
@@ -350,7 +349,6 @@ int compute_trees_matches(char   *filename_root_in,
   else
      SID_log("Matching starting with first snapshot.",SID_LOG_COMMENT);
   SID_log("Done.",SID_LOG_CLOSE);
-/**/
 
   // Generate matches (if needed).  Loop over base groups first...
   if(flag_go){
@@ -446,7 +444,8 @@ int compute_trees_matches(char   *filename_root_in,
                                             NULL,
                                             0,
                                             "match",
-                                            flag_match_subgroups|MATCH_STORE_SCORE);
+                                            flag_match_subgroups|MATCH_STORE_SCORE,
+                                            MATCH_SCORE_RANK_INDEX);
                                 SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
                                 // Writing results
@@ -491,6 +490,9 @@ int compute_trees_matches(char   *filename_root_in,
      SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
      SID_log("Done.",SID_LOG_CLOSE);
   }
+
+  // Clean-up
+  SID_free(SID_FARG flag_go_array);
 
   SID_log("Done.",SID_LOG_CLOSE);
   return(flag_sucessful_completion);

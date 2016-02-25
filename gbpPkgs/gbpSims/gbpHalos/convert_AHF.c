@@ -170,7 +170,7 @@ int main(int argc, char *argv[]){
     }
 
     // Match AHF groups against themselves to find substructure
-    match_halos(&plist,NULL,i_file,NULL,0,&plist,NULL,i_file,NULL,0,"substructure",MATCH_SUBSTRUCTURE);
+    match_halos(&plist,NULL,i_file,NULL,0,&plist,NULL,i_file,NULL,0,"substructure",MATCH_SUBSTRUCTURE,MATCH_SCORE_RANK_INDEX);
     match_id_initial=(int  *)ADaPS_fetch(plist.data,"match_substructure");
     hierarchy_match =match_id_initial; // Fore readability
 

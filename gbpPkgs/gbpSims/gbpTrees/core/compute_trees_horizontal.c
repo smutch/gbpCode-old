@@ -214,10 +214,6 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                       &n_groups_max,
                       &n_halos_max);
 
-fprintf(stderr,"\n");
-for(int i_test=0;i_test<n_files;i_test++) fprintf(stderr,"A:%d %d\n",i_test,n_subgroups[i_test]);
-fprintf(stderr,"\n");
-
   // We need these for allocating arrays
   calc_max(n_subgroups,&n_subgroups_max,n_files,SID_INT,CALC_MODE_DEFAULT);
   calc_max(n_groups,   &n_groups_max,   n_files,SID_INT,CALC_MODE_DEFAULT);
@@ -244,7 +240,7 @@ fprintf(stderr,"\n");
   for(i_search=0;i_search<n_wrap;i_search++){
      subgroups[i_search]             =(tree_horizontal_info *)SID_calloc(sizeof(tree_horizontal_info)*n_subgroups_max);
      groups[i_search]                =(tree_horizontal_info *)SID_calloc(sizeof(tree_horizontal_info)*n_groups_max);       
-     n_subgroups_group[i_search]     =(int                  *)SID_malloc(sizeof(int)                 *n_groups_max);       
+     n_subgroups_group[i_search]     =(int                  *)SID_calloc(sizeof(int)                 *n_groups_max);       
      back_matches_subgroups[i_search]=NULL;
      back_matches_groups[i_search]   =NULL;
   }
@@ -391,14 +387,6 @@ fprintf(stderr,"\n");
                             filename_root_matches,
                             group_text_prefix,
                             flag_match_subgroups);
-if(k_match==1){
-fprintf(stderr,"\n");
-int n_test=0;
-for(int i_test=0;i_test<n_groups[j_file];i_test++) n_test+=n_subgroups_group[i_file%n_wrap][i_test];
-fprintf(stderr,"B:%d %d %d\n",i_file,n_subgroups,n_test);
-fprintf(stderr,"\n");
-SID_exit(ERROR_NONE);
-}
 
        // Add MOST_MASSIVE substructure flags
        if(flag_match_subgroups==MATCH_SUBGROUPS)

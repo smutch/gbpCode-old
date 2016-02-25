@@ -13,7 +13,8 @@ int compute_cross_catalog_matches(char   *filename_root_in_1,
                                   char   *filename_root_in_2,
                                   char   *filename_root_out,
                                   int     i_read_1,
-                                  int     i_read_2){
+                                  int     i_read_2,
+                                  float   match_weight_rank_index){
   char        filename_out[256];
   char       *filename_out_dir;
   char        filename_out_name[256];
@@ -186,7 +187,8 @@ int compute_cross_catalog_matches(char   *filename_root_in_1,
                     NULL,
                     0,
                     "match",
-                    flag_match_subgroups|MATCH_STORE_SCORE);
+                    flag_match_subgroups|MATCH_STORE_SCORE,
+                    match_weight_rank_index);
         SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
         // Writing results
