@@ -8,5 +8,8 @@ BINFILES  =
 SCRIPTS   =
 DATAFILES =
 LIBS      =
-SUBDIRS   = gbpCosmo gbpSims gbpClustering gbpSims_Swap_Endian
+SUBDIRS   = gbpCosmo gbpSims
+ifeq ($(USE_FFTW),1)
+  SUBDIRS := $(SUBDIRS) gbpClustering gbpSims_Swap_Endian
+endif
 #############################
