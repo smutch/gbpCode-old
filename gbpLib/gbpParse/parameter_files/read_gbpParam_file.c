@@ -6,8 +6,8 @@
 #include <gbpParse_core.h>
 #include <gbpParse_parameter_files.h>
 
-void read_parameter_file(const char          *filename_in,
-                         parameter_list_info *param_list){
+void read_gbpParam_file(const char          *filename_in,
+                        parameter_list_info *param_list){
    FILE   *fp_in=NULL;
    char   *line =NULL;
    size_t  line_length=0;

@@ -47,8 +47,8 @@ void add_parameter_to_list(parameter_list_info *param_list,
                            int                  mode);
 int  fetch_parameter_data(parameter_list_info *param_list,const char *name,void *value);
 int  fetch_parameter_list_item(parameter_list_info *param_list,const char *name,parameter_item_info **item);
-void read_parameter_file(const char          *filename_in,
-                         parameter_list_info *param_list);
+void read_gbpParam_file(const char          *filename_in,
+                        parameter_list_info *param_list);
 #ifdef __cplusplus
 }
 #endif

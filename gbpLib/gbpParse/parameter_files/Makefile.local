@@ -10,7 +10,7 @@ OBJFILES = add_parameter_to_list.o      \
            free_parameter_list.o        \
            init_parameter_item.o        \
            init_parameter_list.o        \
-           read_parameter_file.o        \
+           read_gbpParam_file.o         \
            remove_parameter_character.o 
 BINFILES = 
 LIBS     = 

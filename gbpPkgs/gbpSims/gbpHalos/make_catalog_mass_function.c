@@ -47,7 +47,7 @@ int main(int argc, char *argv[]){
   add_parameter_to_list(parameter_list,"box_size",SID_DOUBLE,   PARAMETER_MODE_DEFAULT);
   add_parameter_to_list(parameter_list,"N_dark",  SID_SIZE_T,   PARAMETER_MODE_DEFAULT);
   add_parameter_to_list(parameter_list,"m_dark",  SID_DOUBLE,   PARAMETER_MODE_DEFAULT);
-  read_parameter_file(filename_run,parameter_list);
+  read_gbpParam_file(filename_run,parameter_list);
   fetch_parameter_data(parameter_list,"box_size",&box_size);
   fetch_parameter_data(parameter_list,"m_dark",  &m_dark);
   free_parameter_list(&parameter_list);

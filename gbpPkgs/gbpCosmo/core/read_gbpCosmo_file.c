@@ -73,7 +73,7 @@ void read_gbpCosmo_file(cosmo_info **cosmo,const char *filename_in){
                  MAX_FILENAME_LENGTH);
 
      // Initialize the cosmology file description
-     read_parameter_file(filename_cosmo,parameter_list);
+     read_gbpParam_file(filename_cosmo,parameter_list);
      fetch_parameter_data(parameter_list,"Omega_Lambda",&Omega_Lambda); 
      fetch_parameter_data(parameter_list,"Omega_M",     &Omega_M);
      fetch_parameter_data(parameter_list,"Omega_k",     &Omega_k);
