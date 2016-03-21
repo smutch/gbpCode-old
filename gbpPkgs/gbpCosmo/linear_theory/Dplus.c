@@ -33,14 +33,6 @@ double Dplus(double a,cosmo_info *cosmo){
                        wspace,
                        &r_val,&abs_error); // use qags for singularity at a=0
 
-  //gsl_integration_qag(&integrand,
-  //                     limit_lo,limit_hi,
-  //                     0.,rel_accuracy,
-  //                     n_int,
-  //                     GSL_INTEG_GAUSS61,
-  //                     wspace,
-  //                     &r_val,&abs_error); // use qags for singularity at a=0
-
   // Clean-up
   gsl_integration_workspace_free(wspace);
 

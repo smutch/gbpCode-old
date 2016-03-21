@@ -85,7 +85,7 @@ double bias_model(double       x_in,
       double a    =0.44*y-0.88;
       double b    =1.5;
       double c    =2.4;
-      double sigma=sigma_M(*cosmo,M_R,z,PSPEC_LINEAR_TF,PSPEC_ALL_MATTER);
+      double sigma=sigma_M(cosmo,M_R,z,PSPEC_LINEAR_TF,PSPEC_ALL_MATTER);
       double nu   =delta_c/sigma;
       bias=1.-A*pow(nu,a)/(pow(nu,a)+pow(delta_c,a))+B*pow(nu,b)+C*pow(nu,c);
    }

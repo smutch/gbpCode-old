@@ -22,6 +22,21 @@ struct sigma2_integrand_params_struct {
   int         component;
 };
 
+typedef struct gbpCosmo2gbpCosmo_info gbpCosmo2gbpCosmo_info;
+struct gbpCosmo2gbpCosmo_info {
+   double      s_L;
+   double      s_M;
+   double      M_min;
+   double      M_max;
+   double      z_min;
+   double      z_min_scaled;
+   double      D_prime_z_min;
+   double      D_z_scaled;
+   double      D_ratio;
+   cosmo_info *cosmo_source;
+   cosmo_info *cosmo_target;
+};
+
 // Function definitions
 #ifdef __cplusplus
 extern "C" {
@@ -32,6 +47,15 @@ double M_of_R(double R,cosmo_info *cosmo);
 double M_of_k(double k,cosmo_info *cosmo);
 double R_of_M(double M,cosmo_info *cosmo);
 double k_of_M(double M,cosmo_info *cosmo);
+void init_gbpCosmo2gbpCosmo(cosmo_info      **cosmo_source,
+                            cosmo_info      **cosmo_target,
+                            double            z_min,
+                            double            M_min,
+                            double            M_max,
+                            gbpCosmo2gbpCosmo_info *gbpCosmo2gbpCosmo);
+double z_gbpCosmo2gbpCosmo(double z,gbpCosmo2gbpCosmo_info *gbpCosmo2gbpCosmo);
+double L_gbpCosmo2gbpCosmo(double L,gbpCosmo2gbpCosmo_info *gbpCosmo2gbpCosmo);
+double M_gbpCosmo2gbpCosmo(double M,gbpCosmo2gbpCosmo_info *gbpCosmo2gbpCosmo);
 void   pspec_names(int   mode,
                    int   component,
                    char *mode_name,
@@ -55,11 +79,16 @@ double dln_Inv_sigma_dlogM(cosmo_info **cosmo,
 void init_sigma_M(cosmo_info **cosmo,
                   int          mode,
                   int          component);
-double sigma_M(cosmo_info *cosmo,
-               double      M_interp,
-               double      z,
-               int         mode,
-               int         component);
+double sigma_M(cosmo_info **cosmo,
+               double       M_interp,
+               double       z,
+               int          mode,
+               int          component);
+double sigma_R(cosmo_info **cosmo,
+               double       R,
+               double       z,
+               int          mode,
+               int          component);
 double ln_sigma_M(cosmo_info *cosmo,
                   double      M_interp,
                   double      z,

@@ -91,21 +91,21 @@ void init_sigma_M(cosmo_info **cosmo,
   }
 }
 
-double sigma_M(cosmo_info *cosmo,
-               double      M_interp,
-               double      z,
-               int         mode,
-               int         component){
+double sigma_M(cosmo_info **cosmo,
+               double       M_interp,
+               double       z,
+               int          mode,
+               int          component){
   // Fetch some needed stuff.  Initialize sigma(M) if needed.
   char mode_name[ADaPS_NAME_LENGTH];
   char component_name[ADaPS_NAME_LENGTH];
   pspec_names(mode,component,mode_name,component_name);
-  if(!ADaPS_exist(cosmo,"sigma_lnM_%s_%s_interp",mode_name,component_name))
-     init_sigma_M(&cosmo,mode,component);
-  interp_info *interp_sigma_lnM=(interp_info *)ADaPS_fetch(cosmo,"sigma_lnM_%s_%s_interp",mode_name,component_name);
+  if(!ADaPS_exist(*cosmo,"sigma_lnM_%s_%s_interp",mode_name,component_name))
+     init_sigma_M(cosmo,mode,component);
+  interp_info *interp_sigma_lnM=(interp_info *)ADaPS_fetch(*cosmo,"sigma_lnM_%s_%s_interp",mode_name,component_name);
 
   // Perform interpolation
-  double norm =linear_growth_factor(z,cosmo);
+  double norm =linear_growth_factor(z,*cosmo);
   double r_val=norm*interpolate(interp_sigma_lnM,take_ln(M_interp));
   return(r_val);
 }
