@@ -29,6 +29,7 @@ int main(int argc, char *argv[]){
 
   // Output results
   double h_Hubble=((double *)ADaPS_fetch(cosmo,"h_Hubble"))[0];
+  SID_log("R_NL(z)      = %10.3lf Mpc",         SID_LOG_COMMENT,R_NL_z    (z,&cosmo)/M_PER_MPC);
   SID_log("rho_crit     = %13.6le Msol/(Mpc^3)",SID_LOG_COMMENT,rho_crit_z(z,cosmo)*(M_PER_MPC/M_SOL)*M_PER_MPC*M_PER_MPC);
   SID_log("D_angular    = %10.3lf Mpc",         SID_LOG_COMMENT,D_angular(z,cosmo)/M_PER_MPC);
   SID_log("D_luminosity = %10.3lf Mpc",         SID_LOG_COMMENT,D_luminosity(z,cosmo)/M_PER_MPC);

@@ -8,6 +8,7 @@ OBJFILES  = R_of_k.o                   \
 	        M_of_k.o                   \
 	        R_of_M.o                   \
 	        k_of_M.o                   \
+	        R_NL_z.o                   \
 	        init_gbpCosmo2gbpCosmo.o   \
 	        z_gbpCosmo2gbpCosmo.o      \
 	        L_gbpCosmo2gbpCosmo.o      \

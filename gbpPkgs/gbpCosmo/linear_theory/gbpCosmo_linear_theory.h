@@ -47,6 +47,7 @@ double M_of_R(double R,cosmo_info *cosmo);
 double M_of_k(double k,cosmo_info *cosmo);
 double R_of_M(double M,cosmo_info *cosmo);
 double k_of_M(double M,cosmo_info *cosmo);
+double R_NL_z(double z,cosmo_info **cosmo);
 void init_gbpCosmo2gbpCosmo(cosmo_info      **cosmo_source,
                             cosmo_info      **cosmo_target,
                             double            z_min,
