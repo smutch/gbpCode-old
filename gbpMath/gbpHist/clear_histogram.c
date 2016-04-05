@@ -9,5 +9,6 @@ void clear_histogram(hist_info *hist){
       hist->bin_count[i_bin]=0;
    hist->count_hist=0;
    hist->count_all =0;
+   hist->flag_finalized=FALSE;
 }
 
