@@ -38,10 +38,12 @@ void propagate_n_particles_peak(tree_horizontal_extended_info **groups,   int *n
          if(check_mode_for_flag(this_subgroup->type,TREE_CASE_NO_PROGENITORS))
             this_subgroup->n_particles_peak=this_subgroup->n_particles;
          // ... else check current size against a (previously) propagated result.
-         //     To protect against transient mass exchanges, we only allow dominant centrals
-         //     to participate in this calculation.
-         //else if(flag_most_massive==flag_dominant)
-         else if(flag_most_massive && flag_dominant)
+         // XXX //     To protect against transient mass exchanges, we only allow dominant centrals
+         // XXX //     to participate in this calculation.
+         // XXX else if(flag_most_massive && flag_dominant)
+         //    To protect against transient mass exchanges, we only consider situations
+         //    where non-dominants are satellites or dominants are centrals
+         else if(flag_most_massive==flag_dominant)
             this_subgroup->n_particles_peak=MAX(this_subgroup->n_particles_peak,this_subgroup->n_particles);
 
          // Propagate peak particle counts forward
