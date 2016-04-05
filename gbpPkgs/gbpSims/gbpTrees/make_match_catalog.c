@@ -146,10 +146,10 @@ int main(int argc, char *argv[]){
   properties_i    =(halo_properties_info *)SID_malloc(sizeof(halo_properties_info)*n_halos_i);
   properties_j    =(halo_properties_info *)SID_malloc(sizeof(halo_properties_info)*n_halos_i);
   for(i_halo=0;i_halo<n_halos_i;i_halo++)
-     fread_catalog_file(&fp_properties_i,NULL,&(properties_i[i_halo]),NULL,i_halo);
+     fread_catalog_file(&fp_properties_i,NULL,NULL,&(properties_i[i_halo]),NULL,i_halo);
   for(j_halo=0;j_halo<n_halos_j;j_halo++){
      if(storage_index[j_halo]>=0)
-        fread_catalog_file(&fp_properties_j,NULL,&(properties_j[storage_index[j_halo]]),NULL,j_halo);
+        fread_catalog_file(&fp_properties_j,NULL,NULL,&(properties_j[storage_index[j_halo]]),NULL,j_halo);
   }
   fclose_catalog(&fp_properties_i);
   fclose_catalog(&fp_properties_j);

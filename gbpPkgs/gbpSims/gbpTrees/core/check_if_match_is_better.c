@@ -28,7 +28,13 @@ int check_if_match_is_better(tree_horizontal_info *target_halo,
             // The best match is always the most immediate
             if(file_offset_new>file_offset_old)
                flag_valid=FALSE;
+            // ... otherwise, select via secondary criteria ...
             else if(file_offset_new==file_offset_old){
+               // With f_good>0, the following scheme was found to create lots of poor matches due to small
+               //   halos getting matched to/by the centrals of large systems, leading to lots of spurious
+               //   and very large ragmented halos, particularly when snapshot cadence becomes dense.  For
+               //   that reason, f_good must be kept to zero so that all possible back matches created by 
+               //   FoF core swaps are considered.
                // If equally immediate, give first preference to 2-way matches ...
                if(old_match->flag_two_way)
                   flag_valid=FALSE;

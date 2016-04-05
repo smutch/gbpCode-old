@@ -5,7 +5,7 @@
 
 // This defines the minimum effective fraction of
 //    mass needed to be considered a good match
-#define F_GOODNESS_OF_MATCH   0.2
+#define F_GOODNESS_OF_MATCH   0.
 
 // This defines the minimum and minimum fraction of the 
 //    max score needed to be considered a good match
@@ -141,10 +141,11 @@
 #define INIT_TREE_DATA_GROUPS     1
 #define INIT_TREE_DATA_DEFAULT    INIT_TREE_DATA_SUBGROUPS
 
-#define READ_TREES_CATALOGS_SUBGROUPS   0
-#define READ_TREES_CATALOGS_GROUPS      1
-#define READ_TREES_CATALOGS_PROFILES    2
-#define READ_TREES_CATALOGS_SAGE        4
+#define READ_TREES_CATALOGS_SUBGROUPS   TTTP01
+#define READ_TREES_CATALOGS_GROUPS      TTTP02
+#define READ_TREES_CATALOGS_PROFILES    TTTP03
+#define READ_TREES_CATALOGS_SAGE        TTTP04
+#define READ_TREES_CATALOGS_SHORT       TTTP05
 #define READ_TREES_CATALOGS_BOTH        (READ_TREES_CATALOGS_GROUPS|READ_TREES_CATALOGS_SUBGROUPS)
 #define READ_TREES_CATALOGS_ALL         (READ_TREES_CATALOGS_BOTH)|READ_TREES_CATALOGS_PROFILES
 #define READ_TREES_CATALOGS_DEFAULT     READ_TREES_CATALOGS_BOTH
@@ -338,6 +339,9 @@ struct tree_info{
   char             filename_root_horizontal[MAX_FILENAME_LENGTH];
   char             filename_root_horizontal_trees[MAX_FILENAME_LENGTH];
   char             filename_root_analysis[MAX_FILENAME_LENGTH];
+  char             filename_SSimPL_dir[MAX_FILENAME_LENGTH];
+  char             filename_halos_version[MAX_FILENAME_LENGTH];
+  char             filename_trees_version[MAX_FILENAME_LENGTH];
   char             name[MAX_FILENAME_LENGTH];
   // Snapshot info
   int              i_read_start;
@@ -422,6 +426,8 @@ struct tree_info{
   halo_properties_info       **subgroup_properties;
   halo_properties_SAGE_info  **group_properties_SAGE;
   halo_properties_SAGE_info  **subgroup_properties_SAGE;
+  halo_properties_SHORT_info **group_properties_SHORT;
+  halo_properties_SHORT_info **subgroup_properties_SHORT;
   tree_node_info            ***group_backmatch_pointers;
   tree_node_info            ***subgroup_backmatch_pointers;
   tree_node_info            ***group_forematch_pointers;
@@ -449,9 +455,9 @@ struct store_tree_data_free_parms_info{
 extern "C" {
 #endif
 int tree_case_flags_text(int match_type,const char *separator_string,char **return_string);
-void read_trees(char       *filename_SSiMPL_root,
-                char       *filename_halos_version,
-                char       *filename_trees_version,
+void read_trees(const char *filename_SSiMPL_root,
+                const char *filename_halos_version,
+                const char *filename_trees_version,
                 int         read_mode,
                 tree_info **trees);
 void read_trees_data(tree_info    *trees,
@@ -482,10 +488,7 @@ void read_trees_pointers(tree_info        *trees,
                          int               i_file_ptrs,
                          int               i_read_ptrs,
                          int               mode);
-void read_trees_catalogs(tree_info              *trees,
-                         char                   *filename_SSimPL_dir,
-                         char                   *filename_catalog_name,
-                         int                     mode);
+void read_trees_catalogs(tree_info *trees,int mode);
 void read_AHF_for_trees(char       *filename_root,
                         int         i_file,
                         plist_info *plist,
@@ -510,7 +513,7 @@ void read_matches(char    *filename_root_matches,
 int check_for_matching_input_files(const char *filename_root_in,int i_read);
 
 float maximum_match_score(double n_particles);
-float minimum_match_score(double n_particles);
+float minimum_match_score(double n_particles,double f_goodness);
 float match_score_f_goodness(float match_score,int n_particles_in);
 int check_validity_of_match(int n_particles_use,float match_score,double f_goodness_of_match);
 
@@ -522,6 +525,9 @@ int check_if_halo_is_fragmented(int type);
 int check_if_descendant_is_back_matched(tree_horizontal_info *halo,
                                         tree_horizontal_info *halo_to_check);
 int check_if_match_is_better(tree_horizontal_info *target_halo,
+                             match_info           *old_match,
+                             match_info           *new_match);
+int check_if_match_is_bigger(tree_horizontal_info *target_halo,
                              match_info           *old_match,
                              match_info           *new_match);
 int check_if_match_is_simple(tree_horizontal_info *target_halo,
@@ -916,6 +922,7 @@ void compute_trees_auxiliary(char *filename_root,
                              int   n_files_subgroups,
                              int  *flag_clean);
 void init_trees_read(const char  *filename_SSimPL_dir,
+                     const char  *filename_halos_version,
                      const char  *filename_trees_version,
                      int          mode,
                      tree_info  **tree);

@@ -10,9 +10,9 @@
 #include <gbpTrees_build.h>
 #include <gbpCosmo.h>
 
-void read_trees(char       *filename_SSimPL_root,
-                char       *filename_halos_version,
-                char       *filename_trees_version,
+void read_trees(const char *filename_SSimPL_root,
+                const char *filename_halos_version,
+                const char *filename_trees_version,
                 int         read_mode,
                 tree_info **trees){
 
@@ -44,7 +44,7 @@ void read_trees(char       *filename_SSimPL_root,
 
   // Initialize tree data structure and populate it
   //   with various pieces of header information
-  init_trees_read(filename_SSimPL_root,filename_trees_version,TREE_READ_DEFAULT,trees);
+  init_trees_read(filename_SSimPL_root,filename_halos_version,filename_trees_version,TREE_READ_DEFAULT,trees);
 
   // Set the mode
   (*trees)->mode=read_mode;

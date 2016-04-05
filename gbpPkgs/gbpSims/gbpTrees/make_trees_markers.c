@@ -39,10 +39,7 @@ int main(int argc, char *argv[]){
              &trees);
 
   // Read catalogs
-  read_trees_catalogs(trees,
-                      filename_SSimPL_dir,
-                      filename_halo_version_root,
-                      READ_TREES_CATALOGS_BOTH);
+  read_trees_catalogs(trees,READ_TREES_CATALOGS_BOTH);
 
   // Loop over the two halo types
   for(int i_type=0;i_type<2;i_type++){

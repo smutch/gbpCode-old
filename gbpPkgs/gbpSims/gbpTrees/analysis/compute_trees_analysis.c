@@ -18,7 +18,6 @@ void compute_trees_analysis(tree_info *trees,double logM_min,double dlogM,int n_
 
   // Loop twice; once for groups and once for subgroups
   for(int i_type=0;i_type<2;i_type++){
-
      // Precompute marker statistics
      if(i_type==0)
         precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_GROUPS);
@@ -33,7 +32,7 @@ void compute_trees_analysis(tree_info *trees,double logM_min,double dlogM,int n_
      compute_trees_analysis_fragmented_halos(trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
      compute_trees_analysis_mergers         (trees,filename_out_root,i_type,logM_min,dlogM,n_logM);
 
-     // Free precomputed markers
+     // Free catalogs and precomputed markers
      if(i_type==0)
         free_precompute_treenode_markers(trees,PRECOMPUTE_TREENODE_MARKER_GROUPS);
      else

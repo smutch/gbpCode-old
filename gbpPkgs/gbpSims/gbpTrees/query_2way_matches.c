@@ -162,9 +162,9 @@ int main(int argc, char *argv[]){
                 n_particles_i[i_halo],
                 n_particles_j[j_halo],
                 match_forward_score[i_halo],
-                match_forward_score[i_halo]/minimum_match_score((double)n_particles_i[i_halo]),
+                match_forward_score[i_halo]/minimum_match_score((double)n_particles_i[i_halo],F_GOODNESS_OF_MATCH),
                 match_backward_score[j_halo],
-                match_backward_score[j_halo]/minimum_match_score((double)n_particles_j[j_halo]));
+                match_backward_score[j_halo]/minimum_match_score((double)n_particles_j[j_halo],F_GOODNESS_OF_MATCH));
      }                
   }
   fclose(fp_out);

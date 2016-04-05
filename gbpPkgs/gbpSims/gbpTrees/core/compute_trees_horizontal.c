@@ -223,7 +223,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
   //   and for the current and last i_file as well
   n_wrap      =2*n_search+2;
   i_file_start=n_files-1;
-     
+
   // Initialize arrays
   SID_log("Creating arrays...",SID_LOG_OPEN);
   n_particles_groups    =(int    *)SID_malloc(sizeof(int)   *n_halos_max);

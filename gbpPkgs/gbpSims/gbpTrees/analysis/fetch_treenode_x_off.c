@@ -16,13 +16,13 @@ double fetch_treenode_x_off(tree_info *trees,tree_node_info *halo){
          if(trees->group_properties!=NULL)
             properties=&(trees->group_properties[halo->snap_tree][halo->neighbour_index]);
          else
-            SID_trap_error("Group properties are not defined.  They probably have not been read.",ERROR_LOGIC);
+            SID_trap_error("Group properties are not defined in fetch_treenode_x_off().  They probably have not been read.",ERROR_LOGIC);
       }
       else{
          if(trees->subgroup_properties!=NULL)
             properties=&(trees->subgroup_properties[halo->snap_tree][halo->neighbour_index]);
          else
-            SID_trap_error("Subgroup properties are not defined.  They probably have not been read.",ERROR_LOGIC);
+            SID_trap_error("Subgroup properties are not defined in fetch_treenode_x_off().  They probably have not been read.",ERROR_LOGIC);
       }
       double expansion_factor=a_of_z(trees->z_list[halo->snap_tree]);
       return(sqrt(pow(properties->position_COM[0]-properties->position_MBP[0],2.)+

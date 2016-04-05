@@ -10,6 +10,7 @@
 #include <gbpTrees_build.h>
 
 void init_trees_read(const char  *filename_SSimPL_dir,
+                     const char  *filename_halos_version,
                      const char  *filename_trees_version,
                      int          mode,
                      tree_info  **tree){
@@ -50,6 +51,9 @@ void init_trees_read(const char  *filename_SSimPL_dir,
   sprintf((*tree)->filename_root_analysis,        "%s/analysis",  (*tree)->filename_root);
   sprintf((*tree)->filename_root_horizontal,      "%s/horizontal",(*tree)->filename_root);
   sprintf((*tree)->filename_root_horizontal_trees,"%s/trees",     (*tree)->filename_root_horizontal);
+  strcpy ((*tree)->filename_SSimPL_dir,  filename_SSimPL_dir);
+  strcpy ((*tree)->filename_halos_version,filename_halos_version);
+  strcpy ((*tree)->filename_trees_version,filename_trees_version);
 
   // Read the tree snap-range/search/scan parameters
   read_trees_run_parameters(filename_trees_root,
@@ -161,6 +165,8 @@ void init_trees_read(const char  *filename_SSimPL_dir,
   (*tree)->subgroup_markers           =NULL;
   (*tree)->group_properties           =NULL;
   (*tree)->subgroup_properties        =NULL;
+  (*tree)->group_properties_SHORT     =NULL;
+  (*tree)->subgroup_properties_SHORT  =NULL;
   (*tree)->group_properties_SAGE      =NULL;
   (*tree)->subgroup_properties_SAGE   =NULL;
   (*tree)->group_backmatch_pointers   =NULL;

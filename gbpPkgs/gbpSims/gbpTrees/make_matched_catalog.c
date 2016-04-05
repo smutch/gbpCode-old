@@ -41,10 +41,7 @@ int main(int argc, char *argv[]){
              &trees);
 
   // Read ancillary data
-  read_trees_catalogs(trees,
-                      filename_SSimPL_dir,
-                      filename_halo_version_root,
-                      READ_TREES_CATALOGS_GROUPS|READ_TREES_CATALOGS_SUBGROUPS);
+  read_trees_catalogs(trees,READ_TREES_CATALOGS_GROUPS|READ_TREES_CATALOGS_SUBGROUPS);
 
   // Determine which snapshots best match the given redshifts
   int i_z_lo=find_treesnap_z(trees,z_lo);

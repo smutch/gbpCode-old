@@ -32,6 +32,7 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    check_validity_of_match.o                     \
 	    check_validity_of_emerged_match.o             \
 	    check_if_match_is_better.o                    \
+	    check_if_match_is_bigger.o                    \
 	    check_if_match_is_simple.o                    \
 	    check_if_match_is_immediate.o                 \
 	    check_if_halo_is_descendant.o                 \

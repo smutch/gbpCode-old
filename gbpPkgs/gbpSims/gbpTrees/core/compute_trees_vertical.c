@@ -30,10 +30,7 @@ void compute_trees_vertical(char   *filename_SSimPL_dir,
              &trees);
 
   // Read ancillary data
-  read_trees_catalogs(trees,
-                      filename_SSimPL_dir,
-                      filename_halo_version_root,
-                      READ_TREES_CATALOGS_BOTH|READ_TREES_CATALOGS_SAGE);
+  read_trees_catalogs(trees,READ_TREES_CATALOGS_BOTH|READ_TREES_CATALOGS_SAGE);
 
   // Build depth-first-index pointers
   finalize_trees_vertical(trees);

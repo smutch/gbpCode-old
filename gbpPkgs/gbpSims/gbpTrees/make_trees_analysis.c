@@ -46,25 +46,18 @@ int main(int argc, char *argv[]){
              TREE_MODE_DEFAULT|TREE_READ_EXTENDED_POINTERS,
              &trees);
 
-  // Read ancillary data
-  read_trees_catalogs(trees,
-                      filename_SSimPL_dir,
-                      filename_halo_version_root,
-                      READ_TREES_CATALOGS_GROUPS|READ_TREES_CATALOGS_SUBGROUPS);
-
-  if(strcmp(filename_trees_reference_name,"")){
+  // Read reference trees
+  if(strcmp(filename_trees_reference_name,""))
      read_trees(filename_SSimPL_dir,
                 filename_halo_version_root,
                 filename_trees_reference_name,
                 TREE_MODE_DEFAULT|TREE_READ_EXTENDED_POINTERS|TREE_MODE_REFERENCE,
                 &(trees->trees_reference));
 
-     // Read ancillary data
-     read_trees_catalogs(trees->trees_reference,
-                         filename_SSimPL_dir,
-                         filename_halo_version_root,
-                         READ_TREES_CATALOGS_GROUPS|READ_TREES_CATALOGS_SUBGROUPS);
-  }
+  // Read catalogs.  Use SHORT read to save RAM.
+  read_trees_catalogs(trees,READ_TREES_CATALOGS_BOTH|READ_TREES_CATALOGS_SHORT);
+  if(trees->trees_reference!=NULL)
+     read_trees_catalogs(trees->trees_reference,READ_TREES_CATALOGS_BOTH|READ_TREES_CATALOGS_SHORT);
 
   //read_trees_match_scores(trees,
   //                        filename_SSimPL_dir,

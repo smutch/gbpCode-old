@@ -53,7 +53,7 @@ int main(int argc, char *argv[]){
      fprintf(fp,"%le %le %le %le %le %le %le %le %le %le %le %le %le %le\n",
              n_particles,
              maximum_match_score(n_particles),
-             minimum_match_score(n_particles),
+             minimum_match_score(n_particles,F_GOODNESS_OF_MATCH),
              maximum_match_score(0.9*n_particles),
              maximum_match_score(0.8*n_particles),
              maximum_match_score(0.7*n_particles),

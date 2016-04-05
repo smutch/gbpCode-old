@@ -11,20 +11,40 @@
 
 int fetch_treenode_n_particles(tree_info *trees,tree_node_info *halo){
    if(halo!=NULL){
-      halo_properties_info *properties;
+      int n_particles;
       if(halo->parent==NULL){
-         if(trees->group_properties!=NULL)
-            properties=&(trees->group_properties[halo->snap_tree][halo->neighbour_index]);
+         if(trees->group_properties!=NULL){
+            halo_properties_info *properties=&(trees->group_properties[halo->snap_tree][halo->neighbour_index]);
+            n_particles=properties->n_particles;
+         }
+         else if(trees->group_properties_SHORT!=NULL){
+            halo_properties_SHORT_info *properties=&(trees->group_properties_SHORT[halo->snap_tree][halo->neighbour_index]);
+            n_particles=properties->n_particles;
+         }
+         else if(trees->group_properties_SAGE!=NULL){
+            halo_properties_SAGE_info *properties=&(trees->group_properties_SAGE[halo->snap_tree][halo->neighbour_index]);
+            n_particles=properties->n_particles;
+         }
          else
-            SID_trap_error("Group properties are not defined.  They probably have not been read.",ERROR_LOGIC);
+            SID_trap_error("Group properties are not defined in fetch_treenode_n_particles().  They probably have not been read.",ERROR_LOGIC);
       }
       else{
-         if(trees->subgroup_properties!=NULL)
-            properties=&(trees->subgroup_properties[halo->snap_tree][halo->neighbour_index]);
+         if(trees->subgroup_properties!=NULL){
+            halo_properties_info *properties=&(trees->subgroup_properties[halo->snap_tree][halo->neighbour_index]);
+            n_particles=properties->n_particles;
+         }
+         else if(trees->subgroup_properties_SHORT!=NULL){
+            halo_properties_SHORT_info *properties=&(trees->subgroup_properties_SHORT[halo->snap_tree][halo->neighbour_index]);
+            n_particles=properties->n_particles;
+         }
+         else if(trees->subgroup_properties_SAGE!=NULL){
+            halo_properties_SAGE_info *properties=&(trees->subgroup_properties_SAGE[halo->snap_tree][halo->neighbour_index]);
+            n_particles=properties->n_particles;
+         }
          else
-            SID_trap_error("Subgroup properties are not defined.  They probably have not been read.",ERROR_LOGIC);
+            SID_trap_error("Subgroup properties are not defined in fetch_treenode_n_particles().  They probably have not been read.",ERROR_LOGIC);
       }
-      return(properties->n_particles);
+      return(n_particles);
    }
    return(-1.);
 }

@@ -25,24 +25,8 @@ void write_treenode_list_properties(tree_info *trees,const char *filename_out_ro
   // Write the header
   write_treenode_list_properties_header(trees,list,fp_props_out);
 
-  // Fetch the pointer to the properties
-  halo_properties_info **properties;
-  if(flag_groups_list){
-     if(trees->group_properties!=NULL)
-        properties=trees->group_properties;
-     else
-        SID_trap_error("Group properties are not defined.  They probably have not been read.",ERROR_LOGIC);
-  }
-  else{
-     if(trees->subgroup_properties!=NULL)
-        properties=trees->subgroup_properties;
-     else
-        SID_trap_error("Subgroup properties are not defined.  They probably have not been read.",ERROR_LOGIC);
-  }
-
   // Count the number of entries in the output file
-  int n_properties=0;
-  while(write_treenode_list_properties_set_ith(trees,n_properties,NULL,NULL,NULL,NULL,NULL)) n_properties++;
+  int n_properties=0; while(write_treenode_list_properties_set_ith(trees,n_properties,NULL,NULL,NULL,NULL,NULL)) n_properties++;
 
   // Perform rank-ordered write
   int j_list=0;
