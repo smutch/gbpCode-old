@@ -160,7 +160,7 @@ int main(int argc,char *argv[]){
      int j_subgroup;
      for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
        // Read group properties
-       fread_catalog_file(&fp_group_properties,&group_properties,NULL,NULL,i_group);
+       fread_catalog_file(&fp_group_properties,NULL,&group_properties,NULL,NULL,i_group);
 
        int group_id;
        int group_type;
@@ -182,7 +182,7 @@ int main(int argc,char *argv[]){
        int subgroup_tree_id_max=0;
        for(j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
          // Read group properties
-         fread_catalog_file(&fp_subgroup_properties,&subgroup_properties,NULL,NULL,i_subgroup);
+         fread_catalog_file(&fp_subgroup_properties,NULL,&subgroup_properties,NULL,NULL,i_subgroup);
 
          int subgroup_id;
          int subgroup_type;

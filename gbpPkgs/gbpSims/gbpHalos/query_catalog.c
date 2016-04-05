@@ -80,7 +80,7 @@ int main(int argc, char *argv[]){
 
     // Perform read 
     SID_log("Reading selected halo...",SID_LOG_OPEN);
-    fread_catalog_file(&fp_group_properties,NULL,&properties,NULL,i_group_selected);
+    fread_catalog_file(&fp_group_properties,NULL,NULL,&properties,NULL,i_group_selected);
     SID_log("Done.",SID_LOG_CLOSE);
 
     // Close file

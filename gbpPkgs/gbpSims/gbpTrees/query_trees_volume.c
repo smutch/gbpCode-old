@@ -33,7 +33,7 @@ int main(int argc, char *argv[]){
   SID_init(&argc,&argv,NULL,NULL);
 
   // Fetch user inputs
-  if(argc!=12)
+  if(argc!=13)
      SID_trap_error("Invalid Syntax.",ERROR_SYNTAX);
   char    filename_SSimPL_root[MAX_FILENAME_LENGTH];
   char    filename_halos_root[MAX_FILENAME_LENGTH];
@@ -50,16 +50,17 @@ int main(int argc, char *argv[]){
      SID_log("Invalid mode selection {%s}.  Should be 'group' or 'subgroup'.",SID_LOG_COMMENT,argv[4]);
      SID_exit(ERROR_SYNTAX);
   }
-  double z_in   =(double)atof(argv[5]);
-  double x_cen  =(double)atof(argv[6]);
-  double y_cen  =(double)atof(argv[7]);
-  double z_cen  =(double)atof(argv[8]);
-  double radius =(double)atof(argv[9]);
-  double M_min  =(double)atof(argv[10]);
-  strcpy(filename_out_root,   argv[11]);
+  double x_cen   =(double)atof(argv[5]);
+  double y_cen   =(double)atof(argv[6]);
+  double z_cen   =(double)atof(argv[7]);
+  double radius  =(double)atof(argv[8]);
+  double z_min_in=(double)atof(argv[9]);
+  double z_max_in=(double)atof(argv[10]);
+  double M_min   =(double)atof(argv[11]);
+  strcpy(filename_out_root,    argv[12]);
   double radius2=radius*radius;
 
-  SID_log("Query trees for %s in sphere (x,y,z,r)=(%.2lf,%.2lf,%.2lf,%.2lf)...",SID_LOG_OPEN,argv[4],x_cen,y_cen,z_cen,radius);
+  SID_log("Query trees for %s in sphere (x,y,z,r)=(%.2lf,%.2lf,%.2lf,%.2lf) between z=%.2lf and z=%.2lf...",SID_LOG_OPEN,argv[4],x_cen,y_cen,z_cen,radius,z_min_in,z_max_in);
 
   char                 filename_catalog_root[MAX_FILENAME_LENGTH];
   sprintf(filename_catalog_root,"%s/catalogs/%s",filename_SSimPL_root,filename_halos_root);
@@ -79,11 +80,14 @@ int main(int argc, char *argv[]){
   char       filename_file_root[MAX_FILENAME_LENGTH];
   sprintf(filename_file_root,"%s/trees/%s",filename_SSimPL_root,filename_trees_root);
   SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
-  init_trees_read(filename_SSimPL_root,filename_trees_root,TREE_READ_HEADER_ONLY,&trees);
+  init_trees_read(filename_SSimPL_root,filename_halos_root,filename_trees_root,TREE_READ_HEADER_ONLY,&trees);
   SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
-  int i_snap_z=find_treesnap_z(trees,z_in);
-  SID_log("z=%.2lf, snapshot=%d",SID_LOG_COMMENT,trees->z_list[i_snap_z],trees->snap_list[i_snap_z]);
+  // Turn given redshift range into snapshot range
+  int i_snap_min_z=find_treesnap_z(trees,z_max_in);
+  int i_snap_max_z=find_treesnap_z(trees,z_min_in);
+  SID_log("z=%.2lf -> snapshot=%d",SID_LOG_COMMENT,z_min_in,trees->snap_list[i_snap_max_z]);
+  SID_log("z=%.2lf -> snapshot=%d",SID_LOG_COMMENT,z_max_in,trees->snap_list[i_snap_min_z]);
 
   // Find the halos we want to query
   int  n_list=0;
@@ -133,14 +137,15 @@ int main(int argc, char *argv[]){
      int i_snap_start;
      int i_snap_stop;
      if(i_pass<2){
-        i_snap_start=i_snap_z;
-        i_snap_stop =i_snap_start;
+        i_snap_start=i_snap_min_z;
+        i_snap_stop =i_snap_max_z;
      }
      else{
         i_snap_start=0;
         i_snap_stop =trees->n_snaps-1;
      }
 
+     int i_list=0;
      for(int i_snap=i_snap_start;i_snap<=i_snap_stop;i_snap++){
         // Get the snapshot
         int snapshot=trees->snap_list[i_snap];
@@ -186,9 +191,7 @@ int main(int argc, char *argv[]){
         SID_fskip(sizeof(int),8,&fp_in_bridge_backmatch);
 
         int   i_subgroup=0;
-        int   i_list    =0;
         char *halo_type_string=NULL;
-        if(i_pass==0) SID_log("(%d groups, %d subgroups)...",SID_LOG_CONTINUE,n_groups,n_subgroups);
         for(int i_group=0;i_group<n_groups;i_group++){
            // Read trees
            int   halo_id;
@@ -252,7 +255,7 @@ int main(int argc, char *argv[]){
            // Read group catalogs
            int flag_process=FALSE;
            if(mode==MATCH_GROUPS){
-              fread_catalog_file(&fp_properties,NULL,&properties,NULL,i_group);
+              fread_catalog_file(&fp_properties,NULL,NULL,&properties,NULL,i_group);
               flag_process=TRUE;
               i_halo=i_group;
            }
@@ -283,7 +286,7 @@ int main(int argc, char *argv[]){
                  SID_fread_all(&bridge_backmatch_index,        sizeof(int),  1,&fp_in_bridge_backmatch);
                  SID_fread_all(&bridge_backmatch_score,        sizeof(float),1,&fp_in_bridge_backmatch);
                  SID_fread_all(&bridge_backmatch_score_prog,   sizeof(float),1,&fp_in_bridge_backmatch);
-                 fread_catalog_file(&fp_properties,NULL,&properties,NULL,i_subgroup);
+                 fread_catalog_file(&fp_properties,NULL,NULL,&properties,NULL,i_subgroup);
                  i_halo=i_subgroup;
                  flag_process=TRUE;
               }
@@ -382,8 +385,17 @@ int main(int argc, char *argv[]){
                     if(r2_i<radius2 && properties.M_vir>=M_min){
                        if(i_pass==0)
                           n_list++;
-                       else
-                          halo_list[i_list++]=halo_id;
+                       else{
+                          // Check if we have added this halo ID yet
+                          int flag_continue=TRUE;
+                          for(int i_scan=0;i_scan<i_list && flag_continue;i_scan++){
+                             if(halo_list[i_scan]==halo_id)
+                                flag_continue=FALSE;
+                          }
+                          // Add halo ID uf it isn't in the list
+                          if(flag_continue)
+                             halo_list[i_list++]=halo_id;
+                       }
                     }
                  }
               }
@@ -396,14 +408,17 @@ int main(int argc, char *argv[]){
         SID_fclose(&fp_in_trees);
         SID_fclose(&fp_in_bridge_forematch);
         SID_fclose(&fp_in_bridge_backmatch);
-        if(i_pass==0){
-           SID_log("(%d found)...",SID_LOG_CONTINUE,n_list);
-           halo_list=(int *)SID_malloc(sizeof(int)*n_list);
-        }
-        else if(i_pass==2) SID_log("Done.",SID_LOG_CLOSE);
+        if(i_pass==2) 
+           SID_log("Done.",SID_LOG_CLOSE);
+     } // i_snap
+     if(i_pass==0)
+        halo_list=(int *)SID_malloc(sizeof(int)*n_list);
+     else if(i_pass==1){
+        n_list=i_list;
+        SID_log("(%d found)...",SID_LOG_CONTINUE,n_list);
      }
      SID_log("Done.",SID_LOG_CLOSE);
-  }
+  } 
 
   // Clean-up
   SID_free(SID_FARG halo_list);

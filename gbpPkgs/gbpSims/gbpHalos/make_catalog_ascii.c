@@ -220,7 +220,7 @@ int main(int argc, char *argv[]){
          for(int i_group=0,i_subgroup=0;i_group<fp_catalog_groups.n_halos_total;i_group++){
             int n_subgroups_group;
             // Read group catalog
-            fread_catalog_file(&fp_catalog_groups,NULL,properties_group,profile_group,i_group);
+            fread_catalog_file(&fp_catalog_groups,NULL,NULL,properties_group,profile_group,i_group);
             // Read number of subgroups
             fread_verify(&n_subgroups_group,sizeof(int),1,fp_halos);
             // Read SO masses (if available)
@@ -231,7 +231,7 @@ int main(int argc, char *argv[]){
             // Loop over subgroups
             for(int j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
                // Read subgroup properties
-               fread_catalog_file(&fp_catalog_subgroups,NULL,properties_subgroup,profile_subgroup,i_subgroup);
+               fread_catalog_file(&fp_catalog_subgroups,NULL,NULL,properties_subgroup,profile_subgroup,i_subgroup);
                // Write subgroup results
                print_results_local(fp_out[1],flag_use_profiles,box_size,properties_subgroup,properties_group,profile_subgroup,NULL,i_subgroup,j_subgroup,i_group);
             }

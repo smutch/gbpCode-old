@@ -123,7 +123,7 @@ int main(int argc, char *argv[]){
          for(int i_group=0,i_subgroup=0;i_group<fp_catalog_groups.n_halos_total;i_group++){
             int n_subgroups_group;
             // Read group catalog
-            fread_catalog_file(&fp_catalog_groups,NULL,halo_data.properties_group,halo_data.profiles_group,i_group);
+            fread_catalog_file(&fp_catalog_groups,NULL,NULL,halo_data.properties_group,halo_data.profiles_group,i_group);
             // Read number of subgroups
             fread_verify(&n_subgroups_group,sizeof(int),1,fp_halos);
             // Read SO masses (if available)
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]){
             halo_data.np_sub_largest=0;
             for(int j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
                // Read subgroup properties
-               fread_catalog_file(&fp_catalog_subgroups,NULL,halo_data.properties_subgroup,halo_data.profiles_subgroup,i_subgroup);
+               fread_catalog_file(&fp_catalog_subgroups,NULL,NULL,halo_data.properties_subgroup,halo_data.profiles_subgroup,i_subgroup);
                int np_i=halo_data.properties_subgroup->n_particles;
                halo_data.np_sub+=np_i;
                if(np_i>halo_data.np_sub_largest)

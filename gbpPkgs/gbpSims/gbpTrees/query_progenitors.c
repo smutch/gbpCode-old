@@ -59,7 +59,7 @@ void write_halo_local(tree_info *trees,
                  i_read,
                  read_props_mode,
                  &fp_properties);
-   fread_catalog_file(&fp_properties,NULL,&properties,NULL,i_halo);
+   fread_catalog_file(&fp_properties,NULL,NULL,&properties,NULL,i_halo);
    fclose_catalog(&fp_properties);
 
    // Write results
@@ -172,7 +172,7 @@ int main(int argc, char *argv[]){
   char       filename_file_root[MAX_FILENAME_LENGTH];
   sprintf(filename_file_root,"%s/trees/%s",filename_SSimPL_root,filename_trees_root);
   SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
-  init_trees_read(filename_SSimPL_root,filename_trees_root,TREE_READ_HEADER_ONLY,&trees);
+  init_trees_read(filename_SSimPL_root,filename_halos_root,filename_trees_root,TREE_READ_HEADER_ONLY,&trees);
   SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
 
   // Check that the given snapshot is valid

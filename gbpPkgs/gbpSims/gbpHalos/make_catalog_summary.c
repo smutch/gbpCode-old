@@ -148,7 +148,7 @@ int main(int argc, char *argv[]){
      int i_subgroup=0;
      for(;i_group<fp_catalog_groups.n_halos_total;i_group++){
         // Read group from catalog
-        fread_catalog_file(&fp_catalog_groups,NULL,&(data.group),NULL,i_group);
+        fread_catalog_file(&fp_catalog_groups,NULL,NULL,&(data.group),NULL,i_group);
 
         // Read the number of subgroups for this group
         int n_subgroups;
@@ -159,7 +159,7 @@ int main(int argc, char *argv[]){
         data.n_particles_central     =0;
         data.n_particles_substructure=0;
         for(int j_subgroup=0;j_subgroup<n_subgroups;j_subgroup++,i_subgroup++){
-           fread_catalog_file(&fp_catalog_subgroups,NULL,&(data.subgroup),NULL,i_subgroup);
+           fread_catalog_file(&fp_catalog_subgroups,NULL,NULL,&(data.subgroup),NULL,i_subgroup);
 
            if(data.subgroup.n_particles>data.n_particles_central)
               data.n_particles_central=data.subgroup.n_particles;

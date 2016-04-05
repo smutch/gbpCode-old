@@ -14,30 +14,30 @@
 #define MAX_PROFILE_BINS     1000
 #define MAX_PROFILE_BINS_P1  1001 // This must be set to MAX_PROFILE_BINS+1
 
-#define READ_GROUPS_DEFAULT          1
-#define READ_GROUPS_ALL              2
-#define READ_GROUPS_SUBGROUPS        4
-#define READ_GROUPS_NOSUBGROUPS      8
-#define READ_GROUPS_PROPERTIES      16
-#define READ_GROUPS_NOPROPERTIES    32
-#define READ_GROUPS_NOIDS           64
-#define READ_GROUPS_MBP_IDS_ONLY   128
-#define READ_GROUPS_PEANOHILBERT   256
+#define READ_GROUPS_DEFAULT         TTTP00
+#define READ_GROUPS_ALL             TTTP01
+#define READ_GROUPS_SUBGROUPS       TTTP02
+#define READ_GROUPS_NOSUBGROUPS     TTTP03
+#define READ_GROUPS_PROPERTIES      TTTP04
+#define READ_GROUPS_NOPROPERTIES    TTTP05
+#define READ_GROUPS_NOIDS           TTTP06
+#define READ_GROUPS_MBP_IDS_ONLY    TTTP07
+#define READ_GROUPS_PEANOHILBERT    TTTP08
 
-#define READ_CATALOG_GROUPS      1
-#define READ_CATALOG_SUBGROUPS   2
-#define READ_CATALOG_PROPERTIES  4
-#define READ_CATALOG_PROFILES    8
+#define READ_CATALOG_GROUPS      TTTP00
+#define READ_CATALOG_SUBGROUPS   TTTP01
+#define READ_CATALOG_PROPERTIES  TTTP02
+#define READ_CATALOG_PROFILES    TTTP03
 #define READ_CATALOG_DEFAULT     READ_CATALOG_GROUPS|READ_CATALOG_PROPERTIES
 
-#define MATCH_SUBGROUPS       2 // Match subgroups (default)
-#define MATCH_GROUPS          4 // Match groups
-#define MATCH_BACK            8 // Switch the sence of matching between plists
-#define MATCH_STORE_2        16 // Switch which plist results are stored in
-#define MATCH_STORE_SCORE    32 // Store the matching score
-#define MATCH_SUBSTRUCTURE   64 // Search for substructure; ie. ignore self matches
-#define MATCH_APPLY_OFFSETS 128 // When matching across multiple cores, apply
-                                //   rank offsets so that match_ids are global indices
+#define MATCH_SUBGROUPS     TTTP01 // Match subgroups (default)
+#define MATCH_GROUPS        TTTP02 // Match groups
+#define MATCH_BACK          TTTP03 // Switch the sence of matching between plists
+#define MATCH_STORE_2       TTTP04 // Switch which plist results are stored in
+#define MATCH_STORE_SCORE   TTTP05 // Store the matching score
+#define MATCH_SUBSTRUCTURE  TTTP06 // Search for substructure; ie. ignore self matches
+#define MATCH_APPLY_OFFSETS TTTP07 // When matching across multiple cores, apply
+                                   //   rank offsets so that match_ids are global indices
 
 typedef struct halo_properties_info halo_properties_info;
 struct halo_properties_info{
@@ -137,6 +137,18 @@ struct halo_properties_SAGE_info{
   float half_mass;
 };
 
+// This is the format used as the SHORT structure
+typedef struct halo_properties_SHORT_info halo_properties_SHORT_info;
+struct halo_properties_SHORT_info{
+  float     pos[3];
+  float     vel[3];
+  double    M_vir;
+  float     sigma_v;
+  float     V_max; 
+  float     R_vir; 
+  int       n_particles;
+};
+
 typedef struct halo_MBP_info halo_MBP_info;
 struct halo_MBP_info{
   // properties of halo
@@ -208,7 +220,7 @@ void free_halo_trend_property_SSFctn(trend_property_info *property,void *trees_i
 int  calc_halo_trend_property_index_SSFctn(trend_property_info *property,hist_info *hist,void *halo_in);
 
 int  fopen_nth_catalog_file(fp_catalog_info *fp_in,int n);
-int  fread_catalog_file(fp_catalog_info *fp_in,halo_properties_SAGE_info *properties_out,halo_properties_info *properties_all_out,halo_profile_info *profiles_out,int halo_index);
+int  fread_catalog_file(fp_catalog_info *fp_in,halo_properties_SHORT_info *properties_short_out,halo_properties_SAGE_info *properties_out,halo_properties_info *properties_all_out,halo_profile_info *profiles_out,int halo_index);
 int  fread_catalog_raw(fp_catalog_info *fp_in,halo_properties_info *properties_out,halo_profile_info *profiles_out,int halo_index);
 void fclose_catalog(fp_catalog_info *fp_in);
                  

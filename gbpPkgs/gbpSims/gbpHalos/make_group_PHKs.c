@@ -83,7 +83,7 @@ int main(int argc, char *argv[]){
        if(fp_group_properties.n_halos_total!=n_groups)
          SID_trap_error("Halo counts in group files and catalogs don't match (ie. %d!=%d)",ERROR_LOGIC,fp_group_properties.n_halos_total,n_groups);
        for(int i_group=0;i_group<n_groups;i_group++){
-          fread_catalog_file(&fp_group_properties,NULL,&group_properties,NULL,i_group);
+          fread_catalog_file(&fp_group_properties,NULL,NULL,&group_properties,NULL,i_group);
           x_array[i_group]=group_properties.position_MBP[0];
           y_array[i_group]=group_properties.position_MBP[1];
           z_array[i_group]=group_properties.position_MBP[2];

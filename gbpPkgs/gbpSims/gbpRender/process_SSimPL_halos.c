@@ -33,7 +33,7 @@ void process_SSimPL_halos(render_info *render,
 
   // Initialize trees if they haven't been already and if they've been given
   if(render->trees==NULL)
-     init_trees_read(render->filename_SSimPL_root,render->filename_trees_version,TREE_READ_HEADER_ONLY,&(render->trees));
+     init_trees_read(render->filename_SSimPL_root,render->filename_halos_version,render->filename_trees_version,TREE_READ_HEADER_ONLY,&(render->trees));
 
   // The snapshot list passed to render may not be the same as those used for the trees,
   //    figure-out the appropriate tree_snap to use here

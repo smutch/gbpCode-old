@@ -72,7 +72,7 @@ int main(int argc, char *argv[]){
      int n_keep=0;
      for(int i_halo=0;i_halo<n_halos_total;i_halo++){
         // Read halo
-        fread_catalog_file(&fp_catalog,NULL,properties,NULL,i_halo);
+        fread_catalog_file(&fp_catalog,NULL,NULL,properties,NULL,i_halo);
 
         // Store needed quantities
         if(TRUE){

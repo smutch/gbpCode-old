@@ -206,10 +206,7 @@ int main(int argc, char *argv[]){
   snap_number_stop =find_treesnap_snap(trees,snap_number_stop);
 
   // Read catalogs
-  read_trees_catalogs(trees,
-                      filename_SSimPL_dir,
-                      filename_halo_version_root,
-                      READ_TREES_CATALOGS_BOTH);
+  read_trees_catalogs(trees,READ_TREES_CATALOGS_BOTH);
 
   // ** PERFORM the calculation here **a
   process_trees_params_local params;

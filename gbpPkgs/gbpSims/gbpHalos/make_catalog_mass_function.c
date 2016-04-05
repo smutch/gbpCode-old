@@ -141,7 +141,7 @@ int main(int argc, char *argv[]){
          for(int i_group=0,i_subgroup=0;i_group<n_data;i_group++){
             int n_subgroups_group;
             // Read group catalog
-            fread_catalog_file(&fp_catalog_groups,NULL,properties_group,profile_group,i_group);
+            fread_catalog_file(&fp_catalog_groups,NULL,NULL,properties_group,profile_group,i_group);
             // Read number of subgroups
             fread_verify(&n_subgroups_group,sizeof(int),1,fp_halos);
             // Read SO masses (if available)
@@ -155,7 +155,7 @@ int main(int argc, char *argv[]){
             // Loop over subgroups
             for(int j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
                // Read subgroup properties
-               fread_catalog_file(&fp_catalog_subgroups,NULL,properties_subgroup,profile_subgroup,i_subgroup);
+               fread_catalog_file(&fp_catalog_subgroups,NULL,NULL,properties_subgroup,profile_subgroup,i_subgroup);
                // Process subgroup information
                //double M_vir_sub=properties_subgroup->M_vir;
                double M_vir_sub=m_dark*(double)properties_subgroup->n_particles*(1.-pow((double)properties_subgroup->n_particles,-0.6));

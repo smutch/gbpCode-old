@@ -4,7 +4,7 @@
 
 #define _FILE_OFFSET_BITS 64
 
-int fread_catalog_file(fp_catalog_info *fp_in,halo_properties_SAGE_info *properties_out,halo_properties_info *properties_all_out,halo_profile_info *profiles_out,int halo_index){
+int fread_catalog_file(fp_catalog_info *fp_in,halo_properties_SHORT_info *properties_short_out,halo_properties_SAGE_info *properties_out,halo_properties_info *properties_all_out,halo_profile_info *profiles_out,int halo_index){
   int n_skip;
   int r_val=0;
 
@@ -47,7 +47,20 @@ int fread_catalog_file(fp_catalog_info *fp_in,halo_properties_SAGE_info *propert
      if(properties_all_out!=NULL)
         memcpy(properties_all_out,&properties_in,sizeof(halo_properties_info));
 
-     // Store the quantities we need to keep
+     // Store the quantities we need to keep if alternate pointers are given
+     if(properties_short_out!=NULL){
+        properties_short_out->n_particles     =(int)   properties_in.n_particles;
+        properties_short_out->M_vir           =(double)properties_in.M_vir;
+        properties_short_out->R_vir           =(float) properties_in.R_vir;
+        properties_short_out->pos[0]          =(float) properties_in.position_MBP[0];
+        properties_short_out->pos[1]          =(float) properties_in.position_MBP[1];
+        properties_short_out->pos[2]          =(float) properties_in.position_MBP[2];
+        properties_short_out->vel[0]          =(float) properties_in.velocity_COM[0];
+        properties_short_out->vel[1]          =(float) properties_in.velocity_COM[1];
+        properties_short_out->vel[2]          =(float) properties_in.velocity_COM[2];
+        properties_short_out->sigma_v         =(float) properties_in.sigma_v;
+        properties_short_out->V_max           =(float) properties_in.V_max;
+     }
      if(properties_out!=NULL){
         properties_out->descendant      =0;
         properties_out->progenitor_first=0;

@@ -67,7 +67,7 @@ int main(int argc, char *argv[]){
      sprintf(filename_out,     "%s_%d.txt",     filename_trees_root,halo_id_find);
      sprintf(filename_out_ptrs,"%s_%d_ptrs.txt",filename_trees_root,halo_id_find);
      SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
-     init_trees_read(filename_SSimPL_root,filename_trees_root,TREE_READ_HEADER_ONLY,&trees);
+     init_trees_read(filename_SSimPL_root,filename_halos_root,filename_trees_root,TREE_READ_HEADER_ONLY,&trees);
      SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
   }
   else{
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]){
      i_halo   =atoi(argv[6]);
      SID_log("Querying trees for halo #%d in file #%d from {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,i_halo,i_read,filename_trees_root);
      SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
-     init_trees_read(filename_SSimPL_root,filename_trees_root,TREE_READ_HEADER_ONLY,&trees);
+     init_trees_read(filename_SSimPL_root,filename_halos_root,filename_trees_root,TREE_READ_HEADER_ONLY,&trees);
      SID_set_verbosity(SID_SET_VERBOSITY_DEFAULT);
      // Check that the snapshot we've been asked to look for is in the trees
      int i_file=0;
@@ -354,7 +354,7 @@ int main(int argc, char *argv[]){
                      i_read,
                      read_props_mode,
                      &fp_properties);
-       fread_catalog_file(&fp_properties,NULL,&properties,NULL,i_halo);
+       fread_catalog_file(&fp_properties,NULL,NULL,&properties,NULL,i_halo);
        fclose_catalog(&fp_properties);
 
        // Write results

@@ -69,7 +69,7 @@ int main(int argc, char *argv[]){
                      &fp_group_properties);
 
     // Read halo and close file
-    fread_catalog_file(&fp_group_properties,NULL,&properties,&profile,i_group_selected);
+    fread_catalog_file(&fp_group_properties,NULL,NULL,&properties,&profile,i_group_selected);
     fclose_catalog(&fp_group_properties);
     SID_log("Done.",SID_LOG_CLOSE);
 
