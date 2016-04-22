@@ -150,5 +150,55 @@ void identify_progenitors(tree_horizontal_info **halos,
       }
    }
 
+   // Now that all first and default forematch pointers have been set,
+   //    determine the best match to any halos matched to from this snapshot,
+   //    that don't have a progenitor yet.  This is done to make sure
+   //    that every bridged halo matched to gets a main progenitor and to
+   //    minimize the chance of incorrectly labeling a halo as fragmented.
+   //    Importantly, we want this to be in agreement with the choices that have
+   //    already been made regarding the main progenitor exiting a bridged halo.
+   //    To acheive this in a robust way, we will exclude here (if possible)
+   //    any halos which have default forematch pointers that arent't their
+   //    first forematch pointer (reflecting a halo that has been successfully
+   //    matched in later snapshots to an emerged candidate).  Such a halo
+   //    would not have been chosen as the main progenitor exiting the bridged
+   //    system, since it and all its descendants would have been excluded
+   //    when candidate emerged halo lists were constructed.  We need to wait
+   //    for both the first and default pointers to be properly set to do this,
+   //    so we need to do this now as a seperate and subsequent loop.  When
+   //    matches are finalized, these best pointers will be the first choice
+   //    for constructing the trees.  The default pointers get used otherwise.
+   // Loop over all halos ...
+   for(int i_halo=0;i_halo<(*n_halos_1_matches);i_halo++){
+      tree_horizontal_info *halo_i=&(halos_i[i_halo]);
+      tree_horizontal_info *halo_j=halo_i->forematch_first.halo;
+      // ... if this halo has a first match ...
+      if(halo_j!=NULL){
+         match_info forematch_new;
+         forematch_new.halo        =halo_i;
+         forematch_new.score       =halo_i->forematch_first.score;
+         forematch_new.flag_two_way=halo_i->forematch_first.flag_two_way;
+         // If this is the first match, choose it by default ...
+         if(halo_j->forematch_best.halo==NULL)
+            memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
+         // ... else, if this is a subsequent match, decide if it is better ...
+         else{
+            // First, do the important check for subsequent emerged halo matches ...
+            tree_horizontal_info *halo_k=halo_j->forematch_best.halo;
+            int flag_matched_to_emerged_new=(!((halo_i->forematch_first.halo)==(halo_i->forematch_default.halo)));
+            int flag_matched_to_emerged_old=(!((halo_k->forematch_first.halo)==(halo_k->forematch_default.halo)));
+            // If the new match is not matched to an emerged candidate but the old one is, keep it ...
+            if(!flag_matched_to_emerged_new && flag_matched_to_emerged_old)
+               memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
+            // ... else, keep the best match if neither-or-both the new and
+            //     previous best matches have a match to an emerged candidate.
+            else if((flag_matched_to_emerged_new==flag_matched_to_emerged_old) &&
+                    check_if_match_is_better(halo_j,&(halo_j->forematch_best),&forematch_new)){
+               memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
+            }
+         }
+      }
+   }
+
    SID_log("Done.",SID_LOG_CLOSE);
 }
