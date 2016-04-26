@@ -28,7 +28,8 @@ void precompute_treenode_markers_peak_mass_recursive(tree_info          *trees,
 
       // Walk the tree
       tree_node_info *first_progenitor=halo->progenitor_first;
-      if(first_progenitor!=NULL){   
+      if(first_progenitor!=NULL){
+         // Find the progenitor line with the largest peak particle count
          tree_node_info *current_progenitor=first_progenitor;
          int             n_particles_peak  =0;
          while(current_progenitor!=NULL){
@@ -46,8 +47,8 @@ void precompute_treenode_markers_peak_mass_recursive(tree_info          *trees,
             // Move to the next progenitor
             current_progenitor=current_progenitor->progenitor_next;
          }
-         // If one of the progenitors isn't matched to, then the current must be a new peak
-         if(markers_halo->peak_mass==NULL){
+         // Check if the current halo should set a new pointer
+         if(halo->n_particles_peak>n_particles_peak){
             markers_halo->peak_mass=halo;
             markers_halo->M_peak   =M_halo;
          }
