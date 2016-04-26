@@ -61,6 +61,7 @@ int main(int argc, char *argv[]){
   char filename_out_ptrs[MAX_FILENAME_LENGTH];
   if(argc==6){
      halo_id_find=atoi(argv[5]);
+     find_mode   =0;
      i_read      =0;
      i_halo      =0;
      SID_log("Querying trees for halo ID #%d from {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,halo_id_find,filename_trees_root);
@@ -73,6 +74,7 @@ int main(int argc, char *argv[]){
   else{
      i_read   =atoi(argv[5]);
      i_halo   =atoi(argv[6]);
+     find_mode=1;
      SID_log("Querying trees for halo #%d in file #%d from {%s}...",SID_LOG_OPEN|SID_LOG_TIMER,i_halo,i_read,filename_trees_root);
      SID_set_verbosity(SID_SET_VERBOSITY_RELATIVE,0);
      init_trees_read(filename_SSimPL_root,filename_halos_root,filename_trees_root,TREE_READ_HEADER_ONLY,&trees);
