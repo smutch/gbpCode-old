@@ -14,6 +14,7 @@ OBJFILES  = average_tree_branches.o              \
 	    init_treenode_trend_functions.o           \
 	    process_trees_by_snap.o                   \
 	    compute_trees_analysis.o                  \
+	    compute_trees_stats.o                     \
 	    compute_trees_analysis_strayed_halos.o    \
 	    compute_trees_analysis_dropped_halos.o    \
 	    compute_trees_analysis_mergers.o          \

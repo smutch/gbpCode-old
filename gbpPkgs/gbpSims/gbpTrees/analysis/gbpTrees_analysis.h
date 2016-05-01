@@ -178,6 +178,7 @@ void   compute_treenode_list_marker_stats(tree_info                *trees,
                                           tree_markers_stats_info  *stats,
                                           int                     **n_hist_count,
                                           int                      *n_hist);
+void   compute_trees_stats                    (tree_info *trees);
 void   compute_trees_analysis                 (tree_info *trees,                                   double logM_min,double dlogM,int n_logM);
 void   compute_trees_analysis_emerged_halos   (tree_info *trees,char *filename_out_root,int i_type,double logM_min,double dlogM,int n_logM);
 void   compute_trees_analysis_fragmented_halos(tree_info *trees,char *filename_out_root,int i_type,double logM_min,double dlogM,int n_logM);
