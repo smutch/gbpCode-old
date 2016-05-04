@@ -77,11 +77,11 @@ int process_local(tree_info            *trees,
             (*n_list)++;
          else{
             // Check if we have added this halo ID yet
-            for(int i_scan=0;i_scan<(*n_list) && !flag_found;i_scan++){
+            for(int i_scan=0;i_scan<(*n_list) && flag_found;i_scan++){
                if(halo_list[i_scan]==halo_id)
                   flag_found=FALSE;
             }
-            // Add halo ID uf it isn't in the list
+            // Add halo ID if it isn't in the list
             if(flag_found)
                halo_list[(*n_list)++]=halo_id;
          }
@@ -110,7 +110,7 @@ int process_local(tree_info            *trees,
          
          char *halo_type_string=NULL;
          tree_case_flags_text(halo_type,"+",&halo_type_string);
-         fprintf(fp_out,"%le %7.3lf %3d %7d %7d %5.2lf %6d %6d %5.2lf %5.2lf %5.2lf %10.3le %7d %2d %3d %7d %7d %3d %7d %3d %7d %7d %s",
+         fprintf(fp_out,"%le %7.3lf %3d %7d %7d %5.2lf %6d %6d %10.3le %10.3le %10.3le %10.3le %7d %2d %3d %7d %7d %3d %7d %3d %7d %7d %s",
                         trees->a_list[i_snap],
                         trees->z_list[i_snap],
                         trees->snap_list[i_snap],
@@ -136,10 +136,10 @@ int process_local(tree_info            *trees,
                         halo_type_string);
          SID_free(SID_FARG halo_type_string);
          if(i_type==1)
-            fprintf(fp_out," %7d %5d %7d %5.2lf %5.2lf %5.2lf\n",
+            fprintf(fp_out," %7d %5d %7d %10.3le %10.3le %10.3le\n",
                            i_group,
-                           j_subgroup,
                            group_id,
+                           j_subgroup,
                            properties->position_MBP[0]-properties_group->position_MBP[0],
                            properties->position_MBP[1]-properties_group->position_MBP[1],
                            properties->position_MBP[2]-properties_group->position_MBP[2]);
@@ -506,7 +506,7 @@ int main(int argc, char *argv[]){
                             subgroup_forematch_first_file,
                             subgroup_backmatch_index,
                             subgroup_backmatch_file,
-                            subgroup_id,
+                            group_id,
                             &properties_subgroups,
                             &properties_groups,
                             &n_subgroups_list,
