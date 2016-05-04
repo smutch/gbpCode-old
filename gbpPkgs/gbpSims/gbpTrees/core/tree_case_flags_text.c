@@ -24,6 +24,8 @@ int tree_case_flags_text(int match_type,const char *separator_string,char **retu
            sprintf((*return_string),"%s%s%s",(*return_string),separator_string,tree_case_flag_list_text[i_parse]);
      }
   }
+  if(count==0)
+     sprintf((*return_string),"---");
   return(count);
 }
 
