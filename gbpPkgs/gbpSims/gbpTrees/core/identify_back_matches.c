@@ -145,7 +145,7 @@ void identify_back_matches(tree_horizontal_info **halos,
                    halo_i->forematch_first.halo           =halo_j;
                    halo_i->forematch_first.score          =match_score[i_halo];
                    halo_i->forematch_first.flag_two_way   =match_flag_two_way[i_halo];
-                   halo_i->forematch_first.flag_back_match=0;
+                   halo_i->forematch_first.flag_back_match=FALSE;
                 }
              }
           }
