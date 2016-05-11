@@ -253,7 +253,7 @@ void identify_back_matches(tree_horizontal_info **halos,
           match_info *back_match=&(halos_i[i_halo].back_matches[j_halo]);
           memcpy(&(back_matches[j_halo]),back_match,sizeof(match_info));
           // Set the criteria by which the halos will be sorted here
-          match_score[j_halo]   =(float)(back_match->halo->n_particles);
+          match_score[j_halo]   =(float)(back_match->halo->file);
           backmatch_keep[j_halo]=TRUE;
        }
        merge_sort((void *)match_score,(size_t)(halos_i[i_halo].n_back_matches),&back_match_index,SID_FLOAT,SORT_COMPUTE_INDEX,SORT_COMPUTE_NOT_INPLACE);
@@ -300,8 +300,10 @@ void identify_back_matches(tree_horizontal_info **halos,
              halos_i[i_halo].n_back_matches++;
        }
 
-       // Slide the sorted temporary list to the permanent list (DESCENDING ORDER!)
-       for(j_halo=n_list-1,l_halo=0;j_halo>=0;j_halo--){
+       //// Slide the sorted temporary list to the permanent list (DESCENDING ORDER!)
+       //for(j_halo=n_list-1,l_halo=0;j_halo>=0;j_halo--){
+       // Slide the sorted temporary list to the permanent list 
+       for(j_halo=0,l_halo=0;j_halo<n_list;j_halo++){
           int j_halo_sorted=back_match_index[j_halo];
           if(backmatch_keep[j_halo_sorted]){
              match_info *back_match=&(back_matches[j_halo_sorted]);

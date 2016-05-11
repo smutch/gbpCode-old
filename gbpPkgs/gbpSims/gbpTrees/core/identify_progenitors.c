@@ -102,39 +102,39 @@ void identify_progenitors(tree_horizontal_info **halos,
             //    emerged matches, etc) for this halo.
             tree_horizontal_info *halo_i     =&(halos_i[i_halo]);
             tree_horizontal_info *forematch_i=halo_i->forematch_default.halo;
-            // Only check halos that have been given a descendant
+            // Only check unprocessed halos that have been given a descendant
             if(forematch_i!=NULL && check_mode_for_flag(halo_i->type,TREE_CASE_UNPROCESSED)){
                // Only scan for emerged halos if we are working with
                //    matches past the current default match
                if(j_file_2>forematch_i->file){
-                  int flag_unchecked=FALSE;
-                  int flag_continue =TRUE;
                   // Walk the descendant line of the default match until a change happens (or we reach the extent of the search interval)
-                  while(forematch_i!=NULL && flag_continue){
+                  int flag_unchecked=FALSE;
+                  while(forematch_i!=NULL){
                      int n_back_matches=forematch_i->n_back_matches;
                      if(n_back_matches>0){
                         match_info *back_matches=forematch_i->back_matches;
                         // Loop over all the candidate emerged halos identified with this
                         //   halo in the descendant line of the current default match
-                        for(int k_halo=0;k_halo<n_back_matches && flag_continue;k_halo++){
+                        for(int k_halo=0;k_halo<n_back_matches && !flag_unchecked;k_halo++){
                            tree_horizontal_info *current_back_match=back_matches[k_halo].halo;
                            // If this back match is in the snapshot we are currently checking
-                           if(current_back_match->file==j_file_2 && current_back_match->index==match_id[i_halo]){
-                              // If this is a good match to an emerged halo, then set a new default.  Do not remove the UNPROCESSED flag
-                              //    though, because we still want to check emerged halo candidates in the descendant line of the new match
-                              if(check_validity_of_emerged_match(halo_i,&(back_matches[k_halo]),n_search)){
-                                 halo_i->forematch_default.halo           =current_back_match;
-                                 halo_i->forematch_default.score          =match_score[i_halo];
-                                 halo_i->forematch_default.flag_two_way   =match_flag_two_way[i_halo];
-                                 halo_i->forematch_default.flag_back_match=FALSE;
-                                 flag_continue=FALSE;
+                           if(current_back_match->file==j_file_2){
+                              if(current_back_match->index==match_id[i_halo]){
+                                 // If this is a good match to an emerged halo, then set a new default.  Do not remove the UNPROCESSED flag
+                                 //    though, because we want to continue checking emerged candidates in the descendant line of the new match
+                                 if(check_validity_of_emerged_match(halo_i,&(back_matches[k_halo]),n_search)){
+                                    halo_i->forematch_default.halo           =current_back_match;
+                                    halo_i->forematch_default.score          =match_score[i_halo];
+                                    halo_i->forematch_default.flag_two_way   =match_flag_two_way[i_halo];
+                                    halo_i->forematch_default.flag_back_match=FALSE;
+                                    flag_unchecked=TRUE; // we want to make sure we check the back matches of the new match
+                                 }
                               }
                            }
-                           // Keep count of back matches still to be checked in later snapshots
-                           else if((back_matches[k_halo].halo->file)>j_file_2){
+                           // Determine if there are back matches still to be checked in later snapshots
+                           //    This check works because the back matches have been sorted by their file number
+                           else if(current_back_match->file>j_file_2)
                               flag_unchecked=TRUE;
-                              flag_continue =FALSE;
-                           }
                         }
                      }
                      forematch_i=forematch_i->descendant.halo;
@@ -144,9 +144,8 @@ void identify_progenitors(tree_horizontal_info **halos,
                            forematch_i=NULL;
                      }
                   }
-                  // Stop processing this halo if there are no more
-                  //    emerged candaidates to check in later snapshots
-                  if(!flag_unchecked && flag_continue)
+                  // Stop processing this halo if there are no more emerged candaidates to check
+                  if(!flag_unchecked)
                      halo_i->type&=(~TREE_CASE_UNPROCESSED); 
                }
             }
@@ -175,21 +174,13 @@ void identify_progenitors(tree_horizontal_info **halos,
    //    determine the best match to any halos matched to from this snapshot,
    //    that don't have a progenitor yet.  This is done to make sure
    //    that every bridged halo matched to gets a main progenitor and to
-   //    minimize the chance of incorrectly labeling a halo as fragmented.
+   //    reduce the chance of incorrectly labeling a halo as fragmented.
    //    Importantly, we want this to be in agreement with the choices that have
    //    already been made regarding the main progenitor exiting a bridged halo.
-   //    To acheive this in a robust way, we will exclude here (if possible)
-   //    any halos which have default forematch pointers that arent't their
-   //    first forematch pointer (reflecting a halo that has been successfully
-   //    matched in later snapshots to an emerged candidate).  Such a halo
-   //    would not have been chosen as the main progenitor exiting the bridged
-   //    system, since it and all its descendants would have been excluded
-   //    when candidate emerged halo lists were constructed.  We need to wait
-   //    for both the first and default pointers to be properly set to do this,
-   //    so we need to do this now as a seperate and subsequent loop.  When
-   //    matches are finalized, these best pointers will be the first choice
-   //    for constructing the trees.  The default pointers get used otherwise.
-   // Loop over all halos ...
+   //    We need to wait for both the first and default pointers to be properly 
+   //    set to do this, so we need to do this now as a seperate and subsequent 
+   //    loop.  When matches are finalized, these best pointers will be the first 
+   //    choice for constructing the trees.  The default pointers get used otherwise.
    if(flag_fix_bridges){
       for(int i_halo=0;i_halo<(*n_halos_1_matches);i_halo++){
          tree_horizontal_info *halo_i=&(halos_i[i_halo]);
@@ -205,19 +196,22 @@ void identify_progenitors(tree_horizontal_info **halos,
                memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
             // ... else, if this is a subsequent match, decide if it is better ...
             else{
-               // First, do the important check for subsequent emerged halo matches ...
-               tree_horizontal_info *halo_k=halo_j->forematch_best.halo;
-               int flag_matched_to_emerged_new=(!((halo_i->forematch_first.halo)==(halo_i->forematch_default.halo)));
-               int flag_matched_to_emerged_old=(!((halo_k->forematch_first.halo)==(halo_k->forematch_default.halo)));
-               // If the new match is not matched to an emerged candidate but the old one is, keep it ...
-               if(!flag_matched_to_emerged_new && flag_matched_to_emerged_old)
+               // If the new match is better, keep it ...
+               if(check_if_match_is_better(halo_j,&(halo_j->forematch_best),&forematch_new))
                   memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
-               // ... else, keep the best match if neither-or-both the new and
-               //     previous best matches have a match to an emerged candidate.
-               else if((flag_matched_to_emerged_new==flag_matched_to_emerged_old) &&
-                       check_if_match_is_better(halo_j,&(halo_j->forematch_best),&forematch_new)){
-                  memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
-               }
+               //// First, do the important check for subsequent emerged halo matches ...
+               //tree_horizontal_info *halo_k=halo_j->forematch_best.halo;
+               //int flag_matched_to_emerged_new=(!((halo_i->forematch_first.halo)==(halo_i->forematch_default.halo)));
+               //int flag_matched_to_emerged_old=(!((halo_k->forematch_first.halo)==(halo_k->forematch_default.halo)));
+               //// If the new match is not matched to an emerged candidate but the old one is, keep it ...
+               //if(!flag_matched_to_emerged_new && flag_matched_to_emerged_old)
+               //   memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
+               //// ... else, keep the best match if neither-or-both the new and
+               ////     previous best matches have a match to an emerged candidate.
+               //else if((flag_matched_to_emerged_new==flag_matched_to_emerged_old) &&
+               //        check_if_match_is_better(halo_j,&(halo_j->forematch_best),&forematch_new)){
+               //   memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
+               //}
             }
          }
       }

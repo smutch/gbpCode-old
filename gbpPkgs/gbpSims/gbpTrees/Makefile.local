@@ -13,7 +13,6 @@ BINFILES  = make_trees_stats               \
             query_trees_volume             \
             make_catalog_markers_ascii     \
             make_cross_catalog_matches     \
-            query_matches                  \
             query_progenitors              \
             query_trees                    \
             query_forest_trees_IDs         \
@@ -35,6 +34,7 @@ BINFILES  = make_trees_stats               \
             make_trees_analysis_relaxation \
             make_single_matches            \
             make_forests                   \
+            query_matches                  \
             make_matched_catalog           \
             make_match_catalog             \
             convert_Bolshoi                \
