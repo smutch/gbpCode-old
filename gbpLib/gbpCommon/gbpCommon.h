@@ -92,6 +92,15 @@
 #define TTTP21 2097152
 #define TTTP22 4194304
 #define TTTP23 8388608
+#define TTTP24 16777216
+#define TTTP25 33554432
+#define TTTP26 67108864
+#define TTTP27 134217728
+#define TTTP28 268435456
+#define TTTP29 536870912
+#define TTTP30 1073741824
+#define TTTP31 2147483648
+#define TTTP32 4294967296
 
 #define MU_MMW         0.597  /* Mean molecular weight      */
 #define XI             1.0878 /* Xi=1+Y/(4*(1-Y)) w/ Y=0.26 */
