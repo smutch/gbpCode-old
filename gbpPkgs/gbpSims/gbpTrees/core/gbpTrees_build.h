@@ -44,11 +44,11 @@
                                                        //     to be the source of any fragmented halos)
 #define TREE_CASE_FRAGMENTED_STRAYED           TTTP12  // Set for halos that are marked TREE_CASE_FRAGMENTED (see below), and whose 
                                                        //    decendant_id!=a valid id (ie they are not a progenitor of anything). 
-#define TREE_CASE_FRAGMENTED_RETURNED          TTTP13  // Set for halos that are marked TREE_CASE_FRAGMENTED (see below), and whose 
-                                                       //    decendant_id==the id of the halo they are emerged from. 
-#define TREE_CASE_FRAGMENTED_EXCHANGED         TTTP14  // Set for halos that are marked TREE_CASE_FRAGMENTED (see below), and whose 
-                                                       //    decendant_id!=the id of the halo they are emerged but is nevertheless valid 
-                                                       //    (ie. they are still a progenitor of something). 
+#define TREE_CASE_FRAGMENTED_NORMAL            TTTP13  // Set for halos that are marked TREE_CASE_FRAGMENTED (see below), but
+                                                       //    are otherwise part of a connected progenitor line
+#define TREE_CASE_FRAGMENTED_EJECTED           TTTP14  // Set for halos that are marked TREE_CASE_FRAGMENTED (see below), for which
+                                                       //    a progenitor was possible but could not be used because it was needed
+                                                       //    as a progenitor of the bridged halo this fragmented halo is back matched to. 
 #define TREE_CASE_EMERGED_CANDIDATE            TTTP15  // Set when a halo is identified as a unique back-match to a halo marked TREE_CASE_BRIDGED and
                                                        //    is not selected as the bridged halo's descendant.  This switch is turned off if the halo
                                                        //    is marked TREE_CASE_EMERGED or TREE_CASE_FRAGMENTED_NEW.
@@ -73,8 +73,8 @@
                   TREE_CASE_MERGER,
                   TREE_CASE_FRAGMENTED_NEW,
                   TREE_CASE_FRAGMENTED_STRAYED,
-                  TREE_CASE_FRAGMENTED_RETURNED,
-                  TREE_CASE_FRAGMENTED_EXCHANGED,
+                  TREE_CASE_FRAGMENTED_NORMAL,
+                  TREE_CASE_FRAGMENTED_EJECTED,
                   TREE_CASE_2WAY_MATCH,
                   TREE_CASE_MOST_MASSIVE,
                   TREE_CASE_DOMINANT,
@@ -96,8 +96,8 @@
                   "MERGER",
                   "FRAGMENTED_NEW",
                   "FRAGMENTED_STRAYED",
-                  "FRAGMENTED_RETURNED",
-                  "FRAGMENTED_EXCHANGED",
+                  "FRAGMENTED_NORMAL",
+                  "FRAGMENTED_EJECTED",
                   "2WAY",
                   "MOST_MASSIVE",
                   "DOMINANT",
@@ -172,8 +172,8 @@ struct tree_horizontal_stats_info {
    int n_bridged;
    int n_emerged;
    int n_fragmented_strayed;
-   int n_fragmented_returned;
-   int n_fragmented_exchanged;
+   int n_fragmented_normal;
+   int n_fragmented_ejected;
    int n_emerged_progenitors;
    int n_invalid;
    int n_unprocessed;
@@ -182,8 +182,8 @@ struct tree_horizontal_stats_info {
    int max_bridged_size;
    int max_emerged_size;
    int max_fragmented_strayed_size;
-   int max_fragmented_returned_size;
-   int max_fragmented_exchanged_size;
+   int max_fragmented_normal_size;
+   int max_fragmented_ejected_size;
    int max_emerged_progenitor_size;
    int max_id;
 };
@@ -521,7 +521,8 @@ int check_if_halo_is_descendant(tree_horizontal_info *possible_progenitor,
                                 tree_horizontal_info *possible_descendant,
                                 int n_search);
 int check_if_halo_is_merger(int type);
-int check_if_halo_is_fragmented(int type);
+int check_if_type_is_fragmented(int type);
+int check_if_extended_type_is_fragmented(tree_horizontal_extended_info *halo);
 int check_if_descendant_is_back_matched(tree_horizontal_info *halo,
                                         tree_horizontal_info *halo_to_check);
 int check_if_match_is_better(tree_horizontal_info *target_halo,
@@ -852,6 +853,14 @@ void propagate_merger_info(tree_horizontal_extended_info **groups,   int *n_grou
                            int          l_read,
                            int          i_read_step,
                            int          n_wrap);
+void propagate_tree_ids(tree_horizontal_extended_info **groups,   int *n_groups,
+                        tree_horizontal_extended_info **subgroups,int *n_subgroups,
+                        int        **n_subgroups_group,
+                        int          i_read, // tree snapshot index
+                        int          j_read,
+                        int          l_read,
+                        int          i_read_step,
+                        int          n_wrap);
 void add_progenitor_to_halo(tree_horizontal_info **halos,
                             int                    i_file,
                             int                    i_halo,

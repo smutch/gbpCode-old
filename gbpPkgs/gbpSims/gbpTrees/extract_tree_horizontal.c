@@ -226,7 +226,7 @@ int main(int argc,char *argv[]){
           subgroup_tree_id_max=-1;
        }
        if(i_tree_extract_group==group_tree_id)
-          fprintf(fp_out_groups,"%4d %8d %8d %8d %8d %8d %d %8d %8d %le %le %le\n",i_read,i_group,group_file_index,group_id,n_subgroups_group,group_type,check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_STRAYED)||check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_RETURNED)||check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_EXCHANGED),subgroup_tree_id_min,subgroup_tree_id_max,group_properties.pos[0],group_properties.pos[1],group_properties.pos[2]);
+          fprintf(fp_out_groups,"%4d %8d %8d %8d %8d %8d %d %8d %8d %le %le %le\n",i_read,i_group,group_file_index,group_id,n_subgroups_group,group_type,check_if_type_is_fragmented(group_type),subgroup_tree_id_min,subgroup_tree_id_max,group_properties.pos[0],group_properties.pos[1],group_properties.pos[2]);
      }
      SID_fclose(&fp_in);
      fclose_catalog(&fp_group_properties);

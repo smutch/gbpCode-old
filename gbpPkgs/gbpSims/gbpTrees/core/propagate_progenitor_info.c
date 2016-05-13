@@ -91,6 +91,16 @@ void propagate_progenitor_info(int         *n_groups,
      //    before starting to process or write results.
      if(j_file>n_search){
         if(j_process<=i_read_stop){
+           // Propagate fragmented halo flags
+           if(flag_compute_fragmented)
+              propagate_fragmented_info(groups_read,   n_groups,
+                                        subgroups_read,n_subgroups,
+                                        n_subgroups_group,
+                                        i_process, // tree index
+                                        j_process, // actual snapshot number
+                                        l_process,
+                                        i_read_step,
+                                        n_wrap);
            // Set the identy of the dominant substructures of each group.
            //    This needs to be complete for all descendants before propagate_n_particles_peak() 
            //    is called, so we have to do it here.
@@ -105,6 +115,9 @@ void propagate_progenitor_info(int         *n_groups,
            // Propagate the peak halo size info. This 
            //    needs to be done for all halos before
            //    the merger information can be propagated.
+           //    Fragmented flags for the descendant snapshot
+           //    needs to have been set, but not for 
+           //    subsequent ones.
            propagate_n_particles_peak(groups_read,   n_groups,
                                       subgroups_read,n_subgroups,
                                       n_subgroups_group,
@@ -122,9 +135,20 @@ void propagate_progenitor_info(int         *n_groups,
                                  l_process,
                                  i_read_step,
                                  n_wrap);
-           // Propagate fragmented halo information...
+           // Propagate tree IDs along the progenitor lines with the highest peak particle count.
+           //    This needs to be done after mergers have been processed because we use
+           //    the tree case merger flags to do this.
+           propagate_tree_ids(groups_read,   n_groups,
+                              subgroups_read,n_subgroups,
+                              n_subgroups_group,
+                              i_process, // tree index
+                              j_process, // actual snapshot number
+                              l_process,
+                              i_read_step,
+                              n_wrap);
+           // Propagate bridged halo information...
            //    (n.b.: mergers need to be done before this because we will use those flags here)
-           if(flag_compute_fragmented){
+           if(flag_compute_fragmented)
               // ... propagate bridged halo information 
               propagate_bridge_info(groups_read,   n_groups,
                                     subgroups_read,n_subgroups,
@@ -134,16 +158,6 @@ void propagate_progenitor_info(int         *n_groups,
                                     l_process,
                                     i_read_step,
                                     n_wrap);
-              // ... propagate fragmented halo flags
-              propagate_fragmented_info(groups_read,   n_groups,
-                                        subgroups_read,n_subgroups,
-                                        n_subgroups_group,
-                                        i_process, // tree index
-                                        j_process, // actual snapshot number
-                                        l_process,
-                                        i_read_step,
-                                        n_wrap);
-           }
         }
         i_process++;
         l_process--;

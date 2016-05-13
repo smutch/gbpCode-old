@@ -40,13 +40,13 @@ void add_to_trees_horizontal_stats(tree_horizontal_stats_info *stats,int id,int 
       stats->max_fragmented_strayed_size=MAX(stats->max_fragmented_strayed_size,n_particles);
       stats->n_fragmented_strayed++;
    }
-   if(check_mode_for_flag(type,TREE_CASE_FRAGMENTED_RETURNED)){
-      stats->max_fragmented_returned_size=MAX(stats->max_fragmented_returned_size,n_particles);
-      stats->n_fragmented_returned++;
+   if(check_mode_for_flag(type,TREE_CASE_FRAGMENTED_NORMAL)){
+      stats->max_fragmented_normal_size=MAX(stats->max_fragmented_normal_size,n_particles);
+      stats->n_fragmented_normal++;
    }
-   if(check_mode_for_flag(type,TREE_CASE_FRAGMENTED_EXCHANGED)){
-      stats->max_fragmented_exchanged_size=MAX(stats->max_fragmented_exchanged_size,n_particles);
-      stats->n_fragmented_exchanged++;
+   if(check_mode_for_flag(type,TREE_CASE_FRAGMENTED_EJECTED)){
+      stats->max_fragmented_ejected_size=MAX(stats->max_fragmented_ejected_size,n_particles);
+      stats->n_fragmented_ejected++;
    }
 
    // Sanity checks

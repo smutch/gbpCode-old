@@ -37,7 +37,8 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    check_if_match_is_immediate.o                 \
 	    check_if_halo_is_descendant.o                 \
 	    check_if_halo_is_merger.o                     \
-	    check_if_halo_is_fragmented.o                 \
+	    check_if_type_is_fragmented.o                 \
+        check_if_extended_type_is_fragmented.o        \
 	    check_if_descendant_is_back_matched.o         \
 	    check_validity_of_tree_case_flag.o            \
 	    init_trees_data.o                             \
@@ -101,6 +102,7 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    propagate_n_particles_peak.o                  \
 	    propagate_fragmented_info.o                   \
 	    propagate_merger_info.o                       \
+	    propagate_tree_ids.o                          \
 	    add_progenitor_to_halo.o                      \
 	    assign_group_subgroup_order_vertical.o 
 LIBFILE   = 

@@ -22,23 +22,23 @@ void write_trees_horizontal_log_file(char *filename_log,int l_write,int j_write,
          }
          fprintf(fp,"# (%02d): Maximum %sgroup ID\n",                       i_column++,group_text_prefix);
          fprintf(fp,"# (%02d): # of %sgroups\n",                            i_column++,group_text_prefix);
-         fprintf(fp,"# (%02d): # of merging       %sgroups\n",              i_column++,group_text_prefix);
-         fprintf(fp,"# (%02d): # of strayed       %sgroups\n",              i_column++,group_text_prefix);
-         fprintf(fp,"# (%02d): # of dropped       %sgroups\n",              i_column++,group_text_prefix);
-         fprintf(fp,"# (%02d): # of bridged       %sgroups\n",              i_column++,group_text_prefix);
-         fprintf(fp,"# (%02d): # of emerged       %sgroups\n",              i_column++,group_text_prefix);
-         fprintf(fp,"# (%02d): # of fragmented    %sgroups strayed\n",      i_column++,group_text_prefix);
-         fprintf(fp,"# (%02d): # of fragmented    %sgroups returned\n",     i_column++,group_text_prefix);
-         fprintf(fp,"# (%02d): # of fragmented    %sgroups exchanged\n",    i_column++,group_text_prefix);
-         fprintf(fp,"# (%02d): # of matches to    %sgroup  emerged halos\n",i_column++,group_text_prefix);
-         fprintf(fp,"# (%02d): Largest strayed    %sgroup\n",               i_column++,group_text_prefix);
-         fprintf(fp,"# (%02d): Largest dropped    %sgroup\n",               i_column++,group_text_prefix);
-         fprintf(fp,"# (%02d): Largest bridged    %sgroup\n",               i_column++,group_text_prefix);
-         fprintf(fp,"# (%02d): Largest emerged    %sgroup\n",               i_column++,group_text_prefix);
-         fprintf(fp,"# (%02d): Largest strayed   fragmented %sgroup\n",     i_column++,group_text_prefix);
-         fprintf(fp,"# (%02d): Largest returned  fragmented %sgroup\n",     i_column++,group_text_prefix);
-         fprintf(fp,"# (%02d): Largest exchanged fragmented %sgroup\n",     i_column++,group_text_prefix);
-         fprintf(fp,"# (%02d): Largest emerged    %sgroup  progenitor\n",   i_column++,group_text_prefix);
+         fprintf(fp,"# (%02d): # of merging    %sgroups\n",              i_column++,group_text_prefix);
+         fprintf(fp,"# (%02d): # of strayed    %sgroups\n",              i_column++,group_text_prefix);
+         fprintf(fp,"# (%02d): # of dropped    %sgroups\n",              i_column++,group_text_prefix);
+         fprintf(fp,"# (%02d): # of bridged    %sgroups\n",              i_column++,group_text_prefix);
+         fprintf(fp,"# (%02d): # of emerged    %sgroups\n",              i_column++,group_text_prefix);
+         fprintf(fp,"# (%02d): # of fragmented %sgroups strayed\n",      i_column++,group_text_prefix);
+         fprintf(fp,"# (%02d): # of fragmented %sgroups normal\n",       i_column++,group_text_prefix);
+         fprintf(fp,"# (%02d): # of fragmented %sgroups ejected\n",      i_column++,group_text_prefix);
+         fprintf(fp,"# (%02d): # of matches to %sgroup  emerged halos\n",i_column++,group_text_prefix);
+         fprintf(fp,"# (%02d): Largest strayed %sgroup\n",               i_column++,group_text_prefix);
+         fprintf(fp,"# (%02d): Largest dropped %sgroup\n",               i_column++,group_text_prefix);
+         fprintf(fp,"# (%02d): Largest bridged %sgroup\n",               i_column++,group_text_prefix);
+         fprintf(fp,"# (%02d): Largest emerged %sgroup\n",               i_column++,group_text_prefix);
+         fprintf(fp,"# (%02d): Largest strayed fragmented %sgroup\n",    i_column++,group_text_prefix);
+         fprintf(fp,"# (%02d): Largest normal  fragmented %sgroup\n",    i_column++,group_text_prefix);
+         fprintf(fp,"# (%02d): Largest ejected fragmented %sgroup\n",    i_column++,group_text_prefix);
+         fprintf(fp,"# (%02d): Largest emerged %sgroup  progenitor\n",   i_column++,group_text_prefix);
       }
       fclose(fp);
    }
@@ -66,16 +66,16 @@ void write_trees_horizontal_log_file(char *filename_log,int l_write,int j_write,
            stats->n_bridged,
            stats->n_emerged,
            stats->n_fragmented_strayed,
-           stats->n_fragmented_returned,
-           stats->n_fragmented_exchanged,
+           stats->n_fragmented_normal,
+           stats->n_fragmented_ejected,
            stats->n_emerged_progenitors,
            stats->max_strayed_size,
            stats->max_dropped_size,
            stats->max_bridged_size,
            stats->max_emerged_size,
            stats->max_fragmented_strayed_size,
-           stats->max_fragmented_returned_size,
-           stats->max_fragmented_exchanged_size,
+           stats->max_fragmented_normal_size,
+           stats->max_fragmented_ejected_size,
            stats->max_emerged_progenitor_size);
    if(i_k_match==n_k_match-1)
       fprintf(fp,"\n");

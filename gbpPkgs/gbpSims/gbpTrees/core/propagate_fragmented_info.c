@@ -19,15 +19,11 @@ void propagate_fragmented_info(tree_horizontal_extended_info **groups,   int *n_
    int flag_merger;
    for(i_group=0,i_subgroup=0;i_group<n_groups[l_read];i_group++){
       int group_id                =groups[i_read%n_wrap][i_group].id;
-      int group_n_particles       =groups[i_read%n_wrap][i_group].n_particles;
       int group_tree_id           =groups[i_read%n_wrap][i_group].tree_id;
       int group_descendant_id     =groups[i_read%n_wrap][i_group].descendant_id;
       int group_type              =groups[i_read%n_wrap][i_group].type;
       int group_file_offset       =groups[i_read%n_wrap][i_group].descendant_file_offset;
       int group_index             =groups[i_read%n_wrap][i_group].descendant_index;
-      int group_n_particles_parent=groups[i_read%n_wrap][i_group].n_particles_parent;
-      int group_n_particles_desc  =groups[i_read%n_wrap][i_group].n_particles_desc;
-      int group_n_particles_proj  =groups[i_read%n_wrap][i_group].n_particles_proj;
       int group_score_desc        =groups[i_read%n_wrap][i_group].score_desc;
       int group_score_prog        =groups[i_read%n_wrap][i_group].score_prog;
       int group_snap_bridge       =groups[i_read%n_wrap][i_group].snap_bridge;
@@ -39,22 +35,22 @@ void propagate_fragmented_info(tree_horizontal_extended_info **groups,   int *n_
       flag_returned=(group_file_bridge==(i_read+group_file_offset) && group_index_bridge==group_index);
       flag_merger  =check_if_halo_is_merger(group_type);
 
-      // Propagate type.  Stop when the fragmented halo merges with something or returns to it's bridge.
+      // Propagate type.  Stop when the fragmented halo merges with something or 
+      //    returns to the main progenitor line of it's bridge.
       if(group_id==group_descendant_id && !flag_returned && !flag_merger){
          if(group_index>=0){ // Important for strayed cases
-            // Add the propagated type.  The check for TREE_CASE_MAIN_PROGENITOR is also
-            //    needed so that we don't propagate this type into any halos this one merges with.
+            // Add the propagated type.
             if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_STRAYED))
                groups[(i_read+group_file_offset)%n_wrap][group_index].type|=TREE_CASE_FRAGMENTED_STRAYED;
-            if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_RETURNED))
-               groups[(i_read+group_file_offset)%n_wrap][group_index].type|=TREE_CASE_FRAGMENTED_RETURNED;
-            if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_EXCHANGED))
-               groups[(i_read+group_file_offset)%n_wrap][group_index].type|=TREE_CASE_FRAGMENTED_EXCHANGED;
+            if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_NORMAL))
+               groups[(i_read+group_file_offset)%n_wrap][group_index].type|=TREE_CASE_FRAGMENTED_NORMAL;
+            if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_EJECTED))
+               groups[(i_read+group_file_offset)%n_wrap][group_index].type|=TREE_CASE_FRAGMENTED_EJECTED;
             // Count the number of flags the descendant already has switched on
             int i_count=0;
-            if(check_mode_for_flag(groups[(i_read+group_file_offset)%n_wrap][group_index].type,TREE_CASE_FRAGMENTED_STRAYED))   i_count++;
-            if(check_mode_for_flag(groups[(i_read+group_file_offset)%n_wrap][group_index].type,TREE_CASE_FRAGMENTED_RETURNED))  i_count++;
-            if(check_mode_for_flag(groups[(i_read+group_file_offset)%n_wrap][group_index].type,TREE_CASE_FRAGMENTED_EXCHANGED)) i_count++;
+            if(check_mode_for_flag(groups[(i_read+group_file_offset)%n_wrap][group_index].type,TREE_CASE_FRAGMENTED_STRAYED)) i_count++;
+            if(check_mode_for_flag(groups[(i_read+group_file_offset)%n_wrap][group_index].type,TREE_CASE_FRAGMENTED_NORMAL))  i_count++;
+            if(check_mode_for_flag(groups[(i_read+group_file_offset)%n_wrap][group_index].type,TREE_CASE_FRAGMENTED_EJECTED)) i_count++;
             // Check that the affected halo does not have more than one fragmented halo flag turned on
             if(i_count>1)
                SID_trap_error("Multiple (%d) TREE_CASE_FRAGMENT switches present (type=%d) for i_snap/i_group=%d/%d when a max of one is alowed. Progenitor info: i_snap/i_halo/type=%d/%d/%d",
@@ -73,13 +69,9 @@ void propagate_fragmented_info(tree_horizontal_extended_info **groups,   int *n_
       // Process subgroups
       for(j_subgroup=0;j_subgroup<n_subgroups_group[i_read%n_wrap][i_group];i_subgroup++,j_subgroup++){
          int subgroup_id                =subgroups[i_read%n_wrap][i_subgroup].id;
-         int subgroup_n_particles       =subgroups[i_read%n_wrap][i_subgroup].n_particles;
          int subgroup_tree_id           =subgroups[i_read%n_wrap][i_subgroup].tree_id;
          int subgroup_descendant_id     =subgroups[i_read%n_wrap][i_subgroup].descendant_id;
          int subgroup_type              =subgroups[i_read%n_wrap][i_subgroup].type;
-         int subgroup_n_particles_parent=subgroups[i_read%n_wrap][i_subgroup].n_particles_parent;
-         int subgroup_n_particles_desc  =subgroups[i_read%n_wrap][i_subgroup].n_particles_desc;
-         int subgroup_n_particles_proj  =subgroups[i_read%n_wrap][i_subgroup].n_particles_proj;
          int subgroup_score_desc        =subgroups[i_read%n_wrap][i_subgroup].score_desc;
          int subgroup_score_prog        =subgroups[i_read%n_wrap][i_subgroup].score_prog;
          int subgroup_snap_bridge       =subgroups[i_read%n_wrap][i_subgroup].snap_bridge;
@@ -93,22 +85,22 @@ void propagate_fragmented_info(tree_horizontal_extended_info **groups,   int *n_
          flag_returned=(subgroup_file_bridge==(i_read+subgroup_file_offset) && subgroup_index_bridge==subgroup_index);
          flag_merger  =check_if_halo_is_merger(subgroup_type);
 
-         // Propagate type.  Stop when the fragmented halo merges with something or returns to it's bridge.
+         // Propagate type.  Stop when the fragmented halo merges with something or 
+         //    returns to the main progenitor line of it's bridge.
          if(subgroup_id==subgroup_descendant_id && !flag_returned && !flag_merger){
             if(subgroup_index>=0){ // Important for strayed cases
-               // Add the propagated type.  The check for TREE_CASE_MAIN_PROGENITOR is also
-               //    needed so that we don't propagate this type into any halos this one merges with.
+               // Add the propagated type.
                if(check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_STRAYED))
                   subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type|=TREE_CASE_FRAGMENTED_STRAYED;
-               if(check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_RETURNED))
-                  subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type|=TREE_CASE_FRAGMENTED_RETURNED;
-               if(check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_EXCHANGED))
-                  subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type|=TREE_CASE_FRAGMENTED_EXCHANGED;
+               if(check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_NORMAL))
+                  subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type|=TREE_CASE_FRAGMENTED_NORMAL;
+               if(check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_EJECTED))
+                  subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type|=TREE_CASE_FRAGMENTED_EJECTED;
                // Count the number of flags the descendant already has switched on
                int i_count=0;
-               if(check_mode_for_flag(subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type,TREE_CASE_FRAGMENTED_STRAYED))   i_count++;
-               if(check_mode_for_flag(subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type,TREE_CASE_FRAGMENTED_RETURNED))  i_count++;
-               if(check_mode_for_flag(subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type,TREE_CASE_FRAGMENTED_EXCHANGED)) i_count++;
+               if(check_mode_for_flag(subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type,TREE_CASE_FRAGMENTED_STRAYED)) i_count++;
+               if(check_mode_for_flag(subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type,TREE_CASE_FRAGMENTED_NORMAL))  i_count++;
+               if(check_mode_for_flag(subgroups[(i_read+subgroup_file_offset)%n_wrap][subgroup_index].type,TREE_CASE_FRAGMENTED_EJECTED)) i_count++;
                // Check that the affected halo does not have more than one fragmented halo flag turned on
                if(i_count>1)
                   SID_trap_error("Multiple (%d) TREE_CASE_FRAGMENT switches present (type=%d) for i_snap/i_subgroup=%d/%d when a max of one is alowed. Progenitor info: i_snap/i_halo/type=%d/%d/%d",

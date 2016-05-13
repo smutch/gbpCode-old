@@ -11,9 +11,9 @@
 
 int check_treenode_if_fragmented(tree_node_info *halo){
    if(halo!=NULL)
-      return(check_mode_for_flag(halo->tree_case,TREE_CASE_FRAGMENTED_STRAYED)  ||
-             check_mode_for_flag(halo->tree_case,TREE_CASE_FRAGMENTED_RETURNED) ||
-             check_mode_for_flag(halo->tree_case,TREE_CASE_FRAGMENTED_EXCHANGED));
+      return(check_mode_for_flag(halo->tree_case,TREE_CASE_FRAGMENTED_STRAYED)||
+             check_mode_for_flag(halo->tree_case,TREE_CASE_FRAGMENTED_NORMAL) ||
+             check_mode_for_flag(halo->tree_case,TREE_CASE_FRAGMENTED_EJECTED));
    return(FALSE);
 }
 

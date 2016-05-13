@@ -24,8 +24,13 @@ void propagate_merger_info(tree_horizontal_extended_info **groups,   int *n_grou
       int n_progenitors=0;
       while(current_group!=NULL){
          // Decide if this halo is a better primary
-         if((current_group->n_particles_peak)>(primary_group->n_particles_peak))
-            primary_group=current_group;
+         if((current_group->n_particles_peak)>(primary_group->n_particles_peak)){
+            // Don't set fragmented halos to be primaries if it can be avoided
+            int flag_frag_old=check_if_extended_type_is_fragmented(primary_group);
+            int flag_frag_new=check_if_extended_type_is_fragmented(current_group);
+            if(!flag_frag_new || flag_frag_new==flag_frag_old)
+               primary_group=current_group;
+         }
          current_group=set_extended_next_progenitor(groups,current_group,n_wrap);
          n_progenitors++;
       }
@@ -50,8 +55,13 @@ void propagate_merger_info(tree_horizontal_extended_info **groups,   int *n_grou
          n_progenitors=0;
          while(current_subgroup!=NULL){
             // Decide if this halo is a better primary
-            if((current_subgroup->n_particles_peak)>(primary_subgroup->n_particles_peak))
-               primary_subgroup=current_subgroup;
+            if((current_subgroup->n_particles_peak)>(primary_subgroup->n_particles_peak)){
+               // Don't set fragmented halos to be primaries if it can be avoided
+               int flag_frag_old=check_if_extended_type_is_fragmented(primary_subgroup);
+               int flag_frag_new=check_if_extended_type_is_fragmented(current_subgroup);
+               if(!flag_frag_new || flag_frag_new==flag_frag_old)
+                  primary_subgroup=current_subgroup;
+            }
             current_subgroup=set_extended_next_progenitor(subgroups,current_subgroup,n_wrap);
             n_progenitors++;
          }

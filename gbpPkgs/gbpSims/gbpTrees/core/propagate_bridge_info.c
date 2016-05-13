@@ -19,7 +19,7 @@ void propagate_bridge_info(tree_horizontal_extended_info **groups,   int *n_grou
    for(i_group=0,i_subgroup=0;i_group<n_groups[l_read];i_group++){
       int group_type=groups[i_read%n_wrap][i_group].type;
       // Check if this halo is fragmented
-      if(check_if_halo_is_fragmented(group_type)){
+      if(check_if_type_is_fragmented(group_type)){
          // Advance the bridge to it's descendant for the currect time. Note that n_wrap needs to be
          //   at least 2*n_search+2 so that we are sure to have the bridged halo as well
          int group_snap_bridge =groups[i_read%n_wrap][i_group].snap_bridge;
@@ -53,7 +53,7 @@ void propagate_bridge_info(tree_horizontal_extended_info **groups,   int *n_grou
       for(j_subgroup=0;j_subgroup<n_subgroups_group[i_read%n_wrap][i_group];i_subgroup++,j_subgroup++){
          int subgroup_type=subgroups[i_read%n_wrap][i_subgroup].type;
          // Check if this halo is fragmented
-         if(check_if_halo_is_fragmented(subgroup_type)){
+         if(check_if_type_is_fragmented(subgroup_type)){
             // Advance the bridge to it's descendant for the currect time. Note that n_wrap needs to be
             //   at least 2*n_search+2 so that we are sure to have the bridged halo as well
             int subgroup_snap_bridge =subgroups[i_read%n_wrap][i_subgroup].snap_bridge;

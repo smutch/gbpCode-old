@@ -30,8 +30,8 @@ void compute_trees_analysis_fragmented_halos(tree_info *trees,char *filename_out
 
   // Count the number of fragmented halos 
   SID_log("Counting fragmented halos...",SID_LOG_OPEN|SID_LOG_TIMER);
-  int n_fragmented                 =0;
-  int n_fragmented_new             =0;
+  int n_fragmented    =0;
+  int n_fragmented_new=0;
   for(int i_snap=0;i_snap<trees->n_snaps;i_snap++){
      tree_node_info *current_halo=neighbour_list_start[i_snap];
      while(current_halo!=NULL){
