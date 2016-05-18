@@ -102,7 +102,6 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    propagate_n_particles_peak.o                  \
 	    propagate_fragmented_info.o                   \
 	    propagate_merger_info.o                       \
-	    propagate_tree_ids.o                          \
 	    add_progenitor_to_halo.o                      \
 	    assign_group_subgroup_order_vertical.o 
 LIBFILE   = 

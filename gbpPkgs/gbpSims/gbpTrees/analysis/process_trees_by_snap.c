@@ -18,16 +18,16 @@ void process_trees_fctn_fin_snap_null (tree_info *trees,void *params,int mode,in
 void process_trees_fctn_fin_null      (tree_info *trees,void *params,int mode,int i_type){}
 
 void process_trees_by_snap(tree_info  *trees,
-                                          void       *params,
-                                          int         mode,
-                                          int         i_snap_lo,
-                                          int         n_snap_process,
-                                          void      (*init_fctn)     (tree_info *trees,void *params,int mode,int i_type),
-                                          void      (*init_snap_fctn)(tree_info *trees,void *params,int mode,int i_type,int flag_init,int i_snap),
-                                          int       (*select_fctn)   (tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo),
-                                          void      (*analyze_fctn)  (tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo),
-                                          void      (*fin_snap_fctn) (tree_info *trees,void *params,int mode,int i_type,int flag_init,int i_snap),
-                                          void      (*fin_fctn)      (tree_info *trees,void *params,int mode,int i_type)){
+                           void       *params,
+                           int         mode,
+                           int         i_snap_lo,
+                           int         n_snap_process,
+                           void      (*init_fctn)     (tree_info *trees,void *params,int mode,int i_type),
+                           void      (*init_snap_fctn)(tree_info *trees,void *params,int mode,int i_type,int flag_init,int i_snap),
+                           int       (*select_fctn)   (tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo),
+                           void      (*analyze_fctn)  (tree_info *trees,void *params,int mode,int i_type,int flag_init,tree_node_info *halo),
+                           void      (*fin_snap_fctn) (tree_info *trees,void *params,int mode,int i_type,int flag_init,int i_snap),
+                           void      (*fin_fctn)      (tree_info *trees,void *params,int mode,int i_type)){
 
    // Perform sanity check on the passed snapshot range
    int i_snap_hi=i_snap_lo+n_snap_process-1;

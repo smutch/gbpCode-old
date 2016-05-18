@@ -853,14 +853,6 @@ void propagate_merger_info(tree_horizontal_extended_info **groups,   int *n_grou
                            int          l_read,
                            int          i_read_step,
                            int          n_wrap);
-void propagate_tree_ids(tree_horizontal_extended_info **groups,   int *n_groups,
-                        tree_horizontal_extended_info **subgroups,int *n_subgroups,
-                        int        **n_subgroups_group,
-                        int          i_read, // tree snapshot index
-                        int          j_read,
-                        int          l_read,
-                        int          i_read_step,
-                        int          n_wrap);
 void add_progenitor_to_halo(tree_horizontal_info **halos,
                             int                    i_file,
                             int                    i_halo,

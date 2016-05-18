@@ -2,7 +2,7 @@
 
 if ($#argv < 5) then
   echo
-  echo 'Syntax: run_mpi #nodes #proc_per_node wall_time_in_hrs pmem mpi_command ...'
+  echo 'Syntax: run_mpi #nodes #proc_per_node wall_time_in_hrs pmem [queue] mpi_command ...'
   echo '------'
   echo
   exit(1)
