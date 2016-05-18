@@ -20,10 +20,10 @@ struct select_group_params_local{
 
 int check_case_for_fragmented_local(int tree_case);
 int check_case_for_fragmented_local(int tree_case){
-      return(check_mode_for_flag(tree_case,TREE_CASE_FRAGMENTED_NEW)      ||
-             check_mode_for_flag(tree_case,TREE_CASE_FRAGMENTED_STRAYED)  ||
-             check_mode_for_flag(tree_case,TREE_CASE_FRAGMENTED_RETURNED) ||
-             check_mode_for_flag(tree_case,TREE_CASE_FRAGMENTED_EXCHANGED));
+      return(check_mode_for_flag(tree_case,TREE_CASE_FRAGMENTED_NEW)     ||
+             check_mode_for_flag(tree_case,TREE_CASE_FRAGMENTED_STRAYED) ||
+             check_mode_for_flag(tree_case,TREE_CASE_FRAGMENTED_NORMAL)  ||
+             check_mode_for_flag(tree_case,TREE_CASE_FRAGMENTED_EJECTED));
 }
 
 int count_group_ids_local(int                i_group,
