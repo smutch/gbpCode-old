@@ -92,8 +92,16 @@ void propagate_progenitor_info(int         *n_groups,
      if(j_file>n_search){
         if(j_process<=i_read_stop){
 
-           // Propagate fragmented halo flags
-           if(flag_compute_fragmented)
+           // Propagate bridged and fragmented halo flags
+           if(flag_compute_fragmented){
+              propagate_bridge_info(groups_read,   n_groups,
+                                    subgroups_read,n_subgroups,
+                                    n_subgroups_group,
+                                    i_process, // tree index
+                                    j_process, // actual snapshot number
+                                    l_process,
+                                    i_read_step,
+                                    n_wrap);
               propagate_fragmented_info(groups_read,   n_groups,
                                         subgroups_read,n_subgroups,
                                         n_subgroups_group,
@@ -102,6 +110,7 @@ void propagate_progenitor_info(int         *n_groups,
                                         l_process,
                                         i_read_step,
                                         n_wrap);
+           }
 
            // Set the identy of the dominant substructures of each group.
            //    This needs to be complete for all descendants before propagate_n_particles_peak() 
@@ -139,19 +148,6 @@ void propagate_progenitor_info(int         *n_groups,
                                  l_process,
                                  i_read_step,
                                  n_wrap);
-
-           // Propagate bridged halo information...
-           //    (n.b.: mergers need to be done before this because we will use those flags here)
-           if(flag_compute_fragmented)
-              // ... propagate bridged halo information 
-              propagate_bridge_info(groups_read,   n_groups,
-                                    subgroups_read,n_subgroups,
-                                    n_subgroups_group,
-                                    i_process, // tree index
-                                    j_process, // actual snapshot number
-                                    l_process,
-                                    i_read_step,
-                                    n_wrap);
         }
         i_process++;
         l_process--;

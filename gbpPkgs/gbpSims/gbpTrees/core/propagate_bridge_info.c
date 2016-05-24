@@ -15,7 +15,6 @@ void propagate_bridge_info(tree_horizontal_extended_info **groups,   int *n_grou
    int i_group;
    int i_subgroup;
    int j_subgroup;
-   int flag_returned;
    for(i_group=0,i_subgroup=0;i_group<n_groups[l_read];i_group++){
       int group_type=groups[i_read%n_wrap][i_group].type;
       // Check if this halo is fragmented

@@ -57,16 +57,17 @@
 #define TREE_CASE_SET_BY_BACKMATCH             TTTP18  // Set in cases where a descendant was set using backmatch information, rather
                                                        //    than forematch information.  In these cases, the halo's given matching score and
                                                        //    2way flag are from the back match info, not the forematch info.
-#define TREE_CASE_GHOST                        TTTP19  // Marks ghost halos in ghost-populated trees
-#define TREE_CASE_GHOST_NULL                   TTTP20  // Marks a ghost halo where a subgroup is it's own group.
+#define TREE_CASE_DOMINANT_DROPPED             TTTP19  // Marks a group whose dominant substructure is presently dropped
+#define TREE_CASE_GHOST                        TTTP20  // Marks ghost halos in ghost-populated trees
+#define TREE_CASE_GHOST_NULL                   TTTP21  // Marks a ghost halo where a subgroup is it's own group.
                                                        //    This is a default behaviour that occurs when a group is strayed but one of 
                                                        //    it's subgroups isn't.
-#define TREE_CASE_REINIT_DOMINANT              TTTP21  // For internal use.  This should never be seen in the output.
-#define TREE_CASE_UNPROCESSED                  TTTP22  // For internal use.  This should never be seen in the output.
-#define TREE_CASE_INVALID                      TTTP23  // For internal use.  This should never be seen in the output.
+#define TREE_CASE_REINIT_DOMINANT              TTTP22  // For internal use.  This should never be seen in the output.
+#define TREE_CASE_UNPROCESSED                  TTTP23  // For internal use.  This should never be seen in the output.
+#define TREE_CASE_INVALID                      TTTP24  // For internal use.  This should never be seen in the output.
 
 #ifdef _MAIN
-   int   n_tree_case_flag_list=22;
+   int   n_tree_case_flag_list=23;
    int   tree_case_flag_list[]={
                   TREE_CASE_NO_PROGENITORS,
                   TREE_CASE_STRAYED,
@@ -78,6 +79,7 @@
                   TREE_CASE_2WAY_MATCH,
                   TREE_CASE_MOST_MASSIVE,
                   TREE_CASE_DOMINANT,
+                  TREE_CASE_DOMINANT_DROPPED,
                   TREE_CASE_BRIDGED,
                   TREE_CASE_DROPPED,
                   TREE_CASE_EMERGED,
@@ -101,6 +103,7 @@
                   "2WAY",
                   "MOST_MASSIVE",
                   "DOMINANT",
+                  "DOMINANT_DROPPED",
                   "BRIDGED",
                   "DROPPED",
                   "EMERGED",
@@ -489,6 +492,7 @@ void read_trees_pointers(tree_info        *trees,
                          int               i_read_ptrs,
                          int               mode);
 void read_trees_catalogs(tree_info *trees,int mode);
+void read_trees_substructure_hierarchy(tree_info *trees);
 void read_AHF_for_trees(char       *filename_root,
                         int         i_file,
                         plist_info *plist,

@@ -203,10 +203,16 @@ void identify_progenitors(tree_horizontal_info **halos,
             if(halo_j->forematch_best.halo==NULL)
                memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
             // ... else, if this is a subsequent match, decide if it is better.
-            //     Make sure that the most massive halo is a progenitor.
-            else if(check_if_match_is_better(halo_j,&(halo_j->forematch_best),&forematch_new))
+            //     Make sure that the most massive halo is a progenitor.  An
+            //     attempt was made to use a halo not matched to an emerged
+            //     halo for the progenitor here.  Unfortunately, this does not
+            //     work in cases where the cores of both halos are ejected and
+            //     another small halo is present to become a progenitor.  This
+            //     leads to one major merger being turned into two.  Simply
+            //     choosing the largest halo here conserves merger count at least.
+            //     If it's core becomes fragmented, it will be labled ejected below.
+            else if(check_if_match_is_bigger(halo_j,&(halo_j->forematch_best),&forematch_new))
                memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
-            }
          }
       }
       // Loop a second time to set TREE_CASE_FRAGMENTED_EJECTED flags ...
@@ -216,7 +222,7 @@ void identify_progenitors(tree_horizontal_info **halos,
          // ... if this halo has been matched to something ...
          if(halo_j!=NULL){
             tree_horizontal_info *halo_k=halo_j->forematch_best.halo;
-            int flag_is_best_progenitor =((halo_j->forematch_best.halo) ==(halo_i));
+            int flag_is_best_progenitor=((halo_j->forematch_best.halo)==(halo_i));
             // ... and it has been selected as a best match above ...
             if(flag_is_best_progenitor){
                // ... but was identified as a possible progenitor of an en emerged halo,
