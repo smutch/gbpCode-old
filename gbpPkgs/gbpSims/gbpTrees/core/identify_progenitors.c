@@ -211,7 +211,7 @@ void identify_progenitors(tree_horizontal_info **halos,
             //     leads to one major merger being turned into two.  Simply
             //     choosing the largest halo here conserves merger count at least.
             //     If it's core becomes fragmented, it will be labled ejected below.
-            else if(check_if_match_is_bigger(halo_j,&(halo_j->forematch_best),&forematch_new))
+            else if(check_if_match_is_bigger_peak(halo_j,&(halo_j->forematch_best),&forematch_new))
                memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
          }
       }
