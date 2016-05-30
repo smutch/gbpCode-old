@@ -114,7 +114,7 @@ SID_trap_error("This function is not working yet.  It needs to be debugged.",ERR
                      marker=&(markers_i->first_became_satellite);
                      break;
                   case 3:
-                     marker=&(markers_i->joined_current_parent);
+                     marker=&(markers_i->joined_current_parent_top);
                      break;
                   case 4:
                      marker=&(markers_i->peak_mass);

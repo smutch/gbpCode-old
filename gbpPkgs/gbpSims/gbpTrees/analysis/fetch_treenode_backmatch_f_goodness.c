@@ -11,7 +11,7 @@
 
 float fetch_treenode_backmatch_f_goodness(tree_info *trees,tree_node_info *halo){
    if(halo!=NULL){
-      if(halo->parent==NULL){
+      if(halo->parent_top==NULL){
          if(trees->group_backmatch_score!=NULL){
             float score=trees->group_backmatch_score[halo->snap_tree][halo->neighbour_index];
             int   n_p  =halo->n_particles;

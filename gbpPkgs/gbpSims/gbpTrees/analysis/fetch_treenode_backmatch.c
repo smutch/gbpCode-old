@@ -11,7 +11,7 @@
 
 tree_node_info *fetch_treenode_backmatch(tree_info *trees,tree_node_info *halo){
    if(halo!=NULL){
-      if(halo->parent==NULL){
+      if(halo->parent_top==NULL){
          if(trees->group_backmatch_pointers!=NULL)
             return(trees->group_backmatch_pointers[halo->snap_tree][halo->neighbour_index]);
          else

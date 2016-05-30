@@ -19,6 +19,7 @@ double fetch_treenode_SSFctn(tree_info *trees,tree_node_info *halo){
       int np_i;
       int i_sub=0;
       tree_node_info *current_substructure=halo->substructure_first;
+SID_trap_error("fetch_treenode_SSFctn() needs to be checked!",ERROR_NONE);
       while(current_substructure!=NULL){
          np_i            =fetch_treenode_n_particles(trees,current_substructure);
          np_substructure+=np_i;

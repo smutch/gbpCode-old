@@ -15,7 +15,7 @@ double fetch_treenode_c_NFW(tree_info *trees,tree_node_info *halo){
    static float **c_NFW_subgroups=NULL;
    if(halo!=NULL){
       float **c_NFW;
-      if(halo->parent==NULL){
+      if(halo->parent_top==NULL){
          if(c_NFW_groups==NULL)
             c_NFW_groups=(float **)ADaPS_fetch(trees->data,"c_NFW_groups");
          c_NFW=c_NFW_groups;

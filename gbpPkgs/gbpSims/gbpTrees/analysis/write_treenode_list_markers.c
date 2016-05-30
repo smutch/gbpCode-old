@@ -133,7 +133,7 @@ void write_treenode_list_markers(tree_info *trees,const char *filename_out_root,
                        break;
                     case 10:
                        sprintf(write_name,"parent");
-                       if(current_halo!=NULL) node_write=current_halo->parent;
+                       if(current_halo!=NULL) node_write=current_halo->parent_top;
                        break;
                     case 11:
                        sprintf(write_name,"first_became_satellite");
@@ -141,7 +141,7 @@ void write_treenode_list_markers(tree_info *trees,const char *filename_out_root,
                        break;
                     case 12:
                        sprintf(write_name,"joined_current_parent");
-                       if(markers!=NULL) node_write=markers->joined_current_parent;
+                       if(markers!=NULL) node_write=markers->joined_current_parent_top;
                        break;
                  }
 
@@ -151,7 +151,7 @@ void write_treenode_list_markers(tree_info *trees,const char *filename_out_root,
                     t_node       =trees->t_list[i_z_node];
                     z_node       =trees->z_list[i_z_node];
                     M_node       =fetch_treenode_M_vir(trees,node_write);
-                    M_node_parent=fetch_treenode_M_vir(trees,node_write->parent);
+                    M_node_parent=fetch_treenode_M_vir(trees,node_write->parent_top);
                     n_p_node     =fetch_treenode_n_particles(trees,node_write);
                  }
                  else{

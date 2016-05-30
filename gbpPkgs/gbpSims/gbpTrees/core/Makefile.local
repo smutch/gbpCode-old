@@ -33,6 +33,7 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    check_validity_of_emerged_match.o             \
 	    check_if_match_is_better.o                    \
 	    check_if_match_is_bigger.o                    \
+	    check_if_match_is_bigger_peak.o               \
 	    check_if_match_is_simple.o                    \
 	    check_if_match_is_immediate.o                 \
 	    check_if_halo_is_descendant.o                 \
@@ -46,13 +47,16 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    change_horizontal_ID_recursive.o              \
 	    compute_substructure_order_recursive.o        \
 	    compute_progenitor_order_recursive.o          \
+	    compute_peak_particle_count_recursive.o       \
+	    compute_inclusive_particle_count_recursive.o  \
 	    compute_progenitor_score_vertical_recursive.o \
 	    assign_depth_first_index_recursive.o          \
 	    assign_depth_first_index_recursive.o          \
 	    add_node_to_trees.o                           \
+	    add_node_to_substructure_hierarchy.o          \
+	    add_node_to_vertical_tree.o                   \
 	    free_trees_vertical.o                         \
 	    init_trees_vertical.o                         \
-	    add_node_to_vertical_tree.o                   \
 	    construct_unique_vertical_tree_id.o           \
 	    compute_trees_vertical.o                      \
 	    finalize_trees_vertical.o                     \

@@ -120,7 +120,37 @@ void read_trees(const char *filename_SSimPL_root,
      (*trees)->subgroup_forematch_score   =forematch_pointers_subgroups_score;
      flag_read_extended_pointers=TRUE;
   }
-  
+
+  // Check if the halo files have substructure information.  If they do, we will read it
+  //    as we read the trees to set the substructure hierarchy pointers.
+  char  filename_in[MAX_FILENAME_LENGTH];
+  int   flag_read_sub_pointers=FALSE;
+  if(SID.I_am_Master){
+     FILE *fp_test=NULL;
+     sprintf(filename_in,"%s/halos/%s_%03d.catalog_subgroups",filename_SSimPL_root,filename_halos_version,i_read_stop);
+     fp_test=fopen(filename_in,"r");
+     int n_subgroups_in;fread_verify(&n_subgroups_in,sizeof(int),1,fp_test);
+     int offset_size;   fread_verify(&offset_size,   sizeof(int),1,fp_test);
+     fseeko(fp_test,n_subgroups_in*(sizeof(int)+offset_size),SEEK_CUR);
+     int test;          fread(&offset_size,sizeof(int),1,fp_test); // make sure not to verify here!
+     flag_read_sub_pointers=!feof(fp_test);
+     fclose(fp_test);
+  }
+  SID_Bcast(&flag_read_sub_pointers,sizeof(int),MASTER_RANK,SID.COMM_WORLD);
+  if(flag_read_sub_pointers)
+     SID_log("Substructure hierarchy pointers present and will be used.",SID_LOG_COMMENT);
+  else
+     SID_log("Substructure hierarchy pointers not present and will not be used.",SID_LOG_COMMENT);
+
+  // Maintain a list of substructure pointers for
+  //    setting substructure hierarchy pointers
+  tree_node_info **group_substructure_pointers=NULL;
+  int n_hierarchy_alloc=0;
+  if(flag_read_sub_pointers){
+     n_hierarchy_alloc          =32;
+     group_substructure_pointers=(tree_node_info **)SID_malloc(n_hierarchy_alloc*sizeof(tree_node_info *));
+  }
+
   // Loop over all the horizontal tree files in order of decreasing snapshot number, hanging halos on the trees as we go
   //    For the back match pointer reading, the halos being pointed to must be in place before the read, so
   //    we have to wait until (n_search+1) snapshots have been processed before we start reading those files.
@@ -147,12 +177,11 @@ void read_trees(const char *filename_SSimPL_root,
     SID_log("Processing snapshot %03d (%03d of %03d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read,i_file+1,n_snaps);
 
     // Open horizontal tree file
-    char filename_in[MAX_FILENAME_LENGTH];
     SID_fp fp_trees_in;
     sprintf(filename_in,"%s/horizontal_trees_%03d.dat",filename_input_dir_horizontal_trees,i_read);
     SID_fopen(filename_in,"r",&fp_trees_in);
 
-    // Open the halo files and read their header (needed for halo particle counts)
+    // Open the halo files and read thier header (needed for halo particle counts)
     char   filename_input_halos_groups[MAX_FILENAME_LENGTH];
     char   filename_input_halos_subgroups[MAX_FILENAME_LENGTH];
     int    n_groups_cat;
@@ -170,6 +199,18 @@ void read_trees(const char *filename_SSimPL_root,
     SID_fread_all(&offset_size,    sizeof(int),1,&fp_subgroups_in);
     (*trees)->n_groups_catalog[i_file]   =n_groups_cat;
     (*trees)->n_subgroups_catalog[i_file]=n_subgroups_cat;
+
+    // Set a pointer to the substructure hierarchy pointers if they are being read
+    SID_fp fp_hierarchy_in;
+    if(flag_read_sub_pointers){
+       int n_subgroups_in;
+       int offset_size_in;
+       SID_fopen(filename_input_halos_subgroups,"r",&fp_hierarchy_in);
+       SID_fread_all(&n_subgroups_in,sizeof(int),1,&fp_hierarchy_in);
+       SID_fread_all(&offset_size_in,sizeof(int),1,&fp_hierarchy_in);
+       SID_fseek(&fp_hierarchy_in,sizeof(int),   n_subgroups_in,SID_SEEK_CUR);
+       SID_fseek(&fp_hierarchy_in,offset_size_in,n_subgroups_in,SID_SEEK_CUR);
+    }
 
     // Read tree file header
     int n_step_in;
@@ -198,6 +239,7 @@ void read_trees(const char *filename_SSimPL_root,
        SID_trap_error("Subgroup counts don't match between datasets (ie. %d!=%d)",ERROR_LOGIC,n_subgroups_cat,n_subgroups);
 
     // Initialize read buffers
+    SID_fp_buffer *fp_hierarchy_in_buffer=NULL;
     SID_fp_buffer *fp_subgroups_in_buffer=NULL;
     SID_fp_buffer *fp_groups_in_buffer   =NULL;
     SID_fp_buffer *fp_trees_in_buffer    =NULL;
@@ -205,6 +247,8 @@ void read_trees(const char *filename_SSimPL_root,
     init_SID_fp_buffer(&fp_subgroups_in,(size_t)n_subgroups*sizeof(int),SIZE_OF_MEGABYTE,&fp_subgroups_in_buffer);
     init_SID_fp_buffer(&fp_groups_in,   (size_t)n_groups   *sizeof(int),SIZE_OF_MEGABYTE,&fp_groups_in_buffer);
     init_SID_fp_buffer(&fp_trees_in,    n_bytes_trees,                  SIZE_OF_MEGABYTE,&fp_trees_in_buffer);
+    if(flag_read_sub_pointers)
+       init_SID_fp_buffer(&fp_hierarchy_in,(size_t)n_subgroups*sizeof(int),SIZE_OF_MEGABYTE,&fp_hierarchy_in_buffer);
 
     // Read each group in turn
     int    n_groups_unused        =0;
@@ -232,12 +276,20 @@ void read_trees(const char *filename_SSimPL_root,
       else
         group_descendant_snap=(i_file+group_file_offset);
 
+      // If we are reading the substructure hieararchy, maintain a list
+      //    of pointers for this group which we can use to set these pointers
+      if(flag_read_sub_pointers && n_subgroups_group>n_hierarchy_alloc){
+         SID_free(SID_FARG group_substructure_pointers);
+         n_hierarchy_alloc=MAX(2*n_hierarchy_alloc,n_subgroups_group);
+         group_substructure_pointers=(tree_node_info **)SID_malloc(n_hierarchy_alloc*sizeof(tree_node_info *));
+      }
+
       // Read each subgroup in turn
       int j_subgroup;
       int i_subgroup_valid;
       tree_node_info *group_node;
       tree_node_info *subgroup_node;
-      for(j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
+      for(j_subgroup=0;j_subgroup<n_subgroups_group;j_subgroup++){
          int n_particles_subgroup;     SID_fread_all_buffer(&n_particles_subgroup,     sizeof(int),1,fp_subgroups_in_buffer);
          int subgroup_id;              SID_fread_all_buffer(&subgroup_id,              sizeof(int),1,fp_trees_in_buffer);
          int subgroup_tree_case;       SID_fread_all_buffer(&subgroup_tree_case,       sizeof(int),1,fp_trees_in_buffer);
@@ -267,6 +319,7 @@ void read_trees(const char *filename_SSimPL_root,
          }
 
          // Add node to trees if this subgroup belongs to a local forest ...
+         subgroup_node=NULL;
          if(i_forest>=0 && i_forest<(*trees)->n_forests_local){ 
             // ... add the group ...
             if(!flag_group_added){
@@ -279,7 +332,7 @@ void read_trees(const char *filename_SSimPL_root,
                                  i_group,                // Halo's file index
                                  group_descendant_snap,  // Descendant's snap
                                  group_file_index,       // Descendant's index
-                                 NULL,                   // Pointer to the new node's group
+                                 NULL,                   // Pointer to this halo's group.  NULL if halo is a group.
                                  &group_node);           // Pointer to the new node
                group_node->n_particles_peak=group_n_particles_peak;
                flag_group_added=TRUE;
@@ -291,13 +344,20 @@ void read_trees(const char *filename_SSimPL_root,
                               n_particles_subgroup,     // Number of particles
                               subgroup_id,              // Halo's tree ID
                               i_file,                   // Halo's tree snapshot number
-                              i_subgroup,               // Halo's file index
+                              i_subgroup+j_subgroup,    // Halo's file index
                               subgroup_descendant_snap, // Descendant's snap
                               subgroup_file_index,      // Descendant's index
-                              group_node,               // Pointer to the new node's group
+                              group_node,               // Pointer to this halo's group.  NULL if halo is a group.
                               &subgroup_node);          // Pointer to the new node
             subgroup_node->n_particles_peak=subgroup_n_particles_peak;
          }
+         // Add new pointer to substructure list (if needed)
+         if(flag_read_sub_pointers)
+            group_substructure_pointers[j_subgroup]=subgroup_node;
+         else
+            add_node_to_substructure_hierarchy((*trees),      // The tree datastructure
+                                               subgroup_node, // Pointer to the substructure being added
+                                               group_node);   // Pointer to its parent
       }
 
       // Check how many ranks have used this group.  Should be just one.
@@ -307,6 +367,46 @@ void read_trees(const char *filename_SSimPL_root,
       else if(flag_group_added>1)
          n_groups_added_multiply++;
 
+      // Build substructure hierarchy
+      if(flag_read_sub_pointers){
+         // Process each of this group's substructures
+         int flag_central_set=FALSE;
+         for(j_subgroup=0;j_subgroup<n_subgroups_group;j_subgroup++){
+            // Read and set substructure hierarchy pointers
+            int parent_pointer=-1;
+            SID_fread_all_buffer(&parent_pointer,sizeof(int),1,fp_hierarchy_in_buffer);
+            tree_node_info *parent_node=NULL;
+            // If a substructure is labeled as belonging to '0' or itself,
+            //    then it belongs to the top substructure level.
+            //    Everything else is a descendant of these.
+            if(parent_pointer<=0 || parent_pointer==j_subgroup){
+               parent_node     =group_node;
+               flag_central_set=TRUE;
+            }
+            else{
+               parent_node=group_substructure_pointers[parent_pointer];
+               if(parent_node==NULL)
+                  SID_trap_error("Failed to set a substructure pointer (rank=%d,i_subgroup=%d,parent=%d)",ERROR_LOGIC,SID.My_rank,i_subgroup+j_subgroup,parent_pointer);
+            }
+            // Add halo to the hierarchy
+            tree_node_info *current_subgroup=group_substructure_pointers[j_subgroup];
+            if(current_subgroup!=NULL){
+               add_node_to_substructure_hierarchy((*trees),         // The tree datastructure
+                                                  current_subgroup, // Pointer to the substructure being added
+                                                  parent_node);     // Pointer to its parent
+            }
+         }
+         // Sanity Check
+         if(!flag_central_set && n_subgroups_group>0)
+            SID_trap_error("Failed to identify a central substructure for a group with substructure (rank=%d,i_group=%d,i_subgroup=%d,n_subgroups_group=%d)",
+                           ERROR_LOGIC,SID.My_rank,i_group,i_subgroup,n_subgroups_group);
+         // Build inclusive particle counts
+         for(j_subgroup=0;j_subgroup<n_subgroups_group;j_subgroup++)
+            compute_inclusive_particle_count_recursive((*trees),group_substructure_pointers[j_subgroup],NULL);
+      }
+
+      // Increment global subgroup counter
+      i_subgroup+=n_subgroups_group;
     } // i_group
 
     // Free the buffers and perform sanity checks
@@ -316,6 +416,10 @@ void read_trees(const char *filename_SSimPL_root,
     free_SID_fp_buffer(&fp_subgroups_in_buffer);
     free_SID_fp_buffer(&fp_groups_in_buffer);
     free_SID_fp_buffer(&fp_trees_in_buffer);
+    if(flag_read_sub_pointers){
+       SID_fclose(&fp_hierarchy_in);
+       free_SID_fp_buffer(&fp_hierarchy_in_buffer);
+    }
 
     // Update the temporary look-up arrays
     update_trees_lookup((*trees),i_file);
@@ -379,6 +483,7 @@ void read_trees(const char *filename_SSimPL_root,
   calc_max((*trees)->n_subgroups_forest_local,&((*trees)->max_n_subgroups_forest_local),(*trees)->n_forests_local,SID_INT,CALC_MODE_DEFAULT);
 
   // Clean-up
+  SID_free(SID_FARG group_substructure_pointers);
   if(!check_mode_for_flag((*trees)->mode,TREE_MODE_REFERENCE))
      free_trees_lookup((*trees));
 

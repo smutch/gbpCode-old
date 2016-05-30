@@ -12,7 +12,7 @@
 double fetch_treenode_match_score(tree_info *trees,tree_node_info *halo){
    if(halo!=NULL){
       float match_score;
-      if(halo->parent==NULL){
+      if(halo->parent_top==NULL){
          if(trees->group_match_scores!=NULL)
             match_score=trees->group_match_scores[halo->snap_tree][halo->neighbour_index];
          else

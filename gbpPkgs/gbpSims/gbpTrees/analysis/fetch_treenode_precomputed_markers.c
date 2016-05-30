@@ -13,7 +13,7 @@ tree_markers_info *fetch_treenode_precomputed_markers(tree_info *trees,tree_node
    tree_markers_info *markers=NULL;
    if(halo!=NULL){
       tree_markers_info **markers_precomputed=NULL;
-      if(halo->parent!=NULL)
+      if(halo->parent_top!=NULL)
          markers_precomputed=trees->subgroup_markers;
       else
          markers_precomputed=trees->group_markers;

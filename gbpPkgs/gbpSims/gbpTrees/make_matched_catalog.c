@@ -131,7 +131,7 @@ int main(int argc, char *argv[]){
         }
         else{
            current_subgroup           =current;
-           current_group              =current->parent;
+           current_group              =current->parent_top;
            current_group_properties   =&(group_properties[current_group->snap_tree][current_group->neighbour_index]);
            current_subgroup_properties=&(subgroup_properties[current->snap_tree][current->neighbour_index]);
            current_properties         =current_subgroup_properties;
@@ -215,7 +215,7 @@ int main(int argc, char *argv[]){
               }
               else{
                  matched_subgroup           =matched;
-                 matched_group              =matched_subgroup->parent;
+                 matched_group              =matched_subgroup->parent_top;
                  matched_subgroup_properties=&(subgroup_properties[matched_subgroup->snap_tree][matched_subgroup->neighbour_index]);
                  matched_group_properties   =&(group_properties[matched_group->snap_tree][matched_group->neighbour_index]);
               }

@@ -106,7 +106,7 @@ void process_trees_fctn_analyze_local(tree_info *trees,void *params_in,int mode,
    int n_subgroups       =halo->n_substructures;
    int flag_process_group=(i_type==0);
    halo_properties_info *properties      =fetch_treenode_properties(trees,halo);
-   halo_properties_info *properties_group=fetch_treenode_properties(trees,halo->parent);
+   halo_properties_info *properties_group=fetch_treenode_properties(trees,halo->parent_top);
    double expansion_factor=a_of_z(trees->z_list[halo->snap_tree]);
    double box_size=(double)trees->box_size;
    int    i_group=halo->file_index;
@@ -143,7 +143,7 @@ void process_trees_fctn_analyze_local(tree_info *trees,void *params_in,int mode,
            offset_COM); // converts to kpc/h
     if(!flag_process_group){
        float f_sub=(float)properties->n_particles/(float)properties_group->n_particles;
-       fprintf(params->fp_out,"  %9d %11.5f",halo->parent->file_index,f_sub);
+       fprintf(params->fp_out,"  %9d %11.5f",halo->parent_top->file_index,f_sub);
     }
     else{
        double f_sub=fetch_treenode_SSFctn(trees,halo);

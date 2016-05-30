@@ -296,11 +296,14 @@ struct tree_node_info{
   int             neighbour_index;
   int             n_particles;
   int             n_particles_peak;
+  int             n_particles_inclusive;
+  int             n_particles_inclusive_peak;
   float           match_score;
   int             halo_ID;
   int             tree_case;
   // Pointers for the substructure heirarchy
-  tree_node_info *parent;
+  tree_node_info *parent_top;           // pointer to the top substructure level.  NULL if node is a FoF group.
+  tree_node_info *parent;               // pointer to the next level up in substructure
   tree_node_info *substructure_first;   // for substructure in this halo's parent
   tree_node_info *substructure_last;    // for substructure in this halo's parent
   tree_node_info *substructure_next;    // for substructure in this halo's parent
@@ -322,7 +325,7 @@ struct tree_markers_info{
   tree_node_info *descendant;
   tree_node_info *main_progenitor;
   tree_node_info *first_became_satellite;
-  tree_node_info *joined_current_parent;
+  tree_node_info *joined_current_parent_top;
   tree_node_info *peak_mass;
   tree_node_info *half_peak_mass;
   tree_node_info *merger_33pc_remnant; // Placed at the time of the remnant
@@ -535,6 +538,9 @@ int check_if_match_is_better(tree_horizontal_info *target_halo,
 int check_if_match_is_bigger(tree_horizontal_info *target_halo,
                              match_info           *old_match,
                              match_info           *new_match);
+int check_if_match_is_bigger_peak(tree_horizontal_info *target_halo,
+                                  match_info           *old_match,
+                                  match_info           *new_match);
 int check_if_match_is_simple(tree_horizontal_info *target_halo,
                              match_info           *match);
 int check_if_match_is_immediate(tree_horizontal_info *target_halo,
@@ -941,8 +947,11 @@ int add_node_to_trees(tree_info        *trees,
                       int               halo_index,
                       int               descendant_snap,
                       int               descendant_index,
-                      tree_node_info   *group_node,
+                      tree_node_info   *parent_top,
                       tree_node_info  **new_node);
+int add_node_to_substructure_hierarchy(tree_info       *trees,   
+                                       tree_node_info  *subhalo, 
+                                       tree_node_info  *parent);
 void init_trees_vertical(int n_snaps,tree_vertical_info **tree);
 void free_trees_vertical(tree_vertical_info **tree);
 int  add_node_to_vertical_tree(tree_vertical_info        *tree,
@@ -962,6 +971,8 @@ void assign_unique_vertical_tree_ids(tree_info *trees,tree_node_info *tree_node)
 void compute_progenitor_score_recursive(tree_node_info *tree,int *M_i,int mode);
 void compute_substructure_order_recursive(tree_node_info *parent,int *score_parent,int mode);
 void compute_progenitor_order_recursive(tree_info *trees,tree_node_info *descendant,int *score_descendant,int mode);
+void compute_peak_particle_count_recursive(tree_info *trees,tree_node_info *this_halo,int *flag_fragmented,int *n_particles_peak,int *n_particles_inclusive_peak);
+void compute_inclusive_particle_count_recursive(tree_info *trees,tree_node_info *this_halo,int *n_particles_substructure);
 int  construct_unique_vertical_tree_id(tree_node_info *tree_node);
 
 int  construct_unique_tree_id(tree_node_info *tree_node);

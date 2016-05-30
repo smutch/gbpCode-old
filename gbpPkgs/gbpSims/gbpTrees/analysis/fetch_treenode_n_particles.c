@@ -12,7 +12,7 @@
 int fetch_treenode_n_particles(tree_info *trees,tree_node_info *halo){
    if(halo!=NULL){
       int n_particles;
-      if(halo->parent==NULL){
+      if(halo->parent_top==NULL){
          if(trees->group_properties!=NULL){
             halo_properties_info *properties=&(trees->group_properties[halo->snap_tree][halo->neighbour_index]);
             n_particles=properties->n_particles;

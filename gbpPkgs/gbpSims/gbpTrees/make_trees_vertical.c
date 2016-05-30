@@ -23,6 +23,9 @@ int main(int argc, char *argv[]){
   double box_size     =(double)atof(argv[4]);
   int    n_dim_files  =        atoi(argv[5]);
 
+  fprintf(stderr,"Need to turn-off substructure reading in read_trees for this function to work!  Make sure parent is set to parent_top.  Not implemented yet.\n");
+  SID_exit(ERROR_NONE);
+
   SID_log("Constructing vertical merger trees...",SID_LOG_OPEN|SID_LOG_TIMER);
   compute_trees_vertical(filename_SSimPL_dir,
                          filename_halo_version_root,

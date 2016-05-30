@@ -12,7 +12,7 @@
 double fetch_treenode_y(tree_info *trees,tree_node_info *halo){
    if(halo!=NULL){
       double y;
-      if(halo->parent==NULL){
+      if(halo->parent_top==NULL){
          if(trees->group_properties!=NULL){
             halo_properties_info *properties=&(trees->group_properties[halo->snap_tree][halo->neighbour_index]);
             y=properties->position_COM[1];

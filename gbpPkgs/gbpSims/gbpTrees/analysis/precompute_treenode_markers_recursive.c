@@ -28,7 +28,7 @@ int precompute_treenode_markers_recursive(tree_info *trees,tree_markers_info **m
       //     tree_node_info *descendant;
       //     tree_node_info *main_progenitor;
       //     tree_node_info *first_became_satellite;
-      //     tree_node_info *joined_current_parent;
+      //     tree_node_info *joined_current_parent_top;
       //     tree_node_info *peak_mass;
       //     tree_node_info *half_peak_mass;
       //     tree_node_info *merger_33pc_remnant;
@@ -51,27 +51,27 @@ int precompute_treenode_markers_recursive(tree_info *trees,tree_markers_info **m
          markers_halo->branch_root=halo;
       else
          markers_halo->branch_root=(*markers_descendant)->branch_root;
-      markers_halo->branch_leaf           =NULL;
-      markers_halo->first_became_satellite=NULL;
-      markers_halo->joined_current_parent =NULL;
-      markers_halo->half_peak_mass        =NULL;
-      markers_halo->merger_33pc_remnant   =NULL;
-      markers_halo->merger_33pc_host      =NULL;
-      markers_halo->merger_33pc_merger    =NULL;
-      markers_halo->merger_10pc_remnant   =NULL;
-      markers_halo->merger_10pc_host      =NULL;
-      markers_halo->merger_10pc_merger    =NULL;
+      markers_halo->branch_leaf              =NULL;
+      markers_halo->first_became_satellite   =NULL;
+      markers_halo->joined_current_parent_top=NULL;
+      markers_halo->half_peak_mass           =NULL;
+      markers_halo->merger_33pc_remnant      =NULL;
+      markers_halo->merger_33pc_host         =NULL;
+      markers_halo->merger_33pc_merger       =NULL;
+      markers_halo->merger_10pc_remnant      =NULL;
+      markers_halo->merger_10pc_host         =NULL;
+      markers_halo->merger_10pc_merger       =NULL;
 
       // Inititialize some things if this is a leaf
       tree_node_info *first_progenitor=halo->progenitor_first;
       if(first_progenitor==NULL){
          if(check_treenode_if_satellite(halo)){
-            markers_halo->first_became_satellite=halo;
-            markers_halo->joined_current_parent =halo;
+            markers_halo->first_became_satellite   =halo;
+            markers_halo->joined_current_parent_top=halo;
          }
          else{
-            markers_halo->first_became_satellite=NULL;
-            markers_halo->joined_current_parent =halo;
+            markers_halo->first_became_satellite   =NULL;
+            markers_halo->joined_current_parent_top=halo;
          }
          markers_halo->half_peak_mass        =halo;
          markers_halo->branch_leaf           =halo;
@@ -144,10 +144,10 @@ int precompute_treenode_markers_recursive(tree_info *trees,tree_markers_info **m
             markers_halo->first_became_satellite=halo;
          else
             markers_halo->first_became_satellite=NULL;
-         if(markers_main_progenitor->joined_current_parent==NULL  && (halo->parent)==(markers_halo->branch_root->parent))
-            markers_halo->joined_current_parent=halo;
+         if(markers_main_progenitor->joined_current_parent_top==NULL  && (halo->parent_top)==(markers_halo->branch_root->parent_top))
+            markers_halo->joined_current_parent_top=halo;
          else
-            markers_halo->joined_current_parent=NULL;
+            markers_halo->joined_current_parent_top=NULL;
 
          // Set merger pointers
          if(flag_is_a_merger){

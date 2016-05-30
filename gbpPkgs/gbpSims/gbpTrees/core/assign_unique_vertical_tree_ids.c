@@ -15,11 +15,11 @@ void assign_unique_vertical_tree_ids(tree_info *trees,tree_node_info *halo){
   halo_properties_SAGE_info *halo_properties;
   tree_node_info            *group_halo_first=NULL;
   tree_node_info            *group_halo_next =NULL;
-  if(halo->parent==NULL)
+  if(halo->parent_top==NULL)
      halo_properties=&(trees->group_properties_SAGE[halo->snap_tree][halo->neighbour_index]);
   else{
      halo_properties =&(trees->subgroup_properties_SAGE[halo->snap_tree][halo->neighbour_index]);
-     group_halo_first=halo->parent->substructure_first;
+     group_halo_first=halo->parent_top->substructure_first;
      group_halo_next =halo->substructure_next;
   }  
 

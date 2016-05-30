@@ -12,7 +12,7 @@
 double fetch_treenode_x_off(tree_info *trees,tree_node_info *halo){
    if(halo!=NULL){
       halo_properties_info *properties;
-      if(halo->parent==NULL){
+      if(halo->parent_top==NULL){
          if(trees->group_properties!=NULL)
             properties=&(trees->group_properties[halo->snap_tree][halo->neighbour_index]);
          else

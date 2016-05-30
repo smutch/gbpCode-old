@@ -16,7 +16,7 @@ void add_to_treenode_list(treenode_list_info *list,tree_node_info *node){
      // If this is the first group we've added, then initialize
      //   the flag for making sure that we are including only one
      //   halo type in this list
-     int flag_add_a_group=(node->parent==NULL);
+     int flag_add_a_group=(node->parent_top==NULL);
      if(list->flag_groups_list<0)
         list->flag_groups_list=flag_add_a_group;
 

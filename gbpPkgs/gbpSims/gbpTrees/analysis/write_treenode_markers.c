@@ -102,7 +102,7 @@ void write_treenode_markers(tree_info *trees,const char *filename_output_root,in
                         marker=markers_i->first_became_satellite;
                         break;
                      case 3:
-                        marker=markers_i->joined_current_parent;
+                        marker=markers_i->joined_current_parent_top;
                         break;
                      case 4:
                         marker=markers_i->peak_mass;

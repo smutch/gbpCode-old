@@ -12,7 +12,7 @@
 double fetch_treenode_vx(tree_info *trees,tree_node_info *halo){
    if(halo!=NULL){
       double vx;
-      if(halo->parent==NULL){
+      if(halo->parent_top==NULL){
          if(trees->group_properties!=NULL){
             halo_properties_info *properties=&(trees->group_properties[halo->snap_tree][halo->neighbour_index]);
             vx=properties->velocity_COM[0];

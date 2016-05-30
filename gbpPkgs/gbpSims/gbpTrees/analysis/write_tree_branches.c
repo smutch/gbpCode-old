@@ -259,8 +259,8 @@ void write_tree_branches(tree_info *trees,tree_node_info **list_in,int n_list_in
                     z_node  =trees->z_list[i_z_node];
                     M_node  =halo_properties[i_z_node][idx_node].M_vir;
                     n_p_node=halo_properties[i_z_node][idx_node].n_particles;
-                    if(node_write->parent!=NULL && !flag_processing_groups){
-                       idx_node_parent=node_write->parent->snap_tree;
+                    if(node_write->parent_top!=NULL && !flag_processing_groups){
+                       idx_node_parent=node_write->parent_top->snap_tree;
                        M_node_parent  =group_properties[i_z_node][idx_node_parent].M_vir;
                     }
                     else{

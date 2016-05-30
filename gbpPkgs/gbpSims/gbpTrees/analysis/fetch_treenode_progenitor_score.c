@@ -11,7 +11,7 @@
 
 float fetch_treenode_progenitor_score(tree_info *trees,tree_node_info *halo){
    if(halo!=NULL){
-      if(halo->parent==NULL){
+      if(halo->parent_top==NULL){
          if(trees->group_progenitor_score!=NULL)
             return(trees->group_progenitor_score[halo->snap_tree][halo->neighbour_index]);
          else

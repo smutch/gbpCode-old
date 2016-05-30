@@ -11,8 +11,8 @@
 
 int check_treenode_if_central(tree_node_info *halo){
    if(halo!=NULL){
-      if(halo->parent!=NULL)
-         return(halo->parent->substructure_first==halo);
+      if(halo->parent_top!=NULL)
+         return(halo->parent_top->substructure_first==halo);
       else
          return(FALSE);
    }
