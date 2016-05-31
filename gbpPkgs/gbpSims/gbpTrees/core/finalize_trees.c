@@ -28,24 +28,24 @@ void finalize_trees(tree_info *trees,int mode){
   SID_log("Done.",SID_LOG_CLOSE);
 
   // ... build peak particle counts ...
-//  SID_log("Assigning peak particle counts...",SID_LOG_OPEN|SID_LOG_TIMER);
-//  for(int i_snap=0;i_snap<trees->n_snaps;i_snap++){
-//     // ... groups ...
-//     tree_node_info *current_group=trees->first_neighbour_groups[i_snap];
-//     while(current_group!=NULL){
-//        if(current_group->descendant==NULL)
-//           compute_peak_particle_count_recursive(trees,current_group,NULL,NULL,NULL);
-//        current_group=current_group->next_neighbour;
-//     }
-//     // ... subgroups ...
-//     tree_node_info *current_subgroup=trees->first_neighbour_subgroups[i_snap];
-//     while(current_subgroup!=NULL){
-//        if(current_subgroup->descendant==NULL)
-//           compute_peak_particle_count_recursive(trees,current_subgroup,NULL,NULL,NULL);
-//        current_subgroup=current_subgroup->next_neighbour;
-//     }
-//  }
-//  SID_log("Done.",SID_LOG_CLOSE);
+  SID_log("Assigning peak particle counts...",SID_LOG_OPEN|SID_LOG_TIMER);
+  for(int i_snap=0;i_snap<trees->n_snaps;i_snap++){
+     // ... groups ...
+     tree_node_info *current_group=trees->first_neighbour_groups[i_snap];
+     while(current_group!=NULL){
+        if(current_group->descendant==NULL)
+           compute_peak_particle_count_recursive(trees,current_group,NULL,NULL,NULL);
+        current_group=current_group->next_neighbour;
+     }
+     // ... subgroups ...
+     tree_node_info *current_subgroup=trees->first_neighbour_subgroups[i_snap];
+     while(current_subgroup!=NULL){
+        if(current_subgroup->descendant==NULL)
+           compute_peak_particle_count_recursive(trees,current_subgroup,NULL,NULL,NULL);
+        current_subgroup=current_subgroup->next_neighbour;
+     }
+  }
+  SID_log("Done.",SID_LOG_CLOSE);
 
   // ... correct progenitor ordering ...
   if(check_mode_for_flag(mode_progenitor_order,TREE_PROGENITOR_ORDER_DELUCIA))

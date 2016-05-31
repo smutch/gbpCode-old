@@ -44,6 +44,11 @@ int write_treenode_list_properties_set_ith(tree_info *trees,int i_write,tree_nod
       if(data_i!=NULL)    *data_i   =fetch_treenode_halo_ID(trees,current_halo->descendant);
    }
    else if(i_write==(i_item++)){
+      if(data_name!=NULL) sprintf(data_name,"Parent file index");
+      if(data_type!=NULL) *data_type=SID_INT;
+      if(data_i!=NULL)    *data_i   =fetch_treenode_file_index(trees,current_halo->parent);
+   }
+   else if(i_write==(i_item++)){
       if(data_name!=NULL) sprintf(data_name,"No. of particles");
       if(data_type!=NULL) *data_type=SID_INT;
       if(data_i!=NULL)    *data_i   =fetch_treenode_n_particles(trees,current_halo);

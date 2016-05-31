@@ -33,6 +33,7 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    check_validity_of_emerged_match.o             \
 	    check_if_match_is_better.o                    \
 	    check_if_match_is_bigger.o                    \
+	    check_if_forced_match_is_better.o             \
 	    check_if_match_is_bigger_peak.o               \
 	    check_if_match_is_simple.o                    \
 	    check_if_match_is_immediate.o                 \
@@ -105,6 +106,7 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    propagate_dominant_substructures.o            \
 	    propagate_n_particles_peak.o                  \
 	    propagate_fragmented_info.o                   \
+	    propagate_fix_fragmented_info.o               \
 	    propagate_merger_info.o                       \
 	    add_progenitor_to_halo.o                      \
 	    assign_group_subgroup_order_vertical.o 

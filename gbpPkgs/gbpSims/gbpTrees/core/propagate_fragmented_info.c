@@ -16,7 +16,6 @@ void propagate_fragmented_info(tree_horizontal_extended_info **groups,   int *n_
    int i_subgroup;
    int j_subgroup;
    int flag_returned;
-   int flag_merger;
    for(i_group=0,i_subgroup=0;i_group<n_groups[l_read];i_group++){
       int group_id                =groups[i_read%n_wrap][i_group].id;
       int group_tree_id           =groups[i_read%n_wrap][i_group].tree_id;
@@ -33,11 +32,10 @@ void propagate_fragmented_info(tree_horizontal_extended_info **groups,   int *n_
 
       // Check if the group has returned to it's bridge (if fragmented)
       flag_returned=(group_file_bridge==(i_read+group_file_offset) && group_index_bridge==group_index);
-      flag_merger  =check_if_halo_is_merger(group_type);
 
-      // Propagate type.  Stop when the fragmented halo merges with something or 
+      // Propagate type.  Stop when the fragmented halo 
       //    returns to the main progenitor line of it's bridge.
-      if(group_id==group_descendant_id && !flag_returned && !flag_merger){
+      if(group_id==group_descendant_id && !flag_returned){
          if(group_index>=0){ // Important for strayed cases
             // Add the propagated type.
             if(check_mode_for_flag(group_type,TREE_CASE_FRAGMENTED_STRAYED))
@@ -83,11 +81,10 @@ void propagate_fragmented_info(tree_horizontal_extended_info **groups,   int *n_
 
          // Check if the subgroup has returned to it's bridge (if fragmented)
          flag_returned=(subgroup_file_bridge==(i_read+subgroup_file_offset) && subgroup_index_bridge==subgroup_index);
-         flag_merger  =check_if_halo_is_merger(subgroup_type);
 
-         // Propagate type.  Stop when the fragmented halo merges with something or 
+         // Propagate type.  Stop when the fragmented halo  
          //    returns to the main progenitor line of it's bridge.
-         if(subgroup_id==subgroup_descendant_id && !flag_returned && !flag_merger){
+         if(subgroup_id==subgroup_descendant_id && !flag_returned){
             if(subgroup_index>=0){ // Important for strayed cases
                // Add the propagated type.
                if(check_mode_for_flag(subgroup_type,TREE_CASE_FRAGMENTED_STRAYED))

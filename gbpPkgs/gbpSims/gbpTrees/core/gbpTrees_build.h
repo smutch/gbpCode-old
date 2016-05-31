@@ -24,6 +24,7 @@
 #define TREE_READ_EXTENDED_POINTERS            TTTP04
 #define TREE_READ_HEADER_ONLY                  TTTP05
 #define TREE_MODE_REFERENCE                    TTTP06
+#define TREE_MODE_SUBSTRUCTURE_HIERARCHY_ON    TTTP07
 #define TREE_PROGENITOR_ORDER_DEFAULT          TREE_PROGENITOR_ORDER_N_PARTICLES_PEAK
 #define TREE_MODE_DEFAULT                      (TREE_SUBSTRUCTURE_ORDER_DEFAULT|TREE_PROGENITOR_ORDER_DEFAULT)
 
@@ -322,8 +323,6 @@ typedef struct tree_markers_info tree_markers_info;
 struct tree_markers_info{
   tree_node_info *branch_leaf;
   tree_node_info *branch_root;
-  tree_node_info *descendant;
-  tree_node_info *main_progenitor;
   tree_node_info *first_became_satellite;
   tree_node_info *joined_current_parent_top;
   tree_node_info *peak_mass;
@@ -541,6 +540,9 @@ int check_if_match_is_bigger(tree_horizontal_info *target_halo,
 int check_if_match_is_bigger_peak(tree_horizontal_info *target_halo,
                                   match_info           *old_match,
                                   match_info           *new_match);
+int check_if_forced_match_is_better(tree_horizontal_info *target_halo,
+                                    match_info           *old_match,
+                                    match_info           *new_match);
 int check_if_match_is_simple(tree_horizontal_info *target_halo,
                              match_info           *match);
 int check_if_match_is_immediate(tree_horizontal_info *target_halo,
@@ -855,6 +857,14 @@ void propagate_fragmented_info(tree_horizontal_extended_info **groups,   int *n_
                                int          l_read,
                                int          i_read_step,
                                int          n_wrap);
+void propagate_fix_fragmented_info(tree_horizontal_extended_info **groups,   int *n_groups,
+                                   tree_horizontal_extended_info **subgroups,int *n_subgroups,
+                                   int        **n_subgroups_group,
+                                   int          i_read, // tree snapshot index
+                                   int          j_read,
+                                   int          l_read,
+                                   int          i_read_step,
+                                   int          n_wrap);
 void propagate_merger_info(tree_horizontal_extended_info **groups,   int *n_groups,
                            tree_horizontal_extended_info **subgroups,int *n_subgroups,
                            int        **n_subgroups_group,

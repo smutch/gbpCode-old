@@ -13,13 +13,17 @@ void set_largest_descendants(tree_horizontal_info *halos_i,
    for(int i_halo=0;i_halo<n_halos_i;i_halo++){
       if(halos_i[i_halo].descendant.halo!=NULL){
          if(halos_i[i_halo].id==halos_i[i_halo].descendant.halo->id)
+            // Inherit descendant's largest descendant.
             if(halos_i[i_halo].descendant.halo->n_particles_largest_descendant>halos_i[i_halo].n_particles)
                halos_i[i_halo].n_particles_largest_descendant=halos_i[i_halo].descendant.halo->n_particles_largest_descendant;
+            // Current halo size is larger tha largest descendant.  Use it.
             else
                halos_i[i_halo].n_particles_largest_descendant=halos_i[i_halo].n_particles;
+         // Root of a new branch.  Initialize to current halo size.
          else
             halos_i[i_halo].n_particles_largest_descendant=halos_i[i_halo].n_particles;
       }
+      // Root of a strayed halo.  Initialize to current halo size.
       else
          halos_i[i_halo].n_particles_largest_descendant=halos_i[i_halo].n_particles;
    }

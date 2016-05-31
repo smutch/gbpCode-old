@@ -203,15 +203,21 @@ void identify_progenitors(tree_horizontal_info **halos,
             if(halo_j->forematch_best.halo==NULL)
                memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
             // ... else, if this is a subsequent match, decide if it is better.
-            //     Make sure that the most massive halo is a progenitor.  An
-            //     attempt was made to use a halo not matched to an emerged
+            //     An attempt was made to use a halo not matched to an emerged
             //     halo for the progenitor here.  Unfortunately, this does not
             //     work in cases where the cores of both halos are ejected and
             //     another small halo is present to become a progenitor.  This
-            //     leads to one major merger being turned into two.  Simply
-            //     choosing the largest halo here conserves merger count at least.
-            //     If it's core becomes fragmented, it will be labled ejected below.
-            else if(check_if_match_is_bigger_peak(halo_j,&(halo_j->forematch_best),&forematch_new))
+            //     leads to one major merger being turned into two.  A sensible
+            //     choice here of a halo to force as the bridge's progenitor
+            //     will conserve merger count at least, but at the
+            //     expense of failing to catch the emerging core as such, and
+            //     it becoming labled as a fragment as a result.  
+            //     If the core of the halo we force to be a progenitor
+            //     becomes fragmented, it will be labled as ejected below.
+            //     The choice here of which halo to force to be a progenitor, is 
+            //     designed to minimize the cases of unnecessarily rendering a 
+            //     large halo as fragmented.
+            else if(check_if_forced_match_is_better(halo_j,&(halo_j->forematch_best),&forematch_new))
                memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
          }
       }

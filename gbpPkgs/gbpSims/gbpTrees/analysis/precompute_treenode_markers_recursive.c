@@ -25,8 +25,6 @@ int precompute_treenode_markers_recursive(tree_info *trees,tree_markers_info **m
       //   struct tree_markers_info{
       //     tree_node_info *branch_leaf;
       //     tree_node_info *branch_root;
-      //     tree_node_info *descendant;
-      //     tree_node_info *main_progenitor;
       //     tree_node_info *first_became_satellite;
       //     tree_node_info *joined_current_parent_top;
       //     tree_node_info *peak_mass;
@@ -43,8 +41,6 @@ int precompute_treenode_markers_recursive(tree_info *trees,tree_markers_info **m
          
       // Set defaults (also: stuff that gets set here will be available to this halo's progenitors)
       //    Also: anything having to do with peak mass should already have been set.
-      markers_halo->descendant     =halo->descendant;
-      markers_halo->main_progenitor=halo->progenitor_first;
       if(halo->descendant==NULL || (*markers_descendant)==NULL) 
          markers_halo->branch_root=halo;
       else if(halo->halo_ID!=halo->descendant->halo_ID)

@@ -12,7 +12,7 @@
 // We want to measure merger ratios (zeta) using the particle counts at the time when
 //    the secondary reaches its peak size.  Find the halos involved at that time.  Because
 //    of skips in the trees, etc. the halos may not be *exactly* contemporaneous, but we can
-//    usually tolerate that since the change of peak mass accross skips should be small.
+//    usually tolerate that since the change of *peak* mass accross skips should be small.
 int  fetch_treenode_merger_info(tree_info *trees,tree_node_info **halo_secondary,tree_node_info **halo_primary,
                                 double *zeta,double *v_rel,double *sig_v_p,double *sig_v_s){
 

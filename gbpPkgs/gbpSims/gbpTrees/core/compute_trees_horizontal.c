@@ -428,11 +428,11 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
        // Update the max_id variables
        switch(k_match){
           case 0:
-            max_id_subgroup     =max_id;
+            max_id_subgroup=max_id;
             max_tree_id_subgroup=max_tree_id;
             break;
           case 1:
-            max_id_group     =max_id;
+            max_id_group   =max_id;
             max_tree_id_group=max_tree_id;
             break;
        }
