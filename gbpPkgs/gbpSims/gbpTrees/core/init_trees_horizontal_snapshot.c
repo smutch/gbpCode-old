@@ -25,6 +25,7 @@ void init_trees_horizontal_snapshot(tree_horizontal_info *halos,
    int i_halo;
    for(i_halo=0;i_halo<n_halos_max;i_halo++){
       halos[i_halo].file                          =  i_file;
+      halos[i_halo].file_root                     =  i_file;
       halos[i_halo].snap                          =  i_read;
       halos[i_halo].index                         =  (size_t)i_halo;
       halos[i_halo].n_back_matches                =    0;

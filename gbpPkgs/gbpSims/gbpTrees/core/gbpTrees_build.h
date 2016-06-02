@@ -207,6 +207,7 @@ struct tree_horizontal_info{
   int              tree_id;                        // This halo's tree id
   int              type;                           // A bit-wise switch characterising this halo's matching
   int              file;                           // This halo's snapshot index (ie. 0->n_snaps_used_in_trees-1)
+  int              file_root;                      // This halo's root's snapshot index (ie. 0->n_snaps_used_in_trees-1)
   int              snap;                           // This halo's snapshot number
   int              n_particles;                    // Number of particles in this halo
   int              n_particles_parent;             // Number of particles in this halo's parent halo
@@ -243,6 +244,7 @@ struct tree_horizontal_extended_info{
   int n_particles_parent;        // Number of particles in this halo's parent
   int n_particles_desc;          // Number of particles in this halo's descendant
   int n_particles_proj;          // Number of particles in this halo's progenitor
+  int file_root;                 // This halo's root's snapshot index (ie. 0->n_snaps_used_in_trees-1)
   int score_desc;                // Matching score of this halo to it's descendant
   int score_prog;                // Matching score of this halo to it's progenitor
   int snap_bridge;               // Snapshot of any halo that this halo may be back-matched to
@@ -709,7 +711,7 @@ void finalize_trees_horizontal(int                    n_halos_1_matches,
                                int                   *max_id,
                                int                   *max_tree_id);
 void init_trees_horizontal_stats(tree_horizontal_stats_info *stats,int n_halos);
-void change_horizontal_ID_recursive(tree_horizontal_info *halo,int id_1,int id_2);
+void change_horizontal_ID_recursive(tree_horizontal_info *halo,int i_file,int id_1,int id_2);
 void write_trees_horizontal_log_file(char *filename_log,
                                      int   l_write,
                                      int   j_write,

@@ -30,7 +30,7 @@ void propagate_fragmented_info(tree_horizontal_extended_info **groups,   int *n_
       int group_index_bridge      =groups[i_read%n_wrap][i_group].index_bridge;
       int group_id_bridge         =groups[i_read%n_wrap][i_group].id_bridge;
 
-      // Check if the group has returned to it's bridge (if fragmented)
+      // Check if the group's descendant has returned to it's bridge (if fragmented)
       flag_returned=(group_file_bridge==(i_read+group_file_offset) && group_index_bridge==group_index);
 
       // Propagate type.  Stop when the fragmented halo 
@@ -79,7 +79,7 @@ void propagate_fragmented_info(tree_horizontal_extended_info **groups,   int *n_
          int subgroup_file_offset       =subgroups[i_read%n_wrap][i_subgroup].descendant_file_offset;
          int subgroup_index             =subgroups[i_read%n_wrap][i_subgroup].descendant_index;
 
-         // Check if the subgroup has returned to it's bridge (if fragmented)
+         // Check if the subgroup's descendant has returned to it's bridge (if fragmented)
          flag_returned=(subgroup_file_bridge==(i_read+subgroup_file_offset) && subgroup_index_bridge==subgroup_index);
 
          // Propagate type.  Stop when the fragmented halo  

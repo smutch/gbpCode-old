@@ -32,12 +32,13 @@ void propagate_bridge_info(tree_horizontal_extended_info **groups,   int *n_grou
             group_index_bridge=bridge_descendant->descendant_index;
             group_id_bridge   =bridge_descendant->id;
          }
-         // Set the current state to the descendant state fond above
+         // Set the current state to the descendant state found above
          groups[i_read%n_wrap][i_group].snap_bridge =group_snap_bridge;
          groups[i_read%n_wrap][i_group].file_bridge =group_file_bridge;
          groups[i_read%n_wrap][i_group].index_bridge=group_index_bridge;
          groups[i_read%n_wrap][i_group].id_bridge   =group_id_bridge;
          // Propagate this result to the descendant (if there is one)
+         //   to set the starting point for this proceedure for subsequent snapshots
          int group_index=groups[i_read%n_wrap][i_group].descendant_index;
          if(group_index>=0){
             int desc_file=i_read+groups[i_read%n_wrap][i_group].descendant_file_offset;
@@ -66,12 +67,13 @@ void propagate_bridge_info(tree_horizontal_extended_info **groups,   int *n_grou
                subgroup_index_bridge=bridge_descendant->descendant_index;
                subgroup_id_bridge   =bridge_descendant->id;
             }  
-            // Set the current state to the descendant state fond above
+            // Set the current state to the descendant state found above
             subgroups[i_read%n_wrap][i_subgroup].snap_bridge =subgroup_snap_bridge;
             subgroups[i_read%n_wrap][i_subgroup].file_bridge =subgroup_file_bridge;
             subgroups[i_read%n_wrap][i_subgroup].index_bridge=subgroup_index_bridge;
             subgroups[i_read%n_wrap][i_subgroup].id_bridge   =subgroup_id_bridge;
             // Propagate this result to the descendant (if there is one)
+            //   to set the starting point for this proceedure for subsequent snapshots
             int subgroup_index=subgroups[i_read%n_wrap][i_subgroup].descendant_index;
             if(subgroup_index>=0){
                int desc_file=i_read+subgroups[i_read%n_wrap][i_subgroup].descendant_file_offset;

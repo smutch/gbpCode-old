@@ -216,7 +216,9 @@ void identify_progenitors(tree_horizontal_info **halos,
             //     becomes fragmented, it will be labled as ejected below.
             //     The choice here of which halo to force to be a progenitor, is 
             //     designed to minimize the cases of unnecessarily rendering a 
-            //     large halo as fragmented.
+            //     large halo as fragmented, or of creating a situation where
+            //     two merging halos both become marked as fragmented as a result
+            //     of a sequence of bridged instances, satellite-central swaps, etc.
             else if(check_if_forced_match_is_better(halo_j,&(halo_j->forematch_best),&forematch_new))
                memcpy(&(halo_j->forematch_best),&forematch_new,sizeof(match_info));
          }

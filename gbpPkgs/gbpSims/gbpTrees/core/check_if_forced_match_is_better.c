@@ -13,12 +13,15 @@ int check_if_forced_match_is_better(tree_horizontal_info *target_halo,
          else if(new_match->halo==NULL)
             flag_valid=FALSE;
          else{
-            // First, prioritize 2way matches
-            if(old_match->flag_two_way)
+            // By making a first check on file_root, we effectively
+            //    avoid turning the halo with the longest descendant
+            //    line into a fragmented halo.
+            if(old_match->halo->file_root>new_match->halo->file_root)
                flag_valid=FALSE;
-            // ... then, prioritize larger progenitors
-            else if(!new_match->flag_two_way && old_match->halo->n_particles>new_match->halo->n_particles)
-               flag_valid=FALSE;
+            else if(old_match->halo->file_root==new_match->halo->file_root){
+               if(old_match->halo->file_root>=new_match->halo->file_root)
+                  flag_valid=FALSE;
+            }
          }
       }
    }

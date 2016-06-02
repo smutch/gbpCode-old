@@ -167,6 +167,7 @@ void write_trees_horizontal(void  **groups_in,
      for(i_group=0,i_subgroup=0;i_group<n_groups;i_group++){
 
         // Gather the information we want to write
+        int   group_file_root;
         int   group_id;
         int   group_type;
         int   group_descendant_id;
@@ -207,6 +208,7 @@ void write_trees_horizontal(void  **groups_in,
         if(flag_write_extended || flag_write_pointers){
            tree_horizontal_info **groups;
            groups             =(tree_horizontal_info **)groups_in;
+           group_file_root    =groups[i_write%n_wrap][i_group].file_root;
            group_id           =groups[i_write%n_wrap][i_group].id;
            group_type         =groups[i_write%n_wrap][i_group].type;
            group_descendant_id=set_match_id(&(groups[i_write%n_wrap][i_group].descendant));
@@ -262,6 +264,7 @@ void write_trees_horizontal(void  **groups_in,
         else{
            tree_horizontal_extended_info **groups;
            groups                =(tree_horizontal_extended_info **)groups_in;
+           group_file_root       =groups[i_write%n_wrap][i_group].file_root;
            group_id              =groups[i_write%n_wrap][i_group].id;
            group_type            =groups[i_write%n_wrap][i_group].type;
            group_descendant_id   =groups[i_write%n_wrap][i_group].descendant_id;
@@ -279,6 +282,7 @@ void write_trees_horizontal(void  **groups_in,
         SID_fwrite(&group_file_offset,  sizeof(int),1,&fp_trees_out);
         SID_fwrite(&group_file_index,   sizeof(int),1,&fp_trees_out);
         if(flag_write_extended){
+           SID_fwrite(&group_file_root,             sizeof(int),1,&fp_trees_out);
            SID_fwrite(&group_n_particles,           sizeof(int),  1,&fp_trees_out);
            SID_fwrite(&group_n_particles_parent,    sizeof(int),  1,&fp_trees_out);
            SID_fwrite(&group_n_particles_desc,      sizeof(int),  1,&fp_trees_out);
@@ -327,6 +331,7 @@ void write_trees_horizontal(void  **groups_in,
         for(j_subgroup=0;j_subgroup<n_subgroups_group[i_write%n_wrap][i_group];j_subgroup++,i_subgroup++){
 
            // Gather the information we want to write
+           int   subgroup_file_root;
            int   subgroup_id;
            int   subgroup_type;
            int   subgroup_descendant_id;
@@ -367,6 +372,7 @@ void write_trees_horizontal(void  **groups_in,
            if(flag_write_extended || flag_write_pointers){
               tree_horizontal_info **subgroups;
               subgroups                  =(tree_horizontal_info **)subgroups_in;
+              subgroup_file_root         =subgroups[i_write%n_wrap][i_subgroup].file_root;
               subgroup_id                =subgroups[i_write%n_wrap][i_subgroup].id;
               subgroup_type              =subgroups[i_write%n_wrap][i_subgroup].type;
               subgroup_descendant_id     =set_match_id(&(subgroups[i_write%n_wrap][i_subgroup].descendant));
@@ -422,6 +428,7 @@ void write_trees_horizontal(void  **groups_in,
            else{
               tree_horizontal_extended_info **subgroups;
               subgroups                =(tree_horizontal_extended_info **)subgroups_in;
+              subgroup_file_root       =subgroups[i_write%n_wrap][i_subgroup].file_root;
               subgroup_id              =subgroups[i_write%n_wrap][i_subgroup].id;
               subgroup_type            =subgroups[i_write%n_wrap][i_subgroup].type;
               subgroup_descendant_id   =subgroups[i_write%n_wrap][i_subgroup].descendant_id;
@@ -439,6 +446,7 @@ void write_trees_horizontal(void  **groups_in,
            SID_fwrite(&subgroup_file_offset,  sizeof(int),1,&fp_trees_out);
            SID_fwrite(&subgroup_file_index,   sizeof(int),1,&fp_trees_out);
            if(flag_write_extended){
+              SID_fwrite(&subgroup_file_root,             sizeof(int),  1,&fp_trees_out);
               SID_fwrite(&subgroup_n_particles,           sizeof(int),  1,&fp_trees_out);
               SID_fwrite(&subgroup_n_particles_parent,    sizeof(int),  1,&fp_trees_out);
               SID_fwrite(&subgroup_n_particles_desc,      sizeof(int),  1,&fp_trees_out);

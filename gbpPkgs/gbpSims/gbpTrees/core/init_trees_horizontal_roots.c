@@ -56,6 +56,7 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
   for(i_group=0,(*max_id_group)=0,(*max_tree_id_group)=0;i_group<n_groups_max;i_group++){
      for(int i_search=0;i_search<n_wrap;i_search++){
         groups[i_search][i_group].file                             =   i_file_start; // The resulting file offset must be -ve for tree roots
+        groups[i_search][i_group].file_root                        =   i_file_start; 
         groups[i_search][i_group].snap                             =   i_read_stop;
         groups[i_search][i_group].index                            =(size_t)i_group;
         groups[i_search][i_group].n_back_matches                   =    0;
@@ -164,6 +165,7 @@ void init_trees_horizontal_roots(tree_horizontal_info **groups,
      }
      for(int i_search=0;i_search<n_wrap;i_search++){
         subgroups[i_search][i_subgroup].file                             =    i_file_start; // The resulting file offset must be -ve for tree roots
+        subgroups[i_search][i_subgroup].file_root                        =    i_file_start; 
         subgroups[i_search][i_subgroup].snap                             =    i_read_stop;
         subgroups[i_search][i_subgroup].index                            = (size_t)i_subgroup;
         subgroups[i_search][i_subgroup].n_back_matches                   =    0;

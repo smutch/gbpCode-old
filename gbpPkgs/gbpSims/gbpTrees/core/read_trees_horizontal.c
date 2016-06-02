@@ -106,6 +106,7 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
          groups_extended[i_group].descendant_index      =group_index;
       }
       if(flag_read_extended){
+         int   group_file_root;
          int   group_n_particles;
          int   group_n_particles_parent;
          int   group_n_particles_desc;
@@ -120,6 +121,7 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
          int   group_first_progenitor_index;
          int   group_next_progenitor_file;
          int   group_next_progenitor_index;
+         SID_fread(&group_file_root,             sizeof(int),  1,&fp_in);
          SID_fread(&group_n_particles,           sizeof(int),  1,&fp_in);
          SID_fread(&group_n_particles_parent,    sizeof(int),  1,&fp_in);
          SID_fread(&group_n_particles_desc,      sizeof(int),  1,&fp_in);
@@ -135,6 +137,7 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
          SID_fread(&group_next_progenitor_file,  sizeof(int),  1,&fp_in);
          SID_fread(&group_next_progenitor_index, sizeof(int),  1,&fp_in);
          if(flag_store_extended){
+            groups_extended[i_group].file_root             =group_file_root;
             groups_extended[i_group].n_particles_peak      =0;
             groups_extended[i_group].parent_id             =group_id;
             groups_extended[i_group].substructure_index    =0;
@@ -200,6 +203,7 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
             subgroups_extended[i_subgroup].descendant_index      =subgroup_index;
          }
          if(flag_read_extended){
+            int   subgroup_file_root;
             int   subgroup_n_particles;
             int   subgroup_n_particles_parent;
             int   subgroup_n_particles_desc;
@@ -214,6 +218,7 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
             int   subgroup_first_progenitor_index;
             int   subgroup_next_progenitor_file;
             int   subgroup_next_progenitor_index;
+            SID_fread(&subgroup_file_root,             sizeof(int),  1,&fp_in);
             SID_fread(&subgroup_n_particles,           sizeof(int),  1,&fp_in);
             SID_fread(&subgroup_n_particles_parent,    sizeof(int),  1,&fp_in);
             SID_fread(&subgroup_n_particles_desc,      sizeof(int),  1,&fp_in);
@@ -229,6 +234,7 @@ void read_trees_horizontal(void **groups_in,   int *n_groups_in,
             SID_fread(&subgroup_next_progenitor_file,  sizeof(int),  1,&fp_in);
             SID_fread(&subgroup_next_progenitor_index, sizeof(int),  1,&fp_in);
             if(flag_store_extended){
+               subgroups_extended[i_subgroup].file_root             =subgroup_file_root;
                subgroups_extended[i_subgroup].n_particles_peak      =0;
                subgroups_extended[i_subgroup].parent_id             =group_id;
                subgroups_extended[i_subgroup].substructure_index    =i_subgroup;

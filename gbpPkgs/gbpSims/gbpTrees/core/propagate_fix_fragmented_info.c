@@ -38,7 +38,7 @@ void propagate_fix_fragmented_info(tree_horizontal_extended_info **groups,   int
          tree_horizontal_extended_info *group        =&(groups[i_read%n_wrap][i_group]);
          tree_horizontal_extended_info *current_group=set_extended_first_progenitor(groups,group,n_wrap);
          int flag_fix=FALSE;
-         int n_p_peak=0;
+         int n_p_peak=0; // calculated below under the assumption that a fix is being made
          while(current_group!=NULL){
             int current_group_type=current_group->type;
             if(!check_if_type_is_fragmented(current_group_type)){
@@ -83,7 +83,7 @@ void propagate_fix_fragmented_info(tree_horizontal_extended_info **groups,   int
             tree_horizontal_extended_info *subgroup        =&(subgroups[i_read%n_wrap][i_subgroup]);
             tree_horizontal_extended_info *current_subgroup=set_extended_first_progenitor(subgroups,subgroup,n_wrap);
             int flag_fix=FALSE;
-            int n_p_peak=0;
+            int n_p_peak=0; // calculated below under the assumption that a fix is being made
             while(current_subgroup!=NULL){
                int current_subgroup_type=current_subgroup->type;
                if(!check_if_type_is_fragmented(current_subgroup_type)){

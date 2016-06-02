@@ -93,7 +93,9 @@ void propagate_progenitor_info(int         *n_groups,
         // Note: the order of the functions called here is important.
         if(j_process<=i_read_stop){
            // Decide which halos are primaries and secondaries in merger events.
-           //    Operates on progenitors so it can be done first.
+           //    Set's flags for progenitors.  All progenitor peak particle
+           //    counts must be set at this point.  Those for current
+           //    or descendants' snapshots don't have to be set.
            propagate_merger_info(groups_read,   n_groups,
                                  subgroups_read,n_subgroups,
                                  n_subgroups_group,
@@ -103,8 +105,8 @@ void propagate_progenitor_info(int         *n_groups,
                                  i_read_step,
                                  n_wrap);
            if(flag_compute_fragmented){
-              // Fix incorrect propagations of fragmented flags
-              //   as a result of mergers.  Merger flags of
+              // Fix incorrect propagations of fragmented flags as a result
+              //   of mergers.  Merger flags and peak particle counts of
               //   progenitors need to have been set at this point.
               propagate_fix_fragmented_info(groups_read,   n_groups,
                                             subgroups_read,n_subgroups,
@@ -114,7 +116,11 @@ void propagate_progenitor_info(int         *n_groups,
                                             l_process,
                                             i_read_step,
                                             n_wrap);
-              // Propagate bridged halo flags
+              // Propagate bridged halo flags.  Sets the state of
+              //   the halo each fragmented halo emerged from (ie. their
+              //   bridged halos) to point to the descendant subsequent 
+              //   to this snapshot.  Fragmented halo flags for this 
+              //   snapshot need to have been set.
               propagate_bridge_info(groups_read,   n_groups,
                                     subgroups_read,n_subgroups,
                                     n_subgroups_group,
@@ -123,7 +129,9 @@ void propagate_progenitor_info(int         *n_groups,
                                     l_process,
                                     i_read_step,
                                     n_wrap);
-              // Propagate fragmented halo flags.
+              // Propagate fragmented halo flags.  Fragmented flags
+              //    for this snapshot need to have been set, as well
+              //    as the descendant states of their bridged halos.
               propagate_fragmented_info(groups_read,   n_groups,
                                         subgroups_read,n_subgroups,
                                         n_subgroups_group,
@@ -135,7 +143,9 @@ void propagate_progenitor_info(int         *n_groups,
            }
 
            // Set the identy of the dominant substructures of each group.
-           //    This needs to be complete for all descendants before propagate_n_particles_peak() 
+           //    This needs to be complete for all descendants before 
+           //    propagate_n_particles_peak() can be called.  Initializes
+           //    uninitialized halos and propagates results to descendants.
            propagate_dominant_substructures(groups_read,   n_groups,
                                             subgroups_read,n_subgroups,
                                             n_subgroups_group,
@@ -145,10 +155,10 @@ void propagate_progenitor_info(int         *n_groups,
                                             i_read_step,
                                             n_wrap);
 
-           // Propagate the peak halo size info. 
-           //    Fragmented flags for the descendant snapshot
-           //    need to have been set, but not for 
-           //    subsequent ones.
+           // Propagate the peak particle counts forward. 
+           //    Fragmented flags and peak particle counts
+           //    for this snapshot and for any descendants 
+           //    need to have been set.
            propagate_n_particles_peak(groups_read,   n_groups,
                                       subgroups_read,n_subgroups,
                                       n_subgroups_group,
