@@ -13,15 +13,15 @@ int check_if_forced_match_is_better(tree_horizontal_info *target_halo,
          else if(new_match->halo==NULL)
             flag_valid=FALSE;
          else{
-            // By making a first check on file_root, we effectively
+            // By making a first check on file_root, we are trying to
             //    avoid turning the halo with the longest descendant
             //    line into a fragmented halo.
-            if(old_match->halo->file_root>new_match->halo->file_root)
+            int old_match_file_root=old_match->halo->forematch_default.halo->file_root;
+            int new_match_file_root=new_match->halo->forematch_default.halo->file_root;
+            if(old_match_file_root>new_match_file_root)
                flag_valid=FALSE;
-            else if(old_match->halo->file_root==new_match->halo->file_root){
-               if(old_match->halo->file_root>=new_match->halo->file_root)
-                  flag_valid=FALSE;
-            }
+            else if(old_match_file_root==new_match_file_root)
+               flag_valid=check_if_match_is_better(target_halo,old_match,new_match);
          }
       }
    }

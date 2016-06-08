@@ -19,12 +19,12 @@ int  fetch_treenode_merger_info(tree_info *trees,tree_node_info **halo_secondary
    // Sanity checks
    if((*halo_primary)==NULL)
       SID_trap_error("Primary halo passed to fetch_treenode_merger_info() is not defined.",ERROR_LOGIC);
-   if(!check_mode_for_flag((*halo_primary)->tree_case,TREE_CASE_MERGER_PRIMARY)) 
-      SID_trap_error("Primary halo passed to fetch_treenode_merger_info() is not marked with TREE_CASE_MERGER_PRIMARY.",ERROR_LOGIC);
    if((*halo_secondary)==NULL)
       SID_trap_error("Secondary halo passed to fetch_treenode_merger_info() is not defined.",ERROR_LOGIC);
-   if(!check_mode_for_flag((*halo_secondary)->tree_case,TREE_CASE_MERGER)) 
-      SID_trap_error("Secondary halo passed to fetch_treenode_merger_info() is not marked with TREE_CASE_MERGER.",ERROR_LOGIC);
+   //if(!check_mode_for_flag((*halo_primary)->tree_case,TREE_CASE_MERGER_PRIMARY)) 
+   //   SID_trap_error("Primary halo passed to fetch_treenode_merger_info() is not marked with TREE_CASE_MERGER_PRIMARY.",ERROR_LOGIC);
+   //if(!check_mode_for_flag((*halo_secondary)->tree_case,TREE_CASE_MERGER)) 
+   //   SID_trap_error("Secondary halo passed to fetch_treenode_merger_info() is not marked with TREE_CASE_MERGER.",ERROR_LOGIC);
 
    // Find peak-mass secondary and primary
    int flag_success=FALSE;
@@ -34,14 +34,14 @@ int  fetch_treenode_merger_info(tree_info *trees,tree_node_info **halo_secondary
                                                 (*halo_primary),
                                                 (*halo_secondary)->snap_tree,
                                                 halo_primary,
-                                                TREE_PROGENITOR_ORDER_N_PARTICLES_PEAK);
+                                                TREE_PROGENITOR_ORDER_N_PARTICLES_INCLUSIVE_PEAK);
 
    // Compute merger ratio (zeta)
    if((*halo_secondary)!=NULL && (*halo_primary)!=NULL){
       if(zeta!=NULL){
          // Fetch peak particle counts for both halos
-         int n_p_peak_secondary=(*halo_secondary)->n_particles_peak;
-         int n_p_peak_primary  =(*halo_primary)->n_particles_peak;
+         int n_p_peak_secondary=(*halo_secondary)->n_particles_inclusive_peak;
+         int n_p_peak_primary  =(*halo_primary)->n_particles_inclusive_peak;
 
          // Make sure zeta<=1
          int n_p_lo=MIN(n_p_peak_primary,n_p_peak_secondary);

@@ -16,17 +16,18 @@
 #define K_MATCH_GROUPS    1
 
 // Tree finalization and reading modes
-#define TREE_READ_DEFAULT                      0
-#define TREE_SUBSTRUCTURE_ORDER_DEFAULT        TTTP00
-#define TREE_PROGENITOR_ORDER_DELUCIA          TTTP01
-#define TREE_PROGENITOR_ORDER_N_PARTICLES      TTTP02
-#define TREE_PROGENITOR_ORDER_N_PARTICLES_PEAK TTTP03
-#define TREE_READ_EXTENDED_POINTERS            TTTP04
-#define TREE_READ_HEADER_ONLY                  TTTP05
-#define TREE_MODE_REFERENCE                    TTTP06
-#define TREE_MODE_SUBSTRUCTURE_HIERARCHY_ON    TTTP07
-#define TREE_PROGENITOR_ORDER_DEFAULT          TREE_PROGENITOR_ORDER_N_PARTICLES_PEAK
-#define TREE_MODE_DEFAULT                      (TREE_SUBSTRUCTURE_ORDER_DEFAULT|TREE_PROGENITOR_ORDER_DEFAULT)
+#define TREE_READ_DEFAULT                                0
+#define TREE_SUBSTRUCTURE_ORDER_DEFAULT                  TTTP00
+#define TREE_PROGENITOR_ORDER_DELUCIA                    TTTP01
+#define TREE_PROGENITOR_ORDER_N_PARTICLES                TTTP02
+#define TREE_PROGENITOR_ORDER_N_PARTICLES_PEAK           TTTP04
+#define TREE_PROGENITOR_ORDER_N_PARTICLES_INCLUSIVE_PEAK TTTP05
+#define TREE_READ_EXTENDED_POINTERS                      TTTP06
+#define TREE_READ_HEADER_ONLY                            TTTP07
+#define TREE_MODE_REFERENCE                              TTTP08
+#define TREE_MODE_SUBSTRUCTURE_HIERARCHY_ON              TTTP09
+#define TREE_PROGENITOR_ORDER_DEFAULT                    TREE_PROGENITOR_ORDER_N_PARTICLES_INCLUSIVE_PEAK
+#define TREE_MODE_DEFAULT                                (TREE_SUBSTRUCTURE_ORDER_DEFAULT|TREE_PROGENITOR_ORDER_DEFAULT)
 
 // If any of these are changed, don't forget to modify parse_match_type.c (TTTPXX means "two-to-the-power-XX")
 #define TREE_CASE_NO_PROGENITORS               TTTP00  // Set for halos that have no progenitors.
@@ -202,34 +203,34 @@ struct match_info{
 };
 
 struct tree_horizontal_info{
-  int              id;                             // This halo's id
-  int              main_progenitor_id;             // This halo's main progenitor id
-  int              tree_id;                        // This halo's tree id
-  int              type;                           // A bit-wise switch characterising this halo's matching
-  int              file;                           // This halo's snapshot index (ie. 0->n_snaps_used_in_trees-1)
-  int              file_root;                      // This halo's root's snapshot index (ie. 0->n_snaps_used_in_trees-1)
-  int              snap;                           // This halo's snapshot number
-  int              n_particles;                    // Number of particles in this halo
-  int              n_particles_parent;             // Number of particles in this halo's parent halo
-  int              n_particles_largest_descendant; // Number of particles in this halo's largest-ever descendant
-  int              n_back_matches;                 // The number of halos back-matched to this halo (may contain it's descendant as well)
-  int              n_progenitors;                  // The number of progenitors pointing to this halo
-  int              index;                          // This halo's index in the halo catalog
-  match_info       first_progenitor;               // Pointer to this halo's first progenitor
-  match_info       last_progenitor;                // Pointer to this halo's last  progenitor
-  match_info       next_progenitor;                // Pointer to this halo's next  progenitor
-  match_info      *back_matches;                   // Contains the pointer information for all of the back-matches to this halo
-  match_info       forematch_first;                // Initially used (in identify_back_matches) as a pointer to the most immediate forematched halo,
-                                                   //    then used (in identify_progenitors) as the first and best option for a descendant from
-                                                   //    the back match list.
-  match_info       forematch_default;              // Pointer to the default halo matched to.  Starts with the initial 'first' match but may change
-                                                   //    if we manage to match to one-or-more emerged halo(s).  When we finish scanning, 
-                                                   //    this becomes the match.
-  match_info       forematch_best;                 // The best fore match to this halo generated in 'identify_progenitors'.  Used
-                                                   //    to ensure that a bridged halo gets at least one progenitor, rather
-                                                   //    than have all matches to it end-up as later matches to emerged halos.
-  match_info       bridge_backmatch;               // Pointer to a possible back-matched bridged halo
-  match_info       descendant;                     // Contains all the needed pointers to the descendant
+  int         id;                             // This halo's id
+  int         main_progenitor_id;             // This halo's main progenitor id
+  int         tree_id;                        // This halo's tree id
+  int         type;                           // A bit-wise switch characterising this halo's matching
+  int         file;                           // This halo's snapshot index (ie. 0->n_snaps_used_in_trees-1)
+  int         file_root;                      // This halo's root's snapshot index (ie. 0->n_snaps_used_in_trees-1)
+  int         snap;                           // This halo's snapshot number
+  int         n_particles;                    // Number of particles in this halo
+  int         n_particles_parent;             // Number of particles in this halo's parent halo
+  int         n_particles_largest_descendant; // Number of particles in this halo's largest-ever descendant
+  int         n_back_matches;                 // The number of halos back-matched to this halo (may contain it's descendant as well)
+  int         n_progenitors;                  // The number of progenitors pointing to this halo
+  int         index;                          // This halo's index in the halo catalog
+  match_info  first_progenitor;               // Pointer to this halo's first progenitor
+  match_info  last_progenitor;                // Pointer to this halo's last  progenitor
+  match_info  next_progenitor;                // Pointer to this halo's next  progenitor
+  match_info *back_matches;                   // Contains the pointer information for all of the back-matches to this halo
+  match_info  forematch_first;                // Initially used (in identify_back_matches) as a pointer to the most immediate forematched halo,
+                                              //    then used (in identify_progenitors) as the first and best option for a descendant from
+                                              //    the back match list.
+  match_info  forematch_default;              // Pointer to the default halo matched to.  Starts with the initial 'first' match but may change
+                                              //    if we manage to match to one-or-more emerged halo(s).  When we finish scanning, 
+                                              //    this becomes the match.
+  match_info  forematch_best;                 // The best fore match to this halo generated in 'identify_progenitors'.  Used
+                                              //    to ensure that a bridged halo gets at least one progenitor, rather
+                                              //    than have all matches to it end-up as later matches to emerged halos.
+  match_info  bridge_backmatch;               // Pointer to a possible back-matched bridged halo
+  match_info  descendant;                     // Contains all the needed pointers to the descendant
 };
 
 typedef struct tree_horizontal_extended_info tree_horizontal_extended_info;

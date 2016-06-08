@@ -54,6 +54,8 @@ void finalize_trees(tree_info *trees,int mode){
      SID_log("Assigning progenitor ordering (by particle count)...",SID_LOG_OPEN|SID_LOG_TIMER);
   else if(check_mode_for_flag(mode_progenitor_order,TREE_PROGENITOR_ORDER_N_PARTICLES_PEAK))
      SID_log("Assigning progenitor ordering (by peak particle count)...",SID_LOG_OPEN|SID_LOG_TIMER);
+  else if(check_mode_for_flag(mode_progenitor_order,TREE_PROGENITOR_ORDER_N_PARTICLES_INCLUSIVE_PEAK))
+     SID_log("Assigning progenitor ordering (by peak inclusive particle count)...",SID_LOG_OPEN|SID_LOG_TIMER);
   else
      SID_trap_error("Invalid progenitor mode (%d).",ERROR_LOGIC,mode_progenitor_order);
   for(int i_snap=0;i_snap<trees->n_snaps;i_snap++){

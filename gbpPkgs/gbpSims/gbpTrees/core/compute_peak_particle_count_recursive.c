@@ -37,7 +37,7 @@ void compute_peak_particle_count_recursive(tree_info *trees,tree_node_info *this
   }
 
   // Initialize values at leaves
-  if(first_progenitor==NULL){
+  if(first_progenitor==NULL || this_halo->n_particles_peak==0){
      this_halo->n_particles_peak          =this_halo->n_particles;
      this_halo->n_particles_inclusive_peak=this_halo->n_particles_inclusive;
   }

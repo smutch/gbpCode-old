@@ -123,26 +123,9 @@ void read_trees(const char *filename_SSimPL_root,
 
   // Check if the halo files have substructure information.  If they do, we will read it
   //    as we read the trees to set the substructure hierarchy pointers.
-  char  filename_in[MAX_FILENAME_LENGTH];
-  int   flag_read_sub_pointers=FALSE;
-  if(SID.I_am_Master){
-     FILE *fp_test=NULL;
-     sprintf(filename_in,"%s/halos/%s_%03d.catalog_subgroups",filename_SSimPL_root,filename_halos_version,i_read_stop);
-     fp_test=fopen(filename_in,"r");
-     int n_subgroups_in;fread_verify(&n_subgroups_in,sizeof(int),1,fp_test);
-     int offset_size;   fread_verify(&offset_size,   sizeof(int),1,fp_test);
-     fseeko(fp_test,n_subgroups_in*(sizeof(int)+offset_size),SEEK_CUR);
-     int test;          fread(&offset_size,sizeof(int),1,fp_test); // make sure not to verify here!
-     flag_read_sub_pointers=!feof(fp_test);
-     fclose(fp_test);
-  }
-  SID_Bcast(&flag_read_sub_pointers,sizeof(int),MASTER_RANK,SID.COMM_WORLD);
-  if(flag_read_sub_pointers){
-     SID_log("Substructure hierarchy pointers present and will be used.",SID_LOG_COMMENT);
+  int flag_read_sub_pointers=check_if_substructure_hierarchy_defined(filename_SSimPL_root,filename_halos_version,i_read_stop);
+  if(flag_read_sub_pointers)
      (*trees)->mode|=TREE_MODE_SUBSTRUCTURE_HIERARCHY_ON;
-  }
-  else
-     SID_log("Substructure hierarchy pointers not present and will not be used.",SID_LOG_COMMENT);
 
   // Maintain a list of substructure pointers for
   //    setting substructure hierarchy pointers
@@ -179,6 +162,7 @@ void read_trees(const char *filename_SSimPL_root,
     SID_log("Processing snapshot %03d (%03d of %03d)...",SID_LOG_OPEN|SID_LOG_TIMER,i_read,i_file+1,n_snaps);
 
     // Open horizontal tree file
+    char filename_in[MAX_FILENAME_LENGTH];
     SID_fp fp_trees_in;
     sprintf(filename_in,"%s/horizontal_trees_%03d.dat",filename_input_dir_horizontal_trees,i_read);
     SID_fopen(filename_in,"r",&fp_trees_in);

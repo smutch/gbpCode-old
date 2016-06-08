@@ -12,9 +12,14 @@
 void compute_progenitor_order_recursive(tree_info *trees,tree_node_info *descendant,int *score_descendant,int mode){
   if(descendant==NULL)
      SID_trap_error("NULL descendant in compute_progenitor_order_recursive().",ERROR_LOGIC);
-  int N_i     =descendant->n_particles;
-  int N_i_peak=descendant->n_particles_peak;
-  int max_M_iN=0;
+  int N_i               =descendant->n_particles;
+  int N_i_peak          =descendant->n_particles_peak;
+  int N_i_inclusive_peak=descendant->n_particles_inclusive_peak;
+  int max_M_iN          =0;
+  int flag_reset_primary=check_mode_for_flag(mode,TREE_PROGENITOR_ORDER_N_PARTICLES_INCLUSIVE_PEAK)||
+                         check_mode_for_flag(mode,TREE_PROGENITOR_ORDER_N_PARTICLES_PEAK);
+  if(flag_reset_primary)
+     descendant->progenitor_primary=NULL;
   if(descendant->n_progenitors>1){
      tree_node_info **node_list=NULL;
      int             *score    =NULL;  
@@ -57,6 +62,8 @@ void compute_progenitor_order_recursive(tree_info *trees,tree_node_info *descend
      }
      descendant->progenitor_first=new_first;
      descendant->progenitor_last =new_last;
+     if(flag_reset_primary)
+        descendant->progenitor_primary=descendant->progenitor_first;
 
      // Clean-up 
      SID_free(SID_FARG score_index);
@@ -81,6 +88,8 @@ void compute_progenitor_order_recursive(tree_info *trees,tree_node_info *descend
         (*score_descendant)=N_i;
      else if(check_mode_for_flag(mode,TREE_PROGENITOR_ORDER_N_PARTICLES_PEAK))
         (*score_descendant)=N_i_peak;
+     else if(check_mode_for_flag(mode,TREE_PROGENITOR_ORDER_N_PARTICLES_INCLUSIVE_PEAK))
+        (*score_descendant)=N_i_inclusive_peak;
      else
         SID_trap_error("Invalid mode (%d) in assign_progenitor_order_recursive().",ERROR_LOGIC,mode);
   }
