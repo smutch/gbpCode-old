@@ -206,6 +206,8 @@ int fopen_catalog(char            *filename_catalog_root,
                   int              mode,
                   fp_catalog_info *fp_out);
 
+int check_if_substructure_hierarchy_defined(const char *filename_SSimPL_root,const char *filename_halos_version,int i_snap);
+
 void init_halo_trend           (halo_trend_info *trend_data,trend_info **trend,const char *name);
 void init_halo_trend_coordinate(halo_trend_info *trend_data,trend_info  *trend,const char *name);
 
