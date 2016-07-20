@@ -19,7 +19,7 @@ void compute_progenitor_order_recursive(tree_info *trees,tree_node_info *descend
   int flag_reset_primary=check_mode_for_flag(mode,TREE_PROGENITOR_ORDER_N_PARTICLES_INCLUSIVE_PEAK)||
                          check_mode_for_flag(mode,TREE_PROGENITOR_ORDER_N_PARTICLES_PEAK);
   if(flag_reset_primary)
-     descendant->progenitor_primary=NULL;
+     descendant->progenitor_primary=NULL; // this gets set only if n_progenitors>1
   if(descendant->n_progenitors>1){
      tree_node_info **node_list=NULL;
      int             *score    =NULL;  
@@ -50,10 +50,8 @@ void compute_progenitor_order_recursive(tree_info *trees,tree_node_info *descend
 
      // Reorder the pointers in *decending* order
      int             i_halo;
-     tree_node_info *new_first;
-     tree_node_info *new_last;
-     new_first=node_list[score_index[n_halos-1]];
-     new_last =node_list[score_index[0]];
+     tree_node_info *new_first=node_list[score_index[n_halos-1]];
+     tree_node_info *new_last =node_list[score_index[0]];
      for(i_halo=0;i_halo<n_halos;i_halo++){
        if(i_halo==0)
          node_list[score_index[i_halo]]->progenitor_next=NULL;
@@ -82,7 +80,7 @@ void compute_progenitor_order_recursive(tree_info *trees,tree_node_info *descend
   // Pass order scores up the heirarchy
   if(score_descendant!=NULL){
      if(check_mode_for_flag(mode,TREE_PROGENITOR_ORDER_DELUCIA))
-        // Add this progenitor's score to the descendant's sum (see De Lucia and Blaizot (2006))
+        // Add this progenitor's score to the descendant's sum (see De Lucia and Blaizot, 2006)
         (*score_descendant)=N_i+max_M_iN;
      else if(check_mode_for_flag(mode,TREE_PROGENITOR_ORDER_N_PARTICLES))
         (*score_descendant)=N_i;

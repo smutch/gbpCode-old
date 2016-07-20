@@ -338,7 +338,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                                       n_subgroups_max,
                                       flag_match_subgroups);
 
-       // Identify back matches (and read halo sizes).
+       // Identify matches that will be used for progenitor building (and read halo sizes)
        if(flag_fix_bridges)
           identify_back_matches(halos,
                                 halos_i,
@@ -361,7 +361,7 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
                                 filename_root_matches,
                                 flag_match_subgroups);
 
-       // Perform forward-matching (and read halo sizes if flag_fix_bridges is off).
+       // Perform forward-matching
        identify_progenitors(halos,
                             halos_i,
                             n_subgroups_group,
@@ -426,12 +426,12 @@ void compute_trees_horizontal(char        *filename_halo_root_in,
        write_trees_horizontal_report(n_halos_i,n_halos_max,halos_i);
 
        // Update the max_id variables
-       switch(k_match){
-          case 0:
+       switch(flag_match_subgroups){
+          case MATCH_SUBGROUPS:
             max_id_subgroup=max_id;
             max_tree_id_subgroup=max_tree_id;
             break;
-          case 1:
+          case MATCH_GROUPS:
             max_id_group   =max_id;
             max_tree_id_group=max_tree_id;
             break;
