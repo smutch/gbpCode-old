@@ -35,7 +35,7 @@ void check_for_fragmented_halos(int k_match,
          int halo_id           =halos[i_write%n_wrap][i_halo].id;
          int main_progenitor_id=halos[i_write%n_wrap][i_halo].main_progenitor_id;
          // This is the one case that get's set elsewhere
-         if(check_mode_for_flag(halos[i_write%n_wrap][i_halo].type,TREE_CASE_FRAGMENTED_EJECTED))
+         if(check_mode_for_flag(halos[i_write%n_wrap][i_halo].type,TREE_CASE_FRAGMENTED_OTHER))
             n_ejected++;
          else if(halo_id<0 || check_mode_for_flag(type,TREE_CASE_STRAYED)){
             halos[i_write%n_wrap][i_halo].type|=TREE_CASE_FRAGMENTED_STRAYED;
@@ -48,8 +48,8 @@ void check_for_fragmented_halos(int k_match,
       }
       // It's possible that this flag was set incorrectly in cases where an initial
       //    emerged match was rejected but a subsequent one was made.  Fix this here.
-      else if(check_mode_for_flag(halos[i_write%n_wrap][i_halo].type,TREE_CASE_FRAGMENTED_EJECTED))
-         halos[i_write%n_wrap][i_halo].type&=(~TREE_CASE_FRAGMENTED_EJECTED);
+      else if(check_mode_for_flag(halos[i_write%n_wrap][i_halo].type,TREE_CASE_FRAGMENTED_OTHER))
+         halos[i_write%n_wrap][i_halo].type&=(~TREE_CASE_FRAGMENTED_OTHER);
    }
    if(n_strayed!=0 || n_normal!=0 || n_ejected!=0){
       SID_log("# of new strayed fragmented halos = %-8d",SID_LOG_COMMENT,n_strayed);

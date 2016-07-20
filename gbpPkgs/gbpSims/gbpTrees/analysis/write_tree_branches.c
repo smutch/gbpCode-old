@@ -42,7 +42,7 @@ void write_tree_branches(tree_info *trees,tree_node_info **list_in,int n_list_in
   for(int i_list=0;i_list<n_list_in;i_list++){
     if(check_mode_for_flag(list_in[i_list]->tree_case,TREE_CASE_FRAGMENTED_STRAYED)||
        check_mode_for_flag(list_in[i_list]->tree_case,TREE_CASE_FRAGMENTED_NORMAL) ||
-       check_mode_for_flag(list_in[i_list]->tree_case,TREE_CASE_FRAGMENTED_EJECTED))
+       check_mode_for_flag(list_in[i_list]->tree_case,TREE_CASE_FRAGMENTED_OTHER))
        n_frag++;
   }
   if(n_frag>0)

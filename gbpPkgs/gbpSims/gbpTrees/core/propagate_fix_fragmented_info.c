@@ -56,7 +56,7 @@ void propagate_fix_fragmented_info(tree_horizontal_extended_info **groups,   int
             group->n_particles_peak =n_p_peak;
             group->type            &=(~TREE_CASE_FRAGMENTED_STRAYED);
             group->type            &=(~TREE_CASE_FRAGMENTED_NORMAL);
-            group->type            &=(~TREE_CASE_FRAGMENTED_EJECTED);
+            group->type            &=(~TREE_CASE_FRAGMENTED_OTHER);
          }
       }
 
@@ -101,7 +101,7 @@ void propagate_fix_fragmented_info(tree_horizontal_extended_info **groups,   int
                subgroup->n_particles_peak =n_p_peak;
                subgroup->type            &=(~TREE_CASE_FRAGMENTED_STRAYED);
                subgroup->type            &=(~TREE_CASE_FRAGMENTED_NORMAL);
-               subgroup->type            &=(~TREE_CASE_FRAGMENTED_EJECTED);
+               subgroup->type            &=(~TREE_CASE_FRAGMENTED_OTHER);
             }
          }
       }

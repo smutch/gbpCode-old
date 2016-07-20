@@ -48,9 +48,8 @@
                                                        //    decendant_id!=a valid id (ie they are not a progenitor of anything). 
 #define TREE_CASE_FRAGMENTED_NORMAL            TTTP13  // Set for halos that are marked TREE_CASE_FRAGMENTED (see below), but
                                                        //    are otherwise part of a connected progenitor line
-#define TREE_CASE_FRAGMENTED_EJECTED           TTTP14  // Set for halos that are marked TREE_CASE_FRAGMENTED (see below), for which
-                                                       //    a progenitor was possible but could not be used because it was needed
-                                                       //    as a progenitor of the bridged halo this fragmented halo is back matched to. 
+#define TREE_CASE_FRAGMENTED_OTHER             TTTP14  // Currently unused.  Saved for future use when we may mark other types of fragmented
+                                                       //    halos (relic fragmented halos, for example).
 #define TREE_CASE_EMERGED_CANDIDATE            TTTP15  // Set when a halo is identified as a unique back-match to a halo marked TREE_CASE_BRIDGED and
                                                        //    is not selected as the bridged halo's descendant.  This switch is turned off if the halo
                                                        //    is marked TREE_CASE_EMERGED or TREE_CASE_FRAGMENTED_NEW.
@@ -77,7 +76,7 @@
                   TREE_CASE_FRAGMENTED_NEW,
                   TREE_CASE_FRAGMENTED_STRAYED,
                   TREE_CASE_FRAGMENTED_NORMAL,
-                  TREE_CASE_FRAGMENTED_EJECTED,
+                  TREE_CASE_FRAGMENTED_OTHER,
                   TREE_CASE_2WAY_MATCH,
                   TREE_CASE_MOST_MASSIVE,
                   TREE_CASE_DOMINANT,
@@ -101,7 +100,7 @@
                   "FRAGMENTED_NEW",
                   "FRAGMENTED_STRAYED",
                   "FRAGMENTED_NORMAL",
-                  "FRAGMENTED_EJECTED",
+                  "FRAGMENTED_OTHER",
                   "2WAY",
                   "MOST_MASSIVE",
                   "DOMINANT",
