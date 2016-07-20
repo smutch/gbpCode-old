@@ -39,7 +39,7 @@ void SID_init(int       *argc,
   }
   else
   {
-    mpi_comm = *((MPI_Comm *) mpi_comm_as_void);
+    MPI_Comm_dup(*((MPI_Comm *) mpi_comm_as_void), &mpi_comm);
     flag_passed_comm = 1;
   }
 
