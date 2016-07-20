@@ -357,13 +357,13 @@ void read_trees(const char *filename_SSimPL_root,
          int flag_central_set=FALSE;
          for(int j_subgroup=0;j_subgroup<n_subgroups_group;j_subgroup++){
             // Read and set substructure hierarchy pointers
-            int parent_pointer=-1;
+            int parent_pointer;
             SID_fread_all_buffer(&parent_pointer,sizeof(int),1,fp_hierarchy_in_buffer);
             tree_node_info *parent_node=NULL;
             // If a substructure is labeled as belonging to '0' or itself,
             //    then it belongs to the top substructure level.
             //    Everything else is a descendant of these.
-            if(parent_pointer<=0 || parent_pointer==j_subgroup){
+            if(j_subgroup==0 || j_subgroup==parent_pointer){
                parent_node     =group_node;
                flag_central_set=TRUE;
             }
@@ -385,8 +385,8 @@ void read_trees(const char *filename_SSimPL_root,
             SID_trap_error("Failed to identify a central substructure for a group with substructure (rank=%d,i_group=%d,i_subgroup=%d,n_subgroups_group=%d)",
                            ERROR_LOGIC,SID.My_rank,i_group,i_subgroup,n_subgroups_group);
          // Build inclusive particle counts
-         for(int j_subgroup=0;j_subgroup<n_subgroups_group;j_subgroup++)
-            compute_inclusive_particle_count_recursive((*trees),group_substructure_pointers[j_subgroup],NULL);
+         if(group_node!=NULL)
+            compute_inclusive_particle_count_recursive((*trees),group_node,NULL);
       }
 
       // Increment global subgroup counter
