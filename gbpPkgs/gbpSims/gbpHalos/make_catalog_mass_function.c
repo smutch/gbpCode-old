@@ -180,7 +180,7 @@ int main(int argc, char *argv[]){
                }
                fread_verify(sub_hier,sizeof(int),n_subgroups_group,fp_hier);
                for(int j_subgroup=0;j_subgroup<n_subgroups_group;j_subgroup++){
-                  if(sub_hier[j_subgroup]<=0 || sub_hier[j_subgroup]==j_subgroup)
+                  if(j_subgroup==0 || sub_hier[j_subgroup]==j_subgroup)
                      sub_hier[j_subgroup]=-1;
                }
             }
@@ -206,14 +206,13 @@ int main(int argc, char *argv[]){
                i_subgroup=i_subgroup_save;
                for(int j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
                   int ptr=sub_hier[j_subgroup];
-                  while(ptr>0){
+                  while(ptr>=0){
                      inclusive[i_subgroup_save+ptr]+=subgroups[i_subgroup];
                      subgroup_rank[i_subgroup]++;
                      ptr=sub_hier[ptr];
                   }
                }
             }
-
             // Take log of substructure masses
             i_subgroup=i_subgroup_save;
             for(int j_subgroup=0;j_subgroup<n_subgroups_group;i_subgroup++,j_subgroup++){
