@@ -150,7 +150,7 @@ void identify_progenitors(tree_horizontal_info **halos,
                }
             }
          }
-      }
+      } // if flag_fix_bridges
       // ... else, set progenitors if bridge fixing is switched off ...
       else{
          tree_horizontal_info *halos_j=halos[j_file_2%n_wrap];
@@ -164,6 +164,8 @@ void identify_progenitors(tree_horizontal_info **halos,
                    halo_i->forematch_first.score          =match_score[i_halo];
                    halo_i->forematch_first.flag_two_way   =match_flag_two_way[i_halo];
                    halo_i->forematch_first.flag_back_match=FALSE;
+                   // Initialize the default pointer to the best back match pointer (this is what is used for building descendant pointers)
+                   memcpy(&(halo_i->forematch_default),&(halo_i->forematch_first),sizeof(match_info));
                 }
              }
          }
