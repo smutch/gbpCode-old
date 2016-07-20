@@ -8,7 +8,7 @@ void add_to_trees_horizontal_stats(tree_horizontal_stats_info *stats,int id,int 
    stats->max_id=MAX(stats->max_id,id);
 
    // Compute statistcs for mergers
-   if(descendant_id>0 && id!=descendant_id)
+   if(descendant_id>=0 && id!=descendant_id)
       stats->n_mergers++;
 
    // Compute statistcs for strays
