@@ -10,13 +10,13 @@
 #include <gbpTrees_analysis.h>
 
 int check_treenode_if_merger(tree_node_info *halo){
+   int r_val=FALSE;
    if(halo!=NULL){
       tree_node_info *descendant=halo->descendant;
       if(descendant!=NULL){
          tree_node_info *progenitor_primary=descendant->progenitor_primary;
-         return(progenitor_primary!=NULL && progenitor_primary!=halo);
+         r_val=(progenitor_primary!=NULL && progenitor_primary!=halo);
       }
    }
-   else
-      return(FALSE);
+   return(r_val);
 }
