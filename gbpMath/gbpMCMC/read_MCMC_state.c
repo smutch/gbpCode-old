@@ -85,12 +85,12 @@ void read_MCMC_state(MCMC_info *MCMC){
     // Read/Write Header file
     if((fp_run=fopen(filename_run,"rb"))!=NULL){
       fp_run=fopen(filename_run,"rb");
-      fread(MCMC->problem_name,        sizeof(char),MCMC_NAME_SIZE,fp_run);
-      fread(&(MCMC->n_chains),         sizeof(int),              1,fp_run);
-      fread(&(MCMC->n_avg),            sizeof(int),              1,fp_run);
-      fread(&(MCMC->flag_autocor_on),  sizeof(int),              1,fp_run);
-      fread(&(MCMC->flag_no_map_write),sizeof(int),              1,fp_run);
-      fread(&(MCMC->n_P),              sizeof(int),              1,fp_run);
+      fread_verify(MCMC->problem_name,        sizeof(char),MCMC_NAME_SIZE,fp_run);
+      fread_verify(&(MCMC->n_chains),         sizeof(int),              1,fp_run);
+      fread_verify(&(MCMC->n_avg),            sizeof(int),              1,fp_run);
+      fread_verify(&(MCMC->flag_autocor_on),  sizeof(int),              1,fp_run);
+      fread_verify(&(MCMC->flag_no_map_write),sizeof(int),              1,fp_run);
+      fread_verify(&(MCMC->n_P),              sizeof(int),              1,fp_run);
       SID_log("Problem name    ={%s}",SID_LOG_COMMENT,MCMC->problem_name);
       SID_log("n_avg           ={%d}",SID_LOG_COMMENT,MCMC->n_avg);
       SID_log("flag_autocor_on ={%d}",SID_LOG_COMMENT,MCMC->flag_autocor_on);
@@ -110,10 +110,10 @@ void read_MCMC_state(MCMC_info *MCMC){
       MCMC->P_name_length=0;
       for(i_P=0;i_P<MCMC->n_P;i_P++){
         MCMC->P_names[i_P]=(char *)SID_malloc(sizeof(char)*MCMC_NAME_SIZE);
-        fread(MCMC->P_names[i_P],       sizeof(char),  MCMC_NAME_SIZE,fp_run);
-        fread(&(MCMC->P_init[i_P]),     sizeof(double),             1,fp_run);
-        fread(&(MCMC->P_limit_min[i_P]),sizeof(double),             1,fp_run);
-        fread(&(MCMC->P_limit_max[i_P]),sizeof(double),             1,fp_run);
+        fread_verify(MCMC->P_names[i_P],       sizeof(char),  MCMC_NAME_SIZE,fp_run);
+        fread_verify(&(MCMC->P_init[i_P]),     sizeof(double),             1,fp_run);
+        fread_verify(&(MCMC->P_limit_min[i_P]),sizeof(double),             1,fp_run);
+        fread_verify(&(MCMC->P_limit_max[i_P]),sizeof(double),             1,fp_run);
         MCMC->P_name_length=MAX(MCMC->P_name_length,strlen(MCMC->P_names[i_P]));
       }
       sprintf(MCMC->P_name_format,"%%-%ds",            MCMC->P_name_length);
@@ -121,42 +121,42 @@ void read_MCMC_state(MCMC_info *MCMC){
       for(i_P=0;i_P<MCMC->n_P;i_P++)
         SID_log(format_string,SID_LOG_COMMENT,MCMC->P_names[i_P],MCMC->P_init[i_P],MCMC->P_limit_min[i_P],MCMC->P_limit_max[i_P]);
       SID_log(NULL,SID_LOG_CLOSE|SID_LOG_NOPRINT);
-      fread(&(MCMC->n_arrays),sizeof(int),1,fp_run);
+      fread_verify(&(MCMC->n_arrays),sizeof(int),1,fp_run);
       SID_log("n_arrays=%d",  SID_LOG_OPEN,MCMC->n_arrays);
       MCMC->array     =(double **)SID_malloc(sizeof(double *)*MCMC->n_arrays);
       MCMC->array_name=(char   **)SID_malloc(sizeof(char   *)*MCMC->n_arrays);
       for(i_array=0;i_array<MCMC->n_arrays;i_array++){
         MCMC->array[i_array]     =(double *)SID_malloc(sizeof(double)*MCMC->n_P);
         MCMC->array_name[i_array]=(char *)SID_malloc(sizeof(char)*MCMC_NAME_SIZE);
-        fread(MCMC->array_name[i_array],sizeof(char),  MCMC_NAME_SIZE,fp_run);
-        fread(MCMC->array[i_array],     sizeof(double),MCMC->n_P,     fp_run);
+        fread_verify(MCMC->array_name[i_array],sizeof(char),  MCMC_NAME_SIZE,fp_run);
+        fread_verify(MCMC->array[i_array],     sizeof(double),MCMC->n_P,     fp_run);
         SID_log("array #%03d name ={%s}",SID_LOG_COMMENT,i_array,MCMC->array_name[i_array]);
       }
       SID_log(NULL,SID_LOG_CLOSE|SID_LOG_NOPRINT);
-      fread(&(MCMC->n_DS),sizeof(int),1,fp_run);
+      fread_verify(&(MCMC->n_DS),sizeof(int),1,fp_run);
       SID_log("Reading %d datasets...",SID_LOG_OPEN,MCMC->n_DS);
       for(i_DS=0;i_DS<MCMC->n_DS;i_DS++){
         SID_log("Dataset #%03d:",SID_LOG_OPEN,i_DS);
         current_DS           =(MCMC_DS_info *)SID_malloc(sizeof(MCMC_DS_info));
-        fread(current_DS->name,  sizeof(char),MCMC_NAME_SIZE,fp_run);
-        fread(&(current_DS->n_M),sizeof(int),              1,fp_run);
+        fread_verify(current_DS->name,  sizeof(char),MCMC_NAME_SIZE,fp_run);
+        fread_verify(&(current_DS->n_M),sizeof(int),              1,fp_run);
         MCMC->n_M_total+=current_DS->n_M;
         SID_log("name    ={%s}",SID_LOG_COMMENT,current_DS->name);
         SID_log("n_M     =%d",  SID_LOG_COMMENT,current_DS->n_M);
         current_DS->M_target =(double *)SID_malloc(sizeof(double)*current_DS->n_M);
         current_DS->dM_target=(double *)SID_malloc(sizeof(double)*current_DS->n_M);
         current_DS->params   =NULL;
-        fread(current_DS->M_target,   sizeof(double),current_DS->n_M,fp_run);
-        fread(current_DS->dM_target,  sizeof(double),current_DS->n_M,fp_run);
-        fread(&(current_DS->n_arrays),sizeof(int),                 1,fp_run);
+        fread_verify(current_DS->M_target,   sizeof(double),current_DS->n_M,fp_run);
+        fread_verify(current_DS->dM_target,  sizeof(double),current_DS->n_M,fp_run);
+        fread_verify(&(current_DS->n_arrays),sizeof(int),                 1,fp_run);
         SID_log("n_arrays=%d",  SID_LOG_OPEN,current_DS->n_arrays);
         current_DS->array     =(double **)SID_malloc(sizeof(double *)*current_DS->n_arrays);
         current_DS->array_name=(char   **)SID_malloc(sizeof(char   *)*current_DS->n_arrays);
         for(i_array=0;i_array<current_DS->n_arrays;i_array++){
           current_DS->array[i_array]     =(double *)SID_malloc(sizeof(double)*current_DS->n_M);
           current_DS->array_name[i_array]=(char *)SID_malloc(sizeof(char)*MCMC_NAME_SIZE);
-          fread(current_DS->array_name[i_array],sizeof(char),  MCMC_NAME_SIZE, fp_run);
-          fread(current_DS->array[i_array],     sizeof(double),current_DS->n_M,fp_run);
+          fread_verify(current_DS->array_name[i_array],sizeof(char),  MCMC_NAME_SIZE, fp_run);
+          fread_verify(current_DS->array[i_array],     sizeof(double),current_DS->n_M,fp_run);
           SID_log("array #%03d name={%s}",SID_LOG_COMMENT,i_array,current_DS->array_name[i_array]);
         }
         SID_log(NULL,SID_LOG_CLOSE|SID_LOG_NOPRINT);
@@ -175,12 +175,12 @@ void read_MCMC_state(MCMC_info *MCMC){
     // ... fetch the number of intervals that have already been computed ...
     fp_chain_config=fopen(filename_chain_config,"rb");
     V_read=(double *)SID_malloc(sizeof(double)*MCMC->n_P*MCMC->n_P);
-    fread(&(MCMC->n_iterations),     sizeof(int),   1,      fp_chain_config);
-    fread(&(MCMC->n_iterations_burn),sizeof(int),   1,      fp_chain_config);
+    fread_verify(&(MCMC->n_iterations),     sizeof(int),   1,      fp_chain_config);
+    fread_verify(&(MCMC->n_iterations_burn),sizeof(int),   1,      fp_chain_config);
 
     // ... fetch the temperature and covariance matrix that was being used
-    fread(&(MCMC->temperature),      sizeof(double),1,                  fp_chain_config);
-    fread(V_read,                    sizeof(double),MCMC->n_P*MCMC->n_P,fp_chain_config);
+    fread_verify(&(MCMC->temperature),      sizeof(double),1,                  fp_chain_config);
+    fread_verify(V_read,                    sizeof(double),MCMC->n_P*MCMC->n_P,fp_chain_config);
     set_MCMC_covariance(MCMC,V_read);
     SID_free(SID_FARG V_read);
 

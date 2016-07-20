@@ -10,4 +10,5 @@
 #if USE_HDF5
   #include <gbpHDF5.h>
 #endif
+#include <gbpMultifile.h>
 #endif

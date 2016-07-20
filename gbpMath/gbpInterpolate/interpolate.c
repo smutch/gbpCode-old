@@ -6,7 +6,7 @@
 #include <gbpInterpolate.h>
 
 double interpolate(interp_info *interp, 
-		   double       x) {
+                   double       x) {
   return(gsl_interp_eval(interp->interp,
 			 interp->x,
 			 interp->y,

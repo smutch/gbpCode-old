@@ -75,7 +75,7 @@ int main(int argc, char *argv[]){
   RNG_info     RNG;
 
   // This must be called at the very beginning of the main function  
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   SID_log("Running the MCMC example code '%s'...",SID_LOG_OPEN,argv[0]);
 

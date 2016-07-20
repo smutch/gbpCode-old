@@ -107,7 +107,7 @@ size_t read_binary_by_rank(void    *array,
 	if(n_buffer<=0)
 	  flag_continue=FALSE;
 	else{
-	  n_actual=fread(buffer,n_buffer,bytes_per_read,fp);
+	  n_actual=fread_verify(buffer,n_buffer,bytes_per_read,fp);
 	  if(n_actual!=n_buffer)
 	    flag_error=TRUE;
 	  n_remaining_read-=n_actual;

@@ -17,7 +17,7 @@ int main(int argc, char *argv[]){
   FILE   *unit_in;
 
   // Initialize gbpLib
-  SID_init(&argc,&argv,NULL);
+  SID_init(&argc,&argv,NULL,NULL);
 
   // Check syntax and read-in input parameters
   if(argc!=3)

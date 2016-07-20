@@ -6,14 +6,14 @@ GBPREAL random_number(RNG_info *RNG){
   if(RNG->initialized){
     #if USE_MPI
       if(RNG->global){
-        if(SID.I_am_Master){
+        //if(SID.I_am_Master){
           #if USE_SPRNG
             random_local=(GBPREAL)sprng(RNG->stream);
           #else
             random_local=(GBPREAL)ran1(&(RNG->stream));
           #endif
-        }
-        MPI_Bcast(&random_local,1,MPI_REAL,MASTER_RANK,SID.COMM_WORLD->comm);
+        //}
+        //MPI_Bcast(&random_local,1,MPI_REAL,MASTER_RANK,SID.COMM_WORLD->comm);
         return(random_local);
       }
       else{

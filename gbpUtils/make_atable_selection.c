@@ -8,7 +8,7 @@
 
 int main(int argc, char *argv[]){
 
-    SID_init(&argc,&argv,NULL);
+    SID_init(&argc,&argv,NULL,NULL);
 
     if(argc!=5){
         printf("\n  Syntax: %s file_in column check_option value\n\n",

@@ -1,0 +1,12 @@
+###########################
+# Local Makefile settings #
+###########################
+INCFILES  = gbpMultifile.h
+OBJFILES  = fclose_multifile.o  fopen_multifile.o  fopen_multifile_nth_file.o  fread_multifile.o
+LIBFILE   = 
+BINFILES  = 
+SCRIPTS   = 
+DATAFILES = 
+LIBS      = 
+SUBDIRS   = 
+###########################

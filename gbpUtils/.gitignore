@@ -1,0 +1,4 @@
+run_mpi
+run_mpi_valgrind
+run_queue
+run_valgrind

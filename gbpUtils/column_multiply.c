@@ -25,7 +25,7 @@ int main(int argc, char *argv[]){
         return(ERROR_SYNTAX);
     }
 
-    SID_init(&argc,&argv,NULL);
+    SID_init(&argc,&argv,NULL,NULL);
     strcpy(filename,   argv[1]);
     column_1=(int)atoi(argv[2]);
     column_2=(int)atoi(argv[3]);

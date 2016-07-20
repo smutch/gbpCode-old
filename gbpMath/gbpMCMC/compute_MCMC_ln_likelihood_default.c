@@ -18,6 +18,7 @@ void compute_MCMC_ln_likelihood_default(MCMC_info *MCMC,double **M,double *P,dou
   MCMC_DS_info *current_DS;
   MCMC_DS_info *next_DS;
   (*ln_likelihood_all)=0.;
+  (*n_DoF_all)        =0;
   i_DS                =0;
   current_DS          =MCMC->DS;
   while(current_DS!=NULL){

@@ -1,0 +1,9 @@
+# Standard WMAP-5 cosmology
+% Name         WMAP-5
+% Omega_Lambda 0.727
+% Omega_M      0.273
+% Omega_k      0.
+% Omega_b      0.0456
+% h_Hubble     0.705
+% sigma_8      0.812
+% n_spectral   0.960

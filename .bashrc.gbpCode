@@ -24,13 +24,14 @@ export GBP_QUEUE_TYPE=NONE
 # If any of the following 'USE' flags are set to 1, you must
 #   then set the corresponding GBP_XXX_DIR variable below
 export USE_GSL=1
-export USE_FFTW=1
+export USE_FFTW=0
 export USE_MPI=0
 export USE_VALGRIND=0
 export USE_CFITSIO=0
 export USE_SPRNG=0
 export USE_HDF5=0
 export USE_GADGET=0
+export USE_GDLIB=0
 
 # Set this to 1 if you need to link-in the Intel math library.  If you are
 #   getting errors like 'feupdateenv is not implemented and will always fail'
@@ -47,6 +48,7 @@ export USE_INTEL_MATH=0
 #export GBP_SPRNG_DIR="${GBP_SRC}/3rd_Party/sprng"
 #export GBP_CFITSIO_DIR="${GBP_SRC}/3rd_Party/cfitsio"
 #export GBP_HDF5_DIR="${GBP_SRC}/3rd_Party/"
+#export GBP_GDLIB_DIR="${GBP_SRC}/3rd_Party/"
 
 # This is where the compiled gbpCode libraries, etc will be stored
 export GBP_LIB="${GBP_SRC}/myLib/"
@@ -54,7 +56,7 @@ export GBP_INC="${GBP_SRC}/myInclude/"
 export GBP_BIN="${GBP_SRC}/myBin/"
 export GBP_DAT="${GBP_SRC}/myData/"
 
-# Mac OSX doesn't have getline() so we need to 
+# Old versions of Mac OSX don't have getline() so we may need to 
 #   compile our own version on that platform
 export USE_GETLINE=0
 
@@ -108,6 +110,6 @@ fi
 if [ $?PATH ]; then
   export PATH=${PATH}:${GBP_BIN}
 else
-  export LD_LIBRARY_PATH=${GBP_BIN}
+  export PATH=${GBP_BIN}
 fi
 

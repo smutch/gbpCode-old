@@ -26,13 +26,14 @@ endif
 # If any of the following 'USE' flags are set to 1, you must
 #   then set the corresponding GBP_XXX_DIR variable below
 setenv USE_GSL           1
-setenv USE_FFTW          1
+setenv USE_FFTW          0
 setenv USE_MPI           0
 setenv USE_VALGRIND      0
 setenv USE_CFITSIO       0
 setenv USE_SPRNG         0
 setenv USE_HDF5          0
 setenv USE_GADGET        0
+setenv USE_GDLIB         0
 
 # Set this to 1 if you need to link-in the Intel math library.  If you are
 #   getting errors like 'feupdateenv is not implemented and will always fail'
@@ -49,6 +50,7 @@ setenv USE_INTEL_MATH 0
 #setenv GBP_SPRNG_DIR     ${HOME}/3rd_Party/
 #setenv GBP_CFITSIO_DIR   ${HOME}/3rd_Party/
 #setenv GBP_HDF5_DIR      ${HOME}/3rd_Party/
+#setenv GBP_GDLIB_DIR     ${HOME}/3rd_Party/
 
 # This is where the compiled gbpCode libraries, etc will be stored
 setenv GBP_LIB ${GBP_SRC}'myLib/'
@@ -56,7 +58,7 @@ setenv GBP_INC ${GBP_SRC}'myInclude/'
 setenv GBP_BIN ${GBP_SRC}'myBin/'
 setenv GBP_DAT ${GBP_SRC}'myData/'
 
-# Mac OSX doesn't have getline() so we need to 
+# Old versions of Mac OSX don't have getline() so we may need to 
 #   compile our own version on that platform
 setenv USE_GETLINE 0
 
@@ -81,13 +83,13 @@ endif
 #----------------------------------------------------------------------
 # Swinburne cluster
 #----------------------------------------------------------------------
-if ( $HOSTTYPE=='x86_64-linux' ) then
+if ($HOSTTYPE == 'x86_64-linux') then
   setenv GBP_VALGRIND_PLAT amd64-linux
-else if ( $HOSTTYPE == 'intel-mac' ) then
+else if ($HOSTTYPE == 'intel-mac') then
   setenv GBP_VALGRIND_PLAT x86-darwin
   setenv USE_GETLINE 0
 else
-  echo 'Unsupported HOSTTYPE in .cshrc.gbpCode'
+  echo 'Unsupported HOSTTYPE in .cshrc.gbpCode. Default behavior being used.'
 endif
 
 #----------------------------------------------------------------------
@@ -95,14 +97,14 @@ endif
 #----------------------------------------------------------------------
 
 # Add to the library path
-if ( $?LD_LIBRARY_PATH ) then
+if ($?LD_LIBRARY_PATH) then
   setenv LD_LIBRARY_PATH ${GBP_LIB}/cuda/:${LD_LIBRARY_PATH}
 else
   setenv LD_LIBRARY_PATH ${GBP_LIB}
 endif
 
 # Add to the path
-if ( $?PATH ) then
+if ($?PATH) then
   setenv PATH ${PATH}:${GBP_BIN}
 else
   setenv LD_LIBRARY_PATH ${GBP_BIN}

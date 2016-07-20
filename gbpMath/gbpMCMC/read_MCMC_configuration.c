@@ -28,11 +28,11 @@ void read_MCMC_configuration(MCMC_info *MCMC,char *filename_output_dir,int chain
   int   n_P;
   FILE *fp;
   fp=fopen(filename_run,"r");
-  fread(&n_chains,         sizeof(int),1,fp);
-  fread(&n_avg,            sizeof(int),1,fp);
-  fread(&flag_autocor_on,  sizeof(int),1,fp);
-  fread(&flag_no_map_write,sizeof(int),1,fp);
-  fread(&n_P,              sizeof(int),1,fp);
+  fread_verify(&n_chains,         sizeof(int),1,fp);
+  fread_verify(&n_avg,            sizeof(int),1,fp);
+  fread_verify(&flag_autocor_on,  sizeof(int),1,fp);
+  fread_verify(&flag_no_map_write,sizeof(int),1,fp);
+  fread_verify(&n_P,              sizeof(int),1,fp);
   fclose(fp);
   if(n_P!=MCMC->n_P)
     SID_trap_error("The number of parameters for the two runs does not match (ie. %d!=%d)",ERROR_LOGIC,n_P,MCMC->n_P);
@@ -46,10 +46,10 @@ void read_MCMC_configuration(MCMC_info *MCMC,char *filename_output_dir,int chain
   double  temperature;
   V =(double *)SID_malloc(sizeof(double)*n_P*n_P);
   fp=fopen(filename_chain_config,"r");
-  fread(&n_iterations_file_total,sizeof(int),   1,      fp);
-  fread(&n_iterations_file_burn, sizeof(int),   1,      fp);
-  fread(V,                       sizeof(double),n_P*n_P,fp);
-  fread(&temperature,            sizeof(double),1,      fp);
+  fread_verify(&n_iterations_file_total,sizeof(int),   1,      fp);
+  fread_verify(&n_iterations_file_burn, sizeof(int),   1,      fp);
+  fread_verify(V,                       sizeof(double),n_P*n_P,fp);
+  fread_verify(&temperature,            sizeof(double),1,      fp);
   fclose(fp);
 
   // Set the new state

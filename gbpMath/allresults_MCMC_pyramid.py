@@ -1,8 +1,7 @@
-""" This script generates a series of plots for analysing the results of an 
-MCMC run."""
- 
+#! /bin/env python
+""" This script generates a series of plots for analysing the results of an MCMC run."""
 import sys
-from MCMC_pyTools import MCMC
+import os 
 import numpy as np
 from numpy import log10
 import matplotlib
@@ -10,6 +9,9 @@ matplotlib.use('Agg')
 import pylab as plt
 from matplotlib.patches import Rectangle
  
+sys.path.append(os.path.expandvars('$GBP_SRC/gbpMath/gbpMCMC'))
+from MCMC_pyTools import MCMC
+
 __author__    = "Simon Mutch"
 __date__      = "25/10/11"
 __copyright__ = "Simon Mutch"
@@ -218,5 +220,6 @@ def plot_prob_matrix(mcmc_dir, limits='auto', prob_type='posterior',
 if __name__ == '__main__':
  
     mcmc_dir = sys.argv[1]+'/'
-    plot_prob_matrix(mcmc_dir, limits='priors', prob_type='posterior')
+    #plot_prob_matrix(mcmc_dir, limits='priors', prob_type='posterior')
+    plot_prob_matrix(mcmc_dir, limits='auto', prob_type='posterior')
 

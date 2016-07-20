@@ -7,11 +7,13 @@
 
 void SID_init(int       *argc,
               char     **argv[],
-              SID_args   args[]){
+              SID_args   args[],
+              void      *mpi_comm_as_void){
   int  status;
   int  i_level;
   int  i_char;
   int  flag_continue;
+  int  flag_passed_comm;
 
   // MPI-specific things
 #if USE_MPI
@@ -24,20 +26,26 @@ void SID_init(int       *argc,
   SID_fp   fp_tmp;
   FILE    *fp_hack;
   int      node_name_length;
+  MPI_Comm mpi_comm;
 #if USE_MPI_IO
   MPI_Info info_disp;
 #endif
-  MPI_Init(argc,argv);
-  MPI_Comm_size(MPI_COMM_WORLD,&(SID.n_proc));
-  MPI_Comm_rank(MPI_COMM_WORLD,&(SID.My_rank));
+
+  if(mpi_comm_as_void == NULL){
+    flag_passed_comm=FALSE;
+    MPI_Init(argc,argv);
+    MPI_Comm_dup(MPI_COMM_WORLD, &mpi_comm);
+  }
+  else{
+    MPI_Comm_dup(*((MPI_Comm *) mpi_comm_as_void), &mpi_comm);
+    flag_passed_comm=TRUE;
+  }
+
+  MPI_Comm_size(mpi_comm, &(SID.n_proc));
+  MPI_Comm_rank(mpi_comm, &(SID.My_rank));
 
   SID.My_node =(char *)SID_malloc(SID_MAXLENGTH_PROCESSOR_NAME * sizeof(char));
-#if USE_MPI
   MPI_Get_processor_name(SID.My_node, &node_name_length);
-#else
-  sprintf(SID.My_node,"localhost");
-  node_name_length=strlen(SID.My_node);
-#endif
   if (node_name_length >= SID_MAXLENGTH_PROCESSOR_NAME-1)
     SID_trap_error("SID_MAXLENGTH_PROCESSOR_NAME needs to be increased",ERROR_LOGIC);
 
@@ -60,8 +68,8 @@ void SID_init(int       *argc,
     fp_hack=fopen(".tmp.SID","w+");    
     fclose(fp_hack);
   }
-  MPI_Barrier(MPI_COMM_WORLD);
-  MPI_File_open(MPI_COMM_WORLD,
+  MPI_Barrier(mpi_comm);
+  MPI_File_open(mpi_comm,
                 ".tmp.SID",
                 MPI_MODE_WRONLY,
                 MPI_INFO_NULL,
@@ -84,8 +92,14 @@ void SID_init(int       *argc,
   MPI_Info_set((SID.file_info),"cb_config_list",      "*:1");
   #endif
 #else
+  if(mpi_comm_as_void==NULL)
+    flag_passed_comm=FALSE;
+  else
+    flag_passed_comm=TRUE;
   SID.My_rank=MASTER_RANK;
   SID.n_proc =1;
+  SID.My_node =(char *)SID_malloc(SID_MAXLENGTH_PROCESSOR_NAME * sizeof(char));
+  sprintf(SID.My_node,"localhost");
 #endif
 
 /*
@@ -125,7 +139,10 @@ void SID_init(int       *argc,
 #else
   SID.fp_in          =stdin;
 #endif
-  SID.fp_log         =stderr;
+  if(flag_passed_comm)
+    SID.fp_log       = NULL;
+  else
+    SID.fp_log       = stderr;
   SID.level          =0;
   SID.indent         =TRUE;
   SID.awake          =TRUE;
@@ -151,7 +168,7 @@ void SID_init(int       *argc,
     fp_hack=fopen(".tmp.SID","w+");
     fclose(fp_hack);
   }
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(mpi_comm);
   SID_fopen(".tmp.SID","w",&fp_tmp);
   MPI_File_get_info(fp_tmp.fp,&info_disp);
   if(SID.I_am_Master){
@@ -180,10 +197,14 @@ void SID_init(int       *argc,
   // Create private COMM_WORLD
   SID_Comm_init(&(SID.COMM_WORLD));
 #if USE_MPI
-  MPI_Comm_dup(MPI_COMM_WORLD,          &((SID.COMM_WORLD)->comm));
+  MPI_Comm_dup(mpi_comm,                &((SID.COMM_WORLD)->comm));
   MPI_Comm_group((SID.COMM_WORLD)->comm,&((SID.COMM_WORLD)->group));
   MPI_Comm_size(SID.COMM_WORLD->comm,   &((SID.COMM_WORLD)->n_proc));
   MPI_Comm_rank(SID.COMM_WORLD->comm,   &((SID.COMM_WORLD)->My_rank));
+
+  // We have duplicated our duplicate mpi communicator - now we can free the
+  // original duplicate
+  MPI_Comm_free(&mpi_comm);
 #else
   SID.COMM_WORLD->comm   =NULL;
   SID.COMM_WORLD->group  =NULL;

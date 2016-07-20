@@ -1,0 +1,45 @@
+#############################
+# Library-specific settings #
+#############################
+INCFILES  = gbpTrees.h 
+LIBFILE   = libgbpTrees.a
+OBJFILES  =
+LIBS      = -lgbpTrees -lgbpHalos -lgbpSPH -lgbpCosmo -lgbpMath -lgbpLib
+SUBDIRS   = core analysis
+BINFILES  = make_trees_stats               \
+	        make_match_score_table         \
+            query_2way_matches             \
+            make_atable_match_score        \
+            query_trees_volume             \
+            make_catalog_markers_ascii     \
+            make_cross_catalog_matches     \
+            query_progenitors              \
+            query_trees                    \
+            query_forest_trees_IDs         \
+            extract_tree_horizontal        \
+            most_massive_subgroup_analysis \
+            tree_stats_horizontal          \
+            validate_ghost_trees           \
+            parse_tree_case                \
+            crossmatches2ascii             \
+            check_match_files              \
+            matchfile2ascii                \
+            make_trees                     \
+            make_trees_markers             \
+            make_trees_analysis            \
+            make_trees_matches             \
+            make_trees_vertical            \
+            make_trees_horizontal          \
+            make_trees_grid                \
+            make_trees_analysis_relaxation \
+            make_single_matches            \
+            make_forests                   \
+            query_matches                  \
+            make_matched_catalog           \
+            make_match_catalog             \
+            convert_Bolshoi                \
+            tree_groups                    \
+            view_tree                      \
+            view_tree_mil
+SCRIPTS   = view_tree.py
+#############################

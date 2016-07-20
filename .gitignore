@@ -2,6 +2,7 @@
 *.a
 *.dSYM
 *.pyc
+*.a.objsfile
 .install*
 .printed_status
 todo

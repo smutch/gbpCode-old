@@ -2,7 +2,7 @@
 
 if ($#argv < 4) then
   echo
-  echo 'Syntax: run_mpi wall_time_in_hrs mpi_command ...'
+  echo 'Syntax: run_mpi wall_time_in_hrs pmem [queue] mpi_command ...'
   echo '------'
   echo
   exit(1)
@@ -10,7 +10,9 @@ else
    @  FIRST_ARG=1
    @  ARG_NNODE=1
    @  ARG_PPN  =1
+   @  ARG_PMEM =4
   set ARG_HRS  =($argv[$FIRST_ARG]);@ FIRST_ARG++
+  set ARG_PMEM =($argv[$FIRST_ARG]);@ FIRST_ARG++
   if ( $HOSTNAME == 'g2.hpc.swin.edu.au' ) then
      set ARG_QUEUE  =($argv[$FIRST_ARG]);@ FIRST_ARG++
   endif
@@ -35,7 +37,9 @@ if ( ${GBP_QUEUE_TYPE} == 'PBS' ) then
   echo '#PBS -N '$ARG_CMD                                                                               >> $SUBT_FILE
   echo '#PBS -l nodes='$ARG_NNODE':ppn='$ARG_PPN',walltime='$ARG_HRS':00:00'                            >> $SUBT_FILE
   echo '#PBS -S /bin/csh'                                                                               >> $SUBT_FILE
-  #echo '#PBS -l pmem=6GB'                                                                              >> $SUBT_FILE
+#  echo '#PBS -l pmem=16GB'                                                                              >> $SUBT_FILE
+#  echo '#PBS -l pmem=128GB'                                                                              >> $SUBT_FILE
+  echo '#PBS -l pmem='$ARG_PMEM'Gb'                                                                       >> $SUBT_FILE
   if ( $HOSTNAME == 'g2.hpc.swin.edu.au' ) then
      echo '#PBS -q '$ARG_QUEUE                                                                          >> $SUBT_FILE
   endif

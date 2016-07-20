@@ -156,6 +156,14 @@ struct SID_arg {
   void   *val;
 };
 
+// Custom variadic arguments functions
+#define MAX_GBP_VA_ARGS_STREAM_SIZE 128
+typedef struct gbp_va_list gbp_va_list;
+struct gbp_va_list{
+   char  stream[MAX_GBP_VA_ARGS_STREAM_SIZE];
+   int   stream_position;
+};
+
 typedef struct SID_Comm SID_Comm;
 struct SID_Comm{
   #if USE_MPI
@@ -264,11 +272,27 @@ struct SID_fp{
   size_t               last_item;
 };
 
+// This is used with SID_fp to perform buffered reads
+typedef struct SID_fp_buffer SID_fp_buffer;
+struct SID_fp_buffer{
+   SID_fp *fp;
+   char   *buffer;
+   size_t  n_bytes_buffer_max;
+   size_t  n_bytes_to_read;
+   size_t  n_bytes_unread;
+   size_t  n_bytes_buffer_unprocessed;
+   size_t  n_bytes_buffer_processed;
+   size_t  n_bytes_buffer;
+};
+
 // Function declarations 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void SID_init(int *argc,char **argv[],SID_args args[]);
+void gbp_va_start    (gbp_va_list *vargs);
+void gbp_add_va_arg  (gbp_va_list *vargs,size_t size,void *ptr);
+void gbp_fetch_va_arg(gbp_va_list *vargs,size_t size,void *ptr);
+void SID_init(int *argc,char **argv[],SID_args args[], void *mpi_comm_as_void);
 void SID_Comm_init(SID_Comm **comm);
 void SID_Comm_free(SID_Comm **comm);
 void SID_Comm_split(SID_Comm *comm_in,int colour,int key,SID_Comm *comm_out);
@@ -315,6 +339,7 @@ int SID_fopen_chunked(const char   *filename_root,
                       const char   *mode,
                       SID_fp *fp,
                       void   *header, ...);
+size_t fread_verify(void *ptr, size_t size, size_t count, FILE *stream);
 size_t SID_fread_all(void *buffer,size_t size_per_item, size_t n_items,SID_fp *fp);
 size_t SID_fread_ordered(void *buffer,size_t size_per_item, size_t n_items,SID_fp *fp);
 size_t SID_fread(void *buffer,size_t size_per_item, size_t n_items,SID_fp *fp);
@@ -328,6 +353,12 @@ size_t SID_fread_chunked_ordered(void   *buffer,
 size_t SID_fread_chunked_all(void   *buffer,
                              size_t  n_x_read,
                              SID_fp *fp);
+
+void init_SID_fp_buffer(SID_fp *fp,size_t n_bytes_to_read,size_t n_bytes_buffer_max,SID_fp_buffer **fp_buffer);
+void reset_SID_fp_buffer(SID_fp_buffer **fp_buffer);
+void free_SID_fp_buffer(SID_fp_buffer **fp_buffer);
+int  SID_fread_all_buffer(void *rval,size_t dtype_size,size_t n_items,SID_fp_buffer *fp_buffer);
+
 void SID_fskip_chunked(size_t  n_x_skip_local,
                        SID_fp *fp);
 void SID_fseek_chunked(size_t  i_x_skip_local,
@@ -364,6 +395,7 @@ int  check_mode_for_flag(int mode, int flag);
 
 void SID_input(char *fmt, SID_Datatype type, void *input, ...);
 void SID_log(const char *fmt, int mode, ...);
+void SID_log_set_fp(FILE *fp);
 void SID_free(void **ptr);
 void SID_log_error(const char *fmt, ...);
 void SID_log_warning(const char *fmt, int mode, ...);

@@ -1,0 +1,15 @@
+###########################
+# Local Makefile settings #
+###########################
+INCFILES  = 
+OBJFILES  = 
+LIBFILE   =
+BINFILES  =
+SCRIPTS   =
+DATAFILES =
+LIBS      =
+SUBDIRS   = gbpCosmo gbpSims
+ifeq ($(USE_FFTW),1)
+  SUBDIRS := $(SUBDIRS) gbpClustering gbpSwapEndian
+endif
+#############################

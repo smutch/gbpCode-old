@@ -156,7 +156,7 @@ void merge_helper(void   *data,
         }
       }
       else if(data_type==SID_SIZE_T){
-        if(l<left+midpoint_distance && (r==right||(((size_t *)data)[l]<=((size_t *)data)[r]))){
+        if(l<left+midpoint_distance && (r==right||(((size_t *)data)[l]<=((size_t *)data)[r]))){ //*
           ((size_t *)scratch_d)[i]=((size_t *)data)[l];
           if(flag_compute_index)
             scratch_i[i]=index[l];

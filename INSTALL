@@ -1,24 +1,77 @@
-
 INSTALL GUIDE FOR gbpCode AND ITS PACKAGES
 ==========================================
 
- ***MAC USERS: If you are running OSX-bash, you will want to fix a bug in the
-               OSX version of echo.  You can do so with the following commands:
+Installing gbpCode
+==================
 
-   > sudo port install bash
-   > sudo mv /bin/bash /bin/bash.old
-   > sudo mv /bin/sh /bin/sh.old
-   > sudo ln /opt/local/bin/bash /bin/bash
-   > sudo ln /opt/local/bin/bash /bin/sh
+1) Clone a copy of this repository using the command 'git clone https://github.com/gbpoole/gbpCode.git'
 
-Installing the needed libraries
-===============================
+2) Create an environment variable called GBP_SRC pointing to this directory location (in what follows,
+   I'm assuming you installed gbpCode at ${HOME} ... adjust accordingly) :
 
-To install gbpCode, you need to install several libraries (if you haven't already).  Personally, I place all of these
-in the directory $GBP_SRC/3rd_Party ($GBP_SRC should be set in your .cshrc; see below), but they can be wherever you wish.  You just
-need to edit your .cshrc.myCode (or .bashrc.myCode) file appropriately (again, see below).  
+   for cshell: setenv GBP_SRC ${HOME}'/gbpCode/'
+   for bash:   export GBP_SRC=${HOME}'/gbpCode/'
 
-PRESENTLY, GSL, FFTW and CFITSIO ALL NEED TO BE INSTALLED.
+   gbpCode assumes that this is always set, so ideally put this in your .cshrc or .bashrc so that you 
+   just need to define it once and not worry about it after that.
+
+3) Source the gbpCode start-up file:
+
+   for cshell: source ${GBP_SRC}/.cshrc.gbpCode
+   for bash:   source ${GBP_SRC}/.bashrc.gbpCode
+
+   Again, ideally put this command in your .cshrc or .bashrc so that gbpCode is always ready
+   to go for you.
+
+** N.B.: If you are having troubles installing the code then almost certainly, your problem can
+         be accomodated by editing these files.  Follow the instructions in 4) below to do so.  If
+         you start hacking other things, you are likely making things hard on yourself.
+
+4) OPTIONAL: if you want to compile gbpCode with some/all the bells-and-whistles, you'll need to tell the
+   code which optional libraries you have installed.  Presently GSL is the only MANDITORY library.  To
+   turn-on the functionality tied to the optional libraries, create a .cshrc.myCode (if you're using cshell; or 
+   .bashrc.myCode if you are using bash) file from the default ${GBP_SRC}/.cshrc.gbpCode (or ${GBP_SRC}/.bashrc.gbpCode)
+   files as follows:
+
+   for cshell: > cp ${GBP_SRC}/.cshrc.gbpCode  ${GBP_SRC}/.cshrc.myCode
+   for bash:   > cp ${GBP_SRC}/.bashrc.gbpCode ${GBP_SRC}/.bashrc.myCode
+
+   (This is necessary so that the default X.gbpCode file is not overwritten if you pull from the repo again someday to
+   update to the latest version.  Make sure that you source this new file instead of the default file in the instructions 
+   given in 3) above from now on.)
+
+   You then need to edit this X.myCode file to switch-on the needed libraries and to define the paths to them.  Look for
+   any definitions of "USE_XXX" and "GBP_XXX_DIR" and switch them to "USE_XXX=1" and set the path for each library you want to use.  
+   SEE BELOW ON SPECIFIC INSTRUCTIONS FOR INSTALLING EACH LIBRARY.
+
+4) gbpCode is designed to support fully MPI and serial compiles of the code.  Serial compile is the default.  Do this as follows:
+
+   > cd $GBP_SRC
+   > make clean ; make
+
+All serial executables will end-up in ${GBP_SRC}/myBin by default. Libraries will end-up in ${GBP_SRC}/myLib
+
+5) gbpCode is designed to seamlessly support both MPI and serial compiles of the code.  If you want an MPI compile, make
+   sure you have the MPI libraries set up (see 4 above; I use OpenMPI almost exclusively but the code has been compiled
+   with other MPI implementations) and type:
+
+   > cd $GBP_SRC
+   > make clean ; make USE_MPI=1
+
+   All parallel executables will end-up in ${GBP_SRC}/myBin/mpi by default. Libraries will end-up in ${GBP_SRC}/myLib/mpi
+
+** Be warned however, not all executables necessarily support parallel running at this time.  They will compile, but
+   behavior may be undefined.  This will be straighted-out eventually.
+
+Installing required/optional libraries
+======================================
+
+To install gbpCode, you *must* have GSL installed and may want to install one/all of the following:
+
+- MPI
+- FFTW (use version 2.1.X, version 3 is not yet supported)
+- CFITSIO
+- GDLib
 
 If these libraries are already installed, you will have to find the paths to them.  If they are not, 
 here's some instructions on where to get them and how to install them (if you have already
@@ -27,141 +80,120 @@ you will have to change all the ${GBP_XXX_DIR} references to the paths where you
 installed, and then make sure that you use these same paths later when you configure your .cshrc/.bashrc 
 as described in the 'Installing gbpCode' section below):
 
-1) Install GSL (http://www.gnu.org/software/gsl/):
+1) Install GSL (REQUIRED; http://www.gnu.org/software/gsl/):
    -----------
-> ./configure prefix=${GBP_GSL_DIR}
-> make
-> make install
+   > ./configure prefix=${GBP_GSL_DIR}
+   > make
+   > make install
 
-2) Install FFTW (http://www.fftw.org/download.html):
+2) Install FFTW (optional; http://www.fftw.org/download.html):
    ------------
-Make sure you get version 2.  Version 3 does not support MPI.
+Make sure you get version 2.  gbpCode does not yet support version 3.
 
 The way gbpCode is set up at present, you need 2 separate compiles (one for single precision, one
 for double) of FFTW for both serial and MPI (if you are using it).  To get all of these you need to do 
 the following from your FFTW source code directory:
 
-> make clean
-> ./configure --enable-type-prefix --enable-float --prefix=${GBP_FFTW_DIR}
-> make
-> make install
-> make clean
-> ./configure --enable-type-prefix --prefix=${GBP_FFTW_DIR}
-> make
-> history
-> make install
-> make clean
+   > make clean
+   > ./configure --enable-type-prefix --enable-float --prefix=${GBP_FFTW_DIR}
+   > make
+   > make install
+   > make clean
+   > ./configure --enable-type-prefix --prefix=${GBP_FFTW_DIR}
+   > make
+   > history
+   > make install
+   > make clean
 
 And if you want to use MPI:
 
-> make clean
-> ./configure --enable-type-prefix --enable-float --enable-mpi --prefix=${GBP_FFTW_DIR}
-> make
-> make install
-> make clean
-> ./configure --enable-type-prefix --enable-mpi --prefix=${GBP_FFTW_DIR}
-> make
-> history
-> make install
-> make clean
+   > make clean
+   > ./configure --enable-type-prefix --enable-float --enable-mpi --prefix=${GBP_FFTW_DIR}
+   > make
+   > make install
+   > make clean
+   > ./configure --enable-type-prefix --enable-mpi --prefix=${GBP_FFTW_DIR}
+   > make
+   > history
+   > make install
+   > make clean
 
-3) Install CFITSIO (http://heasarc.gsfc.nasa.gov/fitsio/):
+3) Install CFITSIO (optional; http://heasarc.gsfc.nasa.gov/fitsio/):
    ---------------
-> ./configure prefix=${GBP_CFITSIO_DIR}
-> make
-> make install
+   > ./configure prefix=${GBP_CFITSIO_DIR}
+   > make
+   > make install
 
-4) Install Python (semi-optional):
-   --------------
-Several gbpCode packages use python for plotting, etc.  You will need to have python installed
-in these cases.  This can be a bit of a pain and really varries from system-to-system, so
-I will leave you to your own devices to figure this out.
-
-5) Install MPI (optional; eg. http://www.open-mpi.org/):
+4) Install MPI (optional; eg. http://www.open-mpi.org/):
    -----------
-> ./configure prefix=${GBP_MPI_DIR}
-> make
-> make install
+   > ./configure prefix=${GBP_MPI_DIR}
+   > make
+   > make install
 
-6) Install Valgrind (optional; http://valgrind.org/downloads/):
+5) Install Valgrind (optional; http://valgrind.org/downloads/):
    ----------------
-> ./configure prefix=${GBP_VALGRIND_DIR}
-> make
-> make install
+   > ./configure prefix=${GBP_VALGRIND_DIR}
+   > make
+   > make install
 
-7) Install SPRNG (optional; http://sprng.fsu.edu/):
+If you have Valgrind installed and you want to use it with gbpCode, make sure you compile using:
+> make clean ; make USE_DEBUGGER=1
+This compiles the code wih the '-g' option so that Valgrind can report line numbers when errors occur.
+
+6) Install SPRNG (optional; http://sprng.fsu.edu/):
    -------------
-This is needed for large parallel runs to avoid periodicity in RNG streams.  It is really tough
+This is presently needed for large parallel runs to avoid periodicity in RNG streams.  It is really tough
 to compile and GENERALLY NOT NEEDED.  Make sure you use version 1 if you're brave enough to try
 to compile it.
-
-
-Installing gbpCode
-==================
-
-1) Clone a copy of this repository using the command 'git clone git@green.ssi.swin.edu.au:gbpCode.git'
-
-2) In the gbpCode directory (referred to as ${GBP_SRC} here), create a .cshrc.myCode (or .bashrc.myCode) file from 
-   ${GBP_SRC}/.cshrc.myCode (or ${GBP_SRC}/.bashrc.myCode) as described in a) below, edit it as described in b) and 
-   source it in your .cshrc (or .bashrc) as described in c):
-
-  a) copy ${GBP_SRC}/.cshrc.gbpCode to ${GBP_SRC}/.cshrc.myCode (SO THE FILE DOESN"T GET OVERWRITTEN NEXT TIME YOU PULL FROM THE REPO!)
-  b) EDIT .cshrc.myCode (or .bashrc.myCode); set the USE_XXX variables to the default values you want to use.  You can change them when
-     you compile by passing different values to make.  For example, if you have USE_MPI=0 by default, you can compile with MPI with
-     the command 'make USE_MPI=1'.  For each USE_XXX flag that you anticipate using, you have to supply the path to the library
-     in the GBP_XXX_DIR variable.  Make sure that this directory is where the 'lib' and 'include' directories for the library sit.
-     SEE THE FILE FOR ADDITIONAL INSTRUCTIONS.
-
-** n.b.: Presently, dependancies are not really enforced very well ... so the only libraries that are optional are SPRNG, MPI and Valgrind.
-
-  c) Add the following lines to your .cshrc (or their equivilant in .bashrc if you use bash; eg. assuming you cloned the repo in ${HOME}):
-    > setenv GBP_SRC  ${HOME}'/gbpCode/' 
-    > source ${GBP_SRC}/.cshrc.myCode
-
-3) Before proceeding to use gbpCode for the first time, make sure you source your new .cshrc
-
-4) Compile the code:
-> cd $GBP_SRC
-> make
-
-5) If you want an mpi compile, you should then type:
-> make clean
-> make USE_MPI=1
-
-n.b.: MPI versions of executables can be run using the 'run_mpi' script that gets installed 
-      in $GBP_BIN.  Run it with no arguments to get the syntax.
 
 Installing additional packages:
 ==============================
 
 gbpCode was designed so that you can add packages to it.  Once you have gbpCode installed and compiling correctly,
-it is trivial to add additional packages to it.
+it is pretty easy to add additional packages.
 
 If you add more packages to gbpCode, you should install them in the following way (using the package gbpXXXX as an example):
 
 1) FROM THE $GBP_SRC/gbpPkgs directory, make a clone of the package's repository:
-> cd $GBP_SRC/gbpPkgs
-> git clone git@green.ssi.swin.edu.au:gbpXXXX.git
 
-2) Create a Makefile.mylocal file in the gbpPkgs directory and edit it::
+   > cd $GBP_SRC/gbpPkgs
+   > git clone https://github.com/gbpoole/gbpXXXX.git
+
+2) Create a Makefile.mylocal file in the gbpPkgs directory and edit it:
 
   a) cd $GBP_SRC/gbpPkgs
   b) cp Makefile.local Makefile.mylocal (if you haven't already done so)
   c) Edit this Makefile.mylocal file, adding gbpXXXX to the end of the SUBDIRS list
 
 n.b.: the gbpCode makefile always uses Makefile.mylocal instead of Makefile.local, if it exists.
-      Makefile.mylocal will not get overwritten the next time you pull from the repo!
+      Makefile.mylocal will not get overwritten the next time you pull from the repo, so any
+      changes you make to this file will last through revisions.
 
 Now, everytime you recompile gbpCode (after an update for example) it will also 
 recompile all your additional packages to make sure that everything is compatible 
 and properly linked.
 
 3) Compile your packages:
-> cd $GBP_SRC/gbpPkgs
-> make clean
-> make
+
+   > cd $GBP_SRC/gbpPkgs
+   > make clean ; make
 
 If you want MPI versions, then also do the following:
-> make clean
-> make USE_MPI=1 
+
+   > cd $GBP_SRC/gbpPkgs
+   > make clean ; make USE_MPI=1 
+
+==============================
+
+***QUICK NOTE TO MAC USERS: If you are running an old version of OSX-bash, you will want to fix a bug in the
+                            OSX version of echo which does not suppor the '-n' option.  You can do so with 
+                            the following commands (for example):
+
+   > sudo port install bash
+   > sudo mv /bin/bash /bin/bash.old
+   > sudo mv /bin/sh /bin/sh.old
+   > sudo ln /opt/local/bin/bash /bin/bash
+   > sudo ln /opt/local/bin/bash /bin/sh
+
+Up-to-date Macs don't need to worry about this.
 
