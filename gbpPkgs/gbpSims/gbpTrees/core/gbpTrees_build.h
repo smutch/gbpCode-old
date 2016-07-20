@@ -220,7 +220,7 @@ struct tree_horizontal_info{
   match_info  last_progenitor;                // Pointer to this halo's last  progenitor
   match_info  next_progenitor;                // Pointer to this halo's next  progenitor
   match_info *back_matches;                   // Contains the pointer information for all of the back-matches to this halo
-  match_info  forematch_first;                // Initially used (in identify_back_matches) as a pointer to the most immediate forematched halo,
+  match_info  forematch_first;                // Initially used (in identify_descendant_matches) as a pointer to the most immediate forematched halo,
                                               //    then used (in identify_progenitors) as the first and best option for a descendant from
                                               //    the back match list.
   match_info  forematch_default;              // Pointer to the default halo matched to.  Starts with the initial 'first' match but may change
@@ -526,6 +526,9 @@ float minimum_match_score(double n_particles,double f_goodness);
 float match_score_f_goodness(float match_score,int n_particles_in);
 int check_validity_of_match(int n_particles_use,float match_score,double f_goodness_of_match);
 
+int check_if_halo_is_better_main_progenitor(tree_horizontal_info *target_halo,
+                                            match_info           *old_progenitor,
+                                            match_info           *new_progenitor);
 int check_if_halo_is_descendant(tree_horizontal_info *possible_progenitor,
                                 tree_horizontal_info *possible_descendant,
                                 int n_search);
