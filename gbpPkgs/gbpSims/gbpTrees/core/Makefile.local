@@ -37,6 +37,7 @@ OBJFILES  = read_trees_run_parameters.o               \
 	    check_if_match_is_bigger_peak.o               \
 	    check_if_match_is_simple.o                    \
 	    check_if_match_is_immediate.o                 \
+	    check_if_halo_is_better_main_progenitor.o     \
 	    check_if_halo_is_descendant.o                 \
 	    check_if_halo_is_merger.o                     \
 	    check_if_type_is_fragmented.o                 \
